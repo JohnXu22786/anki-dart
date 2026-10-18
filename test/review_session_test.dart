@@ -52,6 +52,8 @@ void main() {
       final timedState = ReviewQueueState<Object>(
         card: cardState.card,
         schedulingSnapshot: cardState.schedulingSnapshot,
+        counts: cardState.counts,
+        activeQueue: cardState.activeQueue,
         timeboxReached: const ReviewTimeboxReached(secs: 60, reps: 3),
       );
       final scheduler = _FakeReviewScheduler([cardState])
@@ -83,6 +85,8 @@ void main() {
       final timedState = ReviewQueueState<Object>(
         card: next.card,
         schedulingSnapshot: next.schedulingSnapshot,
+        counts: next.counts,
+        activeQueue: next.activeQueue,
         timeboxReached: const ReviewTimeboxReached(secs: 60, reps: 3),
       );
       final scheduler = _FakeReviewScheduler([first, next])
@@ -264,6 +268,9 @@ ReviewQueueState<Object> _queueState(
         answerHtml: answer,
       ),
       schedulingSnapshot: Object(),
+      counts:
+          const ReviewQueueCounts(newCount: 10, learnCount: 5, reviewCount: 20),
+      activeQueue: ReviewQueueKind.newCards,
     );
 
 class _FakeReviewScheduler implements ReviewScheduler<Object> {

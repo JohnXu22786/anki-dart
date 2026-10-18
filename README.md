@@ -6,8 +6,9 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes two source-mapped slices: deck-picker behavior and
-the headless review-session lifecycle.
+The current port includes three source-mapped slices: deck-picker behavior, the
+headless review-session lifecycle, and reviewer count/next-time presentation
+models.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual and expanding
@@ -23,27 +24,34 @@ the headless review-session lifecycle.
   before showing the queued card. The previously displayed side remains visible
   during the timebox and while a queue read loads or retries. A failed queue
   read can be retried without sending the completed card's rating again.
+- Reviewer presentation: a study-count model that renders the three scheduler
+  counts as decimal strings and retains which queue is active, plus an answer
+  next-time model that displays the backend's four strings in Again/Hard/Good/
+  Easy order without deriving intervals in Dart.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
-a `ReviewScheduler` adapter that supplies queue items, timebox events, and
-rating application. The session exposes the event's elapsed-time limit and
-answer count, and can reload the queue when the caller continues. The AnkiDroid
-2.25.3 source pins `io.github.david-allison:anki-android-backend` version
-`0.1.68-anki26.05`; the Rust backend, collection storage, timebox calculation,
-and scheduling algorithm are still external and are not implemented here. This
-is not yet a complete AnkiDroid replacement: the Android screens and lifecycle,
-template rendering and media, review timers, timebox presentation, leech
-handling, reviewer undo/redo and auto-advance, the JavaScript custom-state
-bridge, sync, import/export, and other app features remain to be ported. The
-source project has thousands of files, so this repository does not claim full
-feature parity.
+a `ReviewScheduler` adapter that supplies queue items, backend counts and active
+queue, timebox events, and rating application. `ReviewNextStateDescriber`
+forwards the opaque scheduling state to the pinned backend's
+`describeNextStates()` API. The session exposes the timebox's elapsed-time limit
+and answer count, and can reload the queue when the caller continues. The
+AnkiDroid 2.25.3 source pins
+`io.github.david-allison:anki-android-backend` version `0.1.68-anki26.05`; the
+Rust backend, collection storage, timebox calculation, and scheduling algorithm
+are still external and are not implemented here. This is not yet a complete
+AnkiDroid replacement: Android screens and platform lifecycle, study-count and
+answer-button widgets/layout, next-time visibility preference wiring, template
+rendering and media, review timers, timebox presentation, leech handling,
+reviewer undo/redo and auto-advance, the JavaScript custom-state bridge, sync,
+import/export, and other app features remain to be ported. The source project
+has thousands of files, so this repository does not claim full feature parity.
 
 The port preserves the source behavior for the covered slices, including search
-and collapse quirks, reviewer action ordering, question/answer transitions, and
-the scheduler timebox gate. Scheduling rules and timebox calculation remain
-with the backend adapter; this port does not intentionally correct upstream
-bugs. See the tests and upstream mapping for the specific behaviors and source
-files.
+and collapse quirks, reviewer action ordering, question/answer transitions, the
+scheduler timebox gate, active-count selection, and direct display of backend
+answer labels. Scheduling rules and timebox calculation remain with the backend
+adapter; this port does not intentionally correct upstream bugs. See the tests
+and upstream mapping for the specific behaviors and source files.
 
 ## Use and verify
 

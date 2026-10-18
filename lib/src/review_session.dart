@@ -13,6 +13,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *
+ * SPDX-FileCopyrightText: 2020 Arthur Milchior <arthur@milchior.fr>
  * SPDX-FileCopyrightText: 2022 Ankitects Pty Ltd
  * SPDX-FileCopyrightText: 2026 Mike Hardy <github@mikehardy.net>
  * SPDX-FileCopyrightText: 2026 John Tsui
@@ -53,21 +54,43 @@ class ReviewCard {
   final String answerHtml;
 }
 
+/// The active AnkiDroid scheduler queue for the current review state.
+enum ReviewQueueKind { newCards, learning, review }
+
+/// The three due counts supplied by AnkiDroid's scheduler.
+class ReviewQueueCounts {
+  const ReviewQueueCounts({
+    required this.newCount,
+    required this.learnCount,
+    required this.reviewCount,
+  });
+
+  final int newCount;
+  final int learnCount;
+  final int reviewCount;
+}
+
 /// A card selected by the scheduler, paired with its opaque scheduling snapshot.
 ///
 /// The snapshot is produced by the compatible Anki backend and is passed back
 /// unchanged when the card is answered. A timebox event pauses the reviewer
 /// before this card is displayed; the previously visible card side remains
 /// visible until queue loading resumes, matching AnkiDroid's reviewer flow.
+/// Counts and the active queue correspond to `CurrentQueueState.counts` and
+/// `CurrentQueueState.countsIndex` in AnkiDroid 2.25.3.
 class ReviewQueueState<TSchedulingSnapshot> {
   const ReviewQueueState({
     required this.card,
     required this.schedulingSnapshot,
+    required this.counts,
+    required this.activeQueue,
     this.timeboxReached,
   });
 
   final ReviewCard card;
   final TSchedulingSnapshot schedulingSnapshot;
+  final ReviewQueueCounts counts;
+  final ReviewQueueKind activeQueue;
   final ReviewTimeboxReached? timeboxReached;
 }
 

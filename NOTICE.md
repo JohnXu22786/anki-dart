@@ -24,8 +24,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   individual copyright holder.
 - `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` is Copyright
   © 2022 Ankitects Pty Ltd. The Dart adapter contract in
-  `lib/src/review_session.dart` reflects its queue and answer entry points; the
-  Rust scheduler implementation is not included.
+  `lib/src/review_session.dart` reflects its queue and answer entry points, and
+  `lib/src/review_presentation.dart` reflects its `describeNextStates()` entry
+  point; the Rust scheduler implementation is not included.
+- `libanki/src/main/java/com/ichi2/anki/libanki/sched/Counts.kt` is Copyright
+  © 2020 Arthur Milchior <arthur@milchior.fr>. Its three scheduler counts and
+  queue enum are projected into `ReviewQueueCounts` and `ReviewQueueKind` in
+  `lib/src/review_session.dart`.
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/StudyCounts.kt`,
+  `StudyCountsView.kt`, and `AnswerButtonsNextTime.kt` are marked
+  `GPL-3.0-or-later` in the upstream source. Their count strings, active-queue
+  condition, and four backend label assignments are adapted by
+  `lib/src/review_presentation.dart`; the Android view widgets are not included.
 - `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` contains
   `Collection.TimeboxReached`, Copyright © 2026 Mike Hardy
   <github@mikehardy.net>. Its `secs` and `reps` payload is adapted by
@@ -38,6 +48,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/review_session_test.dart` checks the reviewer flow recorded in
   `ReviewerViewModel.kt`, `Scheduler.kt`, and `Collection.kt`; it is not a port
   of the Android test harness.
+- `test/review_presentation_test.dart` checks the count and answer-label
+  projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
+  `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the
+  Android test harness.
 - Dart adaptations, the review-session controller, and new test code are
   Copyright © 2026 John Tsui.
 

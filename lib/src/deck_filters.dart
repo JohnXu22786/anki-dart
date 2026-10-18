@@ -24,23 +24,29 @@
 
 import 'dart:io' show Platform;
 
+import 'locale_lowercase.dart';
+
 /// A deck search query with AnkiDroid's token and path matching rules.
 class DeckFilters {
-  DeckFilters._(this._filters, this._localeName);
+  DeckFilters._(this._filters, this._localeName, this._localeNameProvider);
 
   final List<DeckFilter> _filters;
-  final String _localeName;
+  final String? _localeName;
+  final String Function() _localeNameProvider;
+
+  String get _localeNameForMatching => _localeName ?? _localeNameProvider();
 
   /// Whether the user supplied at least one non-empty search token.
   bool isActive() => _filters.isNotEmpty;
 
   /// Whether every token occurs in [name].
-  bool deckNamesMatchFilters(String name) => _filters
-      .every((filter) => filter.deckNameMatchesFilter(name, _localeName));
+  bool deckNamesMatchFilters(String name) => _filters.every(
+      (filter) => filter.deckNameMatchesFilter(name, _localeNameForMatching));
 
   /// Whether at least one token matches the last deck-name component.
   bool deckLastNameMatchesAFilter(String name) => _filters.any(
-        (filter) => filter.deckLastNameMatchesFilter(name, _localeName),
+        (filter) =>
+            filter.deckLastNameMatchesFilter(name, _localeNameForMatching),
       );
 
   /// Whether a deck should remain visible for this query.
@@ -48,25 +54,57 @@ class DeckFilters {
       !isActive() ||
       (deckLastNameMatchesAFilter(name) && deckNamesMatchFilters(name));
 
-  /// Parses a query. [localeName] may be supplied by the host app when it
-  /// observes a locale change; the native platform locale is used by default.
+  /// Parses a query. Query tokens use locale-invariant casing. A non-empty
+  /// [localeName] pins deck-name matching to that locale; otherwise, the
+  /// current platform locale is read each time a deck is matched. Supply
+  /// [localeNameProvider] when the host application has its own changing locale.
   static DeckFilters create(
     String filters, {
     String localeName = '',
+    String Function()? localeNameProvider,
   }) {
-    final effectiveLocale =
-        localeName.isEmpty ? Platform.localeName : localeName;
-    final tokens = filters
-        .toLowerCase()
+    final tokens = unicodeLowercase(filters)
         .split(RegExp(r'[ \t\n\x0B\f\r]+'))
-        .map((filter) => filter.trim())
+        .map(_trimKotlinWhitespace)
         .where((filter) => filter.isNotEmpty)
         .map(DeckFilter.new)
         .toList(growable: false);
 
-    return DeckFilters._(tokens, effectiveLocale);
+    return DeckFilters._(
+      tokens,
+      localeName.isEmpty ? null : localeName,
+      localeNameProvider ?? (() => Platform.localeName),
+    );
   }
 }
+
+String _trimKotlinWhitespace(String value) {
+  // Kotlin/JVM Char.isWhitespace includes separator and C0 whitespace
+  // characters, but excludes U+0085 NEXT LINE unlike Dart's String.trim().
+  var start = 0;
+  var end = value.length;
+
+  while (start < end && _isKotlinWhitespace(value.codeUnitAt(start))) {
+    start++;
+  }
+  while (start < end && _isKotlinWhitespace(value.codeUnitAt(end - 1))) {
+    end--;
+  }
+
+  return value.substring(start, end);
+}
+
+bool _isKotlinWhitespace(int codeUnit) =>
+    (codeUnit >= 0x0009 && codeUnit <= 0x000D) ||
+    (codeUnit >= 0x001C && codeUnit <= 0x0020) ||
+    codeUnit == 0x00A0 ||
+    codeUnit == 0x1680 ||
+    (codeUnit >= 0x2000 && codeUnit <= 0x200A) ||
+    codeUnit == 0x2028 ||
+    codeUnit == 0x2029 ||
+    codeUnit == 0x202F ||
+    codeUnit == 0x205F ||
+    codeUnit == 0x3000;
 
 /// A single token in a [DeckFilters] query.
 class DeckFilter {
@@ -82,12 +120,12 @@ class DeckFilter {
 
   /// Whether [name] contains this token or ends with its partial-colon prefix.
   bool deckNameMatchesFilter(String name, [String localeName = '']) {
-    final localeLowercase = _lowercaseForLocale(name, localeName);
-    final rootLowercase = name.toLowerCase();
+    final localeLoweredName = localeLowercase(name, localeName);
+    final rootLowercase = unicodeLowercase(name);
 
-    return localeLowercase.contains(filter) ||
+    return localeLoweredName.contains(filter) ||
         rootLowercase.contains(filter) ||
-        localeLowercase.endsWith(trimmedFilter) ||
+        localeLoweredName.endsWith(trimmedFilter) ||
         rootLowercase.endsWith(trimmedFilter);
   }
 
@@ -130,15 +168,6 @@ class DeckFilter {
       contained,
     );
   }
-}
-
-String _lowercaseForLocale(String value, String localeName) {
-  final language =
-      localeName.replaceAll('_', '-').split('-').first.toLowerCase();
-  if (language == 'tr' || language == 'az') {
-    return value.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
-  }
-  return value.toLowerCase();
 }
 
 bool _equalsIgnoreCase(String left, String right) {

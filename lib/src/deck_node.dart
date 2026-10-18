@@ -64,4 +64,14 @@ class DeckNode {
 
   String get lastDeckNameComponent =>
       _lastDeckNameComponent ?? fullDeckName.split('::').last;
+
+  /// Returns the total due count across this node's immediate children.
+  ///
+  /// The backend caps the root aggregate, while subdecks share their parent's
+  /// limits, so this sums each top-level child exactly once.
+  int totalCardsDue() => children.fold(
+        0,
+        (total, child) =>
+            total + child.newCount + child.revCount + child.lrnCount,
+      );
 }

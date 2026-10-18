@@ -55,6 +55,38 @@ class DisplayDeckNode {
   final int revCount;
   final bool isSelected;
 
+  // AnkiDroid keeps the mutable DeckNode outside the data class constructor.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DisplayDeckNode &&
+          other.did == did &&
+          other.fullDeckName == fullDeckName &&
+          other.lastDeckNameComponent == lastDeckNameComponent &&
+          other.collapsed == collapsed &&
+          other.canCollapse == canCollapse &&
+          other.depth == depth &&
+          other.filtered == filtered &&
+          other.newCount == newCount &&
+          other.lrnCount == lrnCount &&
+          other.revCount == revCount &&
+          other.isSelected == isSelected;
+
+  @override
+  int get hashCode => Object.hash(
+        did,
+        fullDeckName,
+        lastDeckNameComponent,
+        collapsed,
+        canCollapse,
+        depth,
+        filtered,
+        newCount,
+        lrnCount,
+        revCount,
+        isSelected,
+      );
+
   DisplayDeckNode withUpdatedDeckId(int deckId) => _copyWith(
         isSelected: did == deckId,
       );

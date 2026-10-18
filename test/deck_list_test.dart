@@ -93,6 +93,60 @@ void main() {
       );
     });
   });
+
+  group('DeckNode.totalCardsDue', () {
+    test('sums new, review, and learning counts from top-level decks', () {
+      final root = DeckNode.syntheticRoot(
+        children: [
+          _deck(1, 'A', 1, newCount: 100, revCount: 50, lrnCount: 5),
+          _deck(2, 'B', 1, newCount: 200, lrnCount: 10),
+        ],
+      );
+
+      expect(root.totalCardsDue(), 365);
+    });
+
+    test('uses top-level aggregates instead of the capped root or subdecks',
+        () {
+      final cappedRoot = DeckNode.syntheticRoot(children: [
+        _deck(1, 'A', 1, newCount: 9999),
+        _deck(2, 'B', 1, newCount: 9999),
+      ]);
+      final parent = _deck(3, 'Parent', 1, newCount: 9905, children: [
+        _deck(4, 'Sub1', 2, newCount: 9905),
+        _deck(5, 'Sub2', 2, newCount: 9905),
+      ]);
+      final nestedRoot = DeckNode.syntheticRoot(children: [parent]);
+
+      expect(cappedRoot.totalCardsDue(), 19998);
+      expect(nestedRoot.totalCardsDue(), 9905);
+    });
+  });
+
+  group('DisplayDeckNode', () {
+    test('uses value equality without comparing the backing deck node', () {
+      final first = DisplayDeckNode.from(
+        _deck(1, 'Science', 0),
+        matchesSearchOrChild: true,
+        selectedDeckId: 1,
+      );
+      final equal = DisplayDeckNode.from(
+        _deck(1, 'Science', 0),
+        matchesSearchOrChild: true,
+        selectedDeckId: 1,
+      );
+      final different = DisplayDeckNode.from(
+        _deck(1, 'Science', 0),
+        matchesSearchOrChild: true,
+        selectedDeckId: 2,
+      );
+
+      expect(first.deckNode, isNot(same(equal.deckNode)));
+      expect(first, equal);
+      expect(first.hashCode, equal.hashCode);
+      expect(first, isNot(different));
+    });
+  });
 }
 
 DeckNode _scienceTree() {
@@ -110,6 +164,9 @@ DeckNode _deck(
   String fullDeckName,
   int depth, {
   bool collapsed = false,
+  int newCount = 0,
+  int lrnCount = 0,
+  int revCount = 0,
   List<DeckNode> children = const [],
 }) =>
     DeckNode(
@@ -117,5 +174,8 @@ DeckNode _deck(
       fullDeckName: fullDeckName,
       depth: depth,
       collapsed: collapsed,
+      newCount: newCount,
+      lrnCount: lrnCount,
+      revCount: revCount,
       children: children,
     );

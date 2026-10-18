@@ -53,8 +53,115 @@ void main() {
       expect(DeckFilter.containsAtPosition('ı', 1, 'i', 1), isTrue);
       expect(DeckFilter.containsAtPosition('I', 1, 'ı', 1), isTrue);
       expect(DeckFilter.containsAtPosition('i', 1, 'İ', 1), isTrue);
+      expect(DeckFilters.create('I', localeName: 'tr_TR').accept('ı'), isFalse);
       expect(DeckFilters.create('i', localeName: 'tr_TR').accept('I'), isTrue);
       expect(DeckFilters.create('ı', localeName: 'tr_TR').accept('I'), isTrue);
+    });
+
+    test('reads the default locale when matching a reused filter', () {
+      var currentLocale = 'en_US';
+      final filters = DeckFilters.create(
+        'ı',
+        localeNameProvider: () => currentLocale,
+      );
+
+      expect(filters.accept('I'), isFalse);
+      currentLocale = 'tr_TR';
+      expect(filters.accept('I'), isTrue);
+    });
+
+    test('adds Lithuanian dot above before an acute accent', () {
+      expect(
+        DeckFilters.create('i\u0307\u0301', localeName: 'lt_LT')
+            .accept('I\u0301'),
+        isTrue,
+      );
+    });
+
+    test('adds Lithuanian dot above across lower-class combining marks', () {
+      expect(
+        DeckFilters.create('i\u0307\u0327\u0301', localeName: 'lt_LT')
+            .accept('I\u0327\u0301'),
+        isTrue,
+      );
+    });
+
+    test('stops Lithuanian More Above at a class-zero mark', () {
+      expect(
+        DeckFilters.create('i\u0307\u0903\u0301', localeName: 'lt_LT')
+            .accept('I\u0903\u0301'),
+        isFalse,
+      );
+    });
+
+    test('removes the Turkish dot after I across lower-class marks', () {
+      expect(
+        DeckFilters.create('i\u0327', localeName: 'tr_TR')
+            .accept('I\u0327\u0307'),
+        isTrue,
+      );
+    });
+
+    test('removes the Lithuanian dot after a soft-dotted letter', () {
+      expect(
+        DeckFilters.create('i\u0327', localeName: 'lt_LT')
+            .accept('i\u0327\u0307'),
+        isTrue,
+      );
+    });
+
+    test('does not add a second dot to a precomposed Lithuanian I accent', () {
+      expect(
+        DeckFilters.create('i\u0307\u0300', localeName: 'lt_LT').accept('Ì'),
+        isTrue,
+      );
+    });
+
+    test('uses contextual final sigma when lowercasing deck names', () {
+      expect(
+        DeckFilters.create('ος', localeName: 'en_US').accept('ΟΣ'),
+        isTrue,
+      );
+      expect(
+        DeckFilters.create('ος\u0301', localeName: 'en_US').accept('ΟΣ\u0301'),
+        isTrue,
+      );
+      expect(
+        DeckFilters.create('ος\u02B0', localeName: 'en_US').accept('ΟΣ\u02B0'),
+        isTrue,
+      );
+      expect(
+        DeckFilters.create('ος', localeName: 'tr_TR').accept('ΟΣ'),
+        isTrue,
+      );
+      expect(
+        DeckFilters.create("οσ'α", localeName: 'en_US').accept("ΟΣ'Α"),
+        isTrue,
+      );
+    });
+
+    test('uses full lowercase mappings that expand to multiple characters', () {
+      expect(
+        DeckFilters.create('i\u0307', localeName: 'en_US').accept('İ'),
+        isTrue,
+      );
+    });
+
+    test('trims Kotlin whitespace without trimming next-line characters', () {
+      expect(
+        DeckFilters.create('\u001Cfoo\u001C', localeName: 'en_US')
+            .accept('foo'),
+        isTrue,
+      );
+      expect(
+        DeckFilters.create('foo\u0085', localeName: 'en_US').accept('foo'),
+        isFalse,
+      );
+      expect(
+        DeckFilters.create('foo\u0085', localeName: 'en_US')
+            .accept('foo\u0085'),
+        isTrue,
+      );
     });
   });
 }

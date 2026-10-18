@@ -47,6 +47,30 @@ void main() {
       expect(state.limitMs, 5000);
     });
 
+    test('state stream replays the current state and emits transitions',
+        () async {
+      final clock = _FakeClock(1000);
+      final timer = AnswerTimer(elapsedRealtime: clock.read)
+        ..configureForCard(shouldShow: true, limitMs: 5000);
+
+      final states = timer.stateStream.take(4).toList();
+      clock.now = 2000;
+      timer.onPause();
+      clock.now = 4000;
+      timer.onResume();
+      timer.hide();
+
+      expect(
+        await states,
+        const <AnswerTimerState>[
+          AnswerTimerRunning(baseTime: 1000, limitMs: 5000),
+          AnswerTimerPaused(elapsedTimeMs: 1000, limitMs: 5000),
+          AnswerTimerRunning(baseTime: 3000, limitMs: 5000),
+          AnswerTimerHidden(),
+        ],
+      );
+    });
+
     test('stopping a running timer records elapsed time and caps at limit', () {
       final clock = _FakeClock(1000);
       final timer = AnswerTimer(elapsedRealtime: clock.read)
@@ -113,7 +137,8 @@ void main() {
       expect(state.limitMs, 10000);
     });
 
-    test('hide forces Hidden and nonmatching transitions leave state intact', () {
+    test('hide forces Hidden and nonmatching transitions leave state intact',
+        () {
       final clock = _FakeClock(1000);
       final timer = AnswerTimer(elapsedRealtime: clock.read);
 

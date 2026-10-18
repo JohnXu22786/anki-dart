@@ -41,6 +41,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   hidden/running/paused/stopped state machine is adapted in
   `lib/src/answer_timer.dart`; host lifecycle registration and timer rendering
   are not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvance.kt`,
+  `AutoAdvanceSettings.kt`, `AutoAdvanceAction.kt`, `QuestionAction.kt`, and
+  `AnswerAction.kt` are marked `GPL-3.0-or-later` upstream. Their settings
+  contract, action codes, delay dispatch, and cancellation behavior are adapted
+  in `lib/src/auto_advance.dart`; the Android collection settings lookup and
+  reviewer action routing are not included.
+- `libanki/src/main/java/com/ichi2/anki/libanki/DeckConfig.kt` is Copyright
+  © 2020 David Allison <davidallisongithub@gmail.com> and Arthur Milchior
+  <Arthur@Milchior.fr>. Its Auto Advance fields and defaults remain behind the
+  `AutoAdvanceSettingsAdapter`; the Dart port does not copy its storage access
+  or property wrappers.
 - `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` contains
   `Collection.TimeboxReached`, Copyright © 2026 Mike Hardy
   <github@mikehardy.net>. Its `secs` and `reps` payload is adapted by
@@ -59,8 +70,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   Android test harness.
 - `test/answer_timer_test.dart` checks the timer behavior and boundary cases
   from `AnswerTimerTest.kt`; it is not a port of the Android test harness.
-- Dart adaptations, the review-session controller, timer model, and new test code are
-  Copyright © 2026 John Tsui.
+- `test/auto_advance_test.dart` checks the delay, cancellation, deck-setting,
+  action-code, and same-side behavior recorded in `AutoAdvanceTest.kt`; it is
+  not a port of the Android test harness.
+- Dart adaptations, the review-session controller, timer and Auto Advance
+  models, and new test code are Copyright © 2026 John Tsui.
 
 ## Unicode property data
 

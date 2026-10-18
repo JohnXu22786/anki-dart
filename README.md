@@ -6,9 +6,9 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes four source-mapped slices: deck-picker behavior, the
+The current port includes five source-mapped slices: deck-picker behavior, the
 headless review-session lifecycle, reviewer count/next-time presentation
-models, and the answer-timer state machine.
+models, the answer-timer state machine, and reviewer Auto Advance.
 
 - Deck-picker search: token and deck-path matching, with query casing from the
   locale at parse time and locale-aware deck-name casing, including contextual
@@ -30,13 +30,22 @@ models, and the answer-timer state machine.
   Easy order without deriving intervals in Dart.
 - Answer timer: the hidden/running/paused/stopped model, including card
   configuration, elapsed-time clamping, stop/hide, and lifecycle pause/resume
-  transitions. The host supplies a monotonic millisecond clock corresponding to
-  Android `SystemClock.elapsedRealtime()` and calls pause/resume; this model
-  does not drive periodic UI ticks or register lifecycle observers.
+  transitions. Its state stream replays the current state and emits transitions.
+  The host supplies a monotonic millisecond clock corresponding to Android
+  `SystemClock.elapsedRealtime()` and calls pause/resume; this model does not
+  drive periodic UI ticks or register lifecycle observers.
+- Auto Advance: deck-provided question/answer durations and typed actions,
+  enable/disable and card-change cancellation, and the `waitForAudio` value
+  supplied by an adapter. An injectable delay scheduler supports deterministic
+  timing. Same-side visibility events overwrite the tracked job without
+  cancelling its earlier timer, matching the pinned source behavior.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
 a `ReviewScheduler` adapter that supplies queue items, backend counts and active
-queue, timebox events, and rating application. `ReviewNextStateDescriber`
+queue, timebox events, and rating application. Auto Advance requires an
+`AutoAdvanceSettingsAdapter` that loads all five settings for the current card's
+deck; the model does not read collection storage or supply deck-config defaults.
+`ReviewNextStateDescriber`
 forwards the opaque scheduling state to the pinned backend's
 `describeNextStates()` API. The session exposes the timebox's elapsed-time limit
 and answer count, and can reload the queue when the caller continues. The
@@ -45,11 +54,12 @@ AnkiDroid 2.25.3 source pins
 Rust backend, collection storage, timebox calculation, and scheduling algorithm
 are still external and are not implemented here. This is not yet a complete
 AnkiDroid replacement: Android screens and platform lifecycle integration,
-answer-timer widget/tick rendering, study-count and answer-button
-widgets/layout, next-time visibility preference wiring, template rendering and
-media, timebox presentation, leech handling, reviewer undo/redo and
-auto-advance, the JavaScript custom-state bridge, sync, import/export, and
-other app features remain to be ported. The source project has thousands of
+answer-timer widget/tick rendering, Auto Advance settings controls and reviewer
+action routing, study-count and answer-button widgets/layout, next-time
+visibility preference wiring, template rendering and media, timebox
+presentation, leech handling, reviewer undo/redo, the JavaScript custom-state
+bridge, sync, import/export, and other app features remain to be ported. The
+source project has thousands of
 files, so this repository does not claim full feature parity.
 
 The port preserves the source behavior for the covered slices, including search
@@ -59,7 +69,9 @@ answer labels. The answer timer also keeps the source's upper-only elapsed-time
 clamp, exact limit comparison, negative elapsed values, and nonpositive-limit
 behavior. Scheduling rules and timebox calculation remain with the backend
 adapter; this port does not intentionally correct upstream bugs. See the tests
-and upstream mapping for the specific behaviors and source files.
+and upstream mapping for the specific behaviors and source files. Auto Advance
+preserves the integer action codes and invalid-code fallbacks, delays and
+cancellation boundaries, and the same-side job-overwrite quirk.
 
 ## Use and verify
 

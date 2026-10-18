@@ -20,6 +20,8 @@
  * AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
+import 'dart:async';
+
 /// Returns monotonic elapsed-realtime milliseconds, like Android's
 /// `SystemClock.elapsedRealtime()`.
 typedef ElapsedRealtimeClock = int Function();
@@ -104,23 +106,39 @@ final class AnswerTimerStopped extends AnswerTimerState {
 /// class exposes the current state; it does not create a periodic display tick.
 class AnswerTimer {
   AnswerTimer({required ElapsedRealtimeClock elapsedRealtime})
-      : _elapsedRealtime = elapsedRealtime;
+      : _elapsedRealtime = elapsedRealtime,
+        _stateController = StreamController<AnswerTimerState>.broadcast();
 
   final ElapsedRealtimeClock _elapsedRealtime;
+  final StreamController<AnswerTimerState> _stateController;
   AnswerTimerState _state = const AnswerTimerHidden();
 
   /// The latest state, initially [AnswerTimerHidden].
   AnswerTimerState get state => _state;
 
+  /// Emits the current state to each listener, then each distinct transition.
+  Stream<AnswerTimerState> get stateStream =>
+      Stream<AnswerTimerState>.multi((controller) {
+        controller.add(_state);
+        final subscription = _stateController.stream.listen(controller.add);
+        controller.onCancel = subscription.cancel;
+      }, isBroadcast: true);
+
+  void _setState(AnswerTimerState state) {
+    if (_state == state) return;
+    _state = state;
+    _stateController.add(state);
+  }
+
   /// Reconfigures the timer for a card, starting it only when [shouldShow].
   void configureForCard({required bool shouldShow, required int limitMs}) {
     if (!shouldShow) {
-      _state = const AnswerTimerHidden();
+      _setState(const AnswerTimerHidden());
     } else {
-      _state = AnswerTimerRunning(
+      _setState(AnswerTimerRunning(
         baseTime: _elapsedRealtime(),
         limitMs: limitMs,
-      );
+      ));
     }
   }
 
@@ -129,15 +147,15 @@ class AnswerTimer {
     switch (_state) {
       case AnswerTimerRunning(:final baseTime, :final limitMs):
         final elapsed = _elapsedRealtime() - baseTime;
-        _state = AnswerTimerStopped(
+        _setState(AnswerTimerStopped(
           elapsedTimeMs: elapsed > limitMs ? limitMs : elapsed,
           limitMs: limitMs,
-        );
+        ));
       case AnswerTimerPaused(:final elapsedTimeMs, :final limitMs):
-        _state = AnswerTimerStopped(
+        _setState(AnswerTimerStopped(
           elapsedTimeMs: elapsedTimeMs,
           limitMs: limitMs,
-        );
+        ));
       case AnswerTimerHidden() || AnswerTimerStopped():
         return;
     }
@@ -148,10 +166,10 @@ class AnswerTimer {
     final current = _state;
     if (current case AnswerTimerRunning(:final baseTime, :final limitMs)) {
       final elapsed = _elapsedRealtime() - baseTime;
-      _state = AnswerTimerPaused(
+      _setState(AnswerTimerPaused(
         elapsedTimeMs: elapsed > limitMs ? limitMs : elapsed,
         limitMs: limitMs,
-      );
+      ));
     }
   }
 
@@ -160,21 +178,21 @@ class AnswerTimer {
     final current = _state;
     if (current case AnswerTimerPaused(:final elapsedTimeMs, :final limitMs)) {
       if (elapsedTimeMs < limitMs) {
-        _state = AnswerTimerRunning(
+        _setState(AnswerTimerRunning(
           baseTime: _elapsedRealtime() - elapsedTimeMs,
           limitMs: limitMs,
-        );
+        ));
       } else {
-        _state = AnswerTimerStopped(
+        _setState(AnswerTimerStopped(
           elapsedTimeMs: elapsedTimeMs,
           limitMs: limitMs,
-        );
+        ));
       }
     }
   }
 
   /// Hides the timer from any current state.
   void hide() {
-    _state = const AnswerTimerHidden();
+    _setState(const AnswerTimerHidden());
   }
 }

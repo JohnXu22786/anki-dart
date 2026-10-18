@@ -20,5 +20,6 @@
 export 'src/deck_filters.dart';
 export 'src/deck_node.dart';
 export 'src/display_deck_node.dart';
+export 'src/answer_timer.dart';
 export 'src/review_presentation.dart';
 export 'src/review_session.dart';

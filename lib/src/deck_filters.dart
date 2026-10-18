@@ -54,16 +54,19 @@ class DeckFilters {
       !isActive() ||
       (deckLastNameMatchesAFilter(name) && deckNamesMatchFilters(name));
 
-  /// Parses a query. Query tokens use locale-invariant casing. A non-empty
-  /// [localeName] pins deck-name matching to that locale; otherwise, the
-  /// current platform locale is read each time a deck is matched. Supply
+  /// Parses a query using the current locale for token casing. A non-empty
+  /// [localeName] pins token and deck-name casing to that locale; otherwise,
+  /// the current platform locale is read when parsing and matching. Supply
   /// [localeNameProvider] when the host application has its own changing locale.
   static DeckFilters create(
     String filters, {
     String localeName = '',
     String Function()? localeNameProvider,
   }) {
-    final tokens = unicodeLowercase(filters)
+    final tokenLocaleName = localeName.isEmpty
+        ? localeNameProvider?.call() ?? Platform.localeName
+        : localeName;
+    final tokens = localeLowercase(filters, tokenLocaleName)
         .split(RegExp(r'[ \t\n\x0B\f\r]+'))
         .map(_trimKotlinWhitespace)
         .where((filter) => filter.isNotEmpty)

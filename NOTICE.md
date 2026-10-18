@@ -36,6 +36,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `GPL-3.0-or-later` in the upstream source. Their count strings, active-queue
   condition, and four backend label assignments are adapted by
   `lib/src/review_presentation.dart`; the Android view widgets are not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimer.kt`
+  and `AnswerTimerState.kt` are marked `GPL-3.0-or-later` upstream. Their
+  hidden/running/paused/stopped state machine is adapted in
+  `lib/src/answer_timer.dart`; host lifecycle registration and timer rendering
+  are not included.
 - `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` contains
   `Collection.TimeboxReached`, Copyright © 2026 Mike Hardy
   <github@mikehardy.net>. Its `secs` and `reps` payload is adapted by
@@ -52,7 +57,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the
   Android test harness.
-- Dart adaptations, the review-session controller, and new test code are
+- `test/answer_timer_test.dart` checks the timer behavior and boundary cases
+  from `AnswerTimerTest.kt`; it is not a port of the Android test harness.
+- Dart adaptations, the review-session controller, timer model, and new test code are
   Copyright © 2026 John Tsui.
 
 ## Unicode property data
@@ -71,5 +78,5 @@ dependency and is not redistributed here. See the notices in each source file
 and the full license text in `COPYING` and `LICENSES/GPL-3.0-or-later.txt`.
 
 The tests were written against the behavior documented and exercised by
-AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, and reviewer flow. They are
-not a port of the Android test harness.
+AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, reviewer flow, and
+`AnswerTimerTest.kt`. They are not a port of the Android test harness.

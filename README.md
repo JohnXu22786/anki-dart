@@ -6,14 +6,14 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes three source-mapped slices: deck-picker behavior, the
-headless review-session lifecycle, and reviewer count/next-time presentation
-models.
+The current port includes four source-mapped slices: deck-picker behavior, the
+headless review-session lifecycle, reviewer count/next-time presentation
+models, and the answer-timer state machine.
 
-- Deck-picker search: token and deck-path matching, with locale-invariant query
-  casing and locale-aware deck-name casing, including contextual and expanding
-  Unicode mappings, Turkish/Azeri/Lithuanian special cases, and partial `:` /
-  `::` searches;
+- Deck-picker search: token and deck-path matching, with query casing from the
+  locale at parse time and locale-aware deck-name casing, including contextual
+  and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and
+  partial `:` / `::` searches;
 - Deck-picker rows and due count: flattening a deck tree into visible rows,
   including ancestor paths, collapsed decks, counts, and selection state, plus
   the source-equivalent total due count across top-level decks.
@@ -28,6 +28,11 @@ models.
   counts as decimal strings and retains which queue is active, plus an answer
   next-time model that displays the backend's four strings in Again/Hard/Good/
   Easy order without deriving intervals in Dart.
+- Answer timer: the hidden/running/paused/stopped model, including card
+  configuration, elapsed-time clamping, stop/hide, and lifecycle pause/resume
+  transitions. The host supplies a monotonic millisecond clock corresponding to
+  Android `SystemClock.elapsedRealtime()` and calls pause/resume; this model
+  does not drive periodic UI ticks or register lifecycle observers.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
 a `ReviewScheduler` adapter that supplies queue items, backend counts and active
@@ -39,17 +44,20 @@ AnkiDroid 2.25.3 source pins
 `io.github.david-allison:anki-android-backend` version `0.1.68-anki26.05`; the
 Rust backend, collection storage, timebox calculation, and scheduling algorithm
 are still external and are not implemented here. This is not yet a complete
-AnkiDroid replacement: Android screens and platform lifecycle, study-count and
-answer-button widgets/layout, next-time visibility preference wiring, template
-rendering and media, review timers, timebox presentation, leech handling,
-reviewer undo/redo and auto-advance, the JavaScript custom-state bridge, sync,
-import/export, and other app features remain to be ported. The source project
-has thousands of files, so this repository does not claim full feature parity.
+AnkiDroid replacement: Android screens and platform lifecycle integration,
+answer-timer widget/tick rendering, study-count and answer-button
+widgets/layout, next-time visibility preference wiring, template rendering and
+media, timebox presentation, leech handling, reviewer undo/redo and
+auto-advance, the JavaScript custom-state bridge, sync, import/export, and
+other app features remain to be ported. The source project has thousands of
+files, so this repository does not claim full feature parity.
 
 The port preserves the source behavior for the covered slices, including search
 and collapse quirks, reviewer action ordering, question/answer transitions, the
 scheduler timebox gate, active-count selection, and direct display of backend
-answer labels. Scheduling rules and timebox calculation remain with the backend
+answer labels. The answer timer also keeps the source's upper-only elapsed-time
+clamp, exact limit comparison, negative elapsed values, and nonpositive-limit
+behavior. Scheduling rules and timebox calculation remain with the backend
 adapter; this port does not intentionally correct upstream bugs. See the tests
 and upstream mapping for the specific behaviors and source files.
 

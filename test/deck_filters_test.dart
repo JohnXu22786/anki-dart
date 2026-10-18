@@ -53,7 +53,8 @@ void main() {
       expect(DeckFilter.containsAtPosition('ı', 1, 'i', 1), isTrue);
       expect(DeckFilter.containsAtPosition('I', 1, 'ı', 1), isTrue);
       expect(DeckFilter.containsAtPosition('i', 1, 'İ', 1), isTrue);
-      expect(DeckFilters.create('I', localeName: 'tr_TR').accept('ı'), isFalse);
+      expect(DeckFilters.create('I', localeName: 'tr_TR').accept('ı'), isTrue);
+      expect(DeckFilters.create('I', localeName: 'tr_TR').accept('i'), isFalse);
       expect(DeckFilters.create('i', localeName: 'tr_TR').accept('I'), isTrue);
       expect(DeckFilters.create('ı', localeName: 'tr_TR').accept('I'), isTrue);
     });
@@ -88,8 +89,8 @@ void main() {
 
     test('stops Lithuanian More Above at a class-zero mark', () {
       expect(
-        DeckFilters.create('i\u0307\u0903\u0301', localeName: 'lt_LT')
-            .accept('I\u0903\u0301'),
+        DeckFilter('i\u0307\u0903\u0301')
+            .deckNameMatchesFilter('I\u0903\u0301', 'lt_LT'),
         isFalse,
       );
     });
@@ -110,9 +111,9 @@ void main() {
       );
     });
 
-    test('does not add a second dot to a precomposed Lithuanian I accent', () {
+    test('matches a precomposed Lithuanian I accent without a second dot', () {
       expect(
-        DeckFilters.create('i\u0307\u0300', localeName: 'lt_LT').accept('Ì'),
+        DeckFilter('i\u0307\u0300').deckNameMatchesFilter('Ì', 'lt_LT'),
         isTrue,
       );
     });

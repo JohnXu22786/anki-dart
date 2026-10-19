@@ -19,7 +19,8 @@ reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
 resolution, plus Card Browser search-text transitions, text-edit/sync/reset/
 history-selection/request-submission effect sequences, saved-search
-outcome-message mapping, CardTemplate marker-based string composition,
+outcome-message mapping, CardTemplate marker-based string composition and
+verbatim card-content QA wrapping,
 card-template type-answer modifier parsing, and question-side type-answer
 placeholder removal.
 
@@ -153,6 +154,10 @@ placeholder removal.
   message (the Kotlin caught substring failure). This only composes a host-
   supplied template string; Android asset loading, card rendering, media, and
   WebView integration remain outside.
+- Card content wrapper: `wrapCardContentInQaDiv` returns the exact source
+  `<div id="qa">` prefix, unchanged content, and `</div>` suffix. It does not
+  escape or normalize input. Android-side filtering, audio expansion, bold
+  rewriting, rendering, and orchestration remain with the host.
 - Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and the
   set/toggle projections return a one-card collection-write intent followed by
   publication of the same flag only if the host write succeeds. Current-card

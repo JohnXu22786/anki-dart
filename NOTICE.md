@@ -151,6 +151,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   character insertion; malformed-marker cases are source-derived. The host
   supplies the template string; Android asset loading, card rendering, media,
   and WebView integration remain outside this slice.
+- `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/AndroidCardRenderContext.kt`
+  declares `GPL-3.0-or-later`. Its private `enrichWithQADiv()` string wrapper is
+  adapted as `wrapCardContentInQaDiv()` in `lib/src/card_template.dart`; content
+  is inserted verbatim between the exact source tags. The pinned tests do not
+  directly cover this private helper, so Dart assertions are source-derived.
+  Android-side filtering, audio expansion, bold rewriting, rendering, and
+  caller orchestration remain outside this slice.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
   declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
   semantics are adapted in `lib/src/type_answer_modifiers.dart`; card/note

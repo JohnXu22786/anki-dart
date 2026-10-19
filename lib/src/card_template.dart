@@ -16,8 +16,8 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Behavioral reference: CardTemplate.kt in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md.
+ * Behavioral references: CardTemplate.kt and AndroidCardRenderContext.kt in
+ * AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 /// The rendered HTML value returned by AnkiDroid's CardTemplate projection.
@@ -112,3 +112,9 @@ final class CardTemplate {
         '$_preContent$content$_postContent',
       );
 }
+
+/// Wraps card question/answer content in AnkiDroid's `qa` container.
+///
+/// The supplied content is inserted verbatim. Filtering, audio expansion, and
+/// the surrounding rendering pipeline remain with the host.
+String wrapCardContentInQaDiv(String content) => '<div id="qa">$content</div>';

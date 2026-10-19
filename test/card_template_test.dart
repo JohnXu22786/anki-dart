@@ -16,8 +16,9 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source mapping: CardTemplate.kt and CardTemplateTest.kt in AnkiDroid 2.25.3;
- * see ANKIDROID_UPSTREAM.md. Malformed-template cases are source-derived.
+ * Source mapping: CardTemplate.kt, CardTemplateTest.kt, and
+ * AndroidCardRenderContext.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
+ * Malformed-template and QA-wrapper cases are source-derived.
  */
 
 import 'package:anki_dart/anki_dart.dart';
@@ -103,6 +104,26 @@ void main() {
           ),
         );
       }
+    });
+  });
+
+  group('wrapCardContentInQaDiv', () {
+    test('wraps empty content without extra whitespace', () {
+      expect(wrapCardContentInQaDiv(''), '<div id="qa"></div>');
+    });
+
+    test('wraps plain text verbatim', () {
+      expect(
+        wrapCardContentInQaDiv('A plain answer.'),
+        '<div id="qa">A plain answer.</div>',
+      );
+    });
+
+    test('preserves markup-looking content without escaping or newlines', () {
+      expect(
+        wrapCardContentInQaDiv('<p>Question <b>markup</b></p>'),
+        '<div id="qa"><p>Question <b>markup</b></p></div>',
+      );
     });
   });
 }

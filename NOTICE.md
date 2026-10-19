@@ -141,6 +141,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `CardAppearance.fixBoldStyle()`, `getCssClasses()`, or `getCardClass()`; those
   Dart cases are source-derived. The upstream `ReviewerCustomFonts.kt` header
   attributes Copyright © 2013 Flavio Lerda <flerda@gmail.com>.
+- `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardTemplate.kt`
+  declares `GPL-3.0-or-later`. Its first-marker section segmentation and ordered
+  HTML-string composition, including the `RenderedCard` value, are adapted in
+  `lib/src/card_template.dart`. A missing style marker retains the uncaught
+  negative-`take` argument failure as Dart `ArgumentError`; invalid later
+  boundaries map to `StateError` with the pinned source message. The pinned
+  `CardTemplateTest.kt` directly covers canonical replacement and a 1,000-
+  character insertion; malformed-marker cases are source-derived. The host
+  supplies the template string; Android asset loading, card rendering, media,
+  and WebView integration remain outside this slice.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
   declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
   semantics are adapted in `lib/src/type_answer_modifiers.dart`; card/note

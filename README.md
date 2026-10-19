@@ -19,8 +19,9 @@ reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
 resolution, plus Card Browser search-text transitions, text-edit/sync/reset/
 history-selection/request-submission effect sequences, saved-search
-outcome-message mapping, card-template type-answer modifier parsing, and
-question-side type-answer placeholder removal.
+outcome-message mapping, CardTemplate marker-based string composition,
+card-template type-answer modifier parsing, and question-side type-answer
+placeholder removal.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -144,6 +145,14 @@ question-side type-answer placeholder removal.
   resource installation/selection, theme selection and preference IO, actual
   theme CSS, vertical-centering styles, AndroidCardRenderContext's MathJax
   handling, WebView textZoom, and full rendering remain outside.
+- Card template strings: `CardTemplate` caches the first style, script, class,
+  and content marker positions, then renders the five source-ordered segments
+  into a value-equal `RenderedCard`. Later delimiter copies remain literal.
+  Missing style maps to Dart `ArgumentError` (the Kotlin negative-`take`
+  failure); bad or missing later boundaries map to `StateError` with the source
+  message (the Kotlin caught substring failure). This only composes a host-
+  supplied template string; Android asset loading, card rendering, media, and
+  WebView integration remain outside.
 - Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and the
   set/toggle projections return a one-card collection-write intent followed by
   publication of the same flag only if the host write succeeds. Current-card
@@ -348,9 +357,9 @@ vertical-centering preference IO/styles,
 MathJax render context, WebView textZoom/lifecycle, previewer
 collection flag mutation and StateFlow
 publication (flag codes and ordered write/publish intent are modeled),
-marks/note editing, card-template rendering and media, card/note-dependent
-TypeAnswer field lookup, cloze extraction and answer comparison, answer-timer
-widget/tick rendering,
+marks/note editing, Android card-template asset loading and card content
+rendering/media, card/note-dependent TypeAnswer field lookup, cloze extraction
+and answer comparison, answer-timer widget/tick rendering,
 Auto Advance settings
 controls and Android preference lookup, `KeyEvent` extraction and hardware/layout
 `getUnicodeChar()` calculation, binding display strings, Android

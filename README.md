@@ -17,7 +17,8 @@ command routing, reviewer binding codec/map and default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
 resolution, plus Card Browser search-text transitions, sync/reset/history
-selection effect sequences, and saved-search outcome-message mapping.
+selection/request-submission effect sequences, and saved-search outcome-message
+mapping.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -89,6 +90,15 @@ selection effect sequences, and saved-search outcome-message mapping.
   state and maps and applies the effects; no search request is created or run.
   No pinned test directly covers this selection sequence or host-map
   restoration; the similarly named upstream test calls `submitSearch` instead.
+- Card Browser request submission: `browserSubmitCurrentSearchEffects` converts
+  the supplied request to a Kotlin-trimmed, ID-based history entry and applies
+  `BrowserSearchHistoryModel.addRecent`. It emits the resulting Loading history,
+  a close-view event, then the exact request in source order. A blank
+  unfiltered request still emits the unchanged history; this overload does not
+  set screen-open state. The host persists history, delivers events, and runs
+  the search. The pinned view-model tests' `submitSearch` helper calls the
+  no-argument overload instead, so these ordered-effect tests are source-derived
+  and do not claim direct upstream coverage of the request overload.
 - Review session: a headless flow that loads the scheduler's current card, shows
   its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
   the next queue item. It waits for the current card's state-mutation hook
@@ -273,7 +283,8 @@ outcome-message delivery and UI,
 collection-backed deck/note-type lookup, backend query-string generation and
 backend SearchNode conversion, query parsing/validation, final SearchString
 serialization, search execution, search-string conversion,
-Android execution of Card Browser sync/reset/history-selection effects,
+Android execution of Card Browser request-submission/sync/reset/history-selection
+effects and close-view/submitted-search event delivery,
 SavedStateHandle/StateFlow
 integration for mode, text buffers, and history/saved-search availability,
 Basic/Advanced text widgets, history-list

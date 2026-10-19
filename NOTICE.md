@@ -189,7 +189,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   preserves the exact query and omits `historyExpanded` from the three ordered
   key removals. The host performs the StateFlow and SavedStateHandle operations;
   the source marks reset `@NeedsTest("reset")` and has no direct reset or sync
-  test.
+  test. The `submitCurrentSearch(SearchRequest)` overload is also projected in
+  `lib/src/browser_search_state_effects.dart`: it records the trimmed ID-based
+  history entry using the existing recency rules, publishes the updated history
+  as Loading, then emits the close-view event and exact submitted request. It
+  does not set screen-open state or execute the search. The pinned view-model
+  test helper calls the no-argument submit overload instead, so its ordered
+  effects are covered by source-derived Dart tests, not a direct upstream test.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`, and
@@ -266,6 +272,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and the exact three SavedState keys removed. The pinned source marks reset
   `@NeedsTest("reset")` but has no direct test for either method; host execution
   and coroutine scheduling remain outside this test.
+- `test/browser_search_submit_effects_test.dart` adds source-derived cases for
+  the `SearchRequest` submit overload: trimmed ID-based history conversion,
+  history Loading before close-view and request events, blank-query history
+  suppression/inclusion, and exact submitted-request identity. The similarly
+  named pinned view-model test helper exercises the no-argument overload, not
+  this ordered event sequence. Persistence, event delivery, and search execution
+  remain host responsibilities.
 - `test/browser_search_history_selection_test.dart` adds source-derived cases
   for history-selection effect order, active Basic/Advanced text replacement,
   LF/CR behavior, restored filters, and empty-filter fallback on missing IDs.

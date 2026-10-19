@@ -16,13 +16,15 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Behavioral reference: `selectSearchHistoryEntry`, `onSearchTextChanged`,
- * `syncState`, and `resetSearchState` in CardBrowserSearchViewModel.kt, plus
- * `SearchFilters.from`, AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
+ * Behavioral reference: `selectSearchHistoryEntry`, `submitCurrentSearch`,
+ * `onSearchTextChanged`, `syncState`, and `resetSearchState` in
+ * CardBrowserSearchViewModel.kt, plus `SearchFilters.from` and
+ * `SearchRequest.toHistoryEntry`, AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 import 'browser_filter_update.dart';
 import 'browser_search_history.dart';
+import 'browser_search_history_display.dart';
 import 'browser_search_request.dart';
 import 'browser_search_text_state.dart';
 
@@ -46,6 +48,18 @@ final class BrowserSearchSubmittedEffect extends BrowserSearchStateEffect {
   const BrowserSearchSubmittedEffect(this.search);
 
   final BrowserSearchRequest search;
+}
+
+/// Publishes the source `SearchHistoryItems.Loading` history value.
+final class BrowserSearchHistoryLoadingEffect extends BrowserSearchStateEffect {
+  const BrowserSearchHistoryLoadingEffect(this.history);
+
+  final BrowserSearchHistoryLoading history;
+}
+
+/// Emits the source close-search-view event without setting screen-open state.
+final class BrowserCloseSearchViewEventEffect extends BrowserSearchStateEffect {
+  const BrowserCloseSearchViewEventEffect();
 }
 
 /// Sets Basic/Advanced mode; reset sets [enabled] to false.
@@ -141,6 +155,29 @@ List<BrowserSearchStateEffect> browserSyncStateEffects(
       ),
       BrowserSearchSubmittedEffect(search),
     ]);
+
+/// Projects `submitCurrentSearch(searchToSubmit)` in source order.
+///
+/// The request is converted to an ID-based history entry and passed through
+/// [BrowserSearchHistoryModel.addRecent]. The resulting entries are published
+/// as Loading before the close-view event and the exact submitted request.
+/// Blank unfiltered requests follow `addRecent`'s no-op behavior but still
+/// publish the existing history. The host persists history and delivers the
+/// events; this overload does not set screen-open state or execute the search.
+List<BrowserSearchStateEffect> browserSubmitCurrentSearchEffects(
+  BrowserSearchRequest searchToSubmit, {
+  required BrowserSearchHistoryModel history,
+}) {
+  final updatedEntries = history.addRecent(searchToSubmit.toHistoryEntry());
+
+  return List.unmodifiable([
+    BrowserSearchHistoryLoadingEffect(
+      BrowserSearchHistoryLoading(updatedEntries),
+    ),
+    const BrowserCloseSearchViewEventEffect(),
+    BrowserSearchSubmittedEffect(searchToSubmit),
+  ]);
+}
 
 /// Projects `resetSearchState` calls in their source order.
 ///

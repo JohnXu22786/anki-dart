@@ -64,6 +64,11 @@ sequences, and saved-search outcome-message mapping.
   saved-search UI remain outside. `browserSavedSearchUserMessageForMutation`
   maps add/delete outcomes to the exact four source message identifiers; the
   host owns localization and message-flow delivery.
+  `browserSearchHistoryIsAvailable` checks the supplied history's
+  `entryToSearchString` projection (including Loading pairs with null strings),
+  and `browserCanManageSavedSearches` checks whether the supplied saved-search
+  list is nonempty. The host owns StateFlow updates and availability-dependent
+  widgets.
 - Card Browser search text: `BrowserSearchTextState` keeps independent Basic and
   Advanced buffers. Mode toggles preserve both, advanced appends follow the
   source's Kotlin-blank and exact trailing-space checks, text edits replace LF
@@ -261,7 +266,8 @@ collection-backed deck/note-type lookup, backend query-string generation and
 backend SearchNode conversion, query parsing/validation, final SearchString
 serialization, search execution, search-string conversion,
 Android execution of Card Browser sync/reset effects, SavedStateHandle/StateFlow
-integration for mode and text buffers, Basic/Advanced text widgets, history-list
+integration for mode, text buffers, and history/saved-search availability,
+Basic/Advanced text widgets, history-list
 and toggle widgets,
 AGPL-incorporated column defaults,
 backend column registry and rows, column-selection drag/drop and active backend

@@ -157,6 +157,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   expansion state, and toggle threshold are adapted in
   `lib/src/browser_search_history_display.dart`; SavedStateHandle, StateFlow,
   search-string conversion, and Android widgets remain outside.
+  The history and saved-search availability projections from
+  `searchHistoryAvailableFlow` and `canManageSavedSearchesFlow` are adapted in
+  `lib/src/browser_availability.dart`; the host supplies the current values and
+  owns flow updates and widgets.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt`,
   `SearchFilters.kt`, and `SearchRequest.kt` declare `GPL-3.0-or-later`. Their
   structured history/request transformations are adapted in
@@ -260,6 +264,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `CardBrowserSearchViewModelTest.kt` cases for successful/duplicate add and
   successful/missing delete. It checks source message identifiers only; it does
   not test localization, Android message-flow delivery, or UI rendering.
+- `test/browser_availability_test.dart` adapts the direct empty-history and
+  saved-search false/true/false availability cases from
+  `CardBrowserSearchViewModelTest.kt`, with added Loading/Loaded list-shape
+  checks. Android flow scheduling and widgets remain outside.
 - `test/review_presentation_test.dart` checks the count and answer-label
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the

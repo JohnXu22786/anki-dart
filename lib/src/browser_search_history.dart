@@ -23,8 +23,9 @@
 /// One Card Browser search and its selected filters.
 ///
 /// The host supplies stable IDs/codes for filters. JSON conversion lives in
-/// `browser_search_history_json.dart`; collection-backed query reconstruction
-/// remains outside this headless history model.
+/// `browser_search_history_json.dart`; structured request restoration is in
+/// `browser_search_request.dart`. Collection lookup and backend query
+/// generation remain outside these headless history models.
 final class BrowserSearchHistoryEntry {
   const BrowserSearchHistoryEntry({
     required this.query,

@@ -24,6 +24,7 @@ export 'src/auto_advance.dart';
 export 'src/browser_column_collection.dart';
 export 'src/browser_search_history.dart';
 export 'src/browser_saved_searches.dart';
+export 'src/browser_search_request.dart';
 export 'src/browser_search_history_display.dart';
 export 'src/browser_search_history_json.dart';
 export 'src/browser_sort_type.dart';

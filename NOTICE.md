@@ -136,6 +136,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   expansion state, and toggle threshold are adapted in
   `lib/src/browser_search_history_display.dart`; SavedStateHandle, StateFlow,
   search-string conversion, and Android widgets remain outside.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt`,
+  `SearchFilters.kt`, and `SearchRequest.kt` declare `GPL-3.0-or-later`. Their
+  structured history/request transformations are adapted in
+  `lib/src/browser_search_request.dart`. The host supplies deck and note-type
+  name/ID values; only those mapping fields are represented from `Decks.kt` and
+  `Notetypes.kt`. `Decks.kt` is Copyright © 2025 David Allison; `Notetypes.kt`
+  credits Daniel Svärd, Rick Gruber-Riemer, Norbert Nagold, Kostas Spyropoulos,
+  and David Allison. Both files also identify separately incorporated AGPL
+  material; none of that backend implementation is copied here. Collection
+  access, backend query generation, and execution are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SavedSearches.kt`
   declares `GPL-3.0-or-later`. Its named saved-search value behavior,
   case-sensitive ordering and lookup, duplicate rejection, query normalization,
@@ -174,6 +184,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   recent-history presentation, five-entry truncation/toggle behavior, and
   Loading/Loaded shape handling from `CardBrowserSearchViewModelTest.kt`; it
   does not test Android flows, search-string conversion, or widgets.
+- `test/browser_search_restore_test.dart` adapts request/history conversion cases
+  from `SearchHistoryTest.kt`, including first-match ID mapping, duplicate and
+  order preservation, Kotlin query trimming, and missing-ID failure; it does not
+  test collection lookup or backend query generation.
 - `test/browser_saved_searches_test.dart` adapts name ordering and lookup,
   duplicate handling, query normalization, remove/clear, and map conversion
   behavior from `SavedSearchesTest.kt`; it does not test collection config IO,

@@ -19,7 +19,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   immediate child aggregates as used by `DeckPickerViewModel.kt`.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
   is marked `GPL-3.0-or-later` in its upstream header. Its reviewer action and
-  queue lifecycle, including the current-card mutation readiness barrier, is
+  queue lifecycle, including the current-card mutation readiness barrier and
+  the last-published StudyCounts snapshot across timebox/loading/completion, is
   adapted by `lib/src/review_session.dart`; the upstream file does not state an
   individual copyright holder.
 - `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` is Copyright
@@ -35,7 +36,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `StudyCountsView.kt`, and `AnswerButtonsNextTime.kt` are marked
   `GPL-3.0-or-later` in the upstream source. Their count strings, active-queue
   condition, and four backend label assignments are adapted by
-  `lib/src/review_presentation.dart`; the Android view widgets are not included.
+  `lib/src/review_presentation.dart`. The source's default count/active-queue
+  values and last-published snapshot behavior are modeled in
+  `lib/src/review_session.dart`; the Android view widgets are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimer.kt`
   and `AnswerTimerState.kt` are marked `GPL-3.0-or-later` upstream. Their
   hidden/running/paused/stopped state machine is adapted in
@@ -260,7 +263,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `DeckNodeTest.kt`, Copyright © 2025 Shridhar Goel.
 - `test/review_session_test.dart` checks the reviewer flow recorded in
   `ReviewerViewModel.kt`, `Scheduler.kt`, and `Collection.kt`; it is not a port
-  of the Android test harness.
+  of the Android test harness. The added count-snapshot retention cases are
+  source-derived because the pinned tests do not directly cover timebox
+  count-flow retention.
 - `test/review_timebox_test.dart` checks the strict threshold, zero disablement,
   result payload, answer delta, restart reads, negative-limit behavior, and
   rounded-minute conversion from `Collection.kt` and `ReviewerFragment.kt`;

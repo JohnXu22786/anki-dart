@@ -114,7 +114,12 @@ question-side type-answer placeholder removal.
   before grading, and pauses for a scheduler timebox event
   before showing the queued card. The previously displayed side remains visible
   during the timebox and while a queue read loads or retries. A failed queue
-  read can be retried without sending the completed card's rating again.
+  read can be retried without sending the completed card's rating again. Its
+  separate displayed queue-count snapshot starts at AnkiDroid's 0/0/0, NEW
+  defaults and updates only for normal queue states; it stays unchanged during
+  timebox, loading, and queue completion, as the source count flow does not emit
+  new values there. Count-retention tests are source-derived because the pinned
+  suite has no direct timebox count-retention case.
 - Timebox counter: adapter callbacks supply integer clock seconds, the configured
   limit, and recorded-answer count. `ReviewTimeboxTracker` preserves the source's
   zero-only disable check, strict elapsed-time comparison, configured-limit

@@ -27,6 +27,18 @@ import 'package:test/test.dart';
 
 void main() {
   group('ReviewSession', () {
+    test('starts with StudyCounts default values', () {
+      final session = ReviewSession<Object>(_FakeReviewScheduler([]));
+
+      expect(session.displayedQueuePresentation.counts.newCount, 0);
+      expect(session.displayedQueuePresentation.counts.learnCount, 0);
+      expect(session.displayedQueuePresentation.counts.reviewCount, 0);
+      expect(
+        session.displayedQueuePresentation.activeQueue,
+        ReviewQueueKind.newCards,
+      );
+    });
+
     test('starts on the question and reveals the answer once', () async {
       final queue = _queueState(1, 'question 1', 'answer 1');
       final scheduler = _FakeReviewScheduler([queue]);
@@ -116,6 +128,139 @@ void main() {
 
       expect(session.phase, ReviewSessionPhase.question);
       expect(session.visibleContent, 'question 2');
+    });
+
+    test('retains the published counts through a timebox until normal reload',
+        () async {
+      final first = _queueState(
+        1,
+        'question 1',
+        'answer 1',
+        counts: const ReviewQueueCounts(
+          newCount: 3,
+          learnCount: 4,
+          reviewCount: 5,
+        ),
+        activeQueue: ReviewQueueKind.learning,
+      );
+      final queued = _queueState(
+        2,
+        'question 2',
+        'answer 2',
+        counts: const ReviewQueueCounts(
+          newCount: 90,
+          learnCount: 80,
+          reviewCount: 70,
+        ),
+        activeQueue: ReviewQueueKind.review,
+      );
+      final timeboxed = ReviewQueueState<Object>(
+        card: queued.card,
+        schedulingSnapshot: queued.schedulingSnapshot,
+        counts: queued.counts,
+        activeQueue: queued.activeQueue,
+        timeboxReached: const ReviewTimeboxReached(secs: 60, reps: 3),
+      );
+      final resumed = _queueState(
+        2,
+        'question 2',
+        'answer 2',
+        counts: const ReviewQueueCounts(
+          newCount: 2,
+          learnCount: 1,
+          reviewCount: 0,
+        ),
+        activeQueue: ReviewQueueKind.review,
+      );
+      final scheduler = _FakeReviewScheduler([first, resumed])
+        ..queueReadSequence = [first, timeboxed, resumed];
+      final session = ReviewSession<Object>(scheduler);
+      await session.start();
+      final published = session.displayedQueuePresentation;
+
+      expect(published.counts.newCount, 3);
+      expect(published.counts.learnCount, 4);
+      expect(published.counts.reviewCount, 5);
+      expect(published.activeQueue, ReviewQueueKind.learning);
+
+      await session.answerCard(ReviewRating.good);
+
+      expect(session.phase, ReviewSessionPhase.timeboxReached);
+      expect(session.current, isNull);
+      expect(session.displayedQueuePresentation, same(published));
+      expect(scheduler.answers, hasLength(1));
+      await session.answerCard(ReviewRating.again);
+      expect(scheduler.answers, hasLength(1));
+
+      await session.continueAfterTimebox();
+
+      expect(session.current, same(resumed));
+      expect(session.displayedQueuePresentation.counts.newCount, 2);
+      expect(session.displayedQueuePresentation.counts.learnCount, 1);
+      expect(session.displayedQueuePresentation.counts.reviewCount, 0);
+      expect(
+        session.displayedQueuePresentation.activeQueue,
+        ReviewQueueKind.review,
+      );
+    });
+
+    test('keeps displayed counts during queue loading and on completion',
+        () async {
+      final first = _queueState(
+        1,
+        'question 1',
+        'answer 1',
+        counts: const ReviewQueueCounts(
+          newCount: 4,
+          learnCount: 5,
+          reviewCount: 6,
+        ),
+        activeQueue: ReviewQueueKind.review,
+      );
+      final second = _queueState(
+        2,
+        'question 2',
+        'answer 2',
+        counts: const ReviewQueueCounts(
+          newCount: 1,
+          learnCount: 2,
+          reviewCount: 3,
+        ),
+        activeQueue: ReviewQueueKind.learning,
+      );
+      final scheduler = _FakeReviewScheduler([first, second]);
+      final session = ReviewSession<Object>(scheduler);
+      await session.start();
+      final firstPresentation = session.displayedQueuePresentation;
+      await session.showAnswer();
+      scheduler.failNextQueueRead = true;
+
+      await expectLater(
+        session.answerCard(ReviewRating.good),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(session.phase, ReviewSessionPhase.loading);
+      expect(session.current, isNull);
+      expect(session.displayedQueuePresentation, same(firstPresentation));
+
+      await session.retryCurrentQueueState();
+
+      expect(session.current, same(second));
+      expect(session.displayedQueuePresentation.counts.newCount, 1);
+      expect(session.displayedQueuePresentation.counts.learnCount, 2);
+      expect(session.displayedQueuePresentation.counts.reviewCount, 3);
+      expect(
+        session.displayedQueuePresentation.activeQueue,
+        ReviewQueueKind.learning,
+      );
+      final secondPresentation = session.displayedQueuePresentation;
+      await session.showAnswer();
+      await session.answerCard(ReviewRating.easy);
+
+      expect(session.phase, ReviewSessionPhase.finished);
+      expect(session.current, isNull);
+      expect(session.displayedQueuePresentation, same(secondPresentation));
     });
 
     test(
@@ -299,8 +444,13 @@ void main() {
   });
 }
 
-ReviewQueueState<Object> _queueState(
-        int cardId, String question, String answer) =>
+ReviewQueueState<Object> _queueState(int cardId, String question, String answer,
+        {ReviewQueueCounts counts = const ReviewQueueCounts(
+          newCount: 10,
+          learnCount: 5,
+          reviewCount: 20,
+        ),
+        ReviewQueueKind activeQueue = ReviewQueueKind.newCards}) =>
     ReviewQueueState<Object>(
       card: ReviewCard(
         id: cardId,
@@ -308,9 +458,8 @@ ReviewQueueState<Object> _queueState(
         answerHtml: answer,
       ),
       schedulingSnapshot: Object(),
-      counts:
-          const ReviewQueueCounts(newCount: 10, learnCount: 5, reviewCount: 20),
-      activeQueue: ReviewQueueKind.newCards,
+      counts: counts,
+      activeQueue: activeQueue,
     );
 
 class _FakeReviewScheduler implements ReviewScheduler<Object> {

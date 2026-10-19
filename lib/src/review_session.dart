@@ -70,6 +70,25 @@ class ReviewQueueCounts {
   final int reviewCount;
 }
 
+/// The last queue counts published for the reviewer presentation.
+///
+/// AnkiDroid leaves its previous `StudyCounts` value in place when the
+/// scheduler reports a timebox or the queue finishes. The default matches the
+/// source's initial `StudyCounts()` value.
+class ReviewQueuePresentation {
+  const ReviewQueuePresentation({
+    this.counts = const ReviewQueueCounts(
+      newCount: 0,
+      learnCount: 0,
+      reviewCount: 0,
+    ),
+    this.activeQueue = ReviewQueueKind.newCards,
+  });
+
+  final ReviewQueueCounts counts;
+  final ReviewQueueKind activeQueue;
+}
+
 /// A card selected by the scheduler, paired with its opaque scheduling snapshot.
 ///
 /// The snapshot is produced by the compatible Anki backend and is passed back
@@ -140,6 +159,8 @@ class ReviewSession<TSchedulingSnapshot> {
   Future<void> _actionTail = Future<void>.value();
   ReviewSessionPhase _phase = ReviewSessionPhase.idle;
   ReviewQueueState<TSchedulingSnapshot>? _current;
+  ReviewQueuePresentation _displayedQueuePresentation =
+      const ReviewQueuePresentation();
   ReviewTimeboxReached? _timeboxReached;
   ReviewCard? _lastDisplayedCard;
   ReviewSessionPhase? _lastDisplayedSide;
@@ -147,6 +168,14 @@ class ReviewSession<TSchedulingSnapshot> {
   ReviewSessionPhase get phase => _phase;
 
   ReviewQueueState<TSchedulingSnapshot>? get current => _current;
+
+  /// The most recent counts and active queue emitted for a normal queue state.
+  ///
+  /// This remains unchanged during queue loading, a timebox pause, and queue
+  /// completion because AnkiDroid does not emit a replacement `StudyCounts`
+  /// value in those states.
+  ReviewQueuePresentation get displayedQueuePresentation =>
+      _displayedQueuePresentation;
 
   ReviewTimeboxReached? get timeboxReached => _timeboxReached;
 
@@ -236,6 +265,10 @@ class ReviewSession<TSchedulingSnapshot> {
       _lastDisplayedSide = ReviewSessionPhase.question;
       _timeboxReached = null;
       _phase = ReviewSessionPhase.question;
+      _displayedQueuePresentation = ReviewQueuePresentation(
+        counts: next.counts,
+        activeQueue: next.activeQueue,
+      );
     }
   }
 

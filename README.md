@@ -6,12 +6,13 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes eleven source-mapped slices: deck-picker behavior, the
+The current port includes twelve source-mapped slices: deck-picker behavior, the
 headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
-navigation, the Card Browser active-column collection model, the answer-timer
-state machine, reviewer Auto Advance, the headless reviewer gesture parser,
-parsed-gesture command routing, and the reviewer binding codec/map.
+navigation, Card Browser active-column and sort preference models, the
+answer-timer state machine, reviewer Auto Advance, the headless reviewer
+gesture parser, parsed-gesture command routing, and the reviewer binding
+codec/map.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -27,6 +28,12 @@ parsed-gesture command routing, and the reviewer binding codec/map.
   until the next load, matching the source method behavior. The host supplies
   mode-specific default keys and persists the returned value; SharedPreferences
   and backend/UI integration stay outside.
+- Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
+  mode-specific config values, checks the key against host-supplied backend
+  columns, and returns the source sort type. It defaults missing or
+  wrong-typed values to `noteFld` and forward order, treats an unknown column as no ordering, and
+  creates ordered save plans without touching Android or collection storage.
+  The shared no-sorting flag retains the source's cross-mode behavior.
 - Review session: a headless flow that loads the scheduler's current card, shows
   its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
   the next queue item. It waits for the current card's state-mutation hook
@@ -114,6 +121,13 @@ side. It does not access card IDs, collection storage, or the WebView.
 from its caller; the host resolves Cards/Notes mode and persists its returned
 value. The adapter also supplies the mode defaults, so the port does not copy
 `BrowserConfig.kt`'s AGPL-incorporated constant definitions.
+`resolveBrowserSortType` and `buildBrowserSortSavePlan` consume the shared
+no-sorting flag and the active mode's config keys/values from the host. They
+also consume the backend's available column keys. The save plan writes the
+mode-specific column and reverse keys in source order before clearing the
+global no-sorting flag; actual preference/config writes and backend sorting
+remain host responsibilities. This keeps `BrowserConfig.kt` key lookup and
+its AGPL-incorporated constants outside the Dart port.
 `ReviewNextStateDescriber`
 forwards the opaque scheduling state to the pinned backend's
 `describeNextStates()` API. The session exposes the timebox's elapsed-time limit
@@ -126,7 +140,8 @@ callbacks; it does not load settings or collection state. This is not yet a
 complete AnkiDroid replacement: Android screens and platform lifecycle integration,
 Card Browser SharedPreferences and mode lookup, AGPL-incorporated column defaults,
 backend column registry and rows, column-selection drag/drop and active backend
-updates, Card Browser sort behavior,
+updates, Card Browser sort UI, Android preference/synced-config IO, and actual
+backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, previewer flags/marks/note editing, answer-timer widget/tick rendering, Auto Advance settings controls and
 Android preference lookup, Android `KeyEvent` handling and `possibleKeyBindings`,
@@ -142,6 +157,8 @@ full feature parity.
 
 The port preserves the source behavior for the covered slices, including search
 and collapse quirks, ordered Card Browser columns and load-time de-duplication,
+  sort config defaults (including wrong-typed values), per-mode column values,
+  and the global no-sorting quirk,
 reviewer action ordering, question/answer transitions, the scheduler timebox
 gate, active-count selection, and direct display of backend answer labels. The
 answer timer also keeps the source's upper-only elapsed-time

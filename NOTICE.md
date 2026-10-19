@@ -108,6 +108,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   supplies mode-specific defaults from `BrowserConfig.kt`; its constants
   incorporating upstream AGPL code are not copied, and SharedPreferences,
   backend column values and browser UI remain outside.
+- `AnkiDroid/src/main/java/com/ichi2/anki/model/SortType.kt`,
+  `libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, and typed config
+  decoding in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` declare
+  `GPL-3.0-or-later`. Sort-type resolution and ordered save plans are adapted in
+  `lib/src/browser_sort_type.dart`; the model receives the active mode's config
+  keys, values, and backend column keys from its host. It preserves the shared
+  defaults missing or incorrectly typed config values to the source defaults
+  and preserves the shared no-sorting flag behavior, including its effect
+  across both modes. It does not
+  access Android preferences, collection config, or perform backend sorting.
+  `BrowserConfig.kt` constants and lookup code are not copied.
 - Behavioral cases in `test/deck_filters_test.dart` are adapted from
   `DeckFiltersTest.kt`, Copyright © 2026 Arthur Milchior.
 - Behavioral cases in `test/deck_list_test.dart` are adapted from
@@ -126,6 +137,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`; it does not port SharedPreferences,
   backend column setup, or the Android test harness.
+- `test/browser_sort_type_test.dart` adapts the sort resolution and save cases in
+  `SortTypeTest.kt`, plus typed config fallback behavior from `Config.kt`,
+  including the source's global no-sorting behavior; it does not port
+  preference/config storage or the Android test harness.
 - `test/review_presentation_test.dart` checks the count and answer-label
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the

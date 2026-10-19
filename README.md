@@ -9,9 +9,10 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 The current port includes selected source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
-navigation, Card Browser active-column and sort preference models, recent-search
-ordering, JSON serialization, display state, saved-history request restoration,
-structured search-node planning, the answer-timer state machine,
+navigation and flag decision/effect models, Card Browser active-column and sort
+preference models, recent-search ordering, JSON serialization, display state,
+saved-history request restoration, structured search-node planning, the
+answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
 command routing, reviewer binding codec/map and default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
@@ -123,6 +124,12 @@ outcome-message mapping.
   enablement formulas, next/previous transitions, back-side-only mode, and
   one-based slider selection. It returns a show-side or load-card intent for the
   host to carry out; card lookup, rendering, and media playback remain outside.
+- Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and the
+  set/toggle projections return a one-card collection-write intent followed by
+  publication of the same flag only if the host write succeeds. Current-card
+  lookup, the undoable collection operation, asynchronous failure handling and
+  StateFlow publication remain with the host. This enum is separate from the
+  Card Browser backend search flag values.
 - Reviewer presentation: a study-count model that renders the three scheduler
   counts as decimal strings and retains which queue is active, plus an answer
   next-time model that displays the backend's four strings in Again/Hard/Good/
@@ -307,8 +314,10 @@ backend column registry and rows, column-selection drag/drop and active backend
 updates, Card Browser sort UI, Android preference/synced-config IO, and actual
 backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
-WebView rendering and media, previewer flags/marks/note editing, answer-timer widget/tick rendering, Auto Advance settings controls and
-Android preference lookup, `KeyEvent` extraction and hardware/layout
+WebView rendering and media, previewer collection flag mutation and StateFlow
+publication (flag codes and ordered write/publish intent are modeled),
+marks/note editing, answer-timer widget/tick rendering, Auto Advance settings
+controls and Android preference lookup, `KeyEvent` extraction and hardware/layout
 `getUnicodeChar()` calculation, binding display strings, Android
 `MotionEvent` extraction and device handling (host-projected axis-button
 debounce and dispatch are modeled), host `KEYCODE_*` resolution and preference-

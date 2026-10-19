@@ -119,8 +119,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt` and
   `CardViewerViewModel.kt` declare `GPL-3.0-or-later`. Previewer navigation
   formulas and side/card transitions are adapted in
-  `lib/src/previewer_navigation.dart`; SavedStateHandle and card lookup remain
-  outside.
+  `lib/src/previewer_navigation.dart`. Its flag codes and set/toggle choice with
+  ordered write-then-publish-on-success effects are adapted in
+  `lib/src/previewer_flag_effects.dart`; collection/undo execution, current-card
+  lookup and StateFlow publication remain outside.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
   and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
   load-time fallback/de-duplication, nullable updates and replacement are
@@ -248,6 +250,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/previewer_navigation_test.dart` adapts the navigation cases in
   `PreviewerViewModelTest.kt`; it does not port the Android test harness,
   collection, or card-rendering setup.
+- `test/previewer_flag_effects_test.dart` adapts the Previewer flag toggle case
+  and adds source-derived checks for all flag codes, toggle decisions, and
+  write/publish ordering. The pinned test covers RED set/toggle only; no direct
+  test covers every code or failed collection writes.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it

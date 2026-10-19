@@ -70,7 +70,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   quirks are represented as typed values; axis IDs, Java float parsing, and
   source-style Float serialization are retained. Android preference lookup,
   `KeyEvent` handling, `possibleKeyBindings`, MotionEvent axis handling, display
-  strings, and `BindingMap` are not included.
+  strings, `BindingProcessor`, and command execution are not included. The
+  headless key/gesture registration and lookup behavior from
+  `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/BindingMap.kt` is adapted in
+  `lib/src/reviewer_binding_map.dart`; axis registrations are retained without
+  MotionEvent matching.
 - `compat/src/main/java/com/ichi2/anki/compat/BaseCompat.kt` is Copyright
   © 2017 Profpatsch <mail@profpatsch.de>. Its fallback gesture-axis IDs are
   referenced by the codec's syntax check; the compatibility layer itself is
@@ -115,6 +119,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   omission, and router-adapter filtering recorded in `BindingTest.kt`,
   `MappableBindingTest.kt`, and applicable `BindingAndroidTest.kt` cases; they
   are not ports of the Android test harness.
+- `test/reviewer_binding_map_test.dart` checks ordered duplicate registration,
+  side-independent lookup with the original side retained, separate axis
+  registrations, and skipping unknown bindings, based on `BindingMap.kt` and
+  `BindingMapTest.kt`; Android event handling and processor execution are not
+  included.
 - Dart adaptations, the review-session controller, timer, Auto Advance and
   gesture models, and new test code are Copyright © 2026 John Tsui.
 
@@ -137,6 +146,6 @@ and the full license text in `COPYING` and `LICENSES/GPL-3.0-or-later.txt`.
 The tests were written against the behavior documented and exercised by
 AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, reviewer flow,
 `AnswerTimerTest.kt`, `GestureParserTest.kt`, `GestureProcessorTest.kt`,
-`BindingTest.kt`, `MappableBindingTest.kt`, and applicable
-`BindingAndroidTest.kt` cases.
+`BindingTest.kt`, `MappableBindingTest.kt`, `BindingMap.kt`,
+`BindingMapTest.kt`, and applicable `BindingAndroidTest.kt` cases.
 They are not a port of the Android test harness.

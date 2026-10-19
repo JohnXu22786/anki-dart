@@ -25,5 +25,6 @@ export 'src/answer_timer.dart';
 export 'src/gesture_parser.dart';
 export 'src/gesture_command_router.dart';
 export 'src/reviewer_binding_codec.dart';
+export 'src/reviewer_binding_map.dart';
 export 'src/review_presentation.dart';
 export 'src/review_session.dart';

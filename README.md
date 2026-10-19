@@ -71,6 +71,15 @@ preference encoding/decoding.
   rounded and written using the source's `Float.toString` style, and extra axis
   tokens are ignored like the source parser. Android key events and MotionEvent
   handling are unported.
+- Reviewer binding map: `ReviewerBindingMap` consumes explicit typed bindings
+  by command, without loading preferences or adding default bindings. It keeps
+  every key and gesture registration in action order and per-command list
+  order, ignores side when matching while retaining the original side in each
+  result, skips unknown bindings, and lists axis registrations separately.
+  This differs from `GestureCommandRouter`, whose source-mapped behavior lets
+  the later command overwrite a duplicate gesture. `ReviewerBindingMap` only
+  returns registrations; the existing router API and optional executor remain
+  unchanged.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
 a `ReviewScheduler` adapter that supplies queue items, backend counts and active
@@ -91,8 +100,9 @@ are still external and are not implemented here. This is not yet a complete
 AnkiDroid replacement: Android screens and platform lifecycle integration,
 answer-timer widget/tick rendering, Auto Advance settings controls and
 Android preference lookup, Android `KeyEvent` handling and `possibleKeyBindings`,
-binding display strings, MotionEvent axis interpretation, `BindingMap`, touch
-input and reviewer command handlers, study-count and answer-button widgets/layout,
+binding display strings, MotionEvent axis interpretation, `BindingProcessor`
+callbacks, command execution, touch input and reviewer command handlers,
+study-count and answer-button widgets/layout,
 next-time visibility preference wiring, template rendering and media, timebox
 presentation, leech handling, reviewer undo/redo, the JavaScript custom-state
 and gesture bridges, WebView state collection, Android timeout lookup, sync,

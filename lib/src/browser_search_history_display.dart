@@ -42,14 +42,23 @@ sealed class BrowserSearchHistoryItems {
 
 /// History entries whose corresponding display search strings are not loaded.
 final class BrowserSearchHistoryLoading extends BrowserSearchHistoryItems {
-  const BrowserSearchHistoryLoading(this.input);
+  /// Captures the entry-to-null pairs at construction, as the source data class.
+  BrowserSearchHistoryLoading(this.input)
+      : entryToSearchString = [
+          for (final entry in input) (entry: entry, searchString: null),
+        ];
 
   final List<BrowserSearchHistoryEntry> input;
 
   @override
-  List<BrowserSearchHistoryDisplayEntry> get entryToSearchString => [
-        for (final entry in input) (entry: entry, searchString: null),
-      ];
+  final List<BrowserSearchHistoryDisplayEntry> entryToSearchString;
+
+  @override
+  bool operator ==(Object other) =>
+      other is BrowserSearchHistoryLoading && _listEquals(other.input, input);
+
+  @override
+  int get hashCode => Object.hashAll(input);
 
   @override
   BrowserSearchHistoryLoading truncated(int max) =>
@@ -62,6 +71,14 @@ final class BrowserSearchHistoryLoaded extends BrowserSearchHistoryItems {
 
   @override
   final List<BrowserSearchHistoryDisplayEntry> entryToSearchString;
+
+  @override
+  bool operator ==(Object other) =>
+      other is BrowserSearchHistoryLoaded &&
+      _listEquals(other.entryToSearchString, entryToSearchString);
+
+  @override
+  int get hashCode => Object.hashAll(entryToSearchString);
 
   @override
   BrowserSearchHistoryLoaded truncated(int max) =>
@@ -102,4 +119,13 @@ final class BrowserSearchHistoryDisplayModel {
         showHistoryToggle:
             items.entryToSearchString.length > maxCollapsedEntries,
       );
+}
+
+bool _listEquals<T>(List<T> left, List<T> right) {
+  if (identical(left, right)) return true;
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }

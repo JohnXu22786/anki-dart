@@ -147,6 +147,46 @@ void main() {
       expect(scheduler.answers.map((call) => call.state), [first, second]);
     });
 
+    test('answers with the queue snapshot read after the mutation hook',
+        () async {
+      final selected = _queueState(1, 'question 1', 'answer 1');
+      final updated = ReviewQueueState<Object>(
+        card: selected.card,
+        schedulingSnapshot: Object(),
+        counts: selected.counts,
+        activeQueue: selected.activeQueue,
+      );
+      final scheduler = _FakeReviewScheduler([selected])
+        ..stateAfterMutation = () => updated;
+      final session = ReviewSession<Object>(scheduler);
+      await session.start();
+
+      final mutation = scheduler.blockNextMutation();
+      final answer = session.answerCard(ReviewRating.good);
+      await mutation.started.future;
+      expect(scheduler.answers, isEmpty);
+
+      mutation.release.complete();
+      await answer;
+
+      expect(scheduler.answers.single.state, same(updated));
+    });
+
+    test('does not grade when the post-mutation queue state is absent',
+        () async {
+      final selected = _queueState(1, 'question 1', 'answer 1');
+      final scheduler = _FakeReviewScheduler([selected])
+        ..stateAfterMutation = () => null;
+      final session = ReviewSession<Object>(scheduler);
+      await session.start();
+
+      await session.answerCard(ReviewRating.good);
+
+      expect(scheduler.answers, isEmpty);
+      expect(session.current, same(selected));
+      expect(session.phase, ReviewSessionPhase.question);
+    });
+
     test('forwards rating and queue state then loads the next question',
         () async {
       final first = _queueState(1, 'question 1', 'answer 1');
@@ -287,6 +327,7 @@ class _FakeReviewScheduler implements ReviewScheduler<Object> {
   final firstAnswerStarted = Completer<void>();
   List<ReviewQueueState<Object>?>? queueReadSequence;
   int _queueReadSequenceIndex = 0;
+  ReviewQueueState<Object>? Function()? stateAfterMutation;
 
   @override
   Future<ReviewQueueState<Object>?> currentQueueState() async {
@@ -328,11 +369,15 @@ class _FakeReviewScheduler implements ReviewScheduler<Object> {
   }
 
   @override
-  Future<void> waitForCurrentCardStateMutation() async {
-    if (_mutationGates.isEmpty) return;
-    final gate = _mutationGates.removeAt(0);
-    gate.started.complete();
-    await gate.release.future;
+  Future<ReviewQueueState<Object>?> waitForCurrentCardStateMutation() async {
+    if (_mutationGates.isNotEmpty) {
+      final gate = _mutationGates.removeAt(0);
+      gate.started.complete();
+      await gate.release.future;
+    }
+    final getStateAfterMutation = stateAfterMutation;
+    if (getStateAfterMutation != null) return getStateAfterMutation();
+    return _index < _queue.length ? _queue[_index] : null;
   }
 }
 

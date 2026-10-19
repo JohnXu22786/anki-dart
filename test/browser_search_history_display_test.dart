@@ -92,6 +92,41 @@ void main() {
       );
     });
 
+    test('Loading captures entry pairs when it is constructed', () {
+      final entries = _entries(1);
+      final loading = BrowserSearchHistoryLoading(entries);
+      final projection = loading.entryToSearchString;
+
+      entries.add(BrowserSearchHistoryEntry(query: 'later'));
+
+      expect(projection, hasLength(1));
+      expect(loading.entryToSearchString, hasLength(1));
+      expect(loading.entryToSearchString.single.entry.query, 'search 0');
+    });
+
+    test('Loading and Loaded use their source data-class value equality', () {
+      final entry = BrowserSearchHistoryEntry(query: 'same');
+      final loading = BrowserSearchHistoryLoading([entry]);
+      final equalLoading = BrowserSearchHistoryLoading([
+        BrowserSearchHistoryEntry(query: 'same'),
+      ]);
+      final loaded = BrowserSearchHistoryLoaded([
+        (entry: entry, searchString: 's:same'),
+      ]);
+      final equalLoaded = BrowserSearchHistoryLoaded([
+        (
+          entry: BrowserSearchHistoryEntry(query: 'same'),
+          searchString: 's:same',
+        ),
+      ]);
+
+      expect(loading, equalLoading);
+      expect(loading.hashCode, equalLoading.hashCode);
+      expect(loaded, equalLoaded);
+      expect(loaded.hashCode, equalLoaded.hashCode);
+      expect(loading, isNot(loaded));
+    });
+
     test('truncating Loaded preserves nullable converted search strings', () {
       final loaded = BrowserSearchHistoryLoaded([
         for (final entry in _entries(6))

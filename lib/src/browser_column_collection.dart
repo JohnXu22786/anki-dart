@@ -72,7 +72,9 @@ final class BrowserColumnCollection {
   final List<BrowserColumn> columns;
   final int count;
 
-  Iterable<String> get backendKeys => columns.map((column) => column.key);
+  /// A snapshot of the selected keys, matching Kotlin's eager `List.map`.
+  Iterable<String> get backendKeys =>
+      columns.map((column) => column.key).toList();
 
   BrowserColumn operator [](int index) => columns[index];
 

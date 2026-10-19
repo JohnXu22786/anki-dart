@@ -64,7 +64,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   The `ViewerCommand.defaultValue` lists are adapted in
   `lib/src/reviewer_command_defaults.dart`, preserving symbolic key names,
   Unicode values, sides, modifiers, order, and empty entries. The host supplies
-  numeric Android key-code mappings, and preference fallback is not integrated.
+  numeric Android key-code mappings. `ReviewerBindingPreferenceResolver` in
+  `lib/src/reviewer_binding_preference_resolver.dart` uses defaults only when
+  the host supplies a null preference; every configured string replaces them
+  through the codec, including empty and malformed values. Preference lookup
+  remains with the host.
 - `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/AnswerButtons.kt` and
   `AutomaticAnswer.kt` declare `GPL-3.0-or-later`. Their answer-rating to
   `ViewerCommand` mapping, automatic-action config values, unknown-value
@@ -201,8 +205,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `PreviewerViewModelTest.kt`; it does not port the Android test harness,
   collection, or card-rendering setup.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
-  cases in `BrowserColumnCollectionTest.kt`; it does not port SharedPreferences,
-  backend column setup, or the Android test harness.
+  cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
+  and cached count, and adds a source-derived snapshot key-projection check; it
+  does not port SharedPreferences, backend column setup, or the Android harness.
 - `test/browser_sort_type_test.dart` adapts the sort resolution and save cases in
   `SortTypeTest.kt`, plus typed config fallback behavior from `Config.kt`,
   including the source's global no-sorting behavior; it does not port
@@ -214,8 +219,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   collection-backed search query generation.
 - `test/browser_search_history_display_test.dart` adapts collapsed/expanded
   recent-history presentation, five-entry truncation/toggle behavior, and
-  Loading/Loaded shape handling from `CardBrowserSearchViewModelTest.kt`; it
-  does not test Android flows, search-string conversion, or widgets.
+  Loading's construction-time entry/null-pair projection and Loaded shape from
+  `CardBrowserSearchViewModelTest.kt`, with an added source-derived Loading
+  snapshot check; it does not test Android flows, search-string conversion, or
+  widgets.
 - `test/browser_search_restore_test.dart` adapts request/history conversion cases
   from `SearchHistoryTest.kt`, including first-match ID mapping, duplicate and
   order preservation, Kotlin query trimming, and missing-ID failure; it does not
@@ -245,6 +252,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   Unicode and modifier bindings, key-name resolution, duplicate numeric
   values, and the aggregate membership cases from `MappableBindingTest.kt`; it
   is not a port of the Android test harness.
+- `test/reviewer_binding_preference_resolver_test.dart` checks null-only
+  default selection, source-order defaults, configured override behavior,
+  empty/unsupported/malformed values, and the configured path's independence
+  from host key-name resolution.
 - `test/reviewer_binding_codec_test.dart` and
   `test/reviewer_binding_types_test.dart` check serialized binding framing,
   typed key/Unicode parsing, modifiers, UTF-16 behavior, source equality/hash,

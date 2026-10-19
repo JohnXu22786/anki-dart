@@ -29,6 +29,13 @@ final class BrowserDeckNameId {
 
   final String name;
   final int id;
+
+  @override
+  bool operator ==(Object other) =>
+      other is BrowserDeckNameId && other.name == name && other.id == id;
+
+  @override
+  int get hashCode => Object.hash(name, id);
 }
 
 /// A host-supplied note type name and its stable collection ID.
@@ -54,6 +61,24 @@ final class BrowserSearchFilters {
   final List<String> tags;
   final List<BrowserNoteTypeNameId> noteTypes;
   final List<int> cardStateCodes;
+
+  @override
+  bool operator ==(Object other) =>
+      other is BrowserSearchFilters &&
+      _listEquals(other.decks, decks) &&
+      _listEquals(other.flags, flags) &&
+      _listEquals(other.tags, tags) &&
+      _listEquals(other.noteTypes, noteTypes) &&
+      _listEquals(other.cardStateCodes, cardStateCodes);
+
+  @override
+  int get hashCode => Object.hash(
+        Object.hashAll(decks),
+        Object.hashAll(flags),
+        Object.hashAll(tags),
+        Object.hashAll(noteTypes),
+        Object.hashAll(cardStateCodes),
+      );
 
   /// Resolves stored IDs against host-provided mappings.
   ///
@@ -110,6 +135,15 @@ final class BrowserSearchRequest {
   final String query;
   final BrowserSearchFilters filters;
 
+  @override
+  bool operator ==(Object other) =>
+      other is BrowserSearchRequest &&
+      other.query == query &&
+      other.filters == filters;
+
+  @override
+  int get hashCode => Object.hash(query, filters);
+
   /// Restores a request from history using current host-supplied name maps.
   ///
   /// The stored query is carried through unchanged. Query validation and
@@ -139,4 +173,13 @@ final class BrowserSearchRequest {
             .toList(growable: false),
         cardStateCodes: filters.cardStateCodes,
       );
+}
+
+bool _listEquals<T>(List<T> left, List<T> right) {
+  if (identical(left, right)) return true;
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }

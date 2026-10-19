@@ -60,6 +60,47 @@ void main() {
       expect(filters.cardStateCodes, [0, 1, 2, 3, 4]);
     });
 
+    test('search filters and requests use Kotlin data-class value equality',
+        () {
+      final firstDeck = BrowserDeckNameId(name: 'Default', id: 1);
+      final firstNoteType = BrowserNoteTypeNameId(name: 'Basic', id: 3);
+      final firstFilters = BrowserSearchFilters(
+        decks: [firstDeck],
+        flags: [1, 4],
+        tags: ['tag'],
+        noteTypes: [firstNoteType],
+        cardStateCodes: [0, 2],
+      );
+      final equalFilters = BrowserSearchFilters(
+        decks: [BrowserDeckNameId(name: 'Default', id: 1)],
+        flags: [1, 4],
+        tags: ['tag'],
+        // NoteTypeNameID is a regular Kotlin class, so it retains identity.
+        noteTypes: [firstNoteType],
+        cardStateCodes: [0, 2],
+      );
+      final differentNoteType = BrowserSearchFilters(
+        decks: [firstDeck],
+        flags: [1, 4],
+        tags: ['tag'],
+        noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
+        cardStateCodes: [0, 2],
+      );
+
+      expect(firstDeck, BrowserDeckNameId(name: 'Default', id: 1));
+      expect(firstFilters, equalFilters);
+      expect(firstFilters.hashCode, equalFilters.hashCode);
+      expect(firstFilters, isNot(differentNoteType));
+
+      final request = BrowserSearchRequest(query: 'q', filters: firstFilters);
+      final equalRequest = BrowserSearchRequest(
+        query: 'q',
+        filters: equalFilters,
+      );
+      expect(request, equalRequest);
+      expect(request.hashCode, equalRequest.hashCode);
+    });
+
     test('restores the original query with its structured filters', () {
       const entry = BrowserSearchHistoryEntry(
         query: '  query text  ',

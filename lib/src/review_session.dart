@@ -112,11 +112,15 @@ abstract interface class ReviewScheduler<TSchedulingSnapshot> {
   /// A non-null state's [ReviewQueueState.timeboxReached] pauses presentation.
   Future<ReviewQueueState<TSchedulingSnapshot>?> currentQueueState();
 
-  /// Waits for the current card's state-mutation hook, if one is pending.
+  /// Waits for the current card's state-mutation hook, if one is pending, and
+  /// returns the current queue state after that hook completes.
   ///
   /// AnkiDroid waits for this callback before revealing the answer or grading a
-  /// card; an adapter without a pending hook can complete immediately.
-  Future<void> waitForCurrentCardStateMutation();
+  /// card. Grading reads the queue state after the wait because the hook can
+  /// replace its scheduling snapshot. An adapter without a pending hook can
+  /// return its current queue state immediately.
+  Future<ReviewQueueState<TSchedulingSnapshot>?>
+      waitForCurrentCardStateMutation();
 
   /// Applies [rating] to [state] using the backend's scheduling rules.
   Future<void> answerCard(
@@ -207,8 +211,9 @@ class ReviewSession<TSchedulingSnapshot> {
           return;
         }
 
-        await scheduler.waitForCurrentCardStateMutation();
-        await scheduler.answerCard(state, rating);
+        final currentState = await scheduler.waitForCurrentCardStateMutation();
+        if (currentState == null) return;
+        await scheduler.answerCard(currentState, rating);
         _current = null;
         _timeboxReached = null;
         _phase = ReviewSessionPhase.loading;

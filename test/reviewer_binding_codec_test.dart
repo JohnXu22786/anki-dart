@@ -136,6 +136,17 @@ void main() {
       );
     });
 
+    test('hexadecimal floats that round beyond binary32 become infinity', () {
+      final bindings = codec.decode(
+        '1/r◯0 0x1.ffffff8p1272|r◯0 -0x1.ffffff8p1272',
+      );
+
+      expect(
+        bindings.map((binding) => binding.toPreferenceString()),
+        ['r◯0 Infinity2', 'r◯0 -Infinity2'],
+      );
+    });
+
     test('uses ties-to-even decimal digits when formatting Java floats', () {
       final bindings = codec.decode(
         '1/r◯0 -0x1.8f5e8p122|r◯0 0x1.d725aap212',

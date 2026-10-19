@@ -164,5 +164,16 @@ void main() {
       expect(collection.columns, [BrowserColumn.question, BrowserColumn.tags]);
       expect(collection.count, 1);
     });
+
+    test('backend key projection is a snapshot when the source list changes',
+        () {
+      final input = <BrowserColumn>[BrowserColumn.question];
+      final collection = BrowserColumnCollection(input);
+      final keys = collection.backendKeys;
+
+      input.add(BrowserColumn.tags);
+
+      expect(keys, ['question']);
+    });
   });
 }

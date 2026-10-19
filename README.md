@@ -6,16 +6,17 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes twenty-one source-mapped slices: deck-picker behavior,
+The current port includes twenty-two source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation, Card Browser active-column and sort preference models, recent-search
 ordering, JSON serialization, display state, saved-history request restoration,
 structured search-node planning, the answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
-command routing, reviewer binding codec/map and default definitions, and
-headless reviewer keyboard and axis-button dispatch, plus answer-button command
-mapping and AutomaticAnswer action decoding.
+command routing, reviewer binding codec/map and default definitions, headless
+reviewer keyboard and axis-button dispatch, answer-button command mapping and
+AutomaticAnswer action decoding, and reviewer binding preference/default
+resolution.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -30,7 +31,8 @@ mapping and AutomaticAnswer action decoding.
   after removing null entries. Successful updates preserve duplicate entries
   until the next load, matching the source method behavior. The host supplies
   mode-specific default keys and persists the returned value; SharedPreferences
-  and backend/UI integration stay outside.
+  and backend/UI integration stay outside. The constructor keeps the source
+  list alias and cached count, while `backendKeys` returns a mapped snapshot.
 - Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
   mode-specific config values, checks the key against host-supplied backend
   columns, and returns the source sort type. It defaults missing or
@@ -52,15 +54,18 @@ mapping and AutomaticAnswer action decoding.
   `BrowserSearchHistoryDisplayModel` starts collapsed, keeps the first five
   entries visible until expanded, and exposes the toggle only above five items.
   It preserves Loading entries with null search strings and Loaded entry/string
-  pairs; the host supplies converted strings and Android flow/widget integration
-  remains outside. `BrowserSavedSearchesModel` applies exact, case-sensitive
+  pairs, with source data-class equality/hash behavior; Loading captures its
+  null pairs at construction. The host supplies
+  converted strings and Android flow/widget integration remains outside.
+  `BrowserSavedSearchesModel` applies exact, case-sensitive
   lookup and duplicate handling, Kotlin-compatible query trimming, and map/list
   conversion over a host-supplied config map; collection config IO and the
   saved-search UI remain outside.
 - Review session: a headless flow that loads the scheduler's current card, shows
   its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
   the next queue item. It waits for the current card's state-mutation hook
-  before revealing or grading it, and pauses for a scheduler timebox event
+  before revealing or grading it, reads the queue state again after that hook
+  before grading, and pauses for a scheduler timebox event
   before showing the queued card. The previously displayed side remains visible
   during the timebox and while a queue read loads or retries. A failed queue
   read can be retried without sending the completed card's rating again.
@@ -132,9 +137,11 @@ mapping and AutomaticAnswer action decoding.
   `ViewerCommand.defaultValue` list, including empty entries, order, card side,
   and modifiers. Android `KeyEvent.KEYCODE_*` names stay symbolic until the
   host supplies a name-to-integer map to `resolve`. Missing names throw rather
-  than dropping a binding. The host uses these defaults only when its preference
-  lookup reports no configured value; explicitly configured empty/invalid
-  preferences remain a separate codec and host decision.
+  than dropping a binding. `ReviewerBindingPreferenceResolver` selects these
+  defaults only for a null preference. Any present string replaces defaults
+  and uses the existing codec, so empty, unsupported-version, and malformed
+  values do not fall back. Configured values do not require key-name mappings;
+  the host still reads preferences and supplies mappings for default resolution.
 - Reviewer answer mappings: `AnswerButtons` maps Again, Hard, Good, and Easy to
   their corresponding `ViewerCommand`. `AutomaticAnswerAction` preserves config
   values 0–4 and the source unknown-value fallback to Bury Card; its reminder
@@ -187,6 +194,8 @@ compact JSON format. `BrowserSearchRequest` restores a structured request using
 deck and note-type ID/name mappings supplied by the host and converts requests
 back to ID-based history entries. It keeps the stored query unchanged during
 restoration and applies Kotlin `String.trim()` when saving a request to history.
+Request/filter values preserve source structural equality; note-type map
+entries retain identity equality like the upstream regular class.
 The host loads and persists history and resolves current collection objects;
 `buildBrowserSearchNodePlan` returns the source-equivalent typed tree before
 backend conversion. Backend protobuf SearchNode conversion, query parsing and
@@ -226,7 +235,8 @@ Android preference lookup, `KeyEvent` extraction and hardware/layout
 `getUnicodeChar()` calculation, binding display strings, Android
 `MotionEvent` extraction and device handling (host-projected axis-button
 debounce and dispatch are modeled), host `KEYCODE_*` resolution and preference-
-backed default selection (the symbolic default table is modeled), Android
+backed value lookup (symbolic defaults and null-versus-configured selection
+are modeled), Android
 `BindingProcessor` wiring, command execution, touch input and reviewer command handlers,
 study-count and answer-button widgets/layout, next-time visibility preference
 wiring, template rendering and media, localized timebox messages, dialog and

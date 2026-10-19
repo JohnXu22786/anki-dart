@@ -713,6 +713,10 @@ class ReviewerBindingCodec {
         roundedSignificand >>= 1;
         roundedShift += BigInt.one;
       }
+      if (roundedShift + BigInt.from(roundedSignificand.bitLength - 1) >
+          BigInt.from(127)) {
+        return negative ? double.negativeInfinity : double.infinity;
+      }
       rounded =
           roundedSignificand.toDouble() * math.pow(2.0, roundedShift.toInt());
     } else {

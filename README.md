@@ -125,6 +125,12 @@ question-side type-answer placeholder removal.
   enablement formulas, next/previous transitions, back-side-only mode, and
   one-based slider selection. It returns a show-side or load-card intent for the
   host to carry out; card lookup, rendering, and media playback remain outside.
+- Card appearance CSS: `appendCardAppearanceCss` preserves the supplied CSS,
+  then appends nondefault font-scale, card-zoom, and image-zoom rules in source
+  order. It uses the existing Java Float formatter for Android font scale and
+  source-compatible Double formatting for integer zoom ratios. The host supplies
+  the values; custom fonts, themes, vertical centering, WebView textZoom, and
+  full card rendering remain outside.
 - Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and the
   set/toggle projections return a one-card collection-write intent followed by
   publication of the same flag only if the host write succeeds. Current-card
@@ -323,7 +329,9 @@ backend column registry and rows, column-selection drag/drop and active backend
 updates, Card Browser sort UI, Android preference/synced-config IO, and actual
 backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
-WebView rendering and media, previewer collection flag mutation and StateFlow
+WebView rendering and media, remaining CardAppearance custom-font composition,
+theme and vertical-centering classes, WebView textZoom/lifecycle, previewer
+collection flag mutation and StateFlow
 publication (flag codes and ordered write/publish intent are modeled),
 marks/note editing, card-template rendering and media, card/note-dependent
 TypeAnswer field lookup, cloze extraction and answer comparison, answer-timer

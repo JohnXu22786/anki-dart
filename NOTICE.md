@@ -123,6 +123,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   ordered write-then-publish-on-success effects are adapted in
   `lib/src/previewer_flag_effects.dart`; collection/undo execution, current-card
   lookup and StateFlow publication remain outside.
+- `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardAppearance.kt`
+  declares `GPL-3.0-or-later`. Its pure CSS zoom appending behavior is adapted
+  in `lib/src/card_appearance_css.dart`, reusing the internal Java Float
+  formatter in `lib/src/java_float_format.dart`. The host supplies
+  font scale and zoom preferences; custom fonts, themes, vertical centering,
+  WebView textZoom and rendering remain outside.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
   declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
   semantics are adapted in `lib/src/type_answer_modifiers.dart`; card/note

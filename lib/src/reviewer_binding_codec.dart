@@ -22,9 +22,9 @@
  */
 
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'gesture_parser.dart';
+import 'java_float_format.dart';
 import 'unicode_15_case_data.dart';
 
 /// Card side suffixes serialized by AnkiDroid's `ReviewerBinding`.
@@ -245,18 +245,16 @@ final class ReviewerAxisButtonBinding extends ReviewerBindingContent {
 
   @override
   String toBindingString() => '${ReviewerBindingCodec.axisPrefix}$axisValue '
-      '${ReviewerBindingCodec._javaFloatToString(threshold)}';
+      '${javaFloatToString(threshold)}';
 
   @override
   bool operator ==(Object other) =>
       other is ReviewerAxisButtonBinding &&
       other.axisValue == axisValue &&
-      ReviewerBindingCodec._float32Bits(other.threshold) ==
-          ReviewerBindingCodec._float32Bits(threshold);
+      float32Bits(other.threshold) == float32Bits(threshold);
 
   @override
-  int get hashCode =>
-      Object.hash(axisValue, ReviewerBindingCodec._float32Bits(threshold));
+  int get hashCode => Object.hash(axisValue, float32Bits(threshold));
 }
 
 /// The source `Binding.UnknownBinding`; invalid reviewer bindings are omitted
@@ -744,146 +742,6 @@ class ReviewerBindingCodec {
       return truncated + BigInt.one;
     }
     return truncated;
-  }
-
-  static double _float32(double value) => Float32List.fromList([value])[0];
-
-  static String _javaFloatToString(double value) {
-    final floatValue = _float32(value);
-    if (floatValue.isNaN) return 'NaN';
-    if (floatValue.isInfinite)
-      return floatValue.isNegative ? '-Infinity' : 'Infinity';
-    if (floatValue == 0) return floatValue.isNegative ? '-0.0' : '0.0';
-
-    final bits = _float32Bits(floatValue);
-    final absolute = floatValue.abs();
-    var decimalExponent =
-        int.parse(absolute.toStringAsExponential(1).split('e').last);
-    while (absolute < math.pow(10.0, decimalExponent)) {
-      decimalExponent--;
-    }
-    while (absolute >= math.pow(10.0, decimalExponent + 1)) {
-      decimalExponent++;
-    }
-    // Java's Float.toString scientific form keeps at least one fractional
-    // digit. Starting at two significant digits preserves values such as
-    // Float.MIN_VALUE as `1.4E-45`, rather than collapsing them to `1.0E-45`.
-    final firstPrecision = decimalExponent < -3 || decimalExponent >= 7 ? 2 : 1;
-    var shortest = '';
-    for (var precision = firstPrecision; precision <= 9; precision++) {
-      final candidate = _roundedFloatCandidate(
-        floatValue,
-        bits,
-        decimalExponent,
-        precision,
-      );
-      final parsed = double.tryParse(candidate);
-      if (parsed != null && _float32Bits(_float32(parsed)) == bits) {
-        shortest = candidate;
-        break;
-      }
-    }
-    if (shortest.isEmpty) {
-      shortest = _roundedFloatCandidate(floatValue, bits, decimalExponent, 9);
-    }
-    return _formatJavaFloatCandidate(shortest);
-  }
-
-  static String _roundedFloatCandidate(
-    double value,
-    int bits,
-    int decimalExponent,
-    int precision,
-  ) {
-    final exponentBits = (bits >> 23) & 0xff;
-    final fraction = bits & 0x7fffff;
-    final significand = exponentBits == 0 ? fraction : (0x800000 | fraction);
-    final binaryExponent = exponentBits == 0 ? -149 : exponentBits - 127 - 23;
-
-    var numerator = BigInt.from(significand);
-    var denominator = BigInt.one;
-    if (binaryExponent >= 0) {
-      numerator <<= binaryExponent;
-    } else {
-      denominator <<= -binaryExponent;
-    }
-    final decimalScale = precision - 1 - decimalExponent;
-    if (decimalScale >= 0) {
-      numerator *= BigInt.from(10).pow(decimalScale);
-    } else {
-      denominator *= BigInt.from(10).pow(-decimalScale);
-    }
-
-    var rounded = numerator ~/ denominator;
-    final remainder = numerator - rounded * denominator;
-    final twiceRemainder = remainder * BigInt.from(2);
-    if (twiceRemainder > denominator ||
-        (twiceRemainder == denominator && rounded.isOdd)) {
-      rounded += BigInt.one;
-    }
-    var exponent = decimalExponent;
-    var digits = rounded.toString();
-    if (digits.length > precision) {
-      rounded ~/= BigInt.from(10);
-      exponent++;
-      digits = rounded.toString();
-    }
-    digits = digits.padLeft(precision, '0');
-
-    final sign = value.isNegative ? '-' : '';
-    final fractionDigits = digits.substring(1);
-    final significandText =
-        fractionDigits.isEmpty ? digits[0] : '${digits[0]}.$fractionDigits';
-    return '$sign$significandText' 'e$exponent';
-  }
-
-  static int _float32Bits(double value) {
-    final bytes = ByteData(4)..setFloat32(0, value, Endian.big);
-    return bytes.getUint32(0, Endian.big);
-  }
-
-  static String _formatJavaFloatCandidate(String candidate) {
-    var text = candidate.toLowerCase();
-    var negative = false;
-    if (text.startsWith('-')) {
-      negative = true;
-      text = text.substring(1);
-    }
-    final exponentIndex = text.indexOf('e');
-    final exponentPart =
-        exponentIndex < 0 ? '0' : text.substring(exponentIndex + 1);
-    final decimalExponent = int.parse(exponentPart);
-    final significand =
-        exponentIndex < 0 ? text : text.substring(0, exponentIndex);
-    final pointIndex = significand.indexOf('.');
-    final digitsBeforePoint = pointIndex < 0 ? significand.length : pointIndex;
-    final digits = significand.replaceAll('.', '');
-    final firstNonZero = digits.indexOf(RegExp('[1-9]'));
-    final adjustedExponent =
-        decimalExponent + digitsBeforePoint - firstNonZero - 1;
-    var significantDigits = digits.substring(firstNonZero);
-    significantDigits = significantDigits.replaceFirst(RegExp(r'0+$'), '');
-    if (significantDigits.isEmpty) significantDigits = '0';
-
-    late final String formatted;
-    if (adjustedExponent < -3 || adjustedExponent >= 7) {
-      final tail =
-          significantDigits.length == 1 ? '0' : significantDigits.substring(1);
-      formatted = '${significantDigits[0]}.$tail'
-          'E$adjustedExponent';
-    } else if (adjustedExponent >= 0) {
-      final integerDigits = adjustedExponent + 1;
-      if (significantDigits.length <= integerDigits) {
-        formatted = '${significantDigits.padRight(integerDigits, '0')}.0';
-      } else {
-        formatted = '${significantDigits.substring(0, integerDigits)}.'
-            '${significantDigits.substring(integerDigits)}';
-      }
-    } else {
-      final leadingZeros = List.filled(-adjustedExponent - 1, '0').join();
-      formatted = '0.$leadingZeros$significantDigits';
-    }
-    return negative ? '-$formatted' : formatted;
   }
 
   static const _axisMotionEventValues = <int>{

@@ -328,6 +328,23 @@ void main() {
       expect(actual, [Gesture.doubleTap]);
     });
 
+    test('canceling the scheduled single tap suppresses its callback',
+        () async {
+      final scheduler = _FakeGestureScheduler();
+      final parser = _parser(doubleTapEnabled: true, scheduler: scheduler);
+      final actual = <Gesture?>[];
+
+      parser.parse(
+        _input(x: '450', y: '1250', time: '10000'),
+        _viewport(),
+        actual.add,
+      );
+      scheduler.handles.single.cancel();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(actual, isEmpty);
+    });
+
     test(
         'enabled single tap waits for timeout and equality starts another timer',
         () async {

@@ -44,21 +44,36 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvance.kt`,
   `AutoAdvanceSettings.kt`, `AutoAdvanceAction.kt`, `QuestionAction.kt`, and
   `AnswerAction.kt` are marked `GPL-3.0-or-later` upstream. Their settings
-  contract, action codes, delay dispatch, and cancellation behavior are adapted
+  contract, action codes, delay dispatch, and cooperative in-flight cancellation
+  signal are adapted
   in `lib/src/auto_advance.dart`; the Android collection settings lookup and
   reviewer action routing are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`
   and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` declare
   `GPL-3.0-or-later`. Their gesture enums, decoded-input decisions, viewport
-  mapping, and tap timing are adapted in `lib/src/gesture_parser.dart`; Android
-  Uri/WebView/preferences integration is not included.
+  mapping, tap timing, and cancellation of pending delayed taps are adapted in
+  `lib/src/gesture_parser.dart`; Android Uri/WebView/preferences integration is
+  not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/GestureProcessor.kt`,
   `Gesture.kt`, and `ViewerCommand.kt`, together with
   `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/ReviewerBinding.kt` and
   `Binding.kt`, declare `GPL-3.0-or-later`. Their gesture-to-command mapping,
   command identifiers/order, corner gating, and execution-result behavior are
-  adapted in `lib/src/gesture_command_router.dart`; Android preference decoding,
+  adapted in `lib/src/gesture_command_router.dart`; Android preference lookup,
   input events, and command handlers are not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/MappableBinding.kt`,
+  `ReviewerBinding.kt`, `Binding.kt`, `Axis.kt`, and `CardSide.kt` declare
+  `GPL-3.0-or-later`. Their serialized reviewer-binding codec and gesture
+  preference adapter are adapted in `lib/src/reviewer_binding_codec.dart` and
+  `lib/src/gesture_command_router.dart`. Keyboard and Unicode bindings are only
+  recognized for non-gesture round trips; axis IDs, Java float parsing and
+  source-style Float serialization are retained, while runtime axis handling
+  is not included. Android preference lookup, key
+  events, display strings, and `BindingMap` are not included.
+- `compat/src/main/java/com/ichi2/anki/compat/BaseCompat.kt` is Copyright
+  © 2017 Profpatsch <mail@profpatsch.de>. Its fallback gesture-axis IDs are
+  referenced by the codec's syntax check; the compatibility layer itself is
+  not ported.
 - `libanki/src/main/java/com/ichi2/anki/libanki/DeckConfig.kt` is Copyright
   © 2020 David Allison <davidallisongithub@gmail.com> and Arthur Milchior
   <Arthur@Milchior.fr>. Its Auto Advance fields and defaults remain behind the
@@ -92,6 +107,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   center-tap dispatch, corner and multitap filtering, enabled-state behavior,
   and executor results recorded in `GestureProcessorTest.kt`; it is not a port
   of the Android test harness.
+- `test/reviewer_binding_codec_test.dart` checks serialized binding framing,
+  gesture names and sides, permissive prefix and fallback behavior, invalid
+  omission, UTF-16 suffix behavior, and router-adapter filtering recorded in
+  `BindingTest.kt`, `MappableBindingTest.kt`, and applicable
+  `BindingAndroidTest.kt` cases; it is not a port of the Android test harness.
 - Dart adaptations, the review-session controller, timer, Auto Advance and
   gesture models, and new test code are Copyright © 2026 John Tsui.
 
@@ -113,5 +133,7 @@ and the full license text in `COPYING` and `LICENSES/GPL-3.0-or-later.txt`.
 
 The tests were written against the behavior documented and exercised by
 AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, reviewer flow,
-`AnswerTimerTest.kt`, `GestureParserTest.kt`, and `GestureProcessorTest.kt`.
+`AnswerTimerTest.kt`, `GestureParserTest.kt`, `GestureProcessorTest.kt`,
+`BindingTest.kt`, `MappableBindingTest.kt`, and applicable
+`BindingAndroidTest.kt` cases.
 They are not a port of the Android test harness.

@@ -21,6 +21,7 @@
  */
 
 import 'gesture_parser.dart';
+import 'reviewer_binding_codec.dart';
 
 /// AnkiDroid reviewer commands in the declaration order of `ViewerCommand`.
 ///
@@ -93,6 +94,35 @@ typedef GestureCommandExecutor = bool Function(
 /// overwrite earlier commands when they use the same gesture. [isEnabled]
 /// gates [isBound], matching AnkiDroid, but does not gate [route].
 class GestureCommandRouter {
+  /// Builds a router from host-supplied serialized command preference values.
+  ///
+  /// Missing values stay empty rather than applying `ViewerCommand` keyboard
+  /// defaults. Parsed non-gesture bindings are retained by the codec but do not
+  /// participate in gesture routing. Card-side suffixes are not an execution
+  /// filter in AnkiDroid's `GestureProcessor`.
+  factory GestureCommandRouter.fromPreferenceValues({
+    required bool isEnabled,
+    required bool cornerTouchEnabled,
+    required Map<ViewerCommand, String?> serializedBindingsByCommand,
+    GestureCommandExecutor? executeCommand,
+  }) {
+    const codec = ReviewerBindingCodec();
+    final bindingsByCommand = <ViewerCommand, Iterable<Gesture>>{};
+    for (final command in ViewerCommand.values) {
+      bindingsByCommand[command] = codec
+          .decode(serializedBindingsByCommand[command])
+          .where((binding) => binding.gesture != null)
+          .map((binding) => binding.gesture!)
+          .toList(growable: false);
+    }
+    return GestureCommandRouter(
+      isEnabled: isEnabled,
+      cornerTouchEnabled: cornerTouchEnabled,
+      bindingsByCommand: bindingsByCommand,
+      executeCommand: executeCommand,
+    );
+  }
+
   GestureCommandRouter({
     required this.isEnabled,
     required bool cornerTouchEnabled,

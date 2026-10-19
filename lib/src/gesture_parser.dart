@@ -126,6 +126,8 @@ abstract interface class GestureDelayScheduler {
 abstract interface class GestureDelayHandle {
   Future<void> get completion;
 
+  bool get isCancelled;
+
   void cancel();
 }
 
@@ -260,8 +262,9 @@ class GestureParser {
     GestureViewportState viewport,
     void Function(Gesture?) block,
   ) async {
-    await job.delay!.completion;
-    if (job.isCancelled) return;
+    final delay = job.delay!;
+    await delay.completion;
+    if (job.isCancelled || delay.isCancelled) return;
     block(_getTap(data, viewport));
   }
 
@@ -350,12 +353,15 @@ class _TimerGestureDelay implements GestureDelayHandle {
 
   final Completer<void> _completer = Completer<void>();
   late final Timer _timer;
+  @override
+  bool isCancelled = false;
 
   @override
   Future<void> get completion => _completer.future;
 
   @override
   void cancel() {
+    isCancelled = true;
     _timer.cancel();
     _complete();
   }

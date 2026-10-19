@@ -13,8 +13,8 @@ current implementation covers deck-picker filtering and visible-row
 construction, the headless review-session action lifecycle, reviewer count and
 answer-button next-time presentation models, the reviewer answer-timer state
 machine, the reviewer Auto Advance model, the headless reviewer gesture
-parser, and parsed-gesture command routing; it does not claim to reproduce the
-whole Android app.
+parser, parsed-gesture command routing, and a headless codec for serialized
+reviewer bindings; it does not claim to reproduce the whole Android app.
 
 ## Source-to-Dart mapping
 
@@ -30,9 +30,11 @@ whole Android app.
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/StudyCounts.kt` and `StudyCountsView.kt` | `ReviewQueueCounts` and `ReviewQueueKind` in `lib/src/review_session.dart`; `StudyCounts` in `lib/src/review_presentation.dart` | Copies scheduler counts and active queue, renders each integer with direct decimal `toString()`, and exposes the equality check used to style only the active count |
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerButtonsNextTime.kt` and `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` | `ReviewNextStateDescriber<T>` and `AnswerButtonsNextTime` in `lib/src/review_presentation.dart` | Passes the current opaque scheduling snapshot to the backend adapter and assigns its first four strings to Again/Hard/Good/Easy in order; no interval calculation or fallback labels |
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimer.kt` and `AnswerTimerState.kt` | `lib/src/answer_timer.dart` | Hidden/running/paused/stopped states; card configuration; stop, lifecycle pause/resume, hide, elapsed-time upper clamp, and resume-at-limit transition, using an injected monotonic millisecond clock in place of `SystemClock.elapsedRealtime()`; exposes current state and a replaying, per-listener conflated stream of distinct states to match `StateFlow` |
-| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvance.kt`, `AutoAdvanceSettings.kt`, `AutoAdvanceAction.kt`, `QuestionAction.kt`, `AnswerAction.kt`, plus setting fields in `libanki/src/main/java/com/ichi2/anki/libanki/DeckConfig.kt` | `lib/src/auto_advance.dart` | Loads explicit deck settings through `AutoAdvanceSettingsAdapter`; exposes wait-for-audio; schedules typed question/answer actions; preserves enable/disable, card-change and opposite-side cancellation, exact action codes/fallbacks, and the same-side job-overwrite behavior. DeckConfig storage and defaults stay in the adapter. |
-| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`, nested `GestureData`/`WebViewState`, and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` (`Gesture`, `TapGestureMode`) | `lib/src/gesture_parser.dart`, `lib/src/unicode_15_case_data.dart` | Decoded input, explicit timeout/mode/sensitivity config and viewport adapter; multi-finger mapping; Kotlin-compatible signed integer parsing, including BMP Unicode decimal digits and UTF-16 surrogate behavior; four/nine-point taps; Float32 scale/scroll and threshold math; dominant-axis swipes with scroll suppression; malformed-query callback behavior; deferred single and immediate double taps, preserving timeout boundaries, zero-sentinel timing, signed 64-bit subtraction, and same-side job overwrite. Android Uri/WebView/preferences integration remains outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvance.kt`, `AutoAdvanceSettings.kt`, `AutoAdvanceAction.kt`, `QuestionAction.kt`, `AnswerAction.kt`, plus setting fields in `libanki/src/main/java/com/ichi2/anki/libanki/DeckConfig.kt` | `lib/src/auto_advance.dart` | Loads explicit deck settings through `AutoAdvanceSettingsAdapter`; exposes wait-for-audio; schedules typed question/answer actions; preserves enable/disable, card-change and opposite-side cancellation, exact action codes/fallbacks, and the same-side job-overwrite behavior. Each listener receives an explicit cancellation signal and can cooperatively stop suspended work when its source job is cancelled. DeckConfig storage and defaults stay in the adapter. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`, nested `GestureData`/`WebViewState`, and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` (`Gesture`, `TapGestureMode`) | `lib/src/gesture_parser.dart`, `lib/src/unicode_15_case_data.dart` | Decoded input, explicit timeout/mode/sensitivity config and viewport adapter; multi-finger mapping; Kotlin-compatible signed integer parsing, including BMP Unicode decimal digits and UTF-16 surrogate behavior; four/nine-point taps; Float32 scale/scroll and threshold math; dominant-axis swipes with scroll suppression; malformed-query callback behavior; deferred single and immediate double taps, preserving timeout boundaries, zero-sentinel timing, signed 64-bit subtraction, and same-side job overwrite. A canceled delay suppresses its pending callback. Android Uri/WebView/preferences integration remains outside. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/GestureProcessor.kt`, `Gesture.kt`, `ViewerCommand.kt`, and `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/ReviewerBinding.kt` / `Binding.kt` | `lib/src/gesture_command_router.dart` and `Gesture` in `lib/src/gesture_parser.dart` | Retains command enum identifiers and declaration order; resolves host-supplied gesture bindings in that order so later commands overwrite duplicates; gates the four corner taps and center tap on explicit corner-touch configuration; leaves two/three/four-finger taps unmapped; makes `isEnabled` gate only `isBound`; returns `false` for null/unmapped gestures, `null` for mapped gestures without an executor, and otherwise forwards the command and original gesture to the optional callback. Android preference decoding, touch input, and command handlers remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/MappableBinding.kt`, `ReviewerBinding.kt`, `Binding.kt`, `Axis.kt`, `CardSide.kt`, and axis fallback IDs in `compat/src/main/java/com/ichi2/anki/compat/BaseCompat.kt` | `lib/src/reviewer_binding_codec.dart` | Versioned `1/` list framing, `|` splitting with empty-item filtering, reviewer prefix and side suffix encoding, exact gesture enum names, permissive optional `r` removal, UTF-16 code-unit suffix handling, unknown suffix fallback to BOTH, invalid-binding omission on write, and subset recognition/normalization of keyboard and Unicode non-gesture bindings. Axis IDs are checked against `Axis`; Kotlin integer parsing accepts BMP Unicode decimal digits, Java float syntax (including hexadecimal floats) is parsed to binary32 and normalized in the source `Float.toString` style, and extra space-separated axis tokens are ignored like the source. MotionEvent axis handling and full `Binding` are not ported. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/GestureProcessor.kt`, `ViewerCommand.kt`, and `ReviewerBinding.kt` | `GestureCommandRouter.fromPreferenceValues()` in `lib/src/gesture_command_router.dart` | Takes host-supplied serialized preference values, leaves missing values empty rather than applying keyboard defaults, and feeds only decoded gesture values into the existing source-ordered router. Side values are not used as routing filters. Android `SharedPreferences` lookup remains outside. |
 | `AnkiDroid/src/test/java/com/ichi2/anki/deckpicker/DeckFiltersTest.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/libanki/DeckNodeTest.kt` | `test/` | Behavioral reference cases for this slice |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModelTest.kt` and the reviewer action dispatch in `ReviewerViewModel.kt` | `test/review_session_test.dart` | Review-side transitions, mutation readiness, rating forwarding, timebox pausing/continuation, queue advancement, and serialized action behavior |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/StudyCountsViewTest.kt` and the direct four-label mapping in `AnswerButtonsNextTime.kt` | `test/review_presentation_test.dart` | Decimal count strings, active-queue selection, unchanged backend label order, and failure when a required positional label is absent |
@@ -40,6 +42,7 @@ whole Android app.
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvanceTest.kt` | `test/auto_advance_test.dart` | Deterministic cases for positive delays, typed action dispatch, disabled/nonpositive timers, cancellation on disable/side/card change, deck settings reload and wait-for-audio, action codes/fallbacks, and same-side job overwrite |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/GestureParserTest.kt` | `test/gesture_parser_test.dart` | Source-derived cases for malformed input, multi-finger taps, grid/diagonal boundaries, viewport adjustment, strict scaled swipe thresholds, dominant-axis selection, scroll suppression, and asynchronous tap timing/cancellation |
 | `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/GestureProcessorTest.kt` | `test/gesture_command_router_test.dart` | The source center-tap integration behavior plus command-order overwrite, corner configuration, deliberately unmapped multitaps, enabled-state semantics, nullable execution results, and callback forwarding |
+| `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/BindingTest.kt`, `MappableBindingTest.kt`, and applicable preference parsing cases from `BindingAndroidTest.kt` | `test/reviewer_binding_codec_test.dart` | Source-derived version framing, empty filtering, gesture identifiers and suffixes, permissive prefix/unknown-side behavior, malformed/unknown omission, UTF-16 suffix handling, Unicode decimal integer parsing, Java float syntax and normalization, extra axis-token handling, and router adapter filtering; Android key-event behavior is excluded |
 
 ## Review backend boundary
 
@@ -58,7 +61,11 @@ algorithm are not included or reimplemented.
 card's deck. This boundary keeps `Card.currentDeckId()` and `DeckConfig` access
 outside the headless timer model and leaves the source's deck-option defaults to
 the adapter. `AutoAdvanceScheduler` supplies cancellable delays and can be
-replaced with a deterministic scheduler in tests.
+replaced with a deterministic scheduler in tests. The listener receives an
+explicit `AutoAdvanceCancellation` signal; adapters must observe it while
+awaiting cancellation-sensitive work, matching the source coroutine's
+cooperative cancellation. Synchronous side effects already performed are not
+rolled back.
 
 ## Remaining coverage gaps
 
@@ -70,10 +77,11 @@ widgets and layout, next-time visibility preference wiring, Auto Advance deck
 settings UI and actual collection-backed settings loader, reviewer action
 routing and audio lifecycle integration, leech handling, reviewer undo/redo,
 JavaScript card-state mutation and gesture bridges, WebView state collection,
-gesture preference and Android timeout lookup, imports/exports, notifications,
-preferences, and the remaining AnkiDroid modules. Gesture parsing and
-parsed-gesture command routing are platform-independent models; Android
-preference-backed binding decoding, touch input, and reviewer command execution
+Android preference and timeout lookup, imports/exports, notifications,
+preferences, and the remaining AnkiDroid modules. Gesture parsing, serialized
+reviewer binding codec, and parsed-gesture command routing are platform-
+independent models; full `Binding` behavior, Android key events, display strings,
+axis interpretation, `BindingMap`, touch input, and reviewer command execution
 are not ported. The Android WebView integration is not ported. The
 Dart answer-timer model
 exposes pause/resume calls and an observable state stream but does not register

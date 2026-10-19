@@ -178,7 +178,7 @@ void main() {
       final autoAdvance = AutoAdvance<_Card>(
         initialCard: const _Card(1),
         settingsAdapter: adapter,
-        listener: actions.add,
+        listener: (action, _) => actions.add(action),
         scheduler: delay,
       )..isEnabled = true;
 
@@ -196,6 +196,61 @@ void main() {
 
       expect(adapter.loadedDecks, [1, 2]);
       expect(actions, [QuestionAction.showReminder]);
+    });
+
+    test('disabling signals cancellation to a suspended question listener',
+        () async {
+      final delay = _FakeDelay();
+      final listenerStarted = Completer<void>();
+      final listenerCancelled = Completer<void>();
+      final autoAdvance = AutoAdvance<_Card>(
+        initialCard: const _Card(1),
+        settingsAdapter: _FakeSettingsAdapter({
+          1: _settings(questionDelay: const Duration(seconds: 1)),
+        }),
+        listener: (action, cancellation) async {
+          listenerStarted.complete();
+          await cancellation.whenCancelled;
+          listenerCancelled.complete();
+        },
+        scheduler: delay,
+      )..isEnabled = true;
+
+      await autoAdvance.onShowQuestion();
+      await delay.flush();
+      await delay.advanceBy(const Duration(seconds: 1));
+      await listenerStarted.future;
+
+      autoAdvance.isEnabled = false;
+      await listenerCancelled.future;
+    });
+
+    test('card changes signal cancellation to a suspended answer listener',
+        () async {
+      final delay = _FakeDelay();
+      final listenerStarted = Completer<void>();
+      final listenerCancelled = Completer<void>();
+      final autoAdvance = AutoAdvance<_Card>(
+        initialCard: const _Card(1),
+        settingsAdapter: _FakeSettingsAdapter({
+          1: _settings(answerDelay: const Duration(seconds: 1)),
+          2: _settings(),
+        }),
+        listener: (action, cancellation) async {
+          listenerStarted.complete();
+          await cancellation.whenCancelled;
+          listenerCancelled.complete();
+        },
+        scheduler: delay,
+      )..isEnabled = true;
+
+      await autoAdvance.onShowAnswer();
+      await delay.flush();
+      await delay.advanceBy(const Duration(seconds: 1));
+      await listenerStarted.future;
+
+      autoAdvance.onCardChange(const _Card(2));
+      await listenerCancelled.future;
     });
 
     test('a repeated same-side event leaves the older timer untracked',
@@ -251,7 +306,7 @@ AutoAdvance<_Card> _autoAdvance({
     AutoAdvance<_Card>(
       initialCard: const _Card(1),
       settingsAdapter: _FakeSettingsAdapter(settingsByDeck),
-      listener: actions.add,
+      listener: (action, _) => actions.add(action),
       scheduler: scheduler,
     );
 

@@ -106,9 +106,30 @@ abstract interface class AutoAdvanceDelayHandle {
   void cancel();
 }
 
-/// A suspended listener receives either a question-side or answer-side action.
+/// Cancellation context for a dispatched Auto Advance action.
+///
+/// Dart futures do not inherit cancellation from the action job. A listener
+/// should observe [whenCancelled] while awaiting cancellation-sensitive work,
+/// matching the cooperative cancellation of AnkiDroid's coroutine listener.
+class AutoAdvanceCancellation {
+  AutoAdvanceCancellation._();
+
+  final Completer<void> _cancelled = Completer<void>();
+
+  bool get isCancelled => _cancelled.isCompleted;
+
+  Future<void> get whenCancelled => _cancelled.future;
+
+  void _cancel() {
+    if (!_cancelled.isCompleted) _cancelled.complete();
+  }
+}
+
+/// A suspended listener receives an action and its cancellable execution
+/// context.
 typedef AutoAdvanceActionListener = FutureOr<void> Function(
   AutoAdvanceAction action,
+  AutoAdvanceCancellation cancellation,
 );
 
 /// The reviewer Auto Advance timer and deck-settings lifecycle.
@@ -215,16 +236,21 @@ class AutoAdvance<TCard> {
 
     final action = actionFor(await _settings);
     if (job.isCancelled) return;
-    await _listener(action);
+    await Future.any<void>([
+      Future<void>.sync(() => _listener(action, job.cancellation)),
+      job.cancellation.whenCancelled,
+    ]);
   }
 }
 
 class _AutoAdvanceActionJob {
-  bool isCancelled = false;
+  final AutoAdvanceCancellation cancellation = AutoAdvanceCancellation._();
   AutoAdvanceDelayHandle? delay;
 
+  bool get isCancelled => cancellation.isCancelled;
+
   void cancel() {
-    isCancelled = true;
+    cancellation._cancel();
     delay?.cancel();
   }
 }

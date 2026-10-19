@@ -6,10 +6,11 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes seven source-mapped slices: deck-picker behavior, the
+The current port includes eight source-mapped slices: deck-picker behavior, the
 headless review-session lifecycle, reviewer count/next-time presentation
 models, the answer-timer state machine, reviewer Auto Advance, the headless
-reviewer gesture parser, and parsed-gesture command routing.
+reviewer gesture parser, parsed-gesture command routing, and reviewer binding
+preference encoding/decoding.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -53,15 +54,27 @@ reviewer gesture parser, and parsed-gesture command routing.
   overwrite duplicate bindings; the four corner taps and center tap depend on
   explicit corner-touch configuration; multi-finger taps remain unmapped. The
   enabled flag affects `isBound` only, and an optional callback receives the
-  selected command and gesture. This layer does not decode Android
-  `SharedPreferences` or `ReviewerBinding` values, receive touch input, or
-  execute reviewer actions.
+  selected command and gesture. `ReviewerBindingCodec` decodes source-formatted
+  serialized strings, and `GestureCommandRouter.fromPreferenceValues` filters
+  them to gestures. The host supplies the preference strings; this layer does
+  not read Android `SharedPreferences`, receive touch input, or execute reviewer
+  actions.
+- Reviewer binding preferences: the headless codec preserves `1/` framing,
+  `|` list separators, reviewer prefix, gesture enum identifiers, side suffixes,
+  permissive reviewer-prefix removal, and the source's unknown-side fallback.
+  It keeps recognized keyboard and Unicode bindings as non-gesture data and
+  validates axis IDs and Java float syntax. Axis values are rounded and written
+  using the source's `Float.toString` style, and extra axis tokens are ignored
+  like the source parser. Motion-event handling is unported.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
 a `ReviewScheduler` adapter that supplies queue items, backend counts and active
 queue, timebox events, and rating application. Auto Advance requires an
 `AutoAdvanceSettingsAdapter` that loads all five settings for the current card's
 deck; the model does not read collection storage or supply deck-config defaults.
+Its action listener receives a cancellation signal and should observe it while
+awaiting work that can be cancelled, matching the source coroutine's cooperative
+cancellation.
 `ReviewNextStateDescriber`
 forwards the opaque scheduling state to the pinned backend's
 `describeNextStates()` API. The session exposes the timebox's elapsed-time limit
@@ -72,12 +85,13 @@ Rust backend, collection storage, timebox calculation, and scheduling algorithm
 are still external and are not implemented here. This is not yet a complete
 AnkiDroid replacement: Android screens and platform lifecycle integration,
 answer-timer widget/tick rendering, Auto Advance settings controls and
-preference-backed gesture binding decoding, touch input and reviewer command
-handlers, study-count and answer-button widgets/layout, next-time
+Android preference lookup, full `Binding` behavior, Android key events,
+binding display strings, axis interpretation, `BindingMap`, touch input and
+reviewer command handlers, study-count and answer-button widgets/layout, next-time
 visibility preference wiring, template rendering and media, timebox
 presentation, leech handling, reviewer undo/redo, the JavaScript custom-state
-and gesture bridges, WebView state collection, gesture preferences and Android
-timeout lookup, sync, import/export, and other app features remain to be ported.
+and gesture bridges, WebView state collection, Android timeout lookup, sync,
+import/export, and other app features remain to be ported.
 The source project has thousands of files, so this repository does not claim
 full feature parity.
 
@@ -91,9 +105,13 @@ adapter; this port does not intentionally correct upstream bugs. See the tests
 and upstream mapping for the specific behaviors and source files. Auto Advance
 preserves the integer action codes and invalid-code fallbacks, delays and
 cancellation boundaries, and the same-side job-overwrite quirk.
+An in-flight action listener also receives a cancellation signal when its tracked
+job is cancelled; asynchronous adapters must observe it to stop their pending
+work, while already-performed synchronous effects remain.
 The gesture model also keeps strict grid and diagonal boundaries, Float
 threshold and coordinate behavior, and the stale same-side tap job when a
-double tap cancels only the latest scheduled job. The caller supplies tap mode,
+double tap cancels only the latest scheduled job. A canceled delay also
+suppresses its pending single-tap callback. The caller supplies tap mode,
 swipe sensitivity, and the platform double-tap timeout; the model does not read
 Android preferences or WebView properties.
 

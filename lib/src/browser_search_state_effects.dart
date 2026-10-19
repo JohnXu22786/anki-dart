@@ -142,6 +142,35 @@ List<BrowserSearchStateEffect> browserSelectSearchHistoryEntryEffects(
   ]);
 }
 
+/// Projects `onSearchTextChanged(searchText)` in source order.
+///
+/// The source replaces LF with an ASCII space, emits a User update containing
+/// a shallow copy of [currentFilters], then updates only the selected text
+/// buffer. The host applies these effects; this projection does not trim text,
+/// create a request, close the screen, or schedule StateFlow updates.
+List<BrowserSearchStateEffect> browserOnSearchTextChangedEffects(
+  String searchText, {
+  required BrowserSearchFilters currentFilters,
+  required BrowserSearchTextState textState,
+}) {
+  final textAfterEdit = textState.onSearchTextChanged(searchText);
+  final copiedFilters = BrowserSearchFilters(
+    decks: currentFilters.decks,
+    flags: currentFilters.flags,
+    tags: currentFilters.tags,
+    noteTypes: currentFilters.noteTypes,
+    cardStateCodes: currentFilters.cardStateCodes,
+  );
+
+  return List.unmodifiable([
+    BrowserFilterUpdateEffect(BrowserFilterUpdateUser(copiedFilters)),
+    if (textState.isAdvancedSearch)
+      BrowserAdvancedSearchTextEffect(textAfterEdit.advancedText)
+    else
+      BrowserBasicSearchTextEffect(textAfterEdit.basicText),
+  ]);
+}
+
 /// Projects AnkiDroid's `syncState` calls in their source order.
 ///
 /// It emits a System filter update and then the exact request submission. It

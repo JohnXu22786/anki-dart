@@ -16,9 +16,9 @@ reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
 command routing, reviewer binding codec/map and default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
-resolution, plus Card Browser search-text transitions, sync/reset/history
-selection/request-submission effect sequences, and saved-search outcome-message
-mapping.
+resolution, plus Card Browser search-text transitions, text-edit/sync/reset/
+history-selection/request-submission effect sequences, and saved-search
+outcome-message mapping.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -76,6 +76,12 @@ mapping.
   only in the selected buffer, and saved queries gain one trailing ASCII space.
   Android SavedStateHandle, flow scheduling, text widgets, and saved-search
   lookup remain with the host.
+- Card Browser text-edit effects: `browserOnSearchTextChangedEffects` emits a
+  shallow-copied User filter update before the LF-sanitized text for the active
+  buffer. It preserves every filter list and leaves the inactive buffer alone;
+  it does not submit a request or close the screen. Pinned tests cover text
+  changes but not this combined effect order, so the ordered-effect tests are
+  source-derived. The host applies the effects.
 - Card Browser sync/reset: `browserSyncStateEffects` emits the source System
   filter update before submitting the exact request. Reset emits mode, both
   exact text values, System filters, screen closure, and three SavedState key
@@ -283,8 +289,9 @@ outcome-message delivery and UI,
 collection-backed deck/note-type lookup, backend query-string generation and
 backend SearchNode conversion, query parsing/validation, final SearchString
 serialization, search execution, search-string conversion,
-Android execution of Card Browser request-submission/sync/reset/history-selection
-effects and close-view/submitted-search event delivery,
+Android execution of Card Browser
+text-edit/request-submission/sync/reset/history-selection effects and
+close-view/submitted-search event delivery,
 SavedStateHandle/StateFlow
 integration for mode, text buffers, and history/saved-search availability,
 Basic/Advanced text widgets, history-list

@@ -177,6 +177,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   buffers and transition methods are adapted in
   `lib/src/browser_search_text_state.dart`; SavedStateHandle persistence,
   flow scheduling, and Android text widgets remain with the host.
+  The ordered `onSearchTextChanged` effects are projected in
+  `lib/src/browser_search_state_effects.dart`: a shallow-copied User filter
+  update precedes text replacement in the active buffer. LF is replaced while
+  CR and other characters remain unchanged; no request or close event is
+  emitted. The pinned text tests do not assert this combined effect order, so
+  the corresponding Dart cases are source-derived.
   The ordered effects for `selectSearchHistoryEntry` and its LF-only text edit
   are projected in `lib/src/browser_search_state_effects.dart`, reusing the
   host-mapped history restoration; the host applies flows and performs search
@@ -267,6 +273,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   transitions from `CardBrowserSearchViewModelTest.kt`, including append spacing,
   LF replacement, saved-query application, and independent buffers; it does not
   test SavedStateHandle, flow scheduling, or Android text widgets.
+- `test/browser_search_text_effects_test.dart` adds source-derived cases for
+  Basic/Advanced branch selection, LF-only replacement with CR preservation,
+  shallow-copy filter/list identity, User-update-before-text order, and absence
+  of request/close effects. Pinned tests cover text edits but do not assert this
+  combined effect sequence; Android flow execution remains host-side.
 - `test/browser_search_state_effects_test.dart` adds source-derived cases for
   `syncState`/`resetSearchState` effect order, verbatim request/filter values,
   and the exact three SavedState keys removed. The pinned source marks reset

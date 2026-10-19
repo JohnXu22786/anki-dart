@@ -28,24 +28,268 @@ import 'gesture_parser.dart';
 import 'unicode_15_case_data.dart';
 
 /// Card side suffixes serialized by AnkiDroid's `ReviewerBinding`.
-enum ReviewerCardSide { question, answer, both }
+enum ReviewerCardSide {
+  question,
+  answer,
+  both;
+
+  /// Mirrors `CardSide.fromAnswer()`.
+  static ReviewerCardSide fromAnswer(bool displayingAnswer) =>
+      displayingAnswer ? ReviewerCardSide.answer : ReviewerCardSide.question;
+}
 
 /// The subset of serialized bindings exposed by this preference codec.
 enum ReviewerBindingKind { gesture, nonGesture, unknown }
 
+/// A decoded source `Binding` that can be serialized without Android runtime.
+sealed class ReviewerBindingContent {
+  const ReviewerBindingContent();
+
+  bool get isValid => true;
+  bool get isKey => false;
+  String toBindingString();
+
+  @override
+  String toString() => toBindingString();
+}
+
+/// A source `Binding.GestureInput`.
+final class ReviewerGestureBinding extends ReviewerBindingContent {
+  const ReviewerGestureBinding(this.gesture);
+
+  final Gesture gesture;
+
+  @override
+  String toBindingString() =>
+      '${ReviewerBindingCodec.gesturePrefix}${ReviewerBindingCodec._gestureName(gesture)}';
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReviewerGestureBinding && other.gesture == gesture;
+
+  @override
+  int get hashCode => gesture.hashCode;
+}
+
+/// The Ctrl/Alt/Shift matching contract used by source `Binding.ModifierKeys`.
+class ReviewerModifierKeys {
+  const ReviewerModifierKeys({
+    this.shift = false,
+    this.ctrl = false,
+    this.alt = false,
+  });
+
+  final bool shift;
+  final bool ctrl;
+  final bool alt;
+
+  bool shiftMatches(bool shiftPressed) => shift == shiftPressed;
+
+  @override
+  String toString() =>
+      '${ctrl ? 'Ctrl+' : ''}${alt ? 'Alt+' : ''}${shift ? 'Shift+' : ''}';
+
+  /// Source-compatible parser: only the text before the last `+` is treated
+  /// as modifiers, and each modifier name is recognized by case-sensitive
+  /// substring matching.
+  static ({ReviewerModifierKeys modifierKeys, String value}) parse(
+    String input,
+  ) {
+    final plusIndex = input.lastIndexOf('+');
+    if (plusIndex < 0) {
+      return (modifierKeys: none, value: input);
+    }
+    return (
+      modifierKeys: fromString(input.substring(0, plusIndex + 1)),
+      value: input.substring(plusIndex + 1),
+    );
+  }
+
+  static ReviewerModifierKeys fromString(String value) => ReviewerModifierKeys(
+        shift: value.contains('Shift'),
+        ctrl: value.contains('Ctrl'),
+        alt: value.contains('Alt'),
+      );
+
+  static const ReviewerModifierKeys none = ReviewerModifierKeys();
+  static const ReviewerModifierKeys control = ReviewerModifierKeys(ctrl: true);
+  static const ReviewerModifierKeys shiftOnly =
+      ReviewerModifierKeys(shift: true);
+  static const ReviewerModifierKeys altOnly = ReviewerModifierKeys(alt: true);
+
+  bool _semiStructurallyEquals(ReviewerModifierKeys other) {
+    if (alt != other.alt || ctrl != other.ctrl) return false;
+    return shiftMatches(true) == other.shiftMatches(true) ||
+        shiftMatches(false) == other.shiftMatches(false);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReviewerModifierKeys && _semiStructurallyEquals(other);
+
+  @override
+  int get hashCode => _javaObjectsHash([
+        _javaBooleanHash(ctrl),
+        _javaBooleanHash(alt),
+        _javaBooleanHash(shiftMatches(true)),
+      ]);
+}
+
+/// Default keyboard bindings may ignore shift when the source device is
+/// unknown. This matching wildcard is distinct from a parsed no-modifier value.
+final class ReviewerAppDefinedModifierKeys extends ReviewerModifierKeys {
+  const ReviewerAppDefinedModifierKeys._() : super();
+
+  static const ReviewerAppDefinedModifierKeys _instance =
+      ReviewerAppDefinedModifierKeys._();
+
+  static ReviewerAppDefinedModifierKeys allowShift() => _instance;
+
+  @override
+  bool shiftMatches(bool shiftPressed) => true;
+}
+
+/// A source `Binding.KeyCode`. Its equality includes modifiers while its
+/// source hash intentionally uses only the key code.
+final class ReviewerKeyCodeBinding extends ReviewerBindingContent {
+  factory ReviewerKeyCodeBinding({
+    required int keyCode,
+    ReviewerModifierKeys modifierKeys = ReviewerModifierKeys.none,
+  }) {
+    if (keyCode < -0x80000000 || keyCode > 0x7FFFFFFF) {
+      throw RangeError.range(keyCode, -0x80000000, 0x7FFFFFFF, 'keyCode');
+    }
+    return ReviewerKeyCodeBinding._(
+      keyCode: keyCode,
+      modifierKeys: modifierKeys,
+    );
+  }
+
+  const ReviewerKeyCodeBinding._({
+    required this.keyCode,
+    required this.modifierKeys,
+  });
+
+  final int keyCode;
+  final ReviewerModifierKeys modifierKeys;
+
+  @override
+  bool get isKey => true;
+
+  @override
+  String toBindingString() =>
+      '${ReviewerBindingCodec.keyPrefix}$modifierKeys$keyCode';
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReviewerKeyCodeBinding &&
+      other.keyCode == keyCode &&
+      other.modifierKeys == modifierKeys;
+
+  @override
+  int get hashCode => _javaObjectsHash([keyCode]);
+}
+
+/// A source `Binding.UnicodeCharacter`, represented as one UTF-16 code unit.
+/// Its source equality includes modifiers while its hash omits them.
+final class ReviewerUnicodeCharacterBinding extends ReviewerBindingContent {
+  factory ReviewerUnicodeCharacterBinding({
+    required int codeUnit,
+    ReviewerModifierKeys modifierKeys =
+        ReviewerAppDefinedModifierKeys._instance,
+  }) {
+    if (codeUnit < 0 || codeUnit > 0xFFFF) {
+      throw RangeError.range(codeUnit, 0, 0xFFFF, 'codeUnit');
+    }
+    return ReviewerUnicodeCharacterBinding._(
+      codeUnit: codeUnit,
+      modifierKeys: modifierKeys,
+    );
+  }
+
+  const ReviewerUnicodeCharacterBinding._({
+    required this.codeUnit,
+    required this.modifierKeys,
+  });
+
+  final int codeUnit;
+  final ReviewerModifierKeys modifierKeys;
+
+  @override
+  bool get isKey => true;
+
+  @override
+  String toBindingString() =>
+      '${ReviewerBindingCodec.unicodePrefix}$modifierKeys${String.fromCharCode(codeUnit)}';
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReviewerUnicodeCharacterBinding &&
+      other.codeUnit == codeUnit &&
+      other.modifierKeys == modifierKeys;
+
+  @override
+  int get hashCode => _javaObjectsHash([codeUnit]);
+}
+
+/// An axis binding is parsed and serialized, while MotionEvent interpretation
+/// remains outside this platform-independent codec.
+final class ReviewerAxisButtonBinding extends ReviewerBindingContent {
+  const ReviewerAxisButtonBinding._({
+    required this.axisValue,
+    required this.threshold,
+  });
+
+  final int axisValue;
+  final double threshold;
+
+  @override
+  String toBindingString() => '${ReviewerBindingCodec.axisPrefix}$axisValue '
+      '${ReviewerBindingCodec._javaFloatToString(threshold)}';
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReviewerAxisButtonBinding &&
+      other.axisValue == axisValue &&
+      ReviewerBindingCodec._float32Bits(other.threshold) ==
+          ReviewerBindingCodec._float32Bits(threshold);
+
+  @override
+  int get hashCode =>
+      Object.hash(axisValue, ReviewerBindingCodec._float32Bits(threshold));
+}
+
+/// The source `Binding.UnknownBinding`; invalid reviewer bindings are omitted
+/// when preference values are written.
+final class ReviewerUnknownBinding extends ReviewerBindingContent {
+  const ReviewerUnknownBinding();
+
+  @override
+  bool get isValid => false;
+
+  @override
+  String toBindingString() => '';
+
+  @override
+  bool operator ==(Object other) => other is ReviewerUnknownBinding;
+
+  @override
+  int get hashCode =>
+      0x554E4B4E; // Stable hash for source `data object` semantics.
+}
+
 /// A decoded reviewer preference entry.
 ///
-/// Gesture entries expose [gesture] for routing. Non-gesture entries retain
-/// their serialized binding payload but are not interpreted as Android key,
-/// display, or axis behavior. Unknown entries model `Binding.UnknownBinding`
-/// and are omitted when written.
+/// Gesture entries expose [gesture] for routing. Key-code and Unicode entries
+/// expose their serialized fields and source modifier semantics; axis entries
+/// retain the parsed ID and threshold. Android input, display, and runtime axis
+/// handling remain outside this value model. Unknown entries model
+/// `Binding.UnknownBinding` and are omitted when written.
 class ReviewerBindingValue {
   const ReviewerBindingValue._({
-    required this.kind,
+    required this.binding,
     required this.side,
-    required String? serializedBinding,
-    this.gesture,
-  }) : _serializedBinding = serializedBinding;
+  });
 
   /// Constructs a serializable gesture binding.
   factory ReviewerBindingValue.forGesture(
@@ -53,36 +297,92 @@ class ReviewerBindingValue {
     ReviewerCardSide side = ReviewerCardSide.both,
   }) =>
       ReviewerBindingValue._(
-        kind: ReviewerBindingKind.gesture,
+        binding: ReviewerGestureBinding(gesture),
         side: side,
-        gesture: gesture,
-        serializedBinding:
-            '${ReviewerBindingCodec.gesturePrefix}${ReviewerBindingCodec._gestureName(gesture)}',
       );
 
-  final ReviewerBindingKind kind;
-  final ReviewerCardSide side;
-  final Gesture? gesture;
-  final String? _serializedBinding;
+  /// Constructs a source `Binding.KeyCode` value.
+  factory ReviewerBindingValue.forKeyCode(
+    int keyCode, {
+    ReviewerModifierKeys modifierKeys = ReviewerModifierKeys.none,
+    ReviewerCardSide side = ReviewerCardSide.both,
+  }) =>
+      ReviewerBindingValue._(
+        binding: ReviewerKeyCodeBinding(
+          keyCode: keyCode,
+          modifierKeys: modifierKeys,
+        ),
+        side: side,
+      );
 
-  bool get isValid => kind != ReviewerBindingKind.unknown;
+  /// Constructs a source `Binding.unicode` value. The factory defaults to
+  /// shift-tolerant app-defined modifiers and rejects the list separator `|`.
+  factory ReviewerBindingValue.forUnicodeCharacter(
+    int codeUnit, {
+    ReviewerModifierKeys? modifierKeys,
+    ReviewerCardSide side = ReviewerCardSide.both,
+  }) =>
+      ReviewerBindingValue._(
+        binding: codeUnit == ReviewerBindingCodec.separator.codeUnitAt(0)
+            ? const ReviewerUnknownBinding()
+            : ReviewerUnicodeCharacterBinding(
+                codeUnit: codeUnit,
+                modifierKeys:
+                    modifierKeys ?? ReviewerAppDefinedModifierKeys.allowShift(),
+              ),
+        side: side,
+      );
+
+  final ReviewerBindingContent binding;
+  final ReviewerCardSide side;
+
+  ReviewerBindingKind get kind => switch (binding) {
+        ReviewerGestureBinding() => ReviewerBindingKind.gesture,
+        ReviewerUnknownBinding() => ReviewerBindingKind.unknown,
+        _ => ReviewerBindingKind.nonGesture,
+      };
+
+  Gesture? get gesture => switch (binding) {
+        ReviewerGestureBinding(:final gesture) => gesture,
+        _ => null,
+      };
+
+  bool get isValid => binding.isValid;
+
+  bool get isKey => binding.isKey;
 
   /// The ReviewerBinding list item, or null for an invalid/empty binding.
   String? toPreferenceString() {
-    final serializedBinding = _serializedBinding;
-    if (!isValid || serializedBinding == null || serializedBinding.isEmpty) {
+    final serializedBinding = binding.toBindingString();
+    if (!isValid || serializedBinding.isEmpty) {
       return null;
     }
     return '${ReviewerBindingCodec.reviewerPrefix}$serializedBinding${_sideSuffix(side)}';
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ReviewerBindingValue || binding != other.binding)
+      return false;
+    return side == ReviewerCardSide.both ||
+        other.side == ReviewerCardSide.both ||
+        side == other.side;
+  }
+
+  @override
+  int get hashCode => _javaObjectsHash([
+        binding.hashCode,
+        ReviewerBindingCodec.reviewerPrefix.codeUnitAt(0),
+      ]);
 }
 
 /// Encodes and decodes the `1/` list of serialized AnkiDroid reviewer bindings.
 ///
 /// Preference lookup is deliberately supplied by the caller. Gesture bindings
-/// are decoded exactly; known key, Unicode, and axis prefixes are recognized
-/// enough to identify valid non-gesture entries, while Android key events,
-/// display, and MotionEvent axis handling remain outside this model.
+/// are decoded exactly. Key-code, Unicode, and axis values retain their
+/// source-serialized fields, while Android key events, display, and MotionEvent
+/// axis handling remain outside this model.
 class ReviewerBindingCodec {
   const ReviewerBindingCodec();
 
@@ -138,51 +438,56 @@ class ReviewerBindingCodec {
       _ => ReviewerCardSide.both,
     };
 
-    if (binding.isEmpty) return _unknown(side);
-
-    if (binding.startsWith(gesturePrefix)) {
-      final gesture = _gestureFromName(binding.substring(gesturePrefix.length));
-      if (gesture == null) return _unknown(side);
-      return ReviewerBindingValue._(
-        kind: ReviewerBindingKind.gesture,
-        side: side,
-        gesture: gesture,
-        serializedBinding: '$gesturePrefix${_gestureName(gesture)}',
-      );
-    }
-
-    final nonGestureBinding = _canonicalNonGestureBinding(binding);
-    if (nonGestureBinding != null) {
-      return ReviewerBindingValue._(
-        kind: ReviewerBindingKind.nonGesture,
-        side: side,
-        serializedBinding: nonGestureBinding,
-      );
-    }
-
-    return _unknown(side);
+    return ReviewerBindingValue._(binding: decodeBinding(binding), side: side);
   }
 
-  static ReviewerBindingValue _unknown(ReviewerCardSide side) =>
-      ReviewerBindingValue._(
-        kind: ReviewerBindingKind.unknown,
-        side: side,
-        serializedBinding: null,
-      );
-
-  static String? _canonicalNonGestureBinding(String binding) {
-    if (binding.startsWith(keyPrefix)) {
-      return _canonicalKeyBinding(binding);
+  /// Decodes one serialized source `Binding` without the reviewer side suffix.
+  /// This boundary permits direct testing of valid binding strings containing
+  /// the preference list separator, which cannot appear unescaped in a list.
+  ReviewerBindingContent decodeBinding(String serializedBinding) {
+    if (serializedBinding.isEmpty) return const ReviewerUnknownBinding();
+    try {
+      if (serializedBinding.startsWith(gesturePrefix)) {
+        final gesture = _gestureFromName(
+          serializedBinding.substring(gesturePrefix.length),
+        );
+        return gesture == null
+            ? const ReviewerUnknownBinding()
+            : ReviewerGestureBinding(gesture);
+      }
+      if (serializedBinding.startsWith(keyPrefix)) {
+        final parts = ReviewerModifierKeys.parse(
+          serializedBinding.substring(keyPrefix.length),
+        );
+        final keyCode = _parseKotlinInt32(parts.value);
+        return keyCode == null
+            ? const ReviewerUnknownBinding()
+            : ReviewerKeyCodeBinding(
+                keyCode: keyCode,
+                modifierKeys: parts.modifierKeys,
+              );
+      }
+      if (serializedBinding.startsWith(unicodePrefix)) {
+        final parts = ReviewerModifierKeys.parse(
+          serializedBinding.substring(unicodePrefix.length),
+        );
+        if (parts.value.isEmpty) return const ReviewerUnknownBinding();
+        // `Binding.fromString()` uses Char indexing, which selects one UTF-16
+        // code unit even when the remaining text begins with a surrogate pair.
+        return ReviewerUnicodeCharacterBinding(
+          codeUnit: parts.value.codeUnitAt(0),
+          modifierKeys: parts.modifierKeys,
+        );
+      }
+      final axis = _parseAxisBinding(serializedBinding);
+      return axis ?? const ReviewerUnknownBinding();
+    } on Object {
+      // Binding.fromString() catches malformed input and returns UnknownBinding.
+      return const ReviewerUnknownBinding();
     }
-    if (binding.startsWith(unicodePrefix)) {
-      return _canonicalUnicodeBinding(binding);
-    }
-    final axisBinding = _validAxisBinding(binding);
-    if (axisBinding != null) return axisBinding;
-    return null;
   }
 
-  static String? _validAxisBinding(String binding) {
+  static ReviewerAxisButtonBinding? _parseAxisBinding(String binding) {
     if (!binding.startsWith(axisPrefix)) return null;
     final parts = binding.substring(axisPrefix.length).split(' ');
     if (parts.length < 2) return null;
@@ -195,14 +500,10 @@ class ReviewerBindingCodec {
     // canonicalizes both the axis ID and Float value when writing the entry.
     final threshold = _parseJavaFloat(parts[1]);
     if (threshold == null) return null;
-    return '$axisPrefix$axisValue ${_javaFloatToString(threshold)}';
-  }
-
-  static String? _canonicalKeyBinding(String binding) {
-    final parts = _parseModifiers(binding.substring(keyPrefix.length));
-    final keyCode = _parseKotlinInt32(parts.value);
-    if (keyCode == null) return null;
-    return '$keyPrefix${_modifierString(parts)}$keyCode';
+    return ReviewerAxisButtonBinding._(
+      axisValue: axisValue,
+      threshold: threshold,
+    );
   }
 
   static int? _parseKotlinInt32(String value) {
@@ -581,33 +882,6 @@ class ReviewerBindingCodec {
     return negative ? '-$formatted' : formatted;
   }
 
-  static String? _canonicalUnicodeBinding(String binding) {
-    final parts = _parseModifiers(binding.substring(unicodePrefix.length));
-    if (parts.value.isEmpty) return null;
-    // Binding.fromString() takes char[0], i.e. one UTF-16 code unit.
-    final codeUnit = parts.value.codeUnitAt(0);
-    return '$unicodePrefix${_modifierString(parts)}${String.fromCharCode(codeUnit)}';
-  }
-
-  static ({bool ctrl, bool alt, bool shift, String value}) _parseModifiers(
-    String input,
-  ) {
-    final plusIndex = input.lastIndexOf('+');
-    final modifierText = plusIndex < 0 ? '' : input.substring(0, plusIndex + 1);
-    return (
-      ctrl: modifierText.contains('Ctrl'),
-      alt: modifierText.contains('Alt'),
-      shift: modifierText.contains('Shift'),
-      value: plusIndex < 0 ? input : input.substring(plusIndex + 1),
-    );
-  }
-
-  static String _modifierString(
-          ({bool ctrl, bool alt, bool shift, String value}) parts) =>
-      '${parts.ctrl ? 'Ctrl+' : ''}'
-      '${parts.alt ? 'Alt+' : ''}'
-      '${parts.shift ? 'Shift+' : ''}';
-
   static const _axisMotionEventValues = <int>{
     0, // X
     1, // Y
@@ -696,6 +970,16 @@ class ReviewerBindingCodec {
     'FOUR_FINGER_TAP': Gesture.fourFingerTap,
     'SHAKE': Gesture.shake,
   };
+}
+
+int _javaBooleanHash(bool value) => value ? 1231 : 1237;
+
+int _javaObjectsHash(List<int> values) {
+  var result = 1;
+  for (final value in values) {
+    result = (31 * result + value) & 0xFFFFFFFF;
+  }
+  return result >= 0x80000000 ? result - 0x100000000 : result;
 }
 
 String _sideSuffix(ReviewerCardSide side) => switch (side) {

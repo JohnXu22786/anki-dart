@@ -62,10 +62,15 @@ preference encoding/decoding.
 - Reviewer binding preferences: the headless codec preserves `1/` framing,
   `|` list separators, reviewer prefix, gesture enum identifiers, side suffixes,
   permissive reviewer-prefix removal, and the source's unknown-side fallback.
-  It keeps recognized keyboard and Unicode bindings as non-gesture data and
-  validates axis IDs and Java float syntax. Axis values are rounded and written
-  using the source's `Float.toString` style, and extra axis tokens are ignored
-  like the source parser. Motion-event handling is unported.
+  It represents key-code and Unicode bindings as typed values with source
+  modifier parsing and serialization, Kotlin Int32 bounds, UTF-16 code-unit
+  selection, and the distinction between deserialization and the guarded
+  Unicode factory. `isKey`/validity and reviewer-side serialization are modeled;
+  BOTH remains an equality wildcard, and the source's modifier/hash quirks are
+  retained. It also validates axis IDs and Java float syntax. Axis values are
+  rounded and written using the source's `Float.toString` style, and extra axis
+  tokens are ignored like the source parser. Android key events and MotionEvent
+  handling are unported.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
 a `ReviewScheduler` adapter that supplies queue items, backend counts and active
@@ -85,10 +90,10 @@ Rust backend, collection storage, timebox calculation, and scheduling algorithm
 are still external and are not implemented here. This is not yet a complete
 AnkiDroid replacement: Android screens and platform lifecycle integration,
 answer-timer widget/tick rendering, Auto Advance settings controls and
-Android preference lookup, full `Binding` behavior, Android key events,
-binding display strings, axis interpretation, `BindingMap`, touch input and
-reviewer command handlers, study-count and answer-button widgets/layout, next-time
-visibility preference wiring, template rendering and media, timebox
+Android preference lookup, Android `KeyEvent` handling and `possibleKeyBindings`,
+binding display strings, MotionEvent axis interpretation, `BindingMap`, touch
+input and reviewer command handlers, study-count and answer-button widgets/layout,
+next-time visibility preference wiring, template rendering and media, timebox
 presentation, leech handling, reviewer undo/redo, the JavaScript custom-state
 and gesture bridges, WebView state collection, Android timeout lookup, sync,
 import/export, and other app features remain to be ported.

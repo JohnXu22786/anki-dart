@@ -65,11 +65,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `ReviewerBinding.kt`, `Binding.kt`, `Axis.kt`, and `CardSide.kt` declare
   `GPL-3.0-or-later`. Their serialized reviewer-binding codec and gesture
   preference adapter are adapted in `lib/src/reviewer_binding_codec.dart` and
-  `lib/src/gesture_command_router.dart`. Keyboard and Unicode bindings are only
-  recognized for non-gesture round trips; axis IDs, Java float parsing and
-  source-style Float serialization are retained, while runtime axis handling
-  is not included. Android preference lookup, key
-  events, display strings, and `BindingMap` are not included.
+  `lib/src/gesture_command_router.dart`. Serialized key-code and Unicode
+  bindings, modifiers, validity, card-side behavior, and source equality/hash
+  quirks are represented as typed values; axis IDs, Java float parsing, and
+  source-style Float serialization are retained. Android preference lookup,
+  `KeyEvent` handling, `possibleKeyBindings`, MotionEvent axis handling, display
+  strings, and `BindingMap` are not included.
 - `compat/src/main/java/com/ichi2/anki/compat/BaseCompat.kt` is Copyright
   © 2017 Profpatsch <mail@profpatsch.de>. Its fallback gesture-axis IDs are
   referenced by the codec's syntax check; the compatibility layer itself is
@@ -107,11 +108,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   center-tap dispatch, corner and multitap filtering, enabled-state behavior,
   and executor results recorded in `GestureProcessorTest.kt`; it is not a port
   of the Android test harness.
-- `test/reviewer_binding_codec_test.dart` checks serialized binding framing,
+- `test/reviewer_binding_codec_test.dart` and
+  `test/reviewer_binding_types_test.dart` check serialized binding framing,
+  typed key/Unicode parsing, modifiers, UTF-16 behavior, source equality/hash,
   gesture names and sides, permissive prefix and fallback behavior, invalid
-  omission, UTF-16 suffix behavior, and router-adapter filtering recorded in
-  `BindingTest.kt`, `MappableBindingTest.kt`, and applicable
-  `BindingAndroidTest.kt` cases; it is not a port of the Android test harness.
+  omission, and router-adapter filtering recorded in `BindingTest.kt`,
+  `MappableBindingTest.kt`, and applicable `BindingAndroidTest.kt` cases; they
+  are not ports of the Android test harness.
 - Dart adaptations, the review-session controller, timer, Auto Advance and
   gesture models, and new test code are Copyright © 2026 John Tsui.
 

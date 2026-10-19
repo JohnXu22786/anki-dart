@@ -19,7 +19,7 @@ reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
 resolution and Card Browser launch-option precedence. Card Browser search-text
 transitions, text-edit/sync/reset/history-selection/request-submission effect
-sequences, saved-search
+sequences and saved-search submission effects, saved-search
 outcome-message mapping, CardTemplate marker-based string composition and
 verbatim card-content QA wrapping,
 card-template type-answer modifier parsing, and question-side type-answer
@@ -116,6 +116,14 @@ placeholder removal.
   the search. The pinned view-model tests' `submitSearch` helper calls the
   no-argument overload instead, so these ordered-effect tests are source-derived
   and do not claim direct upstream coverage of the request overload.
+- Card Browser saved-search submission: `browserSubmitSavedSearchEffects`
+  applies the direct source effects in order: a shallow-copied User filter
+  update, LF-sanitized text in the active Basic/Advanced buffer, then screen
+  closure. The host's closed-screen flow creates the trimmed request and causes
+  the separate history/submission effects. Pinned tests directly check saved
+  query text, eventual history, view closure, and submitted search; the Dart
+  internal effect-order assertion is source-derived. The host applies the
+  effects and owns StateFlow/coroutine scheduling.
 - Review session: a headless flow that loads the scheduler's current card, shows
   its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
   the next queue item. It waits for the current card's state-mutation hook

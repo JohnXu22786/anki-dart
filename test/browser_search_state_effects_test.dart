@@ -17,9 +17,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Behavioral reference: `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/
- * CardBrowserSearchViewModel.kt`, methods `syncState` and `resetSearchState`.
- * The pinned source marks reset as `@NeedsTest("reset")`; no direct upstream
- * test covers either method. See ANKIDROID_UPSTREAM.md.
+ * CardBrowserSearchViewModel.kt`, methods `submitSavedSearch`, `syncState`, and
+ * `resetSearchState`. The pinned source marks reset as `@NeedsTest("reset")`;
+ * no direct upstream test covers sync/reset. Direct tests cover saved-search
+ * results but not the internal effect order. See ANKIDROID_UPSTREAM.md.
  */
 
 import 'package:anki_dart/anki_dart.dart';
@@ -149,6 +150,104 @@ void main() {
         ],
       );
       expect(removedKeys, isNot(contains('historyExpanded')));
+    });
+
+    group('submitSavedSearch', () {
+      test('edits Basic text before closing and preserves the query value', () {
+        final filters = BrowserSearchFilters(
+          decks: [const BrowserDeckNameId(name: 'Deck', id: 4)],
+          flags: [1],
+          tags: ['tag'],
+          noteTypes: [const BrowserNoteTypeNameId(name: 'Basic', id: 2)],
+          cardStateCodes: [3],
+        );
+        const textState = BrowserSearchTextState(
+          isAdvancedSearch: false,
+          basicText: 'old basic',
+          advancedText: 'keep advanced',
+        );
+        const savedSearch = BrowserSavedSearch(
+          name: 'saved',
+          query: '  sample\nquery \r\nend  ',
+        );
+
+        final effects = browserSubmitSavedSearchEffects(
+          savedSearch,
+          currentFilters: filters,
+          textState: textState,
+        );
+
+        expect(
+          effects.map((effect) => effect.runtimeType),
+          [
+            BrowserFilterUpdateEffect,
+            BrowserBasicSearchTextEffect,
+            BrowserSearchScreenOpenEffect,
+          ],
+        );
+        final update = (effects[0] as BrowserFilterUpdateEffect).update;
+        expect(update, isA<BrowserFilterUpdateUser>());
+        expect(identical(update.state, filters), isFalse);
+        expect(identical(update.state.decks, filters.decks), isTrue);
+        expect(identical(update.state.flags, filters.flags), isTrue);
+        expect(identical(update.state.tags, filters.tags), isTrue);
+        expect(identical(update.state.noteTypes, filters.noteTypes), isTrue);
+        expect(
+          identical(update.state.cardStateCodes, filters.cardStateCodes),
+          isTrue,
+        );
+        expect(
+          (effects[1] as BrowserBasicSearchTextEffect).text,
+          '  sample query \r end  ',
+        );
+        expect((effects[2] as BrowserSearchScreenOpenEffect).isOpen, isFalse);
+
+        final after =
+            effects.fold(textState, browserSearchTextStateAfterEffect);
+        expect(after.basicText, '  sample query \r end  ');
+        expect(after.advancedText, 'keep advanced');
+        expect(
+          effects.every(
+            (effect) =>
+                effect is BrowserFilterUpdateEffect ||
+                effect is BrowserBasicSearchTextEffect ||
+                effect is BrowserSearchScreenOpenEffect,
+          ),
+          isTrue,
+        );
+      });
+
+      test('edits Advanced text only when Advanced mode is selected', () {
+        const textState = BrowserSearchTextState(
+          isAdvancedSearch: true,
+          basicText: 'keep basic',
+          advancedText: 'old advanced',
+        );
+
+        final effects = browserSubmitSavedSearchEffects(
+          const BrowserSavedSearch(name: 'saved', query: 'type:\ncloze'),
+          currentFilters: const BrowserSearchFilters(tags: ['existing']),
+          textState: textState,
+        );
+
+        expect(
+          effects.map((effect) => effect.runtimeType),
+          [
+            BrowserFilterUpdateEffect,
+            BrowserAdvancedSearchTextEffect,
+            BrowserSearchScreenOpenEffect,
+          ],
+        );
+        expect(
+          (effects[1] as BrowserAdvancedSearchTextEffect).text,
+          'type: cloze',
+        );
+        final after =
+            effects.fold(textState, browserSearchTextStateAfterEffect);
+        expect(after.basicText, 'keep basic');
+        expect(after.advancedText, 'type: cloze');
+        expect((effects.last as BrowserSearchScreenOpenEffect).isOpen, isFalse);
+      });
     });
   });
 }

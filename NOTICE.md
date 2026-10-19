@@ -285,7 +285,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `CardBrowserSearchViewModel.kt`'s `addSavedSearch`/`deleteSavedSearch` methods
   and `UserMessage` enum is adapted in `lib/src/browser_saved_search_messages.dart`;
   only message identifiers are returned, while localization, UI and message-flow
-  delivery remain with the host.
+  delivery remain with the host. `submitSavedSearch`'s direct filter/text/close
+  effect sequence is adapted in `lib/src/browser_search_state_effects.dart`;
+  the downstream closed-screen search flow, request generation, and history
+  effects remain separate host-applied behavior.
 - Behavioral cases in `test/deck_filters_test.dart` are adapted from
   `DeckFiltersTest.kt`, Copyright © 2026 Arthur Milchior.
 - Behavioral cases in `test/deck_list_test.dart` are adapted from
@@ -355,6 +358,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and the exact three SavedState keys removed. The pinned source marks reset
   `@NeedsTest("reset")` but has no direct test for either method; host execution
   and coroutine scheduling remain outside this test.
+- The same `test/browser_search_state_effects_test.dart` also checks the
+  source-derived internal effect order for `submitSavedSearch`. Pinned
+  `CardBrowserSearchViewModelTest.kt` directly covers the resulting query text,
+  history entry, close event, and submitted search, but does not assert this
+  internal order. StateFlow scheduling and downstream request/history effects
+  remain host-side.
 - `test/browser_search_submit_effects_test.dart` adds source-derived cases for
   the `SearchRequest` submit overload: trimmed ID-based history conversion,
   history Loading before close-view and request events, blank-query history

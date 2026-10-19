@@ -16,8 +16,9 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Behavioral reference: `selectSearchHistoryEntry`, `submitCurrentSearch`,
- * `onSearchTextChanged`, `syncState`, and `resetSearchState` in
+ * Behavioral reference: `selectSearchHistoryEntry`, `submitSavedSearch`,
+ * `submitCurrentSearch`, `onSearchTextChanged`, `syncState`, and
+ * `resetSearchState` in
  * CardBrowserSearchViewModel.kt, plus `SearchFilters.from` and
  * `SearchRequest.toHistoryEntry`, AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
@@ -27,6 +28,7 @@ import 'browser_search_history.dart';
 import 'browser_search_history_display.dart';
 import 'browser_search_request.dart';
 import 'browser_search_text_state.dart';
+import 'browser_saved_searches.dart';
 
 /// A single ordered effect from Card Browser search state transitions.
 ///
@@ -170,6 +172,27 @@ List<BrowserSearchStateEffect> browserOnSearchTextChangedEffects(
       BrowserBasicSearchTextEffect(textAfterEdit.basicText),
   ]);
 }
+
+/// Projects the direct effects of `submitSavedSearch(search)`.
+///
+/// The source edits text from the saved query first, which replaces LF with
+/// ASCII spaces, emits a shallow-copied User filter update, and changes only
+/// the active text buffer. It then closes the search screen. The resulting
+/// request/history work is produced asynchronously by the host's closed-screen
+/// search flow and is not included here.
+List<BrowserSearchStateEffect> browserSubmitSavedSearchEffects(
+  BrowserSavedSearch search, {
+  required BrowserSearchFilters currentFilters,
+  required BrowserSearchTextState textState,
+}) =>
+    List.unmodifiable([
+      ...browserOnSearchTextChangedEffects(
+        search.query,
+        currentFilters: currentFilters,
+        textState: textState,
+      ),
+      const BrowserSearchScreenOpenEffect(isOpen: false),
+    ]);
 
 /// Projects AnkiDroid's `syncState` calls in their source order.
 ///

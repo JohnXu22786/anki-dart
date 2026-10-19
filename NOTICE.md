@@ -65,6 +65,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/reviewer_command_defaults.dart`, preserving symbolic key names,
   Unicode values, sides, modifiers, order, and empty entries. The host supplies
   numeric Android key-code mappings, and preference fallback is not integrated.
+- `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/AnswerButtons.kt` and
+  `AutomaticAnswer.kt` declare `GPL-3.0-or-later`. Their answer-rating to
+  `ViewerCommand` mapping, automatic-action config values, unknown-value
+  fallback, and optional command result are adapted in
+  `lib/src/reviewer_answer_action.dart`. The upstream REUSE annotation attributes
+  Kotlin source copyright to Contributors to the AnkiDroid project. Deck-config
+  access, command execution, logging, and localized reminder UI remain with the
+  host.
 - `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/MappableBinding.kt`,
   `ReviewerBinding.kt`, `Binding.kt`, `Axis.kt`, and `CardSide.kt` declare
   `GPL-3.0-or-later`. Their serialized reviewer-binding codec and gesture

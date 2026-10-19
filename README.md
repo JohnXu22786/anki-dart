@@ -6,7 +6,7 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes twenty source-mapped slices: deck-picker behavior,
+The current port includes twenty-one source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation, Card Browser active-column and sort preference models, recent-search
@@ -14,7 +14,8 @@ ordering, JSON serialization, display state, saved-history request restoration,
 structured search-node planning, the answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
 command routing, reviewer binding codec/map and default definitions, and
-headless reviewer keyboard and axis-button dispatch.
+headless reviewer keyboard and axis-button dispatch, plus answer-button command
+mapping and AutomaticAnswer action decoding.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -134,6 +135,11 @@ headless reviewer keyboard and axis-button dispatch.
   than dropping a binding. The host uses these defaults only when its preference
   lookup reports no configured value; explicitly configured empty/invalid
   preferences remain a separate codec and host decision.
+- Reviewer answer mappings: `AnswerButtons` maps Again, Hard, Good, and Easy to
+  their corresponding `ViewerCommand`. `AutomaticAnswerAction` preserves config
+  values 0–4 and the source unknown-value fallback to Bury Card; its reminder
+  action has no command. Deck-config access, command execution, logging, and
+  localized reminder UI remain with the host.
 - Reviewer keyboard dispatch: `dispatchReviewerKeyEvent` consumes a host-
   supplied key event projection and `ReviewerBindingMap`. It ignores repeat
   events, tries a nonzero key code before the precomputed Unicode result,

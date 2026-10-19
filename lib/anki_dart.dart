@@ -33,6 +33,7 @@ export 'src/answer_timer.dart';
 export 'src/gesture_parser.dart';
 export 'src/gesture_command_router.dart';
 export 'src/reviewer_command_defaults.dart';
+export 'src/reviewer_answer_action.dart';
 export 'src/reviewer_binding_codec.dart';
 export 'src/reviewer_binding_map.dart';
 export 'src/reviewer_key_dispatch.dart';

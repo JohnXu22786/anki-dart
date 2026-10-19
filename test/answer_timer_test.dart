@@ -20,6 +20,8 @@
  * AnswerTimerTest.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
+import 'dart:async';
+
 import 'package:anki_dart/anki_dart.dart';
 import 'package:test/test.dart';
 
@@ -53,21 +55,89 @@ void main() {
       final timer = AnswerTimer(elapsedRealtime: clock.read)
         ..configureForCard(shouldShow: true, limitMs: 5000);
 
-      final states = timer.stateStream.take(4).toList();
+      final states = StreamIterator<AnswerTimerState>(timer.stateStream);
+      expect(await states.moveNext(), isTrue);
+      expect(states.current,
+          const AnswerTimerRunning(baseTime: 1000, limitMs: 5000));
       clock.now = 2000;
       timer.onPause();
+      expect(await states.moveNext(), isTrue);
+      expect(states.current,
+          const AnswerTimerPaused(elapsedTimeMs: 1000, limitMs: 5000));
       clock.now = 4000;
       timer.onResume();
+      expect(await states.moveNext(), isTrue);
+      expect(states.current,
+          const AnswerTimerRunning(baseTime: 3000, limitMs: 5000));
       timer.hide();
+      expect(await states.moveNext(), isTrue);
+      expect(states.current, const AnswerTimerHidden());
+      await states.cancel();
+    });
 
-      expect(
-        await states,
-        const <AnswerTimerState>[
-          AnswerTimerRunning(baseTime: 1000, limitMs: 5000),
-          AnswerTimerPaused(elapsedTimeMs: 1000, limitMs: 5000),
-          AnswerTimerRunning(baseTime: 3000, limitMs: 5000),
-          AnswerTimerHidden(),
-        ],
+    test('state stream conflates rapid pending transitions to the latest',
+        () async {
+      final clock = _FakeClock(1000);
+      final timer = AnswerTimer(elapsedRealtime: clock.read)
+        ..configureForCard(shouldShow: true, limitMs: 5000);
+      final states = StreamIterator<AnswerTimerState>(timer.stateStream);
+
+      expect(await states.moveNext(), isTrue);
+      expect(states.current,
+          const AnswerTimerRunning(baseTime: 1000, limitMs: 5000));
+      clock.now = 2000;
+      timer.onPause();
+      clock.now = 3000;
+      timer.onResume();
+      timer.hide();
+      expect(await states.moveNext(), isTrue);
+      expect(states.current, const AnswerTimerHidden());
+      await states.cancel();
+    });
+
+    test('state stream replays the latest value if replay is still pending',
+        () async {
+      final clock = _FakeClock(1000);
+      final timer = AnswerTimer(elapsedRealtime: clock.read)
+        ..configureForCard(shouldShow: true, limitMs: 5000);
+      final states = <AnswerTimerState>[];
+      final subscription = timer.stateStream.listen(states.add);
+
+      scheduleMicrotask(timer.hide);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(states, const <AnswerTimerState>[AnswerTimerHidden()]);
+      await subscription.cancel();
+    });
+
+    test('state stream reads the latest state when replay is delivered',
+        () async {
+      final clock = _FakeClock(1000);
+      final timer = AnswerTimer(elapsedRealtime: clock.read)
+        ..configureForCard(shouldShow: true, limitMs: 5000);
+      final states = <AnswerTimerState>[];
+      var replacePendingReplay = false;
+      late StreamSubscription<AnswerTimerState> subscription;
+
+      await runZoned(
+        () async {
+          subscription = timer.stateStream.listen(states.add);
+          replacePendingReplay = true;
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          expect(states, const <AnswerTimerState>[AnswerTimerHidden()]);
+          await subscription.cancel();
+        },
+        zoneSpecification: ZoneSpecification(
+          scheduleMicrotask: (self, parent, zone, callback) {
+            parent.scheduleMicrotask(zone, () {
+              if (replacePendingReplay) {
+                replacePendingReplay = false;
+                timer.hide();
+              }
+              callback();
+            });
+          },
+        ),
       );
     });
 

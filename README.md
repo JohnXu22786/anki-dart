@@ -6,12 +6,13 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes five source-mapped slices: deck-picker behavior, the
+The current port includes six source-mapped slices: deck-picker behavior, the
 headless review-session lifecycle, reviewer count/next-time presentation
-models, the answer-timer state machine, and reviewer Auto Advance.
+models, the answer-timer state machine, reviewer Auto Advance, and the
+headless reviewer gesture parser.
 
-- Deck-picker search: token and deck-path matching, with query casing from the
-  locale at parse time and locale-aware deck-name casing, including contextual
+- Deck-picker search: token and deck-path matching, with locale-invariant query
+  casing and locale-aware deck-name casing, including contextual
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and
   partial `:` / `::` searches;
 - Deck-picker rows and due count: flattening a deck tree into visible rows,
@@ -30,7 +31,8 @@ models, the answer-timer state machine, and reviewer Auto Advance.
   Easy order without deriving intervals in Dart.
 - Answer timer: the hidden/running/paused/stopped model, including card
   configuration, elapsed-time clamping, stop/hide, and lifecycle pause/resume
-  transitions. Its state stream replays the current state and emits transitions.
+  transitions. Its state stream replays the current state and conflates rapid
+  pending updates like `MutableStateFlow`.
   The host supplies a monotonic millisecond clock corresponding to Android
   `SystemClock.elapsedRealtime()` and calls pause/resume; this model does not
   drive periodic UI ticks or register lifecycle observers.
@@ -39,6 +41,13 @@ models, the answer-timer state machine, and reviewer Auto Advance.
   supplied by an adapter. An injectable delay scheduler supports deterministic
   timing. Same-side visibility events overwrite the tracked job without
   cancelling its earlier timer, matching the pinned source behavior.
+- Reviewer gestures: decoded gesture inputs map to two-, three-, and
+  four-finger taps, four- or nine-point taps, and directional swipes. The model
+  preserves viewport scale and scroll adjustment, strict swipe thresholds,
+  scrollable-content suppression, malformed-input callback behavior, and the
+  source's asynchronous single/double-tap timing and same-side timer overwrite.
+  It retains the zero-valued last-tap sentinel behavior for early event times
+  and signed 64-bit timestamp subtraction.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
 a `ReviewScheduler` adapter that supplies queue items, backend counts and active
@@ -58,9 +67,10 @@ answer-timer widget/tick rendering, Auto Advance settings controls and reviewer
 action routing, study-count and answer-button widgets/layout, next-time
 visibility preference wiring, template rendering and media, timebox
 presentation, leech handling, reviewer undo/redo, the JavaScript custom-state
-bridge, sync, import/export, and other app features remain to be ported. The
-source project has thousands of
-files, so this repository does not claim full feature parity.
+and gesture bridges, WebView state collection, gesture preferences and Android
+timeout lookup, sync, import/export, and other app features remain to be ported.
+The source project has thousands of files, so this repository does not claim
+full feature parity.
 
 The port preserves the source behavior for the covered slices, including search
 and collapse quirks, reviewer action ordering, question/answer transitions, the
@@ -72,6 +82,11 @@ adapter; this port does not intentionally correct upstream bugs. See the tests
 and upstream mapping for the specific behaviors and source files. Auto Advance
 preserves the integer action codes and invalid-code fallbacks, delays and
 cancellation boundaries, and the same-side job-overwrite quirk.
+The gesture model also keeps strict grid and diagonal boundaries, Float
+threshold and coordinate behavior, and the stale same-side tap job when a
+double tap cancels only the latest scheduled job. The caller supplies tap mode,
+swipe sensitivity, and the platform double-tap timeout; the model does not read
+Android preferences or WebView properties.
 
 ## Use and verify
 
@@ -93,11 +108,11 @@ matching SPDX license text is included at
 SPDX notices remain in each adapted Dart source file. See [NOTICE.md](NOTICE.md)
 for source-file attribution.
 
-The locale-casing property ranges and lowercase mappings in
-`lib/src/unicode_15_case_data.dart` are derived from Unicode 15.0.0 UCD data
-(`UnicodeData.txt`, `PropList.txt`, `DerivedCoreProperties.txt`, and
-`SpecialCasing.txt`), Copyright © 2022 Unicode, Inc., and are distributed under
-Unicode License V3 (`LicenseRef-Unicode-License-V3`). Its notice is retained
+The locale-casing property ranges, lowercase mappings, and BMP decimal-digit
+block starts in `lib/src/unicode_15_case_data.dart` are derived from Unicode
+15.0.0 UCD data (`UnicodeData.txt`, `PropList.txt`, `DerivedCoreProperties.txt`,
+and `SpecialCasing.txt`), Copyright © 2022 Unicode, Inc., and are distributed
+under Unicode License V3 (`LicenseRef-Unicode-License-V3`). Its notice is retained
 separately in
 [`LICENSES/Unicode-License-V3.txt`](LICENSES/Unicode-License-V3.txt); the
 AnkiDroid code license does not replace this data notice.

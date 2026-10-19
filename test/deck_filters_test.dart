@@ -47,14 +47,12 @@ void main() {
       expect(doubleColon.accept('foo::bar::bu::plop'), isTrue);
     });
 
-    test(
-        'matches dotted and dotless i across path positions and Turkish casing',
-        () {
+    test('uses invariant query casing with Turkish deck-name casing', () {
       expect(DeckFilter.containsAtPosition('ı', 1, 'i', 1), isTrue);
       expect(DeckFilter.containsAtPosition('I', 1, 'ı', 1), isTrue);
       expect(DeckFilter.containsAtPosition('i', 1, 'İ', 1), isTrue);
-      expect(DeckFilters.create('I', localeName: 'tr_TR').accept('ı'), isTrue);
-      expect(DeckFilters.create('I', localeName: 'tr_TR').accept('i'), isFalse);
+      expect(DeckFilters.create('I', localeName: 'tr_TR').accept('ı'), isFalse);
+      expect(DeckFilters.create('I', localeName: 'tr_TR').accept('i'), isTrue);
       expect(DeckFilters.create('i', localeName: 'tr_TR').accept('I'), isTrue);
       expect(DeckFilters.create('ı', localeName: 'tr_TR').accept('I'), isTrue);
     });

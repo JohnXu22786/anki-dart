@@ -47,6 +47,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   contract, action codes, delay dispatch, and cancellation behavior are adapted
   in `lib/src/auto_advance.dart`; the Android collection settings lookup and
   reviewer action routing are not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`
+  and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` declare
+  `GPL-3.0-or-later`. Their gesture enums, decoded-input decisions, viewport
+  mapping, and tap timing are adapted in `lib/src/gesture_parser.dart`; Android
+  Uri/WebView/preferences integration is not included.
 - `libanki/src/main/java/com/ichi2/anki/libanki/DeckConfig.kt` is Copyright
   © 2020 David Allison <davidallisongithub@gmail.com> and Arthur Milchior
   <Arthur@Milchior.fr>. Its Auto Advance fields and defaults remain behind the
@@ -73,16 +78,20 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/auto_advance_test.dart` checks the delay, cancellation, deck-setting,
   action-code, and same-side behavior recorded in `AutoAdvanceTest.kt`; it is
   not a port of the Android test harness.
-- Dart adaptations, the review-session controller, timer and Auto Advance
-  models, and new test code are Copyright © 2026 John Tsui.
+- `test/gesture_parser_test.dart` checks the input, target, swipe, scroll,
+  malformed-data, and asynchronous timing behavior recorded in
+  `GestureParserTest.kt`; it is not a port of the Android test harness.
+- Dart adaptations, the review-session controller, timer, Auto Advance and
+  gesture models, and new test code are Copyright © 2026 John Tsui.
 
 ## Unicode property data
 
 The locale-casing property ranges and full lowercase mappings in
 `lib/src/unicode_15_case_data.dart` are derived from Unicode 15.0.0
 `UnicodeData.txt`, `PropList.txt`, `DerivedCoreProperties.txt`, and
-`SpecialCasing.txt`, Copyright © 2022 Unicode, Inc. This data is distributed
-under Unicode License V3. Its local SPDX identifier is
+`SpecialCasing.txt`; the BMP decimal-digit block starts in the same file are
+derived from Unicode 15.0.0 `UnicodeData.txt`. Copyright © 2022 Unicode, Inc.
+This data is distributed under Unicode License V3. Its local SPDX identifier is
 `LicenseRef-Unicode-License-V3`; the license text is included at
 `LICENSES/Unicode-License-V3.txt`.
 
@@ -92,5 +101,6 @@ dependency and is not redistributed here. See the notices in each source file
 and the full license text in `COPYING` and `LICENSES/GPL-3.0-or-later.txt`.
 
 The tests were written against the behavior documented and exercised by
-AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, reviewer flow, and
-`AnswerTimerTest.kt`. They are not a port of the Android test harness.
+AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, reviewer flow,
+`AnswerTimerTest.kt`, and `GestureParserTest.kt`. They are not a port of the
+Android test harness.

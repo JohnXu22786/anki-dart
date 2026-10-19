@@ -107,27 +107,59 @@ final class AnswerTimerStopped extends AnswerTimerState {
 class AnswerTimer {
   AnswerTimer({required ElapsedRealtimeClock elapsedRealtime})
       : _elapsedRealtime = elapsedRealtime,
-        _stateController = StreamController<AnswerTimerState>.broadcast();
+        _stateController = StreamController<void>.broadcast();
 
   final ElapsedRealtimeClock _elapsedRealtime;
-  final StreamController<AnswerTimerState> _stateController;
+  final StreamController<void> _stateController;
   AnswerTimerState _state = const AnswerTimerHidden();
 
   /// The latest state, initially [AnswerTimerHidden].
   AnswerTimerState get state => _state;
 
-  /// Emits the current state to each listener, then each distinct transition.
-  Stream<AnswerTimerState> get stateStream =>
-      Stream<AnswerTimerState>.multi((controller) {
-        controller.add(_state);
-        final subscription = _stateController.stream.listen(controller.add);
-        controller.onCancel = subscription.cancel;
-      }, isBroadcast: true);
+  /// Replays the current state and conflates rapid pending updates per listener.
+  /// This mirrors `StateFlow` when multiple states change before a collector
+  /// can process them.
+  Stream<AnswerTimerState> get stateStream => Stream<void>.multi((controller) {
+        Timer? pendingNotification;
+        var isPaused = false;
+        var isCancelled = false;
+
+        void notifyLatest() {
+          if (isPaused || isCancelled || pendingNotification != null) return;
+          pendingNotification = Timer(Duration.zero, () {
+            pendingNotification = null;
+            if (!isPaused && !isCancelled) controller.add(null);
+          });
+        }
+
+        final subscription =
+            _stateController.stream.listen((_) => notifyLatest());
+        controller.onPause = () {
+          isPaused = true;
+          pendingNotification?.cancel();
+          pendingNotification = null;
+        };
+        controller.onResume = () {
+          isPaused = false;
+          notifyLatest();
+        };
+        controller.onCancel = () {
+          isCancelled = true;
+          pendingNotification?.cancel();
+          pendingNotification = null;
+          return subscription.cancel();
+        };
+        notifyLatest();
+      }, isBroadcast: true)
+          // Notifications carry no snapshot: a state change before delivery is
+          // picked up here instead of emitting the superseded state.
+          .map((_) => _state)
+          .distinct();
 
   void _setState(AnswerTimerState state) {
     if (_state == state) return;
     _state = state;
-    _stateController.add(state);
+    _stateController.add(null);
   }
 
   /// Reconfigures the timer for a card, starting it only when [shouldShow].

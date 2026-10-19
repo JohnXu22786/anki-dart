@@ -166,7 +166,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   credits Daniel Svärd, Rick Gruber-Riemer, Norbert Nagold, Kostas Spyropoulos,
   and David Allison. Both files also identify separately incorporated AGPL
   material; none of that backend implementation is copied here. Collection
-  access, backend query generation, and execution are not included.
+  access, backend query generation, and execution are not included. The view
+  model's `FilterUpdate` origin and one-snapshot request projection are adapted
+  in `lib/src/browser_filter_update.dart`; StateFlow/coroutine timing and
+  field-specific setter updates remain with the host.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`, and

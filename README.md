@@ -202,6 +202,12 @@ backend conversion. Backend protobuf SearchNode conversion, query parsing and
 validation, final SearchString serialization, query execution, and search UI
 stay outside the model. Search text and filters may contain user-provided
 data, so storage and privacy handling remain the host's duty.
+`BrowserFilterUpdate` models user-versus-system filter origins and the source's
+initial empty System state. For one supplied snapshot, its request projection
+returns nothing while the screen is open or for a System update; a closed-screen
+User update carries the exact filters and Kotlin-trimmed text into a request.
+The host supplies the snapshot and owns field-specific setters, StateFlow and
+coroutine timing, collection access, and search execution.
 `BrowserSearchHistoryDisplayModel` separately projects the supplied Loading or
 Loaded history into a five-entry collapsed or full expanded list. The host owns
 search-string conversion, SavedStateHandle/StateFlow lifecycle, and rendering

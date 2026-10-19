@@ -22,6 +22,7 @@ export 'src/deck_node.dart';
 export 'src/display_deck_node.dart';
 export 'src/auto_advance.dart';
 export 'src/browser_column_collection.dart';
+export 'src/browser_launch_options.dart';
 export 'src/card_appearance_css.dart';
 export 'src/card_template.dart';
 export 'src/browser_availability.dart';

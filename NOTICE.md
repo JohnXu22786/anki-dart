@@ -187,6 +187,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   across both modes. It does not
   access Android preferences, collection config, or perform backend sorting.
   `BrowserConfig.kt` constants and lookup code are not copied.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserLaunchOptions.kt`
+  and the related extra names in `CardBrowserViewModel.kt` are declared
+  `GPL-3.0-or-later`. Their ordered deep-link, JavaScript-search, card-ID, and
+  process-text option projection is adapted in
+  `lib/src/browser_launch_options.dart`. The host supplies already-decoded
+  values; Android Intent/Uri access and navigation remain outside.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/SearchHistory.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`, and
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardState.kt` declare

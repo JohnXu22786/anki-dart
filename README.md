@@ -17,8 +17,9 @@ reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
 command routing, reviewer binding codec/map and default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
-resolution, plus Card Browser search-text transitions, text-edit/sync/reset/
-history-selection/request-submission effect sequences, saved-search
+resolution and Card Browser launch-option precedence. Card Browser search-text
+transitions, text-edit/sync/reset/history-selection/request-submission effect
+sequences, saved-search
 outcome-message mapping, CardTemplate marker-based string composition and
 verbatim card-content QA wrapping,
 card-template type-answer modifier parsing, and question-side type-answer
@@ -45,6 +46,12 @@ placeholder removal.
   wrong-typed values to `noteFld` and forward order, treats an unknown column as no ordering, and
   creates ordered save plans without touching Android or collection storage.
   The shared no-sorting flag retains the source's cross-mode behavior.
+- Card Browser launch options: `browserLaunchOptionFromInput` selects the first
+  host-decoded deep-link search, JavaScript search, card ID, or non-empty
+  process-text search in AnkiDroid's source order. Empty deep-link and
+  JavaScript query values remain present; the host supplies `all_decks` with a
+  false default. Android `Intent`/`Uri` extraction, extra decoding and browser
+  navigation remain host-side.
 - Card Browser recent searches: `BrowserSearchHistoryModel` keeps searches
   newest-first, promotes structurally equal entries, skips the default blank
   search, and trims history to the source's 30-entry cap.
@@ -339,7 +346,8 @@ Rust backend, collection storage, and scheduling algorithm remain external.
 `ReviewTimeboxTracker` consumes clock, configured-limit, and answer-count
 callbacks; it does not load settings or collection state. This is not yet a
 complete AnkiDroid replacement: Android screens and platform lifecycle integration,
-Card Browser SharedPreferences and mode lookup, saved-search config IO, localized
+Card Browser Intent/Uri parsing and navigation for mapped launch options,
+SharedPreferences and mode lookup, saved-search config IO, localized
 outcome-message delivery and UI,
 collection-backed deck/note-type lookup, backend query-string generation and
 backend SearchNode conversion, query parsing/validation, final SearchString

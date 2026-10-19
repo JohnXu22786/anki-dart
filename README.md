@@ -6,15 +6,15 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes seventeen source-mapped slices: deck-picker behavior,
+The current port includes eighteen source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation, Card Browser active-column and sort preference models, recent-search
 ordering, JSON serialization, display state, saved-history request restoration,
 structured search-node planning, the answer-timer state machine,
-reviewer Auto Advance, the headless reviewer
-gesture parser, parsed-gesture command routing, and the reviewer binding
-codec/map.
+reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
+command routing, reviewer binding codec/map, and headless reviewer keyboard
+dispatch.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -125,8 +125,18 @@ codec/map.
   result, skips unknown bindings, and lists axis registrations separately.
   This differs from `GestureCommandRouter`, whose source-mapped behavior lets
   the later command overwrite a duplicate gesture. `ReviewerBindingMap` only
-  returns registrations; the existing router API and optional executor remain
-  unchanged.
+  returns registrations; Android preferences and event decoding remain with
+  the host.
+- Reviewer keyboard dispatch: `dispatchReviewerKeyEvent` consumes a host-
+  supplied key event projection and `ReviewerBindingMap`. It ignores repeat
+  events, tries a nonzero key code before the precomputed Unicode result,
+  constructs candidates with the event's Shift/Ctrl/Alt states, applies
+  Kotlin's low-16-bit `Int.toChar` behavior, omits the `|` separator
+  candidate, and calls registrations in source order until one returns true.
+  Binding lookup keeps source equality behavior, including shift-tolerant
+  app-defined Unicode bindings. The adapter computes
+  `getUnicodeChar(metaState & (META_SHIFT_ON | META_NUM_LOCK_ON))`; Android
+  `KeyEvent` access and keyboard-layout lookup remain outside.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
 a `ReviewScheduler` adapter that supplies queue items, backend counts and active
@@ -191,9 +201,10 @@ updates, Card Browser sort UI, Android preference/synced-config IO, and actual
 backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, previewer flags/marks/note editing, answer-timer widget/tick rendering, Auto Advance settings controls and
-Android preference lookup, Android `KeyEvent` handling and `possibleKeyBindings`,
-binding display strings, MotionEvent axis interpretation, `BindingProcessor`
-callbacks, command execution, touch input and reviewer command handlers,
+Android preference lookup, `KeyEvent` extraction and hardware/layout
+`getUnicodeChar()` calculation, binding display strings, MotionEvent axis
+interpretation, Android `BindingProcessor` wiring, command execution, touch
+input and reviewer command handlers,
 study-count and answer-button widgets/layout, next-time visibility preference
 wiring, template rendering and media, localized timebox messages, dialog and
 lifecycle presentation, leech handling, reviewer undo/redo, JavaScript custom-

@@ -69,12 +69,15 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   bindings, modifiers, validity, card-side behavior, and source equality/hash
   quirks are represented as typed values; axis IDs, Java float parsing, and
   source-style Float serialization are retained. Android preference lookup,
-  `KeyEvent` handling, `possibleKeyBindings`, MotionEvent axis handling, display
-  strings, `BindingProcessor`, and command execution are not included. The
+  `KeyEvent` extraction, platform `getUnicodeChar()` calculation,
+  MotionEvent axis handling, display strings, Android `BindingProcessor`
+  wiring, and command execution are not included. The
   headless key/gesture registration and lookup behavior from
   `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/BindingMap.kt` is adapted in
   `lib/src/reviewer_binding_map.dart`; axis registrations are retained without
-  MotionEvent matching.
+  MotionEvent matching. Projected key candidate construction and sequential
+  dispatch are adapted in `lib/src/reviewer_key_dispatch.dart`; the host must
+  supply the Unicode result computed with the Shift/NumLock meta-state mask.
 - `compat/src/main/java/com/ichi2/anki/compat/BaseCompat.kt` is Copyright
   © 2017 Profpatsch <mail@profpatsch.de>. Its fallback gesture-axis IDs are
   referenced by the codec's syntax check; the compatibility layer itself is
@@ -233,8 +236,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/reviewer_binding_map_test.dart` checks ordered duplicate registration,
   side-independent lookup with the original side retained, separate axis
   registrations, and skipping unknown bindings, based on `BindingMap.kt` and
-  `BindingMapTest.kt`; Android event handling and processor execution are not
+  `BindingMapTest.kt`; Android event decoding and command execution are not
   included.
+- `test/reviewer_key_dispatch_test.dart` checks projected key candidate order,
+  modifier matching, repeat suppression, Unicode code-unit truncation and
+  separator omission, and callback order/short-circuit behavior from
+  `Binding.kt` and `BindingMap.kt`; it does not test Android `KeyEvent` access
+  or keyboard-layout Unicode generation.
 - Dart adaptations, the review-session controller, timer, Auto Advance and
   gesture models, and new test code are Copyright © 2026 John Tsui.
 
@@ -258,5 +266,6 @@ The tests were written against the behavior documented and exercised by
 AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, reviewer flow,
 `AnswerTimerTest.kt`, `GestureParserTest.kt`, `GestureProcessorTest.kt`,
 `BindingTest.kt`, `MappableBindingTest.kt`, `BindingMap.kt`,
-`BindingMapTest.kt`, and applicable `BindingAndroidTest.kt` cases.
+`BindingMapTest.kt`, and applicable `BindingAndroidTest.kt` cases, including
+the projected key dispatch behavior in `Binding.kt` and `BindingMap.kt`.
 They are not a port of the Android test harness.

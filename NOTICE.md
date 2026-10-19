@@ -119,12 +119,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   across both modes. It does not
   access Android preferences, collection config, or perform backend sorting.
   `BrowserConfig.kt` constants and lookup code are not copied.
-- `AnkiDroid/src/main/java/com/ichi2/anki/browser/SearchHistory.kt` declares
-  `GPL-3.0-or-later`. Its in-memory entry equality, blank-search detection, and
-  recency/eviction transitions are adapted in
-  `lib/src/browser_search_history.dart`. The host supplies entries and handles
-  SharedPreferences and the upstream JSON format; entries may contain
-  user-provided search text and filters.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/SearchHistory.kt`,
+  `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`, and
+  `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardState.kt` declare
+  `GPL-3.0-or-later`; `libanki/src/main/java/com/ichi2/anki/libanki/PythonTypes.kt`
+  (Copyright © 2021 David Allison, GPL-3.0-or-later) defines the signed-long
+  `DeckId` and `NoteTypeId`. Search-history equality,
+  blank detection, recency/eviction, and compact JSON encoding/decoding are
+  adapted in `lib/src/browser_search_history.dart` and
+  `lib/src/browser_search_history_json.dart`. The codec preserves source field
+  names/order and invalid-whole-list fallback; the host handles SharedPreferences
+  and entries may contain user-provided search text and filters.
 - Behavioral cases in `test/deck_filters_test.dart` are adapted from
   `DeckFiltersTest.kt`, Copyright © 2026 Arthur Milchior.
 - Behavioral cases in `test/deck_list_test.dart` are adapted from
@@ -147,10 +152,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `SortTypeTest.kt`, plus typed config fallback behavior from `Config.kt`,
   including the source's global no-sorting behavior; it does not port
   preference/config storage or the Android test harness.
-- `test/browser_search_history_test.dart` adapts the recency, duplicate,
-  truncation, removal, and clear behavior in `SearchHistoryTest.kt`; it does not
-  test the Android preferences, serialized JSON, or collection-backed search
-  query generation.
+- `test/browser_search_history_test.dart` adapts recency, duplicate, truncation,
+  removal, clear, canonical serialized JSON, and malformed/invalid-code fallback
+  behavior in `SearchHistoryTest.kt`, `FlagSerializerTest.kt`, and
+  `CardStateSerializerTest.kt`; it does not test Android preferences or
+  collection-backed search query generation.
 - `test/review_presentation_test.dart` checks the count and answer-label
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the

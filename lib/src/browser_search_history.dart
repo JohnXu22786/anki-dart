@@ -22,8 +22,9 @@
 
 /// One Card Browser search and its selected filters.
 ///
-/// The host supplies stable IDs/codes for filters. JSON persistence and query
-/// reconstruction remain outside this headless history model.
+/// The host supplies stable IDs/codes for filters. JSON conversion lives in
+/// `browser_search_history_json.dart`; collection-backed query reconstruction
+/// remains outside this headless history model.
 final class BrowserSearchHistoryEntry {
   const BrowserSearchHistoryEntry({
     required this.query,
@@ -77,7 +78,7 @@ final class BrowserSearchHistoryEntry {
 /// Headless Card Browser history ordering and eviction behavior.
 ///
 /// Supply entries loaded by the host. Persist [entries] after a state change;
-/// Android preferences and AnkiDroid's JSON storage format are not accessed.
+/// this model does not access Android preferences.
 final class BrowserSearchHistoryModel {
   BrowserSearchHistoryModel({
     List<BrowserSearchHistoryEntry> entries = const [],

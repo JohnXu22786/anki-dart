@@ -16,8 +16,9 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Behavioral reference: SearchHistory.kt and SearchHistoryTest.kt in AnkiDroid
- * 2.25.3; see ANKIDROID_UPSTREAM.md.
+ * Behavioral references: SearchHistory.kt, SearchHistoryTest.kt,
+ * FlagSerializerTest.kt, and CardStateSerializerTest.kt in AnkiDroid 2.25.3;
+ * see ANKIDROID_UPSTREAM.md.
  */
 
 import 'package:anki_dart/anki_dart.dart';
@@ -116,6 +117,107 @@ void main() {
       history.clear();
 
       expect(history.entries, isEmpty);
+    });
+  });
+
+  group('Card Browser search history JSON codec', () {
+    test('encodes a v1 entry with only the required query field', () {
+      expect(
+        BrowserSearchHistoryJsonCodec.encode([
+          const BrowserSearchHistoryEntry(query: '1'),
+        ]),
+        '[{"q":"1"}]',
+      );
+      expect(BrowserSearchHistoryJsonCodec.encode([]), '[]');
+    });
+
+    test('encodes and decodes the canonical v2 field order and codes', () {
+      const entry = BrowserSearchHistoryEntry(
+        query: 'queryString',
+        deckIds: [1, 2],
+        flags: [1, 4],
+        tags: ['Hello::World', 'tag'],
+        noteTypeIds: [3, 4],
+        cardStateCodes: [0, 1, 2, 3, 4],
+      );
+      const json =
+          '[{"q":"queryString","did":[1,2],"f":[1,4],"t":["Hello::World","tag"],"ntid":[3,4],"s":[0,1,2,3,4]}]';
+
+      expect(BrowserSearchHistoryJsonCodec.encode([entry]), json);
+      expect(BrowserSearchHistoryJsonCodec.decode(json), [entry]);
+    });
+
+    test('defaults missing optional arrays to empty', () {
+      expect(
+        BrowserSearchHistoryJsonCodec.decode('[{"q":"1"}]'),
+        [const BrowserSearchHistoryEntry(query: '1')],
+      );
+    });
+
+    test('preserves signed 64-bit ID boundaries and rejects out-of-range IDs',
+        () {
+      final entry = BrowserSearchHistoryEntry(
+        query: 'ids',
+        deckIds: [
+          int.parse('9223372036854775807'),
+          int.parse('-9223372036854775808'),
+        ],
+        noteTypeIds: [
+          int.parse('-9223372036854775808'),
+          int.parse('9223372036854775807'),
+        ],
+      );
+
+      expect(
+        BrowserSearchHistoryJsonCodec.decode(
+          BrowserSearchHistoryJsonCodec.encode([entry]),
+        ),
+        [entry],
+      );
+      expect(
+        BrowserSearchHistoryJsonCodec.decode(
+          '[{"q":"bad","did":[9223372036854775808]}]',
+        ),
+        isEmpty,
+      );
+      expect(
+        BrowserSearchHistoryJsonCodec.decode(
+          '[{"q":"bad","ntid":[-9223372036854775809]}]',
+        ),
+        isEmpty,
+      );
+    });
+
+    test('falls back to an empty history for malformed or incompatible JSON',
+        () {
+      for (final json in [
+        'A',
+        '{"q":"1"}',
+        '[{"query":"1"}]',
+        '[{"q":"valid"},{"q":42}]',
+        '[{"q":"valid","unexpected":true}]',
+      ]) {
+        expect(BrowserSearchHistoryJsonCodec.decode(json), isEmpty,
+            reason: json);
+      }
+    });
+
+    test('falls back to an empty history for invalid persisted enum codes', () {
+      expect(
+        BrowserSearchHistoryJsonCodec.decode(
+          '[{"q":"valid"},{"q":"invalid","f":[8]}]',
+        ),
+        isEmpty,
+      );
+      expect(
+        BrowserSearchHistoryJsonCodec.decode('[{"q":"invalid","s":[5]}]'),
+        isEmpty,
+      );
+      expect(
+        BrowserSearchHistoryJsonCodec.decode(
+            '[{"q":"invalid","f":[2147483648]}]'),
+        isEmpty,
+      );
     });
   });
 }

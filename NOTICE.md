@@ -123,6 +123,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   ordered write-then-publish-on-success effects are adapted in
   `lib/src/previewer_flag_effects.dart`; collection/undo execution, current-card
   lookup and StateFlow publication remain outside.
+- `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
+  declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
+  semantics are adapted in `lib/src/type_answer_modifiers.dart`; card/note
+  lookup, cloze extraction, answer comparison, template rendering, and Android
+  input integration are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
   and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
   load-time fallback/de-duplication, nullable updates and replacement are
@@ -254,6 +259,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and adds source-derived checks for all flag codes, toggle decisions, and
   write/publish ordering. The pinned test covers RED set/toggle only; no direct
   test covers every code or failed collection writes.
+- `test/type_answer_modifiers_test.dart` adapts all direct parser cases in
+  `TypeAnswerModifiersTest.kt` and adds source-derived checks for unknown-prefix
+  stopping, verbatim remainder handling, empty input, and structural equality.
+  It does not port card/note lookup or rendered TypeAnswer behavior.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it

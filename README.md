@@ -18,8 +18,8 @@ command routing, reviewer binding codec/map and default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
 resolution, plus Card Browser search-text transitions, text-edit/sync/reset/
-history-selection/request-submission effect sequences, and saved-search
-outcome-message mapping.
+history-selection/request-submission effect sequences, saved-search
+outcome-message mapping, and card-template type-answer modifier parsing.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -130,6 +130,10 @@ outcome-message mapping.
   lookup, the undoable collection operation, asynchronous failure handling and
   StateFlow publication remain with the host. This enum is separate from the
   Card Browser backend search flag values.
+- Type-answer modifiers: `TypeAnswerModifiers.parse` consumes repeated leading
+  `nosuggest:`, `cloze:`, and `nc:` prefixes in any order and returns the
+  unmodified field-name remainder. Card/note lookup, cloze extraction, answer
+  comparison, template rendering, and Android input behavior remain outside.
 - Reviewer presentation: a study-count model that renders the three scheduler
   counts as decimal strings and retains which queue is active, plus an answer
   next-time model that displays the backend's four strings in Again/Hard/Good/
@@ -316,7 +320,9 @@ backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, previewer collection flag mutation and StateFlow
 publication (flag codes and ordered write/publish intent are modeled),
-marks/note editing, answer-timer widget/tick rendering, Auto Advance settings
+marks/note editing, template rendering and media, card/note-dependent
+TypeAnswer comparison and cloze extraction, answer-timer widget/tick rendering,
+Auto Advance settings
 controls and Android preference lookup, `KeyEvent` extraction and hardware/layout
 `getUnicodeChar()` calculation, binding display strings, Android
 `MotionEvent` extraction and device handling (host-projected axis-button

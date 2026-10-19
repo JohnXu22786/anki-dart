@@ -23,8 +23,9 @@ the Card Browser's
 active-column collection, sort preference, and recent-search ordering,
 serialization, display-state, saved-search value, saved-history request
 restoration, structured search-node planning, search-text transitions, ordered
-text-edit/submission/sync/reset effects, and history-selection effects;
-it does not claim to reproduce the whole Android app.
+text-edit/submission/sync/reset effects, history-selection effects, and
+card-template type-answer modifier parsing; it does not claim to reproduce
+the whole Android app.
 
 ## Source-to-Dart mapping
 
@@ -56,6 +57,7 @@ it does not claim to reproduce the whole Android app.
 | `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`searchHistoryAvailableFlow`, `canManageSavedSearchesFlow`) | `browserSearchHistoryIsAvailable()` and `browserCanManageSavedSearches()` in `lib/src/browser_availability.dart` | Projects history availability from `BrowserSearchHistoryItems.isNotEmpty()` (the `entryToSearchString` list, including Loading null pairs) and saved-search manage availability from the supplied list's `isNotEmpty()`. The host owns flow scheduling, list updates/storage, and widgets. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt`, `CardViewerViewModel.kt`, and the slider callback in `PreviewerFragment.kt` | `PreviewerNavigationModel` in `lib/src/previewer_navigation.dart` | Models source button-enabled formulas, next/previous side and card transitions, back-side-only toggling, and one-based slider bounds/selection. Returns show/load intents; Android state, card lookup, rendering, and media remain with the host. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt` (`setFlag`, `toggleFlag`) and `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt` | `PreviewerFlag` and ordered effects in `lib/src/previewer_flag_effects.dart` | Preserves Flag codes 0–7; equal toggle requests select NONE and unequal requests select the requested value. The plan writes the target to the supplied single card ID, then publishes that flag only after write success. Collection/undo execution, current-card lookup, asynchronous failure handling and StateFlow remain host-side; this enum is separate from search backend flag values. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt` | `TypeAnswerModifiers` in `lib/src/type_answer_modifiers.dart` | Repeatedly consumes exact leading `nosuggest:`, `cloze:`, and `nc:` prefixes in any order, then returns the remaining field text verbatim. Defaults and structural equality/hash follow the Kotlin data class. Field/card lookup, cloze extraction, answer comparison, template rendering and Android input integration remain unported. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/StudyCounts.kt` and `StudyCountsView.kt` | `ReviewQueueCounts` and `ReviewQueueKind` in `lib/src/review_session.dart`; `StudyCounts` in `lib/src/review_presentation.dart` | Copies scheduler counts and active queue, renders each integer with direct decimal `toString()`, and exposes the equality check used to style only the active count |
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerButtonsNextTime.kt` and `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` | `ReviewNextStateDescriber<T>` and `AnswerButtonsNextTime` in `lib/src/review_presentation.dart` | Passes the current opaque scheduling snapshot to the backend adapter and assigns its first four strings to Again/Hard/Good/Easy in order; no interval calculation or fallback labels |
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimer.kt` and `AnswerTimerState.kt` | `lib/src/answer_timer.dart` | Hidden/running/paused/stopped states; card configuration; stop, lifecycle pause/resume, hide, elapsed-time upper clamp, and resume-at-limit transition, using an injected monotonic millisecond clock in place of `SystemClock.elapsedRealtime()`; exposes current state and a replaying, per-listener conflated stream of distinct states to match `StateFlow` |
@@ -91,6 +93,7 @@ it does not claim to reproduce the whole Android app.
 | `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModelTest.kt` | `test/browser_availability_test.dart` | Adapts the initially empty history and saved-search false/true/false cases. Additional Loading/Loaded cases verify the `entryToSearchString` list semantics; Android StateFlow scheduling and UI are excluded. |
 | Navigation cases in `AnkiDroid/src/test/java/com/ichi2/anki/previewer/PreviewerViewModelTest.kt` | `test/previewer_navigation_test.dart` | Covers next/previous, answer and back-side-only transitions, one-based slider selection and bounds, button enabled formulas, and the source method's ungated next transition at the last answer |
 | `AnkiDroid/src/test/java/com/ichi2/anki/previewer/PreviewerViewModelTest.kt` (`toggle flag`) plus `PreviewerViewModel.kt` and `Flag.kt` implementation | `test/previewer_flag_effects_test.dart` | The pinned test covers setting/toggling RED and clearing the same flag. Source-derived Dart cases cover all eight flag codes, equal/different/NONE decisions, and ordered one-card write then publish-on-success effects. The pinned test does not cover every flag code or write failure; actual collection effects and StateFlow publication remain host-side. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/TypeAnswerModifiersTest.kt` | `test/type_answer_modifiers_test.dart` | Adapts all nine direct cases for bare, single, chained and reordered prefixes; source-derived cases cover empty input, stopping at unknown text, verbatim remainder, case/whitespace behavior, and structural equality/hash. Card/note-dependent TypeAnswer behavior remains outside. |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/StudyCountsViewTest.kt` and the direct four-label mapping in `AnswerButtonsNextTime.kt` | `test/review_presentation_test.dart` | Decimal count strings, active-queue selection, unchanged backend label order, and failure when a required positional label is absent |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimerTest.kt` | `test/answer_timer_test.dart` | Clock-controlled source cases for initial/configured state, elapsed values, pause/resume, clamping, hide/stop transitions, and the source's negative-delta and nonpositive-limit behavior |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvanceTest.kt` | `test/auto_advance_test.dart` | Deterministic cases for positive delays, typed action dispatch, disabled/nonpositive timers, cancellation on disable/side/card change, deck settings reload and wait-for-audio, action codes/fallbacks, and same-side job overwrite |
@@ -143,8 +146,10 @@ samples/rows, BrowserColumnSelection dialog and drag/drop interactions, active
 backend column updates, sort UI, Android preference/config IO, and actual
 backend row sorting, previewer
 SavedStateHandle/card-ID plumbing and collection-backed card loading, WebView
-rendering and media, previewer flags/marks/note editing, card template rendering,
-collection storage, the Rust backend and
+rendering and media, previewer collection flag mutation and StateFlow
+publication (flag codes and ordered effects are modeled), marks/note editing,
+card-template rendering, card/note-dependent TypeAnswer comparison and cloze
+extraction, collection storage, the Rust backend and
 scheduling algorithm, synchronization, answer-timer widget/tick rendering,
 localized timebox text, dialog and lifecycle presentation, Android study-count
 and answer-button widgets and layout, next-time visibility preference wiring, Auto Advance deck

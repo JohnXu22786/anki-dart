@@ -61,6 +61,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   command identifiers/order, corner gating, and execution-result behavior are
   adapted in `lib/src/gesture_command_router.dart`; Android preference lookup,
   input events, and command handlers are not included.
+  The `ViewerCommand.defaultValue` lists are adapted in
+  `lib/src/reviewer_command_defaults.dart`, preserving symbolic key names,
+  Unicode values, sides, modifiers, order, and empty entries. The host supplies
+  numeric Android key-code mappings, and preference fallback is not integrated.
 - `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/MappableBinding.kt`,
   `ReviewerBinding.kt`, `Binding.kt`, `Axis.kt`, and `CardSide.kt` declare
   `GPL-3.0-or-later`. Their serialized reviewer-binding codec and gesture
@@ -228,6 +232,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   center-tap dispatch, corner and multitap filtering, enabled-state behavior,
   and executor results recorded in `GestureProcessorTest.kt`; it is not a port
   of the Android test harness.
+- `test/reviewer_command_defaults_test.dart` checks that every command has a
+  table entry and the exact empty-default set, plus representative answer,
+  Unicode and modifier bindings, key-name resolution, duplicate numeric
+  values, and the aggregate membership cases from `MappableBindingTest.kt`; it
+  is not a port of the Android test harness.
 - `test/reviewer_binding_codec_test.dart` and
   `test/reviewer_binding_types_test.dart` check serialized binding framing,
   typed key/Unicode parsing, modifiers, UTF-16 behavior, source equality/hash,

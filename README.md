@@ -6,15 +6,15 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes nineteen source-mapped slices: deck-picker behavior,
+The current port includes twenty source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation, Card Browser active-column and sort preference models, recent-search
 ordering, JSON serialization, display state, saved-history request restoration,
 structured search-node planning, the answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
-command routing, reviewer binding codec/map, and headless reviewer keyboard
-and axis-button dispatch.
+command routing, reviewer binding codec/map and default definitions, and
+headless reviewer keyboard and axis-button dispatch.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -119,14 +119,21 @@ and axis-button dispatch.
   tokens are ignored like the source parser. Android key events and MotionEvent
   handling are unported.
 - Reviewer binding map: `ReviewerBindingMap` consumes explicit typed bindings
-  by command, without loading preferences or adding default bindings. It keeps
-  every key and gesture registration in action order and per-command list
-  order, ignores side when matching while retaining the original side in each
-  result, skips unknown bindings, and lists axis registrations separately.
-  This differs from `GestureCommandRouter`, whose source-mapped behavior lets
-  the later command overwrite a duplicate gesture. `ReviewerBindingMap` only
-  returns registrations; Android preferences and event decoding remain with
-  the host.
+  by command; it does not load preferences or implicitly add defaults. It
+  keeps every key and gesture registration in action order and per-command
+  list order, ignores side when matching while retaining the original side in
+  each result, skips unknown bindings, and lists axis registrations
+  separately. This differs from `GestureCommandRouter`, whose source-mapped
+  behavior lets the later command overwrite a duplicate gesture.
+  `ReviewerBindingMap` only returns registrations; Android preferences and
+  event decoding remain with the host.
+- Reviewer command defaults: `ReviewerDefaultBindings` records each
+  `ViewerCommand.defaultValue` list, including empty entries, order, card side,
+  and modifiers. Android `KeyEvent.KEYCODE_*` names stay symbolic until the
+  host supplies a name-to-integer map to `resolve`. Missing names throw rather
+  than dropping a binding. The host uses these defaults only when its preference
+  lookup reports no configured value; explicitly configured empty/invalid
+  preferences remain a separate codec and host decision.
 - Reviewer keyboard dispatch: `dispatchReviewerKeyEvent` consumes a host-
   supplied key event projection and `ReviewerBindingMap`. It ignores repeat
   events, tries a nonzero key code before the precomputed Unicode result,
@@ -212,8 +219,9 @@ WebView rendering and media, previewer flags/marks/note editing, answer-timer wi
 Android preference lookup, `KeyEvent` extraction and hardware/layout
 `getUnicodeChar()` calculation, binding display strings, Android
 `MotionEvent` extraction and device handling (host-projected axis-button
-debounce and dispatch are modeled), Android `BindingProcessor` wiring, command
-execution, touch input and reviewer command handlers,
+debounce and dispatch are modeled), host `KEYCODE_*` resolution and preference-
+backed default selection (the symbolic default table is modeled), Android
+`BindingProcessor` wiring, command execution, touch input and reviewer command handlers,
 study-count and answer-button widgets/layout, next-time visibility preference
 wiring, template rendering and media, localized timebox messages, dialog and
 lifecycle presentation, leech handling, reviewer undo/redo, JavaScript custom-

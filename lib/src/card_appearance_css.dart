@@ -16,8 +16,9 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Behavioral reference: CardAppearance.appendCssStyle(), getCssClasses(), and
- * getCardClass() in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
+ * Behavioral reference: ReviewerCustomFonts.updateCssStyle() and
+ * CardAppearance.style, appendCssStyle(), getCssClasses(), getCardClass(), and
+ * fixBoldStyle() in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 import 'java_float_format.dart';
@@ -29,6 +30,30 @@ import 'java_float_format.dart';
 /// DayTheme.PLAIN to [dayPlain], any non-DARK night theme to [nightOther], and
 /// exact NightTheme.DARK to [nightDark].
 enum CardAppearanceThemeProjection { dayOther, dayPlain, nightOther, nightDark }
+
+const _reviewerCustomFontStyle = "BODY {font-family: 'OpenSans';"
+    'font-weight: normal;font-style: normal;font-stretch: normal;}';
+
+/// Returns `CardAppearance.style`: the fixed ReviewerCustomFonts CSS followed
+/// immediately by the source-ordered nondefault zoom rules.
+///
+/// Font resource installation, user font selection, and Android template
+/// rendering stay with the host.
+String composeCardAppearanceStyle({
+  required double fontScale,
+  required int cardZoom,
+  required int imageZoom,
+}) =>
+    appendCardAppearanceCss(
+      _reviewerCustomFontStyle,
+      fontScale: fontScale,
+      cardZoom: cardZoom,
+      imageZoom: imageZoom,
+    );
+
+/// Applies AnkiDroid's exact global bold-weight replacement to rendered text.
+String fixCardAppearanceBoldStyle(String content) =>
+    content.replaceAll('font-weight:600;', 'font-weight:700;');
 
 /// Appends AnkiDroid's font, card, and image zoom rules to [style].
 ///

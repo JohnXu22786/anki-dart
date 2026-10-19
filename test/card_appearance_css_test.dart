@@ -16,10 +16,12 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source mapping: CardAppearance.appendCssStyle/getCssClasses/getCardClass,
+ * Source mapping: ReviewerCustomFonts.updateCssStyle,
+ * CardAppearance.style/appendCssStyle/getCssClasses/getCardClass/fixBoldStyle,
  * CardTextScaleTest, and AndroidCardRenderContext in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md. Class projection cases are source-derived because no
- * direct pinned tests assert these methods' output.
+ * ANKIDROID_UPSTREAM.md. Exact custom-font CSS, bold replacement, and class
+ * projection cases are source-derived because no direct pinned tests assert
+ * those outputs.
  */
 
 import 'dart:typed_data';
@@ -100,6 +102,50 @@ void main() {
         ),
         'body { zoom: 1.0E7 }\n'
         'img { zoom: -2.147483648E7 }\n',
+      );
+    });
+  });
+
+  group('composeCardAppearanceStyle', () {
+    test('uses the exact custom font CSS when zoom values are default', () {
+      expect(
+        composeCardAppearanceStyle(
+          fontScale: 1,
+          cardZoom: 100,
+          imageZoom: 100,
+        ),
+        "BODY {font-family: 'OpenSans';font-weight: normal;"
+        'font-style: normal;font-stretch: normal;}',
+      );
+    });
+
+    test('appends zoom rules after the font CSS in source order', () {
+      final fontScale = Float32List.fromList([0.85])[0];
+
+      expect(
+        composeCardAppearanceStyle(
+          fontScale: fontScale,
+          cardZoom: 80,
+          imageZoom: 120,
+        ),
+        "BODY {font-family: 'OpenSans';font-weight: normal;"
+        'font-style: normal;font-stretch: normal;}'
+        'html { zoom: 0.85 }\n'
+        'body { zoom: 0.8 }\n'
+        'img { zoom: 1.2 }\n',
+      );
+    });
+  });
+
+  group('fixCardAppearanceBoldStyle', () {
+    test('replaces every exact source substring and leaves near matches', () {
+      const input = 'a{font-weight:600;}b{font-weight:600;}c{font-weight: 600;}'
+          'd{FONT-WEIGHT:600;}e{font-weight:600 }';
+
+      expect(
+        fixCardAppearanceBoldStyle(input),
+        'a{font-weight:700;}b{font-weight:700;}c{font-weight: 600;}'
+        'd{FONT-WEIGHT:600;}e{font-weight:600 }',
       );
     });
   });

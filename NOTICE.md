@@ -126,15 +126,21 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   ordered write-then-publish-on-success effects are adapted in
   `lib/src/previewer_flag_effects.dart`; collection/undo execution, current-card
   lookup and StateFlow publication remain outside.
-- `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardAppearance.kt`
-  declares `GPL-3.0-or-later`. Its CSS zoom appending and class suffix/card-class
-  projections are adapted in `lib/src/card_appearance_css.dart`, reusing the
-  internal Java Float formatter in `lib/src/java_float_format.dart`. The host
-  supplies font scale, zoom preferences, current-theme projection, and centering
-  state. Theme selection/preferences, custom fonts/theme CSS, vertical-centering
-  styles, AndroidCardRenderContext MathJax handling, WebView textZoom and
-  rendering remain outside. The pinned test tree has no direct assertions for
-  `getCssClasses()` or `getCardClass()`; those Dart cases are source-derived.
+- `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardAppearance.kt` and
+  `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/ReviewerCustomFonts.kt`
+  are part of the GPL-3.0-or-later AnkiDroid source. Their CSS zoom appending,
+  exact OpenSans CSS prefix composition, bold-weight string replacement, and
+  class suffix/card-class projections are adapted in
+  `lib/src/card_appearance_css.dart`, reusing the internal Java Float formatter
+  in `lib/src/java_float_format.dart`. The host supplies font scale, zoom
+  preferences, current-theme projection, and centering state. Font resource
+  installation/selection, theme selection/preferences/CSS, vertical-centering
+  styles, AndroidCardRenderContext audio and MathJax rendering, WebView
+  textZoom, and full rendering remain outside. The pinned test tree has no direct
+  assertions for `ReviewerCustomFonts.updateCssStyle()`,
+  `CardAppearance.fixBoldStyle()`, `getCssClasses()`, or `getCardClass()`; those
+  Dart cases are source-derived. The upstream `ReviewerCustomFonts.kt` header
+  attributes Copyright © 2013 Flavio Lerda <flerda@gmail.com>.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
   declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
   semantics are adapted in `lib/src/type_answer_modifiers.dart`; card/note

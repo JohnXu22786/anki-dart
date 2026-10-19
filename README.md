@@ -131,14 +131,19 @@ question-side type-answer placeholder removal.
   one-based slider selection. It returns a show-side or load-card intent for the
   host to carry out; card lookup, rendering, and media playback remain outside.
 - Card appearance projections: `appendCardAppearanceCss` preserves the supplied
-  CSS, then appends nondefault font-scale, card-zoom, and image-zoom rules in
-  source order with source-compatible numeric formatting. The host supplies
-  font scale and zoom preferences. `cardAppearanceCssClasses` and
-  `cardAppearanceClassName` project the source's class suffixes from host-supplied
-  theme predicates and centering state, preserving class spacing/order and direct
-  ordinal interpolation. Theme selection and preference IO, actual theme CSS,
-  custom fonts, vertical-centering styles, AndroidCardRenderContext's MathJax handling,
-  WebView textZoom, and full rendering remain outside.
+  CSS prefix, then appends nondefault font-scale, card-zoom, and image-zoom rules
+  in source order with source-compatible numeric formatting.
+  `composeCardAppearanceStyle` starts with the exact `ReviewerCustomFonts`
+  OpenSans CSS and then appends those rules. `fixCardAppearanceBoldStyle`
+  globally changes only the exact `font-weight:600;` substring to
+  `font-weight:700;`, matching the Android render caller's post-audio-expansion
+  step. The host supplies font scale and zoom preferences.
+  `cardAppearanceCssClasses` and `cardAppearanceClassName` project the source's
+  class suffixes from host-supplied theme predicates and centering state,
+  preserving class spacing/order and direct ordinal interpolation. Font
+  resource installation/selection, theme selection and preference IO, actual
+  theme CSS, vertical-centering styles, AndroidCardRenderContext's MathJax
+  handling, WebView textZoom, and full rendering remain outside.
 - Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and the
   set/toggle projections return a one-card collection-write intent followed by
   publication of the same flag only if the host write succeeds. Current-card
@@ -337,8 +342,9 @@ backend column registry and rows, column-selection drag/drop and active backend
 updates, Card Browser sort UI, Android preference/synced-config IO, and actual
 backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
-WebView rendering and media, remaining CardAppearance custom-font composition,
-theme selection and actual theme CSS, vertical-centering preference IO/styles,
+WebView rendering and media, CardAppearance font resource installation and
+font-selection preferences, theme selection and actual theme CSS,
+vertical-centering preference IO/styles,
 MathJax render context, WebView textZoom/lifecycle, previewer
 collection flag mutation and StateFlow
 publication (flag codes and ordered write/publish intent are modeled),

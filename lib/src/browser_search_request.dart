@@ -21,6 +21,7 @@
  */
 
 import 'browser_search_history.dart';
+import 'kotlin_whitespace.dart';
 
 /// A host-supplied deck name and its stable collection ID.
 final class BrowserDeckNameId {
@@ -129,7 +130,7 @@ final class BrowserSearchRequest {
 
   /// Converts a request to the stable ID-based history format.
   BrowserSearchHistoryEntry toHistoryEntry() => BrowserSearchHistoryEntry(
-        query: _trimKotlinWhitespace(query),
+        query: trimKotlinWhitespace(query),
         deckIds: filters.decks.map((deck) => deck.id).toList(growable: false),
         flags: filters.flags,
         tags: filters.tags,
@@ -139,29 +140,3 @@ final class BrowserSearchRequest {
         cardStateCodes: filters.cardStateCodes,
       );
 }
-
-String _trimKotlinWhitespace(String value) {
-  var start = 0;
-  var end = value.length;
-
-  while (start < end && _isKotlinWhitespace(value.codeUnitAt(start))) {
-    start++;
-  }
-  while (start < end && _isKotlinWhitespace(value.codeUnitAt(end - 1))) {
-    end--;
-  }
-
-  return value.substring(start, end);
-}
-
-bool _isKotlinWhitespace(int codeUnit) =>
-    (codeUnit >= 0x0009 && codeUnit <= 0x000D) ||
-    (codeUnit >= 0x001C && codeUnit <= 0x0020) ||
-    codeUnit == 0x00A0 ||
-    codeUnit == 0x1680 ||
-    (codeUnit >= 0x2000 && codeUnit <= 0x200A) ||
-    codeUnit == 0x2028 ||
-    codeUnit == 0x2029 ||
-    codeUnit == 0x202F ||
-    codeUnit == 0x205F ||
-    codeUnit == 0x3000;

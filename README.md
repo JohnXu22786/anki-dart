@@ -6,12 +6,12 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes sixteen source-mapped slices: deck-picker behavior,
+The current port includes seventeen source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation, Card Browser active-column and sort preference models, recent-search
 ordering, JSON serialization, display state, saved-history request restoration,
-the answer-timer state machine,
+structured search-node planning, the answer-timer state machine,
 reviewer Auto Advance, the headless reviewer
 gesture parser, parsed-gesture command routing, and the reviewer binding
 codec/map.
@@ -42,8 +42,12 @@ codec/map.
   `BrowserSearchHistoryJsonCodec` encodes the compact v1/v2 JSON fields in
   source order, omits empty optional arrays, and returns an empty history when
   any decoded entry is invalid. The host handles SharedPreferences. Structured
-  saved-entry request restoration uses host-supplied deck/note-type maps;
-  collection lookup, backend query generation, and suggestion UI remain outside.
+  saved-entry request restoration uses host-supplied deck/note-type maps.
+  `buildBrowserSearchNodePlan` then models the query and ordered filter terms as
+  typed nodes, with the source's OR groups, AND root, singleton collapse, and
+  explicit flag/card-state mappings. Backend SearchNode conversion, query
+  parsing/validation, final SearchString serialization, and execution remain
+  outside.
   `BrowserSearchHistoryDisplayModel` starts collapsed, keeps the first five
   entries visible until expanded, and exposes the toggle only above five items.
   It preserves Loading entries with null search strings and Loaded entry/string
@@ -153,9 +157,11 @@ deck and note-type ID/name mappings supplied by the host and converts requests
 back to ID-based history entries. It keeps the stored query unchanged during
 restoration and applies Kotlin `String.trim()` when saving a request to history.
 The host loads and persists history and resolves current collection objects;
-backend SearchNode/query-string generation, query execution, and search UI stay
-outside the model. Search text and filters may contain user-provided data, so
-storage and privacy handling remain the host's duty.
+`buildBrowserSearchNodePlan` returns the source-equivalent typed tree before
+backend conversion. Backend protobuf SearchNode conversion, query parsing and
+validation, final SearchString serialization, query execution, and search UI
+stay outside the model. Search text and filters may contain user-provided
+data, so storage and privacy handling remain the host's duty.
 `BrowserSearchHistoryDisplayModel` separately projects the supplied Loading or
 Loaded history into a five-entry collapsed or full expanded list. The host owns
 search-string conversion, SavedStateHandle/StateFlow lifecycle, and rendering
@@ -176,7 +182,8 @@ callbacks; it does not load settings or collection state. This is not yet a
 complete AnkiDroid replacement: Android screens and platform lifecycle integration,
 Card Browser SharedPreferences and mode lookup, saved-search config IO and UI,
 collection-backed deck/note-type lookup, backend query-string generation and
-search execution, search-string conversion,
+backend SearchNode conversion, query parsing/validation, final SearchString
+serialization, search execution, search-string conversion,
 SavedStateHandle/StateFlow integration, history-list and toggle widgets,
 AGPL-incorporated column defaults,
 backend column registry and rows, column-selection drag/drop and active backend

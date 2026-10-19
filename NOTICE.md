@@ -146,6 +146,21 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and David Allison. Both files also identify separately incorporated AGPL
   material; none of that backend implementation is copied here. Collection
   access, backend query generation, and execution are not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt`,
+  `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt`,
+  `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`, and
+  `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardState.kt` declare
+  `GPL-3.0-or-later`. Their pre-backend
+  query and filter-node construction behavior is represented in
+  `lib/src/browser_search_node_plan.dart`; Kotlin-compatible whitespace
+  trimming is shared through `lib/src/kotlin_whitespace.dart`. The plan keeps
+  stored flag/card-state codes separate from semantic search values and models
+  query inclusion and boolean grouping. `Collection.kt` is GPL-3.0-or-later,
+  Copyright © 2011 Norbert Nagold, 2012 Kostas Spyropoulos, and 2022 Ankitects;
+  only its `groupSearches()` singleton-collapse behavior is referenced. That
+  file also incorporates separate AGPL-3.0-or-later code, which is not copied
+  into this port. The backend protobuf SearchNode, parser/validation,
+  SearchString serialization, and execution are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SavedSearches.kt`
   declares `GPL-3.0-or-later`. Its named saved-search value behavior,
   case-sensitive ordering and lookup, duplicate rejection, query normalization,

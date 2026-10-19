@@ -173,9 +173,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   load-time fallback/de-duplication, nullable updates and replacement are
   adapted in `lib/src/browser_column_collection.dart`; successful updates can
   retain duplicates until a later load removes them, as in the source. The host
-  supplies mode-specific defaults from `BrowserConfig.kt`; its constants
-  incorporating upstream AGPL code are not copied, and SharedPreferences,
-  backend column values and browser UI remain outside.
+  supplies the current Cards/Notes mode, and the same file maps all column types
+  from `CardBrowserColumn.kt`, including `template` as TEXT for Cards and
+  NUMERIC for Notes and `cardDue` as UNSPECIFIED. Mode/config lookup, mode-specific
+  defaults from `BrowserConfig.kt` (whose constants incorporate upstream AGPL
+  code and are not copied), SharedPreferences, labels/tooltips, backend column
+  values and browser UI remain outside.
 - `AnkiDroid/src/main/java/com/ichi2/anki/model/SortType.kt`,
   `libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, and typed config
   decoding in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` declare

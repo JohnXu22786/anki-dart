@@ -22,33 +22,47 @@
 
 import 'dart:collection';
 
+/// The Cards or Notes table mode used when interpreting a browser column.
+enum BrowserColumnMode { cards, notes }
+
+/// The source-declared data type for a browser column.
+enum BrowserColumnType { text, numeric, date, unspecified }
+
 /// A column key recognized by AnkiDroid's Card Browser.
 ///
-/// Labels, samples, sort types, and backend row values stay with the host.
+/// The data type may depend on [BrowserColumnMode]. Labels, samples, sort types,
+/// and backend row values stay with the host.
 enum BrowserColumn {
-  question('question'),
-  answer('answer'),
-  sortField('noteFld'),
-  deck('deck'),
-  tags('noteTags'),
-  cardType('template'),
-  due('cardDue'),
-  ease('cardEase'),
-  changed('cardMod'),
-  created('noteCrt'),
-  edited('noteMod'),
-  interval('cardIvl'),
-  lapses('cardLapses'),
-  noteType('note'),
-  reviews('cardReps'),
-  fsrsDifficulty('difficulty'),
-  fsrsRetrievability('retrievability'),
-  fsrsStability('stability'),
-  originalPosition('originalPosition');
+  question('question', BrowserColumnType.text),
+  answer('answer', BrowserColumnType.text),
+  sortField('noteFld', BrowserColumnType.text),
+  deck('deck', BrowserColumnType.text),
+  tags('noteTags', BrowserColumnType.text),
+  cardType('template', BrowserColumnType.text, BrowserColumnType.numeric),
+  due('cardDue', BrowserColumnType.unspecified),
+  ease('cardEase', BrowserColumnType.numeric),
+  changed('cardMod', BrowserColumnType.date),
+  created('noteCrt', BrowserColumnType.date),
+  edited('noteMod', BrowserColumnType.date),
+  interval('cardIvl', BrowserColumnType.numeric),
+  lapses('cardLapses', BrowserColumnType.numeric),
+  noteType('note', BrowserColumnType.text),
+  reviews('cardReps', BrowserColumnType.numeric),
+  fsrsDifficulty('difficulty', BrowserColumnType.numeric),
+  fsrsRetrievability('retrievability', BrowserColumnType.numeric),
+  fsrsStability('stability', BrowserColumnType.numeric),
+  originalPosition('originalPosition', BrowserColumnType.numeric);
 
-  const BrowserColumn(this.key);
+  const BrowserColumn(this.key, this.cardsType, [BrowserColumnType? notesType])
+      : notesType = notesType ?? cardsType;
 
   final String key;
+  final BrowserColumnType cardsType;
+  final BrowserColumnType notesType;
+
+  /// Returns the data type displayed for [mode], matching AnkiDroid's mapping.
+  BrowserColumnType typeFor(BrowserColumnMode mode) =>
+      mode == BrowserColumnMode.cards ? cardsType : notesType;
 
   /// Resolves a source column key, throwing for any unknown key.
   static BrowserColumn fromColumnKey(String key) {

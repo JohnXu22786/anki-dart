@@ -40,6 +40,10 @@ placeholder removal.
   mode-specific default keys and persists the returned value; SharedPreferences
   and backend/UI integration stay outside. The constructor keeps the source
   list alias and cached count, while `backendKeys` returns a mapped snapshot.
+- Card Browser column types: `BrowserColumn.typeFor(mode)` maps all source
+  columns to TEXT, NUMERIC, DATE, or UNSPECIFIED; the `template` column is TEXT
+  in Cards mode and NUMERIC in Notes mode. The host supplies the current mode;
+  labels, tooltips, backend column data, and mode/config lookup remain outside.
 - Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
   mode-specific config values, checks the key against host-supplied backend
   columns, and returns the source sort type. It defaults missing or
@@ -287,8 +291,10 @@ and side flags, then returns an intent for the host to load a card or show a
 side. It does not access card IDs, collection storage, or the WebView.
 `BrowserColumnCollection` consumes a serialized preference and default keys
 from its caller; the host resolves Cards/Notes mode and persists its returned
-value. The adapter also supplies the mode defaults, so the port does not copy
-`BrowserConfig.kt`'s AGPL-incorporated constant definitions.
+value. `BrowserColumn.typeFor(mode)` maps the type of every recognized column,
+including the source's mode-dependent `template` type and `cardDue`'s
+`unspecified` type. The adapter also supplies the mode defaults, so the port
+does not copy `BrowserConfig.kt`'s AGPL-incorporated constant definitions.
 `resolveBrowserSortType` and `buildBrowserSortSavePlan` consume the shared
 no-sorting flag and the active mode's config keys/values from the host. They
 also consume the backend's available column keys. The save plan writes the
@@ -367,7 +373,7 @@ SavedStateHandle/StateFlow
 integration for mode, text buffers, and history/saved-search availability,
 Basic/Advanced text widgets, history-list
 and toggle widgets,
-AGPL-incorporated column defaults,
+persistent Cards/Notes mode lookup and AGPL-incorporated column defaults,
 backend column registry and rows, column-selection drag/drop and active backend
 updates, Card Browser sort UI, Android preference/synced-config IO, and actual
 backend row sorting,

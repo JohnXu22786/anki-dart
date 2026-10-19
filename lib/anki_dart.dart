@@ -22,6 +22,7 @@ export 'src/deck_node.dart';
 export 'src/display_deck_node.dart';
 export 'src/auto_advance.dart';
 export 'src/browser_column_collection.dart';
+export 'src/browser_search_history.dart';
 export 'src/browser_sort_type.dart';
 export 'src/answer_timer.dart';
 export 'src/gesture_parser.dart';

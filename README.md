@@ -6,11 +6,11 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes twelve source-mapped slices: deck-picker behavior, the
-headless review-session lifecycle, reviewer count/next-time presentation
+The current port includes thirteen source-mapped slices: deck-picker behavior,
+the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
-navigation, Card Browser active-column and sort preference models, the
-answer-timer state machine, reviewer Auto Advance, the headless reviewer
+navigation, Card Browser active-column, sort preference, and recent-search
+history models, the answer-timer state machine, reviewer Auto Advance, the headless reviewer
 gesture parser, parsed-gesture command routing, and the reviewer binding
 codec/map.
 
@@ -34,6 +34,11 @@ codec/map.
   wrong-typed values to `noteFld` and forward order, treats an unknown column as no ordering, and
   creates ordered save plans without touching Android or collection storage.
   The shared no-sorting flag retains the source's cross-mode behavior.
+- Card Browser recent searches: `BrowserSearchHistoryModel` keeps searches
+  newest-first, promotes structurally equal entries, skips the default blank
+  search, and trims history to the source's 30-entry cap. It consumes entries
+  supplied by the host; SharedPreferences, its persisted JSON format, query
+  reconstruction, and suggestion UI remain outside.
 - Review session: a headless flow that loads the scheduler's current card, shows
   its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
   the next queue item. It waits for the current card's state-mutation hook
@@ -128,6 +133,11 @@ mode-specific column and reverse keys in source order before clearing the
 global no-sorting flag; actual preference/config writes and backend sorting
 remain host responsibilities. This keeps `BrowserConfig.kt` key lookup and
 its AGPL-incorporated constants outside the Dart port.
+`BrowserSearchHistoryModel` consumes and returns the in-memory history list for
+the host to load or persist. AnkiDroid stores each entry as compact JSON and
+reconstructs filter queries through the collection; neither persistence nor
+query reconstruction is part of this model. Search text and filters may contain
+user-provided data, so storage and privacy handling remain the host's duty.
 `ReviewNextStateDescriber`
 forwards the opaque scheduling state to the pinned backend's
 `describeNextStates()` API. The session exposes the timebox's elapsed-time limit
@@ -138,7 +148,9 @@ Rust backend, collection storage, and scheduling algorithm remain external.
 `ReviewTimeboxTracker` consumes clock, configured-limit, and answer-count
 callbacks; it does not load settings or collection state. This is not yet a
 complete AnkiDroid replacement: Android screens and platform lifecycle integration,
-Card Browser SharedPreferences and mode lookup, AGPL-incorporated column defaults,
+Card Browser SharedPreferences and mode lookup, persisted search-history JSON
+and malformed-data handling, saved-entry query reconstruction and suggestion UI,
+AGPL-incorporated column defaults,
 backend column registry and rows, column-selection drag/drop and active backend
 updates, Card Browser sort UI, Android preference/synced-config IO, and actual
 backend row sorting,
@@ -156,7 +168,8 @@ The source project has thousands of files, so this repository does not claim
 full feature parity.
 
 The port preserves the source behavior for the covered slices, including search
-and collapse quirks, ordered Card Browser columns and load-time de-duplication,
+and collapse quirks, recent-search ordering and blank-search suppression,
+ordered Card Browser columns and load-time de-duplication,
   sort config defaults (including wrong-typed values), per-mode column values,
   and the global no-sorting quirk,
 reviewer action ordering, question/answer transitions, the scheduler timebox

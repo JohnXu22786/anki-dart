@@ -130,6 +130,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/browser_search_history_json.dart`. The codec preserves source field
   names/order and invalid-whole-list fallback; the host handles SharedPreferences
   and entries may contain user-provided search text and filters.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt`
+  and `SearchString.kt` declare `GPL-3.0-or-later`. The view-model's
+  Loading/Loaded recent-history display projection, collapsed five-entry limit,
+  expansion state, and toggle threshold are adapted in
+  `lib/src/browser_search_history_display.dart`; SavedStateHandle, StateFlow,
+  search-string conversion, and Android widgets remain outside.
 - Behavioral cases in `test/deck_filters_test.dart` are adapted from
   `DeckFiltersTest.kt`, Copyright © 2026 Arthur Milchior.
 - Behavioral cases in `test/deck_list_test.dart` are adapted from
@@ -157,6 +163,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   behavior in `SearchHistoryTest.kt`, `FlagSerializerTest.kt`, and
   `CardStateSerializerTest.kt`; it does not test Android preferences or
   collection-backed search query generation.
+- `test/browser_search_history_display_test.dart` adapts collapsed/expanded
+  recent-history presentation, five-entry truncation/toggle behavior, and
+  Loading/Loaded shape handling from `CardBrowserSearchViewModelTest.kt`; it
+  does not test Android flows, search-string conversion, or widgets.
 - `test/review_presentation_test.dart` checks the count and answer-label
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the

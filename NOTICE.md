@@ -100,6 +100,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   formulas and side/card transitions are adapted in
   `lib/src/previewer_navigation.dart`; SavedStateHandle and card lookup remain
   outside.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
+  and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
+  load-time fallback/de-duplication, nullable updates and replacement are
+  adapted in `lib/src/browser_column_collection.dart`; successful updates can
+  retain duplicates until a later load removes them, as in the source. The host
+  supplies mode-specific defaults from `BrowserConfig.kt`; its constants
+  incorporating upstream AGPL code are not copied, and SharedPreferences,
+  backend column values and browser UI remain outside.
 - Behavioral cases in `test/deck_filters_test.dart` are adapted from
   `DeckFiltersTest.kt`, Copyright © 2026 Arthur Milchior.
 - Behavioral cases in `test/deck_list_test.dart` are adapted from
@@ -115,6 +123,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/previewer_navigation_test.dart` adapts the navigation cases in
   `PreviewerViewModelTest.kt`; it does not port the Android test harness,
   collection, or card-rendering setup.
+- `test/browser_column_collection_test.dart` adapts the active-column collection
+  cases in `BrowserColumnCollectionTest.kt`; it does not port SharedPreferences,
+  backend column setup, or the Android test harness.
 - `test/review_presentation_test.dart` checks the count and answer-label
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the

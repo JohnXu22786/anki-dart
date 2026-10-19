@@ -21,6 +21,7 @@ export 'src/deck_filters.dart';
 export 'src/deck_node.dart';
 export 'src/display_deck_node.dart';
 export 'src/auto_advance.dart';
+export 'src/browser_column_collection.dart';
 export 'src/answer_timer.dart';
 export 'src/gesture_parser.dart';
 export 'src/gesture_command_router.dart';

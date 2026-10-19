@@ -6,12 +6,12 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes ten source-mapped slices: deck-picker behavior, the
+The current port includes eleven source-mapped slices: deck-picker behavior, the
 headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
-navigation, the answer-timer state machine, reviewer Auto Advance, the headless
-reviewer gesture parser, parsed-gesture command routing, and the reviewer
-binding codec/map.
+navigation, the Card Browser active-column collection model, the answer-timer
+state machine, reviewer Auto Advance, the headless reviewer gesture parser,
+parsed-gesture command routing, and the reviewer binding codec/map.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -20,6 +20,13 @@ binding codec/map.
 - Deck-picker rows and due count: flattening a deck tree into visible rows,
   including ancestor paths, collapsed decks, counts, and selection state, plus
   the source-equivalent total due count across top-level decks.
+- Card Browser columns: `BrowserColumnCollection` recognizes the source column
+  keys, loads an ordered `|`-separated value with load-time de-duplication and
+  fallback to caller-supplied defaults, and returns serialized update results
+  after removing null entries. Successful updates preserve duplicate entries
+  until the next load, matching the source method behavior. The host supplies
+  mode-specific default keys and persists the returned value; SharedPreferences
+  and backend/UI integration stay outside.
 - Review session: a headless flow that loads the scheduler's current card, shows
   its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
   the next queue item. It waits for the current card's state-mutation hook
@@ -103,6 +110,10 @@ cancellation.
 `PreviewerNavigationModel` consumes the selected-card count and current index
 and side flags, then returns an intent for the host to load a card or show a
 side. It does not access card IDs, collection storage, or the WebView.
+`BrowserColumnCollection` consumes a serialized preference and default keys
+from its caller; the host resolves Cards/Notes mode and persists its returned
+value. The adapter also supplies the mode defaults, so the port does not copy
+`BrowserConfig.kt`'s AGPL-incorporated constant definitions.
 `ReviewNextStateDescriber`
 forwards the opaque scheduling state to the pinned backend's
 `describeNextStates()` API. The session exposes the timebox's elapsed-time limit
@@ -113,6 +124,9 @@ Rust backend, collection storage, and scheduling algorithm remain external.
 `ReviewTimeboxTracker` consumes clock, configured-limit, and answer-count
 callbacks; it does not load settings or collection state. This is not yet a
 complete AnkiDroid replacement: Android screens and platform lifecycle integration,
+Card Browser SharedPreferences and mode lookup, AGPL-incorporated column defaults,
+backend column registry and rows, column-selection drag/drop and active backend
+updates, Card Browser sort behavior,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, previewer flags/marks/note editing, answer-timer widget/tick rendering, Auto Advance settings controls and
 Android preference lookup, Android `KeyEvent` handling and `possibleKeyBindings`,
@@ -127,9 +141,10 @@ The source project has thousands of files, so this repository does not claim
 full feature parity.
 
 The port preserves the source behavior for the covered slices, including search
-and collapse quirks, reviewer action ordering, question/answer transitions, the
-scheduler timebox gate, active-count selection, and direct display of backend
-answer labels. The answer timer also keeps the source's upper-only elapsed-time
+and collapse quirks, ordered Card Browser columns and load-time de-duplication,
+reviewer action ordering, question/answer transitions, the scheduler timebox
+gate, active-count selection, and direct display of backend answer labels. The
+answer timer also keeps the source's upper-only elapsed-time
 clamp, exact limit comparison, negative elapsed values, and nonpositive-limit
 behavior. Scheduling rules remain with the backend. The timebox tracker
 consumes adapter-provided values and preserves the source's boundary conditions.

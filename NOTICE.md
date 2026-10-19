@@ -169,7 +169,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   access, backend query generation, and execution are not included. The view
   model's `FilterUpdate` origin and one-snapshot request projection are adapted
   in `lib/src/browser_filter_update.dart`; StateFlow/coroutine timing and
-  field-specific setter updates remain with the host.
+  field-specific setter updates remain with the host. The Basic/Advanced text
+  buffers and transition methods are adapted in
+  `lib/src/browser_search_text_state.dart`; SavedStateHandle persistence,
+  flow scheduling, and Android text widgets remain with the host.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`, and
@@ -230,6 +233,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   from `SearchHistoryTest.kt`, including first-match ID mapping, duplicate and
   order preservation, Kotlin query trimming, and missing-ID failure; it does not
   test collection lookup or backend query generation.
+- `test/browser_search_text_state_test.dart` adapts Basic/Advanced mode and text
+  transitions from `CardBrowserSearchViewModelTest.kt`, including append spacing,
+  LF replacement, saved-query application, and independent buffers; it does not
+  test SavedStateHandle, flow scheduling, or Android text widgets.
 - `test/browser_saved_searches_test.dart` adapts name ordering and lookup,
   duplicate handling, query normalization, remove/clear, and map conversion
   behavior from `SavedSearchesTest.kt`; it does not test collection config IO,

@@ -6,7 +6,7 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes twenty-two source-mapped slices: deck-picker behavior,
+The current port includes twenty-three source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation, Card Browser active-column and sort preference models, recent-search
@@ -16,7 +16,7 @@ reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
 command routing, reviewer binding codec/map and default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
-resolution.
+resolution, plus Card Browser search-text transitions.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -61,6 +61,12 @@ resolution.
   lookup and duplicate handling, Kotlin-compatible query trimming, and map/list
   conversion over a host-supplied config map; collection config IO and the
   saved-search UI remain outside.
+- Card Browser search text: `BrowserSearchTextState` keeps independent Basic and
+  Advanced buffers. Mode toggles preserve both, advanced appends follow the
+  source's Kotlin-blank and exact trailing-space checks, text edits replace LF
+  only in the selected buffer, and saved queries gain one trailing ASCII space.
+  Android SavedStateHandle, flow scheduling, text widgets, and saved-search
+  lookup remain with the host.
 - Review session: a headless flow that loads the scheduler's current card, shows
   its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
   the next queue item. It waits for the current card's state-mutation hook
@@ -208,6 +214,12 @@ returns nothing while the screen is open or for a System update; a closed-screen
 User update carries the exact filters and Kotlin-trimmed text into a request.
 The host supplies the snapshot and owns field-specific setters, StateFlow and
 coroutine timing, collection access, and search execution.
+`BrowserSearchTextState` separately models the Basic/Advanced text buffers:
+mode toggles retain both values, Advanced appending uses the source's spacing
+rules, text edits replace LF without normalizing CR, and saved-query application
+adds one space before taking the same edit path. The host owns
+SavedStateHandle persistence, StateFlow scheduling, text widgets, and saved
+search lookup.
 `BrowserSearchHistoryDisplayModel` separately projects the supplied Loading or
 Loaded history into a five-entry collapsed or full expanded list. The host owns
 search-string conversion, SavedStateHandle/StateFlow lifecycle, and rendering
@@ -230,7 +242,8 @@ Card Browser SharedPreferences and mode lookup, saved-search config IO and UI,
 collection-backed deck/note-type lookup, backend query-string generation and
 backend SearchNode conversion, query parsing/validation, final SearchString
 serialization, search execution, search-string conversion,
-SavedStateHandle/StateFlow integration, history-list and toggle widgets,
+SavedStateHandle/StateFlow integration for mode and text buffers, Basic/Advanced
+text widgets, history-list and toggle widgets,
 AGPL-incorporated column defaults,
 backend column registry and rows, column-selection drag/drop and active backend
 updates, Card Browser sort UI, Android preference/synced-config IO, and actual
@@ -257,7 +270,9 @@ and collapse quirks, recent-search ordering and blank-search suppression,
 canonical history JSON field order, omitted defaults and whole-list decode
 fallback, the collapsed five-entry history display and untruncated toggle
 threshold, saved-search case-sensitive lookup/order, duplicate handling,
-Kotlin-compatible query trimming, and map conversion,
+Kotlin-compatible query trimming and map conversion, Basic/Advanced buffer
+independence, source append spacing, LF-only text replacement, and saved-query
+trailing spaces,
 ordered Card Browser columns and load-time de-duplication,
   sort config defaults (including wrong-typed values), per-mode column values,
   and the global no-sorting quirk,

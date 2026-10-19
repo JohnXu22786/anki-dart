@@ -28,3 +28,4 @@ export 'src/reviewer_binding_codec.dart';
 export 'src/reviewer_binding_map.dart';
 export 'src/review_presentation.dart';
 export 'src/review_session.dart';
+export 'src/review_timebox.dart';

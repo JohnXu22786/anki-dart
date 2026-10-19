@@ -6,11 +6,11 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes eight source-mapped slices: deck-picker behavior, the
+The current port includes nine source-mapped slices: deck-picker behavior, the
 headless review-session lifecycle, reviewer count/next-time presentation
-models, the answer-timer state machine, reviewer Auto Advance, the headless
-reviewer gesture parser, parsed-gesture command routing, and reviewer binding
-preference encoding/decoding.
+models, the collection timebox counter and rounded-minute projection, the
+answer-timer state machine, reviewer Auto Advance, the headless reviewer gesture
+parser, parsed-gesture command routing, and the reviewer binding codec/map.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -26,6 +26,12 @@ preference encoding/decoding.
   before showing the queued card. The previously displayed side remains visible
   during the timebox and while a queue read loads or retries. A failed queue
   read can be retried without sending the completed card's rating again.
+- Timebox counter: adapter callbacks supply integer clock seconds, the configured
+  limit, and recorded-answer count. `ReviewTimeboxTracker` preserves the source's
+  zero-only disable check, strict elapsed-time comparison, configured-limit
+  payload, answer-count delta, and automatic restart. The display model rounds
+  seconds to minutes using Float32 division and Kotlin `roundToInt()` behavior;
+  localized strings, the Android dialog, and lifecycle wiring remain outside.
 - Reviewer presentation: a study-count model that renders the three scheduler
   counts as decimal strings and retains which queue is active, plus an answer
   next-time model that displays the backend's four strings in Again/Hard/Good/
@@ -95,18 +101,19 @@ forwards the opaque scheduling state to the pinned backend's
 and answer count, and can reload the queue when the caller continues. The
 AnkiDroid 2.25.3 source pins
 `io.github.david-allison:anki-android-backend` version `0.1.68-anki26.05`; the
-Rust backend, collection storage, timebox calculation, and scheduling algorithm
-are still external and are not implemented here. This is not yet a complete
-AnkiDroid replacement: Android screens and platform lifecycle integration,
+Rust backend, collection storage, and scheduling algorithm remain external.
+`ReviewTimeboxTracker` consumes clock, configured-limit, and answer-count
+callbacks; it does not load settings or collection state. This is not yet a
+complete AnkiDroid replacement: Android screens and platform lifecycle integration,
 answer-timer widget/tick rendering, Auto Advance settings controls and
 Android preference lookup, Android `KeyEvent` handling and `possibleKeyBindings`,
 binding display strings, MotionEvent axis interpretation, `BindingProcessor`
 callbacks, command execution, touch input and reviewer command handlers,
-study-count and answer-button widgets/layout,
-next-time visibility preference wiring, template rendering and media, timebox
-presentation, leech handling, reviewer undo/redo, the JavaScript custom-state
-and gesture bridges, WebView state collection, Android timeout lookup, sync,
-import/export, and other app features remain to be ported.
+study-count and answer-button widgets/layout, next-time visibility preference
+wiring, template rendering and media, localized timebox messages, dialog and
+lifecycle presentation, leech handling, reviewer undo/redo, JavaScript custom-
+state and gesture bridges, WebView state collection, Android timeout lookup,
+sync, import/export, and other app features remain to be ported.
 The source project has thousands of files, so this repository does not claim
 full feature parity.
 
@@ -115,9 +122,10 @@ and collapse quirks, reviewer action ordering, question/answer transitions, the
 scheduler timebox gate, active-count selection, and direct display of backend
 answer labels. The answer timer also keeps the source's upper-only elapsed-time
 clamp, exact limit comparison, negative elapsed values, and nonpositive-limit
-behavior. Scheduling rules and timebox calculation remain with the backend
-adapter; this port does not intentionally correct upstream bugs. See the tests
-and upstream mapping for the specific behaviors and source files. Auto Advance
+behavior. Scheduling rules remain with the backend. The timebox tracker
+consumes adapter-provided values and preserves the source's boundary conditions.
+This port does not intentionally correct upstream bugs. See the tests and
+upstream mapping for the specific behaviors and source files. Auto Advance
 preserves the integer action codes and invalid-code fallbacks, delays and
 cancellation boundaries, and the same-side job-overwrite quirk.
 An in-flight action listener also receives a cancellation signal when its tracked

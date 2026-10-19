@@ -13,8 +13,9 @@ current implementation covers deck-picker filtering and visible-row
 construction, the headless review-session action lifecycle, reviewer count and
 answer-button next-time presentation models, the reviewer answer-timer state
 machine, the reviewer Auto Advance model, the headless reviewer gesture
-parser, parsed-gesture command routing, and a headless codec for serialized
-reviewer bindings; it does not claim to reproduce the whole Android app.
+parser, parsed-gesture command routing, a headless codec and map for serialized
+reviewer bindings, and the collection timebox counter and rounded-minute model;
+it does not claim to reproduce the whole Android app.
 
 ## Source-to-Dart mapping
 
@@ -26,7 +27,8 @@ reviewer bindings; it does not claim to reproduce the whole Android app.
 | `libanki/src/main/java/com/ichi2/anki/libanki/sched/DeckNode.kt` and `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt` | `lib/src/deck_node.dart` | Dart input projection for display rows plus `totalCardsDue()`, summing immediate-child new/review/learning counts to avoid the capped root aggregate and shared subdeck limits; full backend tree construction is not ported |
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt` and `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt` | `lib/src/review_session.dart` | Scheduler-selected card, question/answer side, rating dispatch, mutation readiness, serialized actions, timebox event gate/continue, and retention of the previously displayed side during queue reloads and failures |
 | `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` | `ReviewScheduler<TSchedulingSnapshot>` in `lib/src/review_session.dart` | Queue and answer adapter contract, including the optional timebox event; scheduling snapshot and rating are forwarded without Dart interval calculations |
-| `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` | `ReviewTimeboxReached` in `lib/src/review_session.dart` | Carries the elapsed-time limit and answer count emitted by the collection timebox |
+| `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` and `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` | `ReviewTimeboxReached` in `lib/src/review_session.dart`; `ReviewTimeboxTracker` in `lib/src/review_timebox.dart` | Accepts adapter-supplied integer time, configured seconds, and recorded-answer count; disables only for a zero limit; uses strict `elapsed > limit`; emits the configured limit and count delta, then restarts from fresh time/count reads. Collection storage and scheduler state remain behind adapters. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt` | `reviewTimeboxRoundedMinutes()` in `lib/src/review_timebox.dart` | Preserves Float32 division by 60 and Kotlin `roundToInt()` ties toward positive infinity. Localized strings, dialog and lifecycle remain unported. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/StudyCounts.kt` and `StudyCountsView.kt` | `ReviewQueueCounts` and `ReviewQueueKind` in `lib/src/review_session.dart`; `StudyCounts` in `lib/src/review_presentation.dart` | Copies scheduler counts and active queue, renders each integer with direct decimal `toString()`, and exposes the equality check used to style only the active count |
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerButtonsNextTime.kt` and `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` | `ReviewNextStateDescriber<T>` and `AnswerButtonsNextTime` in `lib/src/review_presentation.dart` | Passes the current opaque scheduling snapshot to the backend adapter and assigns its first four strings to Again/Hard/Good/Easy in order; no interval calculation or fallback labels |
 | `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimer.kt` and `AnswerTimerState.kt` | `lib/src/answer_timer.dart` | Hidden/running/paused/stopped states; card configuration; stop, lifecycle pause/resume, hide, elapsed-time upper clamp, and resume-at-limit transition, using an injected monotonic millisecond clock in place of `SystemClock.elapsedRealtime()`; exposes current state and a replaying, per-listener conflated stream of distinct states to match `StateFlow` |
@@ -38,6 +40,7 @@ reviewer bindings; it does not claim to reproduce the whole Android app.
 | `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/BindingMap.kt`, `MappableBinding.kt`, `ReviewerBinding.kt`, and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerCommand.kt` | `lib/src/reviewer_binding_map.dart` | Builds separate reviewer key and gesture maps from explicit typed bindings, preserving action-list then binding-list order and retaining duplicate registrations. Lookups use the underlying binding and retain but do not filter by card side. Unknown values are skipped; axis values are kept in a separate ordered registration list. Preference loading, KeyEvent/MotionEvent matching, processor calls, and command execution are outside. |
 | `AnkiDroid/src/test/java/com/ichi2/anki/deckpicker/DeckFiltersTest.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/libanki/DeckNodeTest.kt` | `test/` | Behavioral reference cases for this slice |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModelTest.kt` and the reviewer action dispatch in `ReviewerViewModel.kt` | `test/review_session_test.dart` | Review-side transitions, mutation readiness, rating forwarding, timebox pausing/continuation, queue advancement, and serialized action behavior |
+| Timebox logic in `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` and minute conversion in `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt` (the pinned source has no direct `timeboxReached()` unit test) | `test/review_timebox_test.dart` | Source-derived checks for strict expiry, zero disablement, configured-limit payload, answer-count delta, fresh restart reads, negative limits, clock rollback, Float32 division, and rounding boundaries |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/StudyCountsViewTest.kt` and the direct four-label mapping in `AnswerButtonsNextTime.kt` | `test/review_presentation_test.dart` | Decimal count strings, active-queue selection, unchanged backend label order, and failure when a required positional label is absent |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimerTest.kt` | `test/answer_timer_test.dart` | Clock-controlled source cases for initial/configured state, elapsed values, pause/resume, clamping, hide/stop transitions, and the source's negative-delta and nonpositive-limit behavior |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvanceTest.kt` | `test/auto_advance_test.dart` | Deterministic cases for positive delays, typed action dispatch, disabled/nonpositive timers, cancellation on disable/side/card change, deck settings reload and wait-for-audio, action codes/fallbacks, and same-side job overwrite |
@@ -56,8 +59,10 @@ requires an adapter for the pinned backend contract. The queue-state adapter
 supplies counts, active queue, scheduling snapshot, and optional timebox event;
 `ReviewNextStateDescriber` forwards that snapshot to the backend's
 `describeNextStates()` operation and returns its four ordered strings. The
-collection database, timebox calculation, generated backend API, and scheduling
-algorithm are not included or reimplemented.
+collection database, scheduler config/count adapters, generated backend API,
+and scheduling algorithm are not included or reimplemented. The
+`ReviewTimeboxTracker` models only the counter behavior that consumes the clock,
+configured time limit, and answer count from those adapters.
 
 `AutoAdvanceSettingsAdapter` loads the five resolved settings for the current
 card's deck. This boundary keeps `Card.currentDeckId()` and `DeckConfig` access
@@ -74,8 +79,8 @@ rolled back.
 Not yet ported: the Android app and platform lifecycle integration, card
 template rendering and media, collection storage, the Rust backend and
 scheduling algorithm, synchronization, answer-timer widget/tick rendering,
-timebox calculation and presentation, Android study-count/answer-button
-widgets and layout, next-time visibility preference wiring, Auto Advance deck
+localized timebox text, dialog and lifecycle presentation, Android study-count
+and answer-button widgets and layout, next-time visibility preference wiring, Auto Advance deck
 settings UI and actual collection-backed settings loader, reviewer action
 routing and audio lifecycle integration, leech handling, reviewer undo/redo,
 JavaScript card-state mutation and gesture bridges, WebView state collection,

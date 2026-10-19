@@ -88,7 +88,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `Collection.TimeboxReached`, Copyright © 2026 Mike Hardy
   <github@mikehardy.net>. Its `secs` and `reps` payload is adapted by
   `ReviewTimeboxReached` in
-  `lib/src/review_session.dart`; collection timebox calculation is not included.
+  `lib/src/review_session.dart`. The source timebox counter and its automatic
+  restart are adapted in `lib/src/review_timebox.dart`; clock, scheduler limit,
+  and answer-count values remain adapter inputs.
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt`
+  declares `GPL-3.0-or-later`. Its `secs / 60f` rounded-minute projection is
+  adapted in `lib/src/review_timebox.dart`; localized text and the Android
+  dialog are not included.
 - Behavioral cases in `test/deck_filters_test.dart` are adapted from
   `DeckFiltersTest.kt`, Copyright © 2026 Arthur Milchior.
 - Behavioral cases in `test/deck_list_test.dart` are adapted from
@@ -96,6 +102,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/review_session_test.dart` checks the reviewer flow recorded in
   `ReviewerViewModel.kt`, `Scheduler.kt`, and `Collection.kt`; it is not a port
   of the Android test harness.
+- `test/review_timebox_test.dart` checks the strict threshold, zero disablement,
+  result payload, answer delta, restart reads, negative-limit behavior, and
+  rounded-minute conversion from `Collection.kt` and `ReviewerFragment.kt`;
+  there is no direct upstream `timeboxReached()` unit test, and this is not a
+  port of the Android test harness.
 - `test/review_presentation_test.dart` checks the count and answer-label
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the

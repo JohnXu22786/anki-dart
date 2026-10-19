@@ -19,7 +19,8 @@ reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
 resolution, plus Card Browser search-text transitions, text-edit/sync/reset/
 history-selection/request-submission effect sequences, saved-search
-outcome-message mapping, and card-template type-answer modifier parsing.
+outcome-message mapping, card-template type-answer modifier parsing, and
+question-side type-answer placeholder removal.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -134,6 +135,10 @@ outcome-message mapping, and card-template type-answer modifier parsing.
   `nosuggest:`, `cloze:`, and `nc:` prefixes in any order and returns the
   unmodified field-name remainder. Card/note lookup, cloze extraction, answer
   comparison, template rendering, and Android input behavior remain outside.
+- Type-answer tags: `removeTypeAnswerTags` removes every nonempty, single-line
+  `[[type:...]]` match through its first `]]`, preserving other text. This is
+  the question-side cleanup model; field lookup, cloze/answer processing,
+  rendering, and Android integration remain with the host.
 - Reviewer presentation: a study-count model that renders the three scheduler
   counts as decimal strings and retains which queue is active, plus an answer
   next-time model that displays the backend's four strings in Again/Hard/Good/
@@ -320,8 +325,9 @@ backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, previewer collection flag mutation and StateFlow
 publication (flag codes and ordered write/publish intent are modeled),
-marks/note editing, template rendering and media, card/note-dependent
-TypeAnswer comparison and cloze extraction, answer-timer widget/tick rendering,
+marks/note editing, card-template rendering and media, card/note-dependent
+TypeAnswer field lookup, cloze extraction and answer comparison, answer-timer
+widget/tick rendering,
 Auto Advance settings
 controls and Android preference lookup, `KeyEvent` extraction and hardware/layout
 `getUnicodeChar()` calculation, binding display strings, Android

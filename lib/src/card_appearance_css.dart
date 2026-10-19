@@ -16,11 +16,19 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Behavioral reference: CardAppearance.appendCssStyle() in AnkiDroid 2.25.3;
- * see ANKIDROID_UPSTREAM.md.
+ * Behavioral reference: CardAppearance.appendCssStyle(), getCssClasses(), and
+ * getCardClass() in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 import 'java_float_format.dart';
+
+/// Host projection of the theme predicates used by `CardAppearance`.
+///
+/// This records only which CSS suffix applies, not AnkiDroid's theme catalog or
+/// selection state. The host maps any non-PLAIN day theme to [dayOther], exact
+/// DayTheme.PLAIN to [dayPlain], any non-DARK night theme to [nightOther], and
+/// exact NightTheme.DARK to [nightDark].
+enum CardAppearanceThemeProjection { dayOther, dayPlain, nightOther, nightDark }
 
 /// Appends AnkiDroid's font, card, and image zoom rules to [style].
 ///
@@ -49,6 +57,45 @@ String appendCardAppearanceCss(
 
   return css.toString();
 }
+
+/// Returns the exact theme and vertical-centering class suffix from
+/// `CardAppearance.getCssClasses()`.
+///
+/// [centerVertically] is host-supplied preference state. Class names and
+/// leading spaces are kept verbatim from the source.
+String cardAppearanceCssClasses({
+  required CardAppearanceThemeProjection theme,
+  required bool centerVertically,
+}) {
+  final cssClasses = StringBuffer();
+  if (centerVertically) {
+    cssClasses.write(' vertically_centered');
+  }
+
+  switch (theme) {
+    case CardAppearanceThemeProjection.dayOther:
+      break;
+    case CardAppearanceThemeProjection.dayPlain:
+      cssClasses.write(' ankidroid_plain_mode');
+    case CardAppearanceThemeProjection.nightOther:
+      cssClasses.write(' night_mode nightMode');
+    case CardAppearanceThemeProjection.nightDark:
+      cssClasses.write(' night_mode nightMode ankidroid_dark_mode');
+  }
+  return cssClasses.toString();
+}
+
+/// Returns `card card{oneBasedCardOrdinal}` followed by the source CSS classes.
+///
+/// The ordinal is concatenated as supplied, matching `getCardClass()` without
+/// validation. Android's render context appends MathJax classes separately.
+String cardAppearanceClassName(
+  int oneBasedCardOrdinal, {
+  required CardAppearanceThemeProjection theme,
+  required bool centerVertically,
+}) =>
+    'card card$oneBasedCardOrdinal'
+    '${cardAppearanceCssClasses(theme: theme, centerVertically: centerVertically)}';
 
 /// Formats the source's `Int / 100.0` result using Java Double notation.
 String _javaPercentDouble(int percent) {

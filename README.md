@@ -125,12 +125,15 @@ question-side type-answer placeholder removal.
   enablement formulas, next/previous transitions, back-side-only mode, and
   one-based slider selection. It returns a show-side or load-card intent for the
   host to carry out; card lookup, rendering, and media playback remain outside.
-- Card appearance CSS: `appendCardAppearanceCss` preserves the supplied CSS,
-  then appends nondefault font-scale, card-zoom, and image-zoom rules in source
-  order. It uses the existing Java Float formatter for Android font scale and
-  source-compatible Double formatting for integer zoom ratios. The host supplies
-  the values; custom fonts, themes, vertical centering, WebView textZoom, and
-  full card rendering remain outside.
+- Card appearance projections: `appendCardAppearanceCss` preserves the supplied
+  CSS, then appends nondefault font-scale, card-zoom, and image-zoom rules in
+  source order with source-compatible numeric formatting. The host supplies
+  font scale and zoom preferences. `cardAppearanceCssClasses` and
+  `cardAppearanceClassName` project the source's class suffixes from host-supplied
+  theme predicates and centering state, preserving class spacing/order and direct
+  ordinal interpolation. Theme selection and preference IO, actual theme CSS,
+  custom fonts, vertical-centering styles, AndroidCardRenderContext's MathJax handling,
+  WebView textZoom, and full rendering remain outside.
 - Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and the
   set/toggle projections return a one-card collection-write intent followed by
   publication of the same flag only if the host write succeeds. Current-card
@@ -330,7 +333,8 @@ updates, Card Browser sort UI, Android preference/synced-config IO, and actual
 backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, remaining CardAppearance custom-font composition,
-theme and vertical-centering classes, WebView textZoom/lifecycle, previewer
+theme selection and actual theme CSS, vertical-centering preference IO/styles,
+MathJax render context, WebView textZoom/lifecycle, previewer
 collection flag mutation and StateFlow
 publication (flag codes and ordered write/publish intent are modeled),
 marks/note editing, card-template rendering and media, card/note-dependent

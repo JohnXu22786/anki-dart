@@ -124,11 +124,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/previewer_flag_effects.dart`; collection/undo execution, current-card
   lookup and StateFlow publication remain outside.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardAppearance.kt`
-  declares `GPL-3.0-or-later`. Its pure CSS zoom appending behavior is adapted
-  in `lib/src/card_appearance_css.dart`, reusing the internal Java Float
-  formatter in `lib/src/java_float_format.dart`. The host supplies
-  font scale and zoom preferences; custom fonts, themes, vertical centering,
-  WebView textZoom and rendering remain outside.
+  declares `GPL-3.0-or-later`. Its CSS zoom appending and class suffix/card-class
+  projections are adapted in `lib/src/card_appearance_css.dart`, reusing the
+  internal Java Float formatter in `lib/src/java_float_format.dart`. The host
+  supplies font scale, zoom preferences, current-theme projection, and centering
+  state. Theme selection/preferences, custom fonts/theme CSS, vertical-centering
+  styles, AndroidCardRenderContext MathJax handling, WebView textZoom and
+  rendering remain outside. The pinned test tree has no direct assertions for
+  `getCssClasses()` or `getCardClass()`; those Dart cases are source-derived.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
   declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
   semantics are adapted in `lib/src/type_answer_modifiers.dart`; card/note

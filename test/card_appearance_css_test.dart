@@ -16,8 +16,10 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source mapping: CardAppearance.appendCssStyle and CardTextScaleTest in
- * AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
+ * Source mapping: CardAppearance.appendCssStyle/getCssClasses/getCardClass,
+ * CardTextScaleTest, and AndroidCardRenderContext in AnkiDroid 2.25.3; see
+ * ANKIDROID_UPSTREAM.md. Class projection cases are source-derived because no
+ * direct pinned tests assert these methods' output.
  */
 
 import 'dart:typed_data';
@@ -98,6 +100,69 @@ void main() {
         ),
         'body { zoom: 1.0E7 }\n'
         'img { zoom: -2.147483648E7 }\n',
+      );
+    });
+  });
+
+  group('cardAppearanceCssClasses', () {
+    test('preserves theme suffixes and centering order for each projection',
+        () {
+      final cases = <(CardAppearanceThemeProjection, String)>[
+        (CardAppearanceThemeProjection.dayOther, ''),
+        (
+          CardAppearanceThemeProjection.dayPlain,
+          ' ankidroid_plain_mode',
+        ),
+        (
+          CardAppearanceThemeProjection.nightOther,
+          ' night_mode nightMode',
+        ),
+        (
+          CardAppearanceThemeProjection.nightDark,
+          ' night_mode nightMode ankidroid_dark_mode',
+        ),
+      ];
+
+      for (final (theme, expectedSuffix) in cases) {
+        expect(
+          cardAppearanceCssClasses(
+            theme: theme,
+            centerVertically: false,
+          ),
+          expectedSuffix,
+        );
+        expect(
+          cardAppearanceCssClasses(
+            theme: theme,
+            centerVertically: true,
+          ),
+          ' vertically_centered$expectedSuffix',
+        );
+      }
+    });
+  });
+
+  group('cardAppearanceClassName', () {
+    test('interpolates the one-based ordinal before the class suffix', () {
+      expect(
+        cardAppearanceClassName(
+          3,
+          theme: CardAppearanceThemeProjection.nightDark,
+          centerVertically: true,
+        ),
+        'card card3 vertically_centered night_mode nightMode ankidroid_dark_mode',
+      );
+    });
+
+    test('concatenates ordinals directly and does not append MathJax state',
+        () {
+      expect(
+        cardAppearanceClassName(
+          0,
+          theme: CardAppearanceThemeProjection.dayOther,
+          centerVertically: false,
+        ),
+        'card card0',
       );
     });
   });

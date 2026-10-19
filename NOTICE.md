@@ -179,6 +179,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   defaults from `BrowserConfig.kt` (whose constants incorporate upstream AGPL
   code and are not copied), SharedPreferences, labels/tooltips, backend column
   values and browser UI remain outside.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardOrNoteId.kt`,
+  `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserRowCollection.kt`, and
+  `AnkiDroid/src/main/java/com/ichi2/anki/model/CardsOrNotes.kt` declare
+  `GPL-3.0-or-later`. Their Cards/Notes-associated row ID and collection
+  projections are adapted in `lib/src/browser_row_collection.dart`. The host
+  supplies collection callbacks for card-to-note and note-to-card lookups;
+  Android collection access, backend row data, selection UI, and sorting are
+  not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/model/SortType.kt`,
   `libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, and typed config
   decoding in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` declare
@@ -325,6 +333,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it
   does not port SharedPreferences, backend column setup, or the Android harness.
+- `test/browser_row_collection_test.dart` contains source-derived checks for
+  Cards/Notes row-ID conversion, aliased list replacement/reset, ordered host
+  lookups, duplicate-preserving note expansion, and first-card/per-position
+  projections. The upstream `CardBrowserViewModelTest.kt` directly verifies
+  expansion of a Notes row to all its cards, and
+  `BrowserMultiColumnAdapterRowsTest.kt` exercises reset/replacement through
+  the UI adapter; there is no dedicated upstream `BrowserRowCollection` test.
 - `test/browser_sort_type_test.dart` adapts the sort resolution and save cases in
   `SortTypeTest.kt`, plus typed config fallback behavior from `Config.kt`,
   including the source's global no-sorting behavior; it does not port

@@ -11,7 +11,8 @@ the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation and flag decision/effect models, Card Browser active-column and sort
 preference models, recent-search ordering, JSON serialization, display state,
-saved-history request restoration, structured search-node planning, the
+saved-history request restoration, Cards/Notes row-ID projection and expansion,
+structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
 command routing, reviewer binding codec/map and default definitions, headless
@@ -44,6 +45,13 @@ placeholder removal.
   columns to TEXT, NUMERIC, DATE, or UNSPECIFIED; the `template` column is TEXT
   in Cards mode and NUMERIC in Notes mode. The host supplies the current mode;
   labels, tooltips, backend column data, and mode/config lookup remain outside.
+- Card Browser row IDs: `BrowserRowId` associates an ID with Cards or Notes
+  mode; `BrowserRowCollection` retains and mutates the supplied list, maps card
+  rows to note IDs through a host callback, and expands note rows to cards in
+  source order. Per-row selection takes the first card, while empty note results
+  preserve the source failure. Collection lookups remain host-side. Only the
+  basic note-to-all-cards behavior has direct upstream integration coverage;
+  the dedicated row-collection tests are source-derived.
 - Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
   mode-specific config values, checks the key against host-supplied backend
   columns, and returns the source sort type. It defaults missing or
@@ -374,9 +382,9 @@ integration for mode, text buffers, and history/saved-search availability,
 Basic/Advanced text widgets, history-list
 and toggle widgets,
 persistent Cards/Notes mode lookup and AGPL-incorporated column defaults,
-backend column registry and rows, column-selection drag/drop and active backend
-updates, Card Browser sort UI, Android preference/synced-config IO, and actual
-backend row sorting,
+collection-backed Card↔Note ID lookups, backend column registry and rows,
+column-selection drag/drop and active backend updates, Card Browser sort UI,
+Android preference/synced-config IO, and actual backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, CardAppearance font resource installation and
 font-selection preferences, theme selection and actual theme CSS,

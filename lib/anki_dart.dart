@@ -25,6 +25,7 @@ export 'src/browser_column_collection.dart';
 export 'src/browser_filter_update.dart';
 export 'src/browser_search_history.dart';
 export 'src/browser_saved_searches.dart';
+export 'src/browser_saved_search_messages.dart';
 export 'src/browser_search_request.dart';
 export 'src/browser_search_node_plan.dart';
 export 'src/browser_search_text_state.dart';

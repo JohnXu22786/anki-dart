@@ -200,7 +200,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and map/list conversion are adapted in `lib/src/browser_saved_searches.dart`.
   `SavedSearches.kt` defines the `Config.savedFilters` extension, while
   `Config.kt` supplies the generic typed get/set operations it uses. Collection
-  config access and saved-search UI are not included.
+  config access and saved-search UI are not included. The outcome mapping from
+  `CardBrowserSearchViewModel.kt`'s `addSavedSearch`/`deleteSavedSearch` methods
+  and `UserMessage` enum is adapted in `lib/src/browser_saved_search_messages.dart`;
+  only message identifiers are returned, while localization, UI and message-flow
+  delivery remain with the host.
 - Behavioral cases in `test/deck_filters_test.dart` are adapted from
   `DeckFiltersTest.kt`, Copyright © 2026 Arthur Milchior.
 - Behavioral cases in `test/deck_list_test.dart` are adapted from
@@ -252,6 +256,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   duplicate handling, query normalization, remove/clear, and map conversion
   behavior from `SavedSearchesTest.kt`; it does not test collection config IO,
   query execution, or the Android test harness.
+- `test/browser_saved_search_messages_test.dart` adapts the four direct
+  `CardBrowserSearchViewModelTest.kt` cases for successful/duplicate add and
+  successful/missing delete. It checks source message identifiers only; it does
+  not test localization, Android message-flow delivery, or UI rendering.
 - `test/review_presentation_test.dart` checks the count and answer-label
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the

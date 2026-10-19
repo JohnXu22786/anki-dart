@@ -6,7 +6,7 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes twenty-four source-mapped slices: deck-picker behavior,
+The current port includes twenty-five source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation, Card Browser active-column and sort preference models, recent-search
@@ -16,8 +16,8 @@ reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
 command routing, reviewer binding codec/map and default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
-resolution, plus Card Browser search-text transitions and sync/reset effect
-sequences.
+resolution, plus Card Browser search-text transitions, sync/reset effect
+sequences, and saved-search outcome-message mapping.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -61,7 +61,9 @@ sequences.
   `BrowserSavedSearchesModel` applies exact, case-sensitive
   lookup and duplicate handling, Kotlin-compatible query trimming, and map/list
   conversion over a host-supplied config map; collection config IO and the
-  saved-search UI remain outside.
+  saved-search UI remain outside. `browserSavedSearchUserMessageForMutation`
+  maps add/delete outcomes to the exact four source message identifiers; the
+  host owns localization and message-flow delivery.
 - Card Browser search text: `BrowserSearchTextState` keeps independent Basic and
   Advanced buffers. Mode toggles preserve both, advanced appends follow the
   source's Kotlin-blank and exact trailing-space checks, text edits replace LF
@@ -239,8 +241,10 @@ search-string conversion, SavedStateHandle/StateFlow lifecycle, and rendering
 the list and expansion toggle.
 `BrowserSavedSearchesModel` operates on a host-supplied saved-search config map.
 It returns case-sensitive name-sorted values, applies the source duplicate and
-query-normalization rules, and exposes map conversion; the host owns collection
-config loading/persistence, saved-search UI, and query parsing/execution.
+query-normalization rules, and exposes map conversion. The saved-search message
+projection maps the mutation result's success flag to the source message kind;
+the host owns collection config loading/persistence, localized UI message
+delivery, and query parsing/execution.
 `ReviewNextStateDescriber`
 forwards the opaque scheduling state to the pinned backend's
 `describeNextStates()` API. The session exposes the timebox's elapsed-time limit
@@ -251,7 +255,8 @@ Rust backend, collection storage, and scheduling algorithm remain external.
 `ReviewTimeboxTracker` consumes clock, configured-limit, and answer-count
 callbacks; it does not load settings or collection state. This is not yet a
 complete AnkiDroid replacement: Android screens and platform lifecycle integration,
-Card Browser SharedPreferences and mode lookup, saved-search config IO and UI,
+Card Browser SharedPreferences and mode lookup, saved-search config IO, localized
+outcome-message delivery and UI,
 collection-backed deck/note-type lookup, backend query-string generation and
 backend SearchNode conversion, query parsing/validation, final SearchString
 serialization, search execution, search-string conversion,

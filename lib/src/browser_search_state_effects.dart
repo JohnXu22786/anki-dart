@@ -16,15 +16,17 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Behavioral reference: `syncState` and `resetSearchState` in
- * CardBrowserSearchViewModel.kt, AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
+ * Behavioral reference: `selectSearchHistoryEntry`, `onSearchTextChanged`,
+ * `syncState`, and `resetSearchState` in CardBrowserSearchViewModel.kt, plus
+ * `SearchFilters.from`, AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 import 'browser_filter_update.dart';
+import 'browser_search_history.dart';
 import 'browser_search_request.dart';
 import 'browser_search_text_state.dart';
 
-/// A single ordered effect from Card Browser search synchronization/reset.
+/// A single ordered effect from Card Browser search state transitions.
 ///
 /// The host executes these effects against its StateFlows and SavedStateHandle.
 /// This model preserves source order and does not schedule or execute them.
@@ -32,7 +34,7 @@ sealed class BrowserSearchStateEffect {
   const BrowserSearchStateEffect();
 }
 
-/// Publishes a System-originated filter update.
+/// Publishes a user- or system-originated filter update.
 final class BrowserFilterUpdateEffect extends BrowserSearchStateEffect {
   const BrowserFilterUpdateEffect(this.update);
 
@@ -84,6 +86,47 @@ final class BrowserSavedStateKeyRemovalEffect extends BrowserSearchStateEffect {
 const browserAdvancedSearchStateKey = 'advancedSearch';
 const browserBasicSearchTextStateKey = 'basicSearchText';
 const browserAdvancedSearchTextStateKey = 'advancedSearchText';
+
+/// Projects the ordered effects of selecting a recent search-history entry.
+///
+/// The source first emits a User update containing a shallow copy of the
+/// current filters, then replaces the active text buffer (mapping LF to an
+/// ASCII space), emits the restored filters as a User update, and closes the
+/// search screen. Missing deck or note-type IDs restore empty filters. The
+/// host supplies the current snapshot and ID maps, and applies the effects;
+/// this projection does not create or execute a search request.
+List<BrowserSearchStateEffect> browserSelectSearchHistoryEntryEffects(
+  BrowserSearchHistoryEntry entry, {
+  required BrowserSearchFilters currentFilters,
+  required BrowserSearchTextState textState,
+  required List<BrowserDeckNameId> deckNameMap,
+  required List<BrowserNoteTypeNameId> noteTypeMap,
+}) {
+  final copiedFilters = BrowserSearchFilters(
+    decks: currentFilters.decks,
+    flags: currentFilters.flags,
+    tags: currentFilters.tags,
+    noteTypes: currentFilters.noteTypes,
+    cardStateCodes: currentFilters.cardStateCodes,
+  );
+  final textAfterEdit = textState.onSearchTextChanged(entry.query);
+  final restoredFilters = BrowserSearchFilters.fromHistoryEntry(
+        entry,
+        deckNameMap: deckNameMap,
+        noteTypeMap: noteTypeMap,
+      ) ??
+      const BrowserSearchFilters();
+
+  return List.unmodifiable([
+    BrowserFilterUpdateEffect(BrowserFilterUpdateUser(copiedFilters)),
+    if (textState.isAdvancedSearch)
+      BrowserAdvancedSearchTextEffect(textAfterEdit.advancedText)
+    else
+      BrowserBasicSearchTextEffect(textAfterEdit.basicText),
+    BrowserFilterUpdateEffect(BrowserFilterUpdateUser(restoredFilters)),
+    const BrowserSearchScreenOpenEffect(isOpen: false),
+  ]);
+}
 
 /// Projects AnkiDroid's `syncState` calls in their source order.
 ///

@@ -177,6 +177,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   buffers and transition methods are adapted in
   `lib/src/browser_search_text_state.dart`; SavedStateHandle persistence,
   flow scheduling, and Android text widgets remain with the host.
+  The ordered effects for `selectSearchHistoryEntry` and its LF-only text edit
+  are projected in `lib/src/browser_search_state_effects.dart`, reusing the
+  host-mapped history restoration; the host applies flows and performs search
+  submission. The pinned test named “selecting search history entry” calls the
+  `submitSearch` helper rather than this method, so the selection sequence is
+  covered by source-derived Dart cases rather than a direct upstream test. No
+  pinned test directly covers host-map restoration through `SearchFilters.from`.
   The source `syncState` and `resetSearchState` method call order is projected
   as typed effects in `lib/src/browser_search_state_effects.dart`. The reset
   preserves the exact query and omits `historyExpanded` from the three ordered
@@ -243,10 +250,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `CardBrowserSearchViewModelTest.kt`, with an added source-derived Loading
   snapshot check; it does not test Android flows, search-string conversion, or
   widgets.
-- `test/browser_search_restore_test.dart` adapts request/history conversion cases
-  from `SearchHistoryTest.kt`, including first-match ID mapping, duplicate and
-  order preservation, Kotlin query trimming, and missing-ID failure; it does not
-  test collection lookup or backend query generation.
+- `test/browser_search_restore_test.dart` uses source-derived request/history
+  conversion cases, with `SearchHistoryTest.kt` as the history-format reference
+  and `CardBrowserSearchViewModel.kt` as the host-map restoration implementation.
+  It covers first-match ID mapping, duplicate/order preservation, Kotlin query
+  trimming, and missing-ID failure. The pinned history tests cover invalid IDs
+  during search-string generation, not direct restoration through host maps.
+  Collection lookup and backend query generation remain outside this model.
 - `test/browser_search_text_state_test.dart` adapts Basic/Advanced mode and text
   transitions from `CardBrowserSearchViewModelTest.kt`, including append spacing,
   LF replacement, saved-query application, and independent buffers; it does not
@@ -256,6 +266,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and the exact three SavedState keys removed. The pinned source marks reset
   `@NeedsTest("reset")` but has no direct test for either method; host execution
   and coroutine scheduling remain outside this test.
+- `test/browser_search_history_selection_test.dart` adds source-derived cases
+  for history-selection effect order, active Basic/Advanced text replacement,
+  LF/CR behavior, restored filters, and empty-filter fallback on missing IDs.
+  The similarly named pinned test calls `submitSearch`, not
+  `selectSearchHistoryEntry`; this model does not execute Android flows or
+  search submission.
 - `test/browser_saved_searches_test.dart` adapts name ordering and lookup,
   duplicate handling, query normalization, remove/clear, and map conversion
   behavior from `SavedSearchesTest.kt`; it does not test collection config IO,

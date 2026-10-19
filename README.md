@@ -6,7 +6,7 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes twenty-five source-mapped slices: deck-picker behavior,
+The current port includes selected source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation, Card Browser active-column and sort preference models, recent-search
@@ -16,8 +16,8 @@ reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
 command routing, reviewer binding codec/map and default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
-resolution, plus Card Browser search-text transitions, sync/reset effect
-sequences, and saved-search outcome-message mapping.
+resolution, plus Card Browser search-text transitions, sync/reset/history
+selection effect sequences, and saved-search outcome-message mapping.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -81,6 +81,14 @@ sequences, and saved-search outcome-message mapping.
   removals in source order; it leaves `historyExpanded` untouched. The host
   applies these effects to StateFlows and SavedStateHandle. The pinned source
   marks reset `@NeedsTest("reset")`; neither method has a direct upstream test.
+- Card Browser history selection: `browserSelectSearchHistoryEntryEffects`
+  emits the source-ordered copied-current User update, LF-sanitized edit to the
+  active text buffer, restored User filters, and screen closure. It uses the
+  existing first-match deck/note-type ID restoration and falls back to empty
+  filters if either map cannot resolve an ID. The host supplies the current
+  state and maps and applies the effects; no search request is created or run.
+  No pinned test directly covers this selection sequence or host-map
+  restoration; the similarly named upstream test calls `submitSearch` instead.
 - Review session: a headless flow that loads the scheduler's current card, shows
   its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
   the next queue item. It waits for the current card's state-mutation hook
@@ -265,7 +273,8 @@ outcome-message delivery and UI,
 collection-backed deck/note-type lookup, backend query-string generation and
 backend SearchNode conversion, query parsing/validation, final SearchString
 serialization, search execution, search-string conversion,
-Android execution of Card Browser sync/reset effects, SavedStateHandle/StateFlow
+Android execution of Card Browser sync/reset/history-selection effects,
+SavedStateHandle/StateFlow
 integration for mode, text buffers, and history/saved-search availability,
 Basic/Advanced text widgets, history-list
 and toggle widgets,
@@ -297,8 +306,9 @@ fallback, the collapsed five-entry history display and untruncated toggle
 threshold, saved-search case-sensitive lookup/order, duplicate handling,
 Kotlin-compatible query trimming and map conversion, Basic/Advanced buffer
 independence, source append spacing, LF-only text replacement, saved-query
-trailing spaces, and exact ordered sync/reset effects with the intentional
-historyExpanded omission,
+trailing spaces, exact ordered sync/reset effects with the intentional
+historyExpanded omission, and history-selection effect order including
+unresolved-ID fallback,
 ordered Card Browser columns and load-time de-duplication,
   sort config defaults (including wrong-typed values), per-mode column values,
   and the global no-sorting quirk,

@@ -6,11 +6,12 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes nine source-mapped slices: deck-picker behavior, the
+The current port includes ten source-mapped slices: deck-picker behavior, the
 headless review-session lifecycle, reviewer count/next-time presentation
-models, the collection timebox counter and rounded-minute projection, the
-answer-timer state machine, reviewer Auto Advance, the headless reviewer gesture
-parser, parsed-gesture command routing, and the reviewer binding codec/map.
+models, the collection timebox counter and rounded-minute projection, Previewer
+navigation, the answer-timer state machine, reviewer Auto Advance, the headless
+reviewer gesture parser, parsed-gesture command routing, and the reviewer
+binding codec/map.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -32,6 +33,10 @@ parser, parsed-gesture command routing, and the reviewer binding codec/map.
   payload, answer-count delta, and automatic restart. The display model rounds
   seconds to minutes using Float32 division and Kotlin `roundToInt()` behavior;
   localized strings, the Android dialog, and lifecycle wiring remain outside.
+- Previewer navigation: `PreviewerNavigationModel` applies the source button
+  enablement formulas, next/previous transitions, back-side-only mode, and
+  one-based slider selection. It returns a show-side or load-card intent for the
+  host to carry out; card lookup, rendering, and media playback remain outside.
 - Reviewer presentation: a study-count model that renders the three scheduler
   counts as decimal strings and retains which queue is active, plus an answer
   next-time model that displays the backend's four strings in Again/Hard/Good/
@@ -95,6 +100,9 @@ deck; the model does not read collection storage or supply deck-config defaults.
 Its action listener receives a cancellation signal and should observe it while
 awaiting work that can be cancelled, matching the source coroutine's cooperative
 cancellation.
+`PreviewerNavigationModel` consumes the selected-card count and current index
+and side flags, then returns an intent for the host to load a card or show a
+side. It does not access card IDs, collection storage, or the WebView.
 `ReviewNextStateDescriber`
 forwards the opaque scheduling state to the pinned backend's
 `describeNextStates()` API. The session exposes the timebox's elapsed-time limit
@@ -105,7 +113,8 @@ Rust backend, collection storage, and scheduling algorithm remain external.
 `ReviewTimeboxTracker` consumes clock, configured-limit, and answer-count
 callbacks; it does not load settings or collection state. This is not yet a
 complete AnkiDroid replacement: Android screens and platform lifecycle integration,
-answer-timer widget/tick rendering, Auto Advance settings controls and
+Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
+WebView rendering and media, previewer flags/marks/note editing, answer-timer widget/tick rendering, Auto Advance settings controls and
 Android preference lookup, Android `KeyEvent` handling and `possibleKeyBindings`,
 binding display strings, MotionEvent axis interpretation, `BindingProcessor`
 callbacks, command execution, touch input and reviewer command handlers,

@@ -95,6 +95,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   declares `GPL-3.0-or-later`. Its `secs / 60f` rounded-minute projection is
   adapted in `lib/src/review_timebox.dart`; localized text and the Android
   dialog are not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt` and
+  `CardViewerViewModel.kt` declare `GPL-3.0-or-later`. Previewer navigation
+  formulas and side/card transitions are adapted in
+  `lib/src/previewer_navigation.dart`; SavedStateHandle and card lookup remain
+  outside.
 - Behavioral cases in `test/deck_filters_test.dart` are adapted from
   `DeckFiltersTest.kt`, Copyright © 2026 Arthur Milchior.
 - Behavioral cases in `test/deck_list_test.dart` are adapted from
@@ -107,6 +112,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   rounded-minute conversion from `Collection.kt` and `ReviewerFragment.kt`;
   there is no direct upstream `timeboxReached()` unit test, and this is not a
   port of the Android test harness.
+- `test/previewer_navigation_test.dart` adapts the navigation cases in
+  `PreviewerViewModelTest.kt`; it does not port the Android test harness,
+  collection, or card-rendering setup.
 - `test/review_presentation_test.dart` checks the count and answer-label
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the

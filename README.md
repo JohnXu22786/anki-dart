@@ -6,10 +6,10 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes six source-mapped slices: deck-picker behavior, the
+The current port includes seven source-mapped slices: deck-picker behavior, the
 headless review-session lifecycle, reviewer count/next-time presentation
-models, the answer-timer state machine, reviewer Auto Advance, and the
-headless reviewer gesture parser.
+models, the answer-timer state machine, reviewer Auto Advance, the headless
+reviewer gesture parser, and parsed-gesture command routing.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -48,6 +48,14 @@ headless reviewer gesture parser.
   source's asynchronous single/double-tap timing and same-side timer overwrite.
   It retains the zero-valued last-tap sentinel behavior for early event times
   and signed 64-bit timestamp subtraction.
+- Gesture command routing: host-supplied gesture bindings resolve to the
+  source reviewer command identifiers and declaration order. Later commands
+  overwrite duplicate bindings; the four corner taps and center tap depend on
+  explicit corner-touch configuration; multi-finger taps remain unmapped. The
+  enabled flag affects `isBound` only, and an optional callback receives the
+  selected command and gesture. This layer does not decode Android
+  `SharedPreferences` or `ReviewerBinding` values, receive touch input, or
+  execute reviewer actions.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
 a `ReviewScheduler` adapter that supplies queue items, backend counts and active
@@ -63,8 +71,9 @@ AnkiDroid 2.25.3 source pins
 Rust backend, collection storage, timebox calculation, and scheduling algorithm
 are still external and are not implemented here. This is not yet a complete
 AnkiDroid replacement: Android screens and platform lifecycle integration,
-answer-timer widget/tick rendering, Auto Advance settings controls and reviewer
-action routing, study-count and answer-button widgets/layout, next-time
+answer-timer widget/tick rendering, Auto Advance settings controls and
+preference-backed gesture binding decoding, touch input and reviewer command
+handlers, study-count and answer-button widgets/layout, next-time
 visibility preference wiring, template rendering and media, timebox
 presentation, leech handling, reviewer undo/redo, the JavaScript custom-state
 and gesture bridges, WebView state collection, gesture preferences and Android

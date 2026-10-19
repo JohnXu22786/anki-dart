@@ -23,5 +23,6 @@ export 'src/display_deck_node.dart';
 export 'src/auto_advance.dart';
 export 'src/answer_timer.dart';
 export 'src/gesture_parser.dart';
+export 'src/gesture_command_router.dart';
 export 'src/review_presentation.dart';
 export 'src/review_session.dart';

@@ -52,6 +52,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `GPL-3.0-or-later`. Their gesture enums, decoded-input decisions, viewport
   mapping, and tap timing are adapted in `lib/src/gesture_parser.dart`; Android
   Uri/WebView/preferences integration is not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/GestureProcessor.kt`,
+  `Gesture.kt`, and `ViewerCommand.kt`, together with
+  `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/ReviewerBinding.kt` and
+  `Binding.kt`, declare `GPL-3.0-or-later`. Their gesture-to-command mapping,
+  command identifiers/order, corner gating, and execution-result behavior are
+  adapted in `lib/src/gesture_command_router.dart`; Android preference decoding,
+  input events, and command handlers are not included.
 - `libanki/src/main/java/com/ichi2/anki/libanki/DeckConfig.kt` is Copyright
   © 2020 David Allison <davidallisongithub@gmail.com> and Arthur Milchior
   <Arthur@Milchior.fr>. Its Auto Advance fields and defaults remain behind the
@@ -81,6 +88,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/gesture_parser_test.dart` checks the input, target, swipe, scroll,
   malformed-data, and asynchronous timing behavior recorded in
   `GestureParserTest.kt`; it is not a port of the Android test harness.
+- `test/gesture_command_router_test.dart` checks command ordering, the source
+  center-tap dispatch, corner and multitap filtering, enabled-state behavior,
+  and executor results recorded in `GestureProcessorTest.kt`; it is not a port
+  of the Android test harness.
 - Dart adaptations, the review-session controller, timer, Auto Advance and
   gesture models, and new test code are Copyright © 2026 John Tsui.
 
@@ -102,5 +113,5 @@ and the full license text in `COPYING` and `LICENSES/GPL-3.0-or-later.txt`.
 
 The tests were written against the behavior documented and exercised by
 AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, reviewer flow,
-`AnswerTimerTest.kt`, and `GestureParserTest.kt`. They are not a port of the
-Android test harness.
+`AnswerTimerTest.kt`, `GestureParserTest.kt`, and `GestureProcessorTest.kt`.
+They are not a port of the Android test harness.

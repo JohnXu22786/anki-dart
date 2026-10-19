@@ -63,6 +63,79 @@ final class BrowserFilterUpdateSystem extends BrowserFilterUpdate {
   int get hashCode => state.hashCode;
 }
 
+/// Projects AnkiDroid's `setDecksFilter()` into a user-originated update.
+///
+/// Like Kotlin `SearchFilters.copy(decks = decks)`, this always returns a new
+/// filter value, retains [decks] itself, and reuses every other field list. It
+/// does not suppress an update when the values are equal.
+BrowserFilterUpdate browserSetDecksFilter({
+  required BrowserSearchFilters currentFilters,
+  required List<BrowserDeckNameId> decks,
+}) =>
+    BrowserFilterUpdateUser(
+      BrowserSearchFilters(
+        decks: decks,
+        flags: currentFilters.flags,
+        tags: currentFilters.tags,
+        noteTypes: currentFilters.noteTypes,
+        cardStateCodes: currentFilters.cardStateCodes,
+      ),
+    );
+
+/// Projects AnkiDroid's `setTagsFilter()` into a user-originated update.
+///
+/// The incoming [tags] list is retained by reference; all other field lists
+/// are reused, and equal-value updates are still returned.
+BrowserFilterUpdate browserSetTagsFilter({
+  required BrowserSearchFilters currentFilters,
+  required List<String> tags,
+}) =>
+    BrowserFilterUpdateUser(
+      BrowserSearchFilters(
+        decks: currentFilters.decks,
+        flags: currentFilters.flags,
+        tags: tags,
+        noteTypes: currentFilters.noteTypes,
+        cardStateCodes: currentFilters.cardStateCodes,
+      ),
+    );
+
+/// Projects AnkiDroid's `setCardStateFilter()` into a user-originated update.
+///
+/// The incoming [cardStateCodes] list is retained by reference; all other
+/// field lists are reused, and equal-value updates are still returned.
+BrowserFilterUpdate browserSetCardStateFilter({
+  required BrowserSearchFilters currentFilters,
+  required List<int> cardStateCodes,
+}) =>
+    BrowserFilterUpdateUser(
+      BrowserSearchFilters(
+        decks: currentFilters.decks,
+        flags: currentFilters.flags,
+        tags: currentFilters.tags,
+        noteTypes: currentFilters.noteTypes,
+        cardStateCodes: cardStateCodes,
+      ),
+    );
+
+/// Projects AnkiDroid's `setFlagsFilter()` into a user-originated update.
+///
+/// The incoming [flags] list is retained by reference; all other field lists
+/// are reused, and equal-value updates are still returned.
+BrowserFilterUpdate browserSetFlagsFilter({
+  required BrowserSearchFilters currentFilters,
+  required List<int> flags,
+}) =>
+    BrowserFilterUpdateUser(
+      BrowserSearchFilters(
+        decks: currentFilters.decks,
+        flags: flags,
+        tags: currentFilters.tags,
+        noteTypes: currentFilters.noteTypes,
+        cardStateCodes: currentFilters.cardStateCodes,
+      ),
+    );
+
 /// Projects one source filter/text/screen snapshot into a search request.
 ///
 /// Returns null while the search screen is open or for system-originated

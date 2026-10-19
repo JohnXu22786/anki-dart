@@ -250,8 +250,14 @@ data, so storage and privacy handling remain the host's duty.
 initial empty System state. For one supplied snapshot, its request projection
 returns nothing while the screen is open or for a System update; a closed-screen
 User update carries the exact filters and Kotlin-trimmed text into a request.
-The host supplies the snapshot and owns field-specific setters, StateFlow and
-coroutine timing, collection access, and search execution.
+The pure `browserSetDecksFilter`, `browserSetTagsFilter`,
+`browserSetCardStateFilter`, and `browserSetFlagsFilter` projections match the
+source copy behavior: each returns a User update even for equal values, keeps
+the incoming category list, and reuses the other field lists. The host supplies
+the snapshot and owns StateFlow/coroutine timing, collection access, and search
+execution. The pinned `SearchFiltersTest.kt` covers active-filter presence but
+does not directly test these ViewModel setters; their Dart cases are
+source-derived.
 `BrowserSearchTextState` separately models the Basic/Advanced text buffers:
 mode toggles retain both values, Advanced appending uses the source's spacing
 rules, text edits replace LF without normalizing CR, and saved-query application

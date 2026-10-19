@@ -173,8 +173,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   access, backend query generation, and execution are not included. The view
   model's `FilterUpdate` origin and one-snapshot request projection are adapted
   in `lib/src/browser_filter_update.dart`; StateFlow/coroutine timing and
-  field-specific setter updates remain with the host. The Basic/Advanced text
-  buffers and transition methods are adapted in
+  application of field-specific setter updates remain with the host. The four
+  Card Browser filter setter projections in that file preserve the source
+  `SearchFilters.copy(field = incomingList)` behavior: each returns a User
+  update without equality suppression, retains the incoming list reference,
+  and reuses other field lists. `SearchFiltersTest.kt` does not directly test
+  the ViewModel setters, so the new setter cases are source-derived. The
+  Basic/Advanced text buffers and transition methods are adapted in
   `lib/src/browser_search_text_state.dart`; SavedStateHandle persistence,
   flow scheduling, and Android text widgets remain with the host.
   The ordered `onSearchTextChanged` effects are projected in

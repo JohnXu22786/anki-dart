@@ -70,14 +70,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   quirks are represented as typed values; axis IDs, Java float parsing, and
   source-style Float serialization are retained. Android preference lookup,
   `KeyEvent` extraction, platform `getUnicodeChar()` calculation,
-  MotionEvent axis handling, display strings, Android `BindingProcessor`
+  MotionEvent extraction and device handling, display strings, Android `BindingProcessor`
   wiring, and command execution are not included. The
   headless key/gesture registration and lookup behavior from
   `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/BindingMap.kt` is adapted in
-  `lib/src/reviewer_binding_map.dart`; axis registrations are retained without
-  MotionEvent matching. Projected key candidate construction and sequential
-  dispatch are adapted in `lib/src/reviewer_key_dispatch.dart`; the host must
-  supply the Unicode result computed with the Shift/NumLock meta-state mask.
+  `lib/src/reviewer_binding_map.dart`; axis registrations are retained there.
+  Their threshold and debounce behavior over host-provided Float32 values is
+  adapted in `lib/src/reviewer_axis_dispatch.dart`. Projected key candidate
+  construction and sequential dispatch are adapted in
+  `lib/src/reviewer_key_dispatch.dart`; the host must supply the Unicode result
+  computed with the Shift/NumLock meta-state mask.
 - `compat/src/main/java/com/ichi2/anki/compat/BaseCompat.kt` is Copyright
   © 2017 Profpatsch <mail@profpatsch.de>. Its fallback gesture-axis IDs are
   referenced by the codec's syntax check; the compatibility layer itself is
@@ -243,6 +245,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   separator omission, and callback order/short-circuit behavior from
   `Binding.kt` and `BindingMap.kt`; it does not test Android `KeyEvent` access
   or keyboard-layout Unicode generation.
+- `test/reviewer_axis_dispatch_test.dart` checks inclusive threshold comparisons,
+  per-registration debounce/rearm, Float32 value handling, ordered multiple
+  triggers, processor-result independence, and null-event/no-registration cases
+  derived from `SingleAxisDetector.kt` and `BindingMap.kt`. AnkiDroid 2.25.3 has
+  no direct `SingleAxisDetector` unit test; Android `MotionEvent` extraction is
+  outside this model.
 - Dart adaptations, the review-session controller, timer, Auto Advance and
   gesture models, and new test code are Copyright © 2026 John Tsui.
 

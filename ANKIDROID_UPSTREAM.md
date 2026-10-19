@@ -15,7 +15,8 @@ answer-button next-time presentation models, the reviewer answer-timer state
 machine, the reviewer Auto Advance model, the headless reviewer gesture
 parser, parsed-gesture command routing, a headless codec and map for serialized
 reviewer bindings, projected key-event candidate construction and dispatch, the
-collection timebox counter and rounded-minute model, and
+projected axis-button debounce and dispatch, the collection timebox counter and
+rounded-minute model, and
 the previewer's headless card-navigation transitions, the Card Browser's
 active-column collection, sort preference, and recent-search ordering,
 serialization, display-state, saved-search value, saved-history request
@@ -52,6 +53,7 @@ it does not claim to reproduce the whole Android app.
 | `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/GestureProcessor.kt`, `ViewerCommand.kt`, and `ReviewerBinding.kt` | `GestureCommandRouter.fromPreferenceValues()` in `lib/src/gesture_command_router.dart` | Takes host-supplied serialized preference values, leaves missing values empty rather than applying keyboard defaults, and feeds only decoded gesture values into the existing source-ordered router. Side values are not used as routing filters. Android `SharedPreferences` lookup remains outside. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/BindingMap.kt`, `MappableBinding.kt`, `ReviewerBinding.kt`, and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerCommand.kt` | `lib/src/reviewer_binding_map.dart` | Builds separate reviewer key and gesture maps from explicit typed bindings, preserving action-list then binding-list order and retaining duplicate registrations. Lookups use the underlying binding and retain but do not filter by card side. Unknown values are skipped; axis values are kept in a separate ordered registration list. Preference loading, platform event decoding, MotionEvent matching, and command execution are outside; projected key dispatch is mapped separately below. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/Binding.kt`, `BindingMap.kt`, and `MappableBinding.kt` | `ReviewerKeyEventProjection` and `dispatchReviewerKeyEvent()` in `lib/src/reviewer_key_dispatch.dart` | Accepts host-decoded key/repeat/modifier fields and the Unicode result computed with Android's `META_SHIFT_ON | META_NUM_LOCK_ON` mask. Ignores repeated key-downs; forms nonzero key-code then Unicode candidates with event modifier values and Kotlin low-16-bit `Int.toChar()` behavior; omits the invalid `|` Unicode preference separator. Lookup delegates to existing binding equality, including the app-defined Unicode binding's shift-tolerant comparison. Resolves each candidate then registrations in source order, retaining card-side metadata, and stops at the first processor result of true. Android KeyEvent access, keyboard-layout Unicode generation, preferences, MotionEvent handling, and command execution remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/SingleAxisDetector.kt`, `BindingMap.kt`, `Binding.kt`, and `Axis.kt` | `ReviewerAxisButtonDispatcher` in `lib/src/reviewer_axis_dispatch.dart` | Consumes the ordered axis registrations and host-supplied Float32 axis values. Keeps one debounce state per registration; positive and negative thresholds compare inclusively, zero/NaN thresholds do not trigger, and a nonqualifying sample rearms. Null events do not evaluate or reset detectors. Evaluates all detectors in source order and reports true if any emits, independent of processor results. Android MotionEvent extraction and device handling remain outside. |
 | `AnkiDroid/src/test/java/com/ichi2/anki/deckpicker/DeckFiltersTest.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/libanki/DeckNodeTest.kt` | `test/` | Behavioral reference cases for this slice |
 | `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModelTest.kt` and the reviewer action dispatch in `ReviewerViewModel.kt` | `test/review_session_test.dart` | Review-side transitions, mutation readiness, rating forwarding, timebox pausing/continuation, queue advancement, and serialized action behavior |
 | Timebox logic in `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` and minute conversion in `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt` (the pinned source has no direct `timeboxReached()` unit test) | `test/review_timebox_test.dart` | Source-derived checks for strict expiry, zero disablement, configured-limit payload, answer-count delta, fresh restart reads, negative limits, clock rollback, Float32 division, and rounding boundaries |
@@ -71,6 +73,7 @@ it does not claim to reproduce the whole Android app.
 | `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/BindingTest.kt`, `MappableBindingTest.kt`, and applicable preference parsing cases from `BindingAndroidTest.kt` | `test/reviewer_binding_codec_test.dart`, `test/reviewer_binding_types_test.dart` | Source-derived preference framing, gesture/side behavior, typed key and Unicode parsing/serialization, modifier parsing, Int32 and UTF-16 boundaries, factory/deserialization distinction, source equality/hash quirks, malformed/unknown omission, Java float syntax and normalization, extra axis-token handling, and router filtering; Android KeyEvent behavior is excluded |
 | `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/BindingMapTest.kt` and map construction in `BindingMap.kt` | `test/reviewer_binding_map_test.dart` | Source-derived cases for duplicate registration order, side-independent key lookup with side retained in results, separate axis registrations, and skipping unknown bindings; Android event handling and processor execution are excluded |
 | `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/BindingTest.kt` and `BindingMapTest.kt` | `test/reviewer_key_dispatch_test.dart` | Covers repeat suppression, zero/nonzero candidate handling, key-before-Unicode order, exact event modifier values and configured modifier matching, signed/overflow UTF-16 truncation including NUL, separator omission, registration order, false continuation, first-true short-circuit, and absent/all-false processors. Android KeyEvent access and keyboard-layout Unicode calculation are excluded. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/SingleAxisDetector.kt`, `BindingMap.kt`, and applicable axis parsing cases from `BindingAndroidTest.kt` | `test/reviewer_axis_dispatch_test.dart` | Source-derived checks for inclusive positive/negative thresholds, zero/NaN behavior, per-registration debounce and rearm, independent duplicate state, ordered multi-trigger dispatch, ignored processor results, null-event preservation, and empty maps. The pinned source has no direct `SingleAxisDetector` unit test; Android MotionEvent extraction is excluded. |
 
 ## Review backend boundary
 
@@ -122,10 +125,12 @@ Android preference and timeout lookup, imports/exports, notifications,
 preferences, and the remaining AnkiDroid modules. Gesture parsing, serialized
 reviewer binding codec, and parsed-gesture command routing are platform-
 independent models; Android `KeyEvent` extraction and hardware/layout
-`getUnicodeChar()` calculation, display strings, MotionEvent axis interpretation,
-Android `BindingProcessor` wiring, touch input, and reviewer command execution
-are not ported. Candidate construction and sequential dispatch for a host-supplied
-key event projection are modeled separately. `ReviewerBindingMap`
+`getUnicodeChar()` calculation, display strings, Android MotionEvent extraction
+and device handling, Android `BindingProcessor` wiring, touch input, and reviewer
+command execution are not ported. Candidate construction and sequential dispatch
+for a host-supplied key event projection are modeled separately. Axis-button
+threshold, debounce and ordered dispatch behavior consume host-provided Float32
+values. `ReviewerBindingMap`
 models only key/gesture registration and lookup plus ordered axis registration.
 The Android WebView integration is not ported.
 The Dart answer-timer model exposes pause/resume calls and an observable state

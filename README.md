@@ -6,7 +6,7 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
-The current port includes eighteen source-mapped slices: deck-picker behavior,
+The current port includes nineteen source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation, Card Browser active-column and sort preference models, recent-search
@@ -14,7 +14,7 @@ ordering, JSON serialization, display state, saved-history request restoration,
 structured search-node planning, the answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
 command routing, reviewer binding codec/map, and headless reviewer keyboard
-dispatch.
+and axis-button dispatch.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -137,6 +137,14 @@ dispatch.
   app-defined Unicode bindings. The adapter computes
   `getUnicodeChar(metaState & (META_SHIFT_ON | META_NUM_LOCK_ON))`; Android
   `KeyEvent` access and keyboard-layout lookup remain outside.
+- Reviewer axis-button dispatch: `ReviewerAxisButtonDispatcher` snapshots the
+  map's axis registrations and keeps an independent debounce flag for each.
+  Positive and negative thresholds compare inclusively; positive and negative
+  zero thresholds do not fire. A registration emits once until a nonqualifying
+  Float32 sample rearms it. Every registration is evaluated in source order
+  even when a processor returns false; the result reports whether any
+  registration fired. The host supplies axis values, while Android
+  `MotionEvent` extraction and device handling remain outside.
 
 The implementation lives in `lib/` as a Dart library. The review flow requires
 a `ReviewScheduler` adapter that supplies queue items, backend counts and active
@@ -202,9 +210,10 @@ backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, previewer flags/marks/note editing, answer-timer widget/tick rendering, Auto Advance settings controls and
 Android preference lookup, `KeyEvent` extraction and hardware/layout
-`getUnicodeChar()` calculation, binding display strings, MotionEvent axis
-interpretation, Android `BindingProcessor` wiring, command execution, touch
-input and reviewer command handlers,
+`getUnicodeChar()` calculation, binding display strings, Android
+`MotionEvent` extraction and device handling (host-projected axis-button
+debounce and dispatch are modeled), Android `BindingProcessor` wiring, command
+execution, touch input and reviewer command handlers,
 study-count and answer-button widgets/layout, next-time visibility preference
 wiring, template rendering and media, localized timebox messages, dialog and
 lifecycle presentation, leech handling, reviewer undo/redo, JavaScript custom-

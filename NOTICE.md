@@ -136,6 +136,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   expansion state, and toggle threshold are adapted in
   `lib/src/browser_search_history_display.dart`; SavedStateHandle, StateFlow,
   search-string conversion, and Android widgets remain outside.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SavedSearches.kt`
+  declares `GPL-3.0-or-later`. Its named saved-search value behavior,
+  case-sensitive ordering and lookup, duplicate rejection, query normalization,
+  and map/list conversion are adapted in `lib/src/browser_saved_searches.dart`.
+  `SavedSearches.kt` defines the `Config.savedFilters` extension, while
+  `Config.kt` supplies the generic typed get/set operations it uses. Collection
+  config access and saved-search UI are not included.
 - Behavioral cases in `test/deck_filters_test.dart` are adapted from
   `DeckFiltersTest.kt`, Copyright © 2026 Arthur Milchior.
 - Behavioral cases in `test/deck_list_test.dart` are adapted from
@@ -167,6 +174,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   recent-history presentation, five-entry truncation/toggle behavior, and
   Loading/Loaded shape handling from `CardBrowserSearchViewModelTest.kt`; it
   does not test Android flows, search-string conversion, or widgets.
+- `test/browser_saved_searches_test.dart` adapts name ordering and lookup,
+  duplicate handling, query normalization, remove/clear, and map conversion
+  behavior from `SavedSearchesTest.kt`; it does not test collection config IO,
+  query execution, or the Android test harness.
 - `test/review_presentation_test.dart` checks the count and answer-label
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the

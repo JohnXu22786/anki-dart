@@ -173,6 +173,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   buffers and transition methods are adapted in
   `lib/src/browser_search_text_state.dart`; SavedStateHandle persistence,
   flow scheduling, and Android text widgets remain with the host.
+  The source `syncState` and `resetSearchState` method call order is projected
+  as typed effects in `lib/src/browser_search_state_effects.dart`. The reset
+  preserves the exact query and omits `historyExpanded` from the three ordered
+  key removals. The host performs the StateFlow and SavedStateHandle operations;
+  the source marks reset `@NeedsTest("reset")` and has no direct reset or sync
+  test.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`, and
@@ -237,6 +243,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   transitions from `CardBrowserSearchViewModelTest.kt`, including append spacing,
   LF replacement, saved-query application, and independent buffers; it does not
   test SavedStateHandle, flow scheduling, or Android text widgets.
+- `test/browser_search_state_effects_test.dart` adds source-derived cases for
+  `syncState`/`resetSearchState` effect order, verbatim request/filter values,
+  and the exact three SavedState keys removed. The pinned source marks reset
+  `@NeedsTest("reset")` but has no direct test for either method; host execution
+  and coroutine scheduling remain outside this test.
 - `test/browser_saved_searches_test.dart` adapts name ordering and lookup,
   duplicate handling, query normalization, remove/clear, and map conversion
   behavior from `SavedSearchesTest.kt`; it does not test collection config IO,

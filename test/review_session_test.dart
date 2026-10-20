@@ -292,6 +292,40 @@ void main() {
       expect(scheduler.answers.map((call) => call.state), [first, second]);
     });
 
+    test('publishes the post-mutation queue state before showing the answer',
+        () async {
+      final selected = _queueState(1, 'question 1', 'answer 1');
+      final updated = ReviewQueueState<Object>(
+        card: selected.card,
+        schedulingSnapshot: Object(),
+        counts: selected.counts,
+        activeQueue: selected.activeQueue,
+      );
+      final scheduler = _FakeReviewScheduler([selected])
+        ..stateAfterMutation = () => updated;
+      final session = ReviewSession<Object>(scheduler);
+      await session.start();
+
+      await session.showAnswer();
+
+      expect(session.phase, ReviewSessionPhase.answer);
+      expect(session.current, same(updated));
+    });
+
+    test('keeps the selected queue state when the mutation hook returns none',
+        () async {
+      final selected = _queueState(1, 'question 1', 'answer 1');
+      final scheduler = _FakeReviewScheduler([selected])
+        ..stateAfterMutation = () => null;
+      final session = ReviewSession<Object>(scheduler);
+      await session.start();
+
+      await session.showAnswer();
+
+      expect(session.phase, ReviewSessionPhase.answer);
+      expect(session.current, same(selected));
+    });
+
     test('answers with the queue snapshot read after the mutation hook',
         () async {
       final selected = _queueState(1, 'question 1', 'answer 1');

@@ -52,6 +52,14 @@ placeholder removal.
   preserve the source failure. Collection lookups remain host-side. Only the
   basic note-to-all-cards behavior has direct upstream integration coverage;
   the dedicated row-collection tests are source-derived.
+- Card Browser multi-select toggles: `toggleBrowserRowSelection` projects the
+  selected-ID set in insertion order, the `RowSelected`/`DeselectRow` mode
+  causes, last-selected row, and the source refresh request. Removing a row
+  emits a mode change only when it was the last selected row; adding always
+  emits `RowSelected`, including when multi-select was active with zero rows.
+  Upstream ViewModel tests cover the add/remove outcomes, while exact value
+  projection tests are source-derived. Android flow scheduling, selection
+  widgets, note-editor actions, and tablet-pane behavior remain host-side.
 - Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
   mode-specific config values, checks the key against host-supplied backend
   columns, and returns the source sort type. It defaults missing or
@@ -139,8 +147,9 @@ placeholder removal.
 - Review session: a headless flow that loads the scheduler's current card, shows
   its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
   the next queue item. It waits for the current card's state-mutation hook
-  before revealing or grading it, reads the queue state again after that hook
-  before grading, and pauses for a scheduler timebox event
+  before revealing or grading it, retains a non-null queue state returned by
+  that hook before exposing the answer, reads the queue state again after the
+  hook before grading, and pauses for a scheduler timebox event
   before showing the queued card. The previously displayed side remains visible
   during the timebox and while a queue read loads or retries. A failed queue
   read can be retried without sending the completed card's rating again. Its
@@ -381,6 +390,7 @@ SavedStateHandle/StateFlow
 integration for mode, text buffers, and history/saved-search availability,
 Basic/Advanced text widgets, history-list
 and toggle widgets,
+Card Browser row-selection widgets and note-editor/pane command delivery,
 persistent Cards/Notes mode lookup and AGPL-incorporated column defaults,
 collection-backed Card↔Note ID lookups, backend column registry and rows,
 column-selection drag/drop and active backend updates, Card Browser sort UI,

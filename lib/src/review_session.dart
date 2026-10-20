@@ -205,9 +205,14 @@ class ReviewSession<TSchedulingSnapshot> {
       });
 
   /// Shows the answer once the question is active; repeated calls are ignored.
+  /// A non-null queue state returned by the mutation hook becomes current
+  /// before the answer side is exposed, matching the source's next-time refresh.
+  /// If the hook returns no state, the selected card remains current.
   Future<void> showAnswer() => _serialize(() async {
         if (_phase != ReviewSessionPhase.question) return;
-        await scheduler.waitForCurrentCardStateMutation();
+        final stateAfterMutation =
+            await scheduler.waitForCurrentCardStateMutation();
+        if (stateAfterMutation != null) _current = stateAfterMutation;
         _phase = ReviewSessionPhase.answer;
         _lastDisplayedSide = ReviewSessionPhase.answer;
       });

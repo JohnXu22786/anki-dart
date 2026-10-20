@@ -20,9 +20,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
   is marked `GPL-3.0-or-later` in its upstream header. Its reviewer action and
   queue lifecycle, including the current-card mutation readiness barrier and
-  the last-published StudyCounts snapshot across timebox/loading/completion, is
-  adapted by `lib/src/review_session.dart`; the upstream file does not state an
-  individual copyright holder.
+  retaining a non-null post-hook queue state before answer reveal, grading from
+  the post-hook state, and the last-published StudyCounts snapshot across
+  timebox/loading/completion, is adapted by `lib/src/review_session.dart`; the
+  upstream file does not state an individual copyright holder.
 - `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` is Copyright
   © 2022 Ankitects Pty Ltd. The Dart adapter contract in
   `lib/src/review_session.dart` reflects its queue and answer entry points, and
@@ -185,8 +186,15 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `GPL-3.0-or-later`. Their Cards/Notes-associated row ID and collection
   projections are adapted in `lib/src/browser_row_collection.dart`. The host
   supplies collection callbacks for card-to-note and note-to-card lookups;
-  Android collection access, backend row data, selection UI, and sorting are
-  not included.
+  Android collection access, backend row data, and sorting are not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`
+  declares `GPL-3.0-or-later`. Its `RowSelection` value and selected-row toggle
+  state projection are adapted in `lib/src/browser_row_selection.dart`, which
+  retains source insertion order, mode-change causes, last-selected ID, and
+  refresh behavior. Upstream `CardBrowserViewModelTest.kt` directly exercises
+  multi-select tap outcomes; the pure value-projection cases are source-derived.
+  The model does not apply Android flows, selection widgets, collection
+  lookups, note-editor actions, or tablet-pane behavior.
 - `AnkiDroid/src/main/java/com/ichi2/anki/model/SortType.kt`,
   `libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, and typed config
   decoding in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` declare
@@ -306,9 +314,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `DeckNodeTest.kt`, Copyright © 2025 Shridhar Goel.
 - `test/review_session_test.dart` checks the reviewer flow recorded in
   `ReviewerViewModel.kt`, `Scheduler.kt`, and `Collection.kt`; it is not a port
-  of the Android test harness. The added count-snapshot retention cases are
-  source-derived because the pinned tests do not directly cover timebox
-  count-flow retention.
+  of the Android test harness. The post-hook queue-state-on-reveal and
+  count-snapshot retention cases are source-derived because the pinned tests do
+  not directly assert those behaviors.
 - `test/review_timebox_test.dart` checks the strict threshold, zero disablement,
   result payload, answer delta, restart reads, negative-limit behavior, and
   rounded-minute conversion from `Collection.kt` and `ReviewerFragment.kt`;
@@ -340,6 +348,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   expansion of a Notes row to all its cards, and
   `BrowserMultiColumnAdapterRowsTest.kt` exercises reset/replacement through
   the UI adapter; there is no dedicated upstream `BrowserRowCollection` test.
+- `test/browser_row_selection_test.dart` contains source-derived checks for
+  selection-toggle order, mode causes, final-row deselection, retained active
+  mode after select-none, refresh/last-selected values, and `RowSelection`
+  equality. Pinned ViewModel tests cover row selection through UI integration,
+  not the pure Dart projection; Android flow delivery and editor/pane actions
+  remain outside.
 - `test/browser_sort_type_test.dart` adapts the sort resolution and save cases in
   `SortTypeTest.kt`, plus typed config fallback behavior from `Config.kt`,
   including the source's global no-sorting behavior; it does not port

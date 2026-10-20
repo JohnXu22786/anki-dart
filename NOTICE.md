@@ -200,6 +200,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `CardBrowserViewModelTest.kt:1395–1472` directly covers the major tap
   branches. The host applies Android flows, selection widgets, pane/mode state,
   collection-backed destination lookup, and note-editor commands.
+  Its `toggleMark()` all-or-none target decision is projected by
+  `planBrowserBulkMarkToggle()` in `lib/src/browser_bulk_mark.dart`: no selected
+  card IDs means no operation; otherwise any unmarked note selects adding the
+  `marked` tag, while all marked notes select removal. The source's empty-note
+  `all()` behavior is retained. `CardBrowserViewModelTest.kt:792–804` directly
+  covers adding the mark to unmarked notes with selection retained; other
+  branch/edge cases are source-derived. Note/tag lookup, undoable collection
+  mutation, and post-success card-state flow publication remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/model/SortType.kt`,
   `libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, and typed config
   decoding in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` declare

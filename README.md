@@ -69,6 +69,14 @@ placeholder removal.
   The host resolves collection-backed editor destinations, applies selection,
   pane/mode state, and delivers activity or pane commands; Android row widgets,
   flows, and navigation remain outside.
+- Card Browser bulk mark: `planBrowserBulkMarkToggle` returns no operation for
+  an empty selected-card list; otherwise it selects tag removal only when every
+  resolved note already has `marked`, and selects adding the tag for an unmarked
+  or mixed selection. It preserves Kotlin `all(empty)` behavior. The upstream
+  ViewModel test directly covers adding the tag to unmarked notes and retaining
+  row selection; other decision cases are source-derived. The host resolves
+  note/tag state, performs the undoable mutation, and publishes card-state
+  refresh only after success.
 - Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
   mode-specific config values, checks the key against host-supplied backend
   columns, and returns the source sort type. It defaults missing or
@@ -412,7 +420,8 @@ vertical-centering preference IO/styles,
 MathJax render context, WebView textZoom/lifecycle, previewer
 collection flag mutation and StateFlow
 publication (flag codes and ordered write/publish intent are modeled),
-marks/note editing, Android card-template asset loading and card content
+mark-state lookup, bulk tag mutation/undo (the bulk-mark target decision is
+modeled), and note editing, Android card-template asset loading and card content
 rendering/media, card/note-dependent TypeAnswer field lookup, cloze extraction
 and answer comparison, answer-timer widget/tick rendering,
 Auto Advance settings

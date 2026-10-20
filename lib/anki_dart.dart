@@ -28,6 +28,7 @@ export 'src/browser_row_selection.dart';
 export 'src/browser_row_activation.dart';
 export 'src/browser_bulk_mark.dart';
 export 'src/browser_bulk_bury.dart';
+export 'src/browser_bulk_suspend.dart';
 export 'src/card_appearance_css.dart';
 export 'src/card_template.dart';
 export 'src/browser_availability.dart';

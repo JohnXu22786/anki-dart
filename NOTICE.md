@@ -216,6 +216,21 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   The host checks selection before resolving card IDs, maps queue states,
   performs the undoable scheduler operation, and exposes the result only after
   success.
+  Its `toggleSuspendCards()` all-or-none decision is projected by
+  `planBrowserBulkSuspendToggle()` and `BrowserBulkSuspendOperation` in
+  `lib/src/browser_bulk_suspend.dart`: all selected card queues must be
+  `Suspended` to select unsuspending; a mixed or unsuspended set selects
+  suspending. The source's empty `all()` behavior is retained. Direct
+  `CardBrowserViewModelTest.kt:662–749` cases directly exercise no-selection,
+  all-suspended, mixed, and none-suspended behavior in Cards mode and
+  no-selection/all-suspended/mixed behavior in Notes mode; the later
+  none-suspended Notes helper is not annotated as a test. Queue-projection
+  order and empty resolved IDs are source-derived. The host
+  checks row selection before resolving card IDs, performs queue lookup and the
+  selected scheduler call inside its undoable operation, and owns execution.
+  `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` is Copyright (c) 2014
+  Houssam Salem and is licensed GPL-3.0-or-later; the host maps its
+  `QueueType.Suspended` identity to the headless enum.
 - `AnkiDroid/src/main/java/com/ichi2/anki/model/SortType.kt`,
   `libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, and typed config
   decoding in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` declare

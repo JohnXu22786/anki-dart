@@ -429,8 +429,8 @@ vertical-centering preference IO/styles,
 MathJax render context, WebView textZoom/lifecycle, previewer
 collection flag mutation and StateFlow
 publication (flag codes and ordered write/publish intent are modeled),
-mark-state lookup, bulk tag mutation/undo (the bulk-mark target decision is
-modeled), and note editing, Android card-template asset loading and card content
+mark-state lookup, bulk tag and suspend writes/undo (bulk-mark and bulk-suspend
+target decisions are modeled), and note editing, Android card-template asset loading and card content
 rendering/media, card/note-dependent TypeAnswer field lookup, cloze extraction
 and answer comparison, answer-timer widget/tick rendering,
 Auto Advance settings
@@ -458,7 +458,8 @@ Kotlin-compatible query trimming and map conversion, Basic/Advanced buffer
 independence, source append spacing, LF-only text replacement, saved-query
 trailing spaces, exact ordered sync/reset effects with the intentional
 historyExpanded omission, and history-selection effect order including
-unresolved-ID fallback,
+unresolved-ID fallback, Card Browser bulk suspend's all-selected suspended-queue
+decision and empty-ID `all()` behavior,
 ordered Card Browser columns and load-time de-duplication,
   sort config defaults (including wrong-typed values), per-mode column values,
   and the global no-sorting quirk,

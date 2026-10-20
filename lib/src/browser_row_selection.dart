@@ -133,3 +133,127 @@ BrowserRowSelectionTransition toggleBrowserRowSelection({
     lastSelectedRowId: selection.rowId,
   );
 }
+
+/// The action selected by AnkiDroid's cached toggle-selection flow value.
+enum BrowserSelectAllOrNoneState { selectAll, selectNone }
+
+/// Ordered asynchronous effects after a bulk selection mutates its row set.
+enum BrowserBulkSelectionEffect {
+  /// Corresponds to assigning `MultiSelectCause.Other` before refreshing rows.
+  emitMultiSelectOther,
+
+  /// Corresponds to emitting the selected-row refresh signal.
+  refreshSelectedRows,
+}
+
+/// The pure result of a Card Browser select-all/select-none operation.
+final class BrowserBulkSelectionTransition {
+  BrowserBulkSelectionTransition._({
+    required Iterable<BrowserRowId> selectedRows,
+    required Iterable<BrowserRowId>? previouslySelectedRows,
+    required this.changed,
+    required this.isInMultiSelectMode,
+    required Iterable<BrowserBulkSelectionEffect> effects,
+  })  : selectedRows = List.unmodifiable(selectedRows),
+        previouslySelectedRows = previouslySelectedRows == null
+            ? null
+            : List.unmodifiable(previouslySelectedRows),
+        effects = List.unmodifiable(effects);
+
+  /// The rows after the source set mutation, in linked-set insertion order.
+  final List<BrowserRowId> selectedRows;
+
+  /// The copy captured by `selectNone()` before the source clears its set.
+  /// This is null for select-all and for an empty select-none no-op.
+  final List<BrowserRowId>? previouslySelectedRows;
+
+  /// True when the source returns a refresh job; false for its early return.
+  final bool changed;
+
+  /// Mode after source mode effects, or the supplied mode when no mode effect
+  /// is emitted. `selectNone()` deliberately retains an active mode.
+  final bool isInMultiSelectMode;
+
+  /// Effects after the synchronous row-set mutation, in source order.
+  final List<BrowserBulkSelectionEffect> effects;
+}
+
+/// Projects `CardBrowserViewModel.selectAll()` over host-supplied row IDs.
+///
+/// The source mutates its internal `LinkedHashSet` in place. This pure model
+/// returns an immutable snapshot instead: existing order is retained, new
+/// distinct rows are appended in [availableRows] order, and duplicates are
+/// collapsed as `Set.addAll()` does. The mode-change effect precedes refresh.
+BrowserBulkSelectionTransition planBrowserSelectAll({
+  required Iterable<BrowserRowId> selectedRows,
+  required Iterable<BrowserRowId> availableRows,
+  required bool isInMultiSelectMode,
+}) {
+  final nextRows = LinkedHashSet<BrowserRowId>.of(selectedRows);
+  final originalLength = nextRows.length;
+  nextRows.addAll(availableRows);
+  final changed = nextRows.length != originalLength;
+
+  return BrowserBulkSelectionTransition._(
+    selectedRows: nextRows,
+    previouslySelectedRows: null,
+    changed: changed,
+    isInMultiSelectMode: changed ? true : isInMultiSelectMode,
+    effects: changed
+        ? const [
+            BrowserBulkSelectionEffect.emitMultiSelectOther,
+            BrowserBulkSelectionEffect.refreshSelectedRows,
+          ]
+        : const [],
+  );
+}
+
+/// Projects `CardBrowserViewModel.selectNone()` over the current ordered IDs.
+///
+/// The source snapshots the selected IDs and clears its mutable set before the
+/// asynchronous refresh. It does not emit a mode change because it passes
+/// `disableMultiSelectIfEmpty: false` to its removal callback.
+BrowserBulkSelectionTransition planBrowserSelectNone({
+  required Iterable<BrowserRowId> selectedRows,
+  required bool isInMultiSelectMode,
+}) {
+  final previousRows = LinkedHashSet<BrowserRowId>.of(selectedRows);
+  if (previousRows.isEmpty) {
+    return BrowserBulkSelectionTransition._(
+      selectedRows: previousRows,
+      previouslySelectedRows: null,
+      changed: false,
+      isInMultiSelectMode: isInMultiSelectMode,
+      effects: const [],
+    );
+  }
+
+  return BrowserBulkSelectionTransition._(
+    selectedRows: const [],
+    previouslySelectedRows: previousRows,
+    changed: true,
+    isInMultiSelectMode: isInMultiSelectMode,
+    effects: const [BrowserBulkSelectionEffect.refreshSelectedRows],
+  );
+}
+
+/// Dispatches to the source operation indicated by the current cached flow
+/// state. The host supplies that state because StateFlow scheduling is outside
+/// this pure model.
+BrowserBulkSelectionTransition planBrowserToggleSelectAllOrNone({
+  required BrowserSelectAllOrNoneState state,
+  required Iterable<BrowserRowId> selectedRows,
+  required Iterable<BrowserRowId> availableRows,
+  required bool isInMultiSelectMode,
+}) =>
+    switch (state) {
+      BrowserSelectAllOrNoneState.selectAll => planBrowserSelectAll(
+          selectedRows: selectedRows,
+          availableRows: availableRows,
+          isInMultiSelectMode: isInMultiSelectMode,
+        ),
+      BrowserSelectAllOrNoneState.selectNone => planBrowserSelectNone(
+          selectedRows: selectedRows,
+          isInMultiSelectMode: isInMultiSelectMode,
+        ),
+    };

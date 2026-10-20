@@ -237,6 +237,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   method, so these Dart cases are source-derived. The host resolves IDs,
   performs the undoable write, delivers the event only after success, and
   returns the IDs after the sequence completes.
+  `selectAll()`, `selectNone()` and `toggleSelectAllOrNone()` are projected by
+  `BrowserBulkSelectionTransition` and the `planBrowserSelect*` functions in
+  `lib/src/browser_row_selection.dart`. Select-all appends new distinct rows in
+  linked-set order and emits the source multi-select `Other` cause before row
+  refresh; select-none copies previous IDs, clears the rows, and refreshes while
+  retaining multi-select mode. The toggle follows the current cached
+  SELECT_ALL/SELECT_NONE state supplied by the host. The pinned
+  `CardBrowserViewModelTest.kt:1331–1375` covers main integration outcomes;
+  immutable projection/no-op/effect-order assertions are source-derived. The
+  source mutates its synchronized set in place; the pure Dart result is an
+  ordered immutable snapshot. Row loading, StateFlow/coroutine delivery, and
+  selection widgets remain host-side.
   `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` is Copyright (c) 2014
   Houssam Salem and is licensed GPL-3.0-or-later; the host maps its
   `QueueType.Suspended` identity to the headless enum.

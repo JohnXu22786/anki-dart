@@ -62,6 +62,15 @@ placeholder removal.
   Upstream ViewModel tests cover the add/remove outcomes, while exact value
   projection tests are source-derived. Android flow scheduling, selection
   widgets, destination lookup, and note-editor command delivery remain host-side.
+- Card Browser select all/none: `planBrowserSelectAll` and
+  `planBrowserSelectNone` preserve linked-set row order and the source's
+  no-op-on-no-change behavior. Select-all emits the `Other` multi-select cause
+  before row refresh; select-none snapshots then clears selected IDs and keeps
+  multi-select active. `planBrowserToggleSelectAllOrNone` follows the cached
+  toggle state supplied by the host. Upstream ViewModel tests cover the main
+  all/none and partial/full toggle behavior; the pure transition/effect and
+  no-op assertions are source-derived. StateFlow calculation, async delivery,
+  and selection widgets remain host-side.
 - Card Browser row activation: `planBrowserRowActivation` returns the source-
   ordered directives for normal phone/tablet editor routing and multi-select
   toggles. A selected row tapped in fragmented mode requests a pane reload only

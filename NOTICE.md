@@ -228,6 +228,15 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   order and empty resolved IDs are source-derived. The host
   checks row selection before resolving card IDs, performs queue lookup and the
   selected scheduler call inside its undoable operation, and owns execution.
+  Its `updateSelectedCardsFlag()` write/event/return sequence is represented by
+  `planBrowserSelectedCardsFlagUpdate()` and `BrowserSelectedCardsFlagPlan` in
+  `lib/src/browser_selected_flag_plan.dart`. The host supplies selected card
+  IDs and the source flag value; the plan preserves that list and flag, orders
+  the write before card-state-changed publication, and retains the source's
+  no-guard behavior for an empty list. No pinned test directly covers this
+  method, so these Dart cases are source-derived. The host resolves IDs,
+  performs the undoable write, delivers the event only after success, and
+  returns the IDs after the sequence completes.
   `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` is Copyright (c) 2014
   Houssam Salem and is licensed GPL-3.0-or-later; the host maps its
   `QueueType.Suspended` identity to the headless enum.

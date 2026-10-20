@@ -12,7 +12,8 @@ models, the collection timebox counter and rounded-minute projection, Previewer
 navigation and flag decision/effect models, Card Browser active-column and sort
 preference models, recent-search ordering, JSON serialization, display state,
 saved-history request restoration, Cards/Notes row-ID projection/expansion,
-row-tap activation directives, and bulk mark/bury decision projections,
+row-tap activation directives, bulk mark/bury/suspend decisions, and
+selected-card flag update effect plans,
 structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
@@ -86,6 +87,13 @@ placeholder removal.
   are source-derived. The host checks selection before resolving card IDs,
   maps queue values, runs the undoable scheduler operation, and exposes the
   result only after success.
+- Card Browser selected-card flag updates: `planBrowserSelectedCardsFlagUpdate`
+  retains the supplied flag and selected-ID list, then orders the flag write
+  before card-state-changed publication and the eventual same-ID return. It
+  still plans both effects for an empty ID list. No pinned test directly covers
+  `updateSelectedCardsFlag`; these plan assertions are source-derived. The host
+  resolves IDs, performs the undoable write, emits the event only after success,
+  and returns the IDs after the source sequence completes.
 - Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
   mode-specific config values, checks the key against host-supplied backend
   columns, and returns the source sort type. It defaults missing or
@@ -428,9 +436,11 @@ font-selection preferences, theme selection and actual theme CSS,
 vertical-centering preference IO/styles,
 MathJax render context, WebView textZoom/lifecycle, previewer
 collection flag mutation and StateFlow
-publication (flag codes and ordered write/publish intent are modeled),
-mark-state lookup, bulk tag and suspend writes/undo (bulk-mark and bulk-suspend
-target decisions are modeled), and note editing, Android card-template asset loading and card content
+publication (flag codes and ordered write/publish intent are modeled), Card
+Browser selected-card lookup, collection flag writes and card-state-changed
+event execution (the ordered plan is modeled), mark-state lookup, bulk tag and
+suspend writes/undo (bulk-mark and bulk-suspend target decisions are modeled),
+and note editing, Android card-template asset loading and card content
 rendering/media, card/note-dependent TypeAnswer field lookup, cloze extraction
 and answer comparison, answer-timer widget/tick rendering,
 Auto Advance settings

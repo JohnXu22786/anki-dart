@@ -208,6 +208,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   covers adding the mark to unmarked notes with selection retained; other
   branch/edge cases are source-derived. Note/tag lookup, undoable collection
   mutation, and post-success card-state flow publication remain host-side.
+  Its `toggleBury()` decision and `BuryResult` values are projected by
+  `planBrowserBulkBuryToggle()` and `BrowserBulkBuryPlan` in
+  `lib/src/browser_bulk_bury.dart`. The source tests cover the main single/mixed
+  branches, no-selection behavior, and manual-buried queue change; sibling
+  burial, empty resolved IDs and projection-value checks are source-derived.
+  The host checks selection before resolving card IDs, maps queue states,
+  performs the undoable scheduler operation, and exposes the result only after
+  success.
 - `AnkiDroid/src/main/java/com/ichi2/anki/model/SortType.kt`,
   `libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, and typed config
   decoding in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` declare

@@ -11,8 +11,8 @@ the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation and flag decision/effect models, Card Browser active-column and sort
 preference models, recent-search ordering, JSON serialization, display state,
-saved-history request restoration, Cards/Notes row-ID projection/expansion and
-row-tap activation directives,
+saved-history request restoration, Cards/Notes row-ID projection/expansion,
+row-tap activation directives, and bulk mark/bury decision projections,
 structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
@@ -77,6 +77,15 @@ placeholder removal.
   row selection; other decision cases are source-derived. The host resolves
   note/tag state, performs the undoable mutation, and publishes card-state
   refresh only after success.
+- Card Browser bulk bury: `planBrowserBulkBuryToggle` returns no plan when no
+  rows are selected. Otherwise, it selects unbury only when every selected card
+  is manually or sibling buried; any unburied card selects bury. It preserves
+  the source action-valued `wasBuried` result, card count, and `all(empty)` case
+  for selected rows that resolve to no cards. Upstream ViewModel tests cover
+  the main single/mixed and no-selection branches; remaining projection cases
+  are source-derived. The host checks selection before resolving card IDs,
+  maps queue values, runs the undoable scheduler operation, and exposes the
+  result only after success.
 - Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
   mode-specific config values, checks the key against host-supplied backend
   columns, and returns the source sort type. It defaults missing or

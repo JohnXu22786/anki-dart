@@ -11,7 +11,8 @@ the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation and flag decision/effect models, Card Browser active-column and sort
 preference models, recent-search ordering, JSON serialization, display state,
-saved-history request restoration, Cards/Notes row-ID projection and expansion,
+saved-history request restoration, Cards/Notes row-ID projection/expansion and
+row-tap activation directives,
 structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
@@ -59,7 +60,15 @@ placeholder removal.
   emits `RowSelected`, including when multi-select was active with zero rows.
   Upstream ViewModel tests cover the add/remove outcomes, while exact value
   projection tests are source-derived. Android flow scheduling, selection
-  widgets, note-editor actions, and tablet-pane behavior remain host-side.
+  widgets, destination lookup, and note-editor command delivery remain host-side.
+- Card Browser row activation: `planBrowserRowActivation` returns the source-
+  ordered directives for normal phone/tablet editor routing and multi-select
+  toggles. A selected row tapped in fragmented mode requests a pane reload only
+  after the selection toggle; adding a row or deselecting on a phone has no
+  editor effect. Upstream ViewModel tests directly cover the major branches.
+  The host resolves collection-backed editor destinations, applies selection,
+  pane/mode state, and delivers activity or pane commands; Android row widgets,
+  flows, and navigation remain outside.
 - Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
   mode-specific config values, checks the key against host-supplied backend
   columns, and returns the source sort type. It defaults missing or
@@ -390,7 +399,8 @@ SavedStateHandle/StateFlow
 integration for mode, text buffers, and history/saved-search availability,
 Basic/Advanced text widgets, history-list
 and toggle widgets,
-Card Browser row-selection widgets and note-editor/pane command delivery,
+Card Browser row-selection widgets, applying row-activation directives,
+collection-backed editor destination lookup, and note-editor/pane command delivery,
 persistent Cards/Notes mode lookup and AGPL-incorporated column defaults,
 collection-backed Card↔Note ID lookups, backend column registry and rows,
 column-selection drag/drop and active backend updates, Card Browser sort UI,

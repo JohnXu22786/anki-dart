@@ -193,8 +193,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   retains source insertion order, mode-change causes, last-selected ID, and
   refresh behavior. Upstream `CardBrowserViewModelTest.kt` directly exercises
   multi-select tap outcomes; the pure value-projection cases are source-derived.
-  The model does not apply Android flows, selection widgets, collection
-  lookups, note-editor actions, or tablet-pane behavior.
+  Its `onTap` branch and `setNoteEditorRow` effect order are projected by
+  `lib/src/browser_row_activation.dart`: normal taps route to a pane or
+  activity, while only deselecting an already selected row in fragmented mode
+  adds a pane reload after the selection toggle. Upstream
+  `CardBrowserViewModelTest.kt:1395–1472` directly covers the major tap
+  branches. The host applies Android flows, selection widgets, pane/mode state,
+  collection-backed destination lookup, and note-editor commands.
 - `AnkiDroid/src/main/java/com/ichi2/anki/model/SortType.kt`,
   `libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, and typed config
   decoding in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` declare

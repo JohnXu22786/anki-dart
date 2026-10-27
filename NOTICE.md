@@ -66,13 +66,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   hidden/running/paused/stopped state machine is adapted in
   `lib/src/answer_timer.dart`; host lifecycle registration and timer rendering
   are not included.
-- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvance.kt`,
-  `AutoAdvanceSettings.kt`, `AutoAdvanceAction.kt`, `QuestionAction.kt`, and
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
+  and `autoadvance/AutoAdvance.kt`, `AutoAdvanceSettings.kt`,
+  `AutoAdvanceAction.kt`, `QuestionAction.kt`, and
   `AnswerAction.kt` are marked `GPL-3.0-or-later` upstream. Their settings
   contract, action codes, delay dispatch, and cooperative in-flight cancellation
   signal are adapted
   in `lib/src/auto_advance.dart`; the Android collection settings lookup and
-  reviewer action routing are not included.
+  reviewer action routing are not included. `toggleAutoAdvance()` state/effect
+  ordering is separately projected in
+  `lib/src/reviewer_auto_advance_toggle.dart`; settings, localization, media
+  state, timer operations, and StateFlow remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`
   and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` declare
   `GPL-3.0-or-later`. Their gesture enums, decoded-input decisions, viewport
@@ -836,6 +840,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/auto_advance_test.dart` checks the delay, cancellation, deck-setting,
   action-code, and same-side behavior recorded in `AutoAdvanceTest.kt`; it is
   not a port of the Android test harness.
+- `test/reviewer_auto_advance_toggle_test.dart` adds source-derived toggle
+  state/message/effect ordering, audio wait, and shown-side scheduling cases.
+  No direct ReviewerViewModel toggle test was found; AutoAdvance's delegated
+  scheduling remains covered separately by `AutoAdvanceTest.kt`.
 - `test/gesture_parser_test.dart` checks the input, target, swipe, scroll,
   malformed-data, and asynchronous timing behavior recorded in
   `GestureParserTest.kt`; it is not a port of the Android test harness.

@@ -283,6 +283,10 @@ placeholder removal.
   `[[type:...]]` match through its first `]]`, preserving other text. This is
   the question-side cleanup model; field lookup, cloze/answer processing,
   rendering, and Android integration remain with the host.
+- Type-answer question prompt: `filterTypeAnswerQuestion` applies the exact
+  span/input prompt or first warning replacement using host-supplied state.
+  Card/note lookup, Android input events and JavaScript integration, and card
+  rendering remain host-side.
 - Reviewer presentation: a study-count model that renders the three scheduler
   counts as decimal strings and retains which queue is active, plus an answer
   next-time model that displays the backend's four strings in Again/Hard/Good/
@@ -487,7 +491,8 @@ event execution (the ordered plan is modeled), mark-state lookup, bulk tag and
 suspend writes/undo (bulk-mark and bulk-suspend target decisions are modeled),
 and note editing, Android card-template asset loading and card content
 rendering/media, card/note-dependent TypeAnswer field lookup, cloze extraction
-and answer comparison, answer-timer widget/tick rendering,
+and answer comparison, Android TypeAnswer input events and JavaScript bridge,
+answer-timer widget/tick rendering,
 Auto Advance settings
 controls and Android preference lookup, `KeyEvent` extraction and hardware/layout
 `getUnicodeChar()` calculation, binding display strings, Android

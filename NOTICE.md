@@ -173,6 +173,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   question-side `removeTypeAnswerTags` function in `lib/src/type_answer_tags.dart`.
   Previewer integration, field lookup, cloze extraction, answer comparison,
   rendering, and Android input remain outside this port.
+- `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` declares
+  `GPL-3.0-or-later`. Its question-prompt transformation in `filterQuestion`
+  is adapted as `filterTypeAnswerQuestion` in
+  `lib/src/type_answer_question.dart`. The host supplies the extracted prompt
+  state; note/card lookup, Android input lifecycle and JavaScript integration,
+  and card rendering remain outside this port.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
   and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
   load-time fallback/de-duplication, nullable updates and replacement are
@@ -449,6 +455,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `TypeAnswer.removeTags` regex. `TypeAnswerTest.kt` has related answer-side
   placeholder cases but no direct `removeTags` test; answer-side behavior is not
   claimed as ported here.
+- `test/type_answer_question_test.dart` contains source-derived checks for
+  `TypeAnswer.filterQuestion`, including prompt formatting and Java Matcher
+  replacement strings. The pinned `TypeAnswerTest.kt` has no direct
+  `filterQuestion` tests; its answer-filter cases are only adjacent evidence.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it

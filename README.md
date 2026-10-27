@@ -741,6 +741,9 @@ conversion. The settled Boolean is projected separately from the host-managed
 flow initial value and delivery.
 The ChangeNoteType tab-position projection maps 0 to Fields and 1 to Templates;
 unknown positions throw. ViewPager input and tab-state delivery remain host-side.
+The `SelectedIndex` model preserves the singleton Nothing choice and value-equal
+index choices, converting them to nullable ordinals without range checks.
+Spinner selection, map updates, StateFlow and UI lifecycle remain host-side.
 
 ## License and attribution
 

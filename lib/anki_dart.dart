@@ -51,6 +51,7 @@ export 'src/change_note_type_has_changes.dart';
 export 'src/change_note_type_discarded_templates.dart';
 export 'src/change_note_type_template_change_eligibility.dart';
 export 'src/change_note_type_tab.dart';
+export 'src/selected_index.dart';
 export 'src/change_note_type_field_mapping_update.dart';
 export 'src/browser_selected_flag_plan.dart';
 export 'src/browser_selection_export.dart';

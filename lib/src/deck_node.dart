@@ -69,9 +69,13 @@ class DeckNode {
   ///
   /// The backend caps the root aggregate, while subdecks share their parent's
   /// limits, so this sums each top-level child exactly once.
-  int totalCardsDue() => children.fold(
-        0,
-        (total, child) =>
-            total + child.newCount + child.revCount + child.lrnCount,
-      );
+  int totalCardsDue() => children.fold(0, (total, child) {
+        final childDue = _addInt32(
+          _addInt32(child.newCount, child.revCount),
+          child.lrnCount,
+        );
+        return _addInt32(total, childDue);
+      });
 }
+
+int _addInt32(int left, int right) => (left + right).toSigned(32);

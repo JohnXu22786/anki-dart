@@ -121,6 +121,31 @@ void main() {
       expect(cappedRoot.totalCardsDue(), 19998);
       expect(nestedRoot.totalCardsDue(), 9905);
     });
+
+    test('wraps signed 32-bit overflow like Kotlin Int arithmetic', () {
+      final root = DeckNode.syntheticRoot(
+        children: [
+          _deck(1, 'A', 1, newCount: 0x7fffffff, revCount: 1),
+          _deck(2, 'B', 1, newCount: 0x7fffffff),
+        ],
+      );
+
+      expect(root.totalCardsDue(), -1);
+    });
+
+    test('wraps signed 32-bit underflow like Kotlin Int arithmetic', () {
+      final root = DeckNode.syntheticRoot(
+        children: [
+          _deck(1, 'A', 1, newCount: -0x80000000, revCount: -1),
+        ],
+      );
+
+      expect(root.totalCardsDue(), 0x7fffffff);
+    });
+
+    test('returns zero when there are no child decks', () {
+      expect(DeckNode.syntheticRoot().totalCardsDue(), 0);
+    });
   });
 
   group('DisplayDeckNode', () {

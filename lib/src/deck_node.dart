@@ -33,8 +33,9 @@ class DeckNode {
     this.lrnCount = 0,
     this.revCount = 0,
     this.children = const [],
-    this.isSyntheticDeck = false,
-  }) : _lastDeckNameComponent = lastDeckNameComponent;
+    bool? isSyntheticDeck,
+  })  : _lastDeckNameComponent = lastDeckNameComponent,
+        isSyntheticDeck = isSyntheticDeck ?? depth < 0;
 
   factory DeckNode.syntheticRoot({
     List<DeckNode> children = const [],

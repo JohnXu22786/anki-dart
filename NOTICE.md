@@ -18,7 +18,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   © 2020 Arthur Milchior <arthur@milchior.fr>. Its Dart input projection and
   `totalCardsDue()` behavior are in `lib/src/deck_node.dart`; the total sums
   immediate child aggregates as used by `DeckPickerViewModel.kt`, preserving
-  Kotlin signed 32-bit `Int` overflow behavior.
+  Kotlin signed 32-bit `Int` overflow behavior. When omitted, the synthetic
+  flag is derived from projected depth (`depth < 0`), matching the source's
+  `node.level <= 0`; explicit Dart overrides remain available.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
   is marked `GPL-3.0-or-later` in its upstream header. Its reviewer action and
   queue lifecycle, including the current-card mutation readiness barrier and
@@ -419,7 +421,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `DeckNodeTest.kt`, Copyright © 2025 Shridhar Goel.
 - The same Dart tests include source-derived empty-child and signed
   overflow/underflow cases; the pinned `DeckNodeTest.kt` does not directly test
-  those boundaries.
+  those boundaries or directly assert `depth`/`isSyntheticDeck`. Synthetic
+  constructor parity cases are source-derived from `DeckNode.kt`'s level
+  projection.
 - `test/review_session_test.dart` checks the reviewer flow recorded in
   `ReviewerViewModel.kt`, `Scheduler.kt`, and `Collection.kt`; it is not a port
   of the Android test harness. The post-hook queue-state-on-reveal and

@@ -36,7 +36,8 @@ placeholder removal.
 - Deck-picker rows and due count: flattening a deck tree into visible rows,
   including ancestor paths, collapsed decks, counts, and selection state, plus
   the source-equivalent total due count across top-level decks, including
-  signed 32-bit `Int` overflow behavior.
+  signed 32-bit `Int` overflow behavior. An omitted synthetic-root flag is
+  derived from negative depth, matching AnkiDroid's level projection.
 - Card Browser columns: `BrowserColumnCollection` recognizes the source column
   keys, loads an ordered `|`-separated value with load-time de-duplication and
   fallback to caller-supplied defaults, and returns serialized update results

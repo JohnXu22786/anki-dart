@@ -25,6 +25,36 @@ import 'package:anki_dart/anki_dart.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('DeckNode synthetic-root projection', () {
+    test('derives synthetic state from negative depth when omitted', () {
+      final root = DeckNode(did: 0, fullDeckName: '', depth: -1);
+      final topLevel = DeckNode(did: 1, fullDeckName: 'Science', depth: 0);
+      final subdeck = DeckNode(did: 2, fullDeckName: 'Science::Math', depth: 1);
+
+      expect(root.isSyntheticDeck, isTrue);
+      expect(topLevel.isSyntheticDeck, isFalse);
+      expect(subdeck.isSyntheticDeck, isFalse);
+    });
+
+    test('preserves explicit synthetic-state overrides', () {
+      final explicitlySynthetic = DeckNode(
+        did: 1,
+        fullDeckName: 'Science',
+        depth: 0,
+        isSyntheticDeck: true,
+      );
+      final explicitlyReal = DeckNode(
+        did: 0,
+        fullDeckName: '',
+        depth: -1,
+        isSyntheticDeck: false,
+      );
+
+      expect(explicitlySynthetic.isSyntheticDeck, isTrue);
+      expect(explicitlyReal.isSyntheticDeck, isFalse);
+    });
+  });
+
   group('filterAndFlattenDisplay', () {
     test('search opens collapsed ancestors and includes the matching path', () {
       final tree = _scienceTree();

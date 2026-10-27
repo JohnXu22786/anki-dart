@@ -92,6 +92,30 @@ int? browserRowPositionOfId({
   return position >= 0 ? position : null;
 }
 
+/// Projects `onPaneRowChanged` to ordered adapter positions needing refresh.
+///
+/// Non-null previous/new IDs are deduplicated by [BrowserRowId] value equality
+/// before lookup. IDs without a current row position are omitted. The host
+/// updates pane state and performs the Android adapter notifications.
+List<int> browserPaneRowNotificationPositions({
+  required BrowserRowId? previousPaneRow,
+  required BrowserRowId? newPaneRow,
+  required List<BrowserRowId> rowIds,
+}) {
+  final changedRows = <BrowserRowId>[];
+  if (previousPaneRow != null) changedRows.add(previousPaneRow);
+  if (newPaneRow != null && !changedRows.contains(newPaneRow)) {
+    changedRows.add(newPaneRow);
+  }
+
+  final positions = <int>[];
+  for (final rowId in changedRows) {
+    final position = browserRowPositionOfId(rowIds: rowIds, rowId: rowId);
+    if (position != null) positions.add(position);
+  }
+  return List<int>.unmodifiable(positions);
+}
+
 /// IDs for rows in either Cards or Notes mode.
 ///
 /// This list delegates its mutable operations to the supplied backing list,

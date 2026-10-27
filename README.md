@@ -106,6 +106,12 @@ substitution using host-computed comparison HTML.
   The generic upstream list helper directly tests first/missing results, but
   AnkiDroid has no direct `getPositionOfId` test; the Dart adapter cases are
   source-derived.
+- Card Browser pane-row refresh positions: `browserPaneRowNotificationPositions`
+  projects the previous and new pane IDs to ordered positions, removing duplicate
+  IDs and omitting IDs absent from the current rows. Android pane state mutation
+  and adapter notifications remain host-side; related upstream tests assert pane
+  state but do not directly cover notification targets, so Dart cases are
+  source-derived.
 - Card Browser multi-select toggles: `toggleBrowserRowSelection` projects the
   selected-ID set in insertion order, the `RowSelected`/`DeselectRow` mode
   causes, last-selected row, and the source refresh request. Removing a row

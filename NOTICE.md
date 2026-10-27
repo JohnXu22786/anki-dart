@@ -288,6 +288,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `GPL-3.0-or-later`. `browserRowPositionOfId()` in
   `lib/src/browser_row_collection.dart` adapts the first-match index-or-null
   lookup; Android scrolling, notifications, and layout offsets remain host-side.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt`
+  declares `GPL-3.0-or-later`. `browserPaneRowNotificationPositions()` in
+  `lib/src/browser_row_collection.dart` adapts its ordered, distinct pane-row
+  lookup to current adapter positions; pane-state mutation and Android adapter
+  notifications remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`
   declares `GPL-3.0-or-later`. Its `RowSelection` value and selected-row toggle
   state projection are adapted in `lib/src/browser_row_selection.dart`, which
@@ -615,6 +620,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   first duplicate match, `BrowserRowId` value equality, missing IDs, and empty
   rows. The generic pinned `ListTest.kt:11–14` directly covers first-match and
   missing-ID helper behavior, but no upstream test invokes `getPositionOfId`.
+- `test/browser_pane_row_notification_test.dart` contains source-derived checks
+  for previous/new position order, null and duplicate ID handling, missing-row
+  omission, and first matching positions for duplicate rows. Pane-state tests
+  exist upstream, but no pinned test asserts the callback's notified positions.
 - The same row-collection tests include source-derived concurrent-mutation cases:
   note IDs captured for `queryCardIds` and `queryOneCardIdPerRow` remain fixed
   while the host lookup awaits, matching `BrowserRowCollection.kt` materializing

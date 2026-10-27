@@ -728,6 +728,10 @@ The field-mapping update projection copies the host's current map and assigns
 the supplied nullable input ordinal at the output key, preserving duplicate
 and unvalidated ordinals. StateFlow, spinner/UI, logging and note conversion
 remain host-side.
+The ChangeNoteType has-changes projection compares host-supplied type IDs and
+default/current maps. It uses structural, order-independent map equality and
+distinguishes absent keys from null-valued keys. Flow composition and Save-button
+state delivery remain host-side.
 
 ## License and attribution
 

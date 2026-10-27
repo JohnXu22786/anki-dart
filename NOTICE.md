@@ -153,7 +153,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   The `toggleMark()` operation order is adapted as host effects in
   `lib/src/previewer_mark_effects.dart`; current note resolution, tag mutation,
   undoable persistence, marked-state lookup, error handling, and StateFlow
-  delivery remain outside.
+  delivery remain outside. `AnkiDroid/src/main/java/com/ichi2/anki/servicelayer/NoteService.kt`
+  is Copyright © 2013 Bibek Shrestha <bibekshrestha@gmail.com>, Zaur
+  Molotnikov <qutorial@gmail.com>, Nicolas Raoul <nicolas.raoul@gmail.com>, and
+  Flavio Lerda <flerda@gmail.com>. Its pure mark-tag action and
+  tag-before-undoable-update plan is in
+  `lib/src/note_mark_toggle.dart`; tag mutation, collection-aware lookup,
+  `updateNote`, and `undoableOp` remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardAppearance.kt` and
   `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/ReviewerCustomFonts.kt`
   are part of the GPL-3.0-or-later AnkiDroid source. Their CSS zoom appending,
@@ -621,6 +627,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   post-toggle read, and publication plan. The pinned ViewModel test verifies the
   resulting mark state and tag but does not directly test effect ordering or
   failure short-circuiting; those cases are source-derived.
+- `test/note_mark_toggle_test.dart` covers both host-resolved mark branches and
+  tag-change-before-undoable-update order. The pinned Previewer and Card Browser
+  integration tests verify successful outcomes, not the isolated NoteService
+  effect order; these focused cases are source-derived.
 - `test/type_answer_modifiers_test.dart` adapts all direct parser cases in
   `TypeAnswerModifiersTest.kt` and adds source-derived checks for unknown-prefix
   stopping, verbatim remainder handling, empty input, and structural equality.

@@ -9,8 +9,9 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 The current port includes selected source-mapped slices: deck-picker behavior,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
-navigation, flag decision/effect models and ordered mark action effects, Card
-Browser active-column and sort preference models, recent-search ordering, JSON
+navigation, flag decision/effect models, ordered Previewer mark action effects
+and NoteService mark-tag update effects, Card Browser active-column and sort
+preference models, recent-search ordering, JSON
 serialization, display state,
 saved-history request restoration, Cards/Notes row-ID projection/expansion,
 column-selection click-toggle planning, row-tap activation directives, bulk
@@ -364,6 +365,10 @@ substitution using host-computed comparison HTML.
   The host stops the sequence when an operation fails; note lookup, `marked` tag
   mutation, undoable persistence, error handling, and StateFlow delivery remain
   host-side.
+- NoteService mark update: `planNoteServiceToggleMark` removes the literal
+  `marked` tag when the supplied state is true or adds it when false, then
+  requests undoable note update. The host reads state, mutates the note, and
+  performs persistence.
 - Type-answer modifiers: `TypeAnswerModifiers.parse` consumes repeated leading
   `nosuggest:`, `cloze:`, and `nc:` prefixes in any order and returns the
   unmodified field-name remainder. Field lookup, cloze-content invocation,

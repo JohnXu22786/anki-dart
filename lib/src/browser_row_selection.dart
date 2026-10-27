@@ -137,6 +137,30 @@ BrowserRowSelectionTransition toggleBrowserRowSelection({
 /// The action selected by AnkiDroid's cached toggle-selection flow value.
 enum BrowserSelectAllOrNoneState { selectAll, selectNone }
 
+/// Initial `StateFlow` value before AnkiDroid's mapped selection flow emits.
+const BrowserSelectAllOrNoneState initialBrowserSelectAllOrNoneState =
+    BrowserSelectAllOrNoneState.selectNone;
+
+/// Projects the source toggle icon state from visible selected rows and count.
+///
+/// AnkiDroid hides selected IDs unless multi-select mode is active, then maps
+/// `selectedRows.size >= rowCount` to `SELECT_NONE`. The source receives a
+/// `Set`; this API accepts an iterable and collapses duplicate IDs to preserve
+/// that cardinality behavior. [rowCount] is compared directly without
+/// validation or clamping.
+BrowserSelectAllOrNoneState projectBrowserSelectAllOrNoneState({
+  required Iterable<BrowserRowId> selectedRows,
+  required bool isInMultiSelectMode,
+  required int rowCount,
+}) {
+  final visibleRowCount = isInMultiSelectMode
+      ? LinkedHashSet<BrowserRowId>.of(selectedRows).length
+      : 0;
+  return visibleRowCount >= rowCount
+      ? BrowserSelectAllOrNoneState.selectNone
+      : BrowserSelectAllOrNoneState.selectAll;
+}
+
 /// Ordered asynchronous effects after a bulk selection mutates its row set.
 enum BrowserBulkSelectionEffect {
   /// Corresponds to assigning `MultiSelectCause.Other` before refreshing rows.

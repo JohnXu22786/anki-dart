@@ -243,12 +243,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   linked-set order and emits the source multi-select `Other` cause before row
   refresh; select-none copies previous IDs, clears the rows, and refreshes while
   retaining multi-select mode. The toggle follows the current cached
-  SELECT_ALL/SELECT_NONE state supplied by the host. The pinned
-  `CardBrowserViewModelTest.kt:1331–1375` covers main integration outcomes;
-  immutable projection/no-op/effect-order assertions are source-derived. The
-  source mutates its synchronized set in place; the pure Dart result is an
-  ordered immutable snapshot. Row loading, StateFlow/coroutine delivery, and
-  selection widgets remain host-side.
+  SELECT_ALL/SELECT_NONE state supplied by the host. The pure
+  `projectBrowserSelectAllOrNoneState()` also applies the source visible-row
+  rule, direct `>= rowCount` comparison, and initial SELECT_NONE value. The
+  pinned `CardBrowserViewModelTest.kt:1316–1329,1361–1375` covers initial,
+  partial, full and mode-integrated outcomes; hidden-selection, duplicate-ID,
+  zero/negative-count projection cases and immutable projection/no-op/effect-
+  order assertions are source-derived. The source mutates its synchronized set
+  in place; the pure Dart results are ordered immutable snapshots. Row loading,
+  StateFlow scheduling/coroutine delivery, and selection widgets remain
+  host-side.
   `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` is Copyright (c) 2014
   Houssam Salem and is licensed GPL-3.0-or-later; the host maps its
   `QueueType.Suspended` identity to the headless enum.
@@ -411,6 +415,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   equality. Pinned ViewModel tests cover row selection through UI integration,
   not the pure Dart projection; Android flow delivery and editor/pane actions
   remain outside.
+- `test/browser_toggle_selection_state_test.dart` adapts the initial, partial,
+  and fully-selected flow outcomes from `CardBrowserViewModelTest.kt`; its
+  hidden-selection, duplicate-ID, and zero/negative-row-count cases are
+  source-derived. StateFlow scheduling and UI remain host-side.
 - `test/browser_sort_type_test.dart` adapts the sort resolution and save cases in
   `SortTypeTest.kt`, plus typed config fallback behavior from `Config.kt`,
   including the source's global no-sorting behavior; it does not port

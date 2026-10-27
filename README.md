@@ -67,10 +67,13 @@ placeholder removal.
   no-op-on-no-change behavior. Select-all emits the `Other` multi-select cause
   before row refresh; select-none snapshots then clears selected IDs and keeps
   multi-select active. `planBrowserToggleSelectAllOrNone` follows the cached
-  toggle state supplied by the host. Upstream ViewModel tests cover the main
-  all/none and partial/full toggle behavior; the pure transition/effect and
-  no-op assertions are source-derived. StateFlow calculation, async delivery,
-  and selection widgets remain host-side.
+  toggle state supplied by the host. `projectBrowserSelectAllOrNoneState`
+  projects the source visible-selection rule and `>= rowCount` boundary, with
+  the initial `SELECT_NONE` value. Upstream ViewModel tests cover initial,
+  partial and full flow outcomes; hidden-selection and zero-count projection
+  cases, along with pure transition/effect and no-op assertions, are
+  source-derived. StateFlow scheduling, async delivery, and selection widgets
+  remain host-side.
 - Card Browser row activation: `planBrowserRowActivation` returns the source-
   ordered directives for normal phone/tablet editor routing and multi-select
   toggles. A selected row tapped in fragmented mode requests a pane reload only
@@ -433,7 +436,8 @@ SavedStateHandle/StateFlow
 integration for mode, text buffers, and history/saved-search availability,
 Basic/Advanced text widgets, history-list
 and toggle widgets,
-Card Browser row-selection widgets, applying row-activation directives,
+Card Browser row-selection widgets, StateFlow scheduling/async refresh delivery,
+applying row-activation directives,
 collection-backed editor destination lookup, and note-editor/pane command delivery,
 persistent Cards/Notes mode lookup and AGPL-incorporated column defaults,
 collection-backed Card↔Note ID lookups, backend column registry and rows,

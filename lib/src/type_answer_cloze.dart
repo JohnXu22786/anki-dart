@@ -16,8 +16,32 @@
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Behavioral reference: `TypeAnswer.contentForCloze()` in AnkiDroid 2.25.3.
+ * Behavioral references: `TypeAnswer.updateInfo()` and
+ * `TypeAnswer.contentForCloze()` in AnkiDroid 2.25.3.
  */
+
+import 'type_answer_modifiers.dart';
+
+/// Derives the source cloze index from a host-supplied rendered [question].
+///
+/// Returns `null` when `TypeAnswer.PATTERN` does not match; the source exits
+/// `updateInfo` before deriving an index in that case. A matched declaration
+/// without `cloze:` has index 0. With `cloze:`, the zero-based [cardOrdinal] is
+/// incremented using Kotlin signed 32-bit `Int` arithmetic. In particular, an
+/// ordinal of -1 produces 0, which the source treats as a non-cloze index.
+///
+/// This does not obtain the question or ordinal from an Android card, inspect
+/// note fields, or extract the answer content.
+int? typeAnswerClozeIndexForQuestion(String question, int cardOrdinal) {
+  final marker = RegExp(
+    r'\[\[type:([^\r\n\u0085\u2028\u2029]+?)]]',
+  ).firstMatch(question);
+  if (marker == null) return null;
+
+  final modifiers = TypeAnswerModifiers.parse(marker.group(1)!);
+  if (!modifiers.cloze) return 0;
+  return (cardOrdinal + 1).toSigned(32);
+}
 
 /// Extracts the source's ordered answer text for [index] from cloze markers.
 ///

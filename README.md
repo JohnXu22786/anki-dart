@@ -26,7 +26,8 @@ transitions, text-edit/sync/reset/history-selection/request-submission effect
 sequences and saved-search submission effects, saved-search
 outcome-message mapping, CardTemplate marker-based string composition and
 verbatim card-content QA wrapping,
-card-template type-answer modifier parsing and cloze-content extraction,
+card-template type-answer modifier parsing, cloze-index derivation and
+cloze-content extraction,
 question-side type-answer placeholder removal, and answer-side placeholder
 substitution using host-computed comparison HTML.
 
@@ -278,13 +279,21 @@ substitution using host-computed comparison HTML.
   Card Browser backend search flag values.
 - Type-answer modifiers: `TypeAnswerModifiers.parse` consumes repeated leading
   `nosuggest:`, `cloze:`, and `nc:` prefixes in any order and returns the
-  unmodified field-name remainder. Card/note lookup, cloze-index derivation and
-  invocation, answer comparison, template rendering, and Android input behavior
-  remain outside.
+  unmodified field-name remainder. Field lookup, cloze-content invocation,
+  answer comparison, template rendering, and Android input behavior remain
+  outside.
+- Type-answer cloze index: `typeAnswerClozeIndexForQuestion` finds the first
+  source `[[type:...]]` marker in the host-supplied rendered question, parses
+  the modifier capture, returns null when no marker matches, zero without
+  `cloze:`, or signed-32-bit `cardOrdinal + 1` with `cloze:`. Overflow wraps;
+  ordinal -1 produces zero, matching the source's `index != 0` check. The host
+  supplies the question and ordinal; card/template access, field lookup,
+  warning/state updates and cloze-content invocation remain host-side.
 - Cloze content: `typeAnswerContentForCloze` extracts captures for a supplied
   cloze index, cuts each hint at the first `::`, collapses repeated identical
   captures to one value, and otherwise joins all captures in source order.
-  Card/note lookup and deriving the index from a card ordinal remain host-side.
+  The host supplies the already-derived index; card/note lookup and invoking
+  this extraction remain host-side.
 - Type-answer tags: `removeTypeAnswerTags` removes every nonempty, single-line
   `[[type:...]]` match through its first `]]`, preserving other text. This is
   the question-side cleanup model; field lookup, cloze-index invocation,
@@ -501,8 +510,9 @@ Browser selected-card lookup, collection flag writes and card-state-changed
 event execution (the ordered plan is modeled), mark-state lookup, bulk tag and
 suspend writes/undo (bulk-mark and bulk-suspend target decisions are modeled),
 and note editing, Android card-template asset loading and card content
-rendering/media, card/note-dependent TypeAnswer field lookup and cloze-index
-derivation (pure cloze-content extraction is modeled), answer comparison
+rendering/media, card/note-dependent TypeAnswer field lookup, rendered-question/
+Card.ord extraction and cloze-content invocation (pure cloze-index derivation
+and cloze-content extraction are modeled), answer comparison
 (placeholder substitution is modeled when comparison HTML is supplied), Android
 TypeAnswer input events and JavaScript bridge,
 answer-timer widget/tick rendering,

@@ -165,9 +165,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   caller orchestration remain outside this slice.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
   declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
-  semantics are adapted in `lib/src/type_answer_modifiers.dart`; card/note
-  lookup, cloze-index derivation/invocation, answer comparison, template
-  rendering, and Android input integration are not included.
+  semantics are adapted in `lib/src/type_answer_modifiers.dart`; field lookup,
+  cloze-content invocation, answer comparison, template rendering, and Android
+  input integration are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/previewer/TypeAnswer.kt` declares
   `GPL-3.0-or-later`. Its `removeTags` regex behavior is adapted as the pure
   question-side `removeTypeAnswerTags` function in `lib/src/type_answer_tags.dart`.
@@ -181,10 +181,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `filterTypeAnswerAnswer` in `lib/src/type_answer_answer.dart`; the host
   supplies already-computed comparison HTML. Its pure `contentForCloze`
   extraction is adapted as `typeAnswerContentForCloze` in
-  `lib/src/type_answer_cloze.dart`; the host supplies field text and cloze
-  index. The Rust comparator, answer lookup, cloze-index derivation, Android
-  input lifecycle and JavaScript integration, and card rendering remain
-  outside this port.
+  `lib/src/type_answer_cloze.dart`; its `updateInfo` marker-to-index projection
+  is also adapted there as `typeAnswerClozeIndexForQuestion`. The host supplies
+  the rendered question, card ordinal, and field text. The Rust comparator,
+  card/template and answer lookup, state/warning updates, cloze-content
+  invocation, Android input lifecycle and JavaScript integration, and card
+  rendering remain outside this port.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
   and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
   load-time fallback/de-duplication, nullable updates and replacement are
@@ -474,8 +476,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/type_answer_cloze_test.dart` adapts the two direct assertions in
   `TypeAnswerTest.kt` for repeated and distinct cloze answers, and adds
   source-derived cases for hints, no matches, requested index, order,
-  duplicates, malformed payloads, and line boundaries. Card/note lookup and
-  deriving the cloze index remain host-side.
+  duplicates, malformed payloads, and line boundaries. The pinned suite has no
+  direct `updateInfo` cloze-index test; source-derived cases cover modifier
+  parsing, first-marker/absent-marker behavior, Java line terminators,
+  signed-32-bit ordinal overflow, and the -1-to-zero edge. Card/template
+  lookup, ordinal extraction, state updates and cloze-content invocation remain
+  host-side.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it

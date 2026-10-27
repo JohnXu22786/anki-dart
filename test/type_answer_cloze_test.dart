@@ -23,6 +23,82 @@ import 'package:anki_dart/anki_dart.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('typeAnswerClozeIndexForQuestion', () {
+    test('derives the one-based cloze index from the first type marker', () {
+      expect(
+        typeAnswerClozeIndexForQuestion(
+          'Question [[type:cloze:Text]] and [[type:Field]]',
+          2,
+        ),
+        3,
+      );
+      expect(
+        typeAnswerClozeIndexForQuestion(
+          'Question [[type:Field]] and [[type:cloze:Text]]',
+          2,
+        ),
+        0,
+      );
+    });
+
+    test('uses zero for matched markers without the cloze modifier', () {
+      for (final declaration in [
+        'Field',
+        'nc:Field',
+        'nosuggest:Field',
+        'nosuggest:nc:Field',
+      ]) {
+        expect(
+          typeAnswerClozeIndexForQuestion('[[type:$declaration]]', 8),
+          0,
+        );
+      }
+    });
+
+    test('a cloze modifier with an empty field name still derives its index',
+        () {
+      expect(typeAnswerClozeIndexForQuestion('[[type:cloze:]]', 2), 3);
+    });
+
+    test('wraps card ordinal plus one as a signed Kotlin Int', () {
+      expect(
+        typeAnswerClozeIndexForQuestion('[[type:cloze:Text]]', 0x7fffffff),
+        -0x80000000,
+      );
+      // Source tests `clozeIdx != 0`; the -1 ordinal therefore skips cloze
+      // extraction despite the modifier being present.
+      expect(typeAnswerClozeIndexForQuestion('[[type:cloze:Text]]', -1), 0);
+    });
+
+    test('returns null when the source type-answer pattern has no match', () {
+      for (final question in [
+        '',
+        '[[type:]]',
+        '[[type:cloze:Text',
+        '[[TYPE:cloze:Text]]',
+        for (final lineTerminator in ['\n', '\r', '\u0085', '\u2028', '\u2029'])
+          '[[type:cloze:Text${lineTerminator}More]]',
+      ]) {
+        expect(typeAnswerClozeIndexForQuestion(question, 2), isNull);
+      }
+    });
+
+    test('parses the first source marker, including its exact modifier case',
+        () {
+      expect(
+        typeAnswerClozeIndexForQuestion(
+          '[[type:Cloze:Text]] then [[type:cloze:Other]]',
+          2,
+        ),
+        0,
+      );
+      expect(
+        typeAnswerClozeIndexForQuestion('[[type:nosuggest:cloze:Text]]', 2),
+        3,
+      );
+    });
+  });
+
   group('typeAnswerContentForCloze', () {
     test('matches direct upstream repeated-word cases', () {
       const same =

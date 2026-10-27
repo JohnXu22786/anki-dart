@@ -359,6 +359,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   for regular and suspended-new cards, but not the constructor directly;
   reversed/equal/negative/null cases are source-derived. SQL lookup and the
   source `max(0,minDue)` behavior remain host-side.
+  The host-read due extrema mapping at `CardBrowserViewModel.kt:1125–1138` is
+  projected by `projectBrowserRepositionDueExtrema()` in
+  `lib/src/browser_reposition_due_extrema.dart`: only minDue is clamped to zero,
+  maxDue is preserved, and the result reuses the queue-bounds projection. SQL
+  and cursor work, scheduler defaults and execution remain host-side. The pinned
+  ViewModel test covers ordinary positive values; negative min/max cases are
+  source-derived.
   `toHumanReadableContent()` at `CardBrowserViewModel.kt:1794–1798` is adapted
   by `projectBrowserRepositionSummary()` in
   `lib/src/browser_reposition_summary.dart`: host-supplied localized top and

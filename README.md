@@ -696,6 +696,8 @@ snackbar directives; resource lookup and Android UI construction/delivery stay
 host-side.
 The queue-bounds projection orders two host-supplied values and preserves the
 source behavior that either missing value clears both bounds.
+The due-extrema projection preserves the source lower-only zero clamp and passes
+max due unchanged before bound ordering; database reads remain host-side.
 The summary projection joins host-localized queue lines with one newline and
 returns null when either queue bound is absent; localization remains host-side.
 

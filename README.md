@@ -26,8 +26,9 @@ transitions, text-edit/sync/reset/history-selection/request-submission effect
 sequences and saved-search submission effects, saved-search
 outcome-message mapping, CardTemplate marker-based string composition and
 verbatim card-content QA wrapping,
-card-template type-answer modifier parsing, and question-side type-answer
-placeholder removal.
+card-template type-answer modifier parsing, question-side type-answer
+placeholder removal, and answer-side placeholder substitution using
+host-computed comparison HTML.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
@@ -287,6 +288,11 @@ placeholder removal.
   span/input prompt or first warning replacement using host-supplied state.
   Card/note lookup, Android input events and JavaScript integration, and card
   rendering remain host-side.
+- Type-answer answer placeholder: `filterTypeAnswerAnswer` replaces every
+  matching answer-side placeholder with comparison HTML supplied by the host.
+  It preserves the source's case-sensitive, nonempty, lazy single-line match
+  and inserts comparison text literally. The Rust answer comparator, answer
+  lookup, and Android rendering/input pipeline remain host-side.
 - Reviewer presentation: a study-count model that renders the three scheduler
   counts as decimal strings and retains which queue is active, plus an answer
   next-time model that displays the backend's four strings in Again/Hard/Good/
@@ -491,7 +497,8 @@ event execution (the ordered plan is modeled), mark-state lookup, bulk tag and
 suspend writes/undo (bulk-mark and bulk-suspend target decisions are modeled),
 and note editing, Android card-template asset loading and card content
 rendering/media, card/note-dependent TypeAnswer field lookup, cloze extraction
-and answer comparison, Android TypeAnswer input events and JavaScript bridge,
+and answer comparison (placeholder substitution is modeled when comparison
+HTML is supplied), Android TypeAnswer input events and JavaScript bridge,
 answer-timer widget/tick rendering,
 Auto Advance settings
 controls and Android preference lookup, `KeyEvent` extraction and hardware/layout

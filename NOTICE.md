@@ -177,8 +177,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `GPL-3.0-or-later`. Its question-prompt transformation in `filterQuestion`
   is adapted as `filterTypeAnswerQuestion` in
   `lib/src/type_answer_question.dart`. The host supplies the extracted prompt
-  state; note/card lookup, Android input lifecycle and JavaScript integration,
-  and card rendering remain outside this port.
+  state. Its `filterAnswer` placeholder replacement is adapted as
+  `filterTypeAnswerAnswer` in `lib/src/type_answer_answer.dart`; the host
+  supplies already-computed comparison HTML. The Rust comparator, answer
+  lookup, Android input lifecycle and JavaScript integration, and card
+  rendering remain outside this port.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
   and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
   load-time fallback/de-duplication, nullable updates and replacement are
@@ -459,6 +462,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `TypeAnswer.filterQuestion`, including prompt formatting and Java Matcher
   replacement strings. The pinned `TypeAnswerTest.kt` has no direct
   `filterQuestion` tests; its answer-filter cases are only adjacent evidence.
+- `test/type_answer_answer_test.dart` contains source-derived checks for the
+  placeholder-substitution stage of `TypeAnswer.filterAnswer`. The pinned
+  `TypeAnswerTest.kt` directly tests full answer filtering with
+  `CollectionManager.compareAnswer`; it does not isolate this substitution
+  stage. Dart accepts the comparator's HTML as input and does not port the
+  comparator or Android integration.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it

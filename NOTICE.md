@@ -359,6 +359,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   for regular and suspended-new cards, but not the constructor directly;
   reversed/equal/negative/null cases are source-derived. SQL lookup and the
   source `max(0,minDue)` behavior remain host-side.
+  `toHumanReadableContent()` at `CardBrowserViewModel.kt:1794–1798` is adapted
+  by `projectBrowserRepositionSummary()` in
+  `lib/src/browser_reposition_summary.dart`: host-supplied localized top and
+  bottom lines are joined with one newline, or null is returned if either bound
+  is missing. The pinned ViewModel test directly asserts normal summary text;
+  missing-bound tests are source-derived. Resource resolution and localization
+  remain host-side; this helper has no production caller in the pinned source.
   Its `updateSelectedCardsFlag()` write/event/return sequence is represented by
   `planBrowserSelectedCardsFlagUpdate()` and `BrowserSelectedCardsFlagPlan` in
   `lib/src/browser_selected_flag_plan.dart`. The host supplies selected card

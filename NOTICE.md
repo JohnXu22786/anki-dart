@@ -154,15 +154,26 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   boundaries map to `StateError` with the pinned source message. The pinned
   `CardTemplateTest.kt` directly covers canonical replacement and a 1,000-
   character insertion; malformed-marker cases are source-derived. The host
-  supplies the template string; Android asset loading, card rendering, media,
-  and WebView integration remain outside this slice.
+  supplies the template string; Android asset loading, full card rendering and
+  media-reference expansion, and WebView integration remain outside this
+  slice. Resolved sound markup is separately listed below.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/AndroidCardRenderContext.kt`
   declares `GPL-3.0-or-later`. Its private `enrichWithQADiv()` string wrapper is
   adapted as `wrapCardContentInQaDiv()` in `lib/src/card_template.dart`; content
   is inserted verbatim between the exact source tags. The pinned tests do not
   directly cover this private helper, so Dart assertions are source-derived.
-  Android-side filtering, audio expansion, bold rewriting, rendering, and
-  caller orchestration remain outside this slice.
+  Android-side filtering, full media-reference expansion, bold rewriting,
+  rendering, and caller orchestration remain outside this slice. Resolved
+  sound markup is separately listed below.
+- `AnkiDroid/src/main/java/com/ichi2/anki/multimedia/SoundUtils.kt` is
+  Copyright © 2009 Edu Zamora <edu.zasu@gmail.com> and © 2014 Timothy rae
+  <perceptualchaos2@gmail.com>, and is marked GPL-3.0-or-later. Its source
+  audio-button and video-element string projections for already-resolved media
+  references are adapted in `lib/src/card_media_markup.dart`. The host supplies
+  the audio/video kind, play side/index, video URI, and HTML-escaped filename;
+  reference parsing/replacement, media-type and file resolution, playback, and
+  WebView integration remain host-side. `libanki/Sound.kt` contains separately
+  AGPL-incorporated parser code and is not adapted by this module.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
   declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
   semantics are adapted in `lib/src/type_answer_modifiers.dart`; field lookup,

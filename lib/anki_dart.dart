@@ -33,6 +33,7 @@ export 'src/browser_bulk_suspend.dart';
 export 'src/browser_selected_flag_plan.dart';
 export 'src/browser_selection_export.dart';
 export 'src/card_appearance_css.dart';
+export 'src/card_media_markup.dart';
 export 'src/card_template.dart';
 export 'src/browser_availability.dart';
 export 'src/browser_filter_update.dart';

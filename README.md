@@ -703,6 +703,9 @@ returns null when either queue bound is absent; localization remains host-side.
 The Card Browser note-type response plan checks selected IDs against a
 host-resolved membership set and preserves first-occurrence order for the
 change result. Type lookup, flows, UI, and note mutation remain host-side.
+The response presentation plan maps mixed-note-type results to a host-resolved
+snackbar resource and compatible results to a dialog carrying the same IDs;
+logging and UI delivery remain host-side.
 
 ## License and attribution
 

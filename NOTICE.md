@@ -375,6 +375,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   membership cases are source-derived. Note-type resolution, collection queries,
   flow publication, snackbar/dialog delivery and the change itself remain
   host-side.
+  `CardBrowserFragment.onChangeNoteType()` at `CardBrowserFragment.kt:1225–1230`
+  is represented by `projectBrowserChangeNoteTypePresentation()` in
+  `lib/src/browser_change_note_type_presentation.dart`: NoSelection has no
+  user-visible action, MixedSelection carries the source snackbar resource, and
+  ChangeNoteType carries the response IDs unchanged to a dialog directive. No
+  pinned test directly invokes the Fragment presenter; the ViewModel tests cover
+  response values, while these mappings are source-derived. Logging, flow
+  collection, resource/UI work and subsequent note-type change remain host-side.
   `toHumanReadableContent()` at `CardBrowserViewModel.kt:1794–1798` is adapted
   by `projectBrowserRepositionSummary()` in
   `lib/src/browser_reposition_summary.dart`: host-supplied localized top and

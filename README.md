@@ -83,6 +83,13 @@ substitution using host-computed comparison HTML.
   before redispatching Back; cancellation emits no effects. The pinned tests
   cover layout only, so Dart assertions are source-derived. The Android
   dispatcher, callback lifecycle, dialog UI and delivery remain host-side.
+- Card Browser column-selection rows: `projectBrowserColumnSelectionRows`
+  projects host-supplied column and usage-heading rows into ordered displayed,
+  available, and selected column types. It uses the first Available heading,
+  strict index comparisons, and the source's `-1` result when that heading is
+  absent. Row construction, labels/samples, RecyclerView behavior, saving, and
+  state restoration remain host-side; upstream tests cover layout and drag
+  callbacks, so Dart assertions are source-derived.
 - Card Browser row IDs: `BrowserRowId` associates an ID with Cards or Notes
   mode; `BrowserRowCollection` retains and mutates the supplied list, maps card
   rows to note IDs through a host callback, and expands note rows to cards in

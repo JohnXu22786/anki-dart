@@ -263,6 +263,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   emits none. The Android dispatcher, dialog callback/lifecycle and delivery
   remain host-side. No direct pinned Back-flow test was found; Dart coverage is
   source-derived.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionAdapter.kt`
+  declares `GPL-3.0-or-later`. Its pure displayed/available/selected row
+  projection is adapted in `lib/src/browser_column_selection_projection.dart`:
+  the first Available heading determines the strict index split, heading rows
+  are excluded, and a missing heading preserves the source `-1` behavior.
+  Labels/samples, RecyclerView state and notifications, saving, and state
+  restoration remain host-side. The pinned screenshot and touch-helper tests do
+  not directly assert these getters; Dart coverage is source-derived.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardOrNoteId.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserRowCollection.kt`, and
   `AnkiDroid/src/main/java/com/ichi2/anki/model/CardsOrNotes.kt` declare
@@ -584,6 +592,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   when enabled, ordered guard-disable/back-redispatch after confirmation, and
   no callback effects after cancellation. The pinned screenshot test covers
   layout only.
+- `test/browser_column_selection_projection_test.dart` contains source-derived
+  checks for strict displayed/available boundaries, first matching Available
+  heading behavior, usage-row dropping, selected/displayed correspondence, and
+  the missing-heading `-1` case. The pinned tests cover screenshots and drag
+  callbacks but do not directly assert these adapter getters.
 - `test/browser_row_collection_test.dart` contains source-derived checks for
   Cards/Notes row-ID conversion, aliased list replacement/reset, ordered host
   lookups, duplicate-preserving note expansion, and first-card/per-position

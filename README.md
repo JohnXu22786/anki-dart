@@ -14,6 +14,7 @@ preference models, recent-search ordering, JSON serialization, display state,
 saved-history request restoration, Cards/Notes row-ID projection/expansion,
 row-tap activation directives, bulk mark/bury/suspend decisions, and
 selected-card flag update effect plans, all-decks filter state,
+selected-row export data,
 structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
@@ -87,6 +88,12 @@ placeholder removal.
   AllDecks states; the Dart check for unrelated filters is source-derived.
   Current search flow, result-message delivery, localization, and UI remain
   host-side.
+- Card Browser selected-row export data: `planBrowserSelectionExport` returns
+  no data for an empty selection; otherwise it maps Cards/Notes mode to the
+  matching export kind and copies IDs in the selected-set iteration order.
+  Direct ViewModel tests cover empty selection and one row in each mode; order
+  and list-copy cases are source-derived. The host still opens the export dialog
+  and handles cache files and actual export.
 - Card Browser row activation: `planBrowserRowActivation` returns the source-
   ordered directives for normal phone/tablet editor routing and multi-select
   toggles. A selected row tapped in fragmented mode requests a pane reload only
@@ -481,7 +488,9 @@ study-count and answer-button widgets/layout, next-time visibility preference
 wiring, template rendering and media, localized timebox messages, dialog and
 lifecycle presentation, leech handling, reviewer undo/redo, JavaScript custom-
 state and gesture bridges, WebView state collection, Android timeout lookup,
-sync, import/export, and other app features remain to be ported.
+sync, actual import/export, and other app features remain to be ported. The
+selected-row export-data projection is modeled, but its dialog, file handling,
+and export implementation remain host-side.
 The source project has thousands of files, so this repository does not claim
 full feature parity.
 

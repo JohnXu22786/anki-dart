@@ -271,6 +271,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   search-result use; the Dart unrelated-filter case is source-derived. Current
   search-flow values, result-message delivery, localization, and UI stay
   host-side.
+  `querySelectionExportData()` is projected by `planBrowserSelectionExport()`
+  and `BrowserSelectionExportPlan` in `lib/src/browser_selection_export.dart`.
+  It returns no plan for an empty selected set; otherwise it chooses Cards or
+  Notes export type from the supplied mode and copies raw row IDs in linked-set
+  iteration order. Direct `CardBrowserViewModelTest.kt:761–790` covers the
+  empty, one-card, and one-note cases; ordering and list-copy checks are
+  source-derived. The host handles the export dialog, cache/file preparation,
+  and actual export; this port does not implement export formats or execution.
   `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` is Copyright (c) 2014
   Houssam Salem and is licensed GPL-3.0-or-later; the host maps its
   `QueueType.Suspended` identity to the headless enum.

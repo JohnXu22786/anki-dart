@@ -79,7 +79,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   state, timer operations, and StateFlow remain host-side. Leech feedback text
   composition is projected in `lib/src/reviewer_leech_feedback.dart`; leech
   detection, card reload/queue lookup, localization, Timber logging and flow
-  delivery remain host-side.
+  delivery remain host-side. Whiteboard toggle state/preference ordering is
+  projected in `lib/src/reviewer_whiteboard_toggle.dart`; StateFlow mutation,
+  repository access/write, action dispatch and UI remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`
   and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` declare
   `GPL-3.0-or-later`. Their gesture enums, decoded-input decisions, viewport
@@ -850,6 +852,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/reviewer_leech_feedback_test.dart` adds source-derived base/suspended
   message composition, separator, whitespace and empty-string cases. No direct
   pinned test for `onLeech()` or its message resources was found.
+- `test/reviewer_whiteboard_toggle_test.dart` adds source-derived enabled and
+  disabled state/preference effect-order cases. Pinned UI tests enable the
+  whiteboard but do not directly assert ReviewerViewModel state/preference
+  ordering.
 - `test/gesture_parser_test.dart` checks the input, target, swipe, scroll,
   malformed-data, and asynchronous timing behavior recorded in
   `GestureParserTest.kt`; it is not a port of the Android test harness.
@@ -889,8 +895,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   derived from `SingleAxisDetector.kt` and `BindingMap.kt`. AnkiDroid 2.25.3 has
   no direct `SingleAxisDetector` unit test; Android `MotionEvent` extraction is
   outside this model.
-- Dart adaptations, the review-session controller, timer, Auto Advance and
-  gesture models, and new test code are Copyright © 2026 John Tsui.
+- Dart adaptations, the review-session controller, timer, Auto Advance, leech
+  and whiteboard toggle models, gesture models, and new test code are Copyright
+  © 2026 John Tsui.
 
 ## Unicode property data
 

@@ -20,9 +20,10 @@ selected-card flag update effect plans, all-decks filter state,
 selected-row export data, Card Browser flag-filter query text,
 structured search-node planning, the
 answer-timer state machine,
-reviewer Auto Advance scheduling and toggle effects, plus leech-feedback
-composition, the headless reviewer gesture parser, parsed-gesture command
-routing, reviewer binding codec/map and default definitions, headless
+reviewer Auto Advance scheduling and toggle effects, leech-feedback
+composition, and whiteboard toggle effects, the headless reviewer gesture
+parser, parsed-gesture command routing, reviewer binding codec/map and default
+definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
 resolution and Card Browser launch-option precedence. Card Browser search-text
@@ -451,6 +452,10 @@ substitution using host-computed comparison HTML.
   cards, it appends one literal ASCII space and the supplied suspended message
   without normalization. Detection, card reload, queue lookup, localization,
   logging, and feedback delivery remain host-side.
+- Reviewer whiteboard toggle: `planReviewerWhiteboardToggle` inverts the
+  host-supplied state, publishes the new value, then requests assigning that
+  same value to the repository preference. StateFlow mutation, repository
+  access/write, action dispatch, and UI remain host-side.
 - Reviewer gestures: decoded gesture inputs map to two-, three-, and
   four-finger taps, four- or nine-point taps, and directional swipes. The model
   preserves viewport scale and scroll adjustment, strict swipe thresholds,

@@ -21,6 +21,7 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/change_note_type_conversion.dart`,
   `lib/src/change_note_type_default_field_map.dart`, and
   `lib/src/change_note_type_discarded_fields.dart`; the template-mapping
+  default template mapping is in `lib/src/change_note_type_default_template_map.dart`; user
   update projections are in `lib/src/change_note_type_template_mapping_update.dart`
   and `lib/src/change_note_type_field_mapping_update.dart`. Collection/type
   lookup, state flow, template UI, note conversion, and sync behavior are not

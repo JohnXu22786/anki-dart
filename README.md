@@ -717,6 +717,9 @@ The discarded-fields projection consumes the host's current field map and
 ordered input names, preserving source-index filtering, duplicate names, null
 and out-of-range values. StateFlow, field lookup, localization and dialog UI
 remain host-side.
+The default template map rebuild maps matching ordinals and returns null for
+extra outputs; an empty output count produces an empty map. Template lookup,
+StateFlow, UI, persistence and conversion remain host-side.
 The template-mapping update projection consumes the host's enabled state,
 current map, output ordinal and nullable selected ordinal; it preserves the
 source collision-clearing and missing-key behavior. Flow delivery, type lookup,

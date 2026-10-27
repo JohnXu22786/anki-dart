@@ -30,7 +30,7 @@ void main() {
     });
 
     test('any selected deck makes the projection false', () {
-      const filters = BrowserSearchFilters(
+      final filters = BrowserSearchFilters(
         decks: [
           BrowserDeckNameId(name: 'Language::Spanish', id: 2),
           BrowserDeckNameId(name: 'Default', id: 1),
@@ -41,7 +41,7 @@ void main() {
     });
 
     test('other filter categories do not affect the deck projection', () {
-      const filters = BrowserSearchFilters(
+      final filters = BrowserSearchFilters(
         flags: [1],
         tags: ['marked'],
         noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],

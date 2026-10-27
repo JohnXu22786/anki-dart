@@ -88,7 +88,7 @@ void main() {
 
     test('orders complex terms and groups exactly like SearchRequest', () {
       final plan = buildBrowserSearchNodePlan(
-        const BrowserSearchRequest(
+        BrowserSearchRequest(
           query: ' queryString ',
           filters: BrowserSearchFilters(
             decks: [

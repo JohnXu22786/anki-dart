@@ -78,14 +78,14 @@ void main() {
 
     test('closed-screen User updates trim text and retain the supplied filters',
         () {
-      const filters = BrowserSearchFilters(
+      final filters = BrowserSearchFilters(
         decks: [BrowserDeckNameId(name: 'Language', id: 7)],
         flags: [1, 4],
         tags: ['one', 'two'],
         noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
         cardStateCodes: [0, 2, 4],
       );
-      const update = BrowserFilterUpdateUser(filters);
+      final update = BrowserFilterUpdateUser(filters);
 
       final request = browserSearchRequestFromFilterUpdate(
         text: '\u00a0\t query\u00a0 ',
@@ -99,7 +99,7 @@ void main() {
     });
 
     test('whitespace-only text remains blank and preserves every filter', () {
-      const filters = BrowserSearchFilters(
+      final filters = BrowserSearchFilters(
         decks: [BrowserDeckNameId(name: 'Default', id: 1)],
         flags: [2],
         tags: ['tag'],
@@ -109,7 +109,7 @@ void main() {
 
       final request = browserSearchRequestFromFilterUpdate(
         text: '\u00a0\u2003\t',
-        update: const BrowserFilterUpdateUser(filters),
+        update: BrowserFilterUpdateUser(filters),
         isScreenOpen: false,
       );
 

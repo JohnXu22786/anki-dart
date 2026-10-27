@@ -26,13 +26,21 @@ import 'package:test/test.dart';
 
 void main() {
   group('Card Browser search-history restoration', () {
+    test('separate note type values retain source identity semantics', () {
+      final first = BrowserNoteTypeNameId(name: 'Basic', id: 3);
+      final second = BrowserNoteTypeNameId(name: 'Basic', id: 3);
+
+      expect(identical(first, second), isFalse);
+      expect(first, isNot(second));
+    });
+
     final decks = [
       const BrowserDeckNameId(name: 'Default', id: 1),
       const BrowserDeckNameId(name: 'Language::Spanish', id: 2),
     ];
     final noteTypes = [
-      const BrowserNoteTypeNameId(name: 'Basic', id: 3),
-      const BrowserNoteTypeNameId(name: 'Cloze', id: 4),
+      BrowserNoteTypeNameId(name: 'Basic', id: 3),
+      BrowserNoteTypeNameId(name: 'Cloze', id: 4),
     ];
 
     test('maps all filter IDs while retaining other filter values', () {
@@ -131,7 +139,7 @@ void main() {
         BrowserDeckNameId(name: 'Ignored duplicate deck', id: 9),
         BrowserDeckNameId(name: 'Other deck', id: 7),
       ];
-      const noteTypeMap = [
+      final noteTypeMap = [
         BrowserNoteTypeNameId(name: 'First type', id: 6),
         BrowserNoteTypeNameId(name: 'Ignored duplicate type', id: 6),
       ];
@@ -155,7 +163,7 @@ void main() {
 
     test('converts a request to an ID-based history entry and trims its query',
         () {
-      const request = BrowserSearchRequest(
+      final request = BrowserSearchRequest(
         query: '\u00a0\t query text \u00a0',
         filters: BrowserSearchFilters(
           decks: [

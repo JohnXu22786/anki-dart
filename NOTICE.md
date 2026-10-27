@@ -343,7 +343,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   credits Daniel Svärd, Rick Gruber-Riemer, Norbert Nagold, Kostas Spyropoulos,
   and David Allison. Both files also identify separately incorporated AGPL
   material; none of that backend implementation is copied here. Collection
-  access, backend query generation, and execution are not included. The view
+  access, backend query generation, and execution are not included. The Dart
+  `BrowserNoteTypeNameId` constructor is intentionally non-const so equal-field
+  instances retain identity semantics rather than Dart const canonicalization;
+  callers should construct ordinary mapping instances. No pinned test directly
+  checks this equality rule; the added assertion is source-derived. The view
   model's `FilterUpdate` origin and one-snapshot request projection are adapted
   in `lib/src/browser_filter_update.dart`; StateFlow/coroutine timing and
   application of field-specific setter updates remain with the host. The four

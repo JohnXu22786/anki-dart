@@ -25,7 +25,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('Card Browser search-text update effects', () {
-    const filters = BrowserSearchFilters(
+    final filters = BrowserSearchFilters(
       decks: [BrowserDeckNameId(name: 'Deck', id: 7)],
       flags: [1, 4],
       tags: ['tag-a', 'tag-b'],

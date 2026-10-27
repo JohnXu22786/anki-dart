@@ -29,14 +29,14 @@ import 'package:test/test.dart';
 void main() {
   group('Card Browser search state effects', () {
     test('sync updates System filters before submitting the exact request', () {
-      const filters = BrowserSearchFilters(
+      final filters = BrowserSearchFilters(
         decks: [BrowserDeckNameId(name: 'Languages', id: 7)],
         flags: [1, 4],
         tags: ['tag'],
         noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
         cardStateCodes: [0, 2],
       );
-      const request = BrowserSearchRequest(
+      final request = BrowserSearchRequest(
         query: '  raw\n query  ',
         filters: filters,
       );
@@ -158,7 +158,7 @@ void main() {
           decks: [const BrowserDeckNameId(name: 'Deck', id: 4)],
           flags: [1],
           tags: ['tag'],
-          noteTypes: [const BrowserNoteTypeNameId(name: 'Basic', id: 2)],
+          noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 2)],
           cardStateCodes: [3],
         );
         const textState = BrowserSearchTextState(

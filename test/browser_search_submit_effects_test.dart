@@ -28,7 +28,7 @@ void main() {
     test('history Loading precedes close-view and exact request events', () {
       const oldEntry = BrowserSearchHistoryEntry(query: 'old');
       final history = BrowserSearchHistoryModel(entries: [oldEntry]);
-      const filters = BrowserSearchFilters(
+      final filters = BrowserSearchFilters(
         decks: [
           BrowserDeckNameId(name: 'Languages', id: 7),
           BrowserDeckNameId(name: 'Default', id: 1),
@@ -38,7 +38,7 @@ void main() {
         noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
         cardStateCodes: [0, 2],
       );
-      const request = BrowserSearchRequest(
+      final request = BrowserSearchRequest(
         query: ' \u00a0search query\t ',
         filters: filters,
       );

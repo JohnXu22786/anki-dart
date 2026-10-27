@@ -400,7 +400,10 @@ deck and note-type ID/name mappings supplied by the host and converts requests
 back to ID-based history entries. It keeps the stored query unchanged during
 restoration and applies Kotlin `String.trim()` when saving a request to history.
 Request/filter values preserve source structural equality; note-type map
-entries retain identity equality like the upstream regular class.
+entries retain identity equality like the upstream regular class. The public
+`BrowserNoteTypeNameId` constructor is intentionally non-const because Dart
+const canonicalization would merge same-field instances that AnkiDroid keeps
+distinct; callers should construct ordinary mapping instances.
 The host loads and persists history and resolves current collection objects;
 `buildBrowserSearchNodePlan` returns the source-equivalent typed tree before
 backend conversion. Backend protobuf SearchNode conversion, query parsing and

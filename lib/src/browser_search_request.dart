@@ -39,8 +39,12 @@ final class BrowserDeckNameId {
 }
 
 /// A host-supplied note type name and its stable collection ID.
+///
+/// This intentionally has no const constructor: AnkiDroid's corresponding
+/// regular Kotlin class uses instance identity, while Dart const instances are
+/// canonicalized by their fields.
 final class BrowserNoteTypeNameId {
-  const BrowserNoteTypeNameId({required this.name, required this.id});
+  BrowserNoteTypeNameId({required this.name, required this.id});
 
   final String name;
   final int id;

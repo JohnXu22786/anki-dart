@@ -26,7 +26,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('Card Browser search-history selection effects', () {
-    const existingFilters = BrowserSearchFilters(
+    final existingFilters = BrowserSearchFilters(
       decks: [BrowserDeckNameId(name: 'Old deck', id: 10)],
       flags: [4],
       tags: ['old-tag'],
@@ -47,7 +47,7 @@ void main() {
       BrowserDeckNameId(name: 'Default', id: 1),
       BrowserDeckNameId(name: 'Language::Spanish', id: 2),
     ];
-    const noteTypeMap = [BrowserNoteTypeNameId(name: 'Basic', id: 3)];
+    final noteTypeMap = [BrowserNoteTypeNameId(name: 'Basic', id: 3)];
 
     test('Basic selection emits ordered updates and restores filters', () {
       const textState = BrowserSearchTextState(
@@ -109,14 +109,14 @@ void main() {
       expect(restoredUpdate, isA<BrowserFilterUpdateUser>());
       expect(
         restoredUpdate.state,
-        const BrowserSearchFilters(
+        BrowserSearchFilters(
           decks: [
             BrowserDeckNameId(name: 'Language::Spanish', id: 2),
             BrowserDeckNameId(name: 'Default', id: 1),
           ],
           flags: [1, 4],
           tags: ['new-tag'],
-          noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
+          noteTypes: [noteTypeMap.single],
           cardStateCodes: [0, 4],
         ),
       );

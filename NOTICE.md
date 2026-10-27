@@ -351,6 +351,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   asserts the fragment's presentation branches; the Dart mapping tests are
   source-derived. Resource resolution, task launching, actual UI construction
   and delivery, and repositioning remain host-side.
+  `RepositionData` min/max normalization is represented by
+  `BrowserRepositionQueueBounds` and `projectBrowserRepositionQueueBounds()` in
+  `lib/src/browser_reposition_queue_bounds.dart`: two present values are
+  ordered into top/bottom, while either missing value clears both; equal and
+  negative values are retained. ViewModel integration tests cover normal bounds
+  for regular and suspended-new cards, but not the constructor directly;
+  reversed/equal/negative/null cases are source-derived. SQL lookup and the
+  source `max(0,minDue)` behavior remain host-side.
   Its `updateSelectedCardsFlag()` write/event/return sequence is represented by
   `planBrowserSelectedCardsFlagUpdate()` and `BrowserSelectedCardsFlagPlan` in
   `lib/src/browser_selected_flag_plan.dart`. The host supplies selected card

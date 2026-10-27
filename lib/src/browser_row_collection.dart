@@ -49,8 +49,7 @@ final class BrowserRowId {
     required int cardId,
     required int noteId,
     required BrowserColumnMode mode,
-  }) =>
-      BrowserRowId(mode == BrowserColumnMode.cards ? cardId : noteId);
+  }) => BrowserRowId(mode == BrowserColumnMode.cards ? cardId : noteId);
 
   /// Returns this ID as a card ID, resolving a note to its first card if needed.
   ///
@@ -92,6 +91,28 @@ int? browserRowPositionOfId({
   return position >= 0 ? position : null;
 }
 
+/// Returns the inclusive row slice between two IDs in source order.
+///
+/// Each ID resolves with the first-match behavior of [List.indexOf]. The
+/// endpoint arguments may be reversed; rows are still returned in ascending
+/// position order. Missing IDs retain the source failure behavior: `indexOf`
+/// yields `-1`, and indexing the resulting range throws a [RangeError].
+/// Selection mutation and delivery remain host responsibilities.
+List<BrowserRowId> browserRowRangeBetweenIds({
+  required List<BrowserRowId> rowIds,
+  required BrowserRowId startRowId,
+  required BrowserRowId endRowId,
+}) {
+  final startPosition = rowIds.indexOf(startRowId);
+  final endPosition = rowIds.indexOf(endRowId);
+  final begin = startPosition < endPosition ? startPosition : endPosition;
+  final end = startPosition > endPosition ? startPosition : endPosition;
+
+  return List<BrowserRowId>.unmodifiable([
+    for (var index = begin; index <= end; index++) rowIds[index],
+  ]);
+}
+
 /// Projects `onPaneRowChanged` to ordered adapter positions needing refresh.
 ///
 /// Non-null previous/new IDs are deduplicated by [BrowserRowId] value equality
@@ -123,8 +144,8 @@ List<int> browserPaneRowNotificationPositions({
 /// explicit host callbacks on the query methods.
 final class BrowserRowCollection extends ListBase<BrowserRowId> {
   BrowserRowCollection(BrowserColumnMode mode, List<BrowserRowId> backingRows)
-      : _mode = mode,
-        _backingRows = backingRows;
+    : _mode = mode,
+      _backingRows = backingRows;
 
   BrowserColumnMode _mode;
   final List<BrowserRowId> _backingRows;
@@ -173,9 +194,7 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
   ///
   /// Notes-mode IDs are snapshotted before the first asynchronous lookup, so a
   /// later mutation of the aliased row list does not change this query.
-  Future<List<int>> queryCardIds({
-    BrowserCardIdsOfNote? cardIdsOfNote,
-  }) async {
+  Future<List<int>> queryCardIds({BrowserCardIdsOfNote? cardIdsOfNote}) async {
     if (_mode == BrowserColumnMode.cards) {
       return _backingRows.map((row) => row.value).toList();
     }

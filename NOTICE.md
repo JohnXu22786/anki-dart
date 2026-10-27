@@ -624,6 +624,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   for previous/new position order, null and duplicate ID handling, missing-row
   omission, and first matching positions for duplicate rows. Pane-state tests
   exist upstream, but no pinned test asserts the callback's notified positions.
+- `test/browser_row_range_test.dart` contains source-derived checks for the
+  inclusive row slice, first-match behavior with repeated endpoint IDs, reversed
+  endpoints, equal endpoints, and missing-ID index failures. The pinned
+  `CardBrowserViewModelTest.kt:489–518` directly
+  tests range-selection effects and no repeated emission, but not the ID-based
+  range projection.
 - The same row-collection tests include source-derived concurrent-mutation cases:
   note IDs captured for `queryCardIds` and `queryOneCardIdPerRow` remain fixed
   while the host lookup awaits, matching `BrowserRowCollection.kt` materializing

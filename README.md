@@ -112,6 +112,12 @@ substitution using host-computed comparison HTML.
   and adapter notifications remain host-side; related upstream tests assert pane
   state but do not directly cover notification targets, so Dart cases are
   source-derived.
+- Card Browser selected row ranges: `browserRowRangeBetweenIds` returns the
+  inclusive row slice between the first matches for two host-supplied IDs, in
+  row order even when endpoints are reversed. Missing IDs preserve the source
+  `indexOf`/indexing failure; selection-set mutation and async delivery remain
+  host-side. Upstream tests cover range-selection effects but not this ID
+  projection, so Dart cases are source-derived.
 - Card Browser multi-select toggles: `toggleBrowserRowSelection` projects the
   selected-ID set in insertion order, the `RowSelected`/`DeselectRow` mode
   causes, last-selected row, and the source refresh request. Removing a row

@@ -133,6 +133,9 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
   }
 
   /// Returns card IDs directly in Cards mode or expands note rows in order.
+  ///
+  /// Notes-mode IDs are snapshotted before the first asynchronous lookup, so a
+  /// later mutation of the aliased row list does not change this query.
   Future<List<int>> queryCardIds({
     BrowserCardIdsOfNote? cardIdsOfNote,
   }) async {
@@ -143,9 +146,10 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
     if (lookup == null) {
       throw StateError('cardIdsOfNote is required in Notes mode');
     }
+    final noteIds = _backingRows.map((row) => row.value).toList();
     final cardIds = <int>[];
-    for (final row in _backingRows) {
-      cardIds.addAll(await lookup(row.value));
+    for (final noteId in noteIds) {
+      cardIds.addAll(await lookup(noteId));
     }
     return cardIds;
   }
@@ -153,7 +157,8 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
   /// Returns one first card ID per row in Notes mode.
   ///
   /// An empty card list raises Dart's `StateError`, corresponding to the
-  /// source's failing `first()` call.
+  /// source's failing `first()` call. Note IDs are snapshotted before the first
+  /// asynchronous lookup, as in the source.
   Future<List<int>> queryOneCardIdPerRow({
     BrowserCardIdsOfNote? cardIdsOfNote,
   }) async {
@@ -164,9 +169,10 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
     if (lookup == null) {
       throw StateError('cardIdsOfNote is required in Notes mode');
     }
+    final noteIds = _backingRows.map((row) => row.value).toList();
     final cardIds = <int>[];
-    for (final row in _backingRows) {
-      cardIds.add((await lookup(row.value)).first);
+    for (final noteId in noteIds) {
+      cardIds.add((await lookup(noteId)).first);
     }
     return cardIds;
   }

@@ -9,7 +9,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckFilters.kt` is
   Copyright © 2026 Arthur Milchior <arthur@milchior.fr>. Its Dart adaptation is
-  `lib/src/deck_filters.dart`.
+  `lib/src/deck_filters.dart`, with locale-sensitive case handling in
+  `lib/src/locale_lowercase.dart`.
 - `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DisplayDeckNode.kt` is
   Copyright © 2025 Gautam Bhetanabhotla <gautamarcturus@gmail.com>. Its Dart
   adaptation is `lib/src/display_deck_node.dart`.
@@ -185,7 +186,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `AnkiDroid/src/main/java/com/ichi2/anki/model/CardsOrNotes.kt` declare
   `GPL-3.0-or-later`. Their Cards/Notes-associated row ID and collection
   projections are adapted in `lib/src/browser_row_collection.dart`. The host
-  supplies collection callbacks for card-to-note and note-to-card lookups;
+  supplies collection callbacks for card-to-note and note-to-card lookups. The
+  port preserves the source's note-ID snapshot before asynchronous note-to-card
+  expansion even if the aliased row list changes while lookups are pending;
   Android collection access, backend row data, and sorting are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`
   declares `GPL-3.0-or-later`. Its `RowSelection` value and selected-row toggle
@@ -253,6 +256,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   in place; the pure Dart results are ordered immutable snapshots. Row loading,
   StateFlow scheduling/coroutine delivery, and selection widgets remain
   host-side.
+  `selectedNoteCount()` at `CardBrowserViewModel.kt:931` applies
+  `distinct().size` to note IDs from `BrowserRowCollection.queryNoteIds()`,
+  represented by `browserSelectedNoteCount()` in
+  `lib/src/browser_row_selection.dart`. The host supplies IDs after the
+  Cards/Notes collection lookup. No pinned test directly exercises the count;
+  the Dart empty/duplicate/unique-ID cases are source-derived. The localized
+  delete-menu plural and UI remain host-side.
   `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` is Copyright (c) 2014
   Houssam Salem and is licensed GPL-3.0-or-later; the host maps its
   `QueueType.Suspended` identity to the headless enum.
@@ -409,6 +419,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   expansion of a Notes row to all its cards, and
   `BrowserMultiColumnAdapterRowsTest.kt` exercises reset/replacement through
   the UI adapter; there is no dedicated upstream `BrowserRowCollection` test.
+- The same row-collection tests include source-derived concurrent-mutation cases:
+  note IDs captured for `queryCardIds` and `queryOneCardIdPerRow` remain fixed
+  while the host lookup awaits, matching `BrowserRowCollection.kt` materializing
+  `requireNoteIdList()` before expansion. Collection lookups remain host-side.
 - `test/browser_row_selection_test.dart` contains source-derived checks for
   selection-toggle order, mode causes, final-row deselection, retained active
   mode after select-none, refresh/last-selected values, and `RowSelection`
@@ -419,6 +433,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and fully-selected flow outcomes from `CardBrowserViewModelTest.kt`; its
   hidden-selection, duplicate-ID, and zero/negative-row-count cases are
   source-derived. StateFlow scheduling and UI remain host-side.
+- `test/browser_selected_note_count_test.dart` uses source-derived cases for
+  empty, repeated, and distinct host-resolved note IDs. No upstream test
+  directly asserts `CardBrowserViewModel.selectedNoteCount()`; collection
+  lookup and delete-menu plural rendering remain host-side.
 - `test/browser_sort_type_test.dart` adapts the sort resolution and save cases in
   `SortTypeTest.kt`, plus typed config fallback behavior from `Config.kt`,
   including the source's global no-sorting behavior; it does not port

@@ -166,6 +166,32 @@ void main() {
       expect(await cards.queryCardIds(), [101, 102]);
     });
 
+    test('queryCardIds keeps note IDs captured before awaiting lookups',
+        () async {
+      final rows = BrowserRowCollection(BrowserColumnMode.notes, [
+        const BrowserRowId(10),
+        const BrowserRowId(20),
+      ]);
+      final firstLookup = Completer<List<int>>();
+      final firstLookupStarted = Completer<void>();
+      final lookedUp = <int>[];
+
+      final pending = rows.queryCardIds(cardIdsOfNote: (noteId) {
+        lookedUp.add(noteId);
+        if (noteId == 10) {
+          firstLookupStarted.complete();
+          return firstLookup.future;
+        }
+        return [noteId * 10];
+      });
+      await firstLookupStarted.future;
+      rows.replaceWith(BrowserColumnMode.notes, [const BrowserRowId(99)]);
+      firstLookup.complete([101]);
+
+      expect(await pending, [101, 200]);
+      expect(lookedUp, [10, 20]);
+    });
+
     test('queryOneCardIdPerRow picks the first note card and fails if empty',
         () async {
       final rows = BrowserRowCollection(BrowserColumnMode.notes, [
@@ -187,6 +213,32 @@ void main() {
         const BrowserRowId(101),
       ]);
       expect(await cards.queryOneCardIdPerRow(), [101]);
+    });
+
+    test('queryOneCardIdPerRow keeps note IDs captured before awaiting',
+        () async {
+      final rows = BrowserRowCollection(BrowserColumnMode.notes, [
+        const BrowserRowId(10),
+        const BrowserRowId(20),
+      ]);
+      final firstLookup = Completer<List<int>>();
+      final firstLookupStarted = Completer<void>();
+      final lookedUp = <int>[];
+
+      final pending = rows.queryOneCardIdPerRow(cardIdsOfNote: (noteId) {
+        lookedUp.add(noteId);
+        if (noteId == 10) {
+          firstLookupStarted.complete();
+          return firstLookup.future;
+        }
+        return [noteId * 10];
+      });
+      await firstLookupStarted.future;
+      rows.reset();
+      firstLookup.complete([101]);
+
+      expect(await pending, [101, 200]);
+      expect(lookedUp, [10, 20]);
     });
 
     test('queryCardIdsAt selects one card row or expands one note row',

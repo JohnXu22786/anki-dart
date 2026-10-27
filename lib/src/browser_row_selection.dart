@@ -161,6 +161,13 @@ BrowserSelectAllOrNoneState projectBrowserSelectAllOrNoneState({
       : BrowserSelectAllOrNoneState.selectAll;
 }
 
+/// Counts distinct note IDs resolved from the selected browser rows.
+///
+/// The host supplies IDs from `BrowserRowCollection.queryNoteIds`; this applies
+/// the source `distinct().size` projection without performing collection
+/// lookups.
+int browserSelectedNoteCount(Iterable<int> noteIds) => noteIds.toSet().length;
+
 /// Ordered asynchronous effects after a bulk selection mutates its row set.
 enum BrowserBulkSelectionEffect {
   /// Corresponds to assigning `MultiSelectCause.Other` before refreshing rows.

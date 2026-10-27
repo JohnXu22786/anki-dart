@@ -50,8 +50,10 @@ placeholder removal.
 - Card Browser row IDs: `BrowserRowId` associates an ID with Cards or Notes
   mode; `BrowserRowCollection` retains and mutates the supplied list, maps card
   rows to note IDs through a host callback, and expands note rows to cards in
-  source order. Per-row selection takes the first card, while empty note results
-  preserve the source failure. Collection lookups remain host-side. Only the
+  source order. It snapshots note IDs before asynchronous expansion so later
+  row-list mutations do not alter a pending lookup. Per-row selection takes the
+  first card, while empty note results preserve the source failure. Collection
+  lookups remain host-side. Only the
   basic note-to-all-cards behavior has direct upstream integration coverage;
   the dedicated row-collection tests are source-derived.
 - Card Browser multi-select toggles: `toggleBrowserRowSelection` projects the
@@ -74,6 +76,11 @@ placeholder removal.
   cases, along with pure transition/effect and no-op assertions, are
   source-derived. StateFlow scheduling, async delivery, and selection widgets
   remain host-side.
+- Card Browser selected-note count: `browserSelectedNoteCount` counts distinct
+  note IDs after the host resolves selected rows to notes, matching the source
+  `.distinct().size` calculation. No pinned test directly covers this count;
+  empty, duplicate, and unique-ID assertions are source-derived. Collection
+  lookup and the localized delete-menu plural remain host-side.
 - Card Browser row activation: `planBrowserRowActivation` returns the source-
   ordered directives for normal phone/tablet editor routing and multi-select
   toggles. A selected row tapped in fragmented mode requests a pane reload only

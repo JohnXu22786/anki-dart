@@ -717,6 +717,10 @@ The discarded-fields projection consumes the host's current field map and
 ordered input names, preserving source-index filtering, duplicate names, null
 and out-of-range values. StateFlow, field lookup, localization and dialog UI
 remain host-side.
+The template-mapping update projection consumes the host's enabled state,
+current map, output ordinal and nullable selected ordinal; it preserves the
+source collision-clearing and missing-key behavior. Flow delivery, type lookup,
+spinner/UI, persistence and note conversion remain host-side.
 
 ## License and attribution
 

@@ -118,6 +118,12 @@ substitution using host-computed comparison HTML.
   `indexOf`/indexing failure; selection-set mutation and async delivery remain
   host-side. Upstream tests cover range-selection effects but not this ID
   projection, so Dart cases are source-derived.
+- Card Browser preview starting index: `browserPreviewStartingIndex` returns
+  zero for zero or multiple selected rows and otherwise uses the first matching
+  position of the single selected ID, retaining `-1` for stale IDs. The host
+  builds preview IDs and launches Android navigation. Upstream tests directly
+  cover no-selection and single-selection indices; multi-selection, stale IDs,
+  and duplicate browser rows are source-derived.
 - Card Browser multi-select toggles: `toggleBrowserRowSelection` projects the
   selected-ID set in insertion order, the `RowSelected`/`DeselectRow` mode
   causes, last-selected row, and the source refresh request. Removing a row

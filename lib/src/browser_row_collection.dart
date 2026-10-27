@@ -113,6 +113,20 @@ List<BrowserRowId> browserRowRangeBetweenIds({
   ]);
 }
 
+/// Projects the source Card Browser preview's starting row index.
+///
+/// More than one selected row starts at zero. With no selected rows the source
+/// falls back to zero; with one selected row its first matching browser row
+/// index is returned, including `-1` when the ID is stale. Both row lists are
+/// host-supplied snapshots in their source iteration order.
+int browserPreviewStartingIndex({
+  required List<BrowserRowId> rowIds,
+  required List<BrowserRowId> selectedRows,
+}) {
+  if (selectedRows.length != 1) return 0;
+  return rowIds.indexOf(selectedRows.first);
+}
+
 /// Projects `onPaneRowChanged` to ordered adapter positions needing refresh.
 ///
 /// Non-null previous/new IDs are deduplicated by [BrowserRowId] value equality

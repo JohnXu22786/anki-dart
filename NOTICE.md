@@ -630,6 +630,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `CardBrowserViewModelTest.kt:489–518` directly
   tests range-selection effects and no repeated emission, but not the ID-based
   range projection.
+- `test/browser_preview_starting_index_test.dart` covers no/multi/single
+  selection, stale single IDs, and first-match behavior for duplicate browser
+  rows. Pinned `CardBrowserViewModelTest.kt:990–1041` directly covers Notes
+  preview at zero, Cards with no selection at zero, and single selected Cards at
+  positions zero and one; the remaining projection cases are source-derived.
 - The same row-collection tests include source-derived concurrent-mutation cases:
   note IDs captured for `queryCardIds` and `queryOneCardIdPerRow` remain fixed
   while the host lookup awaits, matching `BrowserRowCollection.kt` materializing

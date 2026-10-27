@@ -661,6 +661,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `SortTypeTest.kt`, plus typed config fallback behavior from `Config.kt`,
   including the source's global no-sorting behavior; it does not port
   preference/config storage or the Android test harness.
+- `test/browser_sort_notification_test.dart` covers the no-ordering variant,
+  resolved and fallback label/type values, and both reverse values. The pinned
+  `CardBrowserViewModelTest.kt:1951–2003` tests sort query and reverse-direction
+  behavior but does not assert notification values; the Dart projection cases
+  are source-derived.
 - `test/browser_search_history_test.dart` adapts recency, duplicate, truncation,
   removal, clear, canonical serialized JSON, and malformed/invalid-code fallback
   behavior in `SearchHistoryTest.kt`, `FlagSerializerTest.kt`, and

@@ -205,6 +205,12 @@ substitution using host-computed comparison HTML.
   wrong-typed values to `noteFld` and forward order, treats an unknown column as no ordering, and
   creates ordered save plans without touching Android or collection storage.
   The shared no-sorting flag retains the source's cross-mode behavior.
+- Card Browser sort-change notification: `projectBrowserSortChangeNotification`
+  maps no ordering directly, or carries the collection sort's supplied label,
+  type, and reverse flag. Missing resolved labels use the raw sort key; missing
+  types use `unspecified`. Hosts resolve column metadata and deliver localized
+  snackbar text; pinned tests do not directly assert notification values, so
+  the projection cases are source-derived.
 - Card Browser launch options: `browserLaunchOptionFromInput` selects the first
   host-decoded deep-link search, JavaScript search, card ID, or non-empty
   process-text search in AnkiDroid's source order. Empty deep-link and

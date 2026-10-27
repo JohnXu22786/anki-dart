@@ -721,6 +721,10 @@ The template-mapping update projection consumes the host's enabled state,
 current map, output ordinal and nullable selected ordinal; it preserves the
 source collision-clearing and missing-key behavior. Flow delivery, type lookup,
 spinner/UI, persistence and note conversion remain host-side.
+The field-mapping update projection copies the host's current map and assigns
+the supplied nullable input ordinal at the output key, preserving duplicate
+and unvalidated ordinals. StateFlow, spinner/UI, logging and note conversion
+remain host-side.
 
 ## License and attribution
 

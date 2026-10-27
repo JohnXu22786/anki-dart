@@ -21,9 +21,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/change_note_type_conversion.dart`,
   `lib/src/change_note_type_default_field_map.dart`, and
   `lib/src/change_note_type_discarded_fields.dart`; the template-mapping
-  update projection is in `lib/src/change_note_type_template_mapping_update.dart`.
-  Collection/type lookup, state flow, template UI, note conversion, and sync
-  behavior are not included.
+  update projections are in `lib/src/change_note_type_template_mapping_update.dart`
+  and `lib/src/change_note_type_field_mapping_update.dart`. Collection/type
+  lookup, state flow, template UI, note conversion, and sync behavior are not
+  included.
 - `libanki/src/main/java/com/ichi2/anki/libanki/sched/DeckNode.kt` is Copyright
   © 2020 Arthur Milchior <arthur@milchior.fr>. Its Dart input projection and
   `totalCardsDue()` behavior are in `lib/src/deck_node.dart`; the total sums

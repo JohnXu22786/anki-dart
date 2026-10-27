@@ -166,12 +166,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
   declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
   semantics are adapted in `lib/src/type_answer_modifiers.dart`; card/note
-  lookup, cloze extraction, answer comparison, template rendering, and Android
-  input integration are not included.
+  lookup, cloze-index derivation/invocation, answer comparison, template
+  rendering, and Android input integration are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/previewer/TypeAnswer.kt` declares
   `GPL-3.0-or-later`. Its `removeTags` regex behavior is adapted as the pure
   question-side `removeTypeAnswerTags` function in `lib/src/type_answer_tags.dart`.
-  Previewer integration, field lookup, cloze extraction, answer comparison,
+  Previewer integration, field lookup, answer comparison,
   rendering, and Android input remain outside this port.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` declares
   `GPL-3.0-or-later`. Its question-prompt transformation in `filterQuestion`
@@ -179,9 +179,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/type_answer_question.dart`. The host supplies the extracted prompt
   state. Its `filterAnswer` placeholder replacement is adapted as
   `filterTypeAnswerAnswer` in `lib/src/type_answer_answer.dart`; the host
-  supplies already-computed comparison HTML. The Rust comparator, answer
-  lookup, Android input lifecycle and JavaScript integration, and card
-  rendering remain outside this port.
+  supplies already-computed comparison HTML. Its pure `contentForCloze`
+  extraction is adapted as `typeAnswerContentForCloze` in
+  `lib/src/type_answer_cloze.dart`; the host supplies field text and cloze
+  index. The Rust comparator, answer lookup, cloze-index derivation, Android
+  input lifecycle and JavaScript integration, and card rendering remain
+  outside this port.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
   and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
   load-time fallback/de-duplication, nullable updates and replacement are
@@ -468,6 +471,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `CollectionManager.compareAnswer`; it does not isolate this substitution
   stage. Dart accepts the comparator's HTML as input and does not port the
   comparator or Android integration.
+- `test/type_answer_cloze_test.dart` adapts the two direct assertions in
+  `TypeAnswerTest.kt` for repeated and distinct cloze answers, and adds
+  source-derived cases for hints, no matches, requested index, order,
+  duplicates, malformed payloads, and line boundaries. Card/note lookup and
+  deriving the cloze index remain host-side.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it

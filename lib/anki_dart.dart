@@ -40,6 +40,7 @@ export 'src/browser_reposition_presentation.dart';
 export 'src/browser_reposition_queue_bounds.dart';
 export 'src/browser_reposition_summary.dart';
 export 'src/browser_reposition_due_extrema.dart';
+export 'src/browser_change_note_type_plan.dart';
 export 'src/browser_selected_flag_plan.dart';
 export 'src/browser_selection_export.dart';
 export 'src/card_appearance_css.dart';

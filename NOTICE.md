@@ -366,6 +366,15 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and cursor work, scheduler defaults and execution remain host-side. The pinned
   ViewModel test covers ordinary positive values; negative min/max cases are
   source-derived.
+  `requestChangeNoteType()` at `CardBrowserViewModel.kt:383–394` is represented
+  by `planBrowserChangeNoteType()` and `BrowserChangeNoteTypePlan` in
+  `lib/src/browser_change_note_type_plan.dart`. It checks host-supplied note IDs
+  against the first selected note type's membership set, then deduplicates
+  compatible IDs in selected order. Upstream tests directly cover no selection,
+  mixed types, and same-type single/multiple notes; duplicate order and explicit
+  membership cases are source-derived. Note-type resolution, collection queries,
+  flow publication, snackbar/dialog delivery and the change itself remain
+  host-side.
   `toHumanReadableContent()` at `CardBrowserViewModel.kt:1794–1798` is adapted
   by `projectBrowserRepositionSummary()` in
   `lib/src/browser_reposition_summary.dart`: host-supplied localized top and

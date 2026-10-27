@@ -700,6 +700,9 @@ The due-extrema projection preserves the source lower-only zero clamp and passes
 max due unchanged before bound ordering; database reads remain host-side.
 The summary projection joins host-localized queue lines with one newline and
 returns null when either queue bound is absent; localization remains host-side.
+The Card Browser note-type response plan checks selected IDs against a
+host-resolved membership set and preserves first-occurrence order for the
+change result. Type lookup, flows, UI, and note mutation remain host-side.
 
 ## License and attribution
 

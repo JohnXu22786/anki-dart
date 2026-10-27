@@ -142,12 +142,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   adapted in `lib/src/review_timebox.dart`; localized text and the Android
   dialog are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt` and
-  `CardViewerViewModel.kt` declare `GPL-3.0-or-later`. Previewer navigation
+  `CardViewerViewModel.kt` declare `GPL-3.0-or-later`. `servicelayer/NoteService.kt`
+  is Copyright © 2013 Bibek Shrestha, Zaur Molotnikov, Nicolas Raoul, and Flavio
+  Lerda and declares `GPL-3.0-or-later`. Previewer navigation
   formulas and side/card transitions are adapted in
   `lib/src/previewer_navigation.dart`. Its flag codes and set/toggle choice with
   ordered write-then-publish-on-success effects are adapted in
   `lib/src/previewer_flag_effects.dart`; collection/undo execution, current-card
   lookup and StateFlow publication remain outside.
+  The `toggleMark()` operation order is adapted as host effects in
+  `lib/src/previewer_mark_effects.dart`; current note resolution, tag mutation,
+  undoable persistence, marked-state lookup, error handling, and StateFlow
+  delivery remain outside.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardAppearance.kt` and
   `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/ReviewerCustomFonts.kt`
   are part of the GPL-3.0-or-later AnkiDroid source. Their CSS zoom appending,
@@ -611,6 +617,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and adds source-derived checks for all flag codes, toggle decisions, and
   write/publish ordering. The pinned test covers RED set/toggle only; no direct
   test covers every code or failed collection writes.
+- `test/previewer_mark_effects_test.dart` covers the source-ordered mark toggle,
+  post-toggle read, and publication plan. The pinned ViewModel test verifies the
+  resulting mark state and tag but does not directly test effect ordering or
+  failure short-circuiting; those cases are source-derived.
 - `test/type_answer_modifiers_test.dart` adapts all direct parser cases in
   `TypeAnswerModifiersTest.kt` and adds source-derived checks for unknown-prefix
   stopping, verbatim remainder handling, empty input, and structural equality.

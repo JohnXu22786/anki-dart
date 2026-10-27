@@ -77,6 +77,12 @@ substitution using host-computed comparison HTML.
   unchanged list can dismiss and still reach the false-result message. The
   pinned tests do not cover this handler; Dart cases are source-derived. The
   host performs the update and delivers dialog/snackbar effects.
+- Card Browser column-selection Back: `planBrowserColumnSelectionBack` uses the
+  host callback's current enabled state to allow default Back handling or
+  request discard confirmation. Confirmation effects disable the discard guard
+  before redispatching Back; cancellation emits no effects. The pinned tests
+  cover layout only, so Dart assertions are source-derived. The Android
+  dispatcher, callback lifecycle, dialog UI and delivery remain host-side.
 - Card Browser row IDs: `BrowserRowId` associates an ID with Cards or Notes
   mode; `BrowserRowCollection` retains and mutates the supplied list, maps card
   rows to note IDs through a host callback, and expands note rows to cards in

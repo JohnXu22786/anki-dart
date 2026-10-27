@@ -25,6 +25,7 @@ export 'src/browser_column_collection.dart';
 export 'src/browser_column_selection_move.dart';
 export 'src/browser_column_selection_toggle.dart';
 export 'src/browser_column_selection_save.dart';
+export 'src/browser_column_selection_discard.dart';
 export 'src/browser_flag_filter_query.dart';
 export 'src/browser_launch_options.dart';
 export 'src/browser_row_collection.dart';

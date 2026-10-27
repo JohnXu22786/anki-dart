@@ -253,6 +253,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and backend updates, Android dialog lifecycle, and localized snackbar
   delivery remain host-side. No direct pinned save-handler test was found;
   Dart coverage is source-derived.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionFragment.kt`
+  and `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/DiscardChangesDialog.kt`
+  declare `GPL-3.0-or-later`. The pure Back/discard projection is adapted in
+  `lib/src/browser_column_selection_discard.dart`: the host supplies the current
+  discard-callback enabled state, and the plan distinguishes default Back
+  handling from opening the discard dialog. A positive confirmation emits
+  disable-guard then redispatch-back effects in source order; cancellation
+  emits none. The Android dispatcher, dialog callback/lifecycle and delivery
+  remain host-side. No direct pinned Back-flow test was found; Dart coverage is
+  source-derived.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardOrNoteId.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserRowCollection.kt`, and
   `AnkiDroid/src/main/java/com/ichi2/anki/model/CardsOrNotes.kt` declare
@@ -569,6 +579,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   for the staged save/dismiss decision, including the unchanged-selection
   fall-through and update-result mapping. The pinned fragment marks saving as
   needing a test; screenshot coverage is not a save-handler test.
+- `test/browser_column_selection_discard_test.dart` contains source-derived
+  checks for default Back when the discard guard is disabled, confirmation
+  when enabled, ordered guard-disable/back-redispatch after confirmation, and
+  no callback effects after cancellation. The pinned screenshot test covers
+  layout only.
 - `test/browser_row_collection_test.dart` contains source-derived checks for
   Cards/Notes row-ID conversion, aliased list replacement/reset, ordered host
   lookups, duplicate-preserving note expansion, and first-card/per-position

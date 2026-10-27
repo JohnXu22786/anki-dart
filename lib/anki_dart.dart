@@ -24,6 +24,7 @@ export 'src/auto_advance.dart';
 export 'src/reviewer_auto_advance_toggle.dart';
 export 'src/reviewer_leech_feedback.dart';
 export 'src/reviewer_whiteboard_toggle.dart';
+export 'src/reviewer_record_voice_toggle.dart';
 export 'src/browser_column_collection.dart';
 export 'src/browser_column_selection_move.dart';
 export 'src/browser_column_selection_toggle.dart';

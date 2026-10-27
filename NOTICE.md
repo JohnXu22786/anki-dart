@@ -82,6 +82,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   delivery remain host-side. Whiteboard toggle state/preference ordering is
   projected in `lib/src/reviewer_whiteboard_toggle.dart`; StateFlow mutation,
   repository access/write, action dispatch and UI remain host-side.
+  Record-voice toggle state/preference ordering is projected in
+  `lib/src/reviewer_record_voice_toggle.dart`; StateFlow mutation, repository
+  access/write, action dispatch and recorder lifecycle remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`
   and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` declare
   `GPL-3.0-or-later`. Their gesture enums, decoded-input decisions, viewport
@@ -856,6 +859,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   disabled state/preference effect-order cases. Pinned UI tests enable the
   whiteboard but do not directly assert ReviewerViewModel state/preference
   ordering.
+- `test/reviewer_record_voice_toggle_test.dart` adds source-derived enabled and
+  disabled state/preference effect-order cases. No direct ReviewerViewModel
+  record-voice toggle assertion was found; `AudioRecordViewTest.kt` checks only
+  the record button content description.
 - `test/gesture_parser_test.dart` checks the input, target, swipe, scroll,
   malformed-data, and asynchronous timing behavior recorded in
   `GestureParserTest.kt`; it is not a port of the Android test harness.
@@ -895,9 +902,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   derived from `SingleAxisDetector.kt` and `BindingMap.kt`. AnkiDroid 2.25.3 has
   no direct `SingleAxisDetector` unit test; Android `MotionEvent` extraction is
   outside this model.
-- Dart adaptations, the review-session controller, timer, Auto Advance, leech
-  and whiteboard toggle models, gesture models, and new test code are Copyright
-  © 2026 John Tsui.
+- Dart adaptations, the review-session controller, timer, Auto Advance, leech,
+  whiteboard and record-voice toggle models, gesture models, and new test code
+  are Copyright © 2026 John Tsui.
 
 ## Unicode property data
 

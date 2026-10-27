@@ -27,6 +27,18 @@ import 'package:test/test.dart';
 
 void main() {
   group('ReviewSession', () {
+    test('timebox results use structural value equality and hashing', () {
+      final seconds = 60;
+      final reps = 3;
+      final first = ReviewTimeboxReached(secs: seconds, reps: reps);
+      final equal = ReviewTimeboxReached(secs: seconds, reps: reps);
+      final different = ReviewTimeboxReached(secs: seconds, reps: reps + 1);
+
+      expect(equal, first);
+      expect(equal.hashCode, first.hashCode);
+      expect(different, isNot(first));
+    });
+
     test('starts with StudyCounts default values', () {
       final session = ReviewSession<Object>(_FakeReviewScheduler([]));
 
@@ -388,18 +400,25 @@ void main() {
 
     test('keeps the current card if the scheduler rejects an answer', () async {
       final first = _queueState(1, 'question 1', 'answer 1');
-      final scheduler = _FakeReviewScheduler([first])..failNextAnswer = true;
+      final updated = ReviewQueueState<Object>(
+        card: first.card,
+        schedulingSnapshot: Object(),
+        counts: first.counts,
+        activeQueue: first.activeQueue,
+      );
+      final scheduler = _FakeReviewScheduler([first])
+        ..stateAfterMutation = (() => updated)
+        ..failNextAnswer = true;
       final session = ReviewSession<Object>(scheduler);
       await session.start();
-      await session.showAnswer();
 
       await expectLater(
         session.answerCard(ReviewRating.easy),
         throwsA(isA<StateError>()),
       );
 
-      expect(session.current, same(first));
-      expect(session.phase, ReviewSessionPhase.answer);
+      expect(session.current, same(updated));
+      expect(session.phase, ReviewSessionPhase.question);
       expect(scheduler.queueReads, 1);
     });
 

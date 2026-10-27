@@ -50,6 +50,18 @@ class StudyCounts {
 
   /// Whether [queue] receives the active-count styling in the reviewer view.
   bool isActive(ReviewQueueKind queue) => activeQueue == queue;
+
+  @override
+  bool operator ==(Object other) =>
+      other is StudyCounts &&
+      newCount == other.newCount &&
+      learnCount == other.learnCount &&
+      reviewCount == other.reviewCount &&
+      activeQueue == other.activeQueue;
+
+  @override
+  int get hashCode =>
+      Object.hash(newCount, learnCount, reviewCount, activeQueue);
 }
 
 /// Backend boundary for AnkiDroid's scheduler-provided answer-button labels.
@@ -92,4 +104,15 @@ class AnswerButtonsNextTime {
       easy: labels[3],
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is AnswerButtonsNextTime &&
+      again == other.again &&
+      hard == other.hard &&
+      good == other.good &&
+      easy == other.easy;
+
+  @override
+  int get hashCode => Object.hash(again, hard, good, easy);
 }

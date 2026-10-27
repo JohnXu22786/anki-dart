@@ -119,6 +119,13 @@ class ReviewTimeboxReached {
 
   final int secs;
   final int reps;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReviewTimeboxReached && secs == other.secs && reps == other.reps;
+
+  @override
+  int get hashCode => Object.hash(secs, reps);
 }
 
 /// The queue and answer operations required by the reviewer flow.
@@ -247,6 +254,7 @@ class ReviewSession<TSchedulingSnapshot> {
 
         final currentState = await scheduler.waitForCurrentCardStateMutation();
         if (currentState == null) return;
+        _current = currentState;
         await scheduler.answerCard(currentState, rating);
         _current = null;
         _timeboxReached = null;

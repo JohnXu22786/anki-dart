@@ -27,6 +27,34 @@ import 'package:test/test.dart';
 
 void main() {
   group('AutoAdvance actions', () {
+    test('settings use structural value equality and hashing', () {
+      final first = _settings(
+        questionAction: QuestionAction.showReminder,
+        answerAction: AnswerAction.answerGood,
+        questionDelay: const Duration(seconds: 2),
+        answerDelay: const Duration(seconds: 3),
+        waitForAudio: true,
+      );
+      final equal = _settings(
+        questionAction: QuestionAction.showReminder,
+        answerAction: AnswerAction.answerGood,
+        questionDelay: const Duration(seconds: 2),
+        answerDelay: const Duration(seconds: 3),
+        waitForAudio: true,
+      );
+      final different = _settings(
+        questionAction: QuestionAction.showReminder,
+        answerAction: AnswerAction.answerGood,
+        questionDelay: const Duration(seconds: 2),
+        answerDelay: const Duration(seconds: 3),
+        waitForAudio: false,
+      );
+
+      expect(equal, first);
+      expect(equal.hashCode, first.hashCode);
+      expect(different, isNot(first));
+    });
+
     test('decodes the pinned integer codes and fallback actions', () {
       expect(
         QuestionAction.values.map((action) => action.code),

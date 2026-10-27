@@ -25,6 +25,31 @@ import 'package:test/test.dart';
 
 void main() {
   group('StudyCounts', () {
+    test('uses structural value equality and hashing', () {
+      final first = StudyCounts(
+        newCount: 1,
+        learnCount: 2,
+        reviewCount: 3,
+        activeQueue: ReviewQueueKind.learning,
+      );
+      final equal = StudyCounts(
+        newCount: 1,
+        learnCount: 2,
+        reviewCount: 3,
+        activeQueue: ReviewQueueKind.learning,
+      );
+      final different = StudyCounts(
+        newCount: 1,
+        learnCount: 2,
+        reviewCount: 3,
+        activeQueue: ReviewQueueKind.review,
+      );
+
+      expect(equal, first);
+      expect(equal.hashCode, first.hashCode);
+      expect(different, isNot(first));
+    });
+
     test('renders backend counts and marks only the active queue', () {
       for (final activeQueue in ReviewQueueKind.values) {
         final state = _queueState(activeQueue: activeQueue);
@@ -43,6 +68,31 @@ void main() {
   });
 
   group('AnswerButtonsNextTime', () {
+    test('uses structural value equality and hashing', () {
+      final first = AnswerButtonsNextTime(
+        again: '1m',
+        hard: '2m',
+        good: '3m',
+        easy: '4m',
+      );
+      final equal = AnswerButtonsNextTime(
+        again: '1m',
+        hard: '2m',
+        good: '3m',
+        easy: '4m',
+      );
+      final different = AnswerButtonsNextTime(
+        again: '1m',
+        hard: '2m',
+        good: '3m',
+        easy: '5m',
+      );
+
+      expect(equal, first);
+      expect(equal.hashCode, first.hashCode);
+      expect(different, isNot(first));
+    });
+
     test('forwards opaque states and keeps backend labels in answer order',
         () async {
       final state = _queueState(activeQueue: ReviewQueueKind.review);

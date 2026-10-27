@@ -13,7 +13,7 @@ navigation and flag decision/effect models, Card Browser active-column and sort
 preference models, recent-search ordering, JSON serialization, display state,
 saved-history request restoration, Cards/Notes row-ID projection/expansion,
 row-tap activation directives, bulk mark/bury/suspend decisions, and
-selected-card flag update effect plans,
+selected-card flag update effect plans, all-decks filter state,
 structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
@@ -81,6 +81,12 @@ placeholder removal.
   `.distinct().size` calculation. No pinned test directly covers this count;
   empty, duplicate, and unique-ID assertions are source-derived. Collection
   lookup and the localized delete-menu plural remain host-side.
+- Card Browser all-decks state: `browserHasSelectedAllDecks` returns true exactly
+  when the deck-filter list is empty, independent of query text, other filters,
+  or available rows. Pinned ViewModel tests cover the initial/specific and
+  AllDecks states; the Dart check for unrelated filters is source-derived.
+  Current search flow, result-message delivery, localization, and UI remain
+  host-side.
 - Card Browser row activation: `planBrowserRowActivation` returns the source-
   ordered directives for normal phone/tablet editor routing and multi-select
   toggles. A selected row tapped in fragmented mode requests a pane reload only

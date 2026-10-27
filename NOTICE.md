@@ -263,6 +263,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   Cards/Notes collection lookup. No pinned test directly exercises the count;
   the Dart empty/duplicate/unique-ID cases are source-derived. The localized
   delete-menu plural and UI remain host-side.
+  `hasSelectedAllDecks()` at `CardBrowserViewModel.kt:933–935` is represented by
+  `browserHasSelectedAllDecks()` in `lib/src/browser_search_request.dart`; it
+  returns true only when the deck-filter list is empty and ignores other filter
+  fields and available rows. Direct ViewModel tests at
+  `CardBrowserViewModelTest.kt:274–290,1531–1574` cover its selected-deck and
+  search-result use; the Dart unrelated-filter case is source-derived. Current
+  search-flow values, result-message delivery, localization, and UI stay
+  host-side.
   `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` is Copyright (c) 2014
   Houssam Salem and is licensed GPL-3.0-or-later; the host maps its
   `QueueType.Suspended` identity to the headless enum.
@@ -437,6 +445,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   empty, repeated, and distinct host-resolved note IDs. No upstream test
   directly asserts `CardBrowserViewModel.selectedNoteCount()`; collection
   lookup and delete-menu plural rendering remain host-side.
+- `test/browser_has_selected_all_decks_test.dart` adapts direct ViewModel cases
+  for initial/specific-deck false and AllDecks true, plus the search-result
+  action branch. The check that non-deck filter fields are ignored is
+  source-derived; flow delivery, localization, and UI remain host-side.
 - `test/browser_sort_type_test.dart` adapts the sort resolution and save cases in
   `SortTypeTest.kt`, plus typed config fallback behavior from `Config.kt`,
   including the source's global no-sorting behavior; it does not port

@@ -125,6 +125,13 @@ final class BrowserSearchFilters {
   }
 }
 
+/// Whether the current Card Browser filters represent all decks.
+///
+/// AnkiDroid defines this solely as an empty deck-filter list. Other filter
+/// categories, query text, and the host's current row set do not affect it.
+bool browserHasSelectedAllDecks(BrowserSearchFilters filters) =>
+    filters.decks.isEmpty;
+
 /// A query and structured Card Browser filters, without backend execution.
 final class BrowserSearchRequest {
   const BrowserSearchRequest({

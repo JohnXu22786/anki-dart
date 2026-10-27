@@ -80,6 +80,24 @@ class AutoAdvanceSettings {
   final Duration durationToShowQuestionFor;
   final Duration durationToShowAnswerFor;
   final bool waitForAudio;
+
+  @override
+  bool operator ==(Object other) =>
+      other is AutoAdvanceSettings &&
+      questionAction == other.questionAction &&
+      answerAction == other.answerAction &&
+      durationToShowQuestionFor == other.durationToShowQuestionFor &&
+      durationToShowAnswerFor == other.durationToShowAnswerFor &&
+      waitForAudio == other.waitForAudio;
+
+  @override
+  int get hashCode => Object.hash(
+        questionAction,
+        answerAction,
+        durationToShowQuestionFor,
+        durationToShowAnswerFor,
+        waitForAudio,
+      );
 }
 
 /// Loads settings for the deck containing [card].

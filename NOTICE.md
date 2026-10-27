@@ -279,6 +279,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   empty, one-card, and one-note cases; ordering and list-copy checks are
   source-derived. The host handles the export dialog, cache/file preparation,
   and actual export; this port does not implement export formats or execution.
+  `setFlagFilter()` at `CardBrowserViewModel.kt:1236–1245` builds a legacy
+  `flag:<code>` query from the current search terms; the pure transformation is
+  represented by `browserSearchTermsWithFlag()` in
+  `lib/src/browser_flag_filter_query.dart`. It preserves the source's
+  case-sensitive substring check, first unanchored `flag:.` replacement,
+  one-character consumption, nonempty-query prepend, and unmatched incomplete-
+  marker behavior. `Flag.kt` source values supply the integer code to the host.
+  `CardBrowserViewModelTest.kt:293–307` tests RED filtering end-to-end but does
+  not assert the constructed text, so string boundary cases are source-derived.
+  The host owns flag UI, query submission/flows, and backend search.
   `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` is Copyright (c) 2014
   Houssam Salem and is licensed GPL-3.0-or-later; the host maps its
   `QueueType.Suspended` identity to the headless enum.

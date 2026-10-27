@@ -14,7 +14,7 @@ preference models, recent-search ordering, JSON serialization, display state,
 saved-history request restoration, Cards/Notes row-ID projection/expansion,
 row-tap activation directives, bulk mark/bury/suspend decisions, and
 selected-card flag update effect plans, all-decks filter state,
-selected-row export data,
+selected-row export data, Card Browser flag-filter query text,
 structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance, the headless reviewer gesture parser, parsed-gesture
@@ -94,6 +94,12 @@ placeholder removal.
   Direct ViewModel tests cover empty selection and one row in each mode; order
   and list-copy cases are source-derived. The host still opens the export dialog
   and handles cache files and actual export.
+- Card Browser flag-filter query text: `browserSearchTermsWithFlag` preserves
+  the source's first-match `flag:.` replacement, nonempty-query prepend, and
+  incomplete-marker behavior. The pinned RED flag test verifies the resulting
+  search end-to-end but does not assert the query text; exact string cases are
+  source-derived. Android flag actions, query submission, and backend search
+  remain host-side.
 - Card Browser row activation: `planBrowserRowActivation` returns the source-
   ordered directives for normal phone/tablet editor routing and multi-select
   toggles. A selected row tapped in fragmented mode requests a pane reload only

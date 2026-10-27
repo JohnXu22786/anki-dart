@@ -25,9 +25,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   update projections are in `lib/src/change_note_type_template_mapping_update.dart`
   and `lib/src/change_note_type_field_mapping_update.dart`. The pure `hasChanges`
   decision is in `lib/src/change_note_type_has_changes.dart`; discarded-template
-  projection and settled eligibility predicate are in
-  `lib/src/change_note_type_discarded_templates.dart` and
-  `lib/src/change_note_type_template_change_eligibility.dart`. Collection/type
+  projection, settled eligibility predicate, and tab-position mapping are in
+  `lib/src/change_note_type_discarded_templates.dart`,
+  `lib/src/change_note_type_template_change_eligibility.dart`, and
+  `lib/src/change_note_type_tab.dart`. Collection/type
   lookup, state flow, template UI, note conversion, and sync behavior are not
   included.
 - `libanki/src/main/java/com/ichi2/anki/libanki/sched/DeckNode.kt` is Copyright

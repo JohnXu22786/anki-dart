@@ -739,6 +739,8 @@ remain host-side.
 Template changes are eligible only for the host-resolved regular-to-regular
 conversion. The settled Boolean is projected separately from the host-managed
 flow initial value and delivery.
+The ChangeNoteType tab-position projection maps 0 to Fields and 1 to Templates;
+unknown positions throw. ViewPager input and tab-state delivery remain host-side.
 
 ## License and attribution
 

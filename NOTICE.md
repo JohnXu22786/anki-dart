@@ -182,8 +182,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   supplies already-computed comparison HTML. Its pure `contentForCloze`
   extraction is adapted as `typeAnswerContentForCloze` in
   `lib/src/type_answer_cloze.dart`; its `updateInfo` marker-to-index projection
-  is also adapted there as `typeAnswerClozeIndexForQuestion`. The host supplies
-  the rendered question, card ordinal, and field text. The Rust comparator,
+  is also adapted there as `typeAnswerDeclarationForQuestion` and
+  `typeAnswerClozeIndexForQuestion`. The host supplies the rendered question,
+  card ordinal, and field text. The Rust comparator,
   card/template and answer lookup, Android state delivery, cloze-content
   invocation, Android input lifecycle and JavaScript integration, and card
   rendering remain outside this port. The `updateInfo` field/result decision is
@@ -193,7 +194,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   projection preserves first exact-name match, copied font/size/language hint,
   no-match metadata retention, and the source's distinct warning behavior for
   null, empty, and nonempty results. Field lookup, warning localization, and
-  state delivery remain host-side.
+  state delivery remain host-side. The full pure `updateInfo` branch/effect
+  order is projected as `planTypeAnswerInfoUpdate` in
+  `lib/src/type_answer_info_update.dart`; the host applies the assignments in
+  order and handles Android/collection/resource access and source-equivalent
+  failure delivery. The pinned test tree has no direct `updateInfo` test.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
   and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
   load-time fallback/de-duplication, nullable updates and replacement are
@@ -493,6 +498,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `TypeAnswer.updateInfo` field selection/result behavior; the pinned test tree
   has no direct test for this method. Host lookup, localization and state
   application remain excluded.
+- `test/type_answer_info_update_test.dart` contains source-derived checks for
+  the ordered `TypeAnswer.updateInfo` branch/effect plan, including early
+  return, metadata and warning transitions, and the lookup-failure boundary.
+  The pinned test tree has no direct `updateInfo` test; Android state delivery,
+  resources, collection access and exception application remain host-side.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it

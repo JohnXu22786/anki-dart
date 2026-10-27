@@ -305,6 +305,14 @@ substitution using host-computed comparison HTML.
   answer clears it. The host performs field/note/resource lookup, warning
   localization, and state delivery. This projection does not parse the
   question marker or obtain a card ordinal.
+- Type-answer update effects: `planTypeAnswerInfoUpdate` combines the rendered
+  question, card ordinal, ordered field metadata, note values and localized
+  warning strings into the source-ordered `updateInfo` assignments. It resets
+  combining/no-suggest/correct first, returns after those resets if there is no
+  marker, then applies parsed modifiers, answer/cloze selection, metadata and
+  the source's warning/empty-answer behavior. A missing selected note value is
+  reported after the preceding reset/modifier effects. The host applies the
+  plan and performs Android/collection/resource access and failure delivery.
 - Type-answer tags: `removeTypeAnswerTags` removes every nonempty, single-line
   `[[type:...]]` match through its first `]]`, preserving other text. This is
   the question-side cleanup model; field lookup, cloze-index invocation,

@@ -22,6 +22,40 @@
 
 import 'type_answer_modifiers.dart';
 
+/// The parsed first `[[type:...]]` declaration in a host-supplied question.
+final class TypeAnswerQuestionDeclaration {
+  const TypeAnswerQuestionDeclaration({
+    required this.modifiers,
+    required this.clozeIndex,
+  });
+
+  final TypeAnswerModifiers modifiers;
+
+  /// Matches the source's `clozeIdx != 0` decision, including Int overflow.
+  final int clozeIndex;
+}
+
+/// Parses the source's first type-answer marker and derives its cloze index.
+///
+/// Returns null when the source pattern has no match. The host supplies the
+/// already-rendered question and card ordinal.
+TypeAnswerQuestionDeclaration? typeAnswerDeclarationForQuestion(
+  String question,
+  int cardOrdinal,
+) {
+  final marker = RegExp(
+    r'\[\[type:([^\r\n\u0085\u2028\u2029]+?)]]',
+  ).firstMatch(question);
+  if (marker == null) return null;
+
+  final modifiers = TypeAnswerModifiers.parse(marker.group(1)!);
+  final clozeIndex = modifiers.cloze ? (cardOrdinal + 1).toSigned(32) : 0;
+  return TypeAnswerQuestionDeclaration(
+    modifiers: modifiers,
+    clozeIndex: clozeIndex,
+  );
+}
+
 /// Derives the source cloze index from a host-supplied rendered [question].
 ///
 /// Returns `null` when `TypeAnswer.PATTERN` does not match; the source exits
@@ -33,14 +67,7 @@ import 'type_answer_modifiers.dart';
 /// This does not obtain the question or ordinal from an Android card, inspect
 /// note fields, or extract the answer content.
 int? typeAnswerClozeIndexForQuestion(String question, int cardOrdinal) {
-  final marker = RegExp(
-    r'\[\[type:([^\r\n\u0085\u2028\u2029]+?)]]',
-  ).firstMatch(question);
-  if (marker == null) return null;
-
-  final modifiers = TypeAnswerModifiers.parse(marker.group(1)!);
-  if (!modifiers.cloze) return 0;
-  return (cardOrdinal + 1).toSigned(32);
+  return typeAnswerDeclarationForQuestion(question, cardOrdinal)?.clozeIndex;
 }
 
 /// Extracts the source's ordered answer text for [index] from cloze markers.

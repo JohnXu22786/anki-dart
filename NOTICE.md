@@ -334,6 +334,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   order and empty resolved IDs are source-derived. The host
   checks row selection before resolving card IDs, performs queue lookup and the
   selected scheduler call inside its undoable operation, and owns execution.
+  Its `prepareToRepositionCards()` partition and `canRepositionCard()` rule are
+  represented by `planBrowserRepositionCards()` and `BrowserRepositionPlan` in
+  `lib/src/browser_reposition_plan.dart`. Host-resolved type-New or queue-New
+  cards remain eligible; both eligible and skipped IDs preserve selected-row
+  order, and skipped count is exact after a full scan. The pinned tests directly
+  cover mixed New/Review count, all-New, suspended-New eligibility, and the
+  all-ineligible error (`CardBrowserViewModelTest.kt:1063–1147`); order and
+  queue-only eligibility cases are source-derived. The host resolves selected
+  card IDs and queue/type state, scans the collection, computes queue bounds,
+  applies scheduler defaults, and performs or reports repositioning.
   Its `updateSelectedCardsFlag()` write/event/return sequence is represented by
   `planBrowserSelectedCardsFlagUpdate()` and `BrowserSelectedCardsFlagPlan` in
   `lib/src/browser_selected_flag_plan.dart`. The host supplies selected card

@@ -688,6 +688,10 @@ dart pub get
 dart test
 ```
 
+The Card Browser reposition plan projects source-ordered eligible and skipped
+card IDs from host-resolved card type and queue states. Collection access,
+queue-position calculation, and scheduler operations remain host-side.
+
 ## License and attribution
 
 The adapted AnkiDroid code is derived from AnkiDroid and is distributed under

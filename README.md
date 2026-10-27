@@ -27,8 +27,8 @@ sequences and saved-search submission effects, saved-search
 outcome-message mapping, CardTemplate marker-based string composition and
 verbatim card-content QA wrapping,
 card-template type-answer modifier parsing, cloze-index derivation and
-cloze-content extraction,
-question-side type-answer placeholder removal, and answer-side placeholder
+cloze-content extraction, question-side type-answer placeholder removal,
+the host-input field/result decision, and answer-side placeholder
 substitution using host-computed comparison HTML.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
@@ -288,12 +288,23 @@ substitution using host-computed comparison HTML.
   `cloze:`, or signed-32-bit `cardOrdinal + 1` with `cloze:`. Overflow wraps;
   ordinal -1 produces zero, matching the source's `index != 0` check. The host
   supplies the question and ordinal; card/template access, field lookup,
-  warning/state updates and cloze-content invocation remain host-side.
+  warning/state delivery and cloze-content invocation remain host-side. The
+  result's warning choice is modeled separately when the host supplies field
+  values.
 - Cloze content: `typeAnswerContentForCloze` extracts captures for a supplied
   cloze index, cuts each hint at the first `::`, collapses repeated identical
   captures to one value, and otherwise joins all captures in source order.
   The host supplies the already-derived index; card/note lookup and invoking
   this extraction remain host-side.
+- Type-answer field result: `resolveTypeAnswerFieldResult` selects the first
+  exact field-name match from host-supplied ordered metadata and note values,
+  applies the supplied cloze index, and returns the source's answer, matched
+  font/size/language metadata, and warning action. No match sets the supplied
+  unknown-field or empty-cloze warning without updating metadata; an empty
+  answer nulls the answer while preserving the previous warning; a nonempty
+  answer clears it. The host performs field/note/resource lookup, warning
+  localization, and state delivery. This projection does not parse the
+  question marker or obtain a card ordinal.
 - Type-answer tags: `removeTypeAnswerTags` removes every nonempty, single-line
   `[[type:...]]` match through its first `]]`, preserving other text. This is
   the question-side cleanup model; field lookup, cloze-index invocation,
@@ -510,7 +521,8 @@ Browser selected-card lookup, collection flag writes and card-state-changed
 event execution (the ordered plan is modeled), mark-state lookup, bulk tag and
 suspend writes/undo (bulk-mark and bulk-suspend target decisions are modeled),
 and note editing, Android card-template asset loading and card content
-rendering/media, card/note-dependent TypeAnswer field lookup, rendered-question/
+rendering/media, card/note-dependent TypeAnswer field and note-value lookup
+(the field/result projection over supplied values is modeled), rendered-question/
 Card.ord extraction and cloze-content invocation (pure cloze-index derivation
 and cloze-content extraction are modeled), answer comparison
 (placeholder substitution is modeled when comparison HTML is supplied), Android

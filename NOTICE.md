@@ -184,9 +184,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/type_answer_cloze.dart`; its `updateInfo` marker-to-index projection
   is also adapted there as `typeAnswerClozeIndexForQuestion`. The host supplies
   the rendered question, card ordinal, and field text. The Rust comparator,
-  card/template and answer lookup, state/warning updates, cloze-content
+  card/template and answer lookup, Android state delivery, cloze-content
   invocation, Android input lifecycle and JavaScript integration, and card
-  rendering remain outside this port.
+  rendering remain outside this port. The `updateInfo` field/result decision is
+  adapted as `resolveTypeAnswerFieldResult` in
+  `lib/src/type_answer_field_result.dart`; the host supplies ordered field
+  metadata, note values, cloze index, and already-localized warnings. The
+  projection preserves first exact-name match, copied font/size/language hint,
+  no-match metadata retention, and the source's distinct warning behavior for
+  null, empty, and nonempty results. Field lookup, warning localization, and
+  state delivery remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
   and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
   load-time fallback/de-duplication, nullable updates and replacement are
@@ -482,6 +489,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   signed-32-bit ordinal overflow, and the -1-to-zero edge. Card/template
   lookup, ordinal extraction, state updates and cloze-content invocation remain
   host-side.
+- `test/type_answer_field_result_test.dart` contains source-derived checks for
+  `TypeAnswer.updateInfo` field selection/result behavior; the pinned test tree
+  has no direct test for this method. Host lookup, localization and state
+  application remain excluded.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it

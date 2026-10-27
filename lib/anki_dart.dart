@@ -63,6 +63,7 @@ export 'src/previewer_navigation.dart';
 export 'src/previewer_flag_effects.dart';
 export 'src/type_answer_modifiers.dart';
 export 'src/type_answer_cloze.dart';
+export 'src/type_answer_field_result.dart';
 export 'src/type_answer_answer.dart';
 export 'src/type_answer_question.dart';
 export 'src/type_answer_tags.dart';

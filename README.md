@@ -52,6 +52,13 @@ substitution using host-computed comparison HTML.
   columns to TEXT, NUMERIC, DATE, or UNSPECIFIED; the `template` column is TEXT
   in Cards mode and NUMERIC in Notes mode. The host supplies the current mode;
   labels, tooltips, backend column data, and mode/config lookup remain outside.
+- Card Browser column-selection movement: usage-heading rows are not draggable;
+  other rows receive vertical movement capability. `planBrowserColumnSelectionMove`
+  rejects only target position zero and otherwise returns the source's ordered
+  adjacent swaps, including accepted same-position moves with no swaps. The host
+  applies the swaps and handles RecyclerView notifications, drag lifecycle, and
+  the column-selection dialog. The pinned tests cover drop-refresh timing, not
+  this guard or swap sequence, so these Dart assertions are source-derived.
 - Card Browser row IDs: `BrowserRowId` associates an ID with Cards or Notes
   mode; `BrowserRowCollection` retains and mutates the supplied list, maps card
   rows to note IDs through a host callback, and expands note rows to cards in
@@ -528,8 +535,10 @@ applying row-activation directives,
 collection-backed editor destination lookup, and note-editor/pane command delivery,
 persistent Cards/Notes mode lookup and AGPL-incorporated column defaults,
 collection-backed Card↔Note ID lookups, backend column registry and rows,
-column-selection drag/drop and active backend updates, Card Browser sort UI,
-Android preference/synced-config IO, and actual backend row sorting,
+the column-selection dialog and RecyclerView drag lifecycle/notifications, and
+active backend column updates (movement capability and adjacent-swap planning
+are modeled); Card Browser sort UI, Android preference/synced-config IO, and
+actual backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, CardAppearance font resource installation and
 font-selection preferences, theme selection and actual theme CSS,

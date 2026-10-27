@@ -227,6 +227,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   defaults from `BrowserConfig.kt` (whose constants incorporate upstream AGPL
   code and are not copied), SharedPreferences, labels/tooltips, backend column
   values and browser UI remain outside.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionAdapter.kt`
+  and `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MutableList.kt` declare
+  `GPL-3.0-or-later`; their row movement-capability and adjacent-swap plan are
+  adapted in `lib/src/browser_column_selection_move.dart`. It preserves the
+  literal target-position-zero guard and accepted same-position no-op; the host
+  applies swaps and handles RecyclerView notifications, drag lifecycle and the
+  column-selection UI.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardOrNoteId.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserRowCollection.kt`, and
   `AnkiDroid/src/main/java/com/ichi2/anki/model/CardsOrNotes.kt` declare
@@ -528,6 +535,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it
   does not port SharedPreferences, backend column setup, or the Android harness.
+- `test/browser_column_selection_move_test.dart` contains source-derived
+  movement eligibility, target-zero rejection, adjacent-swap order, same-position
+  and index pass-through assertions based on `BrowserColumnSelectionAdapter.kt`
+  and `MutableList.kt`. `BrowserColumnSelectionTouchHelperCallbackTest.kt` tests
+  RecyclerView drop-refresh timing, not the move guard or swap order.
 - `test/browser_row_collection_test.dart` contains source-derived checks for
   Cards/Notes row-ID conversion, aliased list replacement/reset, ordered host
   lookups, duplicate-preserving note expansion, and first-card/per-position

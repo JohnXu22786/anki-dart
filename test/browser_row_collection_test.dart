@@ -166,6 +166,13 @@ void main() {
       expect(await cards.queryCardIds(), [101, 102]);
     });
 
+    test('empty Notes rows do not require a card lookup', () async {
+      final rows = BrowserRowCollection(BrowserColumnMode.notes, []);
+
+      expect(await rows.queryCardIds(), isEmpty);
+      expect(await rows.queryOneCardIdPerRow(), isEmpty);
+    });
+
     test('queryCardIds keeps note IDs captured before awaiting lookups',
         () async {
       final rows = BrowserRowCollection(BrowserColumnMode.notes, [

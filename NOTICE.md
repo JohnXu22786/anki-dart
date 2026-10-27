@@ -189,8 +189,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   projections are adapted in `lib/src/browser_row_collection.dart`. The host
   supplies collection callbacks for card-to-note and note-to-card lookups. The
   port preserves the source's note-ID snapshot before asynchronous note-to-card
-  expansion even if the aliased row list changes while lookups are pending;
-  Android collection access, backend row data, and sorting are not included.
+  expansion even if the aliased row list changes while lookups are pending.
+  Empty Notes-row queries return an empty list without invoking or requiring the
+  lookup callback, as the pinned source's list transforms do not invoke their
+  lambdas for an empty row list; nonempty row lookups remain host-side. Android
+  collection access, backend row data, and sorting are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`
   declares `GPL-3.0-or-later`. Its `RowSelection` value and selected-row toggle
   state projection are adapted in `lib/src/browser_row_selection.dart`, which
@@ -445,7 +448,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/browser_row_collection_test.dart` contains source-derived checks for
   Cards/Notes row-ID conversion, aliased list replacement/reset, ordered host
   lookups, duplicate-preserving note expansion, and first-card/per-position
-  projections. The upstream `CardBrowserViewModelTest.kt` directly verifies
+  projections. It also checks that empty Notes-row queries do not require a
+  host lookup callback; the pinned tests do not directly cover this empty case.
+  The upstream `CardBrowserViewModelTest.kt` directly verifies
   expansion of a Notes row to all its cards, and
   `BrowserMultiColumnAdapterRowsTest.kt` exercises reset/replacement through
   the UI adapter; there is no dedicated upstream `BrowserRowCollection` test.

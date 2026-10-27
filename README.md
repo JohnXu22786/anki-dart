@@ -54,8 +54,9 @@ placeholder removal.
   rows to note IDs through a host callback, and expands note rows to cards in
   source order. It snapshots note IDs before asynchronous expansion so later
   row-list mutations do not alter a pending lookup. Per-row selection takes the
-  first card, while empty note results preserve the source failure. Collection
-  lookups remain host-side. Only the
+  first card, while a note with no cards preserves the source failure. An empty
+  Notes-row collection returns an empty result without requiring the host lookup
+  callback. Collection lookups remain host-side. Only the
   basic note-to-all-cards behavior has direct upstream integration coverage;
   the dedicated row-collection tests are source-derived.
 - Card Browser multi-select toggles: `toggleBrowserRowSelection` projects the

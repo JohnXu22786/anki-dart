@@ -142,11 +142,12 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
     if (_mode == BrowserColumnMode.cards) {
       return _backingRows.map((row) => row.value).toList();
     }
+    final noteIds = _backingRows.map((row) => row.value).toList();
+    if (noteIds.isEmpty) return [];
     final lookup = cardIdsOfNote;
     if (lookup == null) {
       throw StateError('cardIdsOfNote is required in Notes mode');
     }
-    final noteIds = _backingRows.map((row) => row.value).toList();
     final cardIds = <int>[];
     for (final noteId in noteIds) {
       cardIds.addAll(await lookup(noteId));
@@ -165,11 +166,12 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
     if (_mode == BrowserColumnMode.cards) {
       return _backingRows.map((row) => row.value).toList();
     }
+    final noteIds = _backingRows.map((row) => row.value).toList();
+    if (noteIds.isEmpty) return [];
     final lookup = cardIdsOfNote;
     if (lookup == null) {
       throw StateError('cardIdsOfNote is required in Notes mode');
     }
-    final noteIds = _backingRows.map((row) => row.value).toList();
     final cardIds = <int>[];
     for (final noteId in noteIds) {
       cardIds.add((await lookup(noteId)).first);

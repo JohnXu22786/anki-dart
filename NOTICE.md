@@ -243,6 +243,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   without validation. If the heading is missing, insertion uses `-1` and can
   fail after removal, as in the source. Android click wiring, RecyclerView
   notifications, and dialog lifecycle remain host-side.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionFragment.kt`
+  and `CardBrowserViewModel.kt` declare `GPL-3.0-or-later`. Their pure save
+  decision is adapted in `lib/src/browser_column_selection_save.dart`: it
+  preserves the ordered-list comparison, the pre-update dismissal when there
+  are no changes, the unconditional update call, and the later success-dismiss
+  or failure-message result. Thus the source's no-change fall-through can
+  produce an initial dismissal followed by the no-columns message. Preference
+  and backend updates, Android dialog lifecycle, and localized snackbar
+  delivery remain host-side. No direct pinned save-handler test was found;
+  Dart coverage is source-derived.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardOrNoteId.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserRowCollection.kt`, and
   `AnkiDroid/src/main/java/com/ichi2/anki/model/CardsOrNotes.kt` declare
@@ -555,6 +565,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   invalid source positions. No pinned test directly asserts click toggling;
   the upstream touch-helper test covers drag refresh and the screenshot tests
   cover layout only.
+- `test/browser_column_selection_save_test.dart` contains source-derived tests
+  for the staged save/dismiss decision, including the unchanged-selection
+  fall-through and update-result mapping. The pinned fragment marks saving as
+  needing a test; screenshot coverage is not a save-handler test.
 - `test/browser_row_collection_test.dart` contains source-derived checks for
   Cards/Notes row-ID conversion, aliased list replacement/reset, ordered host
   lookups, duplicate-preserving note expansion, and first-card/per-position

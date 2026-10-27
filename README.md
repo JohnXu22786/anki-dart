@@ -68,6 +68,15 @@ substitution using host-computed comparison HTML.
   kinds and owns the click listener, RecyclerView notifications, and dialog.
   Upstream tests cover drag refresh and screenshots, not click toggling; these
   Dart cases are source-derived.
+- Card Browser column-selection save: `planBrowserColumnSelectionSave`
+  compares the initial and current ordered column lists, emits a pre-update
+  dismiss effect only when unchanged, and always supplies the requested mode
+  and columns for the host update. Its completion projection dismisses on a
+  successful update or shows the source no-columns message and returns false
+  otherwise. The source's unchanged-selection fall-through is preserved, so an
+  unchanged list can dismiss and still reach the false-result message. The
+  pinned tests do not cover this handler; Dart cases are source-derived. The
+  host performs the update and delivers dialog/snackbar effects.
 - Card Browser row IDs: `BrowserRowId` associates an ID with Cards or Notes
   mode; `BrowserRowCollection` retains and mutates the supplied list, maps card
   rows to note IDs through a host callback, and expands note rows to cards in

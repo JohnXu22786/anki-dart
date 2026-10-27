@@ -732,6 +732,10 @@ The ChangeNoteType has-changes projection compares host-supplied type IDs and
 default/current maps. It uses structural, order-independent map equality and
 distinguishes absent keys from null-valued keys. Flow composition and Save-button
 state delivery remain host-side.
+The discarded-template projection filters host-supplied ordered names by their
+source list indices. It preserves duplicate names and order; null and
+out-of-range mapping values do not remove entries. Flow and warning UI delivery
+remain host-side.
 
 ## License and attribution
 

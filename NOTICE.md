@@ -76,7 +76,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   reviewer action routing are not included. `toggleAutoAdvance()` state/effect
   ordering is separately projected in
   `lib/src/reviewer_auto_advance_toggle.dart`; settings, localization, media
-  state, timer operations, and StateFlow remain host-side.
+  state, timer operations, and StateFlow remain host-side. Leech feedback text
+  composition is projected in `lib/src/reviewer_leech_feedback.dart`; leech
+  detection, card reload/queue lookup, localization, Timber logging and flow
+  delivery remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`
   and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` declare
   `GPL-3.0-or-later`. Their gesture enums, decoded-input decisions, viewport
@@ -844,6 +847,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   state/message/effect ordering, audio wait, and shown-side scheduling cases.
   No direct ReviewerViewModel toggle test was found; AutoAdvance's delegated
   scheduling remains covered separately by `AutoAdvanceTest.kt`.
+- `test/reviewer_leech_feedback_test.dart` adds source-derived base/suspended
+  message composition, separator, whitespace and empty-string cases. No direct
+  pinned test for `onLeech()` or its message resources was found.
 - `test/gesture_parser_test.dart` checks the input, target, swipe, scroll,
   malformed-data, and asynchronous timing behavior recorded in
   `GestureParserTest.kt`; it is not a port of the Android test harness.

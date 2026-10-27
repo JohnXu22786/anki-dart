@@ -67,6 +67,25 @@ final class BrowserRowSelectionModeChange {
   int get hashCode => Object.hash(cause, selection);
 }
 
+/// Chooses the row opened by `openNoteEditorForCurrentlySelectedRow`.
+///
+/// Empty browser rows return `null` before selection is considered. In
+/// multi-select mode, the first selected ID is returned without checking
+/// whether it remains in [rowIds], matching the source's stale-ID behavior.
+/// Otherwise the first browser row is chosen. The host routes the editor and
+/// handles the no-row message.
+BrowserRowId? browserRowToEdit({
+  required List<BrowserRowId> rowIds,
+  required List<BrowserRowId> selectedRows,
+  required bool isInMultiSelectMode,
+}) {
+  if (rowIds.isEmpty) return null;
+  if (isInMultiSelectMode) {
+    return selectedRows.isEmpty ? null : selectedRows.first;
+  }
+  return rowIds.first;
+}
+
 /// The immutable result of toggling one row in the selected-row set.
 final class BrowserRowSelectionTransition {
   BrowserRowSelectionTransition._({
@@ -185,11 +204,11 @@ final class BrowserBulkSelectionTransition {
     required this.changed,
     required this.isInMultiSelectMode,
     required Iterable<BrowserBulkSelectionEffect> effects,
-  })  : selectedRows = List.unmodifiable(selectedRows),
-        previouslySelectedRows = previouslySelectedRows == null
-            ? null
-            : List.unmodifiable(previouslySelectedRows),
-        effects = List.unmodifiable(effects);
+  }) : selectedRows = List.unmodifiable(selectedRows),
+       previouslySelectedRows = previouslySelectedRows == null
+           ? null
+           : List.unmodifiable(previouslySelectedRows),
+       effects = List.unmodifiable(effects);
 
   /// The rows after the source set mutation, in linked-set insertion order.
   final List<BrowserRowId> selectedRows;
@@ -276,15 +295,14 @@ BrowserBulkSelectionTransition planBrowserToggleSelectAllOrNone({
   required Iterable<BrowserRowId> selectedRows,
   required Iterable<BrowserRowId> availableRows,
   required bool isInMultiSelectMode,
-}) =>
-    switch (state) {
-      BrowserSelectAllOrNoneState.selectAll => planBrowserSelectAll(
-          selectedRows: selectedRows,
-          availableRows: availableRows,
-          isInMultiSelectMode: isInMultiSelectMode,
-        ),
-      BrowserSelectAllOrNoneState.selectNone => planBrowserSelectNone(
-          selectedRows: selectedRows,
-          isInMultiSelectMode: isInMultiSelectMode,
-        ),
-    };
+}) => switch (state) {
+  BrowserSelectAllOrNoneState.selectAll => planBrowserSelectAll(
+    selectedRows: selectedRows,
+    availableRows: availableRows,
+    isInMultiSelectMode: isInMultiSelectMode,
+  ),
+  BrowserSelectAllOrNoneState.selectNone => planBrowserSelectNone(
+    selectedRows: selectedRows,
+    isInMultiSelectMode: isInMultiSelectMode,
+  ),
+};

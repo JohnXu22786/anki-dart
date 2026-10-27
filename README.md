@@ -124,6 +124,12 @@ substitution using host-computed comparison HTML.
   builds preview IDs and launches Android navigation. Upstream tests directly
   cover no-selection and single-selection indices; multi-selection, stale IDs,
   and duplicate browser rows are source-derived.
+- Card Browser edit-row choice: `browserRowToEdit` returns `null` when there
+  are no browser rows; otherwise it chooses the first selected ID in
+  multi-select mode without validating membership, or the first browser row in
+  normal mode. The host routes the editor and shows the no-row snackbar.
+  Upstream tests cover successful editor entry, but not row-choice boundaries;
+  Dart cases are source-derived.
 - Card Browser multi-select toggles: `toggleBrowserRowSelection` projects the
   selected-ID set in insertion order, the `RowSelected`/`DeselectRow` mode
   causes, last-selected row, and the source refresh request. Removing a row

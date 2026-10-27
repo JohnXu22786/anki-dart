@@ -645,6 +645,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   equality. Pinned ViewModel tests cover row selection through UI integration,
   not the pure Dart projection; Android flow delivery and editor/pane actions
   remain outside.
+- `test/browser_row_to_edit_test.dart` contains source-derived checks for empty
+  row precedence, first-selected-row choice without stale-ID validation,
+  multi-select with no selection, and normal-mode first-row choice. Pinned
+  `CardBrowserTest.kt:1548–1563,1576–1590` verifies successful editor entry and
+  persisted edits, but not the helper's row-choice results.
 - `test/browser_toggle_selection_state_test.dart` adapts the initial, partial,
   and fully-selected flow outcomes from `CardBrowserViewModelTest.kt`; its
   hidden-selection, duplicate-ID, and zero/negative-row-count cases are

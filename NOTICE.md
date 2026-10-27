@@ -344,6 +344,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   queue-only eligibility cases are source-derived. The host resolves selected
   card IDs and queue/type state, scans the collection, computes queue bounds,
   applies scheduler defaults, and performs or reports repositioning.
+  `projectBrowserRepositionPresentation()` and its typed resource/directive
+  values in `lib/src/browser_reposition_presentation.dart` map the fragment's
+  error, missing-bound, and valid-bound result branches. The upstream ViewModel
+  tests cover source request results and bounds, but no pinned test directly
+  asserts the fragment's presentation branches; the Dart mapping tests are
+  source-derived. Resource resolution, task launching, actual UI construction
+  and delivery, and repositioning remain host-side.
   Its `updateSelectedCardsFlag()` write/event/return sequence is represented by
   `planBrowserSelectedCardsFlagUpdate()` and `BrowserSelectedCardsFlagPlan` in
   `lib/src/browser_selected_flag_plan.dart`. The host supplies selected card

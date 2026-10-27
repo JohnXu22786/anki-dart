@@ -691,6 +691,9 @@ dart test
 The Card Browser reposition plan projects source-ordered eligible and skipped
 card IDs from host-resolved card type and queue states. Collection access,
 queue-position calculation, and scheduler operations remain host-side.
+Its presentation projection maps host-supplied result values to dialog or
+snackbar directives; resource lookup and Android UI construction/delivery stay
+host-side.
 
 ## License and attribution
 

@@ -283,6 +283,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   lookup callback, as the pinned source's list transforms do not invoke their
   lambdas for an empty row list; nonempty row lookups remain host-side. Android
   collection access, backend row data, and sorting are not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt` and
+  `common/src/main/java/com/ichi2/anki/common/utils/ext/List.kt` declare
+  `GPL-3.0-or-later`. `browserRowPositionOfId()` in
+  `lib/src/browser_row_collection.dart` adapts the first-match index-or-null
+  lookup; Android scrolling, notifications, and layout offsets remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`
   declares `GPL-3.0-or-later`. Its `RowSelection` value and selected-row toggle
   state projection are adapted in `lib/src/browser_row_selection.dart`, which
@@ -606,6 +611,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   expansion of a Notes row to all its cards, and
   `BrowserMultiColumnAdapterRowsTest.kt` exercises reset/replacement through
   the UI adapter; there is no dedicated upstream `BrowserRowCollection` test.
+- `test/browser_row_position_test.dart` contains source-derived checks for the
+  first duplicate match, `BrowserRowId` value equality, missing IDs, and empty
+  rows. The generic pinned `ListTest.kt:11–14` directly covers first-match and
+  missing-ID helper behavior, but no upstream test invokes `getPositionOfId`.
 - The same row-collection tests include source-derived concurrent-mutation cases:
   note IDs captured for `queryCardIds` and `queryOneCardIdPerRow` remain fixed
   while the host lookup awaits, matching `BrowserRowCollection.kt` materializing

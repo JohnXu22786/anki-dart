@@ -100,6 +100,12 @@ substitution using host-computed comparison HTML.
   callback. Collection lookups remain host-side. Only the
   basic note-to-all-cards behavior has direct upstream integration coverage;
   the dedicated row-collection tests are source-derived.
+- Card Browser row position lookup: `browserRowPositionOfId` returns the first
+  index matching a host-supplied row ID, or `null` when it is absent. Android
+  scrolling, row notifications, and layout-offset calculation remain host-side.
+  The generic upstream list helper directly tests first/missing results, but
+  AnkiDroid has no direct `getPositionOfId` test; the Dart adapter cases are
+  source-derived.
 - Card Browser multi-select toggles: `toggleBrowserRowSelection` projects the
   selected-ID set in insertion order, the `RowSelected`/`DeselectRow` mode
   causes, last-selected row, and the source refresh request. Removing a row

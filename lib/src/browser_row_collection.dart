@@ -16,8 +16,8 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Behavioral reference: CardOrNoteId.kt and BrowserRowCollection.kt in
- * AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
+ * Behavioral reference: CardOrNoteId.kt, BrowserRowCollection.kt, and
+ * CardBrowserViewModel.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 import 'dart:async';
@@ -77,6 +77,19 @@ final class BrowserRowId {
 
   @override
   int get hashCode => value.hashCode;
+}
+
+/// Returns the first position of [rowId] or `null` when it is not in [rowIds].
+///
+/// This matches `CardBrowserViewModel.getPositionOfId` and its
+/// `indexOfOrNull` helper. [BrowserRowId] value equality supplies the source
+/// ID comparison; duplicates resolve to their first occurrence.
+int? browserRowPositionOfId({
+  required List<BrowserRowId> rowIds,
+  required BrowserRowId rowId,
+}) {
+  final position = rowIds.indexOf(rowId);
+  return position >= 0 ? position : null;
 }
 
 /// IDs for rows in either Cards or Notes mode.

@@ -736,6 +736,9 @@ The discarded-template projection filters host-supplied ordered names by their
 source list indices. It preserves duplicate names and order; null and
 out-of-range mapping values do not remove entries. Flow and warning UI delivery
 remain host-side.
+Template changes are eligible only for the host-resolved regular-to-regular
+conversion. The settled Boolean is projected separately from the host-managed
+flow initial value and delivery.
 
 ## License and attribution
 

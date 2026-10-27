@@ -43,6 +43,7 @@ export 'src/browser_reposition_due_extrema.dart';
 export 'src/browser_change_note_type_plan.dart';
 export 'src/browser_change_note_type_presentation.dart';
 export 'src/change_note_type_conversion.dart';
+export 'src/change_note_type_default_field_map.dart';
 export 'src/browser_selected_flag_plan.dart';
 export 'src/browser_selection_export.dart';
 export 'src/card_appearance_css.dart';

@@ -709,6 +709,10 @@ logging and UI delivery remain host-side.
 The ChangeNoteType conversion-direction projection maps the host's regular and
 cloze status flags across all four source combinations; note-type lookup,
 templates, conversion and sync remain host-side.
+The default field-map projection uses host-resolved ordered names and ordinals,
+preserving the source's exact-name first match, duplicate-key and fallback
+behavior. Collection access, state flow, user mapping changes, UI, note
+conversion, template mapping and persistence remain host-side.
 
 ## License and attribution
 

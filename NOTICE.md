@@ -14,6 +14,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DisplayDeckNode.kt` is
   Copyright © 2025 Gautam Bhetanabhotla <gautamarcturus@gmail.com>. Its Dart
   adaptation is `lib/src/display_deck_node.dart`.
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt`
+  is marked `GPL-3.0-or-later` and attributes source copyright to Hari
+  Srinivasan. Its pure regular/cloze conversion-direction mapping is adapted in
+  `lib/src/change_note_type_conversion.dart`; collection/type lookup, flow and
+  template UI, note conversion, and sync behavior are not included.
 - `libanki/src/main/java/com/ichi2/anki/libanki/sched/DeckNode.kt` is Copyright
   © 2020 Arthur Milchior <arthur@milchior.fr>. Its Dart input projection and
   `totalCardsDue()` behavior are in `lib/src/deck_node.dart`; the total sums

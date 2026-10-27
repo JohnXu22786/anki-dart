@@ -706,6 +706,9 @@ change result. Type lookup, flows, UI, and note mutation remain host-side.
 The response presentation plan maps mixed-note-type results to a host-resolved
 snackbar resource and compatible results to a dialog carrying the same IDs;
 logging and UI delivery remain host-side.
+The ChangeNoteType conversion-direction projection maps the host's regular and
+cloze status flags across all four source combinations; note-type lookup,
+templates, conversion and sync remain host-side.
 
 ## License and attribution
 

@@ -713,6 +713,10 @@ The default field-map projection uses host-resolved ordered names and ordinals,
 preserving the source's exact-name first match, duplicate-key and fallback
 behavior. Collection access, state flow, user mapping changes, UI, note
 conversion, template mapping and persistence remain host-side.
+The discarded-fields projection consumes the host's current field map and
+ordered input names, preserving source-index filtering, duplicate names, null
+and out-of-range values. StateFlow, field lookup, localization and dialog UI
+remain host-side.
 
 ## License and attribution
 

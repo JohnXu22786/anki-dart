@@ -65,6 +65,7 @@ export 'src/type_answer_modifiers.dart';
 export 'src/type_answer_cloze.dart';
 export 'src/type_answer_field_result.dart';
 export 'src/type_answer_info_update.dart';
+export 'src/type_answer_eligibility.dart';
 export 'src/type_answer_answer.dart';
 export 'src/type_answer_question.dart';
 export 'src/type_answer_tags.dart';

@@ -199,6 +199,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/type_answer_info_update.dart`; the host applies the assignments in
   order and handles Android/collection/resource access and source-equivalent
   failure delivery. The pinned test tree has no direct `updateInfo` test.
+  The pure `validForEditText` and `autoFocusEditText` checks are adapted as
+  `typeAnswerValidForEditText` and `typeAnswerAutoFocusEditText` in
+  `lib/src/type_answer_eligibility.dart`. They preserve the non-null check
+  (including an empty string) and exact `useInputTag`/`autoFocus` gates; the
+  host handles field visibility and Android focus/input lifecycle. No direct
+  pinned tests cover these predicates.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt`
   and `CardBrowserColumn.kt` declare `GPL-3.0-or-later`. Column-key parsing,
   load-time fallback/de-duplication, nullable updates and replacement are
@@ -503,6 +509,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   return, metadata and warning transitions, and the lookup-failure boundary.
   The pinned test tree has no direct `updateInfo` test; Android state delivery,
   resources, collection access and exception application remain host-side.
+- `test/type_answer_eligibility_test.dart` contains source-derived checks for
+  the exact `validForEditText`/`autoFocusEditText` boolean decisions, including
+  the source's empty-but-non-null answer case. The pinned suite has no direct
+  predicate tests; Android visibility and focus integration remain host-side.
 - `test/browser_column_collection_test.dart` adapts the active-column collection
   cases in `BrowserColumnCollectionTest.kt`, including constructor aliasing
   and cached count, and adds a source-derived snapshot key-projection check; it

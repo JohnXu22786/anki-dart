@@ -313,6 +313,11 @@ substitution using host-computed comparison HTML.
   the source's warning/empty-answer behavior. A missing selected note value is
   reported after the preceding reset/modifier effects. The host applies the
   plan and performs Android/collection/resource access and failure delivery.
+- Type-answer input eligibility: `typeAnswerValidForEditText` returns true
+  exactly when input-tag mode is disabled and the correct answer is non-null;
+  an empty string still counts as non-null. `typeAnswerAutoFocusEditText` adds
+  the source `autoFocus` condition. The host supplies these values and owns
+  Android field visibility, focus, and input lifecycle.
 - Type-answer tags: `removeTypeAnswerTags` removes every nonempty, single-line
   `[[type:...]]` match through its first `]]`, preserving other text. This is
   the question-side cleanup model; field lookup, cloze-index invocation,

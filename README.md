@@ -12,7 +12,8 @@ models, the collection timebox counter and rounded-minute projection, Previewer
 navigation and flag decision/effect models, Card Browser active-column and sort
 preference models, recent-search ordering, JSON serialization, display state,
 saved-history request restoration, Cards/Notes row-ID projection/expansion,
-row-tap activation directives, bulk mark/bury/suspend decisions, and
+column-selection click-toggle planning, row-tap activation directives, bulk
+mark/bury/suspend decisions, and
 selected-card flag update effect plans, all-decks filter state,
 selected-row export data, Card Browser flag-filter query text,
 structured search-node planning, the
@@ -59,6 +60,14 @@ substitution using host-computed comparison HTML.
   applies the swaps and handles RecyclerView notifications, drag lifecycle, and
   the column-selection dialog. The pinned tests cover drop-refresh timing, not
   this guard or swap sequence, so these Dart assertions are source-derived.
+- Card Browser column-selection click toggle: `planBrowserColumnSelectionToggle`
+  captures the first Available-heading index, the clicked row index, and the
+  source's before-heading side test. Applying its plan removes then inserts at
+  that original index without validating; a missing heading remains `-1`, so
+  insertion can fail after removal as in the source. The host supplies row
+  kinds and owns the click listener, RecyclerView notifications, and dialog.
+  Upstream tests cover drag refresh and screenshots, not click toggling; these
+  Dart cases are source-derived.
 - Card Browser row IDs: `BrowserRowId` associates an ID with Cards or Notes
   mode; `BrowserRowCollection` retains and mutates the supplied list, maps card
   rows to note IDs through a host callback, and expands note rows to cards in
@@ -535,10 +544,10 @@ applying row-activation directives,
 collection-backed editor destination lookup, and note-editor/pane command delivery,
 persistent Cards/Notes mode lookup and AGPL-incorporated column defaults,
 collection-backed Card↔Note ID lookups, backend column registry and rows,
-the column-selection dialog and RecyclerView drag lifecycle/notifications, and
-active backend column updates (movement capability and adjacent-swap planning
-are modeled); Card Browser sort UI, Android preference/synced-config IO, and
-actual backend row sorting,
+the column-selection dialog and RecyclerView click/drag lifecycle/notifications,
+and active backend column updates (movement capability, adjacent-swap planning,
+and click-toggle planning are modeled); Card Browser sort UI, Android
+preference/synced-config IO, and actual backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, CardAppearance font resource installation and
 font-selection preferences, theme selection and actual theme CSS,

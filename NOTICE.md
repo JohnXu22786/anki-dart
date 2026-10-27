@@ -234,6 +234,15 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   literal target-position-zero guard and accepted same-position no-op; the host
   applies swaps and handles RecyclerView notifications, drag lifecycle and the
   column-selection UI.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionAdapter.kt`
+  and `BrowserColumnSelectionFragment.kt` declare `GPL-3.0-or-later`. The pure
+  click-toggle target/side projection is adapted in
+  `lib/src/browser_column_selection_toggle.dart`: it locates the first
+  AVAILABLE heading in the host-projected row kinds, preserves the source's
+  `< heading` side test, and applies the original-index remove-then-insert move
+  without validation. If the heading is missing, insertion uses `-1` and can
+  fail after removal, as in the source. Android click wiring, RecyclerView
+  notifications, and dialog lifecycle remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardOrNoteId.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserRowCollection.kt`, and
   `AnkiDroid/src/main/java/com/ichi2/anki/model/CardsOrNotes.kt` declare
@@ -540,6 +549,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and index pass-through assertions based on `BrowserColumnSelectionAdapter.kt`
   and `MutableList.kt`. `BrowserColumnSelectionTouchHelperCallbackTest.kt` tests
   RecyclerView drop-refresh timing, not the move guard or swap order.
+- `test/browser_column_selection_toggle_test.dart` contains source-derived tests
+  for active/available side selection, first-heading target selection,
+  remove-then-insert ordering, the missing-heading partial-mutation edge, and
+  invalid source positions. No pinned test directly asserts click toggling;
+  the upstream touch-helper test covers drag refresh and the screenshot tests
+  cover layout only.
 - `test/browser_row_collection_test.dart` contains source-derived checks for
   Cards/Notes row-ID conversion, aliased list replacement/reset, ordered host
   lookups, duplicate-preserving note expansion, and first-card/per-position

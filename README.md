@@ -476,6 +476,14 @@ substitution using host-computed comparison HTML.
   order assertion; source-derived cases are in
   `test/reviewer_delete_note_plan_test.dart`. Card Browser bulk deletion is a
   separate operation.
+- Reviewer flag toggle effects: `planReviewerToggleFlag` composes the existing
+  flag target decision with the Reviewer singleton write and publish-on-success
+  plan. A matching requested/current flag selects NONE; a different request is
+  preserved. The pinned Reviewer tests do not directly cover this action, so
+  source-derived cases cover target selection, exact card targeting, success
+  ordering, and write-failure suppression. Dispatch, flag-state reads, card
+  lookup, undoable collection mutation, exceptions, StateFlow delivery, and
+  lifecycle remain host-side; see `ANKIDROID_UPSTREAM.md`.
 - Reviewer undo/redo feedback: `reviewerUndoRedoFeedbackMessage` selects the
   host-localized no-operation string for an empty operation, or invokes the
   matching undo/redo message callback with a nonempty operation unchanged.

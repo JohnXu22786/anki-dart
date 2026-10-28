@@ -21,6 +21,7 @@
  */
 
 import 'previewer_flag_effects.dart';
+import 'reviewer_flag_toggle_target.dart';
 
 /// One ordered host effect from the Reviewer's explicit set-flag action.
 sealed class ReviewerSetFlagEffect {
@@ -71,3 +72,19 @@ ReviewerSetFlagPlan planReviewerSetFlag({
   required int cardId,
   required PreviewerFlag flag,
 }) => ReviewerSetFlagPlan(cardId: cardId, flag: flag);
+
+/// Projects Reviewer `toggleFlag(flag)` into the existing set-flag plan.
+///
+/// The host supplies its current flag, requested flag, and current card ID.
+/// Matching flags select NONE; otherwise the requested flag passes unchanged
+/// to the singleton-card write and its publication-after-success gate. The
+/// host retains flow reads, action dispatch, card lookup, undoable collection
+/// mutation, exception handling, and StateFlow delivery.
+ReviewerSetFlagPlan planReviewerToggleFlag({
+  required int cardId,
+  required PreviewerFlag currentFlag,
+  required PreviewerFlag requestedFlag,
+}) => planReviewerSetFlag(
+  cardId: cardId,
+  flag: reviewerFlagToggleTarget(currentFlag, requestedFlag),
+);

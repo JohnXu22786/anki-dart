@@ -22,7 +22,8 @@ structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance scheduling and toggle effects, leech-feedback
 composition, whiteboard and record-voice toggle effects, the headless reviewer
-reset-progress and edited-tag request projections, gesture parser,
+reset-progress, stop-auto-advance, and edited-tag request projections,
+gesture parser,
 parsed-gesture command
 routing, reviewer binding codec/map and
 default definitions, headless
@@ -443,6 +444,11 @@ substitution using host-computed comparison HTML.
   supplied by an adapter. An injectable delay scheduler supports deterministic
   timing. Same-side visibility events overwrite the tracked job without
   cancelling its earlier timer, matching the pinned source behavior.
+- Reviewer stop-auto-advance request: `reviewerStopAutoAdvanceDirective`
+  returns a payload-free request for the host to cancel its existing question
+  and answer jobs. Logging, lifecycle callers, cancellation, and timer behavior
+  remain host-side. The pinned source has no direct Reviewer test for this
+  request; see the source mapping in `ANKIDROID_UPSTREAM.md`.
 - Reviewer Auto Advance toggle: `planReviewerAutoAdvanceToggle` orders the
   enabled-state update, state publication, localized feedback, and shown-side
   scheduling request. It skips scheduling only when the host reports both

@@ -49,6 +49,7 @@ export 'src/reviewer_page_navigation_directive.dart';
 export 'src/reviewer_replay_voice_directive.dart';
 export 'src/reviewer_replay_media_side.dart';
 export 'src/reviewer_reset_progress_directive.dart';
+export 'src/reviewer_stop_auto_advance_directive.dart';
 export 'src/reviewer_finish_result_directive.dart';
 export 'src/reviewer_show_answer_guard.dart';
 export 'src/reviewer_action_guard.dart';

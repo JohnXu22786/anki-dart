@@ -64,6 +64,7 @@ export 'src/browser_column_selection_save.dart';
 export 'src/browser_column_selection_discard.dart';
 export 'src/browser_column_selection_projection.dart';
 export 'src/browser_flag_filter_query.dart';
+export 'src/browser_filter_tags_query.dart';
 export 'src/browser_launch_options.dart';
 export 'src/browser_row_collection.dart';
 export 'src/browser_row_selection.dart';

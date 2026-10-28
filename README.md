@@ -93,6 +93,7 @@ substitution using host-computed comparison HTML.
   before redispatching Back; cancellation emits no effects. The pinned tests
   cover layout only, so Dart assertions are source-derived. The Android
   dispatcher, callback lifecycle, dialog UI and delivery remain host-side.
+- Card Browser selected-column replacement: `replaceBrowserSelectedColumn` copies the active columns and replaces every matching key, preserving order and unaffected entries; no match still returns a copy. It follows `CardBrowserViewModel.kt:1484–1497`, called by `ColumnSelectionDialogFragment.kt:102`. Dart cases cover ordinary replacement, repeated-key replacement, order, and no match; the pinned ViewModel tests have no direct assertion. The host calls `updateActiveColumns` and owns mode, guards, persistence, flows, and UI; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Card Browser column-selection rows: `projectBrowserColumnSelectionRows`
   projects host-supplied column and usage-heading rows into ordered displayed,
   available, and selected column types. It uses the first Available heading,

@@ -68,6 +68,7 @@ export 'src/browser_preview_column_order.dart';
 export 'src/browser_refresh_columns_from_prefs.dart';
 export 'src/browser_selected_column_replacement.dart';
 export 'src/browser_flag_filter_query.dart';
+export 'src/browser_flag_filter_search_plan.dart';
 export 'src/browser_filter_tags_query.dart';
 export 'src/browser_launch_options.dart';
 export 'src/browser_row_collection.dart';

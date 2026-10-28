@@ -18,7 +18,7 @@ column-selection click-toggle planning, row-tap activation directives, bulk
 mark/bury/suspend decisions, and
 selected-card flag update effect plans, all-decks filter state,
 selected-row export data, marked/suspended preset-search plans, the Card Browser
-duplicate-query gate, flag-filter query text,
+duplicate-query gate, flag-filter query and effect plan,
 note-editor destination payload,
 structured search-node planning, the
 answer-timer state machine,
@@ -257,12 +257,15 @@ substitution using host-computed comparison HTML.
   and coroutine/cancellation behavior. Pinned ViewModel tests exercise user
   searches but do not directly assert this duplicate-query gate; the Dart cases
   are source-derived.
-- Card Browser flag-filter query text: `browserSearchTermsWithFlag` preserves
-  the source's first-match `flag:.` replacement, nonempty-query prepend, and
-  incomplete-marker behavior. The pinned RED flag test verifies the resulting
-  search end-to-end but does not assert the query text; exact string cases are
-  source-derived. Android flag actions, query submission, and backend search
-  remain host-side.
+- Card Browser flag filtering: `browserSearchTermsWithFlag` preserves the
+  source's first-match `flag:.` replacement, nonempty-query prepend, and
+  incomplete-marker behavior. `planBrowserFlagFilterSearch` composes that
+  transformation over the exact host-supplied search terms, then orders filter
+  query emission, request update with structured filters preserved, and the
+  default refresh search request. The pinned RED flag test verifies the
+  resulting search end-to-end but does not assert this query or effect sequence;
+  those Dart cases are source-derived. Flag resolution, Flow/request state
+  mutation, and search execution remain host-side.
 - Card Browser row activation: `planBrowserRowActivation` returns the source-
   ordered directives for normal phone/tablet editor routing and multi-select
   toggles. A selected row tapped in fragmented mode requests a pane reload only

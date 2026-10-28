@@ -25,6 +25,7 @@ export 'src/reviewer_auto_advance_toggle.dart';
 export 'src/reviewer_auto_advance_action.dart';
 export 'src/reviewer_leech_feedback.dart';
 export 'src/reviewer_undo_redo_feedback.dart';
+export 'src/reviewer_previous_card_info_directive.dart';
 export 'src/reviewer_whiteboard_toggle.dart';
 export 'src/reviewer_record_voice_toggle.dart';
 export 'src/reviewer_flag_toggle_target.dart';

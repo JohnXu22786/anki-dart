@@ -457,6 +457,14 @@ substitution using host-computed comparison HTML.
   matching undo/redo message callback with a nonempty operation unchanged.
   Undo availability and execution, protobuf extraction, localization,
   Reviewer action dispatch, and feedback Flow delivery remain host-side.
+- Reviewer previous-card info: `reviewerPreviousCardInfoDirective` selects
+  host-localized no-card feedback for a null saved previous-card ID and carries
+  every non-null ID unchanged into a navigation directive. SavedStateHandle,
+  current/saved state access, `CardInfoDestination` construction, navigation
+  Flow, localization, and feedback Flow delivery remain host-side. The pinned
+  Reviewer tests have no direct assertion for this action; null/non-null cases,
+  including zero pass-through, are source-derived in
+  `test/reviewer_previous_card_info_directive_test.dart`.
 - Reviewer whiteboard toggle: `planReviewerWhiteboardToggle` inverts the
   host-supplied state, publishes the new value, then requests assigning that
   same value to the repository preference. StateFlow mutation, repository

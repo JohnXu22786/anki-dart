@@ -107,6 +107,7 @@ export 'src/browser_selected_deck_update_plan.dart';
 export 'src/browser_post_search_scroll_plan.dart';
 export 'src/browser_search_text_state.dart';
 export 'src/browser_search_box_state.dart';
+export 'src/browser_save_search_prompt.dart';
 export 'src/browser_search_state_effects.dart';
 export 'src/browser_search_history_display.dart';
 export 'src/browser_search_history_json.dart';

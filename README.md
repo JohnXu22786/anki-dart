@@ -33,7 +33,8 @@ AutomaticAnswer action decoding, and reviewer binding preference/default
 resolution and Card Browser launch-option precedence. Card Browser search-text
 transitions, text-edit/sync/reset/history-selection/request-submission effect
 sequences and saved-search submission effects, saved-search
-outcome-message mapping, CardTemplate marker-based string composition and
+outcome-message mapping and save-search prompt decisions,
+CardTemplate marker-based string composition and
 verbatim card-content QA wrapping,
 card-template type-answer modifier parsing, cloze-index derivation and
 cloze-content extraction, question-side type-answer placeholder removal,
@@ -250,6 +251,13 @@ substitution using host-computed comparison HTML.
   owns logging, Android focus, and widgets. Pinned ViewModel tests cover query
   text used by save-search behavior, but do not assert these state transitions;
   the transition assertions are source-derived.
+- Card Browser save-search prompt decision: `browserSaveSearchPromptQuery`
+  returns null for a null or exactly empty temporary query and otherwise
+  returns the exact query unchanged, including whitespace-only text. The host
+  emits the name-prompt flow and owns Android UI, saving/removing searches, and
+  persistence. Pinned ViewModel tests cover empty text and an unchanged `AAA`
+  prompt query, but not null or whitespace-only values; the complete Dart cases
+  are source-derived.
 - Card Browser initial selected deck: `planBrowserInitialDeck` reports when the
   host must consume the launch-intent saved-state flag and chooses a valid
   resolved intent deck, the all-decks sentinel, a host-validated persisted
@@ -793,6 +801,10 @@ query-normalization rules, and exposes map conversion. The saved-search message
 projection maps the mutation result's success flag to the source message kind;
 the host owns collection config loading/persistence, localized UI message
 delivery, and query parsing/execution.
+`browserSaveSearchPromptQuery` returns no prompt query only for null or exactly
+empty temporary input; every other string is passed through unchanged, including
+whitespace-only text. The host emits the prompt and owns Android UI, saved-search
+mutation, and persistence.
 `ReviewNextStateDescriber`
 forwards the opaque scheduling state to the pinned backend's
 `describeNextStates()` API. The session exposes the timebox's elapsed-time limit

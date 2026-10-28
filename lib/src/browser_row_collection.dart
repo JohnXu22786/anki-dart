@@ -91,6 +91,23 @@ int? browserRowPositionOfId({
   return position >= 0 ? position : null;
 }
 
+/// Keeps [paneRow] only when the fragmented browser has that row currently.
+///
+/// A phone or empty row list clears the pane value. A missing value falls back
+/// to the first current row. Uses the host row type's equality and returns the
+/// original pane/first-row value without converting it. The host invokes this
+/// after search replacement and owns pane state and lifecycle.
+T? ensureBrowserPaneRowValid<T>({
+  required bool isFragmented,
+  required List<T> rows,
+  required T? paneRow,
+}) {
+  if (!isFragmented) return null;
+  if (rows.isEmpty) return null;
+  if (paneRow == null || !rows.contains(paneRow)) return rows.first;
+  return paneRow;
+}
+
 /// Returns the inclusive row slice between two IDs in source order.
 ///
 /// Each ID resolves with the first-match behavior of [List.indexOf]. The

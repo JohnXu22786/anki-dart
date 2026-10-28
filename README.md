@@ -123,6 +123,13 @@ substitution using host-computed comparison HTML.
   The generic upstream list helper directly tests first/missing results, but
   AnkiDroid has no direct `getPositionOfId` test; the Dart adapter cases are
   source-derived.
+- Card Browser pane-row validity: `ensureBrowserPaneRowValid` clears the pane
+  row on phones or when the current row list is empty, falls back to the first
+  current row when the pane value is null or stale, and otherwise returns the
+  supplied pane value using the host row type's equality. The host invokes it
+  after search replacement and owns pane state, UI, and lifecycle. Pinned
+  ViewModel tests cover phone behavior and stale-row fallback, but not an empty
+  row list or direct retention; Dart tests are source-derived.
 - Card Browser pane-row refresh positions: `browserPaneRowNotificationPositions`
   projects the previous and new pane IDs to ordered positions, removing duplicate
   IDs and omitting IDs absent from the current rows. Android pane state mutation

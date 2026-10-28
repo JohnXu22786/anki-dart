@@ -131,6 +131,15 @@ substitution using host-computed comparison HTML.
   after search replacement and owns pane state, UI, and lifecycle. Pinned
   ViewModel tests cover phone behavior and stale-row fallback, but not an empty
   row list or direct retention; Dart tests are source-derived.
+- Card Browser post-search pane command: `browserPostSearchPaneCommand` maps a
+  host-resolved edit destination to `BrowserPostSearchPaneLoadInPane`, retaining
+  the exact destination object, or returns `BrowserPostSearchPaneHidePane` when
+  the host supplies null. The host supplies null for a missing pane row or an
+  empty/invalid editor destination and owns row lookup, destination resolution,
+  command flow delivery, and Android pane UI/lifecycle. Pinned
+  `CardBrowserViewModelTest.kt:1595–1625` covers tablet rows and an empty deck;
+  it does not assert destination identity. Dart outcome and identity cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Card Browser pane-row refresh positions: `browserPaneRowNotificationPositions`
   projects the previous and new pane IDs to ordered positions, removing duplicate
   IDs and omitting IDs absent from the current rows. Android pane state mutation

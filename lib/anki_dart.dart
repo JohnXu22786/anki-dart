@@ -119,6 +119,7 @@ export 'src/browser_preset_search_plan.dart';
 export 'src/browser_find_replace_plan.dart';
 export 'src/browser_delete_selected_notes_plan.dart';
 export 'src/browser_post_search_scroll_plan.dart';
+export 'src/browser_post_search_pane_command.dart';
 export 'src/browser_search_text_state.dart';
 export 'src/browser_search_box_state.dart';
 export 'src/browser_can_search.dart';

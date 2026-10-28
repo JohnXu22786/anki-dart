@@ -161,9 +161,13 @@ substitution using host-computed comparison HTML.
 - Card Browser tag-filter query: `browserFilterTagsQuery` wraps the exact
   host-resolved `SearchRequest.toSearchString()` value in one pair of parentheses
   so an OR tag clause keeps precedence when later combined with AND terms. It
-  preserves all existing query syntax and whitespace; collection access and
-  backend search-string construction remain host-side. Pinned upstream tests
-  exercise the OR wrapper, while arbitrary-syntax preservation is source-derived.
+  preserves all existing query syntax and whitespace. `planBrowserTagFilterSearch`
+  then models the source order: emit the query, update the current request while
+  preserving its structured filters, and request a forced non-user search.
+  Request construction/serialization, collection access, flow delivery, request
+  state mutation, and search execution remain host-side. Pinned upstream tests
+  exercise the OR wrapper; ordered Dart effects and arbitrary-syntax preservation
+  are source-derived.
 - Card Browser preview payload: `browserPreviewPayload` uses host-supplied
   selected card IDs with index zero for multiple selected rows; otherwise it
   uses host-supplied one-card-per-row IDs and the existing starting-index

@@ -30,6 +30,7 @@ export 'src/deck_picker_filtered_deck_operation_plan.dart';
 export 'src/deck_picker_delete_deck_plan.dart';
 export 'src/deck_picker_initial_state_projection.dart';
 export 'src/deck_picker_scheduler_upgrade_prompt.dart';
+export 'src/deck_picker_schedule_review_reminders_request.dart';
 export 'src/deck_picker_reload_deck_counts_plan.dart';
 export 'src/deck_picker_empty_card_deletion.dart';
 export 'src/deck_node.dart';

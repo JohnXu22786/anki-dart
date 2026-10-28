@@ -472,6 +472,13 @@ substitution using host-computed comparison HTML.
   `test/reviewer_edit_note_destination_test.dart`. Current-card lookup, logging,
   concrete Android destination construction, navigation Flow, and lifecycle
   handling remain host-side.
+- Reviewer add-note destination: `reviewerAddNoteFromReviewerDirective()`
+  returns a payload-free typed directive corresponding to
+  `NoteEditorDestination.AddNoteFromReviewer()`. The pinned Reviewer tests have
+  no direct ADD_NOTE destination assertion, so the no-payload mapping is
+  source-derived in `test/reviewer_add_note_destination_test.dart`. Logging,
+  concrete Android destination construction, navigation Flow, and lifecycle
+  handling remain host-side.
 - Reviewer previous-card info: `reviewerPreviousCardInfoDirective` selects
   host-localized no-card feedback for a null saved previous-card ID and carries
   every non-null ID unchanged into a navigation directive. SavedStateHandle,

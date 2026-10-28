@@ -53,6 +53,12 @@ substitution using host-computed comparison HTML.
   the source-equivalent total due count across top-level decks, including
   signed 32-bit `Int` overflow behavior. An omitted synthetic-root flag is
   derived from negative depth, matching AnkiDroid's level projection.
+- Deck-picker position lookup: `findDeckPosition` returns the first visible
+  index for a deck or recursively follows the host-resolved parent chain until
+  a visible ancestor is found, defaulting to zero when the chain ends. The host
+  supplies flattened IDs and resolves parents from the due tree; tree state and
+  scrolling remain host-side. No direct pinned source test covers this helper,
+  so its Dart cases are source-derived.
 - Card Browser columns: `BrowserColumnCollection` recognizes the source column
   keys, loads an ordered `|`-separated value with load-time de-duplication and
   fallback to caller-supplied defaults, and returns serialized update results

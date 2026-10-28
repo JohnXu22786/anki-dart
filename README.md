@@ -19,6 +19,7 @@ mark/bury/suspend decisions, and
 selected-card flag update effect plans, all-decks filter state,
 selected-row export data, marked/suspended preset-search plans, the Card Browser
 duplicate-query gate, flag-filter query text,
+note-editor destination payload,
 structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance scheduling and toggle effects, leech-feedback
@@ -235,6 +236,15 @@ substitution using host-computed comparison HTML.
   assert `getCardIdsForNoteEditor()` results; these branch cases are
   source-derived. Row conversion, collection queries, editor destination
   construction, and UI/lifecycle behavior remain host-side.
+- Card Browser note-editor destination: `browserEditNoteDestination` returns
+  no destination for an empty host-supplied card-ID list; otherwise it preserves
+  that exact list and builds the source `EditSelection` payload with the default
+  transition and `inCardBrowserActivity` copied from fragmented mode. The
+  pinned `CardBrowserViewModelTest` covers `onTap` command routing but does not
+  assert destination fields; the empty, payload, and fragmented cases are
+  source-derived. The host retains row/card-ID resolution, mode-specific
+  queries, warning/logging, pane-row updates, command/Flow delivery, and Android
+  navigation and lifecycle.
 - Card Browser bulk mark: `planBrowserBulkMarkToggle` returns no operation for
   an empty selected-card list; otherwise it selects tag removal only when every
   resolved note already has `marked`, and selects adding the tag for an unmarked

@@ -353,6 +353,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `CardBrowserViewModelTest.kt:1395–1472` directly covers the major tap
   branches. The host applies Android flows, selection widgets, pane/mode state,
   collection-backed destination lookup, and note-editor commands.
+  Its initial `getInitialDeck()` selection is projected in
+  `lib/src/browser_initial_deck.dart`, preserving launch-intent consumption,
+  intent/persisted/all-decks precedence, and host-selected fallback. Android
+  state persistence, intent/deck lookup, collection reads, and `setSelectedDeck`
+  remain host-side. The direct ViewModel tests cover intent and persisted ID
+  behavior and user-choice persistence; unasserted branches are source-derived.
   Its `toggleMark()` all-or-none target decision is projected by
   `planBrowserBulkMarkToggle()` in `lib/src/browser_bulk_mark.dart`: no selected
   card IDs means no operation; otherwise any unmarked note selects adding the

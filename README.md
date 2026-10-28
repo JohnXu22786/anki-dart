@@ -242,6 +242,17 @@ substitution using host-computed comparison HTML.
   and search execution. The pinned ViewModel tests directly cover default
   search, system text, and deep-link text; the pure SearchQueryJs/all-decks
   startup assignment and unchanged scroll/null fields are source-derived.
+- Card Browser initial selected deck: `planBrowserInitialDeck` reports when the
+  host must consume the launch-intent saved-state flag and chooses a valid
+  resolved intent deck, the all-decks sentinel, a host-validated persisted
+  deck, or the current host-selected deck in source order. Intent extraction,
+  deck lookup/name resolution, `SavedStateHandle`, collection access, and
+  `setSelectedDeck` persistence remain host-side. The pinned direct tests
+  assert intent deck ID selection/persistence, persisted-deck fallback for a
+  missing or unknown intent ID, and user selection persistence across process
+  death; they do not assert consumed-flag transition, deck names, all-decks
+  sentinel precedence, or fallback to the host-selected deck. The Dart cases
+  for those unasserted branches are source-derived.
 - Card Browser post-search initial scroll: `planBrowserPostSearchScroll`
   returns no effects without a pending target; otherwise it orders clearing the
   target before lookup. After the host completes that lookup,

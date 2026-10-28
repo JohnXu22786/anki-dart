@@ -253,6 +253,15 @@ substitution using host-computed comparison HTML.
   death; they do not assert consumed-flag transition, deck names, all-decks
   sentinel precedence, or fallback to the host-selected deck. The Dart cases
   for those unasserted branches are source-derived.
+- Card Browser selected-deck updates: `planBrowserSelectedDeckUpdate` selects
+  the source `lastDeckId` value, prepares an empty AllDecks or singleton
+  host-resolved deck filter, copies only that filter into the current request,
+  then requests search with `forceRefresh = false`. The host persists the ID
+  before applying search effects and owns request-flow mutation, collection
+  access, and search execution. Pinned tests directly assert selected-deck
+  persistence and indirectly exercise search outcomes, but do not assert the
+  complete plan order, preserved request fields, or false refresh argument;
+  those Dart assertions are source-derived.
 - Card Browser post-search initial scroll: `planBrowserPostSearchScroll`
   returns no effects without a pending target; otherwise it orders clearing the
   target before lookup. After the host completes that lookup,

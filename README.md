@@ -242,6 +242,15 @@ substitution using host-computed comparison HTML.
   and search execution. The pinned ViewModel tests directly cover default
   search, system text, and deep-link text; the pure SearchQueryJs/all-decks
   startup assignment and unchanged scroll/null fields are source-derived.
+- Card Browser post-search initial scroll: `planBrowserPostSearchScroll`
+  returns no effects without a pending target; otherwise it orders clearing the
+  target before lookup. After the host completes that lookup,
+  `completeBrowserPostSearchScrollPlan` adds a zero-offset request only when the
+  card exists and has been mapped to a row ID. Search synchronization,
+  collection lookup and Cards/Notes mapping, flow delivery, and RecyclerView
+  scrolling stay host-side. Pinned tests cover valid, missing, cleared, and
+  Notes-mode targets; absent-target, clear-before-missing, host-row-ID
+  passthrough, offset, and plan order cases are source-derived.
 - Card Browser recent searches: `BrowserSearchHistoryModel` keeps searches
   newest-first, promotes structurally equal entries, skips the default blank
   search, and trims history to the source's 30-entry cap.

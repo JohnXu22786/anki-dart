@@ -78,6 +78,13 @@ substitution using host-computed comparison HTML.
   inputs return false. The host supplies child IDs; due-tree construction and
   collection access remain host-side. Its cases are source-derived; see
   [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-node lookup and traversal: `find` checks self before descendants and
+  returns the first depth-first match, including synthetic nodes. `DeckNode` is
+  directly iterable in preorder; its lazy `preorder` iterable and `forEach`
+  visit children in order while omitting synthetic nodes and still traversing
+  their descendants. Cases are source-derived; backend tree construction and
+  weak-parent behavior remain host-side. See
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-name paths: `deckNamePath`, `deckNameBasename`,
   `immediateParentDeckNamePath`, and `immediateParentDeckName` preserve
   AnkiDroid's exact `::` split and join behavior, including empty components.

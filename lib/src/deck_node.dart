@@ -21,7 +21,9 @@
  * Dart input model for the deck-tree fields consumed by the deck picker.
  */
 
-class DeckNode {
+import 'dart:collection';
+
+class DeckNode extends IterableBase<DeckNode> {
   DeckNode({
     required this.did,
     required this.fullDeckName,
@@ -65,6 +67,44 @@ class DeckNode {
 
   String get lastDeckNameComponent =>
       _lastDeckNameComponent ?? fullDeckName.split('::').last;
+
+  /// Returns this node or the first descendant with [deckId].
+  ///
+  /// The current node is checked before children, which are searched in order.
+  /// Synthetic nodes participate in lookup just like other nodes.
+  DeckNode? find(int deckId) {
+    if (did == deckId) {
+      return this;
+    }
+    for (final child in children) {
+      final found = child.find(deckId);
+      if (found != null) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  /// The source-order preorder traversal of this node and its descendants.
+  ///
+  /// Synthetic nodes are omitted, while their descendants are still visited.
+  Iterable<DeckNode> get preorder sync* {
+    if (!isSyntheticDeck) {
+      yield this;
+    }
+    for (final child in children) {
+      yield* child.preorder;
+    }
+  }
+
+  @override
+  Iterator<DeckNode> get iterator => preorder.iterator;
+
+  /// Calls [action] on this node and descendants in preorder.
+  ///
+  /// Synthetic nodes are omitted, matching [preorder].
+  @override
+  void forEach(void Function(DeckNode) action) => preorder.forEach(action);
 
   /// Returns the total due count across this node's immediate children.
   ///

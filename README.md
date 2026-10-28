@@ -133,6 +133,16 @@ substitution using host-computed comparison HTML.
   builds preview IDs and launches Android navigation. Upstream tests directly
   cover no-selection and single-selection indices; multi-selection, stale IDs,
   and duplicate browser rows are source-derived.
+- Card Browser preview payload: `browserPreviewPayload` uses host-supplied
+  selected card IDs with index zero for multiple selected rows; otherwise it
+  uses host-supplied one-card-per-row IDs and the existing starting-index
+  projection. It passes the ID lists through unchanged, including their order,
+  and preserves a stale selected row's `-1` index. Collection queries,
+  row-to-card mapping, `IdsFile`/cache creation, Android destination creation,
+  and activity launch remain host-side. Pinned
+  `CardBrowserViewModelTest.kt:990–1041` covers Notes mode, no-selection Cards,
+  and single-selected Cards positions; the payload choice and stale-index cases
+  are source-derived.
 - Card Browser edit-row choice: `browserRowToEdit` returns `null` when there
   are no browser rows; otherwise it chooses the first selected ID in
   multi-select mode without validating membership, or the first browser row in

@@ -127,6 +127,43 @@ int browserPreviewStartingIndex({
   return rowIds.indexOf(selectedRows.first);
 }
 
+/// The host-supplied IDs and starting index selected for Card Browser preview.
+///
+/// [cardIds] is passed through unchanged so the host retains source query order.
+final class BrowserPreviewPayload {
+  const BrowserPreviewPayload({
+    required this.cardIds,
+    required this.currentIndex,
+  });
+
+  final List<int> cardIds;
+  final int currentIndex;
+}
+
+/// Projects `CardBrowserViewModel.queryPreviewIntentData()`'s payload choice.
+///
+/// With multiple selected rows the source uses selected card IDs and index 0.
+/// Otherwise it uses one card ID per row and [browserPreviewStartingIndex],
+/// which preserves `-1` for a stale selected row. The host performs both ID
+/// queries and owns IdsFile/cache creation and Android navigation.
+BrowserPreviewPayload browserPreviewPayload({
+  required List<BrowserRowId> rowIds,
+  required List<BrowserRowId> selectedRows,
+  required List<int> oneCardPerRowIds,
+  required List<int> selectedCardIds,
+}) {
+  if (selectedRows.length > 1) {
+    return BrowserPreviewPayload(cardIds: selectedCardIds, currentIndex: 0);
+  }
+  return BrowserPreviewPayload(
+    cardIds: oneCardPerRowIds,
+    currentIndex: browserPreviewStartingIndex(
+      rowIds: rowIds,
+      selectedRows: selectedRows,
+    ),
+  );
+}
+
 /// Projects `onPaneRowChanged` to ordered adapter positions needing refresh.
 ///
 /// Non-null previous/new IDs are deduplicated by [BrowserRowId] value equality

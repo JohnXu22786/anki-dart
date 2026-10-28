@@ -25,6 +25,68 @@ import 'package:anki_dart/anki_dart.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('Browser preview payload', () {
+    const rowIds = [BrowserRowId(10), BrowserRowId(20), BrowserRowId(30)];
+
+    test('uses selected card IDs in order for multiple selected rows', () {
+      final selectedCardIds = [303, 101, 202];
+      final rowCardIds = [10, 20, 30];
+
+      final payload = browserPreviewPayload(
+        rowIds: rowIds,
+        selectedRows: const [BrowserRowId(30), BrowserRowId(10)],
+        oneCardPerRowIds: rowCardIds,
+        selectedCardIds: selectedCardIds,
+      );
+
+      expect(payload.currentIndex, 0);
+      expect(payload.cardIds, same(selectedCardIds));
+      expect(payload.cardIds, [303, 101, 202]);
+    });
+
+    test('uses one-card-per-row IDs and zero when no row is selected', () {
+      final rowCardIds = [30, 10, 20];
+
+      final payload = browserPreviewPayload(
+        rowIds: rowIds,
+        selectedRows: const [],
+        oneCardPerRowIds: rowCardIds,
+        selectedCardIds: const [999],
+      );
+
+      expect(payload.currentIndex, 0);
+      expect(payload.cardIds, same(rowCardIds));
+      expect(payload.cardIds, [30, 10, 20]);
+    });
+
+    test('uses one-card-per-row IDs and the selected row index', () {
+      final rowCardIds = [30, 10, 20];
+
+      final payload = browserPreviewPayload(
+        rowIds: rowIds,
+        selectedRows: const [BrowserRowId(20)],
+        oneCardPerRowIds: rowCardIds,
+        selectedCardIds: const [999],
+      );
+
+      expect(payload.currentIndex, 1);
+      expect(payload.cardIds, same(rowCardIds));
+      expect(payload.cardIds, [30, 10, 20]);
+    });
+
+    test('preserves stale selected row index instead of defaulting it', () {
+      final payload = browserPreviewPayload(
+        rowIds: rowIds,
+        selectedRows: const [BrowserRowId(99)],
+        oneCardPerRowIds: const [10, 20, 30],
+        selectedCardIds: const [999],
+      );
+
+      expect(payload.currentIndex, -1);
+      expect(payload.cardIds, [10, 20, 30]);
+    });
+  });
+
   group('Browser preview starting index', () {
     const rowIds = [BrowserRowId(10), BrowserRowId(20), BrowserRowId(30)];
 

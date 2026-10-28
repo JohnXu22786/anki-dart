@@ -135,9 +135,10 @@ substitution using host-computed comparison HTML.
 - Deck-name paths: `deckNamePath`, `deckNameBasename`,
   `immediateParentDeckNamePath`, and `immediateParentDeckName` preserve
   AnkiDroid's exact `::` split and join behavior, including empty components.
-  The host retains deck lookup, shortcut data, and Android shortcut delivery;
-  the basename projection used for the shortcut's short label is available to
-  the host. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+  The host resolves a deck ID to its exact full name and passes both to
+  `ShortcutData`, which derives the short label and retains the full long label.
+  Flow emission and Android shortcut delivery remain host-side. Cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Card Browser columns: `BrowserColumnCollection` recognizes the source column
   keys, loads an ordered `|`-separated value with load-time de-duplication and
   fallback to caller-supplied defaults, and returns serialized update results

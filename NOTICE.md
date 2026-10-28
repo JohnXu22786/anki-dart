@@ -863,6 +863,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   disabled state/preference effect-order cases. No direct ReviewerViewModel
   record-voice toggle assertion was found; `AudioRecordViewTest.kt` checks only
   the record button content description.
+- `test/reviewer_edit_note_destination_test.dart` adds source-derived current
+  card ID pass-through cases for the Reviewer's EDIT destination; no direct
+  pinned Reviewer EDIT destination assertion was found.
 - `test/gesture_parser_test.dart` checks the input, target, swipe, scroll,
   malformed-data, and asynchronous timing behavior recorded in
   `GestureParserTest.kt`; it is not a port of the Android test harness.

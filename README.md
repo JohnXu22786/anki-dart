@@ -464,6 +464,14 @@ substitution using host-computed comparison HTML.
   source-derived in `test/reviewer_current_card_info_destination_test.dart`.
   Current-card lookup, concrete `CardInfoDestination` construction, navigation
   Flow, and Android/lifecycle handling remain host-side.
+- Reviewer edit-note destination: `reviewerEditNoteFromPreviewerDirective`
+  carries the host-resolved current card ID unchanged in a typed directive
+  corresponding to `NoteEditorDestination.EditNoteFromPreviewer(cardId)`.
+  The pinned Reviewer tests have no direct EDIT destination assertion, so
+  pass-through cases are source-derived in
+  `test/reviewer_edit_note_destination_test.dart`. Current-card lookup, logging,
+  concrete Android destination construction, navigation Flow, and lifecycle
+  handling remain host-side.
 - Reviewer previous-card info: `reviewerPreviousCardInfoDirective` selects
   host-localized no-card feedback for a null saved previous-card ID and carries
   every non-null ID unchanged into a navigation directive. SavedStateHandle,

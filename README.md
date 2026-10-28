@@ -22,7 +22,8 @@ structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance scheduling and toggle effects, leech-feedback
 composition, whiteboard and record-voice toggle effects, the headless reviewer
-reset-progress request projection, gesture parser, parsed-gesture command
+reset-progress and edited-tag request projections, gesture parser,
+parsed-gesture command
 routing, reviewer binding codec/map and
 default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
@@ -502,6 +503,15 @@ substitution using host-computed comparison HTML.
   source-derived in `test/reviewer_reset_progress_directive_test.dart`.
   Confirmation UI, SharedFlow delivery, reset implementation, and lifecycle
   handling remain host-side.
+- Reviewer edited tags: `reviewerEditedTagsDirective()` returns no request for
+  structurally equal ordered tag lists; otherwise it carries the selected tags
+  joined with one literal ASCII space, preserving order, duplicates, empty
+  elements, and whitespace. The pinned `onEditedTags` implementation is at
+  `ReviewerViewModel.kt:665–679`, called from `ReviewerFragment.kt:670`; no
+  direct pinned `ReviewerViewModelTest` assertion was found, so focused Dart
+  cases are source-derived. Current-card/note/collection lookup,
+  `note.setTagsFromStr`, undoable `updateNote`, logging, and coroutine delivery
+  remain host-side. Card Browser and Previewer mark-tag paths are separate.
 - Reviewer previous-card info: `reviewerPreviousCardInfoDirective` selects
   host-localized no-card feedback for a null saved previous-card ID and carries
   every non-null ID unchanged into a navigation directive. SavedStateHandle,

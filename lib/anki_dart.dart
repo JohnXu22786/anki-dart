@@ -31,6 +31,7 @@ export 'src/reviewer_page_navigation_directive.dart';
 export 'src/reviewer_replay_voice_directive.dart';
 export 'src/reviewer_finish_result_directive.dart';
 export 'src/reviewer_show_answer_guard.dart';
+export 'src/reviewer_action_guard.dart';
 export 'src/browser_column_collection.dart';
 export 'src/browser_column_selection_move.dart';
 export 'src/browser_column_selection_toggle.dart';

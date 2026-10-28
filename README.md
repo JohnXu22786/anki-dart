@@ -64,6 +64,15 @@ substitution using host-computed comparison HTML.
   boundaries, exact `"2.0.2"` mapping, and fallback-only key removal. The host
   supplies typed SharedPreferences callbacks and persists the current version;
   Android preference IO stays host-side. Its cases are source-derived.
+- Deck-picker sync icon: `planDeckPickerSyncIconFetch` gates auth lookup and
+  backend status requests in source order. The lazy
+  `projectDeckPickerSyncIconResponse` iterable emits a nonempty endpoint effect
+  before status mapping; the host must apply effects as it iterates so endpoint
+  persistence still happens before an unrecognized required state throws the
+  source TODO as `UnimplementedError`. Caught exceptions map to Normal. The host
+  owns auth lookup, backend IO, endpoint preference persistence, exception
+  adaptation and logging, coroutine scheduling, and UI. Cases are source-derived;
+  see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker default-child predicate: `onlyHasDefaultDeck` returns true only
   for exactly one child with the default deck ID (`1`); empty and multi-child
   inputs return false. The host supplies child IDs; due-tree construction and

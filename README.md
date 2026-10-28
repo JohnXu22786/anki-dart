@@ -102,6 +102,14 @@ substitution using host-computed comparison HTML.
   host's selected collection ID and publish count changes after success.
   Collection, undo, scheduler, flow, coroutine, and exception behavior remain
   host-side. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker deck deletion: `planDeckPickerDeleteDeck` orders exact singleton
+  removal, focus reset to default deck ID `1`, then the deck name and deleted
+  card count notification. The host resolves `decks.getLegacy(did)!!.name`
+  first, runs removal undoably, and applies later effects only after success.
+  `deleteSelectedDeck` remains host-side: it reads the selected ID, delegates
+  to `deleteDeck`, and joins that job. Collection access, the source null
+  assertion, undo, coroutine, and Flow behavior stay host-side. Cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker default-child predicate: `onlyHasDefaultDeck` returns true only
   for exactly one child with the default deck ID (`1`); empty and multi-child
   inputs return false. The host supplies child IDs; due-tree construction and

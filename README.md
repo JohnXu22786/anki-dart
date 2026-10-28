@@ -22,7 +22,8 @@ structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance scheduling and toggle effects, leech-feedback
 composition, whiteboard and record-voice toggle effects, the headless reviewer
-gesture parser, parsed-gesture command routing, reviewer binding codec/map and
+reset-progress request projection, gesture parser, parsed-gesture command
+routing, reviewer binding codec/map and
 default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
@@ -488,6 +489,12 @@ substitution using host-computed comparison HTML.
   no direct ADD_NOTE destination assertion, so the no-payload mapping is
   source-derived in `test/reviewer_add_note_destination_test.dart`. Logging,
   concrete Android destination construction, navigation Flow, and lifecycle
+  handling remain host-side.
+- Reviewer reset progress: `reviewerResetProgressDirective()` returns a
+  payload-free typed directive for one `resetProgressFlow` emission. The pinned
+  Reviewer tests have no direct RESET_PROGRESS assertion, so this mapping is
+  source-derived in `test/reviewer_reset_progress_directive_test.dart`.
+  Confirmation UI, SharedFlow delivery, reset implementation, and lifecycle
   handling remain host-side.
 - Reviewer previous-card info: `reviewerPreviousCardInfoDirective` selects
   host-localized no-card feedback for a null saved previous-card ID and carries

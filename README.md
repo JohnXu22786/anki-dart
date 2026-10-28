@@ -468,6 +468,12 @@ substitution using host-computed comparison HTML.
   matching undo/redo message callback with a nonempty operation unchanged.
   Undo availability and execution, protobuf extraction, localization,
   Reviewer action dispatch, and feedback Flow delivery remain host-side.
+- Reviewer media replay side: `reviewerReplayMediaSide` maps the host-supplied
+  `showingAnswer` value to `back` when true and `front` when false, matching the
+  pinned `replayMedia()` side choice. The pinned Reviewer tests have no direct
+  PLAY_MEDIA action assertion, so both cases are source-derived in
+  `test/reviewer_replay_media_side_test.dart`. State access, action dispatch,
+  `cardMediaPlayer.replayAll`, media playback, and lifecycle remain host-side.
 - Reviewer current-card info: `reviewerCurrentCardInfoDestination` pairs the
   host-resolved current card ID unchanged with the source
   `EntryPoint.CURRENT_CARD_STUDY`. The pinned Reviewer tests have no direct

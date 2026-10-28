@@ -255,10 +255,11 @@ substitution using host-computed comparison HTML.
 - Card Browser duplicate-query gate: `planBrowserSetQuery` skips request
   assignment and search only when refresh is not forced and the host reports
   equal serialized SearchStrings. Otherwise it copies the exact input query,
-  preserves the structured filters, then requests search with the supplied
-  `forceRefresh` and `fromUserSearch` values. The host supplies Anki SearchString
-  equality and owns request-flow mutation, collection access, search execution,
-  and coroutine/cancellation behavior. Pinned ViewModel tests exercise user
+  preserves the structured filters, then requests search with the exact
+  `forceRefresh` and `fromUserSearch` values (defaulting to `true` and `false`,
+  respectively). The host supplies Anki SearchString equality and owns
+  request-flow mutation, collection access, search execution, and
+  coroutine/cancellation behavior. Pinned ViewModel tests exercise user
   searches but do not directly assert this duplicate-query gate; the Dart cases
   are source-derived.
 - Card Browser flag filtering: `browserSearchTermsWithFlag` preserves the

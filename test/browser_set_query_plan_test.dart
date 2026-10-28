@@ -25,6 +25,21 @@ import 'package:test/test.dart';
 
 void main() {
   group('planBrowserSetQuery', () {
+    test('uses the source refresh and user-search defaults', () {
+      const currentRequest = BrowserSearchRequest(query: 'current');
+
+      final plan = planBrowserSetQuery(
+        currentRequest: currentRequest,
+        query: 'next',
+        serializedSearchStringsEqual: false,
+      )!;
+
+      expect(plan.updatedRequest.query, 'next');
+      final search = plan.directives.last as BrowserRequestQuerySearchDirective;
+      expect(search.forceRefresh, isTrue);
+      expect(search.fromUserSearch, isFalse);
+    });
+
     test(
       'skips assignment and search for equal strings without forced refresh',
       () {

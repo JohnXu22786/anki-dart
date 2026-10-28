@@ -83,9 +83,9 @@ final class BrowserSetQueryPlan {
 BrowserSetQueryPlan? planBrowserSetQuery({
   required BrowserSearchRequest currentRequest,
   required String query,
-  required bool forceRefresh,
   required bool serializedSearchStringsEqual,
-  required bool fromUserSearch,
+  bool forceRefresh = true,
+  bool fromUserSearch = false,
 }) {
   if (!forceRefresh && serializedSearchStringsEqual) return null;
 

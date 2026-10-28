@@ -40,6 +40,7 @@ export 'src/reviewer_bury_card_plan.dart';
 export 'src/reviewer_bury_note_plan.dart';
 export 'src/reviewer_delete_note_plan.dart';
 export 'src/reviewer_suspend_note_plan.dart';
+export 'src/reviewer_set_due_date_directive.dart';
 export 'src/reviewer_user_action_script.dart';
 export 'src/reviewer_hint_expression.dart';
 export 'src/reviewer_page_navigation_directive.dart';

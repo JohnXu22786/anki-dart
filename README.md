@@ -105,6 +105,11 @@ substitution using host-computed comparison HTML.
   host's selected collection ID and publish count changes after success.
   Collection, undo, scheduler, flow, coroutine, and exception behavior remain
   host-side. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker unbury operation: `projectDeckPickerUnburyDeck` carries the
+  supplied deck ID unchanged for the host's undoable `sched.unburyDeck` call.
+  It does not select the deck or publish a deck-list refresh/count-change
+  notification. Undo, scheduler, coroutine, error handling, and UI behavior
+  remain host-side. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker deck deletion: `planDeckPickerDeleteDeck` orders exact singleton
   removal, focus reset to default deck ID `1`, then the deck name and deleted
   card count notification. The host resolves `decks.getLegacy(did)!!.name`

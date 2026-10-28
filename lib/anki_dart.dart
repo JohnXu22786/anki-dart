@@ -27,6 +27,7 @@ export 'src/deck_picker_selection_effects.dart';
 export 'src/deck_picker_expand_toggle_effects.dart';
 export 'src/deck_picker_navigation_plan.dart';
 export 'src/deck_picker_filtered_deck_operation_plan.dart';
+export 'src/deck_picker_unbury_deck_operation.dart';
 export 'src/deck_picker_delete_deck_plan.dart';
 export 'src/deck_picker_initial_state_projection.dart';
 export 'src/deck_picker_scheduler_upgrade_prompt.dart';

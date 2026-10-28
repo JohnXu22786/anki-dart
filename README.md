@@ -73,6 +73,16 @@ substitution using host-computed comparison HTML.
   owns auth lookup, backend IO, endpoint preference persistence, exception
   adaptation and logging, coroutine scheduling, and UI. Cases are source-derived;
   see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker options-menu refresh: `planDeckPickerOptionsMenuRefresh` maps
+  collection accessibility, the ten-deck search-icon threshold, undo values,
+  the empty-collection predicate, and the intermediate Normal sync icon;
+  `completeDeckPickerOptionsMenuRefresh` replaces that icon after the host sync
+  fetch. The pinned source constructs the intermediate state before the fetch,
+  but assigns only the completed state to StateFlow. The host owns collection
+  reads, sync execution/error propagation, StateFlow assignment, and UI.
+  `planDeckPickerUndoMenuRefresh` updates only the undo fields when the
+  collection is open, preserving a null current state and doing nothing when
+  inaccessible. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker default-child predicate: `onlyHasDefaultDeck` returns true only
   for exactly one child with the default deck ID (`1`); empty and multi-child
   inputs return false. The host supplies child IDs; due-tree construction and

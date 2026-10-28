@@ -21,6 +21,7 @@ export 'src/deck_filters.dart';
 export 'src/deck_picker_previous_version.dart';
 export 'src/deck_position.dart';
 export 'src/deck_picker_sync_icon_projection.dart';
+export 'src/deck_picker_options_menu_projection.dart';
 export 'src/deck_node.dart';
 export 'src/deck_name_path.dart';
 export 'src/display_deck_node.dart';

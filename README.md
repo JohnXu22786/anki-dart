@@ -95,6 +95,13 @@ substitution using host-computed comparison HTML.
   supplies the report and owns the undoable deletion, orphan-note handling,
   result count, and notification. Cases are source-derived; see
   [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker filtered-deck operations: `planDeckPickerEmptyFilteredDeck`
+  preserves selection in one collection block followed by a separate undoable
+  empty operation; `planDeckPickerRebuildFilteredDeck` keeps selection and
+  rebuild in one collection block. Both defer the scheduler deck ID to the
+  host's selected collection ID and publish count changes after success.
+  Collection, undo, scheduler, flow, coroutine, and exception behavior remain
+  host-side. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker default-child predicate: `onlyHasDefaultDeck` returns true only
   for exactly one child with the default deck ID (`1`); empty and multi-child
   inputs return false. The host supplies child IDs; due-tree construction and

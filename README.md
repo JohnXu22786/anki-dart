@@ -82,8 +82,11 @@ substitution using host-computed comparison HTML.
   returns the first depth-first match, including synthetic nodes. `DeckNode` is
   directly iterable in preorder; its lazy `preorder` iterable and `forEach`
   visit children in order while omitting synthetic nodes and still traversing
-  their descendants. Cases are source-derived; backend tree construction and
-  weak-parent behavior remain host-side. See
+  their descendants. `deckIdsForShortcutDisable` maps the first matching
+  subtree to decimal ID strings in that iterator order, or returns an empty
+  list when the tree or target is missing. The host emits the flow and owns
+  tree/backend access and Android shortcut handling. Cases are source-derived;
+  backend tree construction and weak-parent behavior remain host-side. See
   [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-node study readiness and diagnostics: `hasCardsReadyToStudy` is true
   when any review, learning, or new count is positive. `toString` preserves the

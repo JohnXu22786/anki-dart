@@ -134,4 +134,12 @@ class DeckNode extends IterableBase<DeckNode> {
 bool onlyHasDefaultDeck(List<int> childDeckIds) =>
     childDeckIds.length == 1 && childDeckIds.single == 1;
 
+/// Returns the IDs AnkiDroid emits when disabling shortcuts for [deckId].
+///
+/// Lookup uses [DeckNode.find]'s first depth-first match, then iterates that
+/// subtree in source order. Synthetic nodes are omitted by the iterator.
+List<String> deckIdsForShortcutDisable(DeckNode? dueTree, int deckId) =>
+    dueTree?.find(deckId)?.map((node) => node.did.toString()).toList() ??
+    const <String>[];
+
 int _addInt32(int left, int right) => (left + right).toSigned(32);

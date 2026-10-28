@@ -24,6 +24,7 @@ export 'src/deck_picker_sync_icon_projection.dart';
 export 'src/deck_picker_options_menu_projection.dart';
 export 'src/deck_picker_startup_projection.dart';
 export 'src/deck_picker_selection_effects.dart';
+export 'src/deck_picker_navigation_plan.dart';
 export 'src/deck_picker_initial_state_projection.dart';
 export 'src/deck_picker_empty_card_deletion.dart';
 export 'src/deck_node.dart';

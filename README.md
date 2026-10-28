@@ -297,6 +297,14 @@ substitution using host-computed comparison HTML.
   AllDecks states; the Dart check for unrelated filters is source-derived.
   Current search flow, result-message delivery, localization, and UI remain
   host-side.
+- Deck-picker navigation: `planDeckPickerBrowseCards` orders selecting the
+  supplied deck before browsing it; `planDeckPickerAddNote` selects only when
+  both the nullable deck ID and `setAsCurrent` permit it, then always preserves
+  the original nullable ID in navigation. `planDeckPickerOpenDeckOptions` uses
+  either explicit filtered value, including `false`, or asks the host to
+  resolve it from the collection when omitted. Collection access, concrete
+  Android destinations, and navigation flows remain host-side. These cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Card Browser search result messages: `browserSearchResultMessage` returns no
   message for non-user searches; otherwise it preserves the source order of
   AllDecks, zero selected-deck rows, then a non-empty selected deck. AllDecks

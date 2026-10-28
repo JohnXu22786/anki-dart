@@ -18,6 +18,7 @@
  */
 
 export 'src/deck_filters.dart';
+export 'src/deck_picker_previous_version.dart';
 export 'src/deck_position.dart';
 export 'src/deck_node.dart';
 export 'src/display_deck_node.dart';

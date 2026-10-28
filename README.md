@@ -59,6 +59,11 @@ substitution using host-computed comparison HTML.
   supplies flattened IDs and resolves parents from the due tree; tree state and
   scrolling remain host-side. No direct pinned source test covers this helper,
   so its Dart cases are source-derived.
+- Deck-picker previous-version lookup: `getPreviousDeckPickerVersion` preserves
+  the source's Long, Int, and String getter order, typed mismatch catch
+  boundaries, exact `"2.0.2"` mapping, and fallback-only key removal. The host
+  supplies typed SharedPreferences callbacks and persists the current version;
+  Android preference IO stays host-side. Its cases are source-derived.
 - Card Browser columns: `BrowserColumnCollection` recognizes the source column
   keys, loads an ordered `|`-separated value with load-time de-duplication and
   fallback to caller-supplied defaults, and returns serialized update results

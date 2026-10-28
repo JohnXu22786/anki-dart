@@ -73,6 +73,7 @@ substitution using host-computed comparison HTML.
   owns auth lookup, backend IO, endpoint preference persistence, exception
   adaptation and logging, coroutine scheduling, and UI. Cases are source-derived;
   see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker startup: `planDeckPickerStartup` maps the permission gate and startup-job intent; `completeDeckPickerStartup` maps fatal-error and success responses after the host check, preserving source effect order. Permission denial leaves the first-refresh flag unchanged and assigns no startup job; authorized startup sets the flag and assigns its job before failure checking. Failure publishes only FatalError; success configures rendering, launches deck-list loading on IO, then publishes Success without waiting for the load. `planDeckPickerUpdateDeckList` preserves the active-job guard, one-shot first-refresh skip, and ordinary load request; `planDeckPickerScreenResumed` clears that flag. The host supplies Android permissions and startup-failure resolution, schedules IO and coroutine/job/lifecycle work, configures rendering, loads decks, and publishes MutableStateFlow values. The pinned tests directly cover the refresh guard and resume transition, not response/effect sequencing; those Dart cases are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker options-menu refresh: `planDeckPickerOptionsMenuRefresh` maps
   collection accessibility, the ten-deck search-icon threshold, undo values,
   the empty-collection predicate, and the intermediate Normal sync icon;

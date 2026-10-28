@@ -22,7 +22,8 @@ structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance scheduling and toggle effects, leech-feedback
 composition, whiteboard and record-voice toggle effects, the headless reviewer
-reset-progress, stop-auto-advance, and edited-tag request projections,
+reset-progress, stop-auto-advance, statistics-destination, and edited-tag
+request projections,
 gesture parser,
 parsed-gesture command
 routing, reviewer binding codec/map and
@@ -584,6 +585,12 @@ substitution using host-computed comparison HTML.
   in `test/reviewer_browse_destination_test.dart`. Collection/current-card
   reads, Android destination construction, navigation Flow, and lifecycle
   remain host-side.
+- Reviewer statistics destination: `reviewerStatisticsDestination()` selects
+  the payload-free statistics destination for `ViewerAction.STATISTICS`. The
+  pinned Reviewer tests have no direct assertion for this branch; the mapping
+  case is source-derived. Flow delivery, Android intent/activity navigation,
+  and statistics UI/collection access remain host-side. `STATISTICS` is not a
+  `ViewerCommand` and adds no binding. See `ANKIDROID_UPSTREAM.md`.
 - Reviewer whiteboard toggle: `planReviewerWhiteboardToggle` inverts the
   host-supplied state, publishes the new value, then requests assigning that
   same value to the repository preference. StateFlow mutation, repository

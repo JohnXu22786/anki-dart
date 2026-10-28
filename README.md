@@ -457,6 +457,13 @@ substitution using host-computed comparison HTML.
   matching undo/redo message callback with a nonempty operation unchanged.
   Undo availability and execution, protobuf extraction, localization,
   Reviewer action dispatch, and feedback Flow delivery remain host-side.
+- Reviewer current-card info: `reviewerCurrentCardInfoDestination` pairs the
+  host-resolved current card ID unchanged with the source
+  `EntryPoint.CURRENT_CARD_STUDY`. The pinned Reviewer tests have no direct
+  assertion for this action, so the ID pass-through and entry-point cases are
+  source-derived in `test/reviewer_current_card_info_destination_test.dart`.
+  Current-card lookup, concrete `CardInfoDestination` construction, navigation
+  Flow, and Android/lifecycle handling remain host-side.
 - Reviewer previous-card info: `reviewerPreviousCardInfoDirective` selects
   host-localized no-card feedback for a null saved previous-card ID and carries
   every non-null ID unchanged into a navigation directive. SavedStateHandle,

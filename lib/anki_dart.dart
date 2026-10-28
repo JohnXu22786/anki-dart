@@ -29,6 +29,7 @@ export 'src/reviewer_record_voice_toggle.dart';
 export 'src/reviewer_flag_toggle_target.dart';
 export 'src/reviewer_suspend_card_plan.dart';
 export 'src/reviewer_bury_card_plan.dart';
+export 'src/reviewer_bury_note_plan.dart';
 export 'src/reviewer_suspend_note_plan.dart';
 export 'src/reviewer_user_action_script.dart';
 export 'src/reviewer_hint_expression.dart';

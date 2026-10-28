@@ -300,6 +300,11 @@ substitution using host-computed comparison HTML.
   owns logging, Android focus, and widgets. Pinned ViewModel tests cover query
   text used by save-search behavior, but do not assert these state transitions;
   the transition assertions are source-derived.
+- Card Browser search availability: `browserQueryCanSearch` returns true only
+  for a non-null, nonempty query. Whitespace-only text remains searchable; the
+  predicate does not trim. The host retains the reactive flow and UI updates.
+  No pinned ViewModel test directly asserts this predicate, so the Dart cases
+  are source-derived.
 - Card Browser save-search prompt decision: `browserSaveSearchPromptQuery`
   returns null for a null or exactly empty temporary query and otherwise
   returns the exact query unchanged, including whitespace-only text. The host

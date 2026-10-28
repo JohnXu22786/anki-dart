@@ -79,4 +79,11 @@ class DeckNode {
       });
 }
 
+/// Returns whether [childDeckIds] contains only the default deck.
+///
+/// This matches `DeckNode.onlyHasDefaultDeck()` in AnkiDroid: the single child
+/// must have ID 1; empty or multi-child lists return false.
+bool onlyHasDefaultDeck(List<int> childDeckIds) =>
+    childDeckIds.length == 1 && childDeckIds.single == 1;
+
 int _addInt32(int left, int right) => (left + right).toSigned(32);

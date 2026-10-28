@@ -64,6 +64,11 @@ substitution using host-computed comparison HTML.
   boundaries, exact `"2.0.2"` mapping, and fallback-only key removal. The host
   supplies typed SharedPreferences callbacks and persists the current version;
   Android preference IO stays host-side. Its cases are source-derived.
+- Deck-picker default-child predicate: `onlyHasDefaultDeck` returns true only
+  for exactly one child with the default deck ID (`1`); empty and multi-child
+  inputs return false. The host supplies child IDs; due-tree construction and
+  collection access remain host-side. Its cases are source-derived; see
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Card Browser columns: `BrowserColumnCollection` recognizes the source column
   keys, loads an ordered `|`-separated value with load-time de-duplication and
   fallback to caller-supplied defaults, and returns serialized update results

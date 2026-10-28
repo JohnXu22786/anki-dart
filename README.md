@@ -376,6 +376,13 @@ substitution using host-computed comparison HTML.
   source-derived cases cover both failure gates. Card/note lookup, NoteService
   calls, `marked` tag mutation, persistence, action dispatch, and StateFlow
   delivery remain host-side.
+- Reviewer mark/flag icon presentation: `reviewerMarkIconVisibilityUpdate`
+  preserves toolbar suppression and otherwise follows the marked Boolean;
+  `reviewerFlagIconPresentation` preserves toolbar suppression, hides for NONE,
+  or passes through the selected flag with a show update. The pinned Reviewer
+  tests do not assert these icon collector decisions, so the Dart cases are
+  source-derived. Flow collection, preference reads, drawable lookup and
+  Android view updates remain host-side.
 - NoteService mark update: `planNoteServiceToggleMark` removes the literal
   `marked` tag when the supplied state is true or adds it when false, then
   requests undoable note update. The host reads state, mutates the note, and

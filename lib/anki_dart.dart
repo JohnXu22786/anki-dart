@@ -72,6 +72,7 @@ export 'src/browser_row_selection.dart';
 export 'src/browser_row_activation.dart';
 export 'src/browser_editor_card_ids.dart';
 export 'src/browser_note_editor_destination.dart';
+export 'src/browser_card_info_destination.dart';
 export 'src/browser_bulk_mark.dart';
 export 'src/browser_bulk_bury.dart';
 export 'src/browser_bulk_suspend.dart';

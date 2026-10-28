@@ -90,6 +90,7 @@ export 'src/change_note_type_tab.dart';
 export 'src/selected_index.dart';
 export 'src/change_note_type_field_mapping_update.dart';
 export 'src/browser_selected_flag_plan.dart';
+export 'src/browser_selected_cards_move_directive.dart';
 export 'src/browser_selection_export.dart';
 export 'src/card_appearance_css.dart';
 export 'src/card_media_markup.dart';

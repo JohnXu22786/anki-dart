@@ -226,6 +226,13 @@ substitution using host-computed comparison HTML.
   are source-derived. The host checks selection before resolving card IDs,
   maps queue values, runs the undoable scheduler operation, and exposes the
   result only after success.
+- Card Browser selected-card deck moves: `planBrowserSelectedCardsMove` emits
+  one `setDeck` operation with the exact host-resolved ordered card IDs and
+  target deck ID, then passes the operation result through unchanged. The pinned
+  Notes-mode test covers two selected note rows resolving to four cards and
+  leaves unselected rows unchanged; its Dart cases cover the mapping and empty
+  resolved IDs. The host resolves selection, runs the undoable collection
+  operation, and reports its changed count in the snackbar.
 - Card Browser selected-card flag updates: `planBrowserSelectedCardsFlagUpdate`
   retains the supplied flag and selected-ID list, then orders the flag write
   before card-state-changed publication and the eventual same-ID return. It

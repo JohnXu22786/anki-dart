@@ -465,6 +465,13 @@ substitution using host-computed comparison HTML.
   Reviewer tests have no direct assertion for this action; null/non-null cases,
   including zero pass-through, are source-derived in
   `test/reviewer_previous_card_info_directive_test.dart`.
+- Reviewer browse destination: `reviewerBrowseToCardDirective` carries the
+  host-resolved deck and card IDs unchanged into a browse-to-card directive,
+  corresponding to `BrowserDestination.ScrollToCard`. The pinned Reviewer
+  tests have no direct BROWSE assertion, so exact-ID cases are source-derived
+  in `test/reviewer_browse_destination_test.dart`. Collection/current-card
+  reads, Android destination construction, navigation Flow, and lifecycle
+  remain host-side.
 - Reviewer whiteboard toggle: `planReviewerWhiteboardToggle` inverts the
   host-supplied state, publishes the new value, then requests assigning that
   same value to the repository preference. StateFlow mutation, repository

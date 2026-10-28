@@ -54,13 +54,15 @@ void main() {
       );
     });
 
-    test('empty JavaScript query remains present and all-decks defaults false',
-        () {
-      expect(
-        browserLaunchOptionFromInput(searchQueryJs: ''),
-        const BrowserLaunchSearchQueryJs('', allDecks: false),
-      );
-    });
+    test(
+      'empty JavaScript query remains present and all-decks defaults false',
+      () {
+        expect(
+          browserLaunchOptionFromInput(searchQueryJs: ''),
+          const BrowserLaunchSearchQueryJs('', allDecks: false),
+        );
+      },
+    );
 
     test('JavaScript search takes precedence over card and process text', () {
       expect(
@@ -116,5 +118,92 @@ void main() {
       );
       expect(browserLaunchOptionFromInput(), isNull);
     });
+
+    test('URI deep link extracts the query and keeps deep-link precedence', () {
+      expect(
+        browserLaunchOptionFromUriString(
+          deepLinkUri: 'anki://x-callback-url/browser?search=dog',
+          searchQueryJs: 'js query',
+          cardId: 123,
+          actionIsProcessText: true,
+          processTextSearch: 'selection',
+        ),
+        const BrowserLaunchDeepLink('dog'),
+      );
+    });
+
+    test(
+      'URI deep link preserves empty presence and allows fallback when absent',
+      () {
+        expect(
+          browserLaunchOptionFromUriString(
+            deepLinkUri: 'anki://x-callback-url/browser?search=',
+            searchQueryJs: 'js query',
+          ),
+          const BrowserLaunchDeepLink(''),
+        );
+        expect(
+          browserLaunchOptionFromUriString(
+            deepLinkUri: 'anki://x-callback-url/browser?other=value',
+            searchQueryJs: 'js query',
+          ),
+          const BrowserLaunchSearchQueryJs('js query', allDecks: false),
+        );
+        expect(
+          browserDeepLinkSearchFromUriString(
+            'anki://x-callback-url/browser?search',
+          ),
+          '',
+        );
+      },
+    );
+
+    test('URI extraction returns the first exact raw search key only', () {
+      expect(
+        browserDeepLinkSearchFromUriString(
+          'anki://x-callback-url/browser?search=first&search=second',
+        ),
+        'first',
+      );
+      expect(
+        browserDeepLinkSearchFromUriString(
+          'anki://x-callback-url/browser?%73earch=encoded&search=literal',
+        ),
+        'literal',
+      );
+      expect(
+        browserDeepLinkSearchFromUriString(
+          'anki://x-callback-url/browser?%73earch=encoded',
+        ),
+        isNull,
+      );
+    });
+
+    test('URI extraction decodes plus, escaped plus, and UTF-8 values', () {
+      expect(
+        browserDeepLinkSearchFromUriString(
+          'anki://x-callback-url/browser?search=one+two%2Bthree%20%E2%98%83',
+        ),
+        'one two+three ☃',
+      );
+    });
+
+    test(
+      'URI extraction rejects malformed percent and invalid UTF-8 values',
+      () {
+        expect(
+          () => browserDeepLinkSearchFromUriString(
+            'anki://x-callback-url/browser?search=%GG',
+          ),
+          throwsFormatException,
+        );
+        expect(
+          () => browserDeepLinkSearchFromUriString(
+            'anki://x-callback-url/browser?search=%FF',
+          ),
+          throwsFormatException,
+        );
+      },
+    );
   });
 }

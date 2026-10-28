@@ -225,12 +225,15 @@ substitution using host-computed comparison HTML.
   types use `unspecified`. Hosts resolve column metadata and deliver localized
   snackbar text; pinned tests do not directly assert notification values, so
   the projection cases are source-derived.
-- Card Browser launch options: `browserLaunchOptionFromInput` selects the first
-  host-decoded deep-link search, JavaScript search, card ID, or non-empty
-  process-text search in AnkiDroid's source order. Empty deep-link and
-  JavaScript query values remain present; the host supplies `all_decks` with a
-  false default. Android `Intent`/`Uri` extraction, extra decoding and browser
-  navigation remain host-side.
+- Card Browser launch options: `browserLaunchOptionFromUriString` extracts the
+  raw URI `search` value, then applies the source order for deep-link search,
+  JavaScript search, card ID, or non-empty process text. Empty query values and
+  the first exact `search` key are preserved. The raw URI string is required
+  because Dart `Uri` canonicalizes escaped query keys. Malformed percent or
+  invalid UTF-8 values throw instead of being normalized; Android replaces
+  malformed input with U+FFFD, so this edge is outside the equivalence domain.
+  Android `Intent`, extras, process-text action, and browser navigation remain
+  host-side.
 - Card Browser recent searches: `BrowserSearchHistoryModel` keeps searches
   newest-first, promotes structurally equal entries, skips the default blank
   search, and trims history to the source's 30-entry cap.

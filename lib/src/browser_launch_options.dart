@@ -17,7 +17,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Behavioral reference: CardBrowserLaunchOptions.kt in AnkiDroid 2.25.3;
- * see ANKIIDROID_UPSTREAM.md. Android Intent/Uri extraction remains host-side.
+ * see ANKIIDROID_UPSTREAM.md. Android Intent/extras/action and navigation
+ * remain host-side; [browserLaunchOptionFromUriString] projects URI search.
  */
 
 /// One source-equivalent way to open AnkiDroid's Card Browser.
@@ -121,3 +122,78 @@ BrowserLaunchOption? browserLaunchOptionFromInput({
 
   return null;
 }
+
+/// Extracts Android's Card Browser `search` deep-link value from a raw URI.
+///
+/// The raw string is required because Dart's [Uri] canonicalizes escaped
+/// unreserved query-key characters, while Android compares the encoded key
+/// literally. This matches Android for hierarchical URIs whose encoded search
+/// value is well-formed UTF-8. Opaque URIs throw [UnsupportedError], like
+/// `android.net.Uri.getQueryParameter`; malformed percent escapes and invalid
+/// UTF-8 throw [FormatException] instead of being normalized. Android replaces
+/// malformed input with U+FFFD, so that malformed-input domain is intentionally
+/// outside this helper's equivalence guarantee.
+String? browserDeepLinkSearchFromUriString(String uriString) {
+  Uri.parse(uriString);
+  final scheme = RegExp(r'^[A-Za-z][A-Za-z0-9+.-]*:').firstMatch(uriString);
+  if (scheme != null && !uriString.substring(scheme.end).startsWith('/')) {
+    throw UnsupportedError('This is not a hierarchical URI.');
+  }
+
+  final queryStart = uriString.indexOf('?');
+  final fragmentStart = uriString.indexOf('#');
+  if (queryStart == -1 || (fragmentStart != -1 && fragmentStart < queryStart)) {
+    return null;
+  }
+
+  final queryEnd = fragmentStart == -1 ? uriString.length : fragmentStart;
+  final query = uriString.substring(queryStart + 1, queryEnd);
+  var start = 0;
+  while (start <= query.length) {
+    final ampersand = query.indexOf('&', start);
+    final end = ampersand == -1 ? query.length : ampersand;
+    final equals = query.indexOf('=', start);
+    final nameEnd = equals == -1 || equals > end ? end : equals;
+
+    if (query.substring(start, nameEnd) == 'search') {
+      if (nameEnd == end) {
+        return '';
+      }
+      final encodedValue = query.substring(nameEnd + 1, end);
+      try {
+        return Uri.decodeQueryComponent(encodedValue);
+      } on ArgumentError {
+        throw FormatException('Invalid encoded search value.', uriString);
+      }
+    }
+
+    if (ampersand == -1) {
+      return null;
+    }
+    start = ampersand + 1;
+  }
+
+  return null;
+}
+
+/// Projects a raw deep-link URI and host-extracted fields in source order.
+///
+/// The URI is only used for the source's `search` query extraction. Android
+/// `Intent`, extras, process-text action and navigation remain host-owned.
+BrowserLaunchOption? browserLaunchOptionFromUriString({
+  String? deepLinkUri,
+  String? searchQueryJs,
+  bool allDecks = false,
+  int? cardId,
+  bool actionIsProcessText = false,
+  String? processTextSearch,
+}) => browserLaunchOptionFromInput(
+  deepLinkSearch: deepLinkUri == null
+      ? null
+      : browserDeepLinkSearchFromUriString(deepLinkUri),
+  searchQueryJs: searchQueryJs,
+  allDecks: allDecks,
+  cardId: cardId,
+  actionIsProcessText: actionIsProcessText,
+  processTextSearch: processTextSearch,
+);

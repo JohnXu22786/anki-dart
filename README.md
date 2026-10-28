@@ -503,6 +503,17 @@ substitution using host-computed comparison HTML.
   source-derived in `test/reviewer_reset_progress_directive_test.dart`.
   Confirmation UI, SharedFlow delivery, reset implementation, and lifecycle
   handling remain host-side.
+- Reviewer edit-tags request: `reviewerEditTagsDirective()` carries the host-resolved
+  note ID unchanged and exposes it as the singleton `noteIds` list passed to the
+  tag-dialog factory. The pinned flow is `NoteId` at
+  `ReviewerViewModel.kt:102`; `editNoteTags()` awaits the current card and emits
+  its note ID at `:660–663`, and `ViewerAction.TAG` dispatches it at `:722`.
+  `ReviewerFragment.kt:626–628` passes `listOf(noteId)` to the dialog factory.
+  No direct pinned `ReviewerViewModelTest` assertion covers this flow payload;
+  the Dart pass-through and singleton cases are source-derived. Current-card and
+  collection reads, action dispatch, SharedFlow delivery, Android dialog
+  creation, and lifecycle remain host-side. This opening request is separate
+  from the F131 `reviewerEditedTagsDirective()` result decision below.
 - Reviewer edited tags: `reviewerEditedTagsDirective()` returns no request for
   structurally equal ordered tag lists; otherwise it carries the selected tags
   joined with one literal ASCII space, preserving order, duplicates, empty

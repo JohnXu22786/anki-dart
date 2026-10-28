@@ -83,6 +83,13 @@ substitution using host-computed comparison HTML.
   `planDeckPickerUndoMenuRefresh` updates only the undo fields when the
   collection is open, preserving a null current state and doing nothing when
   inaccessible. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker empty-card deletion: `deckPickerEmptyCardDeletionIds` flattens
+  the host report in note order and retains duplicates. With `preserveNotes`,
+  it drops the first card ID only for notes marked for deletion; empty and
+  single-card lists follow the source's ordinary `drop(1)` behavior. The host
+  supplies the report and owns the undoable deletion, orphan-note handling,
+  result count, and notification. Cases are source-derived; see
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker default-child predicate: `onlyHasDefaultDeck` returns true only
   for exactly one child with the default deck ID (`1`); empty and multi-child
   inputs return false. The host supplies child IDs; due-tree construction and

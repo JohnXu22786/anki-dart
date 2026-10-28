@@ -65,6 +65,14 @@ class DeckNode extends IterableBase<DeckNode> {
   final List<DeckNode> children;
   final bool isSyntheticDeck;
 
+  /// Whether any review, learning, or new cards are ready to study.
+  bool hasCardsReadyToStudy() =>
+      revCount > 0 || newCount > 0 || lrnCount > 0;
+
+  @override
+  String toString() =>
+      '$fullDeckName, $did, $revCount, $lrnCount, $newCount';
+
   String get lastDeckNameComponent =>
       _lastDeckNameComponent ?? fullDeckName.split('::').last;
 

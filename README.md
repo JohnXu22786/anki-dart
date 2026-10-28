@@ -85,6 +85,11 @@ substitution using host-computed comparison HTML.
   their descendants. Cases are source-derived; backend tree construction and
   weak-parent behavior remain host-side. See
   [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-node study readiness and diagnostics: `hasCardsReadyToStudy` is true
+  when any review, learning, or new count is positive. `toString` preserves the
+  source order of full name, ID, review, learning, and new counts with decimal
+  values and comma-space separators. Cases are source-derived; see
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-name paths: `deckNamePath`, `deckNameBasename`,
   `immediateParentDeckNamePath`, and `immediateParentDeckName` preserve
   AnkiDroid's exact `::` split and join behavior, including empty components.

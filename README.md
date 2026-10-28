@@ -370,6 +370,12 @@ substitution using host-computed comparison HTML.
   The host stops the sequence when an operation fails; note lookup, `marked` tag
   mutation, undoable persistence, error handling, and StateFlow delivery remain
   host-side.
+- Reviewer mark toggle: `planReviewerMarkToggle` exposes the host-resolved note
+  toggle, a marked-state read only after toggle success, and publication only
+  after read success. The pinned Reviewer tests do not assert this effect order;
+  source-derived cases cover both failure gates. Card/note lookup, NoteService
+  calls, `marked` tag mutation, persistence, action dispatch, and StateFlow
+  delivery remain host-side.
 - NoteService mark update: `planNoteServiceToggleMark` removes the literal
   `marked` tag when the supplied state is true or adds it when false, then
   requests undoable note update. The host reads state, mutates the note, and

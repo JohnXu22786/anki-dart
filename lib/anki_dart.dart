@@ -35,6 +35,7 @@ export 'src/reviewer_flag_toggle_target.dart';
 export 'src/reviewer_deck_options_targets.dart';
 export 'src/reviewer_browse_destination.dart';
 export 'src/reviewer_set_flag_plan.dart';
+export 'src/reviewer_mark_toggle_plan.dart';
 export 'src/reviewer_suspend_card_plan.dart';
 export 'src/reviewer_bury_card_plan.dart';
 export 'src/reviewer_bury_note_plan.dart';

@@ -32,6 +32,7 @@ export 'src/reviewer_add_note_destination.dart';
 export 'src/reviewer_whiteboard_toggle.dart';
 export 'src/reviewer_record_voice_toggle.dart';
 export 'src/reviewer_flag_toggle_target.dart';
+export 'src/reviewer_flag_command_operation.dart';
 export 'src/reviewer_deck_options_targets.dart';
 export 'src/reviewer_browse_destination.dart';
 export 'src/reviewer_set_flag_plan.dart';

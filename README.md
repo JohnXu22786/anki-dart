@@ -491,6 +491,14 @@ substitution using host-computed comparison HTML.
   ordering, and write-failure suppression. Dispatch, flag-state reads, card
   lookup, undoable collection mutation, exceptions, StateFlow delivery, and
   lifecycle remain host-side; see `ANKIDROID_UPSTREAM.md`.
+- Reviewer flag command mapping: `reviewerFlagCommandOperation` maps each
+  existing `ViewerCommand.TOGGLE_FLAG_*` to a typed Toggle operation carrying
+  its corresponding source `Flag`, and `UNSET_FLAG` to a typed Set operation
+  carrying `Flag.NONE`. The pinned `ReviewerViewModelTest.kt` has no direct
+  assertion for this command-to-outcome mapping, so focused cases are
+  source-derived. The host retains action dispatch, flag-flow reads,
+  current-card lookup, undoable collection writes, and publication; menu-only
+  `FLAG_*` actions are outside `ViewerCommand`. See `ANKIDROID_UPSTREAM.md`.
 - Reviewer undo/redo feedback: `reviewerUndoRedoFeedbackMessage` selects the
   host-localized no-operation string for an empty operation, or invokes the
   matching undo/redo message callback with a nonempty operation unchanged.

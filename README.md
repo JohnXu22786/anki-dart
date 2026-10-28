@@ -17,7 +17,8 @@ saved-history request restoration, Cards/Notes row-ID projection/expansion,
 column-selection click-toggle planning, row-tap activation directives, bulk
 mark/bury/suspend decisions, and
 selected-card flag update effect plans, all-decks filter state,
-selected-row export data, Card Browser flag-filter query text,
+selected-row export data, marked/suspended preset-search plans, Card Browser
+flag-filter query text,
 structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance scheduling and toggle effects, leech-feedback
@@ -186,6 +187,14 @@ substitution using host-computed comparison HTML.
   Direct ViewModel tests cover empty selection and one row in each mode; order
   and list-copy cases are source-derived. The host still opens the export dialog
   and handles cache files and actual export.
+- Card Browser marked/suspended preset searches: `planBrowserPresetSearch`
+  stops when the host reports selected rows; otherwise it orders the exact
+  `tag:marked` or `is:suspended` query emission, query-only request copy, and
+  default refresh-search request. It preserves all existing structured filters.
+  Pinned tests cover marked and suspended search results in Cards and Notes,
+  but not the selection guard or request/effect details; Dart cases are
+  source-derived. The host owns row-selection lookup, flow/request updates,
+  collection access, and search execution.
 - Card Browser flag-filter query text: `browserSearchTermsWithFlag` preserves
   the source's first-match `flag:.` replacement, nonempty-query prepend, and
   incomplete-marker behavior. The pinned RED flag test verifies the resulting

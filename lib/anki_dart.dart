@@ -104,6 +104,7 @@ export 'src/browser_search_node_plan.dart';
 export 'src/browser_launch_state_patch.dart';
 export 'src/browser_initial_deck.dart';
 export 'src/browser_selected_deck_update_plan.dart';
+export 'src/browser_preset_search_plan.dart';
 export 'src/browser_post_search_scroll_plan.dart';
 export 'src/browser_search_text_state.dart';
 export 'src/browser_search_box_state.dart';

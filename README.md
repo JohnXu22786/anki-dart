@@ -452,6 +452,16 @@ substitution using host-computed comparison HTML.
   cards, it appends one literal ASCII space and the supplied suspended message
   without normalization. Detection, card reload, queue lookup, localization,
   logging, and feedback delivery remain host-side.
+- Reviewer delete-note effects: `executeReviewerDeleteNotePlan` sends the
+  host-resolved current card ID as a singleton list to the undoable removal
+  callback, passes its returned count into host localization, delivers that
+  message, then requests a current-card reload. A failed removal stops before
+  localization, feedback, and reload. Current-card lookup, collection access
+  and deletion, result extraction, resource localization, feedback Flow, and
+  reload remain host-side. The pinned Reviewer tests have no direct delete-note
+  order assertion; source-derived cases are in
+  `test/reviewer_delete_note_plan_test.dart`. Card Browser bulk deletion is a
+  separate operation.
 - Reviewer undo/redo feedback: `reviewerUndoRedoFeedbackMessage` selects the
   host-localized no-operation string for an empty operation, or invokes the
   matching undo/redo message callback with a nonempty operation unchanged.

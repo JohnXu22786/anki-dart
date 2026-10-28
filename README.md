@@ -156,6 +156,14 @@ substitution using host-computed comparison HTML.
   `CardBrowserViewModelTest.kt:990–1041` covers Notes mode, no-selection Cards,
   and single-selected Cards positions; the payload choice and stale-index cases
   are source-derived.
+- Card Browser preview column order: `projectBrowserPreviewColumns` splits
+  host-supplied sample rows into displayed and available lists. Displayed rows
+  follow the first matching position in the host-supplied current columns,
+  with sample order retained for equal positions; available rows retain sample
+  order. It preserves sample identity and leaves both inputs unchanged. Sample
+  creation, labels, active-column resolution, preferences, and backend access
+  remain host-side. Pinned preview tests cover sample values and an active
+  column round trip, but not this list projection; Dart cases are source-derived.
 - Card Browser edit-row choice: `browserRowToEdit` returns `null` when there
   are no browser rows; otherwise it chooses the first selected ID in
   multi-select mode without validating membership, or the first browser row in

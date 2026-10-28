@@ -242,6 +242,14 @@ substitution using host-computed comparison HTML.
   and search execution. The pinned ViewModel tests directly cover default
   search, system text, and deep-link text; the pure SearchQueryJs/all-decks
   startup assignment and unchanged scroll/null fields are source-derived.
+- Card Browser search-box state: `setBrowserSearchQueryExpanded`,
+  `updateBrowserSearchQueryText`, and `removeBrowserUnsubmittedInput` emit
+  ordered, explicit changes for expansion and unsubmitted text. Collapsing
+  clears text before setting expanded false; expanding and text updates leave
+  unrelated state unchanged. The host applies the changes to StateFlows and
+  owns logging, Android focus, and widgets. Pinned ViewModel tests cover query
+  text used by save-search behavior, but do not assert these state transitions;
+  the transition assertions are source-derived.
 - Card Browser initial selected deck: `planBrowserInitialDeck` reports when the
   host must consume the launch-intent saved-state flag and chooses a valid
   resolved intent deck, the all-decks sentinel, a host-validated persisted

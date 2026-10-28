@@ -234,6 +234,14 @@ substitution using host-computed comparison HTML.
   malformed input with U+FFFD, so this edge is outside the equivalence domain.
   Android `Intent`, extras, process-text action, and browser navigation remain
   host-side.
+- Card Browser launch initialization: `projectBrowserLaunchState` returns an
+  immutable patch with explicit assigned and unchanged fields. It preserves
+  exact search text, assigns the JavaScript `allDecks` value even when false,
+  and leaves search/deck state unchanged for card-scroll options. Hosts apply
+  the patch and retain deck resolution, SavedStateHandle, collection access,
+  and search execution. The pinned ViewModel tests directly cover default
+  search, system text, and deep-link text; the pure SearchQueryJs/all-decks
+  startup assignment and unchanged scroll/null fields are source-derived.
 - Card Browser recent searches: `BrowserSearchHistoryModel` keeps searches
   newest-first, promotes structurally equal entries, skips the default blank
   search, and trims history to the source's 30-entry cap.

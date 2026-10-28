@@ -113,6 +113,7 @@ export 'src/reviewer_binding_map.dart';
 export 'src/reviewer_key_dispatch.dart';
 export 'src/reviewer_axis_dispatch.dart';
 export 'src/review_presentation.dart';
+export 'src/reviewer_answer_buttons_next_time_update.dart';
 export 'src/review_session.dart';
 export 'src/review_timebox.dart';
 export 'src/previewer_navigation.dart';

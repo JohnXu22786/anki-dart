@@ -523,6 +523,17 @@ substitution using host-computed comparison HTML.
   cases are source-derived. Current-card/note/collection lookup,
   `note.setTagsFromStr`, undoable `updateNote`, logging, and coroutine delivery
   remain host-side. Card Browser and Previewer mark-tag paths are separate.
+- Reviewer answer-button next-time publication:
+  `projectReviewerAnswerButtonsNextTimeUpdate()` returns no update when the
+  host-resolved setting hides times or the host has no computed value; when
+  visible, it carries the existing `AnswerButtonsNextTime` unchanged. The
+  source gate is `ReviewerViewModel.kt:651–658`, with a nullable flow at `:138`
+  and callers at `:148–149` and `:224`. No direct pinned
+  `ReviewerViewModelTest` assertion covers the gate/publication decision;
+  `ReviewerTest.kt:383–390` checks a button-label update end to end, so these
+  Dart cases are source-derived. Settings and queue reads, scheduler
+  calculation, coroutine and StateFlow delivery, and answer-button sizing
+  remain host-side.
 - Reviewer previous-card info: `reviewerPreviousCardInfoDirective` selects
   host-localized no-card feedback for a null saved previous-card ID and carries
   every non-null ID unchanged into a navigation directive. SavedStateHandle,

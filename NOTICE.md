@@ -61,6 +61,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/review_presentation.dart`. The source's default count/active-queue
   values and last-published snapshot behavior are modeled in
   `lib/src/review_session.dart`; the Android view widgets are not included.
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
+  is marked `GPL-3.0-or-later` upstream. Its answer-button next-time
+  visibility/null-state publication decision is adapted by
+  `lib/src/reviewer_answer_buttons_next_time_update.dart`; host settings and
+  queue reads, scheduler calculation, coroutine and Flow delivery, call sites,
+  and answer-button layout remain outside.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimer.kt`
   and `AnswerTimerState.kt` are marked `GPL-3.0-or-later` upstream. Their
   hidden/running/paused/stopped state machine is adapted in
@@ -843,6 +849,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   projection recorded in `StudyCounts.kt`, `StudyCountsViewTest.kt`,
   `AnswerButtonsNextTime.kt`, and `Scheduler.kt`; it is not a port of the
   Android test harness.
+- `test/reviewer_answer_buttons_next_time_update_test.dart` checks hidden,
+  missing-value, and publication outcomes derived from
+  `ReviewerViewModel.kt:651–658`; no direct pinned Reviewer ViewModel test
+  covers this decision, and the existing Android reviewer test checks only an
+  end-to-end button update.
 - `test/answer_timer_test.dart` checks the timer behavior and boundary cases
   from `AnswerTimerTest.kt`; it is not a port of the Android test harness.
 - `test/auto_advance_test.dart` checks the delay, cancellation, deck-setting,

@@ -452,6 +452,11 @@ substitution using host-computed comparison HTML.
   cards, it appends one literal ASCII space and the supplied suspended message
   without normalization. Detection, card reload, queue lookup, localization,
   logging, and feedback delivery remain host-side.
+- Reviewer undo/redo feedback: `reviewerUndoRedoFeedbackMessage` selects the
+  host-localized no-operation string for an empty operation, or invokes the
+  matching undo/redo message callback with a nonempty operation unchanged.
+  Undo availability and execution, protobuf extraction, localization,
+  Reviewer action dispatch, and feedback Flow delivery remain host-side.
 - Reviewer whiteboard toggle: `planReviewerWhiteboardToggle` inverts the
   host-supplied state, publishes the new value, then requests assigning that
   same value to the repository preference. StateFlow mutation, repository
@@ -668,7 +673,7 @@ are modeled), Android
 `BindingProcessor` wiring, command execution, touch input and reviewer command handlers,
 study-count and answer-button widgets/layout, next-time visibility preference
 wiring, template rendering and media, localized timebox messages, dialog and
-lifecycle presentation, leech handling, reviewer undo/redo, JavaScript custom-
+lifecycle presentation, leech handling, undo/redo availability and execution, JavaScript custom-
 state and gesture bridges, WebView state collection, Android timeout lookup,
 sync, actual import/export, and other app features remain to be ported. The
 selected-row export-data projection is modeled, but its dialog, file handling,

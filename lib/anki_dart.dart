@@ -124,6 +124,7 @@ export 'src/browser_search_box_state.dart';
 export 'src/browser_can_search.dart';
 export 'src/browser_save_search_prompt.dart';
 export 'src/browser_search_state_effects.dart';
+export 'src/browser_search_result_message.dart';
 export 'src/browser_search_history_display.dart';
 export 'src/browser_search_history_json.dart';
 export 'src/browser_sort_type.dart';

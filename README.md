@@ -35,7 +35,8 @@ AutomaticAnswer action decoding, and reviewer binding preference/default
 resolution and Card Browser launch-option precedence. Card Browser search-text
 transitions, text-edit/sync/reset/history-selection/request-submission effect
 sequences and saved-search submission effects, saved-search
-outcome-message mapping and save-search prompt decisions,
+outcome-message mapping, search-result message selection, and save-search
+prompt decisions,
 CardTemplate marker-based string composition and
 verbatim card-content QA wrapping,
 card-template type-answer modifier parsing, cloze-index derivation and
@@ -216,6 +217,14 @@ substitution using host-computed comparison HTML.
   AllDecks states; the Dart check for unrelated filters is source-derived.
   Current search flow, result-message delivery, localization, and UI remain
   host-side.
+- Card Browser search result messages: `browserSearchResultMessage` returns no
+  message for non-user searches; otherwise it preserves the source order of
+  AllDecks, zero selected-deck rows, then a non-empty selected deck. AllDecks
+  therefore keeps CardCount with its all-decks action disabled even at zero
+  rows, preserving the pinned TODO/quirk. Pinned tests cover each branch except
+  AllDecks with zero rows; the Dart test covers that precedence gap. The host
+  supplies search values, composes/publishes completed state, and handles
+  localization, snackbar actions, UI, navigation, and row-count derivation.
 - Card Browser selected-row export data: `planBrowserSelectionExport` returns
   no data for an empty selection; otherwise it maps Cards/Notes mode to the
   matching export kind and copies IDs in the selected-set iteration order.

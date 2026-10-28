@@ -156,6 +156,13 @@ substitution using host-computed comparison HTML.
   `CardBrowserViewModelTest.kt:990–1041` covers Notes mode, no-selection Cards,
   and single-selected Cards positions; the payload choice and stale-index cases
   are source-derived.
+- Card Browser saved selection payload: `browserSavedSelectionPayloadIds`
+  preserves a nonempty pending restore; otherwise it snapshots selected rows.
+  Empty input means no payload, and emitted IDs retain exact order and
+  duplicates. Pinned ViewModel tests cover empty selection and restore timing,
+  but do not assert restore precedence or the exact saved ID sequence. The host
+  retains the saved-state provider, Bundle/Parcelable, `IdsFile` construction,
+  cache-file writes, and restoration lifecycle.
 - Card Browser preview column order: `projectBrowserPreviewColumns` splits
   host-supplied sample rows into displayed and available lists. Displayed rows
   follow the first matching position in the host-supplied current columns,

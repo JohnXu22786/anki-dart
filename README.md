@@ -215,6 +215,14 @@ substitution using host-computed comparison HTML.
   The host resolves collection-backed editor destinations, applies selection,
   pane/mode state, and delivers activity or pane commands; Android row widgets,
   flows, and navigation remain outside.
+- Card Browser editor card IDs: `browserEditorCardIds` returns no IDs when the
+  host cannot resolve the row, all host-resolved sibling IDs in Notes mode, the
+  exact selected-card list for Cards-mode multi-select, or the resolved row ID
+  alone otherwise. It preserves host list order and identity. Pinned tests
+  cover row-tap/editor routing and fragment editor integration, but do not
+  assert `getCardIdsForNoteEditor()` results; these branch cases are
+  source-derived. Row conversion, collection queries, editor destination
+  construction, and UI/lifecycle behavior remain host-side.
 - Card Browser bulk mark: `planBrowserBulkMarkToggle` returns no operation for
   an empty selected-card list; otherwise it selects tag removal only when every
   resolved note already has `marked`, and selects adding the tag for an unmarked

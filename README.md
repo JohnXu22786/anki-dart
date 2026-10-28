@@ -49,10 +49,11 @@ substitution using host-computed comparison HTML.
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and
   partial `:` / `::` searches;
 - Deck-picker rows and due count: flattening a deck tree into visible rows,
-  including ancestor paths, collapsed decks, counts, and selection state, plus
-  the source-equivalent total due count across top-level decks, including
-  signed 32-bit `Int` overflow behavior. An omitted synthetic-root flag is
-  derived from negative depth, matching AnkiDroid's level projection.
+  including ancestor paths, collapsed decks, counts, and selection state; the
+  aggregate preserves AnkiDroid's top-level subdeck flag. The source-equivalent
+  total due count across top-level decks includes signed 32-bit `Int` overflow
+  behavior. An omitted synthetic-root flag is derived from negative depth,
+  matching AnkiDroid's level projection.
 - Deck-picker position lookup: `findDeckPosition` returns the first visible
   index for a deck or recursively follows the host-resolved parent chain until
   a visible ancestor is found, defaulting to zero when the chain ends. The host

@@ -28,6 +28,7 @@ export 'src/deck_picker_empty_card_deletion.dart';
 export 'src/deck_node.dart';
 export 'src/deck_name_path.dart';
 export 'src/display_deck_node.dart';
+export 'src/flattened_deck_list.dart';
 export 'src/auto_advance.dart';
 export 'src/reviewer_auto_advance_toggle.dart';
 export 'src/reviewer_auto_advance_action.dart';

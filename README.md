@@ -17,8 +17,8 @@ saved-history request restoration, Cards/Notes row-ID projection/expansion,
 column-selection click-toggle planning, row-tap activation directives, bulk
 mark/bury/suspend decisions, and
 selected-card flag update effect plans, all-decks filter state,
-selected-row export data, marked/suspended preset-search plans, Card Browser
-flag-filter query text,
+selected-row export data, marked/suspended preset-search plans, the Card Browser
+duplicate-query gate, flag-filter query text,
 structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance scheduling and toggle effects, leech-feedback
@@ -201,6 +201,15 @@ substitution using host-computed comparison HTML.
   but not the selection guard or request/effect details; Dart cases are
   source-derived. The host owns row-selection lookup, flow/request updates,
   collection access, and search execution.
+- Card Browser duplicate-query gate: `planBrowserSetQuery` skips request
+  assignment and search only when refresh is not forced and the host reports
+  equal serialized SearchStrings. Otherwise it copies the exact input query,
+  preserves the structured filters, then requests search with the supplied
+  `forceRefresh` and `fromUserSearch` values. The host supplies Anki SearchString
+  equality and owns request-flow mutation, collection access, search execution,
+  and coroutine/cancellation behavior. Pinned ViewModel tests exercise user
+  searches but do not directly assert this duplicate-query gate; the Dart cases
+  are source-derived.
 - Card Browser flag-filter query text: `browserSearchTermsWithFlag` preserves
   the source's first-match `flag:.` replacement, nonempty-query prepend, and
   incomplete-marker behavior. The pinned RED flag test verifies the resulting
@@ -860,7 +869,7 @@ SharedPreferences and mode lookup, saved-search config IO, localized
 outcome-message delivery and UI,
 collection-backed deck/note-type lookup, backend query-string generation and
 backend SearchNode conversion, query parsing/validation, final SearchString
-serialization, search execution, search-string conversion,
+serialization and equality, search execution, search-string conversion,
 Android execution of Card Browser
 text-edit/request-submission/sync/reset/history-selection effects and
 close-view/submitted-search event delivery,

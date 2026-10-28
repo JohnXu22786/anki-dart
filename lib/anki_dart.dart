@@ -103,6 +103,7 @@ export 'src/browser_search_history.dart';
 export 'src/browser_saved_searches.dart';
 export 'src/browser_saved_search_messages.dart';
 export 'src/browser_search_request.dart';
+export 'src/browser_set_query_plan.dart';
 export 'src/browser_search_node_plan.dart';
 export 'src/browser_launch_state_patch.dart';
 export 'src/browser_initial_deck.dart';

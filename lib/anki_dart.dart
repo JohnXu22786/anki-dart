@@ -95,6 +95,7 @@ export 'src/browser_filter_tags_query.dart';
 export 'src/browser_tag_filter_search_plan.dart';
 export 'src/browser_launch_options.dart';
 export 'src/browser_row_collection.dart';
+export 'src/browser_row_interaction.dart';
 export 'src/browser_row_selection.dart';
 export 'src/browser_row_activation.dart';
 export 'src/browser_editor_card_ids.dart';

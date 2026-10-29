@@ -247,6 +247,13 @@ substitution using host-computed comparison HTML.
   `indexOf`/indexing failure; selection-set mutation and async delivery remain
   host-side. Upstream tests cover range-selection effects but not this ID
   projection, so Dart cases are source-derived.
+- Card Browser long-press and right-click selection: `planBrowserRowLongPress`
+  and `planBrowserRowRightClick` choose a range from the last selected ID to
+  the pressed row only when multi-select is active and that ID exists; both
+  otherwise pass the exact row selection to the toggle operation. Row mutation
+  remains host-side. Upstream tests cover long-press selection behavior but not
+  the isolated decision or right-click branch, so focused Dart cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Card Browser preview starting index: `browserPreviewStartingIndex` returns
   zero for zero or multiple selected rows and otherwise uses the first matching
   position of the single selected ID, retaining `-1` for stale IDs. The host

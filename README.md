@@ -443,11 +443,20 @@ substitution using host-computed comparison HTML.
   wrong-typed values to `noteFld` and forward order, treats an unknown column as no ordering, and
   creates ordered save plans without touching Android or collection storage.
   The shared no-sorting flag retains the source's cross-mode behavior.
+- Card Browser sort-type change: `planBrowserSortTypeUpdate` orders save,
+  reverse-direction update, sort-change notification, and search launch. The
+  host completes each effect before advancing, so a save failure prevents the
+  later publications and search. The notification effect carries the selected
+  sort type; the host resolves the current localized label and column type
+  while applying it. Pinned `CardBrowserViewModelTest.kt:1908–1985` directly
+  covers search launch, integration ordering, and reverse-direction state for
+  collection ordering and no ordering; notification construction values are
+  not directly asserted.
 - Card Browser sort-change notification: `projectBrowserSortChangeNotification`
   maps no ordering directly, or carries the collection sort's supplied label,
   type, and reverse flag. Missing resolved labels use the raw sort key; missing
   types use `unspecified`. Hosts resolve column metadata and deliver localized
-  snackbar text; pinned tests do not directly assert notification values, so
+  snackbar text. Pinned tests do not directly assert notification values, so
   the projection cases are source-derived.
 - Card Browser launch options: `browserLaunchOptionFromUriString` extracts the
   raw URI `search` value, then applies the source order for deep-link search,

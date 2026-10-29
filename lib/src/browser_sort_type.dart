@@ -155,3 +155,74 @@ BrowserSortSavePlan buildBrowserSortSavePlan({
           ],
         ),
     };
+
+/// One ordered host action in a Card Browser sort-type update.
+sealed class BrowserSortTypeUpdateEffect {
+  const BrowserSortTypeUpdateEffect();
+}
+
+/// Persists the selected sort type before any state publication or search.
+final class BrowserSortTypeSaveEffect extends BrowserSortTypeUpdateEffect {
+  const BrowserSortTypeSaveEffect(this.plan);
+
+  final BrowserSortSavePlan plan;
+}
+
+/// Updates the host's reverse-direction state after the sort type was saved.
+final class BrowserSortReverseDirectionEffect
+    extends BrowserSortTypeUpdateEffect {
+  const BrowserSortReverseDirectionEffect(this.direction);
+
+  /// Null clears the direction for no ordering; otherwise this is the exact
+  /// selected collection-ordering direction.
+  final bool? direction;
+}
+
+/// Requests that the host build and emit the sort-change notification now.
+///
+/// The host resolves the current localized column label and column type when
+/// applying this effect, after the preceding save and direction update.
+final class BrowserSortNotificationEffect extends BrowserSortTypeUpdateEffect {
+  const BrowserSortNotificationEffect(this.sortType);
+
+  final BrowserSortType sortType;
+}
+
+/// Launches the Card Browser search after the sort notification is emitted.
+final class BrowserSortSearchEffect extends BrowserSortTypeUpdateEffect {
+  const BrowserSortSearchEffect();
+}
+
+/// Ordered `setSortType()` effects for the host to apply sequentially.
+///
+/// The host must complete each effect before advancing. If saving fails, it
+/// must stop without updating direction, emitting a notification, or launching
+/// search. Notification metadata is resolved by the host when it applies the
+/// notification effect, rather than when this plan is built.
+final class BrowserSortTypeUpdatePlan {
+  BrowserSortTypeUpdatePlan({
+    required this.sortType,
+    required BrowserSortConfigKeys configKeys,
+  }) : effects = List.unmodifiable([
+         BrowserSortTypeSaveEffect(
+           buildBrowserSortSavePlan(sortType: sortType, configKeys: configKeys),
+         ),
+         BrowserSortReverseDirectionEffect(switch (sortType) {
+           BrowserSortNoOrdering() => null,
+           BrowserSortCollectionOrdering(:final reverse) => reverse,
+         }),
+         BrowserSortNotificationEffect(sortType),
+         const BrowserSortSearchEffect(),
+       ]);
+
+  final BrowserSortType sortType;
+
+  /// Effects in the same order as `CardBrowserViewModel.setSortType()`.
+  final List<BrowserSortTypeUpdateEffect> effects;
+}
+
+/// Plans `CardBrowserViewModel.setSortType()` without performing host effects.
+BrowserSortTypeUpdatePlan planBrowserSortTypeUpdate({
+  required BrowserSortType sortType,
+  required BrowserSortConfigKeys configKeys,
+}) => BrowserSortTypeUpdatePlan(sortType: sortType, configKeys: configKeys);

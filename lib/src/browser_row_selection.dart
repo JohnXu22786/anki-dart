@@ -198,6 +198,70 @@ int browserSelectedRowCount(Iterable<BrowserRowId> selectedRows) =>
 bool browserHasSelectedAnyRows(Iterable<BrowserRowId> selectedRows) =>
     selectedRows.toSet().isNotEmpty;
 
+/// Ordered effects emitted when a row range adds at least one new ID.
+enum BrowserRangeSelectionEffect { emitMultiSelectOther, refreshSelectedRows }
+
+/// The immutable result of adding a row range to the selected-ID Set.
+final class BrowserRangeSelectionTransition {
+  BrowserRangeSelectionTransition._({
+    required Iterable<BrowserRowId> selectedRows,
+    required this.changed,
+    required this.isInMultiSelectMode,
+    required Iterable<BrowserRangeSelectionEffect> effects,
+  }) : selectedRows = List.unmodifiable(selectedRows),
+       effects = List.unmodifiable(effects);
+
+  /// IDs after `LinkedHashSet.addAll`, in source iteration order.
+  final List<BrowserRowId> selectedRows;
+
+  /// Whether the source set added any row and consequently launched a refresh.
+  final bool changed;
+
+  /// The prior mode unless a changed selection emits `MultiSelectCause.Other`.
+  final bool isInMultiSelectMode;
+
+  /// Mode-change cause then selected-row refresh; empty when no row was added.
+  final List<BrowserRangeSelectionEffect> effects;
+}
+
+/// Projects `selectRowsBetween(start, end)` over host-supplied row IDs.
+///
+/// The existing range helper preserves first-match endpoints and inclusive
+/// source order. This then applies source `LinkedHashSet.addAll` semantics: new
+/// IDs append after existing ones, and no mode or refresh effects occur when
+/// the entire range was already selected. The host applies the mutation and
+/// emits these effects.
+BrowserRangeSelectionTransition planBrowserSelectRowsBetween({
+  required Iterable<BrowserRowId> selectedRows,
+  required List<BrowserRowId> rowIds,
+  required BrowserRowId startRowId,
+  required BrowserRowId endRowId,
+  required bool isInMultiSelectMode,
+}) {
+  final nextRows = LinkedHashSet<BrowserRowId>.of(selectedRows);
+  final previousLength = nextRows.length;
+  nextRows.addAll(
+    browserRowRangeBetweenIds(
+      rowIds: rowIds,
+      startRowId: startRowId,
+      endRowId: endRowId,
+    ),
+  );
+  final changed = nextRows.length != previousLength;
+
+  return BrowserRangeSelectionTransition._(
+    selectedRows: nextRows,
+    changed: changed,
+    isInMultiSelectMode: changed ? true : isInMultiSelectMode,
+    effects: changed
+        ? const [
+            BrowserRangeSelectionEffect.emitMultiSelectOther,
+            BrowserRangeSelectionEffect.refreshSelectedRows,
+          ]
+        : const [],
+  );
+}
+
 /// Immutable result of `CardBrowserViewModel.endMultiSelectMode(reason)`.
 final class BrowserEndMultiSelectTransition<T> {
   BrowserEndMultiSelectTransition._({

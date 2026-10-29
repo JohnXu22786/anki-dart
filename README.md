@@ -246,9 +246,11 @@ substitution using host-computed comparison HTML.
 - Card Browser selected row ranges: `browserRowRangeBetweenIds` returns the
   inclusive row slice between the first matches for two host-supplied IDs, in
   row order even when endpoints are reversed. Missing IDs preserve the source
-  `indexOf`/indexing failure; selection-set mutation and async delivery remain
-  host-side. Upstream tests cover range-selection effects but not this ID
-  projection, so Dart cases are source-derived.
+  `indexOf`/indexing failure. `planBrowserSelectRowsBetween` merges that range
+  into the selected-ID set in insertion order and emits the source mode-change
+  and refresh effects only if rows were added. The host applies the set update
+  and async delivery. Upstream tests cover range-selection effects but not the
+  isolated range projection; Dart cases are source-derived.
 - Card Browser long-press and right-click selection: `planBrowserRowLongPress`
   and `planBrowserRowRightClick` choose a range from the last selected ID to
   the pressed row only when multi-select is active and that ID exists; both

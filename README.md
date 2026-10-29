@@ -321,6 +321,13 @@ substitution using host-computed comparison HTML.
   cases, along with pure transition/effect and no-op assertions, are
   source-derived. StateFlow scheduling, async delivery, and selection widgets
   remain host-side.
+- Card Browser end-multiselect: `planBrowserEndMultiSelectMode` snapshots the
+  selected IDs in insertion order, returns an empty snapshot when none were
+  selected, clears the modeled selection, and preserves the exact supplied
+  single-select cause object for host publication. The host attaches the
+  snapshot to that cause and emits it; fragment scroll anchoring remains
+  Android-side. The source has no direct snapshot assertion, so these cases
+  are source-derived.
 - Card Browser selected-note count: `browserSelectedNoteCount` counts distinct
   note IDs after the host resolves selected rows to notes, matching the source
   `.distinct().size` calculation. No pinned test directly covers this count;

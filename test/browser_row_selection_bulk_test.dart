@@ -113,6 +113,42 @@ void main() {
     });
   });
 
+  group('planBrowserEndMultiSelectMode', () {
+    test('snapshots rows in insertion order and retains the cause object', () {
+      final reason = Object();
+      final transition = planBrowserEndMultiSelectMode(
+        selectedRows: const [
+          BrowserRowId(30),
+          BrowserRowId(10),
+          BrowserRowId(30),
+          BrowserRowId(20),
+        ],
+        reason: reason,
+      );
+
+      expect(transition.previouslySelectedRows, const [
+        BrowserRowId(30),
+        BrowserRowId(10),
+        BrowserRowId(20),
+      ]);
+      expect(transition.selectedRows, isEmpty);
+      expect(transition.isInMultiSelectMode, isFalse);
+      expect(identical(transition.reason, reason), isTrue);
+    });
+
+    test('keeps an empty prior snapshot distinct from no snapshot', () {
+      final transition = planBrowserEndMultiSelectMode(
+        selectedRows: const [],
+        reason: 'navigate back',
+      );
+
+      expect(transition.previouslySelectedRows, isEmpty);
+      expect(transition.selectedRows, isEmpty);
+      expect(transition.isInMultiSelectMode, isFalse);
+      expect(transition.reason, 'navigate back');
+    });
+  });
+
   group('planBrowserToggleSelectAllOrNone', () {
     test('uses the supplied cached state to select all', () {
       final transition = planBrowserToggleSelectAllOrNone(

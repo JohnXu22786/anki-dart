@@ -187,6 +187,42 @@ BrowserSelectAllOrNoneState projectBrowserSelectAllOrNoneState({
 /// lookups.
 int browserSelectedNoteCount(Iterable<int> noteIds) => noteIds.toSet().length;
 
+/// Immutable result of `CardBrowserViewModel.endMultiSelectMode(reason)`.
+final class BrowserEndMultiSelectTransition<T> {
+  BrowserEndMultiSelectTransition._({
+    required Iterable<BrowserRowId> previouslySelectedRows,
+    required this.reason,
+  }) : previouslySelectedRows = List.unmodifiable(previouslySelectedRows);
+
+  /// Snapshot assigned to the source single-select cause before rows are clear.
+  /// This is an empty list when no rows were selected, never `null`.
+  final List<BrowserRowId> previouslySelectedRows;
+
+  /// The exact source cause object that the host attaches the snapshot to and
+  /// publishes through its multi-select-mode flow.
+  final T reason;
+
+  /// The source clears the selected-row set.
+  List<BrowserRowId> get selectedRows => const [];
+
+  /// Ending multi-select always publishes a single-select cause.
+  bool get isInMultiSelectMode => false;
+}
+
+/// Projects `endMultiSelectMode(reason)` without mutating host state.
+///
+/// The source snapshots its linked selected-row set, clears it, then publishes
+/// the same supplied single-select cause after assigning that snapshot to the
+/// cause. The host performs those mutations/publication; this returns an
+/// immutable snapshot and the unchanged cause object in source order.
+BrowserEndMultiSelectTransition<T> planBrowserEndMultiSelectMode<T>({
+  required Iterable<BrowserRowId> selectedRows,
+  required T reason,
+}) => BrowserEndMultiSelectTransition<T>._(
+  previouslySelectedRows: LinkedHashSet<BrowserRowId>.of(selectedRows),
+  reason: reason,
+);
+
 /// Ordered asynchronous effects after a bulk selection mutates its row set.
 enum BrowserBulkSelectionEffect {
   /// Corresponds to assigning `MultiSelectCause.Other` before refreshing rows.

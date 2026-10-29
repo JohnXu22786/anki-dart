@@ -317,3 +317,12 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
     return await lookup(rowId);
   }
 }
+
+/// Returns the first card ID for the row at [index], as the Card Browser does.
+///
+/// The host supplies the collection lookup through [queryCardIdsAt]. The index
+/// is passed through unchanged and an empty result retains `first`'s failure.
+Future<int> browserCardIdAtPosition({
+  required int index,
+  required FutureOr<List<int>> Function(int index) queryCardIdsAt,
+}) async => (await queryCardIdsAt(index)).first;

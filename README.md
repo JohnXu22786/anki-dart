@@ -212,7 +212,9 @@ substitution using host-computed comparison HTML.
   Notes-row collection returns an empty result without requiring the host lookup
   callback. Collection lookups remain host-side. Only the
   basic note-to-all-cards behavior has direct upstream integration coverage;
-  the dedicated row-collection tests are source-derived.
+  the dedicated row-collection tests are source-derived. The ViewModel's
+  `queryCardIdAtPosition` wrapper returns the first ID from the host query for
+  that exact row index and preserves failure when the result is empty.
 - Card Browser row position lookup: `browserRowPositionOfId` returns the first
   index matching a host-supplied row ID, or `null` when it is absent. Android
   scrolling, row notifications, and layout-offset calculation remain host-side.

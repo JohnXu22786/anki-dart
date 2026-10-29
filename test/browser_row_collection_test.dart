@@ -270,5 +270,29 @@ void main() {
       );
       expect(queried, [20]);
     });
+
+    test('browserCardIdAtPosition returns the first query result unchanged',
+        () async {
+      final queriedPositions = <int>[];
+
+      final cardId = await browserCardIdAtPosition(
+        index: 7,
+        queryCardIdsAt: (index) {
+          queriedPositions.add(index);
+          return [301, 302];
+        },
+      );
+
+      expect(cardId, 301);
+      expect(queriedPositions, [7]);
+    });
+
+    test('browserCardIdAtPosition preserves first failure on empty results',
+        () async {
+      await expectLater(
+        browserCardIdAtPosition(index: 0, queryCardIdsAt: (_) => []),
+        throwsStateError,
+      );
+    });
   });
 }

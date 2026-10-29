@@ -130,6 +130,24 @@ List<BrowserRowId> browserRowRangeBetweenIds({
   ]);
 }
 
+/// Selects the row used by `openNoteEditorForCurrentlySelectedRow()`.
+///
+/// An empty row list returns null. In multi-select mode, the first selected ID
+/// is used without checking that it is still present in [rowIds]; an empty
+/// selection returns null without falling back to the first row. Outside
+/// multi-select mode, the first current row is used. The host opens the editor
+/// for a non-null result and retains flow, collection, and navigation work.
+BrowserRowId? browserRowToOpenEditor({
+  required List<BrowserRowId> rowIds,
+  required Iterable<BrowserRowId> selectedRows,
+  required bool isInMultiSelectMode,
+}) {
+  if (rowIds.isEmpty) return null;
+  if (!isInMultiSelectMode) return rowIds.first;
+  final selected = selectedRows.iterator;
+  return selected.moveNext() ? selected.current : null;
+}
+
 /// Projects the source Card Browser preview's starting row index.
 ///
 /// More than one selected row starts at zero. With no selected rows the source

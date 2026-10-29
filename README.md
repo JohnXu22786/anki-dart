@@ -342,7 +342,6 @@ substitution using host-computed comparison HTML.
   `.distinct().size` calculation. No pinned test directly covers this count;
   empty, duplicate, and unique-ID assertions are source-derived. Collection
   lookup and the localized delete-menu plural remain host-side.
-- Card Browser editor row choice: `browserRowToOpenEditor` returns the first current row outside multi-select mode or the first selected row in multi-select mode; no rows or no multi-select selection returns null, matching the source helper. The host opens the editor.
 - Card Browser selected-row state: `browserSelectedRowCount` and
   `browserHasSelectedAnyRows` project the selected-ID Set's distinct count and
   nonempty check. The host owns selection and uses these values for UI and

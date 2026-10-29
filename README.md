@@ -47,7 +47,8 @@ substitution using host-computed comparison HTML.
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and
-  partial `:` / `::` searches;
+  partial `:` / `::` searches. `projectDeckPickerFilterUpdate` creates the
+  fresh filter value assigned for each input; the host owns StateFlow updates.
 - Deck-picker rows and due count: flattening a deck tree into visible rows,
   including ancestor paths, collapsed decks, counts, and selection state; the
   aggregate preserves AnkiDroid's top-level subdeck flag. The source-equivalent

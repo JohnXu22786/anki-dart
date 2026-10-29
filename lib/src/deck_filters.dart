@@ -78,6 +78,19 @@ class DeckFilters {
   }
 }
 
+/// Builds the fresh filter value assigned by `DeckPickerViewModel.updateDeckFilter`.
+///
+/// The host assigns the returned instance to its current-filter StateFlow.
+DeckFilters projectDeckPickerFilterUpdate(
+  String filterText, {
+  String localeName = '',
+  String Function()? localeNameProvider,
+}) => DeckFilters.create(
+  filterText,
+  localeName: localeName,
+  localeNameProvider: localeNameProvider,
+);
+
 String _trimKotlinWhitespace(String value) {
   // Kotlin/JVM Char.isWhitespace includes separator and C0 whitespace
   // characters, but excludes U+0085 NEXT LINE unlike Dart's String.trim().

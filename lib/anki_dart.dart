@@ -106,6 +106,7 @@ export 'src/browser_bulk_mark.dart';
 export 'src/browser_bulk_bury.dart';
 export 'src/browser_bulk_suspend.dart';
 export 'src/browser_reposition_plan.dart';
+export 'src/browser_reposition_selected_rows_request.dart';
 export 'src/browser_reposition_presentation.dart';
 export 'src/browser_reposition_queue_bounds.dart';
 export 'src/browser_reposition_summary.dart';

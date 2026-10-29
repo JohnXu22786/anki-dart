@@ -1150,6 +1150,10 @@ dart test
 The Card Browser reposition plan projects source-ordered eligible and skipped
 card IDs from host-resolved card type and queue states. Collection access,
 queue-position calculation, and scheduler operations remain host-side.
+The selected-rows scheduler request carries the host-resolved card IDs in order
+and the exact position, step, shuffle, and shift arguments to `sched.sortCards`;
+the host scheduler result count passes through unchanged. Selection resolution,
+undo, coroutine, scheduler execution, and UI remain host-side.
 Its presentation projection maps host-supplied result values to dialog or
 snackbar directives; resource lookup and Android UI construction/delivery stay
 host-side.

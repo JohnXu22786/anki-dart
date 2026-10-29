@@ -187,6 +187,17 @@ BrowserSelectAllOrNoneState projectBrowserSelectAllOrNoneState({
 /// lookups.
 int browserSelectedNoteCount(Iterable<int> noteIds) => noteIds.toSet().length;
 
+/// Projects `CardBrowserViewModel.selectedRowCount()` from selected row IDs.
+///
+/// The source selection is a Set; duplicate iterable values therefore count
+/// only once, matching its value-based row-ID equality.
+int browserSelectedRowCount(Iterable<BrowserRowId> selectedRows) =>
+    selectedRows.toSet().length;
+
+/// Projects `CardBrowserViewModel.hasSelectedAnyRows()` from selected row IDs.
+bool browserHasSelectedAnyRows(Iterable<BrowserRowId> selectedRows) =>
+    selectedRows.toSet().isNotEmpty;
+
 /// Immutable result of `CardBrowserViewModel.endMultiSelectMode(reason)`.
 final class BrowserEndMultiSelectTransition<T> {
   BrowserEndMultiSelectTransition._({

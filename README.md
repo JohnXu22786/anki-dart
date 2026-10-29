@@ -335,6 +335,10 @@ substitution using host-computed comparison HTML.
   `.distinct().size` calculation. No pinned test directly covers this count;
   empty, duplicate, and unique-ID assertions are source-derived. Collection
   lookup and the localized delete-menu plural remain host-side.
+- Card Browser selected-row state: `browserSelectedRowCount` and
+  `browserHasSelectedAnyRows` project the selected-ID Set's distinct count and
+  nonempty check. The host owns selection and uses these values for UI and
+  operation guards.
 - Card Browser all-decks state: `browserHasSelectedAllDecks` returns true exactly
   when the deck-filter list is empty, independent of query text, other filters,
   or available rows. Pinned ViewModel tests cover the initial/specific and

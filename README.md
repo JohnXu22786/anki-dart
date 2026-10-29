@@ -291,6 +291,10 @@ substitution using host-computed comparison HTML.
   but do not assert restore precedence or the exact saved ID sequence. The host
   retains the saved-state provider, Bundle/Parcelable, `IdsFile` construction,
   cache-file writes, and restoration lifecycle.
+- Card Browser saved selection restore: `planBrowserSelectionRestore` filters
+  pending IDs to current rows, merges them after existing selections in source
+  order, and emits the `Other` mode cause then refresh only when a new row was
+  added. The host clears the pending restore after applying the transition.
 - Card Browser preview column order: `projectBrowserPreviewColumns` splits
   host-supplied sample rows into displayed and available lists. Displayed rows
   follow the first matching position in the host-supplied current columns,

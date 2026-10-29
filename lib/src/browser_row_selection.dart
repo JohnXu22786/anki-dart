@@ -262,6 +262,76 @@ BrowserRangeSelectionTransition planBrowserSelectRowsBetween({
   );
 }
 
+/// Ordered source effects produced when saved rows are restored after search.
+enum BrowserSelectionRestoreEffect { emitMultiSelectOther, refreshSelectedRows }
+
+/// Immutable result of filtering and applying pending saved row IDs.
+final class BrowserSelectionRestoreTransition {
+  BrowserSelectionRestoreTransition._({
+    required Iterable<BrowserRowId> selectedRows,
+    required Iterable<BrowserRowId> restoredRows,
+    required this.changed,
+    required this.isInMultiSelectMode,
+    required Iterable<BrowserSelectionRestoreEffect> effects,
+  }) : selectedRows = List.unmodifiable(selectedRows),
+       restoredRows = List.unmodifiable(restoredRows),
+       effects = List.unmodifiable(effects);
+
+  /// Selection after the source linked-set `addAll`.
+  final List<BrowserRowId> selectedRows;
+
+  /// Pending IDs that exist in current rows, preserving pending-list order and
+  /// duplicates until set insertion collapses them.
+  final List<BrowserRowId> restoredRows;
+
+  /// True when at least one valid, previously unselected ID was added.
+  final bool changed;
+
+  /// The current mode unless a changed addition emits `Other`.
+  final bool isInMultiSelectMode;
+
+  /// Source-order mode and refresh effects; empty when there was no addition.
+  final List<BrowserSelectionRestoreEffect> effects;
+
+  /// The source clears `pendingSelectionRestore` after calling the operation.
+  bool get clearsPendingSelectionRestore => true;
+}
+
+/// Projects `selectUnvalidatedRowIds(pendingSelectionRestore)` after search.
+///
+/// IDs absent from the current rows are discarded in source filtering order.
+/// Valid IDs are added to the existing selected linked set; only new additions
+/// emit `MultiSelectCause.Other` followed by selected-row refresh. The host
+/// clears the pending restore after applying this transition.
+BrowserSelectionRestoreTransition planBrowserSelectionRestore({
+  required Iterable<BrowserRowId> selectedRows,
+  required Iterable<BrowserRowId> pendingSelectionRestore,
+  required Iterable<BrowserRowId> currentRows,
+  required bool isInMultiSelectMode,
+}) {
+  final validRows = currentRows.toSet();
+  final restoredRows = pendingSelectionRestore
+      .where(validRows.contains)
+      .toList();
+  final nextRows = LinkedHashSet<BrowserRowId>.of(selectedRows);
+  final previousLength = nextRows.length;
+  nextRows.addAll(restoredRows);
+  final changed = nextRows.length != previousLength;
+
+  return BrowserSelectionRestoreTransition._(
+    selectedRows: nextRows,
+    restoredRows: restoredRows,
+    changed: changed,
+    isInMultiSelectMode: changed ? true : isInMultiSelectMode,
+    effects: changed
+        ? const [
+            BrowserSelectionRestoreEffect.emitMultiSelectOther,
+            BrowserSelectionRestoreEffect.refreshSelectedRows,
+          ]
+        : const [],
+  );
+}
+
 /// Immutable result of `CardBrowserViewModel.endMultiSelectMode(reason)`.
 final class BrowserEndMultiSelectTransition<T> {
   BrowserEndMultiSelectTransition._({

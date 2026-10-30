@@ -7,6 +7,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/InsertFieldDialogViewModel.kt`,
+  `AnkiDroid/src/main/java/com/ichi2/anki/model/FieldName.kt`,
+  `AnkiDroid/src/main/java/com/ichi2/anki/model/SpecialField.kt`, and
+  `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/SingleCardSide.kt` are
+  marked `GPL-3.0-or-later` upstream. Their portable field values, ordered
+  side-specific availability, tab positions, and selection state are adapted in
+  `lib/src/insert_field_dialog_selection.dart`. SavedStateHandle, StateFlow,
+  metadata queries, database reads, descriptions/localization, and dialog UI
+  remain host-side. The pinned ViewModel tests directly cover field selection
+  and special-field ordering; invalid-selection retention and wrapper/selected
+  value identity cases are source-derived.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsList.kt`,
   `AnkiDroid/src/main/java/com/ichi2/utils/TagsUtil.kt`, and
   `UniqueArrayList.kt` are marked `GPL-3.0-or-later` upstream; `TagsList.kt`

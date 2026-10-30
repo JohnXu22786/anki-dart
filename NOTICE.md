@@ -7,6 +7,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesState.kt`
+  and `ManageNoteTypesViewModel.kt` are Copyright © 2025 lukstbit and marked
+  `GPL-3.0-or-later` upstream. Their portable row/state values, filter and
+  selection transitions, selected-row projection, and editor destination
+  requests are adapted in `lib/src/manage_note_types_state.dart`. The host
+  supplies note-type rows and retains collection loading/refresh, use-count
+  queries, rename/delete/undo, exception aggregation, StateFlow/coroutines,
+  Android UI/lifecycle, and note-type mutations. The pinned
+  `ManageNoteTypesViewModelTest.kt` is Copyright © 2025 lukstbit and marked
+  `GPL-3.0-or-later`.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/InsertFieldDialogViewModel.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/model/FieldName.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/model/SpecialField.kt`, and
@@ -989,7 +1000,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 ## Unicode property data
 
 The locale-casing property ranges and full lowercase mappings in
-`lib/src/unicode_15_case_data.dart` are derived from Unicode 15.0.0
+`lib/src/unicode_15_case_data.dart`, and simple BMP case mappings in
+`lib/src/unicode_15_simple_case_mappings.dart`, are derived from Unicode 15.0.0
 `UnicodeData.txt`, `PropList.txt`, `DerivedCoreProperties.txt`, and
 `SpecialCasing.txt`; the BMP decimal-digit block starts in the same file are
 derived from Unicode 15.0.0 `UnicodeData.txt`. Copyright © 2022 Unicode, Inc.

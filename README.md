@@ -92,6 +92,7 @@ remain host-side.
 - Deck-picker review reminders: `projectDeckPickerScheduleReviewReminders` carries the caller-supplied deck ID unchanged in a host-facing request for deck-specific reminder routing. The host owns coroutine/flow delivery, destination and Intent construction, and reminder handling. Its focused Dart case is source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker export: `projectDeckPickerExportDeck` carries the caller-supplied deck ID unchanged in a host-facing request for publication to the export flow. The host retains `launchCatchingIO`, flow emission, coroutine/IO/error handling, and export execution. The focused Dart case is source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker Manage Note Types: `projectDeckPickerOpenManageNoteTypes` creates a fresh host-facing destination request on every call, matching the source's plain `ManageNoteTypesDestination` class identity. The host retains coroutine/flow delivery, Intent construction, and navigation. Its focused identity case is source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Manage Note Types list state: `ManageNoteTypesState` maps case-insensitive filtering, display flags, row selection and multi-select mode, source-order selected rows, Fields Editor and Card Editor destinations, and destination clearing. The host supplies note-type rows and retains collection loading/refresh, use-count queries, rename/delete/undo, exception aggregation, asynchronous flows, lifecycle, UI, and note-type mutations. Its cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker reload-count publication: `planDeckPickerReloadDeckCounts` stages host reads and publications in source order, so a later read failure leaves earlier publications intact. It publishes due-tree and no-cards state before reading studied-today, then stages scheduler config, focused deck, and undo-menu reads around their corresponding updates. It composes the existing scheduler and undo-menu projections and replaces only literal LF characters in studied-today text, preserving CR and other whitespace. The host owns cancellation, IO/jobs, reads, and flow updates; cases are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker options-menu refresh: `planDeckPickerOptionsMenuRefresh` maps
   collection accessibility, the ten-deck search-icon threshold, undo values,
@@ -1269,9 +1270,11 @@ SPDX notices remain in each adapted Dart source file. See [NOTICE.md](NOTICE.md)
 for source-file attribution.
 
 The locale-casing property ranges, lowercase mappings, and BMP decimal-digit
-block starts in `lib/src/unicode_15_case_data.dart` are derived from Unicode
-15.0.0 UCD data (`UnicodeData.txt`, `PropList.txt`, `DerivedCoreProperties.txt`,
-and `SpecialCasing.txt`), Copyright © 2022 Unicode, Inc., and are distributed
+block starts in `lib/src/unicode_15_case_data.dart`, along with simple BMP case
+mappings in `lib/src/unicode_15_simple_case_mappings.dart`, are derived from
+Unicode 15.0.0 UCD data (`UnicodeData.txt`, `PropList.txt`,
+`DerivedCoreProperties.txt`, and `SpecialCasing.txt`), Copyright © 2022 Unicode,
+Inc., and are distributed
 under Unicode License V3 (`LicenseRef-Unicode-License-V3`). Its notice is retained
 separately in
 [`LICENSES/Unicode-License-V3.txt`](LICENSES/Unicode-License-V3.txt); the

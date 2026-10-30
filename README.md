@@ -644,6 +644,10 @@ substitution using host-computed comparison HTML.
   enablement formulas, next/previous transitions, back-side-only mode, and
   one-based slider selection. It returns a show-side or load-card intent for the
   host to carry out; card lookup, rendering, and media playback remain outside.
+- Template Previewer tabs: `previewerToggleShowAnswerEffects` orders the
+  selected-side display before its audio load; the ordinal helpers preserve
+  cloze tab indexing and source lookup behavior while leaving card updates and
+  tab widgets to the host. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Card appearance projections: `appendCardAppearanceCss` preserves the supplied
   CSS prefix, then appends nondefault font-scale, card-zoom, and image-zoom rules
   in source order with source-compatible numeric formatting.

@@ -45,8 +45,9 @@ the host-input field/result decision, and answer-side placeholder
 substitution using host-computed comparison HTML.
 
 The portable Set Due Date validation and parameter decisions are also included.
-Collection reads, dialog behavior, undoable scheduling, and scheduler mutation
-remain host-side.
+Study Options data and state projections preserve buried-count derivation and
+Loading/Empty/Congrats/StudyOptions precedence. Collection reads, flow delivery,
+media resolution, undoable scheduling, and UI remain host-side.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual

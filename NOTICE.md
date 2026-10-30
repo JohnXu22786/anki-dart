@@ -7,6 +7,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` is
+  Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked
+  `GPL-3.0-or-later` upstream. Its `DeckStudyData`, buried-count derivation,
+  and Loading/Empty/Congrats/StudyOptions projections are adapted in
+  `lib/src/study_options_view_model.dart`. Collection access, flow publication,
+  Android lifecycle, description rendering, media resolution, and UI remain
+  host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/scheduling/SetDueDateViewModel.kt`
   is marked `GPL-3.0-or-later` upstream. Its portable due-date validation,
   parameter formatting, scheduler-setting guard, interval-match behavior, card
@@ -972,3 +979,7 @@ AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, reviewer flow,
 `BindingMapTest.kt`, and applicable `BindingAndroidTest.kt` cases, including
 the projected key dispatch behavior in `Binding.kt` and `BindingMap.kt`.
 They are not a port of the Android test harness.
+
+The Study Options projection tests were written against
+`StudyOptionsViewModelTest.kt` and cover buried-count arithmetic, state precedence,
+and Loading accessors. They are not a port of the Android test harness.

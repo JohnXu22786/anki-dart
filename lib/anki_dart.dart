@@ -67,6 +67,7 @@ export 'src/reviewer_delete_note_plan.dart';
 export 'src/reviewer_suspend_note_plan.dart';
 export 'src/reviewer_set_due_date_directive.dart';
 export 'src/set_due_date_view_model.dart';
+export 'src/study_options_view_model.dart';
 export 'src/reviewer_edited_tags_directive.dart';
 export 'src/reviewer_edit_tags_directive.dart';
 export 'src/reviewer_user_action_script.dart';

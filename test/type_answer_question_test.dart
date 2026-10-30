@@ -171,4 +171,84 @@ void main() {
       );
     });
   });
+
+  group('filterTemplatePreviewerTypeAnswerQuestion', () {
+    const input =
+        "<center><input id='typeans' type=text value='example' readonly='readonly'></center>";
+
+    test(
+        'uses the read-only example on the first match, then warns on the rest',
+        () {
+      expect(
+        filterTemplatePreviewerTypeAnswerQuestion(
+          'before [[type:Front]] middle [[type:Back]] after',
+          warningHtml: '<center><b>Missing type field</b></center>',
+        ),
+        'before $input middle <center><b>Missing type field</b></center> after',
+      );
+    });
+
+    test('expands warning replacement groups and backslash escapes', () {
+      expect(
+        filterTemplatePreviewerTypeAnswerQuestion(
+          '[[type:Front]] + [[type:Back]]',
+          warningHtml: r'<b>$1</b>\\',
+        ),
+        '$input + <b>Back</b>\\',
+      );
+    });
+
+    test('does not validate replacement strings when there is no match', () {
+      expect(
+        filterTemplatePreviewerTypeAnswerQuestion(
+          'no marker',
+          warningHtml: r'$3',
+        ),
+        'no marker',
+      );
+    });
+
+    test('rejects invalid warning groups only when a later marker matches',
+        () {
+      expect(
+        filterTemplatePreviewerTypeAnswerQuestion(
+          '[[type:Front]]',
+          warningHtml: r'$2',
+        ),
+        input,
+      );
+      expect(
+        () => filterTemplatePreviewerTypeAnswerQuestion(
+          '[[type:Front]] [[type:Back]]',
+          warningHtml: r'$2',
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('keeps absent, malformed, and line-broken markers unchanged', () {
+      for (final text in [
+        '',
+        '[[type:]]',
+        '[[type:Front',
+        '[[TYPE:Front]]',
+        for (final lineTerminator in [
+          '\n',
+          '\r',
+          '\u0085',
+          '\u2028',
+          '\u2029',
+        ])
+          '[[type:Front${lineTerminator}Back]]',
+      ]) {
+        expect(
+          filterTemplatePreviewerTypeAnswerQuestion(
+            text,
+            warningHtml: 'warning',
+          ),
+          text,
+        );
+      }
+    });
+  });
 }

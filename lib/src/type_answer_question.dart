@@ -55,6 +55,30 @@ String filterTypeAnswerQuestion(
   );
 }
 
+/// Applies the Template Previewer's question-side `typeAnsFilter` replacement.
+///
+/// The first matching marker becomes the exact read-only example input;
+/// later markers become the supplied warning. The read-only input matches the
+/// source literal; the host supplies the localized warning and retains
+/// Previewer state and rendering. Replacement strings use Java `Matcher` group
+/// and backslash semantics, matching the existing question-side helper.
+String filterTemplatePreviewerTypeAnswerQuestion(
+  String text, {
+  required String warningHtml,
+}) {
+  var first = true;
+  return text.replaceAllMapped(_questionTypeAnswerPattern, (match) {
+    final replacement =
+        first ? _templatePreviewerExampleInputHtml : warningHtml;
+    first = false;
+    return _expandJavaMatcherReplacement(replacement, match);
+  });
+}
+
+const String _templatePreviewerExampleInputHtml =
+    "<center><input id='typeans' type=text value='example' "
+    "readonly='readonly'></center>";
+
 String _inputPrompt({
   required bool autoFocus,
   required String font,

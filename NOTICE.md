@@ -231,6 +231,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   question-side `removeTypeAnswerTags` function in `lib/src/type_answer_tags.dart`.
   Previewer integration, field lookup, answer comparison,
   rendering, and Android input remain outside this port.
+- `AnkiDroid/src/main/java/com/ichi2/anki/previewer/TemplatePreviewerViewModel.kt`
+  declares `GPL-3.0-or-later`. Its question-side `typeAnsFilter` marker
+  replacement is adapted as `filterTemplatePreviewerTypeAnswerQuestion` in
+  `lib/src/type_answer_question.dart`; Previewer state, warning localization,
+  and rendering remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` declares
   `GPL-3.0-or-later`. Its question-prompt transformation in `filterQuestion`
   is adapted as `filterTypeAnswerQuestion` in
@@ -670,6 +675,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `TypeAnswer.filterQuestion`, including prompt formatting and Java Matcher
   replacement strings. The pinned `TypeAnswerTest.kt` has no direct
   `filterQuestion` tests; its answer-filter cases are only adjacent evidence.
+- The same file contains source-derived checks for the question branch of
+  `TemplatePreviewerViewModel.typeAnsFilter`, which has no direct pinned test;
+  it verifies first-input/later-warning order, replacement-string behavior,
+  and unchanged malformed markers.
 - `test/type_answer_answer_test.dart` contains source-derived checks for the
   placeholder-substitution stage of `TypeAnswer.filterAnswer`. The pinned
   `TypeAnswerTest.kt` directly tests full answer filtering with

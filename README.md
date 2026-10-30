@@ -723,6 +723,10 @@ substitution using host-computed comparison HTML.
   warning/state delivery and cloze-content invocation remain host-side. The
   result's warning choice is modeled separately when the host supplies field
   values.
+- Template Previewer type-answer prompt: `filterTemplatePreviewerTypeAnswerQuestion`
+  replaces the first matching question marker with the exact source read-only
+  example input HTML, then replaces every later match with host-supplied warning
+  HTML. The host retains Previewer state, localization, and rendering.
 - Cloze content: `typeAnswerContentForCloze` extracts captures for a supplied
   cloze index, cuts each hint at the first `::`, collapses repeated identical
   captures to one value, and otherwise joins all captures in source order.

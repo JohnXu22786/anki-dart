@@ -16,6 +16,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/study_options_view_model.dart`. Collection access, flow publication,
   Android lifecycle, description rendering, media resolution, and UI remain
   host-side.
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/customstudy/CustomStudyViewModel.kt`
+  is Copyright © 2025 lukstbit and marked `GPL-3.0-or-later` upstream;
+  `CustomStudyDialog.kt`, which declares the card-state enum, is Copyright © 2015
+  Timothy Rae and marked `GPL-3.0-or-later`. Their portable selected-index to
+  scheduler-kind mapping is adapted in `lib/src/custom_study_card_state.dart`.
+  SavedStateHandle persistence, Android spinner, labels/localization, and
+  scheduler execution remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/scheduling/SetDueDateViewModel.kt`
   is marked `GPL-3.0-or-later` upstream. Its portable due-date validation,
   parameter formatting, scheduler-setting guard, interval-match behavior, card

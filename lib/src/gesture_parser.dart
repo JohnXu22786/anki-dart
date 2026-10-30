@@ -390,6 +390,16 @@ BigInt? _parseInt64(String? value) {
   );
 }
 
+/// Parses a signed 32-bit decimal value with Kotlin `toIntOrNull()` semantics.
+int? parseKotlinInt32(String? value) {
+  final parsed = _parseKotlinDecimal(
+    value,
+    positiveLimit: BigInt.from(0x7fffffff),
+    negativeLimit: BigInt.from(0x80000000),
+  );
+  return parsed?.toInt();
+}
+
 /// Parses signed decimal input like Kotlin's `toIntOrNull()`/`toLongOrNull()`.
 /// Those functions accept BMP Unicode decimal digits through `Char` parsing,
 /// while their optional sign remains ASCII `+` or `-`.

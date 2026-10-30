@@ -46,8 +46,12 @@ substitution using host-computed comparison HTML.
 
 The portable Set Due Date validation and parameter decisions are also included.
 Study Options data and state projections preserve buried-count derivation and
-Loading/Empty/Congrats/StudyOptions precedence. Collection reads, flow delivery,
-media resolution, undoable scheduling, and UI remain host-side.
+Loading/Empty/Congrats/StudyOptions precedence; collection reads, flow delivery,
+media resolution, undoable scheduling, and UI remain host-side. Filtered Deck
+Options name and limit validation, second-filter toggling, and build eligibility
+are also projected from the pinned source. Collection access, SavedStateHandle,
+asynchronous flows, Android UI, query execution, and deck-building mutations
+remain host-side.
 
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual

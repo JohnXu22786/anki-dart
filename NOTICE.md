@@ -7,6 +7,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsState.kt` and `FilteredDeckOptionsViewModel.kt` are marked `GPL-3.0-or-later` upstream; `FilteredDeckOptionsState.kt` attributes source copyright to lukstbit. The portable option/filter values and name/limit validation, build-eligibility, and second-filter toggle projections are adapted in `lib/src/filtered_deck_options.dart`. Collection access, SavedStateHandle, asynchronous flows, backend query parsing/execution, Android UI, and filtered-deck build mutations remain host-side.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` is
   Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked
   `GPL-3.0-or-later` upstream. Its `DeckStudyData`, buried-count derivation,

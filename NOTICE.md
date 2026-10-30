@@ -7,6 +7,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/scheduling/SetDueDateViewModel.kt`
+  is marked `GPL-3.0-or-later` upstream. Its portable due-date validation,
+  parameter formatting, scheduler-setting guard, interval-match behavior, card
+  count, and review-only current-interval visibility are adapted in
+  `lib/src/set_due_date_view_model.dart`. Collection access, scheduler mutation,
+  undo handling, and Android UI remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckFilters.kt` is
   Copyright © 2026 Arthur Milchior <arthur@milchior.fr>. Its Dart adaptation is
   `lib/src/deck_filters.dart`, with locale-sensitive case handling in
@@ -954,7 +960,12 @@ version (`GPL-3.0-or-later`). The pinned scheduler binary is an external
 dependency and is not redistributed here. See the notices in each source file
 and the full license text in `COPYING` and `LICENSES/GPL-3.0-or-later.txt`.
 
-The tests were written against the behavior documented and exercised by
+The Set Due Date tests were written against `SetDueDateViewModelTest.kt` and
+exercise its scheduler-loading guard, day/range validation, parameter format,
+FSRS setter semantics, and current-interval visibility. They are not a port of
+the Android test harness.
+
+The other tests were written against the behavior documented and exercised by
 AnkiDroid's `DeckFiltersTest.kt`, `DeckNodeTest.kt`, reviewer flow,
 `AnswerTimerTest.kt`, `GestureParserTest.kt`, `GestureProcessorTest.kt`,
 `BindingTest.kt`, `MappableBindingTest.kt`, `BindingMap.kt`,

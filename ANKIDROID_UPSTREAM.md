@@ -41,10 +41,15 @@ question-side type-answer placeholder removal, and answer-side
 placeholder substitution using host-computed comparison HTML;
 it does not claim to reproduce the whole Android app.
 
+The Set Due Date slice preserves the portable validation and parameter decisions
+from `SetDueDateViewModel.kt`; collection reads, undoable scheduling, dialog
+behavior, and scheduler mutation remain host-side.
+
 ## Source-to-Dart mapping
 
 | AnkiDroid 2.25.3 source | Dart port | Covered behavior |
 | --- | --- | --- |
+| `AnkiDroid/src/main/java/com/ichi2/anki/scheduling/SetDueDateViewModel.kt` | `SetDueDateViewModel`, `SetDueDateRange`, and `projectSetDueDateCurrentInterval()` in `lib/src/set_due_date_view_model.dart`; focused cases in `test/set_due_date_view_model_test.dart` | Preserves nonnegative single-day values, date-range ordering and equal-endpoint collapse, scheduler-setting tri-state submission guard, FSRS forced interval matching and false-set exception, card count, and review-only one-card interval visibility. The host retains collection reads, Android dialog, reactive state delivery, `SetDueDateDays`, undoable operation, and `sched.setDueDate`. Pinned tests directly cover the scheduler guard, day/range validation, parameter suffix, FSRS setter, default, and multi-card interval suppression; one-card review-type visibility is source-derived. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckFilters.kt` | `lib/src/deck_filters.dart`, `lib/src/locale_lowercase.dart` | Search tokenization with locale-invariant query casing, Kotlin whitespace trimming, path matching, partial-colon matching, and locale/root deck-name casing using the current platform locale on each match |
 | `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:430–433` (`updateDeckFilter`) | `projectDeckPickerFilterUpdate()` in `lib/src/deck_filters.dart`; cases in `test/deck_picker_filter_update_test.dart` | Creates a fresh `DeckFilters` value from the exact input text, matching the source plain-class construction on every call. The host assigns it to the current-filter StateFlow; Android flow delivery and deck-list refresh remain host-side. The pinned ViewModel has no direct assertion for this setter, so identity/input cases are source-derived. |
 | Unicode 15.0.0 UCD `UnicodeData.txt`, `PropList.txt`, `DerivedCoreProperties.txt`, and `SpecialCasing.txt` | `lib/src/unicode_15_case_data.dart`, `lib/src/locale_lowercase.dart` | Canonical-combining-class, `Soft_Dotted`, `Cased`, and `Case_Ignorable` data; BMP decimal-digit block starts for Kotlin-compatible gesture query parsing; and full lowercase mappings for final sigma and unconditional expansions; see the separate Unicode license notice |

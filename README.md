@@ -44,6 +44,10 @@ cloze-content extraction, question-side type-answer placeholder removal,
 the host-input field/result decision, and answer-side placeholder
 substitution using host-computed comparison HTML.
 
+The portable Set Due Date validation and parameter decisions are also included.
+Collection reads, dialog behavior, undoable scheduling, and scheduler mutation
+remain host-side.
+
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and

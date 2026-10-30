@@ -190,3 +190,4 @@ export 'src/type_answer_eligibility.dart';
 export 'src/type_answer_answer.dart';
 export 'src/type_answer_question.dart';
 export 'src/type_answer_tags.dart';
+export 'src/tags_dialog_initialization.dart';

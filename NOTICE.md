@@ -13,7 +13,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   attributes copyright to Tarek Mohamed Abdalla. Their portable tag selection
   model and hierarchy comparison helpers are adapted in
   `lib/src/tags_list.dart`. Collection loading, dialog and adapter UI,
-  localization, and saving remain host-side.
+  localization, and saving remain host-side. The portable initialization
+  projection from `TagsDialogViewModel.kt` is in
+  `lib/src/tags_dialog_initialization.dart`; it consumes host-fetched note tags
+  and returns the TagsList plus source-ordered progress values. Collection and
+  note reads, coroutine/flow publication, lifecycle, dialog UI, and saving stay
+  host-side. The pinned `TagsDialogViewModelTest.kt` is Copyright © 2025
+  Divyansh Kushwaha and marked `GPL-3.0-or-later`.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsState.kt` and `FilteredDeckOptionsViewModel.kt` are marked `GPL-3.0-or-later` upstream; `FilteredDeckOptionsState.kt` attributes source copyright to lukstbit. The portable option/filter values and name/limit validation, build-eligibility, and second-filter toggle projections are adapted in `lib/src/filtered_deck_options.dart`. Collection access, SavedStateHandle, asynchronous flows, backend query parsing/execution, Android UI, and filtered-deck build mutations remain host-side.
 

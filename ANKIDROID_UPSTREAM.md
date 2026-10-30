@@ -49,7 +49,10 @@ state projections from `StudyOptionsViewModel.kt`; collection access, flow
 publication, Android lifecycle, description rendering, media resolution, and UI
 remain host-side. The Custom Study slice maps the selected card-state index to
 its scheduler kind; SavedStateHandle, Android spinner, labels/localization, and
-scheduler execution remain host-side.
+scheduler execution remain host-side. The Manage Tags slice maps tag-name
+normalization and ancestor paths plus the recursive tree's flattened display,
+collapsed visibility, and search projections; collection tag loading/mutation,
+undo, StateFlow, RecyclerView/lifecycle, and user messages remain host-side.
 
 ## Source-to-Dart mapping
 
@@ -327,6 +330,7 @@ scheduler execution remain host-side.
 | `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/BindingMapTest.kt` and map construction in `BindingMap.kt` | `test/reviewer_binding_map_test.dart` | Source-derived cases for duplicate registration order, side-independent key lookup with side retained in results, separate axis registrations, and skipping unknown bindings; Android event handling and processor execution are excluded |
 | `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/BindingTest.kt` and `BindingMapTest.kt` | `test/reviewer_key_dispatch_test.dart` | Covers repeat suppression, zero/nonzero candidate handling, key-before-Unicode order, exact event modifier values and configured modifier matching, signed/overflow UTF-16 truncation including NUL, separator omission, registration order, false continuation, first-true short-circuit, and absent/all-false processors. Android KeyEvent access and keyboard-layout Unicode calculation are excluded. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/SingleAxisDetector.kt`, `BindingMap.kt`, and applicable axis parsing cases from `BindingAndroidTest.kt` | `test/reviewer_axis_dispatch_test.dart` | Source-derived checks for inclusive positive/negative thresholds, zero/NaN behavior, per-registration debounce and rearm, independent duplicate state, ordered multi-trigger dispatch, ignored processor results, null-event preservation, and empty maps. The pinned source has no direct `SingleAxisDetector` unit test; Android MotionEvent extraction is excluded. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/tags/TagName.kt` and `ManageTagsViewModel.kt` (`flattenTree`, `applyCollapsedVisibility`, `applySearchFilter`, `TagListItemState`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); `AnkiDroid/src/test/java/com/ichi2/anki/tags/FlattenTreeTest.kt` | `TagName`, `TagTreeNode`, `TagListItemState`, and tag-tree projections in `lib/src/tag_tree_projection.dart`; focused cases in `test/tag_tree_projection_test.dart` | Preserves Kotlin blank rejection, space-to-underscore conversion, literal `::` ancestors, preorder flattening, full paths and display leaves, source levels/flags, collapsed visibility, case-insensitive full-path matches and matching ancestors, selective parent expansion, and value/data-class equality. Blank invalid tags retain the source failure. The host supplies the recursive tree; collection loading/mutation, undo, StateFlow, Android RecyclerView/lifecycle, and user messages remain unported. |
 
 ## Review backend boundary
 

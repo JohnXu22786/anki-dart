@@ -38,6 +38,7 @@ export 'src/deck_picker_reload_deck_counts_plan.dart';
 export 'src/deck_picker_empty_card_deletion.dart';
 export 'src/deck_node.dart';
 export 'src/deck_name_path.dart';
+export 'src/tag_tree_projection.dart';
 export 'src/shortcut_data.dart';
 export 'src/display_deck_node.dart';
 export 'src/flattened_deck_list.dart';

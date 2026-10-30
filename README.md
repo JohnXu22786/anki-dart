@@ -53,6 +53,12 @@ are also projected from the pinned source. Collection access, SavedStateHandle,
 asynchronous flows, Android UI, query execution, and deck-building mutations
 remain host-side.
 
+Media Check unused-file deletion is also projected: a null check result yields
+an empty list, the host trashes the supplied list under `DELETING_MEDIA`, and
+the deleted count is published only after trash succeeds. Media scanning,
+filesystem/backend work, progress execution, and state delivery remain
+host-side.
+
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and

@@ -66,6 +66,15 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   count, and review-only current-interval visibility are adapted in
   `lib/src/set_due_date_view_model.dart`. Collection access, scheduler mutation,
   undo handling, and Android UI remain host-side.
+- `AnkiDroid/src/main/java/com/ichi2/anki/mediacheck/MediaCheckViewModel.kt`
+  is Copyright (c) 2025 Ashish Yadav <mailtoashish693@gmail.com> and marked
+  `GPL-3.0-or-later` upstream. Its portable unused-file deletion plan is
+  adapted in `lib/src/media_check_unused_deletion.dart`; it preserves the null
+  fallback, exact list passed to host trash, `DELETING_MEDIA` progress, and
+  count publication only after success. Media scanning, filesystem/backend
+  operations, progress execution, StateFlow/coroutines, lifecycle, and UI remain
+  host-side. The pinned `MediaCheckViewModelTest.kt` is Copyright (c) 2026
+  Ashish Yadav <mailtoashish693@gmail.com> and marked `GPL-3.0-or-later`.
 - `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckFilters.kt` is
   Copyright © 2026 Arthur Milchior <arthur@milchior.fr>. Its Dart adaptation is
   `lib/src/deck_filters.dart`, with locale-sensitive case handling in

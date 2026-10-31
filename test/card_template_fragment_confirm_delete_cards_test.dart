@@ -111,53 +111,56 @@ void main() {
       ]);
     });
 
-    test('callback failures stop subsequent effects and confirmation failures propagate', () {
-      final formatFailure = StateError('message formatting failed');
-      final formatEvents = <String>[];
+    test(
+      'callback failures stop subsequent effects and confirmation failures propagate',
+      () {
+        final formatFailure = StateError('message formatting failed');
+        final formatEvents = <String>[];
 
-      expect(
-        () =>
-            cardTemplateFragmentConfirmDeleteCards<
-              _Template,
-              _Notetype,
-              _Dialog
-            >(
-              template: _Template('Card 1'),
-              notetype: _Notetype(),
-              numAffectedCards: 2,
-              callbacks: _callbacks(
-                events: formatEvents,
-                formatMessage: (_, _, _) => throw formatFailure,
+        expect(
+          () =>
+              cardTemplateFragmentConfirmDeleteCards<
+                _Template,
+                _Notetype,
+                _Dialog
+              >(
+                template: _Template('Card 1'),
+                notetype: _Notetype(),
+                numAffectedCards: 2,
+                callbacks: _callbacks(
+                  events: formatEvents,
+                  formatMessage: (_, _, _) => throw formatFailure,
+                ),
               ),
-            ),
-        throwsA(same(formatFailure)),
-      );
-      expect(formatEvents, [
-        'create-dialog',
-        'quantity:2',
-        'name',
-        'format:2:Card 1',
-      ]);
+          throwsA(same(formatFailure)),
+        );
+        expect(formatEvents, [
+          'create-dialog',
+          'quantity:2',
+          'name',
+          'format:2:Card 1',
+        ]);
 
-      final syncFailure = StateError('sync check failed');
-      final confirmEvents = <String>[];
-      final dialog = _Dialog();
-      cardTemplateFragmentConfirmDeleteCards<_Template, _Notetype, _Dialog>(
-        template: _Template('Card 1'),
-        notetype: _Notetype(),
-        numAffectedCards: 2,
-        callbacks: _callbacks(
-          events: confirmEvents,
-          dialog: dialog,
-          executeWithSyncCheck: (_) => throw syncFailure,
-        ),
-      );
+        final syncFailure = StateError('sync check failed');
+        final confirmEvents = <String>[];
+        final dialog = _Dialog();
+        cardTemplateFragmentConfirmDeleteCards<_Template, _Notetype, _Dialog>(
+          template: _Template('Card 1'),
+          notetype: _Notetype(),
+          numAffectedCards: 2,
+          callbacks: _callbacks(
+            events: confirmEvents,
+            dialog: dialog,
+            executeWithSyncCheck: (_) => throw syncFailure,
+          ),
+        );
 
-      expect(dialog.confirm, isNotNull);
-      expect(() => dialog.confirm!(), throwsA(same(syncFailure)));
-      expect(confirmEvents.last, 'sync-check');
-      expect(confirmEvents, isNot(contains('delete')));
-    });
+        expect(dialog.confirm, isNotNull);
+        expect(() => dialog.confirm!(), throwsA(same(syncFailure)));
+        expect(confirmEvents.last, 'sync-check');
+        expect(confirmEvents, isNot(contains('delete')));
+      },
+    );
   });
 }
 

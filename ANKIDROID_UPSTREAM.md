@@ -8,6 +8,25 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## CardTemplateFragment.saveNoteType
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1091–1119`
+(`saveNoteType`, pinned commit `d9bf072f814a0c37d30a694192593b31ff2df875`)
+is adapted by `cardTemplateFragmentSaveNoteType()` in
+`lib/src/card_template_fragment_save_note_type.dart`. The port preserves the
+unchanged-note finish path, disabled-button early return, disable-before-task
+sequence, pre-task error-message lookup, in-task Activity and progress-message
+order, non-null temporary-model save, success callback, and `Exception`-only
+log/post/rethrow boundary. Activity, views, resources, task/progress execution,
+the temporary-model `!!` read, database save, logging, and lifecycle remain
+host-side. Focused tests are in
+`test/card_template_fragment_save_note_type_test.dart` and cover unchanged and
+disabled paths, successful callback order, caught exception identity and
+button re-enable, null-button behavior, and `Error` propagation. The pinned
+`CardTemplateEditorTest` includes successful confirm/save flows at lines
+160–185, 237–243, 293–300, 488–493, 588–595, and 694–700, but does not cover
+these branch/error details; the focused Dart cases are source-derived.
+
 This repository is a partial Dart port of that exact source snapshot. The
 current implementation covers deck-picker filtering and visible-row
 construction, the headless review-session action lifecycle, reviewer count and

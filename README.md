@@ -1463,6 +1463,25 @@ branches, order, identities, and failure stopping. Pinned
 preview, while its helper asserts the confirmation quantity. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment save note type
+
+`cardTemplateFragmentSaveNoteType()` in
+`lib/src/card_template_fragment_save_note_type.dart` follows
+`CardTemplateFragment.saveNoteType()` at `CardTemplateEditor.kt:1091–1119`
+in AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+Unchanged note types log and finish immediately. Changed note types preserve
+the confirm-button guard and disable-before-task order, then validate the
+Activity, resolve progress text, save the non-null temporary model, and call
+the success callback. The task catches only `Exception`, logs the same object,
+posts re-enabling the same button when present, and rethrows it. Android views,
+resources, lifecycle, task/progress UI, model/database, logging, and host effects
+remain host-side. Focused tests cover unchanged/disabled branches, success
+ordering, caught exception identity and re-enable, null-button behavior, and
+`Error` propagation. The host performs the temporary-model `!!` read and
+database save through callbacks. The pinned `CardTemplateEditorTest` covers
+successful confirm/save flows in context; these additional branch/error cases
+are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor current template name
 
 `cardTemplateEditorCurrentTemplateName()` in

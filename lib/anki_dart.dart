@@ -271,6 +271,7 @@ export 'src/card_template_fragment_arguments.dart';
 export 'src/card_template_fragment_current_template.dart';
 export 'src/card_template_fragment_get_note.dart';
 export 'src/card_template_fragment_perform_preview.dart';
+export 'src/card_template_fragment_save_note_type.dart';
 export 'src/card_template_fragment_display_deck_override_dialog.dart';
 export 'src/card_template_fragment_insert_field.dart';
 export 'src/card_template_fragment_set_current_editor_view.dart';

@@ -7,6 +7,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt`
+  (`CardTemplateFragment.saveNoteType`, lines 1091–1119) is marked
+  `GPL-3.0-or-later` upstream and names no separate copyright holder. Its
+  callback order and `Exception` boundary are adapted in
+  `lib/src/card_template_fragment_save_note_type.dart`, with focused cases in
+  `test/card_template_fragment_save_note_type_test.dart`. Android views,
+  Activity/lifecycle, resources, task/progress UI, temporary-model `!!` read,
+  model/database, logging, and success effects remain host-side. The pinned
+  `CardTemplateEditorTest` covers successful confirm/save flows in context;
+  the focused branch and error cases are source-derived.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/NoteFieldsCheckResult.kt` is Copyright (c) 2024 Ashish Yadav and declares `GPL-3.0-or-later`. Its status-to-success/failure decision is adapted in `lib/src/note_fields_check_result.dart`; host validation, generated response types, note/collection access, localization, and Android remain host-side. No generated protocol code is copied. The pinned source has no direct focused test; source-derived cases are in `test/note_fields_check_result_test.dart`.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/FullScreenMode.kt` declares `GPL-3.0-or-later` and does not name a separate copyright holder. Its exact mode strings, default/null/unknown decoding, fullscreen predicate, legacy boolean migration decision, and ordered string-write/key-removal plan are adapted in `lib/src/reviewer_full_screen_mode.dart`; source-derived cases are in `test/reviewer_full_screen_mode_test.dart`. The host reads SharedPreferences and applies the ordered actions inside its Android edit transaction. SharedPreferences, Android window/insets/UI effects, and unrelated Reviewer behavior remain host-side.

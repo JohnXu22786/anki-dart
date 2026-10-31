@@ -81,6 +81,8 @@ final class ReviewReminderIdAllocation {
 
 /// Minimum number of due cards required to trigger a review reminder.
 final class ReviewReminderCardTriggerThreshold {
+  static const zero = ReviewReminderCardTriggerThreshold._(0);
+
   ReviewReminderCardTriggerThreshold(this.threshold) {
     if (threshold < 0 || threshold > ReviewReminderId._maximumInt32) {
       throw ArgumentError.value(
@@ -90,6 +92,8 @@ final class ReviewReminderCardTriggerThreshold {
       );
     }
   }
+
+  const ReviewReminderCardTriggerThreshold._(this.threshold);
 
   final int threshold;
 

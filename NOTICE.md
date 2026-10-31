@@ -1227,6 +1227,15 @@ access, persistence, runtime reminder creation, and Android behavior remain
 host-side. The focused Dart cases are source-derived behavior tests, not a port
 of the Android test harness.
 
+The current `ReviewReminder` model in `lib/src/review_reminder.dart` and its
+source-compatible nested time/scope string forms are derived from AnkiDroid's
+`ReviewReminder.kt` and `ReviewReminderTest.kt`, Copyright © 2025 Eric Li
+<ericli3690@gmail.com>, licensed `GPL-3.0-or-later` upstream. The host supplies
+the allocated reminder ID and epoch-millisecond timestamps and retains clock,
+preference access, serialization, Parcelable, persistence, collection access,
+and notification scheduling. The focused Dart cases are source-derived behavior
+tests, not a port of the Android test harness.
+
 The schema version values, V1/V2 reminder schemas, and current-schema migration
 projection in `lib/src/review_reminder_schema_migration.dart` are derived from
 AnkiDroid's `ReviewReminderSchema.kt`, `ReviewReminder.kt`, and

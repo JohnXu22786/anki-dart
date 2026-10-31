@@ -50,6 +50,9 @@ final class ReviewReminderTime {
 
   @override
   int get hashCode => Object.hash(hour, minute);
+
+  @override
+  String toString() => 'ReviewReminderTime(hour=$hour, minute=$minute)';
 }
 
 /// The scope selected when adding a reminder.
@@ -65,6 +68,9 @@ final class GlobalReminderScope extends ReviewReminderScope {
 
   @override
   int get hashCode => 0;
+
+  @override
+  String toString() => 'Global';
 }
 
 final class DeckSpecificReminderScope extends ReviewReminderScope {
@@ -78,6 +84,9 @@ final class DeckSpecificReminderScope extends ReviewReminderScope {
 
   @override
   int get hashCode => Object.hash(DeckSpecificReminderScope, deckId);
+
+  @override
+  String toString() => 'DeckSpecific(did=$deckId)';
 }
 
 /// The fields consumed by the dialog when editing or emitting a reminder.

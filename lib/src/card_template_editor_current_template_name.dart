@@ -22,18 +22,19 @@
 
 /// Reads the current template name, preserving the source's Exception boundary.
 ///
-/// The host resolves the current template ordinal and supplies a callback that
-/// reads the name by that ordinal. If the read throws an [Exception], [warn] is
-/// called once with the same exception before an empty string is returned.
-/// Errors and failures from [warn] propagate. Backend model access, ordinal
-/// retrieval, and Timber logging stay with the host.
+/// The host supplies a callback that reads the current template ordinal and a
+/// callback that reads the name by that ordinal. Both callbacks run inside the
+/// same source-compatible `Exception` boundary, in that order. If either read
+/// throws an [Exception], [warn] is called once with that exception before an
+/// empty string is returned. Errors and failures from [warn] propagate.
+/// Backend model access and Timber logging stay with the host.
 String cardTemplateEditorCurrentTemplateName({
-  required int currentOrdinal,
+  required int Function() readCurrentOrdinal,
   required String Function(int ordinal) readTemplateName,
   required void Function(Exception exception) warn,
 }) {
   try {
-    return readTemplateName(currentOrdinal);
+    return readTemplateName(readCurrentOrdinal());
   } on Exception catch (exception) {
     warn(exception);
     return '';

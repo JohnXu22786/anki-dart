@@ -25,21 +25,24 @@ import 'package:test/test.dart';
 
 void main() {
   group('cardTemplateEditorCurrentTemplateName', () {
-    test('reads by the source ordinal and returns the exact name', () {
-      final ordinals = <int>[];
+    test('reads the source ordinal then returns the exact name', () {
+      final events = <String>[];
       final warnings = <Exception>[];
 
       final name = cardTemplateEditorCurrentTemplateName(
-        currentOrdinal: 3,
+        readCurrentOrdinal: () {
+          events.add('ordinal');
+          return 3;
+        },
         readTemplateName: (ordinal) {
-          ordinals.add(ordinal);
+          events.add('name:$ordinal');
           return '  Exact Name\n';
         },
         warn: warnings.add,
       );
 
       expect(name, '  Exact Name\n');
-      expect(ordinals, [3]);
+      expect(events, ['ordinal', 'name:3']);
       expect(warnings, isEmpty);
     });
 
@@ -49,7 +52,7 @@ void main() {
       var reads = 0;
 
       final name = cardTemplateEditorCurrentTemplateName(
-        currentOrdinal: 0,
+        readCurrentOrdinal: () => 0,
         readTemplateName: (_) {
           reads++;
           throw failure;
@@ -62,13 +65,34 @@ void main() {
       expect(warnings, [same(failure)]);
     });
 
+    test('warns once and returns empty for an ordinal-read Exception', () {
+      final failure = Exception('ordinal read failed');
+      final events = <String>[];
+
+      final name = cardTemplateEditorCurrentTemplateName(
+        readCurrentOrdinal: () {
+          events.add('ordinal');
+          throw failure;
+        },
+        readTemplateName: (_) {
+          events.add('name');
+          return 'unreachable';
+        },
+        warn: (exception) =>
+            events.add('warn:${identical(exception, failure)}'),
+      );
+
+      expect(name, '');
+      expect(events, ['ordinal', 'warn:true']);
+    });
+
     test('propagates a non-Exception Error without warning', () {
       final failure = AssertionError('fatal host failure');
       final warnings = <Exception>[];
 
       expect(
         () => cardTemplateEditorCurrentTemplateName(
-          currentOrdinal: 0,
+          readCurrentOrdinal: () => 0,
           readTemplateName: (_) => throw failure,
           warn: warnings.add,
         ),
@@ -83,7 +107,7 @@ void main() {
 
       expect(
         () => cardTemplateEditorCurrentTemplateName(
-          currentOrdinal: 0,
+          readCurrentOrdinal: () => 0,
           readTemplateName: (_) => throw readFailure,
           warn: (_) => throw warningFailure,
         ),
@@ -91,12 +115,15 @@ void main() {
       );
     });
 
-    test('runs the template read before the host warning/log callback', () {
+    test('runs ordinal and template reads before the warning/log callback', () {
       final events = <String>[];
       final failure = Exception('template read failed');
 
       final name = cardTemplateEditorCurrentTemplateName(
-        currentOrdinal: 5,
+        readCurrentOrdinal: () {
+          events.add('ordinal');
+          return 5;
+        },
         readTemplateName: (ordinal) {
           events.add('read:$ordinal');
           throw failure;
@@ -106,7 +133,7 @@ void main() {
       );
 
       expect(name, '');
-      expect(events, ['read:5', 'warn:true']);
+      expect(events, ['ordinal', 'read:5', 'warn:true']);
     });
   });
 }

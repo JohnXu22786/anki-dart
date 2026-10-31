@@ -42,6 +42,7 @@ export 'src/review_reminder_form_state.dart';
 export 'src/review_reminder_delivery.dart';
 export 'src/review_reminder.dart';
 export 'src/review_reminder_group.dart';
+export 'src/review_reminder_refresh_decision.dart';
 export 'src/review_reminder_id.dart';
 export 'src/review_reminder_schema_migration.dart';
 export 'src/edit_deck_description_state.dart';

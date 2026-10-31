@@ -20,6 +20,7 @@
 export 'src/deck_filters.dart';
 export 'src/card_utils.dart';
 export 'src/card_template_browser_appearance_has_changes.dart';
+export 'src/card_template_browser_appearance_on_create.dart';
 export 'src/card_template_browser_appearance_menu_routing.dart';
 export 'src/card_template_browser_appearance_dialog_actions.dart';
 export 'src/card_template_browser_appearance_state_transfer.dart';

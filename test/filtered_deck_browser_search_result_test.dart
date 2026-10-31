@@ -81,7 +81,7 @@ void main() {
     test(
       'failure wraps cause and localized message without changing query',
       () {
-        final cause = StateError('backend detail');
+        final cause = FormatException('backend detail');
         final previousError = StateError('previous error');
         final current = FilteredDeckOptions(
           throwable: previousError,
@@ -103,7 +103,7 @@ void main() {
     );
 
     test('failure preserves a null localized message as null', () {
-      final cause = StateError('backend detail');
+      final cause = FormatException('backend detail');
 
       final result = onSearchInBrowserFailure(
         current: const FilteredDeckOptions(),

@@ -212,7 +212,7 @@ class FilteredDeckBrowserSearchRequest {
 
 /// The portable form of AnkiDroid's `InvalidSearchException` wrapper.
 ///
-/// [cause] is the host's original backend exception, and [message] is its
+/// [cause] is the host's original backend [Exception], and [message] is its
 /// localized message as supplied by the host.
 class FilteredDeckInvalidSearchException implements Exception {
   const FilteredDeckInvalidSearchException({
@@ -220,7 +220,7 @@ class FilteredDeckInvalidSearchException implements Exception {
     required this.message,
   });
 
-  final Object cause;
+  final Exception cause;
   final String? message;
 }
 
@@ -245,9 +245,12 @@ FilteredDeckOptions onSearchInBrowserSuccess({
 }) => current.copyWith(browserQuery: browserQuery);
 
 /// Projects a failed host `safeBuildSearchString()` result.
+///
+/// The pinned host helper catches `Exception`, so backend errors outside that
+/// type do not enter this result projection.
 FilteredDeckOptions onSearchInBrowserFailure({
   required FilteredDeckOptions current,
-  required Object cause,
+  required Exception cause,
   required String? localizedMessage,
 }) => current.copyWith(
   throwable: FilteredDeckInvalidSearchException(

@@ -1332,3 +1332,12 @@ from AnkiDroid's `ReviewRemindersDatabase.kt` and
 schema migration, and recovery behavior.
 The Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
+  (pinned at `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked
+  `GPL-3.0-or-later` and names no separate copyright holder. Its
+  `showAnswerInternal()` effect order is adapted in
+  `lib/src/reviewer_show_answer_effects.dart`, with source-derived cases in
+  `test/reviewer_show_answer_effects_test.dart`. The host retains deferred and
+  coroutine execution, scheduler/deck/config reads, media playback, timer
+  operation, StateFlow/lifecycle, and UI.

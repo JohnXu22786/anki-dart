@@ -920,6 +920,14 @@ Android lifecycle, StateFlow, localization, and UI.
   icon, and render the host-selected side; card requests reload before updating
   the flag icon. The host owns change/handler reads and executes callbacks in
   order, stopping naturally on failure; see `ANKIDROID_UPSTREAM.md`.
+- Reviewer show-answer effects: `planReviewerShowAnswerEffects` preserves the
+  mutation wait, typed-answer result publication/default and 1,000 ms result
+  timeout, next-time update, answer display, answer-side media, audio-gated
+  Auto Advance callback, and timer hidden-state read in source order. Hidden
+  timers skip current-deck/config reads; visible timers request them before the
+  host applies `stopTimerOnAnswer`. Deferred/coroutine execution, mutable
+  Reviewer state, scheduler/deck/media/timer access, Flow/lifecycle, and UI
+  remain host-side; see `ANKIDROID_UPSTREAM.md`.
 - Reviewer media replay side: `reviewerReplayMediaSide` maps the host-supplied
   `showingAnswer` value to `back` when true and `front` when false, matching the
   pinned `replayMedia()` side choice. The pinned Reviewer tests have no direct

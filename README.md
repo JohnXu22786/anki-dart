@@ -54,7 +54,9 @@ and post-operation collection refresh order; collection reads, flow delivery,
 media resolution, undoable scheduling, and UI remain host-side.
 Study Options unbury preserves the current-deck lookup inside the undoable
 scheduler callback and does not refresh derived state; its host lifecycle and
-scheduler operation remain host-side. Filtered Deck Options name and limit
+scheduler operation remain host-side. Study Options refreshData preserves the
+open-collection callback boundary for derived-state refresh; collection lookup
+and state updates remain host-side. Filtered Deck Options name and limit
 validation, second-filter toggling, and build eligibility
 are also projected from the pinned source. Collection access, SavedStateHandle,
 asynchronous flows, Android UI, query execution, and deck-building mutations

@@ -1476,6 +1476,22 @@ retains `CardTemplates`, its length and names, and localization. Focused tests i
 `test/card_template_editor_new_card_name_test.dart` are source-derived; no
 direct pinned test for `newCardName` was found.
 
+## Card Template Editor Intent construction
+
+`createCardTemplateEditorIntent()` in
+`lib/src/card_template_editor_intent_callbacks.dart` follows
+`CardTemplateEditor.getIntent()` at `CardTemplateEditor.kt:1709–1726` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It constructs the host Intent,
+adds the note-type ID, then the optional note ID and ordinal when present,
+logs those exact values, and returns the same Intent. Each callback failure
+propagates immediately and prevents later writes or logging. The host owns
+`Context`, the Activity target, Android `Intent`, generated ID types and values,
+extra keys, typed writes, and Timber logging; Dart only sequences the callbacks.
+Focused tests in `test/card_template_editor_intent_callbacks_test.dart` are
+source-derived; no direct pinned test for `getIntent()` was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment arguments
 
 `createCardTemplateFragment()` in

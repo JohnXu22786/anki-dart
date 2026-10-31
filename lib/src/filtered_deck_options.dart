@@ -168,6 +168,64 @@ FilteredDeckBackendUpdateRequest filteredDeckBackendUpdateRequest(
   );
 }
 
+/// The `DeckBuilt` state emitted after a successful filtered-deck build.
+class DeckBuilt {
+  const DeckBuilt._();
+
+  static const instance = DeckBuilt._();
+}
+
+/// Synchronous state and captured host request produced when a build begins.
+class FilteredDeckBuildStart {
+  const FilteredDeckBuildStart({required this.state, required this.request});
+
+  final FilteredDeckOptions state;
+  final FilteredDeckBackendUpdateRequest request;
+}
+
+/// Build completion facts; the host supplies the backend operation result.
+class FilteredDeckBuildOutcome {
+  const FilteredDeckBuildOutcome({
+    this.state,
+    this.effect,
+    required this.usesDefaultOperationResult,
+  });
+
+  /// The failure state, or null when the host publishes [effect].
+  final FilteredDeckOptions? state;
+
+  /// The success event, or null when [state] contains a failure.
+  final DeckBuilt? effect;
+
+  /// True when the source returns `OpChangesWithId.getDefaultInstance()`.
+  final bool usesDefaultOperationResult;
+}
+
+/// Sets the in-progress flag before snapshotting request values for the host.
+FilteredDeckBuildStart beginFilteredDeckBuild(FilteredDeckOptions current) {
+  final state = current.copyWith(isBuildingBrowserSearch: true);
+  return FilteredDeckBuildStart(
+    state: state,
+    request: filteredDeckBackendUpdateRequest(state),
+  );
+}
+
+/// Projects the successful completion state; backend changes remain host-side.
+FilteredDeckBuildOutcome completeFilteredDeckBuildSuccessfully() =>
+    const FilteredDeckBuildOutcome(
+      effect: DeckBuilt.instance,
+      usesDefaultOperationResult: false,
+    );
+
+/// Projects the source's caught failure while preserving the latest form state.
+FilteredDeckBuildOutcome completeFilteredDeckBuildWithFailure({
+  required FilteredDeckOptions current,
+  required Exception exception,
+}) => FilteredDeckBuildOutcome(
+  state: current.copyWith(throwable: exception, isBuildingBrowserSearch: false),
+  usesDefaultOperationResult: true,
+);
+
 /// State for a filtered-deck search term and its form validation result.
 class SearchTermState {
   const SearchTermState({

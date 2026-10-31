@@ -117,7 +117,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `GPL-3.0-or-later` and attribute copyright to lukstbit (2025); the host
   supplies `safeBuildSearchString` outcomes and localized messages, while
   collection access, coroutine/StateFlow delivery, and Android UI remain
-  host-side. `AnkiDroid/src/main/java/com/ichi2/anki/exception/InvalidSearchException.kt` is Copyright (c) 2026 lukstbit and distributed under GPL-3.0-or-later; the Dart wrapper does not implement backend parsing or localization.
+  host-side. The same `build()` outcome boundary is adapted by
+  `FilteredDeckBuildStart`, `FilteredDeckBuildOutcome`, and singleton `DeckBuilt`
+  in `lib/src/filtered_deck_options.dart`; focused cases in
+  `test/filtered_deck_build_outcome_test.dart` cover the immediate build flag
+  and request snapshot, success marker, and failure against current state. The
+  host retains the undoable operation, scheduler call, generated request/result
+  types, and state/effect publication. `AnkiDroid/src/main/java/com/ichi2/anki/exception/InvalidSearchException.kt` is Copyright (c) 2026 lukstbit and distributed under GPL-3.0-or-later; the Dart wrapper does not implement backend parsing or localization.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` is
   Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked

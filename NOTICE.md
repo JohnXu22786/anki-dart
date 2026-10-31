@@ -124,6 +124,23 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   and request snapshot, success marker, and failure against current state. The
   host retains the undoable operation, scheduler call, generated request/result
   types, and state/effect publication. `AnkiDroid/src/main/java/com/ichi2/anki/exception/InvalidSearchException.kt` is Copyright (c) 2026 lukstbit and distributed under GPL-3.0-or-later; the Dart wrapper does not implement backend parsing or localization.
+  `FilteredDeckOptionsViewModel.kt` also supplies `onShowExcludedCards()` and
+  `filteredSearchNode()` (the latter is annotated `@NeedsTest("Ensure this
+  method produces the expected filter")` and has no direct pinned unit test).
+  Their portable plan is `FilteredDeckExcludedCardsSearchPlan` and its node
+  DTOs in `lib/src/filtered_deck_options.dart`; source-derived cases in
+  `test/filtered_deck_excluded_search_plan_test.dart` preserve exact manual
+  searches, optional second-filter gating, OR grouping and singleton collapse,
+  suspended/buried/deck implicit order, the new/edit filtered-deck node shape,
+  and the final AND structure. Success stores the exact browser query while
+  retaining the existing throwable; a caught `Exception` is assigned directly
+  while retaining the browser query. Collection `groupSearches`, generated
+  `SearchNode` construction, `buildSearchString` serialization/validation,
+  asynchronous query execution, state delivery, and Android lifecycle remain
+  host-side. The source path is
+  `AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsViewModel.kt`,
+  pinned at `d9bf072f814a0c37d30a694192593b31ff2df875`; the source header marks
+  it `GPL-3.0-or-later` and attributes copyright to lukstbit (2025).
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` is
   Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked

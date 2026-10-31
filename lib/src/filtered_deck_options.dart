@@ -24,6 +24,131 @@
 
 import 'gesture_parser.dart';
 
+/// Joiners used by the portable tree for Filtered Deck excluded-card search.
+enum FilteredDeckSearchJoiner { and, or }
+
+/// A source-shaped SearchNode plan, before host backend construction.
+sealed class FilteredDeckSearchNodePlan {
+  const FilteredDeckSearchNodePlan();
+}
+
+/// A group of nodes combined with [joiner]. Singleton groups are collapsed.
+final class FilteredDeckSearchGroupPlan extends FilteredDeckSearchNodePlan {
+  FilteredDeckSearchGroupPlan._(
+    this.joiner,
+    List<FilteredDeckSearchNodePlan> children,
+  ) : children = List.unmodifiable(children);
+
+  final FilteredDeckSearchJoiner joiner;
+  final List<FilteredDeckSearchNodePlan> children;
+}
+
+/// A raw manual query supplied unchanged to the host's search-node adapter.
+final class FilteredDeckSearchQueryTermPlan extends FilteredDeckSearchNodePlan {
+  const FilteredDeckSearchQueryTermPlan(this.search);
+
+  final String search;
+}
+
+enum FilteredDeckSearchCardState { suspended, buried }
+
+final class FilteredDeckSearchCardStateTermPlan
+    extends FilteredDeckSearchNodePlan {
+  const FilteredDeckSearchCardStateTermPlan(this.state);
+
+  final FilteredDeckSearchCardState state;
+}
+
+final class FilteredDeckSearchDeckTermPlan extends FilteredDeckSearchNodePlan {
+  const FilteredDeckSearchDeckTermPlan(this.name);
+
+  final String name;
+}
+
+final class FilteredDeckSearchNotTermPlan extends FilteredDeckSearchNodePlan {
+  const FilteredDeckSearchNotTermPlan(this.child);
+
+  final FilteredDeckSearchNodePlan child;
+}
+
+/// Full excluded-card search tree passed to the host adapter.
+final class FilteredDeckExcludedCardsSearchPlan {
+  const FilteredDeckExcludedCardsSearchPlan({
+    required this.manualFilter,
+    required this.implicitFilter,
+    required this.search,
+  });
+
+  final FilteredDeckSearchNodePlan manualFilter;
+  final FilteredDeckSearchNodePlan implicitFilter;
+  final FilteredDeckSearchNodePlan search;
+}
+
+/// Projects `onShowExcludedCards()` and `filteredSearchNode()` into a DTO.
+///
+/// Raw filter searches and deck names are kept verbatim. The host builds the
+/// generated backend SearchNode tree, serializes/validates its SearchString,
+/// and executes the asynchronous collection query.
+FilteredDeckExcludedCardsSearchPlan filteredDeckExcludedCardsSearchPlan(
+  FilteredDeckOptions current,
+) {
+  final manualFilters = <FilteredDeckSearchNodePlan>[
+    FilteredDeckSearchQueryTermPlan(current.filter1State.search),
+    if (current.isSecondFilterEnabled && current.filter2State != null)
+      FilteredDeckSearchQueryTermPlan(current.filter2State!.search),
+  ];
+  final manualFilter = _groupFilteredDeckSearchNodes(
+    manualFilters,
+    FilteredDeckSearchJoiner.or,
+  );
+  final filteredDeck = current.id == null
+      ? const FilteredDeckSearchDeckTermPlan('filtered')
+      : FilteredDeckSearchGroupPlan._(FilteredDeckSearchJoiner.and, [
+          const FilteredDeckSearchDeckTermPlan('filtered'),
+          FilteredDeckSearchNotTermPlan(
+            FilteredDeckSearchDeckTermPlan(current.name),
+          ),
+        ]);
+  final implicitFilter = _groupFilteredDeckSearchNodes([
+    const FilteredDeckSearchCardStateTermPlan(
+      FilteredDeckSearchCardState.suspended,
+    ),
+    const FilteredDeckSearchCardStateTermPlan(
+      FilteredDeckSearchCardState.buried,
+    ),
+    filteredDeck,
+  ], FilteredDeckSearchJoiner.or);
+  return FilteredDeckExcludedCardsSearchPlan(
+    manualFilter: manualFilter,
+    implicitFilter: implicitFilter,
+    search: _groupFilteredDeckSearchNodes([
+      manualFilter,
+      implicitFilter,
+    ], FilteredDeckSearchJoiner.and),
+  );
+}
+
+FilteredDeckSearchNodePlan _groupFilteredDeckSearchNodes(
+  List<FilteredDeckSearchNodePlan> nodes,
+  FilteredDeckSearchJoiner joiner,
+) => nodes.length == 1
+    ? nodes.single
+    : FilteredDeckSearchGroupPlan._(joiner, nodes);
+
+/// Projects successful `buildSearchString()` completion for excluded cards.
+FilteredDeckOptions onShowExcludedCardsSuccess({
+  required FilteredDeckOptions current,
+  required String browserQuery,
+}) => current.copyWith(browserQuery: browserQuery);
+
+/// Projects a caught `Exception` from excluded-card search construction.
+///
+/// Unlike `onSearchInBrowser`, the source stores this Exception directly.
+FilteredDeckOptions onShowExcludedCardsFailure({
+  required FilteredDeckOptions current,
+  required Exception exception,
+}) => current.copyWith(throwable: exception);
+
 /// Portable host-supplied data used to initialize filtered-deck options.
 ///
 /// The host owns the collection query and generated backend model conversion.

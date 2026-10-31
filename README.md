@@ -1315,7 +1315,7 @@ suppresses its pending single-tap callback. The caller supplies tap mode,
 swipe sensitivity, and the platform double-tap timeout; the model does not read
 Android preferences or WebView properties.
 
-Card Browser appearance change detection uses `browserAppearanceHasChanges` to compare question format before answer format, skipping the answer callback when the question changed. It assumes changes on `Exception` while allowing Dart `Error` to propagate. The host supplies Intent/editor reads, logging, and Activity/back/discard/save behavior. Focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+Card Browser appearance change detection uses `browserAppearanceHasChanges` to compare question format before answer format, skipping the answer callback when the question changed. Its options-menu router maps resolved Confirm, Restore Default, Home, and other actions to the source callback order; only Home calls `hasChanges`, and unknown actions return the superclass result unchanged. Callback failures stop subsequent work. It assumes changes on `Exception` while allowing Dart `Error` to propagate. The host resolves Android item IDs and supplies Intent/editor reads, logging, dialogs, Activity, saving, and superclass handling. Focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Use and verify
 

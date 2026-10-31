@@ -7,6 +7,19 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/analytics/AnalyticsSamplePercentage.kt:1–38`
+  (pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later` and Copyright © 2026 Ashish
+  Yadav <mailtoashish693@gmail.com>; no method-level authorship is asserted.
+  Its range/sentinel validation, initialization predicate, constants, and
+  integer-value equality/hash and string behavior are adapted in
+  `lib/src/analytics_sample_percentage.dart`, with focused source-derived cases
+  in `test/analytics_sample_percentage_test.dart`. No direct focused test for
+  this value was found in the pinned source. Analytics collection,
+  resource/configuration lookup, Firebase, event-sampling effects, and transport
+  remain host-side. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/backend/AnkiBackendLanguage.kt` and
   `AnkiDroid/src/test/java/com/ichi2/anki/backend/AnkiBackendLanguageTest.kt`
   (pinned AnkiDroid 2.25.3 commit

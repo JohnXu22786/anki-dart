@@ -8,6 +8,23 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## AnalyticsSamplePercentage value contract
+
+`AnalyticsSamplePercentage` in `lib/src/analytics_sample_percentage.dart`
+adapts `AnkiDroid/src/main/java/com/ichi2/anki/analytics/AnalyticsSamplePercentage.kt:1–38`
+from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It accepts only `-1` or percentages
+from `0` through `100`, preserves the exact validation message, and implements
+the initialization predicate, `Uninitialized`/`Full` constants, integer-based
+equality and hash, and Kotlin value-class string form. Analytics collection,
+resource/configuration lookup, Firebase, event-sampling effects, and transport
+remain host-side. No direct focused test for this value was found at the pinned
+source; `test/analytics_sample_percentage_test.dart` contains source-derived
+contract cases and is not an Android test-harness port. The Kotlin source declares
+`SPDX-License-Identifier: GPL-3.0-or-later` and Copyright © 2026 Ashish Yadav
+<mailtoashish693@gmail.com>; no method-level authorship is asserted. Root
+`COPYING` remains byte-identical.
+
 ## AnkiBackendLanguage tag normalization
 
 `AnkiBackendLanguage` in `lib/src/anki_backend_language.dart` adapts the app-side

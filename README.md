@@ -13,6 +13,19 @@ substitute Dart locale rules. Source pin, GPL attribution, and the focused parse
 cases are documented in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md).
 
+`AnalyticsSamplePercentage` preserves the pinned value contract: `-1` is the
+uninitialized sentinel and percentages are limited to `0..100`, with source
+validation, initialization, equality/hash, and value-class string behavior.
+It is adapted from
+`AnkiDroid/src/main/java/com/ichi2/anki/analytics/AnalyticsSamplePercentage.kt:1–38`
+at AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`; the
+source declares `GPL-3.0-or-later` and Copyright © 2026 Ashish Yadav
+<mailtoashish693@gmail.com>. Analytics collection, configuration/resource
+lookup, Firebase, event-sampling effects, and transport remain host-side. The
+pinned source has no direct focused test; the Dart contract cases are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
+
 The current port includes selected source-mapped slices: deck-picker behavior,
 review-reminder Add/Edit form state,
 the headless review-session lifecycle, reviewer count/next-time presentation

@@ -23,6 +23,150 @@
 
 import 'gesture_parser.dart';
 
+/// Portable host-supplied data used to initialize filtered-deck options.
+///
+/// The host owns the collection query and generated backend model conversion.
+class FilteredDeckBackendData {
+  const FilteredDeckBackendData({
+    required this.id,
+    required this.name,
+    required this.allowEmpty,
+    required this.reschedule,
+    required this.previewAgainSecs,
+    required this.previewHardSecs,
+    required this.previewGoodSecs,
+    required this.searchTerms,
+  });
+
+  final int id;
+  final String name;
+  final bool allowEmpty;
+  final bool reschedule;
+  final int previewAgainSecs;
+  final int previewHardSecs;
+  final int previewGoodSecs;
+  final List<FilteredDeckBackendSearchTerm> searchTerms;
+}
+
+/// One host-projected search term; [orderNumber] is the generated enum number.
+class FilteredDeckBackendSearchTerm {
+  const FilteredDeckBackendSearchTerm({
+    required this.search,
+    required this.limit,
+    required this.orderNumber,
+  });
+
+  final String search;
+  final int limit;
+  final int orderNumber;
+}
+
+/// Request fields for the host's generated `FilteredDeckForUpdate` adapter.
+///
+/// [orderIndex] deliberately stays an integer adapter input. The host must
+/// resolve it with its generated enum `forNumber` function; this portable
+/// package does not define behavior for unknown enum numbers or serialize a
+/// backend protobuf.
+class FilteredDeckBackendUpdateRequest {
+  const FilteredDeckBackendUpdateRequest({
+    required this.id,
+    required this.name,
+    required this.allowEmpty,
+    required this.reschedule,
+    required this.previewAgainSecs,
+    required this.previewHardSecs,
+    required this.previewGoodSecs,
+    required this.searchTerms,
+  });
+
+  final int id;
+  final String name;
+  final bool allowEmpty;
+  final bool reschedule;
+  final int previewAgainSecs;
+  final int previewHardSecs;
+  final int previewGoodSecs;
+  final List<FilteredDeckBackendUpdateSearchTerm> searchTerms;
+}
+
+class FilteredDeckBackendUpdateSearchTerm {
+  const FilteredDeckBackendUpdateSearchTerm({
+    required this.search,
+    required this.limit,
+    required this.orderIndex,
+  });
+
+  final String search;
+  final int limit;
+  final int orderIndex;
+}
+
+/// Projects AnkiDroid `FilteredDeckForUpdate.asInitialState()`.
+FilteredDeckOptions filteredDeckOptionsFromBackendData({
+  required FilteredDeckBackendData data,
+  List<String> cardsOptions = const [],
+  String? defaultSearch1,
+  String? defaultSearch2,
+}) {
+  // Indexing the first term directly preserves the source failure on malformed
+  // host data with no search terms.
+  final firstFilter = data.searchTerms[0];
+  final secondFilter = data.searchTerms.length > 1 ? data.searchTerms[1] : null;
+  return FilteredDeckOptions(
+    id: data.id == 0 ? null : data.id,
+    name: data.name,
+    title: data.name,
+    shouldReschedule: data.reschedule,
+    allowEmpty: data.allowEmpty,
+    cardOptions: cardsOptions,
+    filter1State: SearchTermState(
+      search: defaultSearch1 ?? firstFilter.search,
+      limit: firstFilter.limit.toString(),
+      index: firstFilter.orderNumber,
+    ),
+    isSecondFilterEnabled: secondFilter != null && data.id != 0,
+    filter2State: secondFilter == null
+        ? null
+        : SearchTermState(
+            search: defaultSearch2 ?? secondFilter.search,
+            limit: secondFilter.limit.toString(),
+            index: secondFilter.orderNumber,
+          ),
+    delayAgain: data.previewAgainSecs.toString(),
+    delayHard: data.previewHardSecs.toString(),
+    delayGood: data.previewGoodSecs.toString(),
+  );
+}
+
+/// Projects AnkiDroid `FilteredDeckOptions.asBackendData()` into adapter input.
+FilteredDeckBackendUpdateRequest filteredDeckBackendUpdateRequest(
+  FilteredDeckOptions state,
+) {
+  final secondFilter = state.filter2State;
+  return FilteredDeckBackendUpdateRequest(
+    id: state.id ?? 0,
+    name: state.name,
+    allowEmpty: state.allowEmpty,
+    reschedule: state.shouldReschedule,
+    previewAgainSecs: parseKotlinInt32(state.delayAgain) ?? 60,
+    previewHardSecs: parseKotlinInt32(state.delayHard) ?? 600,
+    previewGoodSecs: parseKotlinInt32(state.delayGood) ?? 0,
+    searchTerms: [
+      FilteredDeckBackendUpdateSearchTerm(
+        search: state.filter1State.search,
+        limit: parseKotlinInt32(state.filter1State.limit) ?? 0,
+        orderIndex: state.filter1State.index,
+      ),
+      if (state.isSecondFilterEnabled && secondFilter != null)
+        FilteredDeckBackendUpdateSearchTerm(
+          search: secondFilter.search,
+          limit: parseKotlinInt32(secondFilter.limit) ?? 0,
+          orderIndex: secondFilter.index,
+        ),
+    ],
+  );
+}
+
 /// State for a filtered-deck search term and its form validation result.
 class SearchTermState {
   const SearchTermState({

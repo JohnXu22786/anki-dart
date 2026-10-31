@@ -94,8 +94,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   including changed input, unobserved properties, and restored state. The
   transition model reports whether each action recomputes dirty status while
   leaving StateFlow delivery and SavedStateHandle persistence to the host. The
-  host also retains collection access, lifecycle, asynchronous flows, backend
-  query parsing/execution, Android UI, and filtered-deck build mutations.
+  same ViewModel's `FilteredDeckForUpdate.asInitialState` and
+  `FilteredDeckOptions.asBackendData` projections are adapted with portable
+  input/update DTOs in `lib/src/filtered_deck_options.dart`; focused cases in
+  `test/filtered_deck_backend_conversion_test.dart` cover zero/nonzero IDs,
+  null versus empty default search overrides, term-count and second-filter
+  rules, malformed missing-first-term failure, integer parsing/defaults, and
+  host order-index inputs. The source files are marked `GPL-3.0-or-later` and
+  attribute copyright to lukstbit (2025). The generated backend model, enum
+  `forNumber` resolution and protobuf serialization, collection queries and
+  mutations, lifecycle, asynchronous flows, query validation/execution, Android
+  UI, and filtered-deck building remain host-side; Dart does not recreate the
+  generated backend or collection behavior.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` is
   Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked

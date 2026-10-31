@@ -1463,6 +1463,27 @@ Pinned `CardTemplateEditorTest` cases cover the single-template guard,
 orphan prevention, and deletion confirmation. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment delete template
+
+`cardTemplateFragmentDeleteTemplate()` in
+`lib/src/card_template_fragment_delete_template.dart` follows
+`CardTemplateFragment.deleteTemplate()` at `CardTemplateEditor.kt:1550–1574`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the original template
+collection once and appends unmatched template objects unchanged. Each match is
+logged and removed through the temporary note type in source order, then the new
+collection is assigned and ordinals are updated. Pager-adapter resolution,
+ordinal shift, notification, pager lookup, current index, and animation lookup
+retain their source order. The host keeps `NotetypeJson`, `CardTemplates` and
+JSONArray, null assertions, Timber, ordinal updates, adapters, pager, animation,
+and UI; Dart sequences opaque values and propagates callback failures. Focused
+source-derived cases in
+`test/card_template_fragment_delete_template_test.dart` cover ordering,
+identity, duplicate and missing matches, the empty-list index, and failure
+stopping. Pinned `CardTemplateEditorTest.testDeleteTemplate` and
+`testDeleteTemplateWithSelectivelyGeneratedCards` cover integration behavior.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment delete confirmation
 
 `cardTemplateFragmentConfirmDeleteCards()` in

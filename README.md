@@ -12,6 +12,7 @@ the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation and audio-side selection, flag decision/effect models, ordered
 Previewer mark action effects and NoteService mark-tag update effects,
+original deck-ID selection for filtered-deck cards,
 CardViewer POST request routing and Reviewer POST route selection, Card Browser
 active-column and sort preference models, recent-search ordering, JSON
 serialization, display state,

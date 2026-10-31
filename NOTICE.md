@@ -1263,6 +1263,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   rendering, hook execution, mark/flag collection reads and Flow publication,
   Auto Advance, coroutine/error boundaries, media callbacks, and UI.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardUtils.kt` contains the pure
+  `getDeckIdForCard()` rule adapted in `lib/src/card_utils.dart`, with focused
+  cases in `test/card_utils_test.dart`. The Kotlin file has no copyright or
+  SPDX header; its only header comment suppresses the missing-copyright-header
+  inspection. The pinned `CardUtilsTest.kt` is Copyright (c) 2026 Ayush
+  <ayushdevraj9@gmail.com> and marked `GPL-3.0-or-later`. AnkiDroid's root
+  `COPYING` is GNU GPL version 3. The Dart adaptation and focused tests are
+  Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`; card and collection
+  access remain host-side.
+
 ## Unicode property data
 
 The locale-casing property ranges and full lowercase mappings in

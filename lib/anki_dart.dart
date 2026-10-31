@@ -18,6 +18,7 @@
  */
 
 export 'src/deck_filters.dart';
+export 'src/card_utils.dart';
 export 'src/deck_picker_previous_version.dart';
 export 'src/deck_position.dart';
 export 'src/deck_picker_sync_icon_projection.dart';

@@ -1534,8 +1534,11 @@ template/model access and deletion scan, metadata/backend query, Android dialog,
 and UI remain host-side. Focused source-derived cases in
 `test/card_template_fragment_show_insert_field_dialog_test.dart` cover null
 fields, mapping and note-ID boundaries, ordinal laziness, exact dialog inputs,
-callback order, asynchronous query waiting/failure, and failure stopping. See
-[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+callback order, asynchronous query waiting/failure, and failure stopping. The
+pinned `CardTemplateEditorTest.testInsertFieldInCorrectFragmentAfterNavigation`
+directly covers successful insertion into the intended fragment after pager
+navigation, but does not isolate these callback decisions; their Dart tests are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Card Template Fragment rename dialog
 

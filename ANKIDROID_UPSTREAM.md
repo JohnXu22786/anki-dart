@@ -716,10 +716,13 @@ dialog construction. Callback failures propagate to the same host
 launch boundary and stop subsequent work. Android
 Fragment/dialog/models, template-change scan, metadata/backend query, coroutine
 execution, and UI remain host-side. Focused source-derived cases are in
-`test/card_template_fragment_show_insert_field_dialog_test.dart`; no direct
-pinned test for this callback was found. The source file SPDX-notices Copyright
-© 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is
-asserted. Root `COPYING` remains unchanged.
+`test/card_template_fragment_show_insert_field_dialog_test.dart`. The pinned
+`CardTemplateEditorTest.testInsertFieldInCorrectFragmentAfterNavigation` directly
+covers successful field insertion into the intended fragment after pager
+navigation; it does not isolate this callback's metadata and early-return
+branches. The Dart callback-decision cases are source-derived. The source file's
+SPDX header credits © 2014 Timothy Rae and © 2018 Mike Hardy; no
+method-specific authorship is asserted. Root `COPYING` remains unchanged.
 
 ## CardTemplateFragment.showRenameDialog
 

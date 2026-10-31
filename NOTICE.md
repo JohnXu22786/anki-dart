@@ -187,9 +187,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   host callback projection is adapted in
   `lib/src/card_template_fragment_show_insert_field_dialog.dart`, with focused
   source-derived cases in
-  `test/card_template_fragment_show_insert_field_dialog_test.dart`. Android
-  Fragment/dialog/models, coroutine execution, metadata/backend query, and UI
-  remain host-side.
+  `test/card_template_fragment_show_insert_field_dialog_test.dart`. The pinned
+  `CardTemplateEditorTest.testInsertFieldInCorrectFragmentAfterNavigation`
+  directly covers successful insertion into the intended fragment after pager
+  navigation; it does not isolate these callback decisions, whose Dart cases
+  are source-derived. Android Fragment/dialog/models, coroutine execution,
+  metadata/backend query, and UI remain host-side.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:922–953`
   (`CardTemplateFragment.showRenameDialog`; pinned AnkiDroid 2.25.3 commit

@@ -247,4 +247,294 @@ void main() {
       );
     });
   });
+
+  group('Filtered Deck Options ViewModel state transitions', () {
+    test(
+      'existing name, limit, and toggle projections expose dirty updates',
+      () {
+        const initial = FilteredDeckOptions(
+          name: 'Filtered',
+          filter1State: SearchTermState(limit: '5'),
+        );
+        final name = onDeckNameChangeTransition(
+          current: initial,
+          initial: initial,
+          name: 'Renamed',
+          deckNames: const [],
+        );
+        expect(name.state.name, 'Renamed');
+        expect(name.hasUnsavedChanges, isTrue);
+        expect(
+          onDeckNameChangeTransition(
+            current: initial,
+            initial: initial,
+            name: 'Filtered',
+            deckNames: const [],
+          ).hasUnsavedChanges,
+          isNull,
+        );
+
+        final limit = onLimitChangeTransition(
+          current: initial,
+          initial: initial,
+          index: FilterIndex.first,
+          limit: '8',
+        );
+        expect(limit.state.filter1State.limit, '8');
+        expect(limit.hasUnsavedChanges, isTrue);
+        expect(
+          onLimitChangeTransition(
+            current: initial,
+            initial: initial,
+            index: FilterIndex.first,
+            limit: '5',
+          ).hasUnsavedChanges,
+          isNull,
+        );
+
+        final toggled = onSecondFilterStatusChangeTransition(
+          current: initial,
+          initial: initial,
+          isEnabled: true,
+        );
+        expect(toggled.state.isSecondFilterEnabled, isTrue);
+        expect(toggled.hasUnsavedChanges, isTrue);
+        expect(
+          onSecondFilterStatusChangeTransition(
+            current: initial,
+            initial: initial,
+            isEnabled: false,
+          ).hasUnsavedChanges,
+          isNull,
+        );
+      },
+    );
+
+    test('search changes recompute dirty status and same input is a no-op', () {
+      const initial = FilteredDeckOptions();
+      final changed = onSearchChange(
+        current: initial,
+        initial: initial,
+        index: FilterIndex.first,
+        searchQuery: 'tag:one',
+      );
+      expect(changed.state.filter1State.search, 'tag:one');
+      expect(changed.hasUnsavedChanges, isTrue);
+
+      final reverted = onSearchChange(
+        current: changed.state,
+        initial: initial,
+        index: FilterIndex.first,
+        searchQuery: '',
+      );
+      expect(reverted.hasUnsavedChanges, isFalse);
+      final noOp = onSearchChange(
+        current: reverted.state,
+        initial: initial,
+        index: FilterIndex.first,
+        searchQuery: '',
+      );
+      expect(identical(noOp.state, reverted.state), isTrue);
+      expect(noOp.hasUnsavedChanges, isNull);
+    });
+
+    test('card order changes recompute dirty status for both filters', () {
+      const initial = FilteredDeckOptions(
+        isSecondFilterEnabled: true,
+        filter1State: SearchTermState(index: 1),
+        filter2State: SearchTermState(index: 2),
+      );
+      final first = onCardsOptionsChange(
+        current: initial,
+        initial: initial,
+        filterIndex: FilterIndex.first,
+        cardOptionIndex: 3,
+      );
+      expect(first.state.filter1State.index, 3);
+      expect(first.hasUnsavedChanges, isTrue);
+
+      final second = onCardsOptionsChange(
+        current: initial,
+        initial: initial,
+        filterIndex: FilterIndex.second,
+        cardOptionIndex: 4,
+      );
+      expect(second.state.filter2State?.index, 4);
+      expect(second.hasUnsavedChanges, isTrue);
+      expect(
+        onCardsOptionsChange(
+          current: initial,
+          initial: initial,
+          filterIndex: FilterIndex.first,
+          cardOptionIndex: 1,
+        ).hasUnsavedChanges,
+        isNull,
+      );
+    });
+
+    test(
+      'second filter null remains null while changed search recomputes dirty',
+      () {
+        const initial = FilteredDeckOptions(filter2State: null);
+        final result = onSearchChange(
+          current: initial,
+          initial: initial,
+          index: FilterIndex.second,
+          searchQuery: 'tag:two',
+        );
+        expect(result.state.filter2State, isNull);
+        expect(result.hasUnsavedChanges, isFalse);
+        expect(
+          filteredDeckOptionsWasStateModified(
+            initial: initial,
+            current: result.state,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'dirty comparison ignores disabled filter two and unobserved fields',
+      () {
+        const initial = FilteredDeckOptions(
+          filter2State: SearchTermState(search: 'old'),
+        );
+        const disabledChanged = FilteredDeckOptions(
+          filter2State: SearchTermState(search: 'new'),
+          allowEmpty: false,
+          shouldReschedule: false,
+          delayAgain: '9',
+          delayHard: '8',
+          delayGood: '7',
+        );
+        expect(
+          filteredDeckOptionsWasStateModified(
+            initial: initial,
+            current: disabledChanged,
+          ),
+          isFalse,
+        );
+
+        final enabledChanged = disabledChanged.copyWith(
+          isSecondFilterEnabled: true,
+        );
+        expect(
+          filteredDeckOptionsWasStateModified(
+            initial: initial.copyWith(isSecondFilterEnabled: true),
+            current: enabledChanged,
+          ),
+          isTrue,
+        );
+        expect(
+          filteredDeckOptionsWasStateModified(
+            initial: null,
+            current: enabledChanged,
+          ),
+          isFalse,
+        );
+        expect(
+          filteredDeckOptionsWasStateModified(initial: initial, current: null),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'reschedule, delays, and allow-empty leave dirty status untouched',
+      () {
+        const initial = FilteredDeckOptions();
+        final reschedule = onRescheduleChange(
+          current: initial,
+          isEnabled: false,
+        );
+        expect(reschedule.state.shouldReschedule, isFalse);
+        expect(reschedule.hasUnsavedChanges, isNull);
+        expect(
+          onRescheduleChange(
+            current: initial,
+            isEnabled: true,
+          ).hasUnsavedChanges,
+          isNull,
+        );
+
+        for (final delay in RescheduleDelay.values) {
+          final changed = onRescheduleDelayChange(
+            current: initial,
+            target: delay,
+            amount: '12',
+          );
+          expect(changed.hasUnsavedChanges, isNull);
+          final same = onRescheduleDelayChange(
+            current: initial,
+            target: delay,
+            amount: '0',
+          );
+          expect(identical(same.state, initial), isTrue);
+          expect(same.hasUnsavedChanges, isNull);
+        }
+
+        final allowEmpty = onAllowEmptyChange(
+          current: initial,
+          isEnabled: false,
+        );
+        expect(allowEmpty.state.allowEmpty, isFalse);
+        expect(allowEmpty.hasUnsavedChanges, isNull);
+        expect(
+          identical(
+            onAllowEmptyChange(current: initial, isEnabled: true).state,
+            initial,
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'clear actions clear only their value and never update dirty status',
+      () {
+        final current = FilteredDeckOptions(
+          browserQuery: 'tag:one',
+          throwable: StateError('bad search'),
+        );
+        final query = clearSearchInBrowser(current);
+        expect(query.state.browserQuery, isNull);
+        expect(query.state.throwable, isNotNull);
+        expect(query.hasUnsavedChanges, isNull);
+
+        final error = clearError(query.state);
+        expect(error.state.throwable, isNull);
+        expect(error.state.browserQuery, isNull);
+        expect(error.hasUnsavedChanges, isNull);
+      },
+    );
+
+    test(
+      'restored baseline detects pending changes and accepts reverted state',
+      () {
+        const initial = FilteredDeckOptions(
+          name: 'Saved',
+          filter1State: SearchTermState(search: 'tag:saved'),
+        );
+        final restored = initial.copyWith(
+          name: 'Pending',
+          filter1State: const SearchTermState(search: 'tag:pending'),
+        );
+        expect(
+          filteredDeckOptionsWasStateModified(
+            initial: initial,
+            current: restored,
+          ),
+          isTrue,
+        );
+        expect(
+          filteredDeckOptionsWasStateModified(
+            initial: initial,
+            current: initial,
+          ),
+          isFalse,
+        );
+      },
+    );
+  });
 }

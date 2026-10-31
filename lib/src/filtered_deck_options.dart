@@ -55,6 +55,22 @@ enum FilteredNameInputError { empty, alreadyExists }
 
 enum FilterIndex { first, second }
 
+enum RescheduleDelay { again, hard, good }
+
+/// Result of one source ViewModel state action.
+///
+/// A null [hasUnsavedChanges] means the Kotlin action does not update the dirty
+/// status. Otherwise it is the value produced by `wasStateModified()`.
+class FilteredDeckOptionsTransition {
+  const FilteredDeckOptionsTransition({
+    required this.state,
+    this.hasUnsavedChanges,
+  });
+
+  final FilteredDeckOptions state;
+  final bool? hasUnsavedChanges;
+}
+
 /// Portable state used by the Filtered Deck Options form.
 ///
 /// Collection-backed setup, query execution, deck building, and Android state
@@ -261,6 +277,219 @@ FilteredDeckOptions onSecondFilterStatusChange({
     isSecondFilterEnabled: isEnabled,
     filter2State: current.filter2State ?? const SearchTermState(),
   );
+}
+
+/// Adds the source dirty-status update to [onDeckNameChange] without changing
+/// its existing state-only projection.
+FilteredDeckOptionsTransition onDeckNameChangeTransition({
+  required FilteredDeckOptions current,
+  required FilteredDeckOptions initial,
+  required String name,
+  required List<String> deckNames,
+}) {
+  final state = onDeckNameChange(
+    current: current,
+    name: name,
+    deckNames: deckNames,
+  );
+  return identical(state, current)
+      ? FilteredDeckOptionsTransition(state: current)
+      : _withDirtyStatus(state, initial);
+}
+
+/// Adds the source dirty-status update to [onLimitChange] without changing its
+/// existing state-only projection.
+FilteredDeckOptionsTransition onLimitChangeTransition({
+  required FilteredDeckOptions current,
+  required FilteredDeckOptions initial,
+  required FilterIndex index,
+  required String limit,
+}) {
+  final state = onLimitChange(current: current, index: index, limit: limit);
+  return identical(state, current)
+      ? FilteredDeckOptionsTransition(state: current)
+      : _withDirtyStatus(state, initial);
+}
+
+/// Adds the source dirty-status update to [onSecondFilterStatusChange] without
+/// changing its existing state-only projection.
+FilteredDeckOptionsTransition onSecondFilterStatusChangeTransition({
+  required FilteredDeckOptions current,
+  required FilteredDeckOptions initial,
+  required bool isEnabled,
+}) {
+  final state = onSecondFilterStatusChange(
+    current: current,
+    isEnabled: isEnabled,
+  );
+  return identical(state, current)
+      ? FilteredDeckOptionsTransition(state: current)
+      : _withDirtyStatus(state, initial);
+}
+
+/// Projects `FilteredDeckOptionsViewModel.onSearchChange()` and its dirty update.
+FilteredDeckOptionsTransition onSearchChange({
+  required FilteredDeckOptions current,
+  required FilteredDeckOptions initial,
+  required FilterIndex index,
+  required String searchQuery,
+}) {
+  final filter = _filterState(current, index);
+  if (filter?.search == searchQuery) {
+    return FilteredDeckOptionsTransition(state: current);
+  }
+  final updated = filter == null
+      ? null
+      : SearchTermState(
+          search: searchQuery,
+          limit: filter.limit,
+          index: filter.index,
+          error: filter.error,
+        );
+  final state = switch (index) {
+    FilterIndex.first => current.copyWith(filter1State: updated!),
+    FilterIndex.second =>
+      updated == null
+          ? current.copyWith(clearFilter2State: true)
+          : current.copyWith(filter2State: updated),
+  };
+  return _withDirtyStatus(state, initial);
+}
+
+/// Projects `FilteredDeckOptionsViewModel.onCardsOptionsChange()`.
+FilteredDeckOptionsTransition onCardsOptionsChange({
+  required FilteredDeckOptions current,
+  required FilteredDeckOptions initial,
+  required FilterIndex filterIndex,
+  required int cardOptionIndex,
+}) {
+  final filter = _filterState(current, filterIndex);
+  if (filter?.index == cardOptionIndex) {
+    return FilteredDeckOptionsTransition(state: current);
+  }
+  final updated = filter == null
+      ? null
+      : SearchTermState(
+          search: filter.search,
+          limit: filter.limit,
+          index: cardOptionIndex,
+          error: filter.error,
+        );
+  final state = switch (filterIndex) {
+    FilterIndex.first => current.copyWith(filter1State: updated!),
+    FilterIndex.second =>
+      updated == null
+          ? current.copyWith(clearFilter2State: true)
+          : current.copyWith(filter2State: updated),
+  };
+  return _withDirtyStatus(state, initial);
+}
+
+/// Projects `FilteredDeckOptionsViewModel.onRescheduleChange()`.
+FilteredDeckOptionsTransition onRescheduleChange({
+  required FilteredDeckOptions current,
+  required bool isEnabled,
+}) {
+  if (current.shouldReschedule == isEnabled) {
+    return FilteredDeckOptionsTransition(state: current);
+  }
+  return FilteredDeckOptionsTransition(
+    state: current.copyWith(shouldReschedule: isEnabled),
+  );
+}
+
+/// Projects `FilteredDeckOptionsViewModel.onRescheduleDelayChange()`.
+FilteredDeckOptionsTransition onRescheduleDelayChange({
+  required FilteredDeckOptions current,
+  required RescheduleDelay target,
+  required String amount,
+}) {
+  final currentAmount = switch (target) {
+    RescheduleDelay.again => current.delayAgain,
+    RescheduleDelay.hard => current.delayHard,
+    RescheduleDelay.good => current.delayGood,
+  };
+  if (amount == currentAmount) {
+    return FilteredDeckOptionsTransition(state: current);
+  }
+  final state = switch (target) {
+    RescheduleDelay.again => current.copyWith(delayAgain: amount),
+    RescheduleDelay.hard => current.copyWith(delayHard: amount),
+    RescheduleDelay.good => current.copyWith(delayGood: amount),
+  };
+  return FilteredDeckOptionsTransition(state: state);
+}
+
+/// Projects `FilteredDeckOptionsViewModel.onAllowEmptyChange()`.
+FilteredDeckOptionsTransition onAllowEmptyChange({
+  required FilteredDeckOptions current,
+  required bool isEnabled,
+}) {
+  if (current.allowEmpty == isEnabled) {
+    return FilteredDeckOptionsTransition(state: current);
+  }
+  return FilteredDeckOptionsTransition(
+    state: current.copyWith(allowEmpty: isEnabled),
+  );
+}
+
+/// Projects `FilteredDeckOptionsViewModel.clearSearchInBrowser()`.
+FilteredDeckOptionsTransition clearSearchInBrowser(
+  FilteredDeckOptions current,
+) => FilteredDeckOptionsTransition(
+  state: current.copyWith(clearBrowserQuery: true),
+);
+
+/// Projects `FilteredDeckOptionsViewModel.clearError()`.
+FilteredDeckOptionsTransition clearError(FilteredDeckOptions current) =>
+    FilteredDeckOptionsTransition(
+      state: current.copyWith(clearThrowable: true),
+    );
+
+/// Projects the source's `wasStateModified()` comparison.
+bool filteredDeckOptionsWasStateModified({
+  required FilteredDeckOptions? initial,
+  required FilteredDeckOptions? current,
+}) {
+  if (initial == null || current == null) return false;
+  return initial.name != current.name ||
+      _filterWasChanged(initial.filter1State, current.filter1State) ||
+      initial.isSecondFilterEnabled != current.isSecondFilterEnabled ||
+      _filter2WasChanged(initial, current);
+}
+
+FilteredDeckOptionsTransition _withDirtyStatus(
+  FilteredDeckOptions state,
+  FilteredDeckOptions initial,
+) => FilteredDeckOptionsTransition(
+  state: state,
+  hasUnsavedChanges: filteredDeckOptionsWasStateModified(
+    initial: initial,
+    current: state,
+  ),
+);
+
+SearchTermState? _filterState(FilteredDeckOptions state, FilterIndex index) =>
+    switch (index) {
+      FilterIndex.first => state.filter1State,
+      FilterIndex.second => state.filter2State,
+    };
+
+bool _filterWasChanged(SearchTermState initial, SearchTermState current) =>
+    initial.search != current.search ||
+    initial.limit != current.limit ||
+    initial.index != current.index;
+
+bool _filter2WasChanged(
+  FilteredDeckOptions initial,
+  FilteredDeckOptions current,
+) {
+  if (!initial.isSecondFilterEnabled || !current.isSecondFilterEnabled) {
+    return false;
+  }
+  return initial.filter2State?.search != current.filter2State?.search ||
+      initial.filter2State?.limit != current.filter2State?.limit ||
+      initial.filter2State?.index != current.filter2State?.index;
 }
 
 bool _isKotlinBlank(String value) => value.runes.every(_isKotlinWhitespace);

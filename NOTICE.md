@@ -80,7 +80,22 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   The host retains collection access, the generated report type, query
   execution, coroutine/job, StateFlow, lifecycle, and UI.
 
-- `AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsState.kt` and `FilteredDeckOptionsViewModel.kt` are marked `GPL-3.0-or-later` upstream; `FilteredDeckOptionsState.kt` attributes source copyright to lukstbit. The portable option/filter values and name/limit validation, build-eligibility, and second-filter toggle projections are adapted in `lib/src/filtered_deck_options.dart`. Collection access, SavedStateHandle, asynchronous flows, backend query parsing/execution, Android UI, and filtered-deck build mutations remain host-side.
+- `AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsState.kt`
+  and `FilteredDeckOptionsViewModel.kt` are marked `GPL-3.0-or-later` upstream;
+  both headers attribute copyright to lukstbit (2025). Their portable
+  option/filter values, name/limit validation, search/card-order/reschedule/
+  allow-empty transitions, clear actions, dirty-state comparison, build
+  eligibility, and second-filter toggle projections are adapted in
+  `lib/src/filtered_deck_options.dart`; transition wrappers also expose the
+  dirty updates for name, limit, and second-filter changes without changing the
+  existing state-only projections. Focused cases in
+  `test/filtered_deck_options_validation_test.dart` derive from
+  `AnkiDroid/src/test/java/com/ichi2/anki/filtered/FilteredDeckOptionsViewModelTest.kt`,
+  including changed input, unobserved properties, and restored state. The
+  transition model reports whether each action recomputes dirty status while
+  leaving StateFlow delivery and SavedStateHandle persistence to the host. The
+  host also retains collection access, lifecycle, asynchronous flows, backend
+  query parsing/execution, Android UI, and filtered-deck build mutations.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` is
   Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked

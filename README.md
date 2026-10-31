@@ -2122,6 +2122,24 @@ pinned source marks this method `@NeedsTest("Restore to default option")`; no
 focused direct pinned restore test was found. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+`cardTemplateFragmentRestoreNotetypeToStock()` in
+`lib/src/card_template_fragment_restore_notetype_to_stock.dart` follows
+`CardTemplateFragment.restoreNotetypeToStock(kind)` at
+`CardTemplateEditor.kt:1162–1172` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It obtains the temporary model's
+note-type ID, passes that value through the host `notetypeId` builder, and
+awaits the host undoable operation with the same nullable `kind`. Only after
+that operation completes does it call `onModelSaved()`, resolve `requireContext`
+and `TR.cardTemplatesRestoredToDefault()`, and show the themed toast with
+`shortLength: false`. Callback failures propagate unchanged and stop later
+effects. Model and collection access, generated IDs, undoable operations,
+Android context/resources, and toast display remain host-side. Focused Dart
+tests cover awaited ordering, nullable-kind forwarding, and failure stopping.
+The source marks the method
+`@NeedsTest("Notetype is restored to stock kind")`; inspection of the pinned
+`CardTemplateEditorTest.kt` found no direct test for this method. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 `setupCardTemplateCommonMenu()` in
 `lib/src/card_template_fragment_common_menu.dart` follows
 `CardTemplateFragment.setupCommonMenu(menu)` at

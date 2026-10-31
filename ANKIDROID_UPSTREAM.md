@@ -77,6 +77,27 @@ in `test/card_template_fragment_on_model_saved_test.dart` cover source order,
 null-button behavior, and callback failure stopping; no direct pinned upstream
 test for this callback was found, so the Dart cases are source-derived.
 
+
+## CardTemplateFragment.restoreNotetypeToStock
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1162–1172`
+(`restoreNotetypeToStock`, pinned commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted by
+`cardTemplateFragmentRestoreNotetypeToStock()` in
+`lib/src/card_template_fragment_restore_notetype_to_stock.dart`. It reads the
+temporary model's note-type ID, invokes the host `notetypeId` builder, awaits
+the host undoable operation with `notetypes.restoreNotetypeToStock(nid, kind)`,
+then calls `onModelSaved()`, resolves `requireContext()` and
+`TR.cardTemplatesRestoredToDefault()`, and shows a themed toast with
+`shortLength = false`. The nullable kind is forwarded unchanged. Failures
+propagate unchanged and stop later effects. Model/collection access, generated
+ID creation, undoable operation, Android context/resources, and toast remain
+host-side. The source annotation is
+`@NeedsTest("Notetype is restored to stock kind")`. The pinned
+`CardTemplateEditorTest.kt` was checked; no direct test for this method was
+found, so the focused Dart cases are source-derived.
+
+
 This repository is a partial Dart port of that exact source snapshot. The
 current implementation covers deck-picker filtering and visible-row
 construction, the headless review-session action lifecycle, reviewer count and
@@ -506,6 +527,8 @@ undo, StateFlow, RecyclerView/lifecycle, and user messages remain host-side.
 | `AnkiDroid/src/main/java/com/ichi2/anki/previewer/CardViewerViewModel.kt` (`setSoundPlayerEnabled`, `playSoundFromUrl`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `setCardViewerSoundPlayerEnabled()` and `playCardViewerSoundFromUrl()` in `lib/src/card_viewer_sound_actions.dart`; source-derived cases in `test/card_viewer_sound_actions_test.dart` | Forwards the exact enabled Boolean to the host player callback. Sound-link handling awaits the host current card, passes that card and the unchanged URL to the host AV-tag resolver, and calls the host player with the same tag only when non-null. The host retains `viewModelScope`/IO scheduling, AV parsing and collection callbacks, player implementation, and asynchronous error handling. The pinned ViewModel tests do not directly cover these methods; Dart tests are source-derived. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/TtsParser.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/libanki/TtsParserTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `TtsDomNode`, `TtsTextLocale`, and `selectTtsText()` in `lib/src/tts_text_selection.dart`; focused cases in `test/tts_text_selection_test.dart` | Selects case-insensitive `tts` / `android` nodes in child order, replaces every exact `[...]` marker, passes through voice, and skips children of a qualifying node; when none match it returns one body-text item with empty locale, while an explicit empty item suppresses fallback. The host supplies tag/attribute/text/child/body facts and constructs TTSTag; Jsoup parsing and text semantics, protobuf fields, and playback remain host-side. Pinned `TtsParserTest.kt` directly covers fallback and marker replacement; the remaining cases are source-derived. The source has a MissingCopyrightHeader suppression and no separate copyright holder; the root `COPYING` supplies the GPLv3 project license. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/CardUtils.kt` (`getDeckIdForCard`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) and `AnkiDroid/src/test/java/com/ichi2/anki/CardUtilsTest.kt` | `getDeckIdForCard()` in `lib/src/card_utils.dart`; focused cases in `test/card_utils_test.dart` | Returns the supplied original deck ID (`oDid`) when it is nonzero, otherwise the direct deck ID (`did`), preserving the source's exact zero comparison. The host retains Card and collection access. The pinned tests directly cover nonzero `oDid` and zero `oDid`; `CardUtils.kt` has no copyright or SPDX header and contains a missing-header inspection suppression, while `CardUtilsTest.kt` is Copyright (c) 2026 Ayush and GPL-3.0-or-later. The AnkiDroid root `COPYING` is GNU GPL version 3. |
+
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1162–1172` (`CardTemplateFragment.restoreNotetypeToStock`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentRestoreNotetypeToStockCallbacks` and `cardTemplateFragmentRestoreNotetypeToStock()` in `lib/src/card_template_fragment_restore_notetype_to_stock.dart`; focused cases in `test/card_template_fragment_restore_notetype_to_stock_test.dart` | Reads the temporary model ID, passes it through the host `notetypeId` builder, and awaits the host undoable operation calling `notetypes.restoreNotetypeToStock(nid, kind)` with the same nullable kind. Only on success calls `onModelSaved()`, resolves `requireContext()` and `TR.cardTemplatesRestoredToDefault()`, then shows the themed toast with `shortLength = false`. Callback failures propagate and stop later work. Models, generated IDs, collection access, undoable operation, Android context/resources/toast remain host-side. Source annotation: `@NeedsTest("Notetype is restored to stock kind")`. The pinned `CardTemplateEditorTest.kt` was checked and has no direct test for this method; focused Dart cases are source-derived. |
 
 ## Review backend boundary
 

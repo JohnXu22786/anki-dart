@@ -22,6 +22,7 @@
  * AnkiDroid 2.25.3; see ANKIIDROID_UPSTREAM.md.
  */
 
+import 'review_reminder.dart';
 import 'review_reminder_form_state.dart';
 import 'review_reminder_id.dart';
 
@@ -197,4 +198,83 @@ final class ReviewReminderCurrentProjection {
   final int latestNotifTime;
   final String profileID;
   final bool onlyNotifyIfNoReviews;
+}
+
+/// Applies the source's in-memory reminder schema migrations to a decoded map.
+///
+/// The host supplies ID allocation and epoch-millisecond time for each V2
+/// reminder, matching the source factory's behavior. Storage decoding,
+/// serialization, and writes remain host responsibilities.
+Map<ReviewReminderId, ReviewReminder> migrateReviewReminderSchemas(
+  Map<ReviewReminderId, Object> reminders, {
+  required ReviewReminderSchemaVersion fromVersion,
+  required ReviewReminderSchemaVersion toVersion,
+  required ReviewReminderId Function() allocateId,
+  required int Function() currentEpochMilliseconds,
+}) {
+  if (fromVersion.value < 1 ||
+      fromVersion.value > toVersion.value ||
+      fromVersion.value > 3 ||
+      toVersion.value > 3) {
+    throw ArgumentError('Invalid review reminder schema version: $fromVersion');
+  }
+
+  var currentMap = Map<ReviewReminderId, Object>.of(reminders);
+  var currentVersion = fromVersion.value;
+  while (currentVersion < toVersion.value) {
+    final nextMap = <ReviewReminderId, Object>{};
+    for (final entry in currentMap.entries) {
+      final Object newValue;
+      switch ((currentVersion, entry.value)) {
+        case (1, ReviewReminderSchemaV1 value):
+          newValue = value.migrate();
+          break;
+        case (2, ReviewReminderSchemaV2 value):
+          final projection = value.migrate(
+            id: allocateId(),
+            latestNotifTime: currentEpochMilliseconds(),
+          );
+          newValue = ReviewReminder.createReviewReminder(
+            id: projection.id,
+            time: projection.time,
+            cardTriggerThreshold: projection.cardTriggerThreshold,
+            scope: projection.scope,
+            enabled: projection.enabled,
+            latestNotifTime: projection.latestNotifTime,
+            profileID: projection.profileID,
+            onlyNotifyIfNoReviews: projection.onlyNotifyIfNoReviews,
+          );
+          break;
+        case (3, ReviewReminder value):
+          newValue = value.migrate();
+          break;
+        default:
+          throw StateError(
+            'Unexpected review reminder value for schema version '
+            '$currentVersion: ${entry.value.runtimeType}',
+          );
+      }
+      // The source uses each migrated value's ID as the next map key.
+      final newId = switch (newValue) {
+        ReviewReminderSchemaV2 value => value.id,
+        ReviewReminder value => value.id,
+        _ => throw StateError(
+          'Unexpected migrated review reminder value: ${newValue.runtimeType}',
+        ),
+      };
+      nextMap[newId] = newValue;
+    }
+    currentMap = nextMap;
+    currentVersion++;
+  }
+
+  final finalMap = <ReviewReminderId, ReviewReminder>{};
+  for (final entry in currentMap.entries) {
+    final value = entry.value;
+    if (value is! ReviewReminder) {
+      throw StateError('Expected ReviewReminder, got ${value.runtimeType}');
+    }
+    finalMap[entry.key] = value;
+  }
+  return finalMap;
 }

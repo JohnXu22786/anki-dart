@@ -122,4 +122,149 @@ void main() {
       expect(migrated.latestNotifTime, currentTimestamp);
     },
   );
+
+  group('ReviewReminder schema migration runner', () {
+    test('migrates every entry step by step and rekeys by each new value ID', () {
+      final time = ReviewReminderTime(hour: 7, minute: 35);
+      final otherTime = ReviewReminderTime(hour: 20, minute: 10);
+      final values = <ReviewReminderId, Object>{
+        // Deliberately disagree with the map key: the source re-keys by value.id.
+        ReviewReminderId(90): ReviewReminderSchemaV1(
+          id: ReviewReminderId(1),
+          time: time,
+          cardTriggerThreshold: ReviewReminderCardTriggerThreshold(5),
+          scope: const GlobalReminderScope(),
+          enabled: false,
+          profileID: 'first',
+        ),
+        ReviewReminderId(91): ReviewReminderSchemaV1(
+          id: ReviewReminderId(2),
+          time: otherTime,
+          cardTriggerThreshold: ReviewReminderCardTriggerThreshold(8),
+          scope: const DeckSpecificReminderScope(42),
+          enabled: true,
+          profileID: 'second',
+          onlyNotifyIfNoReviews: true,
+        ),
+      };
+      final allocatedIds = <ReviewReminderId>[
+        ReviewReminderId(101),
+        ReviewReminderId(102),
+      ];
+      var allocationIndex = 0;
+      var clockCalls = 0;
+
+      final migrated = migrateReviewReminderSchemas(
+        values,
+        fromVersion: ReviewReminderSchemaVersion(1),
+        toVersion: ReviewReminderSchemaVersion(3),
+        allocateId: () => allocatedIds[allocationIndex++],
+        currentEpochMilliseconds: () {
+          clockCalls++;
+          return 1700000000000 + clockCalls;
+        },
+      );
+
+      expect(migrated.keys.toList(), allocatedIds);
+      expect(allocationIndex, 2);
+      expect(clockCalls, 2);
+      final first = migrated[ReviewReminderId(101)]!;
+      expect(first, isA<ReviewReminder>());
+      expect(first.id, ReviewReminderId(101));
+      expect(first.time, time);
+      expect(first.cardTriggerThreshold.threshold, 5);
+      expect(first.scope, const GlobalReminderScope());
+      expect(first.enabled, isFalse);
+      expect(first.latestNotifTime, 1700000000001);
+      expect(first.profileID, 'first');
+      expect(first.onlyNotifyIfNoReviews, isFalse);
+
+      final second = migrated[ReviewReminderId(102)]!;
+      expect(second.id, ReviewReminderId(102));
+      expect(second.time, otherTime);
+      expect(second.cardTriggerThreshold.threshold, 8);
+      expect(second.scope, const DeckSpecificReminderScope(42));
+      expect(second.enabled, isTrue);
+      expect(second.latestNotifTime, 1700000000002);
+      expect(second.profileID, 'second');
+      expect(second.onlyNotifyIfNoReviews, isTrue);
+    });
+
+    test(
+      'current version migration preserves each instance and does not use host inputs',
+      () {
+        final reminder = ReviewReminder.createReviewReminder(
+          id: ReviewReminderId(11),
+          time: ReviewReminderTime(hour: 9, minute: 0),
+          latestNotifTime: 500,
+        );
+        final migrated = migrateReviewReminderSchemas(
+          {ReviewReminderId(99): reminder},
+          fromVersion: ReviewReminderSchemaVersion(3),
+          toVersion: ReviewReminderSchemaVersion(3),
+          allocateId: () => throw StateError('unexpected allocation'),
+          currentEpochMilliseconds: () =>
+              throw StateError('unexpected clock read'),
+        );
+
+        expect(identical(migrated[ReviewReminderId(99)], reminder), isTrue);
+        expect(migrated.containsKey(ReviewReminderId(11)), isFalse);
+      },
+    );
+
+    test(
+      'validates migration boundaries and requires a current final value',
+      () {
+        final current = <ReviewReminderId, Object>{
+          ReviewReminderId(1): ReviewReminder.createReviewReminder(
+            id: ReviewReminderId(1),
+            time: ReviewReminderTime(hour: 8, minute: 0),
+            latestNotifTime: 0,
+          ),
+        };
+        ReviewReminderId allocateId() => ReviewReminderId(20);
+        int now() => 0;
+
+        expect(
+          () => migrateReviewReminderSchemas(
+            current,
+            fromVersion: ReviewReminderSchemaVersion(3),
+            toVersion: ReviewReminderSchemaVersion(2),
+            allocateId: allocateId,
+            currentEpochMilliseconds: now,
+          ),
+          throwsArgumentError,
+        );
+        expect(
+          () => migrateReviewReminderSchemas(
+            current,
+            fromVersion: ReviewReminderSchemaVersion(1),
+            toVersion: ReviewReminderSchemaVersion(4),
+            allocateId: allocateId,
+            currentEpochMilliseconds: now,
+          ),
+          throwsArgumentError,
+        );
+        expect(
+          () => migrateReviewReminderSchemas(
+            {
+              ReviewReminderId(1): ReviewReminderSchemaV1(
+                id: ReviewReminderId(1),
+                time: ReviewReminderTime(hour: 8, minute: 0),
+                cardTriggerThreshold: ReviewReminderCardTriggerThreshold(0),
+                scope: const GlobalReminderScope(),
+                enabled: true,
+                profileID: '',
+              ),
+            },
+            fromVersion: ReviewReminderSchemaVersion(1),
+            toVersion: ReviewReminderSchemaVersion(2),
+            allocateId: allocateId,
+            currentEpochMilliseconds: now,
+          ),
+          throwsStateError,
+        );
+      },
+    );
+  });
 }

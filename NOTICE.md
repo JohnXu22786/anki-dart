@@ -1251,17 +1251,20 @@ schema/database handling, mutexes/coroutines, scheduling, and Android UI remain
 host-side. Value iteration order is not a contract. The focused Dart cases are
 source-derived behavior tests, not a port of an Android group test harness.
 
-The schema version values, V1/V2 reminder schemas, and current-schema migration
-projection in `lib/src/review_reminder_schema_migration.dart` are derived from
-AnkiDroid's `ReviewReminderSchema.kt`, `ReviewReminder.kt`, and
-`ReviewRemindersDatabaseTest.kt`, Copyright © 2026 Eric Li
+The schema version values, V1/V2 reminder schemas, current-schema migration
+projection, and in-memory step-by-step map migration in
+`lib/src/review_reminder_schema_migration.dart` are derived from AnkiDroid's
+`ReviewReminderSchema.kt`, `ReviewReminder.kt`, `ReviewRemindersDatabase.kt`,
+and `ReviewRemindersDatabaseTest.kt`, Copyright © 2026 Eric Li
 <ericli3690@gmail.com> (schema source) and Copyright © 2025 Eric Li
 <ericli3690@gmail.com> (migration tests), licensed `GPL-3.0-or-later`
-upstream. The host supplies the allocated reminder ID and current
-epoch-millisecond timestamp; serialization,
-schema registry/database migration, preference access, persistence, and runtime
-reminder construction remain host-side. The focused Dart cases are
-source-derived behavior tests, not a port of the Android test harness.
+upstream. The Dart migration runner and focused tests are Copyright © 2026 John
+Tsui <110079544+JohnXu22786@users.noreply.github.com>, licensed
+`GPL-3.0-or-later`. The host supplies each allocated reminder ID and current
+epoch-millisecond timestamp; serialization, schema registry/database
+migration, preference access, persistence, clock access, and other runtime
+integration remain host-side. The focused Dart cases are source-derived
+behavior tests, not a port of the Android test harness.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReminderTroubleshootingViewModel.kt` is marked `GPL-3.0-or-later` upstream and does not name a separate copyright holder in its source header. Its portable result variants, check values/defaults, summary precedence, and battery optimization result mapping are adapted in `lib/src/reminder_troubleshooting_state.dart`. Android Context and notification APIs, repository-backed checks, ViewModel lifecycle/StateFlow/coroutines, localization, and UI remain host-side. The pinned `ReminderTroubleshootingViewModelTest.kt` is also marked `GPL-3.0-or-later` and is the behavioral reference; the Dart cases add only focused coverage for source cases it does not directly test.
 

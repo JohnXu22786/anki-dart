@@ -7,6 +7,21 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:374–387`
+  (`loadDeckList`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later`; the file header contains no
+  copyright text, and no method-specific authorship is asserted. Its ordered
+  collection-open and fingerprint checks, fire-and-forget background-backup
+  launch, log, and joined deck-count reload are adapted in
+  `lib/src/deck_picker_load_deck_list.dart`, with focused cases in
+  `test/deck_picker_load_deck_list_test.dart`. The pinned test search found no
+  direct `loadDeckList` coverage; existing tests exercise related
+  `reloadDeckCounts` and `updateDeckList` behavior only. Collection state,
+  Android fingerprint, backup execution, Timber, reload Job semantics,
+  `launchCatchingIO`, IO dispatch, and lifecycle remain host-side. Root
+  `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:501–506`
   (`disableDeckAndChildrenShortcuts`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) declares

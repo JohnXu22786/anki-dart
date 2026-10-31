@@ -1926,6 +1926,25 @@ Bundle, generated key, tab map and UI remain host-side. Focused Dart tests in
 The pinned `CardTemplateEditorTest.kt` has no direct test for this initial
 selection expression. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment window-insets callback
+
+`cardTemplateFragmentCreateWindowInsetsHandler()` in
+`lib/src/card_template_fragment_apply_window_insets.dart` follows the
+`CardTemplateFragment.onViewCreated()` `doOnApplyWindowInsets` callback at
+`CardTemplateEditor.kt:787–806` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The returned handler keeps all reads
+deferred, ignores the initial flag, compares IME bottom strictly with the live
+bottom-navigation minimum height, then sets navigation visibility and conditional
+bottom padding from the combined inset sample. It checks current-page status
+before updating discard handling, then checks fragmentation and reads bars and
+cutout padding only for non-fragmented mode. Android inset masks and samples,
+bindings, views and mutations remain host-side; failures propagate and stop
+later work. Focused tests in
+`test/card_template_fragment_apply_window_insets_test.dart` are source-derived.
+The pinned `CardTemplateEditorTest.kt` covers inset-driven keyboard/back paths
+but has no direct assertion for this callback's padding or navigation behavior.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment bottom-navigation selection
 
 `cardTemplateFragmentBottomNavigationSelection()` in

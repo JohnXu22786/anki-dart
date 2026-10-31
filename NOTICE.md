@@ -20,6 +20,21 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   generated key, tab map, bottom navigation, listener behavior, and UI remain
   host-side. Root `COPYING` remains byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:787–806`
+  (`CardTemplateFragment.onViewCreated()` window-insets callback; pinned
+  AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked
+  `GPL-3.0-or-later`. Its file-level SPDX credits Copyright © 2014 Timothy Rae
+  and © 2018 Mike Hardy; no method-specific authorship is asserted. The deferred
+  callback orchestration is adapted in
+  `lib/src/card_template_fragment_apply_window_insets.dart`, with focused
+  source-derived cases in
+  `test/card_template_fragment_apply_window_insets_test.dart`. Android inset
+  masks/samples, binding and view access, padding and visibility mutations remain
+  host-side. The pinned `CardTemplateEditorTest.kt` has inset-driven keyboard/back
+  scenarios but no direct assertion for this callback. Root `COPYING` remains
+  byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:708–732`
   (bottom-navigation `setOnItemSelectedListener`; pinned AnkiDroid 2.25.3
   commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked

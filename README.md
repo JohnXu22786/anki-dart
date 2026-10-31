@@ -1522,6 +1522,21 @@ Focused tests in `test/card_template_fragment_arguments_test.dart` are
 source-derived; no direct pinned test for this factory was found. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment note lookup
+
+`cardTemplateFragmentGetNote()` in
+`lib/src/card_template_fragment_get_note.dart` follows the nested
+`CardTemplateFragment.getNote(col)` at `CardTemplateEditor.kt:1315–1319` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the host-provided
+`EDITOR_NOTE_ID` once before collection access. The exact `-1L` sentinel returns
+null without lookup; every other ID is passed unchanged to the host collection
+lookup once, and its nullable result is returned unchanged. Argument reading,
+Android argument keys, Collection and Note types, and lookup remain host-side;
+callback failures propagate immediately. Focused tests in
+`test/card_template_fragment_get_note_test.dart` are source-derived; no direct
+pinned test for this method was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment current template
 
 `cardTemplateFragmentCurrentTemplate()` in

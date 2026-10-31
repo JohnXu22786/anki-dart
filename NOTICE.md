@@ -1102,3 +1102,5 @@ and `AddEditReminderDialog.kt`, Copyright © 2025 Eric Li
 <ericli3690@gmail.com>, licensed `GPL-3.0-or-later` upstream. The host retains
 runtime reminder creation and all Android, collection, persistence, scheduling,
 and notification behavior.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/viewmodel/TtsVoicesViewModel.kt` declares `GPL-3.0-or-later`; its available-voice status precedence and pure filter projection are adapted in `lib/src/tts_voice_filter_projection.dart`. `AnkiDroid/src/main/java/com/ichi2/anki/TtsVoices.kt` supplies the `AndroidTtsVoice.unavailable()` and network-required facts used by the projection; `libanki/src/main/java/com/ichi2/anki/libanki/Tts.kt` supplies the base `TtsVoice` availability contract. Voice enumeration, sorting, Android/platform classes, engine/player, and playback are not copied. `TtsVoices.kt` and `Tts.kt` also identify separately licensed Anki backend code, which this Dart slice does not include. The pinned source has no direct `TtsVoicesViewModel` tests; the focused Dart cases are source-derived.

@@ -380,6 +380,8 @@ awaiting cancellation-sensitive work, matching the source coroutine's
 cooperative cancellation. Synchronous side effects already performed are not
 rolled back.
 
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/viewmodel/TtsVoicesViewModel.kt`, `AnkiDroid/src/main/java/com/ichi2/anki/TtsVoices.kt`, and `libanki/src/main/java/com/ichi2/anki/libanki/Tts.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `TtsEngineStatus`, `LoadVoiceStatus<T>`, `VoiceLoadingState<T>`, `TtsVoiceFilters`, and `projectAvailableVoices<T>()` in `lib/src/tts_voice_filter_projection.dart`; focused cases in `test/tts_voice_filter_projection_test.dart` | Preserves engine-error precedence and exact exception identity, then voice-list failure, and emits Success only when both statuses succeed. Successful voices retain host order and object identity; filtering first matches `showNotInstalled` to the source `unavailable()` fact, then immediately returns unavailable voices regardless of the internet setting, or filters installed network voices by that setting. Empty lists remain successful. The host retains Android voice enumeration and locale/name sorting, TTS engine/player, playback/errors, refresh/cancellation, flows/coroutines, lifecycle, clipboard, and UI. No direct `TtsVoicesViewModel` tests were found; focused Dart cases are source-derived. `AndroidTtsVoice` and `TtsVoice` property facts are host inputs; those platform classes are not copied. |
+
 ## Remaining coverage gaps
 
 Not yet ported: the Android app and platform lifecycle integration, Card Browser

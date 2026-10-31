@@ -73,17 +73,19 @@ void main() {
       }
     });
 
-    test('font interpolation retains Java Matcher group and escape behavior',
-        () {
-      expect(
-        filterReviewerTypeAnswerQuestion(
-          '[[type:Front]]',
-          font: r'Open$10\Mono',
-          fontSize: 12,
-        ),
-        contains("font-family: 'OpenFront0Mono'; font-size: 12px;"),
-      );
-    });
+    test(
+      'font interpolation retains Java Matcher group and escape behavior',
+      () {
+        expect(
+          filterReviewerTypeAnswerQuestion(
+            '[[type:Front]]',
+            font: r'Open$10\Mono',
+            fontSize: 12,
+          ),
+          contains("font-family: 'OpenFront0Mono'; font-size: 12px;"),
+        );
+      },
+    );
 
     test('invalid font groups fail only when a marker is replaced', () {
       expect(
@@ -106,51 +108,56 @@ void main() {
   });
 
   group('filterTypeAnswerQuestion', () {
-    test('uses the span prompt for every placeholder without trimming text',
-        () {
-      const prompt = '<span id="typeans" class="typePrompt">........</span>';
-      expect(
-        filterTypeAnswerQuestion(
-          '  \n[[type:Front]]\t[[type:Back]]\n  ',
-          useInputTag: false,
-          autoFocus: true,
-        ),
-        '  \n$prompt\t$prompt\n  ',
-      );
-      expect(filterTypeAnswerQuestion('', useInputTag: false, autoFocus: true),
-          '');
-    });
+    test(
+      'uses the span prompt for every placeholder without trimming text',
+      () {
+        const prompt = '<span id="typeans" class="typePrompt">........</span>';
+        expect(
+          filterTypeAnswerQuestion(
+            '  \n[[type:Front]]\t[[type:Back]]\n  ',
+            useInputTag: false,
+            autoFocus: true,
+          ),
+          '  \n$prompt\t$prompt\n  ',
+        );
+        expect(
+          filterTypeAnswerQuestion('', useInputTag: false, autoFocus: true),
+          '',
+        );
+      },
+    );
 
     test(
-        'builds the exact input prompt and includes style only for valid font size',
-        () {
-      expect(
-        filterTypeAnswerQuestion(
+      'builds the exact input prompt and includes style only for valid font size',
+      () {
+        expect(
+          filterTypeAnswerQuestion(
+            '[[type:Front]]',
+            useInputTag: true,
+            autoFocus: true,
+            font: 'Open Sans',
+            size: 20,
+          ),
+          '<center>\n'
+          '<input type="text" name="typed" id="typeans" data-focus="true" '
+          'onfocus="taFocus();" oninput=\'taChange(this);\' '
+          'onKeyPress="return taKey(this, event)" autocomplete="off" '
+          'style="font-family: \'Open Sans\'; font-size: 20px;" >\n'
+          '</center>\n',
+        );
+
+        final withoutStyle = filterTypeAnswerQuestion(
           '[[type:Front]]',
           useInputTag: true,
-          autoFocus: true,
+          autoFocus: false,
           font: 'Open Sans',
-          size: 20,
-        ),
-        '<center>\n'
-        '<input type="text" name="typed" id="typeans" data-focus="true" '
-        'onfocus="taFocus();" oninput=\'taChange(this);\' '
-        'onKeyPress="return taKey(this, event)" autocomplete="off" '
-        'style="font-family: \'Open Sans\'; font-size: 20px;" >\n'
-        '</center>\n',
-      );
-
-      final withoutStyle = filterTypeAnswerQuestion(
-        '[[type:Front]]',
-        useInputTag: true,
-        autoFocus: false,
-        font: 'Open Sans',
-        size: 0,
-      );
-      expect(withoutStyle, contains('data-focus="false"'));
-      expect(withoutStyle, contains('autocomplete="off" >'));
-      expect(withoutStyle, isNot(contains('style="font-family')));
-    });
+          size: 0,
+        );
+        expect(withoutStyle, contains('data-focus="false"'));
+        expect(withoutStyle, contains('autocomplete="off" >'));
+        expect(withoutStyle, isNot(contains('style="font-family')));
+      },
+    );
 
     test('a non-null warning replaces only the first placeholder', () {
       expect(
@@ -223,34 +230,41 @@ void main() {
     });
 
     test(
-        'leaves empty, malformed, case-mismatched, and multiline markers intact',
-        () {
-      for (final text in [
-        '',
-        'before [[type:]] after',
-        'before [[type:Front after',
-        '[[TYPE:Front]]',
-        for (final lineTerminator in ['\n', '\r', '\u0085', '\u2028', '\u2029'])
-          'before [[type:Front${lineTerminator}after]]',
-      ]) {
+      'leaves empty, malformed, case-mismatched, and multiline markers intact',
+      () {
+        for (final text in [
+          '',
+          'before [[type:]] after',
+          'before [[type:Front after',
+          '[[TYPE:Front]]',
+          for (final lineTerminator in [
+            '\n',
+            '\r',
+            '\u0085',
+            '\u2028',
+            '\u2029',
+          ])
+            'before [[type:Front${lineTerminator}after]]',
+        ]) {
+          expect(
+            filterTypeAnswerQuestion(
+              text,
+              useInputTag: false,
+              autoFocus: false,
+            ),
+            text,
+          );
+        }
         expect(
           filterTypeAnswerQuestion(
-            text,
+            '[[type: ]]',
             useInputTag: false,
             autoFocus: false,
           ),
-          text,
+          '<span id="typeans" class="typePrompt">........</span>',
         );
-      }
-      expect(
-        filterTypeAnswerQuestion(
-          '[[type: ]]',
-          useInputTag: false,
-          autoFocus: false,
-        ),
-        '<span id="typeans" class="typePrompt">........</span>',
-      );
-    });
+      },
+    );
   });
 
   group('filterTemplatePreviewerTypeAnswerQuestion', () {
@@ -258,16 +272,17 @@ void main() {
         "<center><input id='typeans' type=text value='example' readonly='readonly'></center>";
 
     test(
-        'uses the read-only example on the first match, then warns on the rest',
-        () {
-      expect(
-        filterTemplatePreviewerTypeAnswerQuestion(
-          'before [[type:Front]] middle [[type:Back]] after',
-          warningHtml: '<center><b>Missing type field</b></center>',
-        ),
-        'before $input middle <center><b>Missing type field</b></center> after',
-      );
-    });
+      'uses the read-only example on the first match, then warns on the rest',
+      () {
+        expect(
+          filterTemplatePreviewerTypeAnswerQuestion(
+            'before [[type:Front]] middle [[type:Back]] after',
+            warningHtml: '<center><b>Missing type field</b></center>',
+          ),
+          'before $input middle <center><b>Missing type field</b></center> after',
+        );
+      },
+    );
 
     test('expands warning replacement groups and backslash escapes', () {
       expect(
@@ -289,8 +304,7 @@ void main() {
       );
     });
 
-    test('rejects invalid warning groups only when a later marker matches',
-        () {
+    test('rejects invalid warning groups only when a later marker matches', () {
       expect(
         filterTemplatePreviewerTypeAnswerQuestion(
           '[[type:Front]]',
@@ -313,13 +327,7 @@ void main() {
         '[[type:]]',
         '[[type:Front',
         '[[TYPE:Front]]',
-        for (final lineTerminator in [
-          '\n',
-          '\r',
-          '\u0085',
-          '\u2028',
-          '\u2029',
-        ])
+        for (final lineTerminator in ['\n', '\r', '\u0085', '\u2028', '\u2029'])
           '[[type:Front${lineTerminator}Back]]',
       ]) {
         expect(

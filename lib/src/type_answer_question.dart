@@ -68,8 +68,9 @@ String filterTemplatePreviewerTypeAnswerQuestion(
 }) {
   var first = true;
   return text.replaceAllMapped(_questionTypeAnswerPattern, (match) {
-    final replacement =
-        first ? _templatePreviewerExampleInputHtml : warningHtml;
+    final replacement = first
+        ? _templatePreviewerExampleInputHtml
+        : warningHtml;
     first = false;
     return _expandJavaMatcherReplacement(replacement, match);
   });

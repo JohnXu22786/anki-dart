@@ -8,6 +8,30 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## Card Browser selected-row refresh effects
+
+`runBrowserAppendSelectedRowsEffects()` and
+`runBrowserRemoveSelectedRowsEffects()` in
+`lib/src/browser_selected_row_refresh_effects.dart` adapt
+`CardBrowserViewModel.onAppendSelectedRows()` and
+`onRemoveSelectedRows()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:908–927`
+from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies whether rows
+remain after its selection mutation. Append emits the supplied multi-select
+reason only when rows remain; remove emits its single-select reason only when
+no rows remain and `disableMultiSelectIfEmpty` is true (default true). Both
+always refresh selected rows and then log, in source order. Callback failures
+propagate unchanged and stop later effects. Selection mutation, Android
+`viewModelScope.launch`, `_selectedRows`, StateFlow/SharedFlow, and Timber remain
+host-side. Focused cases are source-derived in
+`test/browser_selected_row_refresh_effects_test.dart`. The pinned
+`CardBrowserViewModelTest.selected rows are refreshed` checks resulting flow
+values across selection operations, but does not assert these mode-reason gates
+or effect order. The source file declares `SPDX-License-Identifier:
+GPL-3.0-or-later` and has no file-level copyright line; no method-specific
+authorship is asserted. Root `COPYING` remains byte-identical.
+
 ## CardTemplateEditor Back dispatcher
 
 `cardTemplateEditorBackDispatcherPressed()` in

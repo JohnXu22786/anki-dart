@@ -7,6 +7,20 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:908–927`
+  (`onAppendSelectedRows` and `onRemoveSelectedRows`; pinned AnkiDroid 2.25.3
+  commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later` and has no file-level copyright
+  line; no method-specific authorship is asserted. The source-ordered post-mutation
+  effects are adapted in `lib/src/browser_selected_row_refresh_effects.dart`,
+  with focused source-derived cases in
+  `test/browser_selected_row_refresh_effects_test.dart`. The host supplies
+  post-mutation selected-row state and retains selection mutation, Android
+  coroutine/flow delivery, and Timber. The pinned
+  `CardBrowserViewModelTest.selected rows are refreshed` verifies resulting flow
+  values but does not assert these mode-reason gates or effect order. Root
+  `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:733–735`
   (`CardTemplateFragment.onViewCreated()` initial selected-item expression;
   pinned AnkiDroid 2.25.3 commit

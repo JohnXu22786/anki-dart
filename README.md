@@ -461,6 +461,12 @@ Android lifecycle, StateFlow, localization, and UI.
   `browserHasSelectedAnyRows` project the selected-ID Set's distinct count and
   nonempty check. The host owns selection and uses these values for UI and
   operation guards.
+- Card Browser selected-row refresh effects:
+  `runBrowserAppendSelectedRowsEffects` and
+  `runBrowserRemoveSelectedRowsEffects` preserve the pinned source's conditional
+  mode-reason emissions followed by unconditional refresh and logging. The host
+  supplies post-mutation selection state and retains selection mutation,
+  coroutine/flow delivery, and Timber. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md).
 - Card Browser all-decks state: `browserHasSelectedAllDecks` returns true exactly
   when the deck-filter list is empty, independent of query text, other filters,
   or available rows. Pinned ViewModel tests cover the initial/specific and

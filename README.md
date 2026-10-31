@@ -1430,6 +1430,20 @@ This is an independent project and is not endorsed by or affiliated with the
 AnkiDroid or Anki projects. The names are used only to identify the source and
 compatibility target.
 
+## Card Template Editor dynamic note type predicate
+
+`cardTemplateEditorNoteTypeCreatesDynamicNumberOfNotes()` in
+`lib/src/card_template_editor_dynamic_note_type.dart` follows
+`noteTypeCreatesDynamicNumberOfNotes()` at `CardTemplateEditor.kt:1003–1006` in
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes
+lazy `isCloze` then `isImageOcclusion` callbacks with source `||` short-circuit
+behavior, so a true cloze result skips the image-occlusion read. Callback
+failures propagate unchanged. The host keeps `tempNoteType`, its generated
+notetype model, and closures over that same source note type; Dart only sequences
+the boolean reads. Focused tests in
+`test/card_template_editor_dynamic_note_type_test.dart` are source-derived; the
+pinned method is marked `@NeedsTest`. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor current template name
 
 `cardTemplateEditorCurrentTemplateName()` in

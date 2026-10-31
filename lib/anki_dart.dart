@@ -195,6 +195,7 @@ export 'src/reviewer_post_routing.dart';
 export 'src/card_viewer_sound_actions.dart';
 export 'src/card_template.dart';
 export 'src/card_template_editor_current_template.dart';
+export 'src/card_template_editor_dynamic_note_type.dart';
 export 'src/card_template_change_tracking.dart';
 export 'src/browser_availability.dart';
 export 'src/browser_filter_update.dart';

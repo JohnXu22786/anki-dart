@@ -217,6 +217,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   Record-voice toggle state/preference ordering is projected in
   `lib/src/reviewer_record_voice_toggle.dart`; StateFlow mutation, repository
   access/write, action dispatch and recorder lifecycle remain host-side.
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/whiteboard/WhiteboardViewModel.kt`
+  declares `SPDX-License-Identifier: GPL-3.0-or-later`; its header contains no
+  separate copyright line. Completed-add, clear, undo, redo and reset history
+  transitions are adapted in `lib/src/whiteboard_drawing_history.dart`. The
+  Dart model is Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Path
+  values remain opaque; Android `Path` geometry, erase gestures, StateFlow,
+  ViewModel lifecycle, repository behavior, rendering and UI stay host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`
   and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` declare
   `GPL-3.0-or-later`. Their gesture enums, decoded-input decisions, viewport
@@ -1014,6 +1021,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   disabled state/preference effect-order cases. Pinned UI tests enable the
   whiteboard but do not directly assert ReviewerViewModel state/preference
   ordering.
+- `test/whiteboard_drawing_history_test.dart` adds source-derived completed-add,
+  empty-operation, identity, removal ordering/clamping, clear/redo equality, and
+  Kotlin `Float` equality (Float32 rounding, NaN, and signed zero), and reset
+  cases. No direct pinned `WhiteboardViewModel` history test was found; Android
+  fragment/repository whiteboard tests provide context only.
 - `test/reviewer_record_voice_toggle_test.dart` adds source-derived enabled and
   disabled state/preference effect-order cases. No direct ReviewerViewModel
   record-voice toggle assertion was found; `AudioRecordViewTest.kt` checks only

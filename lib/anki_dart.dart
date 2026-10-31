@@ -38,6 +38,7 @@ export 'src/manage_note_types_state.dart';
 export 'src/manage_note_types_delete_plan.dart';
 export 'src/manage_note_type_delete_plan.dart';
 export 'src/manage_note_type_rename_plan.dart';
+export 'src/manage_note_type_refresh_plan.dart';
 export 'src/login_input_state.dart';
 export 'src/logged_in_logout_plan.dart';
 export 'src/switch_profiles_dialog_state.dart';

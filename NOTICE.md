@@ -57,7 +57,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   host retains `safeRenameNoteType`, undoable execution, generated changes,
   backend-exception classification, reportable-error construction, coroutine
   scheduling, logging, and Android/UI lifecycle. No direct pinned test covers
-  rename; focused Dart cases are source-derived.
+  rename; focused Dart cases are source-derived. Refresh result publication is
+  adapted in `lib/src/manage_note_type_refresh_plan.dart`; the host retains the
+  collection query/use-count lookup, safe-query `Exception` capture,
+  `ReportableException`, `MutableStateFlow`, coroutine scheduling, Timber, and
+  Android lifecycle/UI. Its state/error branch and callback-boundary cases are
+  source-derived; no direct pinned refresh test was found.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/InsertFieldDialogViewModel.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/model/FieldName.kt`,

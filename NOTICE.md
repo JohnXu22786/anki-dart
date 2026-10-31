@@ -1277,6 +1277,14 @@ source-derived behavior tests, not a port of the Android test harness.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReminderLogTree.kt` and `common/src/main/java/com/ichi2/anki/common/utils/ext/ByteArray.kt` are Copyright © 2026 Eric Li <ericli3690@gmail.com> and marked `GPL-3.0-or-later` upstream. The exact reminder log prefix/header, level and line projection, newline search, and trim projection are adapted in `lib/src/reminder_log_projection.dart`; focused source-reference cases are in `test/reminder_log_projection_test.dart`. The implementation accepts a host-formatted timestamp and host grapheme ellipsizer. Timber routing, Android logging, coroutine scheduling, log-file IO/rotation, atomic rename, and error handling remain host-side. The supporting `StringUtils.kt` source is also GPL-3.0-or-later; its Unicode grapheme behavior is delegated to the host. The pinned direct tests are `ReminderLogTreeTest.kt` and `ByteArrayTest.kt`.
 
+The scope-to-SharedPreferences-key projection in
+`lib/src/review_reminder_scope_storage_key.dart` and focused cases in
+`test/review_reminder_scope_storage_key_test.dart` are derived from AnkiDroid's
+`ReviewRemindersDatabase.kt` and `ReviewRemindersDatabaseTest.kt`, Copyright © 2025 Eric Li
+<ericli3690@gmail.com>, licensed `GPL-3.0-or-later`. The host retains
+SharedPreferences access and reminder persistence. The focused Dart cases are
+source-derived behavior tests, not a port of the Android test harness.
+
 The notification refresh decision in `lib/src/review_reminder_refresh_decision.dart`
 and its focused cases are derived from AnkiDroid's `ReviewRemindersDatabase.kt`,
 `ReviewReminder.kt`, and `ReviewRemindersDatabaseTest.kt`, Copyright © 2025 Eric

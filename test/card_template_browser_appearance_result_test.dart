@@ -16,9 +16,9 @@
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from CardTemplateBrowserAppearanceEditor.Result.fromIntent()
- * in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md. The pinned source has no
- * direct test for this method.
+ * Source-derived from CardTemplateBrowserAppearanceEditor.Result in AnkiDroid
+ * 2.25.3; see ANKIDROID_UPSTREAM.md. The pinned source has no direct tests for
+ * these methods.
  */
 
 import 'package:anki_dart/anki_dart.dart';
@@ -131,6 +131,57 @@ void main() {
         throwsA(same(error)),
       );
       expect(answerWasRead, isFalse);
+    });
+  });
+
+  group('browser appearance result application', () {
+    test('applies question before answer', () {
+      final result = BrowserAppearanceResult(
+        question: 'question',
+        answer: 'answer',
+      );
+      final applied = <String>[];
+
+      result.applyTo(
+        setBqfmt: (value) => applied.add('bqfmt:$value'),
+        setBafmt: (value) => applied.add('bafmt:$value'),
+      );
+
+      expect(applied, ['bqfmt:question', 'bafmt:answer']);
+    });
+
+    test('passes both formats to the corresponding host setters unchanged', () {
+      const question = ' {{Front}}\n{{Back}} ';
+      const answer = '<div>{{FrontSide}}</div>\n';
+      final result = BrowserAppearanceResult(
+        question: question,
+        answer: answer,
+      );
+      String? bqfmt;
+      String? bafmt;
+
+      result.applyTo(
+        setBqfmt: (value) => bqfmt = value,
+        setBafmt: (value) => bafmt = value,
+      );
+
+      expect(bqfmt, question);
+      expect(bafmt, answer);
+    });
+
+    test('first setter exception propagates and skips the answer setter', () {
+      final result = BrowserAppearanceResult(question: 'q', answer: 'a');
+      final exception = StateError('question setter failed');
+      var answerWasSet = false;
+
+      expect(
+        () => result.applyTo(
+          setBqfmt: (_) => throw exception,
+          setBafmt: (_) => answerWasSet = true,
+        ),
+        throwsA(same(exception)),
+      );
+      expect(answerWasSet, isFalse);
     });
   });
 }

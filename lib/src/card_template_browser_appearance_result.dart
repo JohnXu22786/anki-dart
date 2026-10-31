@@ -16,8 +16,8 @@
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from CardTemplateBrowserAppearanceEditor.Result.fromIntent()
- * in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
+ * Source-derived from CardTemplateBrowserAppearanceEditor.Result in AnkiDroid
+ * 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 /// The default format value used by the source when an Intent extra is null.
@@ -33,6 +33,18 @@ final class BrowserAppearanceResult {
 
   final String question;
   final String answer;
+
+  /// Applies the formats to host-owned template fields in source order.
+  ///
+  /// A setter failure propagates immediately, so the answer setter is skipped
+  /// if setting the question format fails.
+  void applyTo({
+    required void Function(String) setBqfmt,
+    required void Function(String) setBafmt,
+  }) {
+    setBqfmt(question);
+    setBafmt(answer);
+  }
 }
 
 /// Extracts the two formats while leaving Intent access with the host.

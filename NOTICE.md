@@ -7,6 +7,20 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:501–506`
+  (`disableDeckAndChildrenShortcuts`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later`; its file header contains no
+  copyright text, and no method-specific authorship is asserted. The
+  host-callback subtree lookup, eager ordered ID stringification, and single
+  emission are adapted in `lib/src/deck_picker_disable_deck_shortcuts.dart`,
+  with focused cases in `test/deck_picker_disable_deck_shortcuts_test.dart`.
+  The pinned `DeckPickerViewModelTest` directly checks emission of the selected
+  deck and its descendants; nullable, ordering, and failure branches are
+  source-derived. The host retains due-tree/backend access,
+  `launchCatchingIO`, lifecycle, Flow delivery, and Android shortcut handling.
+  Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:908–927`
   (`onAppendSelectedRows` and `onRemoveSelectedRows`; pinned AnkiDroid 2.25.3
   commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares

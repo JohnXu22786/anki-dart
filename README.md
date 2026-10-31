@@ -41,8 +41,8 @@ sequences and saved-search submission effects, saved-search
 outcome-message mapping, search-result message selection, and save-search
 prompt decisions,
 CardTemplate marker-based string composition and
-verbatim card-content QA wrapping, browser-appearance onCreate callback
-ordering and result extraction,
+verbatim card-content QA wrapping, card-template editor unique new-name
+generation, browser-appearance onCreate callback ordering and result extraction,
 card-template type-answer modifier parsing, cloze-index derivation and
 cloze-content extraction, question-side type-answer placeholder removal,
 the host-input field/result decision, and answer-side placeholder
@@ -1425,3 +1425,16 @@ retained; this repository does not relicense them under `GPL-3.0-or-later`.
 This is an independent project and is not endorsed by or affiliated with the
 AnkiDroid or Anki projects. The names are used only to identify the source and
 compatibility target.
+
+## Card Template Editor new names
+
+`newCardName()` in `lib/src/card_template_editor_new_card_name.dart` follows
+`CardTemplateEditor.kt:1629–1641` at AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It starts at the host-supplied
+template count plus one, localizes each candidate once, and returns the first
+name absent from the ordered existing names using exact, case-sensitive
+equality. It preserves Kotlin signed 32-bit overflow and stops scanning at the
+first match; callback and iteration failures propagate in source order. The host
+retains `CardTemplates`, its length and names, and localization. Focused tests in
+`test/card_template_editor_new_card_name_test.dart` are source-derived; no
+direct pinned test for `newCardName` was found.

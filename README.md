@@ -1949,6 +1949,21 @@ Activity lifecycle remain host-side. Focused source-derived cases are in
 `test/card_template_editor_discard_confirmation_test.dart`; see
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Editor action-bar Back
+
+`cardTemplateEditorActionBarBackPressed()` in
+`lib/src/card_template_editor_action_bar_back.dart` follows
+`CardTemplateEditor.onActionBarBackPressed()` at `CardTemplateEditor.kt:347–359`
+from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It checks whether the note type
+changed once, then shows the host discard dialog or finishes the Activity, and
+returns true only after that callback succeeds. Callback failures propagate
+unchanged. This action-bar callback does not read keyboard state; Android
+Activity, dialog, lifecycle, and view behavior remain host-side. Focused
+source-derived cases are in
+`test/card_template_editor_action_bar_back_test.dart`; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor Markdown
 
 `cardTemplateToMarkdown()` in `lib/src/card_template_editor_markdown.dart`

@@ -55,6 +55,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `test/card_template_editor_discard_confirmation_test.dart`. Android dialog,
   Timber, temporary-model/cache access, and Activity lifecycle remain host-side.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:347–359`
+  (`CardTemplateEditor.onActionBarBackPressed`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked
+  `GPL-3.0-or-later` with SPDX copyright notices for Timothy Rae (2014) and
+  Mike Hardy (2018); no method-specific authorship is asserted. Its ordered
+  note-type check and discard-or-finish callback are adapted in
+  `lib/src/card_template_editor_action_bar_back.dart`, with focused
+  source-derived cases in
+  `test/card_template_editor_action_bar_back_test.dart`. Android Activity,
+  dialog, lifecycle, and view remain host-side.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1305–1314`
   (`CardTemplateFragment.onModelSaved`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked

@@ -26,6 +26,24 @@ asserted. Focused cases in
 `test/card_template_editor_discard_confirmation_test.dart` are
 source-derived because no direct pinned test covers this callback.
 
+## CardTemplateEditor.onActionBarBackPressed
+
+`CardTemplateEditor.onActionBarBackPressed()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:347–359` (pinned
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted
+by `cardTemplateEditorActionBarBackPressed()` in
+`lib/src/card_template_editor_action_bar_back.dart`. The projection calls the
+host's note-type-change check once, then invokes the host discard dialog when
+changed or Activity finish when unchanged, and returns true only after the
+selected callback succeeds. Callback failures propagate unchanged. This
+action-bar path is distinct from the Back dispatcher and does not inspect
+keyboard state. Android Activity, dialog, lifecycle, and view remain host-side.
+Focused tests in `test/card_template_editor_action_bar_back_test.dart` are
+source-derived; no direct pinned test for this action-bar callback was found.
+
+The source file declares `GPL-3.0-or-later` and identifies Copyright © 2014
+Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted.
+
 ## CardTemplateFragment.saveNoteType
 
 `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1091–1119`

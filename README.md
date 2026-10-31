@@ -2295,3 +2295,25 @@ source-derived tests are in
 The adapted source is GPL-3.0-or-later; file-level copyright attribution and
 source pin are recorded in [NOTICE.md](NOTICE.md) and
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.
+
+## CardTemplateEditor edge-to-edge insets
+
+`setupCardTemplateEditorEdgeToEdge()` in
+`lib/src/card_template_editor_edge_to_edge.dart` ports the callback orchestration
+from `CardTemplateEditor.setupEdgeToEdge()` at `CardTemplateEditor.kt:270–291`
+in AnkiDroid 2.25.3. It enables edge-to-edge first, registers the top inset
+listener before the root listener, and keeps inset-mask creation, inset reads,
+view lookups, and the fragmented-state read inside their source callbacks. The
+top listener updates only left, top, and right padding; the fragmented root
+listener updates the editor's left padding and fragment container's right
+padding. Both listeners return the exact input object, and failures propagate
+in source order. The Android host supplies `SystemBarStyle.dark(Color.TRANSPARENT)`,
+`systemBars() or displayCutout()`, and
+`systemBars() or displayCutout() or ime()` through the callbacks; Android
+WindowInsets, resource IDs, view binding, and `updatePadding` remain host-side.
+Focused source-derived tests are in
+[`test/card_template_editor_edge_to_edge_test.dart`](test/card_template_editor_edge_to_edge_test.dart).
+No direct pinned test for `setupEdgeToEdge()` was found in
+`CardTemplateEditorTest.kt`. File-level SPDX credits are recorded in
+[NOTICE.md](NOTICE.md), and the source pin is in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.

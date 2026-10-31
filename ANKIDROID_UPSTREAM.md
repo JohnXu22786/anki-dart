@@ -838,3 +838,26 @@ lifecycle, and resource types remain host-side. Focused cases are in
 `GPL-3.0-or-later` and its file-level SPDX credits © 2014 Timothy Rae and
 © 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING`
 remains byte-identical.
+
+## CardTemplateEditor.setupEdgeToEdge inset callbacks
+
+`CardTemplateEditor.setupEdgeToEdge()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:270–291`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`setupCardTemplateEditorEdgeToEdge()` in
+`lib/src/card_template_editor_edge_to_edge.dart`. It enables the host's dark
+transparent system bar style, registers the top listener before the root
+listener, and defers inset-mask construction, inset reads, view resolution, and
+the fragmented-state read until each listener runs. The top listener applies
+only left/top/right padding when the top view exists. The root listener checks
+fragmented after reading insets, then applies editor-left and fragment-container-
+right padding in order when true. Both callbacks return their identical input
+object; callback failures propagate and prevent subsequent work. Android window,
+inset types/masks, view binding, resource IDs, and padding APIs remain host-side.
+Focused tests in `test/card_template_editor_edge_to_edge_test.dart` are
+source-derived. No direct pinned test for this method was found in
+`AnkiDroid/src/test/java/com/ichi2/anki/CardTemplateEditorTest.kt`. The source
+file is marked `GPL-3.0-or-later` and its file-level SPDX header credits Timothy
+Rae (2014) and Mike Hardy (2018); no method-specific authorship is asserted.
+Root `COPYING` remains byte-identical.

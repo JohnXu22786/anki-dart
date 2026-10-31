@@ -1700,3 +1700,14 @@ and Mike Hardy (2018); no method-specific authorship is asserted. Android
 Fragment, Bundle, and the key constant remain host-side. The Dart adaptation
 and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`. Root `COPYING` is unchanged.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:270–291`
+  (`CardTemplateEditor.setupEdgeToEdge`) is marked `GPL-3.0-or-later` and its
+  file-level SPDX header credits Copyright © 2014 Timothy Rae and © 2018 Mike
+  Hardy; no method-specific authorship is asserted. Its ordered edge-to-edge
+  enablement and lazy inset-listener orchestration are adapted in
+  `lib/src/card_template_editor_edge_to_edge.dart`, with focused source-derived
+  cases in `test/card_template_editor_edge_to_edge_test.dart`. The host retains
+  Android windows, insets and masks, bindings, resource IDs, and view padding
+  operations. No direct test for `setupEdgeToEdge()` was found in the pinned
+  `CardTemplateEditorTest.kt`. Root `COPYING` remains byte-identical.

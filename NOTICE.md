@@ -22,7 +22,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt`
   (`CardTemplateFragment.saveNoteType`, lines 1091–1119) is marked
-  `GPL-3.0-or-later` upstream and names no separate copyright holder. Its
+  `GPL-3.0-or-later` upstream. Its file SPDX header credits Timothy Rae
+  (2014) and Mike Hardy (2018); no method-specific authorship is asserted. Its
   callback order and `Exception` boundary are adapted in
   `lib/src/card_template_fragment_save_note_type.dart`, with focused cases in
   `test/card_template_fragment_save_note_type_test.dart`. Android views,

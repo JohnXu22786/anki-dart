@@ -36,6 +36,8 @@ void main() {
         'require activity',
         'cast menu host',
         'create provider',
+        'read view lifecycle owner',
+        'read resumed state',
         'register provider',
       ]);
       expect(harness.registeredHost, same(harness.host));
@@ -50,7 +52,10 @@ void main() {
         'require activity',
         'cast menu host',
         'create provider',
+        'read view lifecycle owner',
+        'read resumed state',
         'register provider',
+        'read menu resource',
         'inflate',
         'setup common menu',
       ]);
@@ -73,6 +78,8 @@ void main() {
         'require activity',
         'cast menu host',
         'create provider',
+        'read view lifecycle owner',
+        'read resumed state',
         'register provider',
       ]) {
         final harness = _Harness(failedStage: failedStage);
@@ -87,8 +94,17 @@ void main() {
           'require activity',
           if (failedStage != 'require activity') 'cast menu host',
           if (failedStage == 'create provider' ||
+              failedStage == 'read view lifecycle owner' ||
+              failedStage == 'read resumed state' ||
               failedStage == 'register provider')
             'create provider',
+          if (failedStage == 'read view lifecycle owner' ||
+              failedStage == 'read resumed state' ||
+              failedStage == 'register provider')
+            'read view lifecycle owner',
+          if (failedStage == 'read resumed state' ||
+              failedStage == 'register provider')
+            'read resumed state',
           if (failedStage == 'register provider') 'register provider',
         ], reason: failedStage);
         if (failedStage == 'cast menu host') {
@@ -110,8 +126,31 @@ void main() {
         'require activity',
         'cast menu host',
         'create provider',
+        'read view lifecycle owner',
+        'read resumed state',
         'register provider',
+        'read menu resource',
         'inflate',
+      ]);
+
+      final resourceFailure = _Harness(failedStage: 'read menu resource');
+      cardTemplateFragmentSetupMenu(callbacks: resourceFailure.callbacks);
+      final deferredResourceFailure = resourceFailure.failure;
+      expect(
+        () => resourceFailure.provider!.onCreateMenu(
+          _Handle('menu'),
+          _Handle('inflater'),
+        ),
+        throwsA(same(deferredResourceFailure)),
+      );
+      expect(resourceFailure.events, [
+        'require activity',
+        'cast menu host',
+        'create provider',
+        'read view lifecycle owner',
+        'read resumed state',
+        'register provider',
+        'read menu resource',
       ]);
     });
   });
@@ -158,9 +197,21 @@ final class _Harness {
                 registeredOwner = actualOwner;
                 registeredState = actualState;
               },
-          viewLifecycleOwner: owner,
-          resumedState: resumed,
-          cardTemplateEditorMenuResource: resource,
+          readViewLifecycleOwner: () {
+            events.add('read view lifecycle owner');
+            if (failedStage == 'read view lifecycle owner') throw failure;
+            return owner;
+          },
+          readResumedLifecycleState: () {
+            events.add('read resumed state');
+            if (failedStage == 'read resumed state') throw failure;
+            return resumed;
+          },
+          readCardTemplateEditorMenuResource: () {
+            events.add('read menu resource');
+            if (failedStage == 'read menu resource') throw failure;
+            return resource;
+          },
           inflateMenu: (actualInflater, actualResource, actualMenu) {
             events.add('inflate');
             inflatedInflater = actualInflater;

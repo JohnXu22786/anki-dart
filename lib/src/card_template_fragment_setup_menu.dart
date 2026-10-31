@@ -43,9 +43,9 @@ final class CardTemplateFragmentSetupMenuCallbacks<
     required this.castMenuHost,
     required this.createMenuProvider,
     required this.addMenuProvider,
-    required this.viewLifecycleOwner,
-    required this.resumedState,
-    required this.cardTemplateEditorMenuResource,
+    required this.readViewLifecycleOwner,
+    required this.readResumedLifecycleState,
+    required this.readCardTemplateEditorMenuResource,
     required this.inflateMenu,
     required this.setupCommonMenu,
     required this.handleCommonMenuItemSelected,
@@ -65,9 +65,9 @@ final class CardTemplateFragmentSetupMenuCallbacks<
     TLifecycleState lifecycleState,
   )
   addMenuProvider;
-  final TLifecycleOwner viewLifecycleOwner;
-  final TLifecycleState resumedState;
-  final TMenuResource cardTemplateEditorMenuResource;
+  final TLifecycleOwner Function() readViewLifecycleOwner;
+  final TLifecycleState Function() readResumedLifecycleState;
+  final TMenuResource Function() readCardTemplateEditorMenuResource;
   final void Function(
     TMenuInflater menuInflater,
     TMenuResource resource,
@@ -112,7 +112,7 @@ void cardTemplateFragmentSetupMenu<
   final menuProvider = callbacks.createMenuProvider((menu, menuInflater) {
     callbacks.inflateMenu(
       menuInflater,
-      callbacks.cardTemplateEditorMenuResource,
+      callbacks.readCardTemplateEditorMenuResource(),
       menu,
     );
     callbacks.setupCommonMenu(menu);
@@ -120,7 +120,7 @@ void cardTemplateFragmentSetupMenu<
   callbacks.addMenuProvider(
     menuHost,
     menuProvider,
-    callbacks.viewLifecycleOwner,
-    callbacks.resumedState,
+    callbacks.readViewLifecycleOwner(),
+    callbacks.readResumedLifecycleState(),
   );
 }

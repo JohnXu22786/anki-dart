@@ -43,10 +43,9 @@ void main() {
         expect(harness.events, [
           'read-previous',
           'read-tab',
-          if (entry.$1 == CardTemplateEditorEditTab.STYLING) 'read-model-css',
           'read-text',
           entry.$3,
-          'read-model-update',
+          'read-activity-model',
           'read-index',
           'update-template',
           'create-runnable',
@@ -55,6 +54,15 @@ void main() {
           'update-discard',
         ]);
         expect(harness.assignedValue, 'edited text');
+        expect(
+          harness.assignedModel,
+          entry.$1 == CardTemplateEditorEditTab.STYLING
+              ? same(harness.storedModel)
+              : isNull,
+        );
+        expect(harness.currentActivityModelReads, 1);
+        expect(harness.updatedModel, same(harness.activityModel));
+        expect(harness.updatedModel, isNot(same(harness.storedModel)));
         expect(harness.updatedTemplate, same(harness.template));
         expect(harness.updatedIndex, 4);
         expect(harness.scheduledRunnable, same(harness.createdRunnable));
@@ -81,6 +89,56 @@ void main() {
       ]);
     });
 
+    test(
+      'Styling writes the stored model before reading the current Activity model',
+      () {
+        final harness = _Harness(tab: CardTemplateEditorEditTab.STYLING);
+
+        cardTemplateFragmentAfterTextChanged<Object, Object, Object, int>(
+          editable: Object(),
+          callbacks: harness.callbacks,
+        );
+
+        expect(
+          harness.events.indexOf('set-css'),
+          lessThan(harness.events.indexOf('read-activity-model')),
+        );
+        expect(harness.assignedModel, same(harness.storedModel));
+        expect(harness.updatedModel, same(harness.activityModel));
+        expect(harness.currentActivityModelReads, 1);
+      },
+    );
+
+    test(
+      'non-styling tabs read the Activity model only at template update',
+      () {
+        for (final tab in [
+          CardTemplateEditorEditTab.BACK,
+          CardTemplateEditorEditTab.FRONT,
+          null,
+          'unknown',
+        ]) {
+          final harness = _Harness(tab: tab);
+
+          cardTemplateFragmentAfterTextChanged<Object, Object, Object, int>(
+            editable: Object(),
+            callbacks: harness.callbacks,
+          );
+
+          expect(harness.currentActivityModelReads, 1);
+          expect(
+            harness.events.indexOf('read-activity-model'),
+            harness.events.indexOf('set-answer') >= 0
+                ? harness.events.indexOf('set-answer') + 1
+                : harness.events.indexOf('set-question') + 1,
+          );
+          expect(harness.assignedModel, isNull);
+          expect(harness.updatedModel, same(harness.activityModel));
+          expect(harness.updatedModel, isNot(same(harness.storedModel)));
+        }
+      },
+    );
+
     test('ignores the Editable argument', () {
       final first = _Harness(tab: CardTemplateEditorEditTab.FRONT);
       final second = _Harness(tab: CardTemplateEditorEditTab.FRONT);
@@ -106,12 +164,16 @@ final class _Harness {
   final Object? tab;
   final events = <String>[];
   final template = Object();
-  final model = Object();
+  final storedModel = Object();
+  final activityModel = Object();
   _Runnable? createdRunnable;
   Object? currentRunnable;
   Object? previousRunnable;
   Object? scheduledRunnable;
   Object? assignedValue;
+  Object? assignedModel;
+  Object? updatedModel;
+  var currentActivityModelReads = 0;
   Object? updatedTemplate;
   int? updatedIndex;
 
@@ -131,19 +193,19 @@ final class _Harness {
       return 'edited text';
     },
     template: template,
-    temporaryModel: () {
-      final readingCss =
-          tab == CardTemplateEditorEditTab.STYLING &&
-          !events.contains('set-css');
-      events.add(readingCss ? 'read-model-css' : 'read-model-update');
-      return model;
+    storedTempModel: storedModel,
+    currentActivityTempNoteType: () {
+      events.add('read-activity-model');
+      currentActivityModelReads++;
+      return activityModel;
     },
     cardIndex: () {
       events.add('read-index');
       return 4;
     },
-    setCss: (_, value) {
+    setCss: (model, value) {
       events.add('set-css');
+      assignedModel = model;
       assignedValue = value;
     },
     setAnswerFormat: (_, value) {
@@ -154,8 +216,9 @@ final class _Harness {
       events.add('set-question');
       assignedValue = value;
     },
-    updateTemplate: (_, index, value) {
+    updateTemplate: (model, index, value) {
       events.add('update-template');
+      updatedModel = model;
       updatedIndex = index;
       updatedTemplate = value;
     },

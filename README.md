@@ -2003,13 +2003,15 @@ source has no direct enum-focused test. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UP
 `CardTemplateEditor.kt:747–764` in AnkiDroid v2.25.3 commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. It ignores the editable argument,
 cancels only a non-null prior preview runnable, routes styling/back/front and
-null or unknown tabs to CSS/answer/question format, updates the temporary model
-at the current card index, then creates and stores the refresh runnable before
-scheduling it at the host-supplied source delay. The discard-changes callback
-runs last. The runnable calls the host preview loader without an ordinal, so its
-default pager lookup remains at runnable execution time. Android `Editable`,
-template/model mutation, Handler/Runnable scheduling, and pager access remain
-host-side. Focused tests are source-derived; the pinned
+null or unknown tabs to CSS/answer/question format. Styling writes to the
+fragment's stored `tempModel`; the later template update separately resolves
+the Activity's current `tempNoteType`, which can be a different instance. The
+update uses the same card index. It then creates and stores the refresh runnable
+before scheduling it at the host-supplied source delay. The discard-changes
+callback runs last. The runnable calls the host preview loader without an
+ordinal, so its default pager lookup remains at runnable execution time. Android
+`Editable`, template/model mutation, Handler/Runnable scheduling, and pager
+access remain host-side. Focused tests are source-derived; the pinned
 `CardTemplateEditorTest.kt` contains no direct `TextWatcher.afterTextChanged`
 test. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 

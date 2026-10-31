@@ -16,8 +16,10 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/card_template_fragment_after_text_changed.dart`, with focused
   source-derived cases in
   `test/card_template_fragment_after_text_changed_test.dart`. Android
-  `Editable`, current template and temporary-model mutation, Handler/Runnable
-  scheduling, and pager state remain host-side. `CardTemplateEditorTest.kt`
+  `Editable` and template/model mutation, Handler/Runnable scheduling, and pager
+  state remain host-side. Styling writes to the fragment's stored `tempModel`,
+  while the later template update resolves Activity `tempNoteType!!` separately.
+  `CardTemplateEditorTest.kt`
   contains no direct test for this `TextWatcher` method. Root `COPYING` remains
   byte-identical.
 

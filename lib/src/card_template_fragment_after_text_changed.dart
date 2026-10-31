@@ -25,10 +25,14 @@ import 'card_template_editor_edit_tab.dart';
 /// Host callbacks for `CardTemplateFragment`'s `afterTextChanged` watcher.
 ///
 /// Android `Editable`, editor/model mutation, the Handler and Runnable, and
-/// pager state stay host-side. The host supplies its exact refresh delay and
-/// wraps [loadTemplatePreviewerFragmentIfFragmented] in its Runnable factory;
-/// that callback must invoke the host method with no ordinal argument when the
-/// runnable executes, so the host's default current-page lookup stays deferred.
+/// pager state stay host-side. [storedTempModel] is the fragment's already-held
+/// `tempModel` used for Styling CSS only. [currentActivityTempNoteType] resolves
+/// the Activity's current temporary model later, at `updateTemplate`; it is a
+/// distinct source and may return a different instance. The host supplies its
+/// exact refresh delay and wraps [loadTemplatePreviewerFragmentIfFragmented]
+/// in its Runnable factory; that callback must invoke the host method with no
+/// ordinal argument when the runnable executes, so the host's default current-
+/// page lookup stays deferred.
 final class CardTemplateFragmentAfterTextChangedCallbacks<
   TTemplate,
   TModel,
@@ -41,7 +45,8 @@ final class CardTemplateFragmentAfterTextChangedCallbacks<
     required this.currentEditTab,
     required this.editorText,
     required this.template,
-    required this.temporaryModel,
+    required this.storedTempModel,
+    required this.currentActivityTempNoteType,
     required this.cardIndex,
     required this.setCss,
     required this.setAnswerFormat,
@@ -60,7 +65,8 @@ final class CardTemplateFragmentAfterTextChangedCallbacks<
   final Object? Function() currentEditTab;
   final String Function() editorText;
   final TTemplate template;
-  final TModel Function() temporaryModel;
+  final TModel storedTempModel;
+  final TModel Function() currentActivityTempNoteType;
   final int Function() cardIndex;
   final void Function(TModel model, String text) setCss;
   final void Function(TTemplate template, String text) setAnswerFormat;
@@ -98,8 +104,7 @@ cardTemplateFragmentAfterTextChanged<TTemplate, TModel, TRunnable, TDelay>({
 
   final editTab = callbacks.currentEditTab();
   if (editTab == CardTemplateEditorEditTab.STYLING) {
-    final model = callbacks.temporaryModel();
-    callbacks.setCss(model, callbacks.editorText());
+    callbacks.setCss(callbacks.storedTempModel, callbacks.editorText());
   } else if (editTab == CardTemplateEditorEditTab.BACK) {
     callbacks.setAnswerFormat(callbacks.template, callbacks.editorText());
   } else {
@@ -107,7 +112,7 @@ cardTemplateFragmentAfterTextChanged<TTemplate, TModel, TRunnable, TDelay>({
   }
 
   callbacks.updateTemplate(
-    callbacks.temporaryModel(),
+    callbacks.currentActivityTempNoteType(),
     callbacks.cardIndex(),
     callbacks.template,
   );

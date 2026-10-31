@@ -1447,6 +1447,22 @@ failures propagate. The host callback resolves the pager ordinal and accesses
 source-derived; no direct pinned test was found. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Editor current template read
+
+`cardTemplateEditorCurrentTemplate()` follows `getCurrentTemplate()` in
+`CardTemplateEditor.kt:1370–1379` at AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the current index before
+the guarded read; the host callback performs the temporary-model null
+assertion and indexed template access. Only the host-classified
+source-equivalent `JSONException` is sent unchanged to the warning callback
+with the source message format and index, after which the helper returns null.
+Index-read failures, unrelated exceptions, errors, and warning callback
+failures propagate; a null host value is returned unchanged. Android
+arguments, generated models and list access, JSON exception classification,
+and Timber logging remain host-side. Focused tests in
+`test/card_template_editor_current_template_test.dart` are source-derived; no
+direct pinned test was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor new names
 
 `newCardName()` in `lib/src/card_template_editor_new_card_name.dart` follows

@@ -32,7 +32,8 @@ routing, reviewer binding codec/map and
 default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
-resolution and Card Browser launch-option precedence. Card Browser search-text
+resolution, Reviewer state-mutation hook decisions, and Card Browser
+launch-option precedence. Card Browser search-text
 transitions, text-edit/sync/reset/history-selection/request-submission effect
 sequences and saved-search submission effects, saved-search
 outcome-message mapping, search-result message selection, and save-search
@@ -928,6 +929,19 @@ Android lifecycle, StateFlow, localization, and UI.
   host applies `stopTimerOnAnswer`. Deferred/coroutine execution, mutable
   Reviewer state, scheduler/deck/media/timer access, Flow/lifecycle, and UI
   remain host-side; see `ANKIDROID_UPSTREAM.md`.
+- Reviewer state-mutation hook: `reviewerStateMutationHookDecision()` requests
+  completion only for empty JavaScript with an incomplete host signal; an already
+  completed signal produces no action. Nonempty JavaScript returns the exact
+  raw triple-quoted source template, including its leading newline, indentation,
+  and trailing newline/spaces, with raw state-key/JavaScript interpolation; it
+  leaves signal completion to the later host callback. The pinned source test
+  context at `ReviewerViewModelTest.kt:81–112` covers restored custom-scheduler
+  waiting and retained-ViewModel non-rerun behavior; it does not directly assert
+  the empty-JavaScript branch or exact script formatting, which are covered by
+  source-derived cases in `test/reviewer_state_mutation_hook_test.dart`. Awaiting
+  the JavaScript, SharedFlow emission/delivery, callback failure propagation,
+  mutation-signal completion, scheduler execution, WebView and lifecycle remain
+  host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Reviewer media replay side: `reviewerReplayMediaSide` maps the host-supplied
   `showingAnswer` value to `back` when true and `front` when false, matching the
   pinned `replayMedia()` side choice. The pinned Reviewer tests have no direct

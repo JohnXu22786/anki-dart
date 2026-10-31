@@ -1186,6 +1186,20 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   controller, timer, Auto Advance, leech, whiteboard and record-voice toggle
   models, gesture models, and new test code are Copyright © 2026 John Tsui.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
+  (`runStateMutationHook`, lines 481–495; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked `GPL-3.0-or-later`
+  and states no separate copyright holder. Its empty-JavaScript signal decision
+  and exact raw-interpolation script template are adapted in
+  `lib/src/reviewer_state_mutation_hook.dart`; focused source-derived cases are
+  in `test/reviewer_state_mutation_hook_test.dart`. The pinned
+  `ReviewerViewModelTest.kt:81–112` covers restoring an answer while waiting
+  for the custom scheduler and not rerunning it for a retained ViewModel, but
+  does not directly test the empty branch or template formatting. The host
+  retains awaiting, flow emission/delivery, deferred mutation-signal completion
+  from the callback, scheduler execution, callback error propagation, logging,
+  WebView, and lifecycle.
+
 ## Unicode property data
 
 The locale-casing property ranges and full lowercase mappings in

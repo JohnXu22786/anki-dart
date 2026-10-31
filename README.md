@@ -6,6 +6,13 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Current port scope
 
+The language-tag value and parser also follow AnkiDroid 2.25.3, including its
+exact accepted identifier syntax and aliases. Java `Locale.Builder` normalization
+and extension removal are supplied by a host callback; the Dart port does not
+substitute Dart locale rules. Source pin, GPL attribution, and the focused parser
+cases are documented in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md).
+
 The current port includes selected source-mapped slices: deck-picker behavior,
 review-reminder Add/Edit form state,
 the headless review-session lifecycle, reviewer count/next-time presentation

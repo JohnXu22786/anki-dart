@@ -8,6 +8,27 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## AnkiBackendLanguage tag normalization
+
+`AnkiBackendLanguage` in `lib/src/anki_backend_language.dart` adapts the app-side
+value and `fromLanguageTag()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/backend/AnkiBackendLanguage.kt` at
+pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Focused cases are in
+`test/anki_backend_language_test.dart`, derived from
+`AnkiDroid/src/test/java/com/ichi2/anki/backend/AnkiBackendLanguageTest.kt`.
+The direct identifier syntax, aliases, blank-input handling, and value semantics
+are implemented in Dart. Java `Locale.Builder().setLanguageTag(...).clearExtensions()
+.build().toLanguageTag()` normalization remains an explicit host callback; the
+callback receives underscores converted to hyphens, returns null for Java
+`IllformedLocaleException`, and lets unexpected failures propagate. This keeps
+Java locale canonicalization, including removal of `x-lvariant` private-use
+extensions, on the host. The pinned tests also iterate `LanguageUtil.APP_LANGUAGES`
+and `BACKEND_LANGS`; those lists and their broader localization behavior are not
+part of this bounded port. The source and test declare `GPL-3.0-or-later` with no
+separate copyright line; no method-specific authorship is asserted. Root
+`COPYING` remains byte-identical.
+
 ## Card Browser selected-row refresh effects
 
 `runBrowserAppendSelectedRowsEffects()` and

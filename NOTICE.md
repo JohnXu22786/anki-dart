@@ -7,6 +7,22 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/backend/AnkiBackendLanguage.kt` and
+  `AnkiDroid/src/test/java/com/ichi2/anki/backend/AnkiBackendLanguageTest.kt`
+  (pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declare
+  `SPDX-License-Identifier: GPL-3.0-or-later` and contain no separate copyright
+  line; no method-specific authorship is asserted. The value and language-tag
+  parser are adapted in `lib/src/anki_backend_language.dart`, with focused cases
+  in `test/anki_backend_language_test.dart`. The host supplies Java
+  `Locale.Builder` conversion and extension removal through a callback; it should
+  return null for `IllformedLocaleException`, while unexpected failures
+  propagate. Direct parsing preserves source-accepted spelling and applies the
+  `heb`/`ind`/`tgl`/`hi` aliases. The pinned test loops over configured
+  `LanguageUtil.APP_LANGUAGES` and `BACKEND_LANGS`; those lists are not copied or
+  covered by this bounded unit. Root `COPYING` remains byte-identical.
+
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:374–387`
   (`loadDeckList`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) declares

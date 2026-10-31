@@ -263,6 +263,7 @@ export 'src/card_template_editor_flip_qa.dart';
 export 'src/card_template_editor_markdown.dart';
 export 'src/card_template_editor_markdown_clipboard.dart';
 export 'src/card_template_editor_new_card_name.dart';
+export 'src/card_template_pager_stable_ids.dart';
 export 'src/card_template_editor_intent_callbacks.dart';
 export 'src/card_template_fragment_arguments.dart';
 export 'src/card_template_fragment_current_template.dart';

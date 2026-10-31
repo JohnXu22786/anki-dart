@@ -527,3 +527,18 @@ entries, and the pending-add predicate retains the source's `-1` comparison quir
 aliasing, and helper cases. Android Bundle/Parcelable serialization and restore,
 NotetypeJson mutation, temporary files, logging, CollectionManager and Rust backend
 operations, undoable database writes, and edit UI remain host-side.
+
+## Card Template Editor pager stable IDs
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt` at pinned
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`, methods
+`TemplatePagerAdapter.getItemCount`, `getItemId`, `containsItem`, and
+`ordinalShift` (around lines 569–585), maps to
+`templatePagerGetItemId()`, `templatePagerContainsItem()`, and
+`templatePagerOrdinalShift()` in `lib/src/card_template_pager_stable_ids.dart`.
+The Dart projection preserves signed JVM Int32/Int64 overflow, validity
+comparisons, callback reads/writes, and failure order. The host retains
+`FragmentStateAdapter`, template count/model access, adapter state, and
+`baseId` storage. No pinned AnkiDroid test directly covers these adapter
+methods; Dart host storage starts from `initialTemplatePagerBaseId`
+(`BigInt.zero`) and focused Dart coverage is source-derived.

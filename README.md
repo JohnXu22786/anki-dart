@@ -1681,3 +1681,16 @@ discard UI; Dart only sequences host callbacks. Focused tests in
 pinned `CardTemplateEditorTest.testDeckOverride` covers valid deck then null
 mutation and its `noteTypeHasChanged` integration; it does not directly cover
 these method branches. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor pager stable IDs
+
+`templatePagerGetItemId()`, `templatePagerContainsItem()`, and
+`templatePagerOrdinalShift()` in `lib/src/card_template_pager_stable_ids.dart`
+map the portable stable-ID behavior from `CardTemplateEditor.kt:569–585` in
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. They
+preserve Kotlin signed Int32/Int64 wrap and the source callback order; `BigInt`
+keeps the full JVM `Long` range exact on Dart VM and web. The host retains
+`FragmentStateAdapter`, template count/model access, adapter state, and mutable
+`baseId` storage, initialized to `initialTemplatePagerBaseId` (`BigInt.zero`).
+Focused tests are source-derived because no pinned test covers
+these adapter methods. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).

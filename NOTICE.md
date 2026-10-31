@@ -1095,3 +1095,10 @@ They are not a port of the Android test harness.
 The Study Options projection tests were written against
 `StudyOptionsViewModelTest.kt` and cover buried-count arithmetic, state precedence,
 and Loading accessors. They are not a port of the Android test harness.
+
+The portable review-reminder form state in `lib/src/review_reminder_form_state.dart`
+is derived from AnkiDroid's `AddEditReminderDialogViewModel.kt`, `ReviewReminder.kt`,
+and `AddEditReminderDialog.kt`, Copyright © 2025 Eric Li
+<ericli3690@gmail.com>, licensed `GPL-3.0-or-later` upstream. The host retains
+runtime reminder creation and all Android, collection, persistence, scheduling,
+and notification behavior.

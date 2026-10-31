@@ -7,6 +7,7 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 ## Current port scope
 
 The current port includes selected source-mapped slices: deck-picker behavior,
+review-reminder Add/Edit form state,
 the headless review-session lifecycle, reviewer count/next-time presentation
 models, the collection timebox counter and rounded-minute projection, Previewer
 navigation and audio-side selection, flag decision/effect models, ordered Previewer mark action effects

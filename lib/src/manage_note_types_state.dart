@@ -40,14 +40,17 @@ final class NoteTypeItemState {
   final bool isSelected;
   final bool shouldBeDisplayed;
 
-  NoteTypeItemState copyWith({bool? isSelected, bool? shouldBeDisplayed}) =>
-      NoteTypeItemState(
-        id: id,
-        name: name,
-        useCount: useCount,
-        isSelected: isSelected ?? this.isSelected,
-        shouldBeDisplayed: shouldBeDisplayed ?? this.shouldBeDisplayed,
-      );
+  NoteTypeItemState copyWith({
+    String? name,
+    bool? isSelected,
+    bool? shouldBeDisplayed,
+  }) => NoteTypeItemState(
+    id: id,
+    name: name ?? this.name,
+    useCount: useCount,
+    isSelected: isSelected ?? this.isSelected,
+    shouldBeDisplayed: shouldBeDisplayed ?? this.shouldBeDisplayed,
+  );
 }
 
 /// Host-facing navigation request from Manage Note Types.

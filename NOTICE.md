@@ -41,8 +41,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   selection transitions, selected-row projection, and editor destination
   requests are adapted in `lib/src/manage_note_types_state.dart`. The host
   supplies note-type rows and retains collection loading/refresh, use-count
-  queries, rename/delete/undo, exception aggregation, StateFlow/coroutines,
-  Android UI/lifecycle, and note-type mutations. Selected deletion choreography
+  queries, note-type mutations, exception classification/construction,
+  StateFlow/coroutines, and Android UI/lifecycle. Selected deletion choreography
   is adapted in `lib/src/manage_note_types_delete_plan.dart`; the host retains
   `safeRemoveNoteType`, undoable database operations, `OpChanges`, Kotlin
   exception wrappers, mutable state/StateFlow, coroutine scheduling, Timber,
@@ -52,7 +52,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   adapted in `lib/src/manage_note_type_delete_plan.dart`; the host retains the
   undoable operation, safe removal, generated result, reportable exception,
   coroutine/state-flow, logging, and Android/UI lifecycle. No direct pinned
-  test covers this method; focused Dart cases are source-derived.
+  test covers this method; focused Dart cases are source-derived. Rename
+  choreography is adapted in `lib/src/manage_note_type_rename_plan.dart`; the
+  host retains `safeRenameNoteType`, undoable execution, generated changes,
+  backend-exception classification, reportable-error construction, coroutine
+  scheduling, logging, and Android/UI lifecycle. No direct pinned test covers
+  rename; focused Dart cases are source-derived.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/InsertFieldDialogViewModel.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/model/FieldName.kt`,

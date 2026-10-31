@@ -399,6 +399,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   in `test/card_viewer_show_question_effects_test.dart`; collection/card access,
   media operations, type-answer filtering, JSON encoding, body-class lookup,
   eval delivery, coroutines, media/lifecycle, and UI remain with the host.
+  `CardViewerViewModel.handlePostRequest()` routing is adapted in
+  `lib/src/card_viewer_post_routing.dart`, with source-derived cases in
+  `test/card_viewer_post_routing_test.dart`; URI parsing/rendering, byte
+  transport, resource lookup, Android/coroutine/API exceptions, and HTTP
+  handling remain with the host.
   `AnkiDroid/src/main/java/com/ichi2/anki/servicelayer/NoteService.kt`
   is Copyright © 2013 Bibek Shrestha <bibekshrestha@gmail.com>, Zaur
   Molotnikov <qutorial@gmail.com>, Nicolas Raoul <nicolas.raoul@gmail.com>, and

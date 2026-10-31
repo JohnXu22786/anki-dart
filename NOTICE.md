@@ -1217,6 +1217,16 @@ supplies the local clock and timezone and retains reminder persistence,
 TimeManager, and Android alarm/notification scheduling. The Dart tests are
 source-derived behavior tests, not a port of the Android test harness.
 
+The `ReviewReminderId`, `ReviewReminderIdAllocation`, and
+`ReviewReminderCardTriggerThreshold` values in
+`lib/src/review_reminder_id.dart` are derived from AnkiDroid's
+`ReviewReminder.kt` and `ReviewReminderTest.kt`, Copyright © 2025 Eric Li
+<ericli3690@gmail.com>, licensed `GPL-3.0-or-later` upstream. The host supplies
+the current next-ID preference and applies the returned increment; preference
+access, persistence, runtime reminder creation, and Android behavior remain
+host-side. The focused Dart cases are source-derived behavior tests, not a port
+of the Android test harness.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReminderTroubleshootingViewModel.kt` is marked `GPL-3.0-or-later` upstream and does not name a separate copyright holder in its source header. Its portable result variants, check values/defaults, summary precedence, and battery optimization result mapping are adapted in `lib/src/reminder_troubleshooting_state.dart`. Android Context and notification APIs, repository-backed checks, ViewModel lifecycle/StateFlow/coroutines, localization, and UI remain host-side. The pinned `ReminderTroubleshootingViewModelTest.kt` is also marked `GPL-3.0-or-later` and is the behavioral reference; the Dart cases add only focused coverage for source cases it does not directly test.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/viewmodel/TtsVoicesViewModel.kt` declares `GPL-3.0-or-later`; its available-voice status precedence and pure filter projection are adapted in `lib/src/tts_voice_filter_projection.dart`. `AnkiDroid/src/main/java/com/ichi2/anki/TtsVoices.kt` supplies the `AndroidTtsVoice.unavailable()` and network-required facts used by the projection; `libanki/src/main/java/com/ichi2/anki/libanki/Tts.kt` supplies the base `TtsVoice` availability contract. Voice enumeration, sorting, Android/platform classes, engine/player, and playback are not copied. `TtsVoices.kt` and `Tts.kt` also identify separately licensed Anki backend code, which this Dart slice does not include. The pinned source has no direct `TtsVoicesViewModel` tests; the focused Dart cases are source-derived.

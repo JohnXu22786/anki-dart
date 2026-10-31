@@ -43,6 +43,7 @@ export 'src/card_template_fragment_get_current_card_template_index.dart';
 export 'src/card_template_fragment_initial_selected_tab.dart';
 export 'src/card_template_fragment_initial_focus.dart';
 export 'src/card_template_fragment_apply_window_insets.dart';
+export 'src/card_template_fragment_request_insets_on_attach.dart';
 export 'src/card_template_fragment_open_browser_appearance.dart';
 export 'src/deck_picker_previous_version.dart';
 export 'src/deck_position.dart';

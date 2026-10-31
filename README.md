@@ -1951,6 +1951,23 @@ The pinned `CardTemplateEditorTest.kt` covers inset-driven keyboard/back paths
 but has no direct assertion for this callback's padding or navigation behavior.
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment request-insets-on-attach callback
+
+`cardTemplateFragmentRequestInsetsOnAttach()` in
+`lib/src/card_template_fragment_request_insets_on_attach.dart` follows
+`binding.root.doOnAttach { ViewCompat.requestApplyInsets(it) }` at
+`CardTemplateEditor.kt:803–804` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves the host root once as
+the registration receiver and passes the inset-request callback to the host's
+attach adapter; the host controls when attach is reported, including
+already-attached behavior. The exact attached view is forwarded once, and
+callback failures propagate unchanged. Android views, attach registration,
+lifecycle, and `ViewCompat` remain host-side. Focused tests in
+`test/card_template_fragment_request_insets_on_attach_test.dart` are
+source-derived. The pinned `CardTemplateEditorTest.kt` exercises
+inset-driven keyboard/back behavior but does not directly assert this attach
+callback. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment bottom-navigation selection
 
 `cardTemplateFragmentBottomNavigationSelection()` in

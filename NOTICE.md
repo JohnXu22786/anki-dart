@@ -35,6 +35,20 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   scenarios but no direct assertion for this callback. Root `COPYING` remains
   byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:803–804`
+  (`CardTemplateFragment.onViewCreated()` attach callback; pinned AnkiDroid
+  2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked
+  `GPL-3.0-or-later`. Its file-level SPDX credits Copyright © 2014 Timothy Rae
+  and © 2018 Mike Hardy; no method-specific authorship is asserted. Its root
+  receiver evaluation and deferred attach callback forwarding are adapted in
+  `lib/src/card_template_fragment_request_insets_on_attach.dart`, with focused
+  source-derived cases in
+  `test/card_template_fragment_request_insets_on_attach_test.dart`. Android
+  views, attach registration, lifecycle, and `ViewCompat` remain host-side. The
+  pinned `CardTemplateEditorTest.kt` exercises inset-driven keyboard/back
+  behavior but has no direct assertion for this attach callback. Root
+  `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:809–821`
   (`CardTemplateFragment.onViewCreated()` initial focus block; pinned AnkiDroid
   2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked

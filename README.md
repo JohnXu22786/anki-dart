@@ -74,6 +74,12 @@ nonempty-string button predicate without trimming, and Idle/Success/Error state
 variants with opaque error payloads. Authentication, persistence, logging,
 localization, lifecycle, and UI remain host-side.
 
+Logged-in logout preserves the host callback order: clear the saved hkey, clear
+the username, clear the current sync URI, then force media resync. Callback
+failures propagate and stop later callbacks without rolling back earlier host
+effects. Preference storage, collection/media access, coroutine scheduling,
+lifecycle, and UI remain host-side.
+
 Card Template Editor state preserves the Initializing, Loaded, and Finished
 states, source defaults, load/error/finish transitions, and Loaded-only updates.
 The host supplies opaque exception data and retains Android lifecycle, StateFlow,

@@ -1430,6 +1430,21 @@ This is an independent project and is not endorsed by or affiliated with the
 AnkiDroid or Anki projects. The names are used only to identify the source and
 compatibility target.
 
+## Card Template Editor current template name
+
+`cardTemplateEditorCurrentTemplateName()` in
+`lib/src/card_template_editor_current_template_name.dart` follows
+`CardTemplateEditor.kt:1354–1361` at AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The helper passes the source
+ordinal to a host name-read callback and returns its exact result. It catches
+only `Exception`, passes that same exception once to the host warning callback,
+and then returns an empty string; `Error`s and warning callback failures
+propagate. The host resolves the ordinal, accesses `CardTemplateNotetype` and
+backend models, and performs `Timber.w` logging. Focused tests in
+`test/card_template_editor_current_template_name_test.dart` are
+source-derived; no direct pinned test was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor new names
 
 `newCardName()` in `lib/src/card_template_editor_new_card_name.dart` follows

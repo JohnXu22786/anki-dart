@@ -1582,3 +1582,16 @@ The Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
   `test/reviewer_show_answer_effects_test.dart`. The host retains deferred and
   coroutine execution, scheduler/deck/config reads, media playback, timer
   operation, StateFlow/lifecycle, and UI.
+
+The host-callback projection in
+`lib/src/card_template_fragment_get_current_card_template_index.dart` and its
+focused cases in
+`test/card_template_fragment_get_current_card_template_index_test.dart` are
+derived from `CardTemplateFragment.getCurrentCardTemplateIndex()` in
+AnkiDroid's `CardTemplateEditor.kt` at lines 1383–1386, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source file is marked
+`GPL-3.0-or-later` and its file-level SPDX header credits Timothy Rae (2014)
+and Mike Hardy (2018); no method-specific authorship is asserted. Android
+Fragment, Bundle, and the key constant remain host-side. The Dart adaptation
+and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` is unchanged.

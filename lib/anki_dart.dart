@@ -35,6 +35,7 @@ export 'src/card_template_fragment_show_rename_dialog.dart';
 export 'src/card_template_fragment_show_reposition_dialog.dart';
 export 'src/card_template_fragment_confirm_add_cards.dart';
 export 'src/card_template_fragment_execute_with_sync_check.dart';
+export 'src/card_template_fragment_get_current_card_template_index.dart';
 export 'src/card_template_fragment_open_browser_appearance.dart';
 export 'src/deck_picker_previous_version.dart';
 export 'src/deck_position.dart';

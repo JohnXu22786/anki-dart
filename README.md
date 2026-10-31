@@ -1918,6 +1918,21 @@ host-side; Dart does not normalize the field values. Focused tests in
 direct pinned test for this getter was found. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment current card-template index
+
+`cardTemplateFragmentGetCurrentCardTemplateIndex()` in
+`lib/src/card_template_fragment_get_current_card_template_index.dart` follows
+`CardTemplateFragment.getCurrentCardTemplateIndex()` at
+`CardTemplateEditor.kt:1383–1386` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host
+`requireArguments()` callback once, passes the exact returned Bundle to the
+host `getInt(CARD_INDEX)` callback once, and returns the exact integer. Android
+Fragment/Bundle and the key constant remain host-side. Callback failures
+propagate unchanged. Focused tests in
+`test/card_template_fragment_get_current_card_template_index_test.dart` are
+source-derived; no direct pinned test for this helper was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment browser appearance result
 
 `applyBrowserAppearanceResult()` in

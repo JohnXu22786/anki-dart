@@ -1261,10 +1261,15 @@ and `ReviewRemindersDatabaseTest.kt`, Copyright © 2026 Eric Li
 upstream. The Dart migration runner and focused tests are Copyright © 2026 John
 Tsui <110079544+JohnXu22786@users.noreply.github.com>, licensed
 `GPL-3.0-or-later`. The host supplies each allocated reminder ID and current
-epoch-millisecond timestamp; serialization, schema registry/database
-migration, preference access, persistence, clock access, and other runtime
-integration remain host-side. The focused Dart cases are source-derived
-behavior tests, not a port of the Android test harness.
+epoch-millisecond timestamp. `ReviewReminderSchemaV1MapCodec` and
+`ReviewReminderSchemaV2MapCodec` in `lib/src/review_reminder_group.dart` encode
+and decode the typed legacy maps with source-compatible decimal keys, value
+IDs, scope JSON, strict fields/types, and V1's omitted false default. The Dart
+codecs and focused cases in `test/review_reminder_schema_codec_test.dart` are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Schema
+registry/database migration, preference access, persistence, clock access, and
+other runtime integration remain host-side. The focused Dart cases are
+source-derived behavior tests, not a port of the Android test harness.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReminderTroubleshootingViewModel.kt` is marked `GPL-3.0-or-later` upstream and does not name a separate copyright holder in its source header. Its portable result variants, check values/defaults, summary precedence, and battery optimization result mapping are adapted in `lib/src/reminder_troubleshooting_state.dart`. Android Context and notification APIs, repository-backed checks, ViewModel lifecycle/StateFlow/coroutines, localization, and UI remain host-side. The pinned `ReminderTroubleshootingViewModelTest.kt` is also marked `GPL-3.0-or-later` and is the behavioral reference; the Dart cases add only focused coverage for source cases it does not directly test.
 

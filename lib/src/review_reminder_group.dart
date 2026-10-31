@@ -18,8 +18,8 @@
  * SPDX-FileCopyrightText: 2026 Eric Li <ericli3690@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from ReviewReminderGroup.kt and ReviewReminder.kt in
- * AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
+ * Source-derived from ReviewReminderGroup.kt, ReviewReminder.kt, and
+ * ReviewReminderSchema.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 import 'dart:convert';
@@ -27,6 +27,7 @@ import 'dart:convert';
 import 'review_reminder.dart';
 import 'review_reminder_id.dart';
 import 'review_reminder_form_state.dart';
+import 'review_reminder_schema_migration.dart';
 
 /// A mutable map wrapper for reminders sharing one host-selected scope.
 ///
@@ -115,6 +116,30 @@ const _globalScopeType =
 const _deckSpecificScopeType =
     'com.ichi2.anki.reviewreminders.ReviewReminderScope.DeckSpecific';
 
+/// Encodes and decodes the V1 reminder map stored for schema migrations.
+///
+/// Map keys are decimal reminder IDs. Each schema value retains its own ID,
+/// matching the source serializer; the migration runner handles re-keying.
+abstract final class ReviewReminderSchemaV1MapCodec {
+  static Map<ReviewReminderId, ReviewReminderSchemaV1> decode(String json) =>
+      _decodeSchemaMap(json, _schemaV1FromJson);
+
+  static String encode(Map<ReviewReminderId, ReviewReminderSchemaV1> schemas) =>
+      _encodeSchemaMap(schemas, _schemaV1ToJson);
+}
+
+/// Encodes and decodes the V2 reminder map stored for schema migrations.
+///
+/// Map keys are decimal reminder IDs. Each schema value retains its own ID,
+/// matching the source serializer; the migration runner handles re-keying.
+abstract final class ReviewReminderSchemaV2MapCodec {
+  static Map<ReviewReminderId, ReviewReminderSchemaV2> decode(String json) =>
+      _decodeSchemaMap(json, _schemaV2FromJson);
+
+  static String encode(Map<ReviewReminderId, ReviewReminderSchemaV2> schemas) =>
+      _encodeSchemaMap(schemas, _schemaV2ToJson);
+}
+
 Map<ReviewReminderId, ReviewReminder> _decodeReminderMap(String json) {
   final decoded = jsonDecode(json) as Map<String, dynamic>;
   return {
@@ -139,13 +164,6 @@ ReviewReminder _reminderFromJson(Map<String, dynamic> json) {
   final time = json['time'] as Map<String, dynamic>;
   _requireJsonKeys(time, const {'hour', 'minute'});
 
-  final scopeJson = json['scope'] as Map<String, dynamic>;
-  final scope = switch (scopeJson['type'] as String) {
-    _globalScopeType => _globalScopeFromJson(scopeJson),
-    _deckSpecificScopeType => _deckSpecificScopeFromJson(scopeJson),
-    _ => throw FormatException('Unknown review reminder scope type'),
-  };
-
   return ReviewReminder.createReviewReminder(
     id: ReviewReminderId(_int32(json['id'])),
     time: ReviewReminderTime(
@@ -155,7 +173,7 @@ ReviewReminder _reminderFromJson(Map<String, dynamic> json) {
     cardTriggerThreshold: ReviewReminderCardTriggerThreshold(
       _int32(json['cardTriggerThreshold']),
     ),
-    scope: scope,
+    scope: _scopeFromJson(json['scope'] as Map<String, dynamic>),
     enabled: json['enabled'] as bool,
     latestNotifTime: _int64(json['latestNotifTime']),
     profileID: json['profileID'] as String,
@@ -177,17 +195,130 @@ Map<String, Object?> _reminderToJson(ReviewReminder reminder) => {
   'id': reminder.id.value,
   'time': {'hour': reminder.time.hour, 'minute': reminder.time.minute},
   'cardTriggerThreshold': reminder.cardTriggerThreshold.threshold,
-  'scope': switch (reminder.scope) {
-    GlobalReminderScope() => {'type': _globalScopeType},
-    DeckSpecificReminderScope(:final deckId) => {
-      'type': _deckSpecificScopeType,
-      'did': deckId,
-    },
-  },
+  'scope': _scopeToJson(reminder.scope),
   'enabled': reminder.enabled,
   'latestNotifTime': reminder.latestNotifTime,
   'profileID': reminder.profileID,
   'onlyNotifyIfNoReviews': reminder.onlyNotifyIfNoReviews,
+};
+
+Map<ReviewReminderId, T> _decodeSchemaMap<T>(
+  String json,
+  T Function(Map<String, dynamic>) decodeValue,
+) {
+  final decoded = jsonDecode(json) as Map<String, dynamic>;
+  return {
+    for (final entry in decoded.entries)
+      ReviewReminderId(int.parse(entry.key)): decodeValue(
+        entry.value as Map<String, dynamic>,
+      ),
+  };
+}
+
+String _encodeSchemaMap<T>(
+  Map<ReviewReminderId, T> schemas,
+  Map<String, Object?> Function(T) encodeValue,
+) => jsonEncode({
+  for (final entry in schemas.entries)
+    entry.key.value.toString(): encodeValue(entry.value),
+});
+
+ReviewReminderSchemaV1 _schemaV1FromJson(Map<String, dynamic> json) {
+  _requireJsonKeys(
+    json,
+    const {
+      'id',
+      'time',
+      'cardTriggerThreshold',
+      'scope',
+      'enabled',
+      'profileID',
+    },
+    optional: const {'onlyNotifyIfNoReviews'},
+  );
+  final time = json['time'] as Map<String, dynamic>;
+  _requireJsonKeys(time, const {'hour', 'minute'});
+
+  return ReviewReminderSchemaV1(
+    id: ReviewReminderId(_int32(json['id'])),
+    time: ReviewReminderTime(
+      hour: _int32(time['hour']),
+      minute: _int32(time['minute']),
+    ),
+    cardTriggerThreshold: ReviewReminderCardTriggerThreshold(
+      _int32(json['cardTriggerThreshold']),
+    ),
+    scope: _scopeFromJson(json['scope'] as Map<String, dynamic>),
+    enabled: json['enabled'] as bool,
+    profileID: json['profileID'] as String,
+    onlyNotifyIfNoReviews: json.containsKey('onlyNotifyIfNoReviews')
+        ? json['onlyNotifyIfNoReviews'] as bool
+        : false,
+  );
+}
+
+ReviewReminderSchemaV2 _schemaV2FromJson(Map<String, dynamic> json) {
+  _requireJsonKeys(json, const {
+    'id',
+    'time',
+    'cardTriggerThreshold',
+    'scope',
+    'enabled',
+    'profileID',
+    'onlyNotifyIfNoReviews',
+  });
+  final time = json['time'] as Map<String, dynamic>;
+  _requireJsonKeys(time, const {'hour', 'minute'});
+
+  return ReviewReminderSchemaV2(
+    id: ReviewReminderId(_int32(json['id'])),
+    time: ReviewReminderTime(
+      hour: _int32(time['hour']),
+      minute: _int32(time['minute']),
+    ),
+    cardTriggerThreshold: ReviewReminderCardTriggerThreshold(
+      _int32(json['cardTriggerThreshold']),
+    ),
+    scope: _scopeFromJson(json['scope'] as Map<String, dynamic>),
+    enabled: json['enabled'] as bool,
+    profileID: json['profileID'] as String,
+    onlyNotifyIfNoReviews: json['onlyNotifyIfNoReviews'] as bool,
+  );
+}
+
+Map<String, Object?> _schemaV1ToJson(ReviewReminderSchemaV1 schema) => {
+  'id': schema.id.value,
+  'time': {'hour': schema.time.hour, 'minute': schema.time.minute},
+  'cardTriggerThreshold': schema.cardTriggerThreshold.threshold,
+  'scope': _scopeToJson(schema.scope),
+  'enabled': schema.enabled,
+  'profileID': schema.profileID,
+  if (schema.onlyNotifyIfNoReviews) 'onlyNotifyIfNoReviews': true,
+};
+
+Map<String, Object?> _schemaV2ToJson(ReviewReminderSchemaV2 schema) => {
+  'id': schema.id.value,
+  'time': {'hour': schema.time.hour, 'minute': schema.time.minute},
+  'cardTriggerThreshold': schema.cardTriggerThreshold.threshold,
+  'scope': _scopeToJson(schema.scope),
+  'enabled': schema.enabled,
+  'profileID': schema.profileID,
+  'onlyNotifyIfNoReviews': schema.onlyNotifyIfNoReviews,
+};
+
+ReviewReminderScope _scopeFromJson(Map<String, dynamic> json) =>
+    switch (json['type'] as String) {
+      _globalScopeType => _globalScopeFromJson(json),
+      _deckSpecificScopeType => _deckSpecificScopeFromJson(json),
+      _ => throw FormatException('Unknown review reminder scope type'),
+    };
+
+Map<String, Object?> _scopeToJson(ReviewReminderScope scope) => switch (scope) {
+  GlobalReminderScope() => {'type': _globalScopeType},
+  DeckSpecificReminderScope(:final deckId) => {
+    'type': _deckSpecificScopeType,
+    'did': deckId,
+  },
 };
 
 int _int32(Object? value) {
@@ -206,8 +337,13 @@ int _int64(Object? value) {
   return number;
 }
 
-void _requireJsonKeys(Map<String, dynamic> json, Set<String> expected) {
-  if (json.length != expected.length || !json.keys.every(expected.contains)) {
+void _requireJsonKeys(
+  Map<String, dynamic> json,
+  Set<String> required, {
+  Set<String> optional = const {},
+}) {
+  final allowed = {...required, ...optional};
+  if (!json.keys.every(allowed.contains) || !required.every(json.containsKey)) {
     throw FormatException('JSON fields do not match the reminder schema');
   }
 }

@@ -1482,6 +1482,28 @@ values, callback order, lazy confirmation, and failure stopping. The pinned
 `CardTemplateEditorTest.kt:213–220` checks the rendered message and continuation.
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment execute with sync check
+
+`cardTemplateFragmentExecuteWithSyncCheck()` in
+`lib/src/card_template_fragment_execute_with_sync_check.dart` follows
+`CardTemplateFragment.executeWithSyncCheck()` at `CardTemplateEditor.kt:1522–1543`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the checked schema
+change, action, discard-state update, and fragmented-only preview reload inside
+one catch boundary. Only Exceptions classified by the host as
+`ConfirmModSchemaException` open the localized full-sync dialog; Dart `Error`
+values propagate. Confirm repeats the schema change unchecked,
+runs the same action, updates discard state, and dismisses dialogs; cancel only
+dismisses. Collection/schema access, exception classification and logging,
+Android dialog/resources, lifecycle, previewer, and UI stay host-side. This
+source is Copyright © 2014 Timothy Rae and © 2018 Mike Hardy under
+`GPL-3.0-or-later`; see [NOTICE.md](NOTICE.md) for credit and
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) for the source mapping. Focused
+cases in `test/card_template_fragment_execute_with_sync_check_test.dart` cover
+the branch order, lazy callbacks, and error boundaries. Pinned
+`CardTemplateEditorTest.testDeleteTemplate` and `testTemplateAdd` exercise full
+sync confirmation integration.
+
 ## Card Template Fragment add card template
 
 `cardTemplateFragmentAddCardTemplate()` in

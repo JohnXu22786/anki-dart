@@ -73,6 +73,7 @@ export 'src/reviewer_set_due_date_directive.dart';
 export 'src/set_due_date_view_model.dart';
 export 'src/study_options_view_model.dart';
 export 'src/media_check_unused_deletion.dart';
+export 'src/media_check_missing_tagging.dart';
 export 'src/custom_study_card_state.dart';
 export 'src/filtered_deck_options.dart';
 export 'src/reviewer_edited_tags_directive.dart';

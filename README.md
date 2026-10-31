@@ -59,6 +59,12 @@ the deleted count is published only after trash succeeds. Media scanning,
 filesystem/backend work, progress execution, and state delivery remain
 host-side.
 
+Media Check missing-media tagging preserves the current result's note IDs (or
+an empty list when absent) and caller tag for the host bulk-add under
+`ADDING_TAGS` and its undoable operation. The host result count is published
+only after success; tag storage, progress execution, and state delivery remain
+host-side.
+
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and

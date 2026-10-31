@@ -20,8 +20,8 @@
  * see ANKIIDROID_UPSTREAM.md.
  */
 
-/// Progress message used while AnkiDroid trashes unused media files.
-enum MediaCheckProgress { deletingMedia }
+/// Progress messages used while AnkiDroid applies Media Check actions.
+enum MediaCheckProgress { addingTags, deletingMedia }
 
 /// A host operation in the unused-media deletion plan.
 sealed class MediaCheckUnusedDeletionEffect {

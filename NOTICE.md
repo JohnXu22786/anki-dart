@@ -70,10 +70,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   undo handling, and Android UI remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/mediacheck/MediaCheckViewModel.kt`
   is Copyright (c) 2025 Ashish Yadav <mailtoashish693@gmail.com> and marked
-  `GPL-3.0-or-later` upstream. Its portable unused-file deletion plan is
-  adapted in `lib/src/media_check_unused_deletion.dart`; it preserves the null
-  fallback, exact list passed to host trash, `DELETING_MEDIA` progress, and
-  count publication only after success. Media scanning, filesystem/backend
+  `GPL-3.0-or-later` upstream. Its portable unused-file deletion and
+  missing-media tagging plans are adapted in
+  `lib/src/media_check_unused_deletion.dart` and
+  `lib/src/media_check_missing_tagging.dart`. They preserve null-result
+  fallbacks, exact host inputs, `DELETING_MEDIA` / `ADDING_TAGS` progress, and
+  count publication only after successful host operations. The tagging plan
+  uses the host bulk-add result count. Media scanning, filesystem/tag backend
   operations, progress execution, StateFlow/coroutines, lifecycle, and UI remain
   host-side. The pinned `MediaCheckViewModelTest.kt` is Copyright (c) 2026
   Ashish Yadav <mailtoashish693@gmail.com> and marked `GPL-3.0-or-later`.

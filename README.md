@@ -1219,7 +1219,11 @@ lifecycle presentation, leech handling, undo/redo availability and execution, Ja
 state and gesture bridges, WebView state collection, Android timeout lookup,
 sync, actual import/export, and other app features remain to be ported. The
 selected-row export-data projection is modeled, but its dialog, file handling,
-and export implementation remain host-side.
+and export implementation remain host-side. The portable Export Ready ViewModel
+slice models the initially empty request, unchanged immutable parameters, and
+clearing to null. It preserves the exact export path and `asText` default;
+SavedStateHandle/StateFlow/Parcelable, Android lifecycle and logging,
+dialog/navigation, file access, and export execution remain host-side.
 The source project has thousands of files, so this repository does not claim
 full feature parity.
 

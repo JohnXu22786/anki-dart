@@ -41,6 +41,31 @@ void main() {
       }
     });
 
+    test('word cloze number uses the first match anywhere in the word', () {
+      final state = InstantEditorClozeState();
+
+      expect(state.getWordClozeNumber('prefix{{c2::two}}suffix'), 2);
+      expect(state.getWordClozeNumber('{{c4::first}}/{{c5::second}}'), 4);
+      expect(state.getWordClozeNumber('no cloze'), isNull);
+    });
+
+    test(
+      'word cloze number follows source digit capture and Int32 parsing',
+      () {
+        final state = InstantEditorClozeState();
+
+        expect(state.getWordClozeNumber('{{c0::zero}}'), 0);
+        expect(state.getWordClozeNumber('{{c2147483647::max}}'), 2147483647);
+        expect(state.getWordClozeNumber('{{c2147483648::overflow}}'), isNull);
+        expect(
+          state.getWordClozeNumber('{{c2147483648::overflow}} {{c1::later}}'),
+          isNull,
+        );
+        expect(state.getWordClozeNumber('{{c+2::plus}}'), isNull);
+        expect(state.getWordClozeNumber('{{c-2::minus}}'), isNull);
+      },
+    );
+
     test('testExtractWordsIncludingClozes', () {
       final state = InstantEditorClozeState();
       state.setClozeFieldText(

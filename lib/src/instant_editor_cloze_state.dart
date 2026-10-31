@@ -106,6 +106,12 @@ final class InstantEditorClozeState {
         '${match.group(4) ?? ''}',
   );
 
+  /// Returns the parsed ordinal from the first cloze match anywhere in [word].
+  int? getWordClozeNumber(String word) {
+    final capturedNumber = _clozePattern.firstMatch(word)?.group(2);
+    return capturedNumber == null ? null : _toIntOrNull(capturedNumber);
+  }
+
   /// Splits nullable field text around full cloze matches like the source.
   ///
   /// Kotlin's default JVM `\\s` is ASCII-only, while `trim()` also removes

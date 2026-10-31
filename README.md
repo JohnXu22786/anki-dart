@@ -42,7 +42,7 @@ outcome-message mapping, search-result message selection, and save-search
 prompt decisions,
 CardTemplate marker-based string composition and
 verbatim card-content QA wrapping, card-template editor unique new-name
-generation, browser-appearance onCreate callback ordering and result extraction,
+generation and exact Markdown projection, browser-appearance onCreate callback ordering and result extraction,
 card-template type-answer modifier parsing, cloze-index derivation and
 cloze-content extraction, question-side type-answer placeholder removal,
 the host-input field/result decision, and answer-side placeholder
@@ -1438,3 +1438,17 @@ first match; callback and iteration failures propagate in source order. The host
 retains `CardTemplates`, its length and names, and localization. Focused tests in
 `test/card_template_editor_new_card_name_test.dart` are source-derived; no
 direct pinned test for `newCardName` was found.
+
+
+## Card Template Editor Markdown
+
+`cardTemplateToMarkdown()` in `lib/src/card_template_editor_markdown.dart`
+tracks the nested `CardTemplate.toMarkdown(context)` at
+`CardTemplateEditor.kt:1644–1661` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the exact section
+order and LF fence layout, interpolating the supplied front, back, style, and
+three localized headings without escaping, trimming, or normalizing them. The
+CSS fence has no final LF. Android `Context`, generated localization, and
+Markdown rendering remain host-side; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Focused exact-output tests are
+source-derived because the pinned source has no direct test for this formatter.

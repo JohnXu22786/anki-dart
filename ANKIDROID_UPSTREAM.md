@@ -454,3 +454,19 @@ registration.
 The Android WebView integration is not ported.
 The Dart answer-timer model exposes pause/resume calls and an observable state
 stream but does not register a platform lifecycle observer or render timer ticks.
+
+## Card template change tracking
+
+The pending card-template change history in `lib/src/card_template_change_tracking.dart`
+is adapted from `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateNotetype.kt`
+at pinned AnkiDroid v2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+It preserves add/delete routing, cancellation and ordinal shifts for unsaved adds,
+database-relative delete ordinals, adjusted add ordinals, and the source helper
+return values. `TemplateChange.ordinal` remains mutable; `type` is immutable as in
+the Kotlin `val`. The adjusted projection clones add entries but aliases delete
+entries, and the pending-add predicate retains the source's `-1` comparison quirk.
+`test/card_template_change_tracking_test.dart` covers the pinned
+`CardTemplateNotetypeTest.kt` add/delete sequence plus source-derived projection,
+aliasing, and helper cases. Android Bundle/Parcelable serialization and restore,
+NotetypeJson mutation, temporary files, logging, CollectionManager and Rust backend
+operations, undoable database writes, and edit UI remain host-side.

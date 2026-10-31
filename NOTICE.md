@@ -1206,3 +1206,15 @@ and notification behavior.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/viewmodel/TtsVoicesViewModel.kt` declares `GPL-3.0-or-later`; its available-voice status precedence and pure filter projection are adapted in `lib/src/tts_voice_filter_projection.dart`. `AnkiDroid/src/main/java/com/ichi2/anki/TtsVoices.kt` supplies the `AndroidTtsVoice.unavailable()` and network-required facts used by the projection; `libanki/src/main/java/com/ichi2/anki/libanki/Tts.kt` supplies the base `TtsVoice` availability contract. Voice enumeration, sorting, Android/platform classes, engine/player, and playback are not copied. `TtsVoices.kt` and `Tts.kt` also identify separately licensed Anki backend code, which this Dart slice does not include. The pinned source has no direct `TtsVoicesViewModel` tests; the focused Dart cases are source-derived.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/audiorecord/CheckPronunciationViewModel.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/audiorecord/CheckPronunciationViewModelTest.kt` both declare `GPL-3.0-or-later` and name no separate copyright holder. The ordered `onPlayOrReplay()` branch/effect projection is adapted in `lib/src/check_pronunciation_playback_plan.dart`; the Dart tests are focused behavior cases, not a copy of the Android test harness. The host retains Flow delivery, coroutine scheduling and Job lifecycle, duration/prepared/completion callbacks, progress sampling, audio player/recorder behavior, file access, and UI.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateNotetype.kt` and its
+  `CardTemplateNotetypeTest.kt` are marked `GPL-3.0-or-later` and identify
+  Copyright (c) 2020 Mike Hardy <mike@mikehardy.net>. The deterministic pending
+  template-change history and ordinal projections are adapted in
+  `lib/src/card_template_change_tracking.dart`; focused source-derived cases are
+  in `test/card_template_change_tracking_test.dart`. The Dart adaptation and new
+  tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Only the
+  add/delete tracking algorithms are represented. Java `Serializable`, Android
+  Bundle/Parcelable behavior, NotetypeJson mutation, temporary-file persistence,
+  logging, CollectionManager/Rust backend operations, undoable database writes,
+  and editor UI remain host-side and are not reimplemented here.

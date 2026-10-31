@@ -221,3 +221,4 @@ export 'src/reminder_troubleshooting_state.dart';
 export 'src/profile_id.dart';
 export 'src/profile_name.dart';
 export 'src/reviewer_full_screen_mode.dart';
+export 'src/reminder_log_projection.dart';

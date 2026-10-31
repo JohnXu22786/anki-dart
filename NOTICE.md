@@ -178,9 +178,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked
   `GPL-3.0-or-later` upstream. Its `DeckStudyData`, buried-count derivation,
   and Loading/Empty/Congrats/StudyOptions projections are adapted in
-  `lib/src/study_options_view_model.dart`. Collection access, flow publication,
-  Android lifecycle, description rendering, media resolution, and UI remain
-  host-side.
+  `lib/src/study_options_view_model.dart`. The `rebuildCram()` and `emptyCram()`
+  action order is adapted in `lib/src/study_options_filtered_deck_actions.dart`:
+  each keeps its diagnostic, selected-deck scheduler call inside one undoable
+  operation, and collection-state refresh afterward. Collection access, flow
+  publication, scheduler execution, Android lifecycle, description rendering,
+  media resolution, and UI remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/customstudy/CustomStudyViewModel.kt`
   is Copyright © 2025 lukstbit and marked `GPL-3.0-or-later` upstream;
   `CustomStudyDialog.kt`, which declares the card-state enum, is Copyright © 2015
@@ -1292,7 +1295,10 @@ They are not a port of the Android test harness.
 
 The Study Options projection tests were written against
 `StudyOptionsViewModelTest.kt` and cover buried-count arithmetic, state precedence,
-and Loading accessors. They are not a port of the Android test harness.
+and Loading accessors. The filtered-deck action tests are source-derived from
+`StudyOptionsViewModel.kt` and cover diagnostic distinction, scheduler/refresh
+ordering, and failure propagation. They are not a port of the Android test
+harness.
 
 The portable review-reminder form state in `lib/src/review_reminder_form_state.dart`
 is derived from AnkiDroid's `AddEditReminderDialogViewModel.kt`, `ReviewReminder.kt`,

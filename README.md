@@ -48,7 +48,9 @@ substitution using host-computed comparison HTML.
 
 The portable Set Due Date validation and parameter decisions are also included.
 Study Options data and state projections preserve buried-count derivation and
-Loading/Empty/Congrats/StudyOptions precedence; collection reads, flow delivery,
+Loading/Empty/Congrats/StudyOptions precedence. Its filtered-deck rebuild and
+empty actions preserve their diagnostics, selected-deck scheduler operation,
+and post-operation collection refresh order; collection reads, flow delivery,
 media resolution, undoable scheduling, and UI remain host-side. Filtered Deck
 Options name and limit validation, second-filter toggling, and build eligibility
 are also projected from the pinned source. Collection access, SavedStateHandle,

@@ -101,6 +101,7 @@ export 'src/reviewer_suspend_note_plan.dart';
 export 'src/reviewer_set_due_date_directive.dart';
 export 'src/set_due_date_view_model.dart';
 export 'src/study_options_view_model.dart';
+export 'src/study_options_filtered_deck_actions.dart';
 export 'src/media_check_unused_deletion.dart';
 export 'src/media_check_missing_tagging.dart';
 export 'src/media_check_result_publication.dart';

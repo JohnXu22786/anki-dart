@@ -1552,6 +1552,26 @@ source-derived. The pinned `CardTemplateEditorTest.testInsertFieldInCorrectFragm
 covers successful insertion into the intended fragment. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment editor view
+
+`cardTemplateFragmentSetCurrentEditorView()` in
+`lib/src/card_template_fragment_set_current_editor_view.dart` follows
+`CardTemplateFragment.setCurrentEditorView(viewId, cardId, editorContent)` at
+`CardTemplateEditor.kt:974–998` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It saves the previous view's
+selection only when the first cursor map exists, updates the current view ID,
+sets the exact content, requests focus only for the current page, then performs
+a fresh cursor-map lookup and restores its offset or zero. The host retains
+Android `EditText`, view IDs, cursor-map storage and access, current-page
+lookup, focus, text, and selection; Dart sequences opaque host callbacks.
+Callback failures propagate immediately. Focused tests in
+`test/card_template_fragment_set_current_editor_view_test.dart` cover callback
+order, both nullable-map paths, focus gating, exact content, unchanged cursor
+offset, and failure propagation. The pinned
+`CardTemplateEditorTest.testContentPreservedAfterChangingEditorView` covers the
+Styling-to-Front content transition; the cursor save/restore cases are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment current template
 
 `cardTemplateFragmentCurrentTemplate()` in

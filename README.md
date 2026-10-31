@@ -1463,6 +1463,22 @@ Pinned `CardTemplateEditorTest` cases cover the single-template guard,
 orphan prevention, and deletion confirmation. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment orphan note dialog
+
+`cardTemplateFragmentShowOrphanNoteDialog()` in
+`lib/src/card_template_fragment_show_orphan_note_dialog.dart` follows
+`CardTemplateFragment.showOrphanNoteDialog()` at `CardTemplateEditor.kt:1057–1066`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It obtains the required host
+context, creates a builder, applies the orphan title and message resources, sets
+the Android OK resource with a null listener, then shows that same builder. The
+host retains Context, AlertDialog.Builder, resource constants and Android UI;
+Dart sequences opaque handles and returns no dialog value. Callback failures
+propagate unchanged and stop later effects. Focused source-derived cases in
+`test/card_template_fragment_show_orphan_note_dialog_test.dart` cover callback
+order, identity, resources, null listener, Unit return and failure stopping.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment delete template
 
 `cardTemplateFragmentDeleteTemplate()` in

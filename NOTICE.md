@@ -7,6 +7,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1057–1066`
+  (`CardTemplateFragment.showOrphanNoteDialog`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked
+  `GPL-3.0-or-later` with SPDX copyright notices for Timothy Rae (2014) and
+  Mike Hardy (2018); no method-specific authorship is asserted. Its ordered
+  context, builder, resource and show callbacks are adapted in
+  `lib/src/card_template_fragment_show_orphan_note_dialog.dart`, with focused
+  source-derived cases in
+  `test/card_template_fragment_show_orphan_note_dialog_test.dart`. Android
+  Context, AlertDialog.Builder, resource constants, lifecycle, and UI remain
+  host-side.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1550–1574` (`CardTemplateFragment.deleteTemplate`) is Copyright © 2014 Timothy Rae and © 2018 Mike Hardy and marked `GPL-3.0-or-later` upstream. Its source-ordered collection filtering, per-match log and temporary-note-type removal, assignment/update, and pager effects are adapted in `lib/src/card_template_fragment_delete_template.dart`; focused source-derived cases are in `test/card_template_fragment_delete_template_test.dart`. The host retains `NotetypeJson`, `CardTemplates`/JSONArray, the null assertion, Timber, ordinal updater, adapter, pager, animation, and UI. Pinned `CardTemplateEditorTest.testDeleteTemplate` and `testDeleteTemplateWithSelectivelyGeneratedCards` cover integration behavior.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:418–430`

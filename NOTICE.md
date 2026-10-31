@@ -224,6 +224,15 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   Dart model is Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Path
   values remain opaque; Android `Path` geometry, erase gestures, StateFlow,
   ViewModel lifecycle, repository behavior, rendering and UI stay host-side.
+  Brush and eraser tool state decisions from that same source, including
+  source-ordered persistence requests, are adapted in
+  `lib/src/whiteboard_tool_state.dart`; `BrushInfo` and default width values
+  are drawn from `WhiteboardRepository.kt`, which also declares
+  `SPDX-License-Identifier: GPL-3.0-or-later` and no separate copyright line.
+  The host supplies loaded preferences and the current eraser display width and
+  performs repository IO; Android SharedPreferences, StateFlow, lifecycle,
+  flows, gestures, rendering and UI remain host-side. The Dart tool-state model
+  is Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`
   and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` declare
   `GPL-3.0-or-later`. Their gesture enums, decoded-input decisions, viewport
@@ -1026,6 +1035,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   Kotlin `Float` equality (Float32 rounding, NaN, and signed zero), and reset
   cases. No direct pinned `WhiteboardViewModel` history test was found; Android
   fragment/repository whiteboard tests provide context only.
+- `test/whiteboard_tool_state_test.dart` adds source-derived brush and eraser
+  selection, effect ordering, preference, invalid-index, Float32 width, and
+  brush add/remove cases. No direct pinned `WhiteboardViewModel` tool-state
+  test was found; Android fragment/repository whiteboard tests provide context
+  only.
 - `test/reviewer_record_voice_toggle_test.dart` adds source-derived enabled and
   disabled state/preference effect-order cases. No direct ReviewerViewModel
   record-voice toggle assertion was found; `AudioRecordViewTest.kt` checks only

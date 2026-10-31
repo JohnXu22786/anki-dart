@@ -64,6 +64,7 @@ export 'src/reviewer_edit_note_destination.dart';
 export 'src/reviewer_add_note_destination.dart';
 export 'src/reviewer_whiteboard_toggle.dart';
 export 'src/whiteboard_drawing_history.dart';
+export 'src/whiteboard_tool_state.dart';
 export 'src/reviewer_record_voice_toggle.dart';
 export 'src/reviewer_flag_toggle_target.dart';
 export 'src/reviewer_flag_command_operation.dart';

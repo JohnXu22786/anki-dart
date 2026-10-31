@@ -100,6 +100,12 @@ The Card Template Editor `EditTab` enum preserves the source values and order
 `FRONT`, `BACK`, `STYLING`. Android view IDs, current-tab resolution,
 rendering/editing, and host integration remain host-side.
 
+Card Template Fragment initial focus preserves the current-page check and
+`EditText.post` timing: it resolves the field once as the post receiver, then
+resolves the current field again inside the deferred focus action. The host
+retains pager state, Android views, posting, and focus behavior; no keyboard is
+shown. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 The Card Template Editor page-selected callback preserves the selected position,
 performs one fragment lookup, and, when present, resolves its binding and edit
 field before requesting focus once. Android fragments, views, bindings, and focus

@@ -35,6 +35,19 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   scenarios but no direct assertion for this callback. Root `COPYING` remains
   byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:809–821`
+  (`CardTemplateFragment.onViewCreated()` initial focus block; pinned AnkiDroid
+  2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked
+  `GPL-3.0-or-later`. Its file-level SPDX credits Copyright © 2014 Timothy Rae
+  and © 2018 Mike Hardy; no method-specific authorship is asserted. The lazy
+  current-page check and deferred edit-field lookup are adapted in
+  `lib/src/card_template_fragment_initial_focus.dart`, with focused source-derived
+  cases in `test/card_template_fragment_initial_focus_test.dart`. The host
+  retains pager state, Android `EditText.post` and `requestFocus`, and keyboard
+  behavior; the source explicitly avoids automatic keyboard display. The pinned
+  `CardTemplateEditorTest.kt` has no direct assertion for this block. Root
+  `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:708–732`
   (bottom-navigation `setOnItemSelectedListener`; pinned AnkiDroid 2.25.3
   commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked

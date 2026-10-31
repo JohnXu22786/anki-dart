@@ -179,6 +179,12 @@ final class ManageNoteTypesState {
   /// Consumes any pending destination.
   ManageNoteTypesState clearDestination() => _copyWith(destination: null);
 
+  /// Clears the current transient message while retaining every other field.
+  ManageNoteTypesState clearMessage() => _copyWith(message: null);
+
+  /// Clears the current error while retaining every other field.
+  ManageNoteTypesState clearError() => _copyWith(error: null);
+
   List<NoteTypeItemState> _withUpdatedItem(
     int id,
     NoteTypeItemState Function(NoteTypeItemState) update,

@@ -181,6 +181,57 @@ void main() {
       );
       expect(requested.clearDestination().destination, isNull);
     });
+
+    test('clearMessage clears only the latest state message', () {
+      final error = StateError('keep error');
+      final destination = ManageNoteTypesFieldsEditor(4, 'latest');
+      final rows = [_row(4, 'latest', selected: true)];
+      final state = ManageNoteTypesState(
+        isLoading: false,
+        noteTypes: rows,
+        searchQuery: 'late',
+        destination: destination,
+        error: error,
+        message: 'dismissed',
+        isInMultiSelectMode: true,
+      );
+
+      final cleared = state.clearMessage();
+
+      expect(cleared.message, isNull);
+      expect(cleared.error, same(error));
+      expect(cleared.isLoading, state.isLoading);
+      expect(cleared.noteTypes, same(rows));
+      expect(cleared.searchQuery, state.searchQuery);
+      expect(cleared.destination, same(destination));
+      expect(cleared.isInMultiSelectMode, state.isInMultiSelectMode);
+    });
+
+    test('clearError clears only the latest state error', () {
+      final error = StateError('dismissed error');
+      final message = Object();
+      final destination = ManageNoteTypesCardEditor(9);
+      final rows = [_row(9, 'current', selected: true)];
+      final state = ManageNoteTypesState(
+        isLoading: false,
+        noteTypes: rows,
+        searchQuery: 'curr',
+        destination: destination,
+        error: error,
+        message: message,
+        isInMultiSelectMode: true,
+      );
+
+      final cleared = state.clearError();
+
+      expect(cleared.error, isNull);
+      expect(cleared.message, same(message));
+      expect(cleared.isLoading, state.isLoading);
+      expect(cleared.noteTypes, same(rows));
+      expect(cleared.searchQuery, state.searchQuery);
+      expect(cleared.destination, same(destination));
+      expect(cleared.isInMultiSelectMode, state.isInMultiSelectMode);
+    });
   });
 }
 

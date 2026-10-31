@@ -62,7 +62,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   collection query/use-count lookup, safe-query `Exception` capture,
   `ReportableException`, `MutableStateFlow`, coroutine scheduling, Timber, and
   Android lifecycle/UI. Its state/error branch and callback-boundary cases are
-  source-derived; no direct pinned refresh test was found.
+  source-derived; no direct pinned refresh test was found. Independent
+  transient message/error clearing is adapted in
+  `ManageNoteTypesState.clearMessage()` and `clearError()`; the host retains
+  MutableStateFlow publication, logging, and lifecycle. Focused cases are
+  source-derived; the pinned ViewModel tests do not cover these clear methods.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/InsertFieldDialogViewModel.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/model/FieldName.kt`,

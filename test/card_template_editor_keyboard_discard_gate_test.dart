@@ -89,7 +89,7 @@ void main() {
     );
 
     test('visibility must be exactly false to report an open keyboard', () {
-      for (final visibility in <bool?>[true, false, null]) {
+      for (final visibility in <bool>[true, false]) {
         final events = <String>[];
         bool? enabled;
         cardTemplateEditorUpdateDiscardChangesCallback(
@@ -130,6 +130,62 @@ void main() {
                 ],
         );
       }
+    });
+
+    test('reads binding from the same fragment after the view guard', () {
+      final fragment = Object();
+      final events = <String>[];
+      cardTemplateEditorUpdateDiscardChangesCallback(
+        callbacks:
+            CardTemplateEditorKeyboardDiscardCallbacks<
+              Object,
+              int,
+              String,
+              String
+            >(
+              currentFragment: () {
+                events.add('fragment');
+                return fragment;
+              },
+              fragmentView: (receivedFragment) {
+                expect(receivedFragment, same(fragment));
+                events.add('view guard');
+                return 7;
+              },
+              fragmentBinding: (receivedFragment) {
+                expect(receivedFragment, same(fragment));
+                events.add('fragment binding');
+                return 'binding';
+              },
+              bindingBottomNavigation: (binding) {
+                expect(binding, 'binding');
+                events.add('navigation');
+                return 'bottom navigation';
+              },
+              bottomNavigationIsVisible: (navigation) {
+                expect(navigation, 'bottom navigation');
+                events.add('visibility');
+                return true;
+              },
+              noteTypeHasChanged: () {
+                events.add('noteTypeHasChanged');
+                return true;
+              },
+              setDiscardCallbackEnabled: (enabled) {
+                events.add('setEnabled:$enabled');
+              },
+            ),
+      );
+
+      expect(events, [
+        'fragment',
+        'view guard',
+        'fragment binding',
+        'navigation',
+        'visibility',
+        'noteTypeHasChanged',
+        'setEnabled:true',
+      ]);
     });
 
     test(
@@ -295,7 +351,7 @@ CardTemplateEditorKeyboardDiscardCallbacks<String, String, String, String>
 _callbacks(
   List<String> events, {
   String? absent,
-  bool? visibility = true,
+  bool visibility = true,
   String? Function()? readFragment,
   required bool Function() noteTypeHasChanged,
   required void Function(bool) setEnabled,
@@ -325,7 +381,7 @@ _callbacks(
       stage('view');
       return absent == 'view' ? null : 'view';
     },
-    viewBinding: (_) {
+    fragmentBinding: (_) {
       stage('binding');
       return absent == 'binding' ? null : 'binding';
     },

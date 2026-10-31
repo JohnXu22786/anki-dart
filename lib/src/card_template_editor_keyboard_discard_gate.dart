@@ -32,7 +32,7 @@ class CardTemplateEditorKeyboardDiscardCallbacks<
   const CardTemplateEditorKeyboardDiscardCallbacks({
     required this.currentFragment,
     required this.fragmentView,
-    required this.viewBinding,
+    required this.fragmentBinding,
     required this.bindingBottomNavigation,
     required this.bottomNavigationIsVisible,
     required this.noteTypeHasChanged,
@@ -41,9 +41,9 @@ class CardTemplateEditorKeyboardDiscardCallbacks<
 
   final Fragment? Function() currentFragment;
   final View? Function(Fragment fragment) fragmentView;
-  final Binding? Function(View view) viewBinding;
+  final Binding? Function(Fragment fragment) fragmentBinding;
   final BottomNavigation? Function(Binding binding) bindingBottomNavigation;
-  final bool? Function(BottomNavigation bottomNavigation)
+  final bool Function(BottomNavigation bottomNavigation)
   bottomNavigationIsVisible;
   final bool Function() noteTypeHasChanged;
   final void Function(bool enabled) setDiscardCallbackEnabled;
@@ -73,9 +73,8 @@ void cardTemplateEditorUpdateDiscardChangesCallback<
   bool? visibility;
   final fragment = callbacks.currentFragment();
   if (fragment != null) {
-    final view = callbacks.fragmentView(fragment);
-    if (view != null) {
-      final binding = callbacks.viewBinding(view);
+    if (callbacks.fragmentView(fragment) != null) {
+      final binding = callbacks.fragmentBinding(fragment);
       if (binding != null) {
         final bottomNavigation = callbacks.bindingBottomNavigation(binding);
         if (bottomNavigation != null) {

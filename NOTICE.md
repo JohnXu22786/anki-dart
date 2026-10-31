@@ -31,6 +31,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `CardTemplateEditorTest` covers successful confirm/save flows in context;
   the focused branch and error cases are source-derived.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:433–441`
+  (`showDiscardChangesDialog`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked
+  `GPL-3.0-or-later` with SPDX copyright notices for Timothy Rae (2014) and
+  Mike Hardy (2018); the method itself states no separate attribution. Its
+  deferred confirmation callback and dialog-result forwarding are adapted in
+  `lib/src/card_template_editor_discard_confirmation.dart`, with focused
+  source-derived cases in
+  `test/card_template_editor_discard_confirmation_test.dart`. Android dialog,
+  Timber, temporary-model/cache access, and Activity lifecycle remain host-side.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1305–1314`
   (`CardTemplateFragment.onModelSaved`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked

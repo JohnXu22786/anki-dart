@@ -1918,6 +1918,21 @@ host-side. Focused source-derived cases are in
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 
+## Card Template Editor discard confirmation
+
+`cardTemplateEditorShowDiscardChangesDialog()` in
+`lib/src/card_template_editor_discard_confirmation.dart` preserves
+`CardTemplateEditor.kt:433–441` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It passes the confirmation callback
+to the host dialog and returns the exact opaque dialog result unchanged. The
+callback defers all effects until confirmation, then logs the source literal,
+clears temporary note type files, clears the editor's temporary note type, and
+finishes in source order. Callback failures propagate unchanged and stop later
+effects. Android dialog behavior, Timber, temporary-model/cache access, and
+Activity lifecycle remain host-side. Focused source-derived cases are in
+`test/card_template_editor_discard_confirmation_test.dart`; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor Markdown
 
 `cardTemplateToMarkdown()` in `lib/src/card_template_editor_markdown.dart`

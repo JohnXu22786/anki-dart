@@ -8,6 +8,24 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## Card Template Editor discard confirmation
+
+`cardTemplateEditorShowDiscardChangesDialog()` in
+`lib/src/card_template_editor_discard_confirmation.dart` adapts
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:433–441`
+(`showDiscardChangesDialog`) from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It passes the source
+confirmation callback to the host dialog and returns its exact opaque result.
+No effect runs before confirmation. The callback logs the exact source literal,
+clears temporary note type files, sets the editor's temporary note type to null,
+then finishes; callback failures propagate unchanged and stop later effects.
+Android dialog behavior, Timber, temporary-model/cache access, and Activity
+lifecycle remain host-side. The source file SPDX header attributes Copyright
+© 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is
+asserted. Focused cases in
+`test/card_template_editor_discard_confirmation_test.dart` are
+source-derived because no direct pinned test covers this callback.
+
 ## CardTemplateFragment.saveNoteType
 
 `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1091–1119`

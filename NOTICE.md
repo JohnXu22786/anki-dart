@@ -48,6 +48,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   host-side. The pinned `TagsDialogViewModelTest.kt` is Copyright © 2025
   Divyansh Kushwaha and marked `GPL-3.0-or-later`.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/tags/ManageTagsViewModel.kt` and
+  `AnkiDroid/src/test/java/com/ichi2/anki/tags/ManageTagsViewModelTest.kt` are
+  marked `GPL-3.0-or-later` upstream and state no separate copyright holder.
+  The source-ordered remove, rename, and clear-unused operation orchestration,
+  event values, query snapshot, and failure behavior are adapted in
+  `lib/src/manage_tags_operation_plan.dart`. The host retains the collection
+  mutations, undoable operation, tag-tree loading, coroutine/job scheduling,
+  StateFlow, event channel, logging, lifecycle, and UI. The pinned tests cover
+  operation effects and affected-note counts; Dart cases for orchestration and
+  failure ordering are source-derived.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsState.kt` and `FilteredDeckOptionsViewModel.kt` are marked `GPL-3.0-or-later` upstream; `FilteredDeckOptionsState.kt` attributes source copyright to lukstbit. The portable option/filter values and name/limit validation, build-eligibility, and second-filter toggle projections are adapted in `lib/src/filtered_deck_options.dart`. Collection access, SavedStateHandle, asynchronous flows, backend query parsing/execution, Android UI, and filtered-deck build mutations remain host-side.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` is

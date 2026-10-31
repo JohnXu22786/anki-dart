@@ -79,6 +79,13 @@ states, source defaults, load/error/finish transitions, and Loaded-only updates.
 The host supplies opaque exception data and retains Android lifecycle, StateFlow,
 template loading and persistence, rendering, and UI.
 
+Manage Tags remove, rename, and clear-unused actions preserve the selected host
+operation, count-bearing event, captured search query, synchronous Loading
+transition, and operation → event → reload order. Cancellation is rethrown and
+other exceptions are published before the flow stops; collection mutations,
+undoable operation, coroutine/job scheduling, StateFlow, events, and UI remain
+host-side.
+
 Media Check trash actions preserve `deleteTrash()` / `restoreTrash()` operation
 selection and run the chosen host operation inside unlabeled progress and the
 collection host. Backend work, coroutine launch, and progress lifecycle remain

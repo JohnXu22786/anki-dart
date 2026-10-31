@@ -67,3 +67,36 @@ BrowserAppearanceResult? browserAppearanceResultFromIntent({
     return null;
   }
 }
+
+/// Restores both host-owned formats to the source default, then saves and exits.
+///
+/// Each callback runs in source order. A failure propagates immediately, so a
+/// failed question setter skips the answer setter and save callback, and a
+/// failed answer setter skips saving.
+void restoreBrowserAppearanceDefaultAndClose({
+  required void Function(String) setQuestionFormat,
+  required void Function(String) setAnswerFormat,
+  required void Function() saveAndExit,
+}) {
+  setQuestionFormat(browserAppearanceUseDefault);
+  setAnswerFormat(browserAppearanceUseDefault);
+  saveAndExit();
+}
+
+/// Reads the host formats, passes their successful result payload, then exits.
+///
+/// The host callback applies Android's result code and the host performs the
+/// actual Activity finish. A callback failure propagates and stops later work.
+void saveBrowserAppearanceAndExit({
+  required String Function() readQuestionFormat,
+  required String Function() readAnswerFormat,
+  required void Function(BrowserAppearanceResult) setResult,
+  required void Function() finish,
+}) {
+  final result = BrowserAppearanceResult(
+    question: readQuestionFormat(),
+    answer: readAnswerFormat(),
+  );
+  setResult(result);
+  finish();
+}

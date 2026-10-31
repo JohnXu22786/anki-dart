@@ -1627,3 +1627,21 @@ later work. Android `Context`, `TruncatedString`, clipboard services, and UI
 remain host-side. Focused source-derived callback tests cover the early returns,
 argument identity, order, and failure boundaries; see
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor deck selection
+
+`cardTemplateEditorDeckSelected()` in
+`lib/src/card_template_editor_deck_selection.dart` follows
+`CardTemplateEditor.onDeckSelected()` at `CardTemplateEditor.kt:443–476` in
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It validates
+the nullable deck before model reads, rejects cloze note types and filtered
+decks before mutation, and preserves the removal/selection logging, JSON
+override, localized message, short snackbar, menu invalidation, and discard
+update order. Callback failures propagate unchanged and stop later work. The
+host retains `SelectableDeck`, note-type/template/JSON models, filtered-deck
+lookup, Timber, localization, snackbar duration, options-menu invalidation, and
+discard UI; Dart only sequences host callbacks. Focused tests in
+`test/card_template_editor_deck_selection_test.dart` are source-derived. The
+pinned `CardTemplateEditorTest.testDeckOverride` covers valid deck then null
+mutation and its `noteTypeHasChanged` integration; it does not directly cover
+these method branches. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).

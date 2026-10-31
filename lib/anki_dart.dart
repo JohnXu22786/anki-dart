@@ -266,6 +266,7 @@ export 'src/card_template_fragment_arguments.dart';
 export 'src/card_template_fragment_current_template.dart';
 export 'src/card_template_fragment_get_note.dart';
 export 'src/card_template_editor_deletion_orphan_check.dart';
+export 'src/card_template_editor_deck_selection.dart';
 export 'src/tts_voice_filter_projection.dart';
 export 'src/tts_text_selection.dart';
 export 'src/instant_editor_cloze_state.dart';

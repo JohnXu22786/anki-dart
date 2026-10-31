@@ -1635,6 +1635,24 @@ browser-appearance result followed by the discard dialog, but does not directly
 test the opener's null-template path or all host callback boundaries. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Editor add template
+
+`cardTemplateFragmentAddNewTemplate()` in
+`lib/src/card_template_fragment_add_new_template.dart` follows
+`CardTemplateFragment.addNewTemplate()` at `CardTemplateEditor.kt:1580–1604`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the selected-template
+lookup, passes the same templates collection to the existing `newCardName()`
+projection, copies question then answer, flips only when the collection has one
+entry, and then assigns the wrapped signed-32-bit next ordinal, appends the same
+template to the collection and temporary note type, and updates the pager in
+source order. Callback failures propagate and stop later effects. Template and
+note-type models, JSON, localization, logging, adapter, pager, Android, and UI
+remain host-side. Focused cases in
+`test/card_template_fragment_add_new_template_test.dart` are source-derived;
+the pinned `CardTemplateEditorTest.testTemplateAdd` covers the integrated add
+flow. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor new names
 
 `newCardName()` in `lib/src/card_template_editor_new_card_name.dart` follows

@@ -1444,6 +1444,25 @@ the boolean reads. Focused tests in
 `test/card_template_editor_dynamic_note_type_test.dart` are source-derived; the
 pinned method is marked `@NeedsTest`. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment add card template
+
+`cardTemplateFragmentAddCardTemplate()` in
+`lib/src/card_template_fragment_add_card_template.dart` follows
+`CardTemplateFragment.addCardTemplate()` at `CardTemplateEditor.kt:1074–1089`
+in AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+Cloze note types emit the exact source warning and return before further reads.
+Other note types preserve the repeated lazy temporary-model and ordinal reads;
+pending-add ordinals confirm with zero affected cards and skip the collection
+query, while ordinary ordinals forward the exact host template-use count. The
+host retains models, `!!` assertions, Timber, collection access, the pending-add
+predicate, count query, and confirmation UI; Dart only sequences callbacks and
+propagates failures. Focused cases in
+`test/card_template_fragment_add_card_template_test.dart` cover the callback
+branches, order, identities, and failure stopping. Pinned
+`CardTemplateEditorTest.testTemplateAdd` covers the resulting template count and
+preview, while its helper asserts the confirmation quantity. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor current template name
 
 `cardTemplateEditorCurrentTemplateName()` in

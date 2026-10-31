@@ -2075,6 +2075,22 @@ source-derived cases are in
 `test/card_template_editor_action_bar_back_test.dart`; see
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Editor Back dispatcher
+
+`cardTemplateEditorBackDispatcherPressed()` in
+`lib/src/card_template_editor_back_dispatcher.dart` follows the anonymous
+`OnBackPressedCallback.handleOnBackPressed()` at
+`CardTemplateEditor.kt:180–182` from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes the host discard-dialog
+callback once, without checking keyboard or dirty state, and propagates callback
+failures unchanged. Android dispatcher, callback lifecycle, and dialog remain
+host-side. Focused source-derived cases are in
+`test/card_template_editor_back_dispatcher_test.dart`; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+The source file is `GPL-3.0-or-later` and its file-level SPDX header credits
+Timothy Rae (2014) and Mike Hardy (2018); no method-specific authorship is
+asserted.
+
 ## Card Template Editor Markdown
 
 `cardTemplateToMarkdown()` in `lib/src/card_template_editor_markdown.dart`

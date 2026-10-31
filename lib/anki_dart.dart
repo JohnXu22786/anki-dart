@@ -274,6 +274,7 @@ export 'src/card_template_editor_ctrl_shortcut.dart';
 export 'src/card_template_editor_keyboard_discard_gate.dart';
 export 'src/card_template_editor_discard_confirmation.dart';
 export 'src/card_template_editor_action_bar_back.dart';
+export 'src/card_template_editor_back_dispatcher.dart';
 export 'src/card_template_editor_note_type_changed.dart';
 export 'src/card_template_editor_flip_qa.dart';
 export 'src/card_template_editor_markdown.dart';

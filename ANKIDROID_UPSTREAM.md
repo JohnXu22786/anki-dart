@@ -8,6 +8,23 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## CardTemplateEditor Back dispatcher
+
+`cardTemplateEditorBackDispatcherPressed()` in
+`lib/src/card_template_editor_back_dispatcher.dart` adapts the anonymous
+`OnBackPressedCallback.handleOnBackPressed()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:180–182` from
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes the host discard-dialog
+callback exactly once and propagates callback failures unchanged. The separate
+dispatcher enabled state and keyboard-dependent update remain in their existing
+projections; Android dispatcher, callback lifecycle, and dialog remain host-side.
+Focused source-derived cases are in
+`test/card_template_editor_back_dispatcher_test.dart`; no direct pinned test
+for this callback was found. The source file is marked `GPL-3.0-or-later` and
+its file-level SPDX header credits Timothy Rae (2014) and Mike Hardy (2018); no
+method-specific authorship is asserted. Root `COPYING` remains byte-identical.
+
 ## Card Template Editor discard confirmation
 
 `cardTemplateEditorShowDiscardChangesDialog()` in
@@ -152,6 +169,7 @@ undo, StateFlow, RecyclerView/lifecycle, and user messages remain host-side.
 
 | AnkiDroid 2.25.3 source | Dart port | Covered behavior |
 | --- | --- | --- |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:180–182` (`OnBackPressedCallback.handleOnBackPressed`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateEditorBackDispatcherPressed()` in `lib/src/card_template_editor_back_dispatcher.dart`; focused cases in `test/card_template_editor_back_dispatcher_test.dart` | Invokes the host discard-dialog callback exactly once and propagates its failure unchanged. The separate dispatcher enabled state and keyboard gate remain in their existing projections; Android dispatcher, callback lifecycle, and dialog remain host-side. The pinned source file is `GPL-3.0-or-later` and its file-level SPDX credits Timothy Rae (2014) and Mike Hardy (2018); no method-specific author is asserted. Root `COPYING` is unchanged. No direct pinned test for this callback was found; the focused Dart case is source-derived. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:361–404` (`CardTemplateEditor.onCollectionLoaded`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateEditorOnCollectionLoadedCallbacks` and `cardTemplateEditorOnCollectionLoaded()` in `lib/src/card_template_editor_on_collection_loaded.dart`; focused cases in `test/card_template_editor_on_collection_loaded_test.dart` | Preserves superclass callback and notetype-cache clear order; only when the temporary note type is absent, looks up by the original ID, delegates the source assertion and deep clone to the host, then assigns the clone. It then assigns current field names, creates/assigns the adapter, sets offscreen limit 7, creates the mediator with a deferred callback that reads the current temporary note type/template/name, and attaches it. Optional ActionBar title then current-note-type subtitle precede the exact success and starting-tab log calls. Only ordinals other than `-1` read the pager/animation setting and set its current page; discard-change callback update is last. Host failures propagate and stop later operations. Collection/models, cloning/mutation, Android pager/adapter/mediator/ActionBar/resources, logging, and Activity lifecycle remain host-side. The source marks the method `@NeedsTest`; no direct pinned test covers it, so Dart cases are source-derived. Source-file SPDX credits Copyright © 2014 Timothy Rae and © 2018 Mike Hardy; no method-level authorship is asserted. Root `COPYING` remains byte-identical. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/NoteFieldsCheckResult.kt` (`checkNoteFieldsResponse` decision branches; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `NoteFieldsCheckStatus`, `NoteFieldsCheckMessages`, and `projectNoteFieldsCheckResult()` in `lib/src/note_fields_check_result.dart`; source-derived cases in `test/note_fields_check_result_test.dart` | Maps NORMAL and DUPLICATE to success; EMPTY to the host-supplied Image Occlusion or ordinary first-field message; each cloze validation status to its exact host-localized message; and UNRECOGNIZED to failure with a null message. The host performs note/collection/backend validation, maps generated response states to semantic statuses, supplies Image Occlusion status and localization, and displays the result. Note, collection, generated protocol types, localization, validation, and Android remain host-side. The source declares `GPL-3.0-or-later` and Copyright (c) 2024 Ashish Yadav; no direct pinned focused test was found, so Dart cases are source-derived. No generated protocol code is copied. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReminderLogTree.kt`, `common/src/main/java/com/ichi2/anki/common/utils/ext/ByteArray.kt`, and `common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reminderLogPrefix`, line/header/level projection, and byte newline/trim projection in `lib/src/reminder_log_projection.dart`; focused cases in `test/reminder_log_projection_test.dart` | Preserves the exact anchored `[Reminders]` / numeric-ID header with optional single space, INFO-and-above predicate, source level chars, missing-ID marker, header stripping, LF escaping, max line length handoff, and byte-array trim behavior including equal trigger, negative index clamp, and no-newline discard. Pinned references are `ReminderLogTreeTest.kt` and `ByteArrayTest.kt`; the Dart tests include focused source-derived edge cases. The host supplies formatted timestamps and grapheme-aware ellipsizing and retains Timber routing, Android logging, coroutine scheduling, file IO, atomic rename, and error handling. |

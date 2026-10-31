@@ -47,22 +47,28 @@ void main() {
       expect(callbackCalled, isFalse);
     });
 
-    test('exact i18nResources name forwards the same bytes object', () async {
-      final bytes = <int>[0, 1, 127, 255];
-      List<int>? forwardedBytes;
+    test(
+      'exact i18nResources name forwards bytes and returns host response',
+      () async {
+        final bytes = <int>[0, 1, 127, 255];
+        final response = Object();
+        List<int>? forwardedBytes;
 
-      await routeCardViewerPostRequest(
-        backendMethodName: 'i18nResources',
-        uri: 'unused URI rendering',
-        bytes: bytes,
-        i18nResourcesRaw: (value) {
-          forwardedBytes = value;
-        },
-      );
+        final actualResponse = await routeCardViewerPostRequest<Object>(
+          backendMethodName: 'i18nResources',
+          uri: 'unused URI rendering',
+          bytes: bytes,
+          i18nResourcesRaw: (value) {
+            forwardedBytes = value;
+            return response;
+          },
+        );
 
-      expect(forwardedBytes, same(bytes));
-      expect(forwardedBytes, [0, 1, 127, 255]);
-    });
+        expect(forwardedBytes, same(bytes));
+        expect(forwardedBytes, [0, 1, 127, 255]);
+        expect(actualResponse, same(response));
+      },
+    );
 
     test(
       'similar, case-different, and unrecognized names use Anki error',

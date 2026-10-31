@@ -28,19 +28,19 @@ import 'dart:async';
 /// received bytes. It also owns URI parsing, transport, resource lookup, and
 /// HTTP handling. Only the exact `i18nResources` method is delegated; errors
 /// retain the source branch and use the host-supplied URI rendering verbatim.
-Future<void> routeCardViewerPostRequest({
+/// The host callback's response is returned unchanged.
+Future<Response> routeCardViewerPostRequest<Response>({
   required String? backendMethodName,
   required String uri,
   required List<int> bytes,
-  required FutureOr<void> Function(List<int> bytes) i18nResourcesRaw,
+  required FutureOr<Response> Function(List<int> bytes) i18nResourcesRaw,
 }) async {
   if (backendMethodName == null) {
     throw ArgumentError('Unhandled POST request: $uri');
   }
 
   if (backendMethodName == 'i18nResources') {
-    await i18nResourcesRaw(bytes);
-    return;
+    return await i18nResourcesRaw(bytes);
   }
 
   throw ArgumentError('Unhandled Anki request: $uri');

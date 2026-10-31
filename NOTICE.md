@@ -1236,6 +1236,16 @@ preference access, serialization, Parcelable, persistence, collection access,
 and notification scheduling. The focused Dart cases are source-derived behavior
 tests, not a port of the Android test harness.
 
+`ReviewReminderGroup` and `List<ReviewReminderGroup>.mergeAll()` in
+`lib/src/review_reminder_group.dart` are derived from AnkiDroid's
+`ReviewReminderGroup.kt`, Copyright © 2026 Eric Li
+<ericli3690@gmail.com>, licensed `GPL-3.0-or-later` upstream. The map wrapper
+and merge operations are represented in memory; JSON serialization,
+SharedPreferences, schema/database handling, mutexes/coroutines, scheduling, and
+Android UI remain host-side. Value iteration order is not a contract. The
+focused Dart cases are source-derived behavior tests, not a port of an Android
+group test harness.
+
 The schema version values, V1/V2 reminder schemas, and current-schema migration
 projection in `lib/src/review_reminder_schema_migration.dart` are derived from
 AnkiDroid's `ReviewReminderSchema.kt`, `ReviewReminder.kt`, and

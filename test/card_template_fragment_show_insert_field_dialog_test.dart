@@ -23,6 +23,8 @@
  * see ANKIDROID_UPSTREAM.md.
  */
 
+import 'dart:async';
+
 import 'package:anki_dart/anki_dart.dart';
 import 'package:test/test.dart';
 
@@ -30,16 +32,17 @@ void main() {
   group('cardTemplateFragmentShowInsertFieldDialog', () {
     test(
       'null field names return before every later source read or effect',
-      () {
+      () async {
         final harness = _Harness(fieldNames: null);
 
         cardTemplateFragmentShowInsertFieldDialog(callbacks: harness.callbacks);
+        await harness.completion;
 
         expect(harness.events, ['launch', 'field names']);
       },
     );
 
-    test('maps edit tabs and note ID boundaries into metadata', () {
+    test('maps edit tabs and note ID boundaries into metadata', () async {
       for (final (tab, noteId, side, expectedId) in [
         (CardTemplateEditorEditTab.FRONT, 17, SingleCardSide.front, 17),
         (CardTemplateEditorEditTab.BACK, 1, SingleCardSide.back, 1),
@@ -49,6 +52,7 @@ void main() {
         final harness = _Harness(tab: tab, noteId: noteId);
 
         cardTemplateFragmentShowInsertFieldDialog(callbacks: harness.callbacks);
+        await harness.completion;
 
         expect(harness.metadata, (
           side: side,
@@ -75,9 +79,10 @@ void main() {
 
     test(
       'deletions suppress ord reads and otherwise selected ord is read once',
-      () {
+      () async {
         final deleted = _Harness(hasDeletion: true);
         cardTemplateFragmentShowInsertFieldDialog(callbacks: deleted.callbacks);
+        await deleted.completion;
         expect(deleted.ordReads, 0);
         expect(deleted.metadata?.ord, isNull);
 
@@ -85,17 +90,66 @@ void main() {
         cardTemplateFragmentShowInsertFieldDialog(
           callbacks: unchanged.callbacks,
         );
+        await unchanged.completion;
         expect(unchanged.ordReads, 1);
         expect(unchanged.metadata?.ord, 8);
       },
     );
 
+    test('awaits metadata before creating and showing the dialog', () async {
+      final gate = Completer<void>();
+      final harness = _Harness(metadataGate: gate);
+
+      cardTemplateFragmentShowInsertFieldDialog(callbacks: harness.callbacks);
+      expect(harness.events, [
+        'launch',
+        'field names',
+        'edit tab',
+        'note ID',
+        'deletion scan',
+        'selected template ordinal',
+        'template name',
+        'note type name',
+        'metadata query',
+      ]);
+
+      gate.complete();
+      await harness.completion;
+      expect(harness.events, [
+        'launch',
+        'field names',
+        'edit tab',
+        'note ID',
+        'deletion scan',
+        'selected template ordinal',
+        'template name',
+        'note type name',
+        'metadata query',
+        'new dialog',
+        'show dialog',
+      ]);
+    });
+
+    test('metadata future failures stop dialog creation and show', () async {
+      final gate = Completer<void>();
+      final harness = _Harness(metadataGate: gate);
+
+      cardTemplateFragmentShowInsertFieldDialog(callbacks: harness.callbacks);
+      gate.completeError(harness.failure);
+      await expectLater(harness.completion, throwsA(same(harness.failure)));
+
+      expect(harness.events.last, 'metadata query');
+      expect(harness.events, isNot(contains('new dialog')));
+      expect(harness.events, isNot(contains('show dialog')));
+    });
+
     test(
       'passes exact field list, metadata, and request key before showing',
-      () {
+      () async {
         final harness = _Harness();
 
         cardTemplateFragmentShowInsertFieldDialog(callbacks: harness.callbacks);
+        await harness.completion;
 
         expect(harness.dialogInputs?.fieldItems, same(harness.fieldNames));
         expect(harness.dialogInputs?.metadata, same(harness.metadataHandle));
@@ -106,10 +160,9 @@ void main() {
     );
 
     test(
-      'callback failures propagate unchanged and stop subsequent callbacks',
-      () {
+      'async callback failures propagate unchanged and stop later callbacks',
+      () async {
         const stages = [
-          'launch',
           'field names',
           'edit tab',
           'note ID',
@@ -126,17 +179,30 @@ void main() {
           final harness = _Harness(failAt: stages[i]);
           final failure = harness.failure;
 
-          expect(
-            () => cardTemplateFragmentShowInsertFieldDialog(
-              callbacks: harness.callbacks,
-            ),
-            throwsA(same(failure)),
-            reason: stages[i],
+          cardTemplateFragmentShowInsertFieldDialog(
+            callbacks: harness.callbacks,
           );
-          expect(harness.events, stages.take(i + 1), reason: stages[i]);
+          await expectLater(harness.completion, throwsA(same(failure)));
+          expect(harness.events, [
+            'launch',
+            ...stages.take(i + 1),
+          ], reason: stages[i]);
         }
       },
     );
+
+    test('launch failure propagates before scheduling the task', () {
+      final harness = _Harness(failAt: 'launch');
+
+      expect(
+        () => cardTemplateFragmentShowInsertFieldDialog(
+          callbacks: harness.callbacks,
+        ),
+        throwsA(same(harness.failure)),
+      );
+      expect(harness.events, ['launch']);
+      expect(harness.task, isNull);
+    });
   });
 }
 
@@ -147,6 +213,7 @@ final class _Harness {
     this.noteId = 17,
     this.hasDeletion = false,
     this.failAt,
+    this.metadataGate,
   });
 
   final List<String>? fieldNames;
@@ -154,11 +221,15 @@ final class _Harness {
   final int noteId;
   final bool hasDeletion;
   final String? failAt;
+  final Completer<void>? metadataGate;
   final failure = StateError('callback failed');
   final events = <String>[];
   final metadataHandle = Object();
   final dialogHandle = Object();
   int ordReads = 0;
+  Future<void> Function()? task;
+  Future<void>? runningTask;
+  Future<void> get completion => runningTask!;
   ({
     SingleCardSide side,
     int? noteId,
@@ -177,9 +248,10 @@ final class _Harness {
 
   CardTemplateFragmentShowInsertFieldDialogCallbacks<Object, Object>
   get callbacks => CardTemplateFragmentShowInsertFieldDialogCallbacks(
-    launchCatchingTask: (task) {
+    launchCatchingTask: (scheduledTask) {
       hit('launch');
-      task();
+      task = scheduledTask;
+      runningTask = scheduledTask();
     },
     readFieldNames: () {
       hit('field names');
@@ -217,8 +289,9 @@ final class _Harness {
           required ord,
           required templateName,
           required notetypeName,
-        }) {
+        }) async {
           hit('metadata query');
+          await metadataGate?.future;
           metadata = (
             side: side,
             noteId: noteId,

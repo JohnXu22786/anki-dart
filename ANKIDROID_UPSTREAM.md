@@ -639,8 +639,10 @@ retains the outer host launch callback, returns before later reads when field
 names are null, maps FRONT/BACK/other tabs to FRONT/BACK/FRONT, preserves only
 positive note IDs, scans for pending template deletions before lazily reading
 the selected template ordinal, then queries metadata, constructs the dialog with
-the original field-name list and request key, and shows it. Callback failures
-propagate to the same host launch boundary and stop subsequent work. Android
+the original field-name list and request key, and shows it. The host launch
+callback receives an asynchronous task; the metadata query is awaited before
+dialog construction. Callback failures propagate to the same host
+launch boundary and stop subsequent work. Android
 Fragment/dialog/models, template-change scan, metadata/backend query, coroutine
 execution, and UI remain host-side. Focused source-derived cases are in
 `test/card_template_fragment_show_insert_field_dialog_test.dart`; no direct

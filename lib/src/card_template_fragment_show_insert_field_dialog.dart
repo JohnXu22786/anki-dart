@@ -50,7 +50,7 @@ final class CardTemplateFragmentShowInsertFieldDialogCallbacks<
     required this.showDialogFragment,
   });
 
-  final void Function(void Function() task) launchCatchingTask;
+  final void Function(Future<void> Function() task) launchCatchingTask;
   final List<String>? Function() readFieldNames;
   final CardTemplateEditorEditTab Function() readCurrentEditTab;
   final int Function() readNoteId;
@@ -58,7 +58,7 @@ final class CardTemplateFragmentShowInsertFieldDialogCallbacks<
   final int Function() readSelectedTemplateOrd;
   final String Function() readTemplateName;
   final String Function() readNoteTypeName;
-  final TMetadata Function({
+  final Future<TMetadata> Function({
     required SingleCardSide side,
     required int? noteId,
     required int? ord,
@@ -78,9 +78,11 @@ final class CardTemplateFragmentShowInsertFieldDialogCallbacks<
 
 /// Projects `CardTemplateFragment.showInsertFieldDialog` in pinned source order.
 ///
-/// The host's `launchCatchingTask` remains the launch and error boundary. A
-/// null field-name list returns before any later host callback; callback errors
-/// otherwise propagate to that same boundary and stop subsequent effects.
+/// The host's `launchCatchingTask` remains the launch and error boundary and
+/// receives the asynchronous task. A null field-name list returns before any
+/// later host callback; the metadata query is awaited before dialog creation.
+/// Callback errors otherwise propagate to that same boundary and stop later
+/// effects.
 void cardTemplateFragmentShowInsertFieldDialog<TMetadata, TDialog>({
   required CardTemplateFragmentShowInsertFieldDialogCallbacks<
     TMetadata,
@@ -88,7 +90,7 @@ void cardTemplateFragmentShowInsertFieldDialog<TMetadata, TDialog>({
   >
   callbacks,
 }) {
-  callbacks.launchCatchingTask(() {
+  callbacks.launchCatchingTask(() async {
     final fieldNames = callbacks.readFieldNames();
     if (fieldNames == null) return;
 
@@ -107,7 +109,7 @@ void cardTemplateFragmentShowInsertFieldDialog<TMetadata, TDialog>({
 
     final templateName = callbacks.readTemplateName();
     final noteTypeName = callbacks.readNoteTypeName();
-    final metadata = callbacks.queryMetadata(
+    final metadata = await callbacks.queryMetadata(
       side: side,
       noteId: noteId,
       ord: ord,

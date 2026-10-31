@@ -1995,6 +1995,24 @@ rendering/editing, and host integration remain host-side. Focused cases in
 `test/card_template_editor_edit_tab_test.dart` are source-derived; the pinned
 source has no direct enum-focused test. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Editor text change preview
+
+`cardTemplateFragmentAfterTextChanged()` in
+`lib/src/card_template_fragment_after_text_changed.dart` follows
+`CardTemplateFragment`'s `TextWatcher.afterTextChanged(arg0)` at
+`CardTemplateEditor.kt:747–764` in AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It ignores the editable argument,
+cancels only a non-null prior preview runnable, routes styling/back/front and
+null or unknown tabs to CSS/answer/question format, updates the temporary model
+at the current card index, then creates and stores the refresh runnable before
+scheduling it at the host-supplied source delay. The discard-changes callback
+runs last. The runnable calls the host preview loader without an ordinal, so its
+default pager lookup remains at runnable execution time. Android `Editable`,
+template/model mutation, Handler/Runnable scheduling, and pager access remain
+host-side. Focused tests are source-derived; the pinned
+`CardTemplateEditorTest.kt` contains no direct `TextWatcher.afterTextChanged`
+test. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor Ctrl shortcuts
 
 `dispatchCardTemplateEditorCtrlShortcut()` in

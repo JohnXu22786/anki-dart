@@ -28,6 +28,7 @@ export 'src/card_template_browser_appearance_result.dart';
 export 'src/card_template_browser_appearance_result_application.dart';
 export 'src/card_template_fragment_add_card_template.dart';
 export 'src/card_template_fragment_add_new_template.dart';
+export 'src/card_template_fragment_after_text_changed.dart';
 export 'src/card_template_fragment_delete_template.dart';
 export 'src/card_template_fragment_show_orphan_note_dialog.dart';
 export 'src/card_template_fragment_show_insert_field_dialog.dart';

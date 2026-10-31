@@ -268,6 +268,7 @@ export 'src/card_template_editor_intent_callbacks.dart';
 export 'src/card_template_fragment_arguments.dart';
 export 'src/card_template_fragment_current_template.dart';
 export 'src/card_template_fragment_get_note.dart';
+export 'src/card_template_fragment_insert_field.dart';
 export 'src/card_template_editor_deletion_orphan_check.dart';
 export 'src/card_template_editor_deck_selection.dart';
 export 'src/tts_voice_filter_projection.dart';

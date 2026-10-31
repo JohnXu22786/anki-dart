@@ -1537,6 +1537,21 @@ callback failures propagate immediately. Focused tests in
 `test/card_template_fragment_get_note_test.dart` are source-derived; no direct
 pinned test for this method was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment field insertion
+
+`cardTemplateFragmentInsertField()` in
+`lib/src/card_template_fragment_insert_field.dart` follows the nested
+`CardTemplateFragment.insertField(fieldToInsert)` at
+`CardTemplateEditor.kt:967–971` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads selection start, then end,
+floors each to zero, normalizes the bounds, and calls the host replacement once
+with the original field and its full UTF-16 range. Android `EditText`/`Editable`,
+text access and mutation remain host-side; callback failures propagate unchanged.
+Focused Dart cases in `test/card_template_fragment_insert_field_test.dart` are
+source-derived. The pinned `CardTemplateEditorTest.testInsertFieldInCorrectFragmentAfterNavigation`
+covers successful insertion into the intended fragment. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment current template
 
 `cardTemplateFragmentCurrentTemplate()` in

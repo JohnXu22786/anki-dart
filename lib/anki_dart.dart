@@ -30,6 +30,7 @@ export 'src/card_template_fragment_add_card_template.dart';
 export 'src/card_template_fragment_add_new_template.dart';
 export 'src/card_template_fragment_delete_template.dart';
 export 'src/card_template_fragment_show_orphan_note_dialog.dart';
+export 'src/card_template_fragment_show_insert_field_dialog.dart';
 export 'src/card_template_fragment_confirm_add_cards.dart';
 export 'src/card_template_fragment_execute_with_sync_check.dart';
 export 'src/card_template_fragment_open_browser_appearance.dart';

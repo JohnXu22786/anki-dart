@@ -627,3 +627,23 @@ comparisons, callback reads/writes, and failure order. The host retains
 `baseId` storage. No pinned AnkiDroid test directly covers these adapter
 methods; Dart host storage starts from `initialTemplatePagerBaseId`
 (`BigInt.zero`) and focused Dart coverage is source-derived.
+
+## CardTemplateFragment.showInsertFieldDialog
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:875–916`
+(`CardTemplateFragment.showInsertFieldDialog`; pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted by
+`cardTemplateFragmentShowInsertFieldDialog()` and its callback type in
+`lib/src/card_template_fragment_show_insert_field_dialog.dart`. The projection
+retains the outer host launch callback, returns before later reads when field
+names are null, maps FRONT/BACK/other tabs to FRONT/BACK/FRONT, preserves only
+positive note IDs, scans for pending template deletions before lazily reading
+the selected template ordinal, then queries metadata, constructs the dialog with
+the original field-name list and request key, and shows it. Callback failures
+propagate to the same host launch boundary and stop subsequent work. Android
+Fragment/dialog/models, template-change scan, metadata/backend query, coroutine
+execution, and UI remain host-side. Focused source-derived cases are in
+`test/card_template_fragment_show_insert_field_dialog_test.dart`; no direct
+pinned test for this callback was found. The source file SPDX-notices Copyright
+© 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is
+asserted. Root `COPYING` remains unchanged.

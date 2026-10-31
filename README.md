@@ -1479,6 +1479,24 @@ propagate unchanged and stop later effects. Focused source-derived cases in
 order, identity, resources, null listener, Unit return and failure stopping.
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment insert-field dialog
+
+`cardTemplateFragmentShowInsertFieldDialog()` in
+`lib/src/card_template_fragment_show_insert_field_dialog.dart` follows
+`CardTemplateFragment.showInsertFieldDialog()` at `CardTemplateEditor.kt:875–916`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the launch callback,
+null-field early return, edit-tab to side mapping, positive note-ID rule,
+delete-sensitive selected-template ordinal read, metadata query, dialog
+construction, and final show callback in source order. Callback failures stop
+later callbacks and propagate to the host launch boundary. Coroutine scheduling,
+template/model access and deletion scan, metadata/backend query, Android dialog,
+and UI remain host-side. Focused source-derived cases in
+`test/card_template_fragment_show_insert_field_dialog_test.dart` cover null
+fields, mapping and note-ID boundaries, ordinal laziness, exact dialog inputs,
+callback order, and failure stopping. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment delete template
 
 `cardTemplateFragmentDeleteTemplate()` in

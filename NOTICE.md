@@ -7,6 +7,19 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:875–916`
+  (`CardTemplateFragment.showInsertFieldDialog`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked
+  `GPL-3.0-or-later` with SPDX copyright notices for Timothy Rae (2014) and
+  Mike Hardy (2018); no method-specific authorship is asserted. Its source-order
+  host callback projection is adapted in
+  `lib/src/card_template_fragment_show_insert_field_dialog.dart`, with focused
+  source-derived cases in
+  `test/card_template_fragment_show_insert_field_dialog_test.dart`. Android
+  Fragment/dialog/models, coroutine execution, metadata/backend query, and UI
+  remain host-side.
+
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1057–1066`
   (`CardTemplateFragment.showOrphanNoteDialog`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked

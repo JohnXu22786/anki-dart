@@ -25,23 +25,26 @@ import 'package:test/test.dart';
 
 void main() {
   group('runBrowserAppendSelectedRowsEffects', () {
-    test('emits the supplied reason before one refresh and one log when rows remain', () {
-      final reason = Object();
-      final effects = <String>[];
+    test(
+      'emits the supplied reason before one refresh and one log when rows remain',
+      () {
+        final reason = Object();
+        final effects = <String>[];
 
-      runBrowserAppendSelectedRowsEffects(
-        hasSelectedRows: true,
-        reason: reason,
-        emitMultiSelectModeChanged: (value) {
-          expect(identical(value, reason), isTrue);
-          effects.add('mode');
-        },
-        refreshSelectedRows: () => effects.add('refresh'),
-        logRefreshedSelectedRows: () => effects.add('log'),
-      );
+        runBrowserAppendSelectedRowsEffects(
+          hasSelectedRows: true,
+          reason: reason,
+          emitMultiSelectModeChanged: (value) {
+            expect(identical(value, reason), isTrue);
+            effects.add('mode');
+          },
+          refreshSelectedRows: () => effects.add('refresh'),
+          logRefreshedSelectedRows: () => effects.add('log'),
+        );
 
-      expect(effects, ['mode', 'refresh', 'log']);
-    });
+        expect(effects, ['mode', 'refresh', 'log']);
+      },
+    );
 
     test('skips the reason when empty but still refreshes and logs', () {
       final effects = <String>[];

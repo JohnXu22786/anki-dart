@@ -1496,6 +1496,26 @@ and Timber logging remain host-side. Focused tests in
 `test/card_template_editor_current_template_test.dart` are source-derived; no
 direct pinned test was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment browser appearance opener
+
+`openCardTemplateBrowserAppearance()` in
+`lib/src/card_template_fragment_open_browser_appearance.dart` follows
+`CardTemplateFragment.openBrowserAppearance()` and
+`launchCardBrowserAppearance(currentTemplate)` at `CardTemplateEditor.kt:1068–1072, 1363–1367`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the current template once;
+a null result skips context, Intent construction, and result launch, while a
+present template passes the exact host context and template through Intent
+construction and ActivityResult launch in source order. Successful paths return
+true, and callback failures propagate. Current-template lookup and its source
+exception boundary, Android models and Intent, context access, and ActivityResult
+launcher remain host-side. Focused tests in
+`test/card_template_fragment_open_browser_appearance_test.dart` are
+source-derived. The pinned `CardTemplateEditorTest` covers the successful
+browser-appearance result followed by the discard dialog, but does not directly
+test the opener's null-template path or all host callback boundaries. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor new names
 
 `newCardName()` in `lib/src/card_template_editor_new_card_name.dart` follows

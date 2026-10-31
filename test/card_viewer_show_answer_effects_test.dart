@@ -84,9 +84,9 @@ void main() {
         'renderOutput:card',
         'replace:escaped answer:rendered media',
         'typeAnswerFilter:answer with play buttons',
+        'encode:filtered answer',
         'currentCard3',
         'bodyClass:card',
-        'encode:filtered answer',
         'eval:_showAnswer("filtered answer", \'card type\');',
       ]);
     });
@@ -104,9 +104,9 @@ void main() {
           'renderOutput',
           'replace',
           'typeAnswerFilter',
+          'encode',
           'currentCard3',
           'bodyClass',
-          'encode',
           'eval',
         ];
 

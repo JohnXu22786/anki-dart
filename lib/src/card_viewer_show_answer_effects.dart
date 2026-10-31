@@ -59,8 +59,8 @@ Future<void> runCardViewerShowAnswer<Card>({
   );
   final answer = await typeAnswerFilter(answerWithPlayButtons);
 
+  final encodedAnswer = await encodeAnswer(answer);
   final bodyCard = await awaitCurrentCard();
   final bodyClass = await bodyClassForCard(bodyCard);
-  final encodedAnswer = await encodeAnswer(answer);
   await emitEval("_showAnswer($encodedAnswer, '$bodyClass');");
 }

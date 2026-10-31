@@ -7,6 +7,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:294–333`
+  (`loadTemplatePreviewerFragmentIfFragmented`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) is from a source file marked
+  `GPL-3.0-or-later` with file-level SPDX copyright notices for Timothy Rae
+  (2014) and Mike Hardy (2018); no method-specific authorship is asserted. Its
+  callback projection is adapted in
+  `lib/src/card_template_fragment_load_previewer_if_fragmented.dart`, with
+  focused source-derived cases in
+  `test/card_template_fragment_load_previewer_if_fragmented_test.dart`. Android
+  context, notetype/note/collection, fragment manager, resources, layout params,
+  coroutine scheduling and task/error handling remain host-side.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:875–916`
   (`CardTemplateFragment.showInsertFieldDialog`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked

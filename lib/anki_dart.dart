@@ -281,6 +281,7 @@ export 'src/card_template_editor_intent_callbacks.dart';
 export 'src/card_template_fragment_arguments.dart';
 export 'src/card_template_fragment_current_template.dart';
 export 'src/card_template_fragment_get_note.dart';
+export 'src/card_template_fragment_load_previewer_if_fragmented.dart';
 export 'src/card_template_fragment_perform_preview.dart';
 export 'src/card_template_fragment_save_note_type.dart';
 export 'src/card_template_fragment_on_model_saved.dart';

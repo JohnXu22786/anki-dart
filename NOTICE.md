@@ -15,6 +15,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ImportViewModel.kt` is Copyright © 2026 Georgios Michelakis <michelakisgio@gmail.com> and marked `GPL-3.0-or-later` upstream. Its add/replace action selection and unchanged path request are adapted in `lib/src/import_action_routing.dart`. SharedFlow delivery, coroutine/Job scheduling, importer/backend work, and Android UI remain host-side. The pinned source has no tests for these methods; focused Dart cases are source-derived.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/shareddeck/SharedDecksDownloadViewModel.kt` is Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked `GPL-3.0-or-later` upstream. Its portable download state and progress transitions are adapted in `lib/src/shared_decks_download_state.dart`; process-default locale formatting is delegated to the host. DownloadManager/network/file work, Android lifecycle, StateFlow, localization, and UI remain host-side. The pinned `SharedDecksDownloadViewModelTest.kt` is also Copyright © 2026 Ashish Yadav and marked `GPL-3.0-or-later`; focused Dart cases are source-derived.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesState.kt`
   and `ManageNoteTypesViewModel.kt` are Copyright © 2025 lukstbit and marked
   `GPL-3.0-or-later` upstream. Their portable row/state values, filter and

@@ -25,6 +25,22 @@ import 'package:test/test.dart';
 
 void main() {
   group('Instant Editor cloze state', () {
+    test('clean cloze words follow source replacement for every match', () {
+      const cases = <(String, String)>[
+        ('{{c1::word}}', 'word'),
+        ('{{c2::another}}', 'another'),
+        ('{{c4::help}}!!', 'help!!'),
+        ('no cloze', 'no cloze'),
+        ('[{{c6::word}}]', '[word]'),
+        ('{{c1::first}} {{c2::second}}', 'first second'),
+      ];
+      final state = InstantEditorClozeState();
+
+      for (final (input, expected) in cases) {
+        expect(state.getCleanClozeWords(input), expected);
+      }
+    });
+
     test(
       'field text replaces ordinals in source order and keeps duplicates',
       () {

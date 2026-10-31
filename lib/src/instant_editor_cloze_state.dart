@@ -86,6 +86,17 @@ final class InstantEditorClozeState {
     }
   }
 
+  /// Removes cloze markers and delimiters from every matching word.
+  ///
+  /// Optional punctuation and cloze content are retained as in the source.
+  String getCleanClozeWords(String word) => word.replaceAllMapped(
+    _clozePattern,
+    (match) =>
+        '${match.group(1) ?? ''}'
+        '${match.group(3) ?? ''}'
+        '${match.group(4) ?? ''}',
+  );
+
   /// Adds a cloze around the first source-regex word, or removes an existing
   /// cloze using the source's match and counter/list update order.
   String buildClozeText(String text) {

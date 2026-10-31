@@ -1476,6 +1476,22 @@ retains `CardTemplates`, its length and names, and localization. Focused tests i
 `test/card_template_editor_new_card_name_test.dart` are source-derived; no
 direct pinned test for `newCardName` was found.
 
+## Card Template Fragment arguments
+
+`createCardTemplateFragment()` in
+`lib/src/card_template_fragment_arguments.dart` follows the nested
+`CardTemplateFragment.newInstance()` at `CardTemplateEditor.kt:1664–1675` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates the fragment before the
+Bundle, writes `CARD_INDEX` as an integer, `EDITOR_NOTE_ID` as a long, and
+`EDITOR_VIEW_ID_KEY` as an integer in source order, assigns that Bundle to the
+same fragment, then returns it. Callback failures propagate and stop later
+steps. The host constructs Android fragments and Bundles, supplies the key
+constants and IDs, and performs the typed Bundle writes and argument assignment.
+Focused tests in `test/card_template_fragment_arguments_test.dart` are
+source-derived; no direct pinned test for this factory was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor deletion orphan check
 
 `cardTemplateEditorDeletionWouldOrphanNote()` in

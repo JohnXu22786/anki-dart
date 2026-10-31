@@ -7,6 +7,20 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:361–404`
+  (`CardTemplateEditor.onCollectionLoaded`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a
+  `GPL-3.0-or-later` source file with file-level SPDX copyright notices for
+  Timothy Rae (2014) and Mike Hardy (2018); no method-specific authorship is
+  asserted. Its ordered host-callback projection is adapted in
+  `lib/src/card_template_editor_on_collection_loaded.dart`, with focused
+  source-derived cases in
+  `test/card_template_editor_on_collection_loaded_test.dart`. The host retains
+  Collection and note-type operations, Android pager/adapter and tab mediator,
+  ActionBar/resources, logging, and Activity lifecycle. The pinned source marks
+  this method `@NeedsTest`; no direct pinned test was found for this method, so
+  the Dart cases are source-derived. Root `COPYING` remains unchanged.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:294–333`
   (`loadTemplatePreviewerFragmentIfFragmented`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) is from a source file marked

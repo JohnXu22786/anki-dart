@@ -1328,6 +1328,15 @@ Android preferences or WebView properties.
 
 Card Browser appearance state transfer uses `saveBrowserAppearanceInstanceState` to read and write question format before answer format, then call superclass saving. `initializeBrowserAppearanceUiFromBundle` restores question then answer values, calls `hasChanges` once, publishes the discard-enabled state, enables the toolbar, then sets the localized title. Nullable saved values pass through unchanged, and callback failures stop later work. The host owns Bundle and EditText access, localization, toolbar and Activity lifecycle, and superclass invocation. Change detection and menu routing preserve their source callback order; only Home calls `hasChanges`, and unknown menu actions return the superclass result unchanged. The discard dialog finishes only after confirmation, and the restore-default dialog restores and closes only after confirmation; cancellation or dismissal performs no callback. Dialog construction and user-choice delivery remain host-side. It assumes changes on `Exception` while allowing Dart `Error` to propagate. Focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+The Card Template Editor collection-loaded callback is also mapped: it keeps
+the source order for temporary notetype initialization, pager and tab setup,
+optional ActionBar updates, exact logs, starting-tab selection, and the final
+discard-change callback. Its tab configuration remains deferred and reads the
+current temporary notetype when invoked. Collection/model operations and
+Android UI remain host-side. The focused Dart tests are source-derived; the
+upstream `@NeedsTest` note remains unresolved because no direct pinned test for
+this method was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Use and verify
 
 This package currently contains library code, not a runnable app. It supports

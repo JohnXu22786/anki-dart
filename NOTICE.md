@@ -278,10 +278,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   reviewer action routing are not included. `toggleAutoAdvance()` state/effect
   ordering is separately projected in
   `lib/src/reviewer_auto_advance_toggle.dart`; settings, localization, media
-  state, timer operations, and StateFlow remain host-side. Leech feedback text
-  composition is projected in `lib/src/reviewer_leech_feedback.dart`; leech
-  detection, card reload/queue lookup, localization, Timber logging and flow
-  delivery remain host-side. Whiteboard toggle state/preference ordering is
+  state, timer operations, and StateFlow remain host-side. The
+  `answerCardInternal()` operation order is projected in
+  `lib/src/reviewer_answer_card_effect_plan.dart`; mutation/queue/card Flows,
+  scheduler computation, collection access, undoable persistence, leech
+  detection, card reload/queue lookup, localization, feedback delivery,
+  logging and lifecycle remain host-side. The source's negative-queue-code
+  suspension decision is projected in that helper. Leech feedback text
+  composition is projected in `lib/src/reviewer_leech_feedback.dart`;
+  localization and flow delivery remain host-side. Whiteboard toggle
+  state/preference ordering is
   projected in `lib/src/reviewer_whiteboard_toggle.dart`; StateFlow mutation,
   repository access/write, action dispatch and UI remain host-side.
   Record-voice toggle state/preference ordering is projected in
@@ -1105,6 +1111,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 - `test/reviewer_leech_feedback_test.dart` adds source-derived base/suspended
   message composition, separator, whitespace and empty-string cases. No direct
   pinned test for `onLeech()` or its message resources was found.
+- `test/reviewer_answer_card_effect_plan_test.dart` adds source-derived cases
+  for the null-queue early return and the answer persistence, feedback, saved
+  card, conditional leech handling, negative queue-code suspension check and
+  refresh order. The pinned
+  `ReviewerViewModelTest.kt` directly covers scheduler mutation waiting and
+  process-death restoration, not this complete effect sequence.
 - `test/reviewer_whiteboard_toggle_test.dart` adds source-derived enabled and
   disabled state/preference effect-order cases. Pinned UI tests enable the
   whiteboard but do not directly assert ReviewerViewModel state/preference

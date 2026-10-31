@@ -673,3 +673,25 @@ source-derived cases are in
 the method `@NeedsTest`; no direct pinned rename-dialog test was found. The
 source file SPDX-notices Copyright © 2014 Timothy Rae and © 2018 Mike Hardy;
 no method-specific authorship is asserted. Root `COPYING` remains unchanged.
+
+## CardTemplateFragment.showRepositionDialog
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:955–965`
+(`CardTemplateFragment.showRepositionDialog`; pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted by
+`cardTemplateFragmentShowRepositionDialog()` and its callback type in
+`lib/src/card_template_fragment_show_reposition_dialog.dart`. It requires the
+host Context, resolves/asserts the pager adapter, reads that adapter's `itemCount`,
+and registers the host reposition dialog with the same Context and count. The
+confirmation callback is deferred; it reads the current editor ordinal once,
+warns with `moving card template %d to %d` using the ordinal first and requested
+position second, then throws Dart `UnimplementedError` with the exact source TODO
+message `CardTemplateNotetype is a complex class and requires significant testing`.
+This intentionally preserves the source TODO and does not implement
+repositioning. Dialog construction's result is ignored and the method returns
+Unit; callback failures propagate and stop later effects. Android Context,
+dialog construction, pager adapter, lifecycle, and Timber remain host-side.
+Focused source-derived cases are in
+`test/card_template_fragment_show_reposition_dialog_test.dart`. The source file
+SPDX-notices Copyright © 2014 Timothy Rae and © 2018 Mike Hardy; no
+method-specific authorship is asserted. Root `COPYING` remains unchanged.

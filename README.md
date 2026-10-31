@@ -1518,6 +1518,25 @@ read order and repeated names, name-list ordering, deferred effects, and
 failure stopping. The source marks this method `@NeedsTest`; no direct pinned
 rename-dialog test was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment reposition dialog
+
+`cardTemplateFragmentShowRepositionDialog()` in
+`lib/src/card_template_fragment_show_reposition_dialog.dart` follows
+`CardTemplateFragment.showRepositionDialog()` at `CardTemplateEditor.kt:955–965`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It requires Context, resolves and
+asserts the pager adapter, reads its item count, then registers the host dialog
+with that Context and count. Confirmation remains deferred; it reads the current
+ordinal once, emits `moving card template %d to %d` with ordinal then requested
+position, and throws `UnimplementedError` with the source TODO message
+`CardTemplateNotetype is a complex class and requires significant testing`.
+The TODO is preserved as current source behavior; no repositioning is performed.
+The method returns Unit and callback failures propagate in order. Android
+Context, dialog, adapter, lifecycle, and Timber remain host-side. Focused cases
+in `test/card_template_fragment_show_reposition_dialog_test.dart` cover setup
+order/opaque handles, deferred confirmation, warning arguments, exact TODO
+failure, and failure stopping. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment delete template
 
 `cardTemplateFragmentDeleteTemplate()` in

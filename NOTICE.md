@@ -31,6 +31,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   models/templates/JSON, `CardTypeName`, Context/dialog and UI, Timber,
   adapter/pager, previewer, and Activity behavior remain host-side.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:955–965`
+  (`CardTemplateFragment.showRepositionDialog`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked
+  `GPL-3.0-or-later` with SPDX copyright notices for Timothy Rae (2014) and
+  Mike Hardy (2018); no method-specific authorship is asserted. Its ordered
+  dialog setup and deferred warning/TODO callback are adapted in
+  `lib/src/card_template_fragment_show_reposition_dialog.dart`, with focused
+  source-derived cases in
+  `test/card_template_fragment_show_reposition_dialog_test.dart`. Android
+  Context, dialog, pager adapter, lifecycle, and Timber remain host-side.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1057–1066`
   (`CardTemplateFragment.showOrphanNoteDialog`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked

@@ -270,6 +270,7 @@ export 'src/card_template_editor_current_template_name.dart';
 export 'src/card_template_editor_edit_tab.dart';
 export 'src/card_template_editor_page_selected_focus.dart';
 export 'src/card_template_editor_template_fragment.dart';
+export 'src/card_template_editor_create_fragment.dart';
 export 'src/card_template_editor_ctrl_shortcut.dart';
 export 'src/card_template_editor_keyboard_discard_gate.dart';
 export 'src/card_template_editor_discard_confirmation.dart';

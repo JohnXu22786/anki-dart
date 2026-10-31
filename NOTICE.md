@@ -31,6 +31,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   adapter, FragmentManager, and Fragment remain host-side. Root `COPYING`
   remains unchanged.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:566–569`
+  (`TemplatePagerAdapter.createFragment`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a `GPL-3.0-or-later`
+  source file with file-level SPDX copyright notices for Timothy Rae (2014) and
+  Mike Hardy (2018); no method-specific authorship is asserted. Its one-lookup,
+  null-fallback, host-factory projection is adapted in
+  `lib/src/card_template_editor_create_fragment.dart`, with focused
+  source-derived cases in
+  `test/card_template_editor_create_fragment_test.dart`. Android map/view IDs,
+  note ID, Fragment, and Bundle construction remain host-side. Root `COPYING`
+  remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:361–404`
   (`CardTemplateEditor.onCollectionLoaded`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a

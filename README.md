@@ -2222,3 +2222,21 @@ source-derived tests are in
 The adapted source is GPL-3.0-or-later; file-level copyright attribution and
 source pin are recorded in [NOTICE.md](NOTICE.md) and
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.
+
+## TemplatePagerAdapter fragment creation
+
+`cardTemplateEditorCreateFragment()` in
+`lib/src/card_template_editor_create_fragment.dart` maps
+`TemplatePagerAdapter.createFragment(position)` at
+`CardTemplateEditor.kt:566–569` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It performs one host map lookup at
+the original position, uses the host-supplied FRONT editor view ID only when
+the mapped value is null, and calls the host fragment factory once with the
+original position, note ID, and selected view ID. The exact factory result is
+returned, and callback failures propagate in source order. Android map/view
+IDs, note ID, Fragment and Bundle construction remain host-side. Focused
+source-derived tests are in
+[`test/card_template_editor_create_fragment_test.dart`](test/card_template_editor_create_fragment_test.dart).
+The adapted source is GPL-3.0-or-later; file-level copyright attribution and
+source pin are recorded in [NOTICE.md](NOTICE.md) and
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.

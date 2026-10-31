@@ -762,6 +762,24 @@ host-side. Focused source-derived cases are in
 credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship
 is asserted. Root `COPYING` remains byte-identical.
 
+## TemplatePagerAdapter.createFragment
+
+`TemplatePagerAdapter.createFragment(position)` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:566–569`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateEditorCreateFragment()` in
+`lib/src/card_template_editor_create_fragment.dart`. It performs one host
+`tabToViewId` lookup with the unchanged position, falls back to the host-supplied
+front editor view ID only when that lookup is null, and calls the host factory
+once with the unchanged position, source note ID, and selected view ID. It
+returns the exact fragment from the host factory; callback failures propagate
+unchanged in source order. Android map/view IDs, note ID, Fragment, and
+Bundle construction remain host-side. Focused source-derived tests are in
+`test/card_template_editor_create_fragment_test.dart`. The source-file SPDX
+credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship
+is asserted. Root `COPYING` remains byte-identical.
+
 ## CardTemplateEditor page-selected focus
 
 `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:261–263`

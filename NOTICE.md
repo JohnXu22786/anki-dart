@@ -1298,3 +1298,12 @@ check time and a separately sampled update timestamp and retains database
 lookup, locking, serialization, editor/persistence execution, logging,
 coroutines, scheduling, alarms, and UI behavior. The focused Dart cases are
 source-derived behavior tests, not a port of the Android test harness.
+
+`StoredReviewReminderGroup` in `lib/src/review_reminder_stored_group.dart` and
+its focused cases in `test/stored_review_reminder_group_test.dart` are derived
+from AnkiDroid's `ReviewRemindersDatabase.kt` and
+`ReviewRemindersDatabaseTest.kt`, Copyright © 2025 Eric Li
+<ericli3690@gmail.com>, licensed `GPL-3.0-or-later`. The host retains storage,
+schema migration, and recovery behavior.
+The Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`.

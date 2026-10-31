@@ -69,6 +69,11 @@ Media Check result publication uses `CHECKING_MEDIA` progress and passes the
 opaque backend result through only after the host check returns successfully.
 The host retains the backend call, progress execution, and result storage.
 
+Media Check trash actions preserve `deleteTrash()` / `restoreTrash()` operation
+selection and run the chosen host operation inside unlabeled progress and the
+collection host. Backend work, coroutine launch, and progress lifecycle remain
+host-side.
+
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and

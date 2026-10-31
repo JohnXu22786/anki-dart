@@ -1454,6 +1454,23 @@ rendering/editing, and host integration remain host-side. Focused cases in
 `test/card_template_editor_edit_tab_test.dart` are source-derived; the pinned
 source has no direct enum-focused test. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Editor note type change check
+
+`cardTemplateNoteTypeHasChanged()` in
+`lib/src/card_template_editor_note_type_changed.dart` preserves
+`CardTemplateEditor.kt:406–414` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Without a temporary note type it
+returns false before invoking the stored-type lookup, preserving the early
+lifecycle guard against opening the collection. Otherwise it invokes the host
+lookup once: an absent stored type means changed, and a present type means the
+negation of the host-projected JSON content-equality result. Callback errors
+propagate unchanged. Collection access, generated note-type models, and
+`JSONObject.contentEquals` remain host-side; JSON is not serialized or
+normalized. Focused cases in
+`test/card_template_editor_note_type_changed_test.dart` derive from the pinned
+`CardTemplateEditorTest.kt` behavior and source logic. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 
 ## Card Template Editor Markdown
 

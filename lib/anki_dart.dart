@@ -253,6 +253,7 @@ export 'src/type_answer_tags.dart';
 export 'src/tags_dialog_initialization.dart';
 export 'src/card_template_editor_state.dart';
 export 'src/card_template_editor_edit_tab.dart';
+export 'src/card_template_editor_note_type_changed.dart';
 export 'src/card_template_editor_flip_qa.dart';
 export 'src/card_template_editor_markdown.dart';
 export 'src/card_template_editor_new_card_name.dart';

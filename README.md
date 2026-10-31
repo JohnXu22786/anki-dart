@@ -26,6 +26,15 @@ pinned source has no direct focused test; the Dart contract cases are
 source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source and license record.
 
+`ViewerRefresh` and `ViewerRefresh.updateState()` preserve the pinned deferred
+CardViewer refresh flags, including the no-change same-instance return and
+accumulation of pending flags. The host extracts `OpChanges` fields and retains
+Activity/View lifecycle, deferred refresh storage and consumption, and
+collection-backed rendering. The pinned source test checks lifecycle consumption
+but does not directly test `updateState()`; focused Dart behavior tests are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 The current port includes selected source-mapped slices: deck-picker behavior,
 review-reminder Add/Edit form state,
 the headless review-session lifecycle, reviewer count/next-time presentation

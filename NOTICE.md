@@ -1866,3 +1866,17 @@ and focused tests are Copyright © 2026 John Tsui and marked
   Android windows, insets and masks, bindings, resource IDs, and view padding
   operations. No direct test for `setupEdgeToEdge()` was found in the pinned
   `CardTemplateEditorTest.kt`. Root `COPYING` remains byte-identical.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerRefresh.kt:1–27`
+  (`ViewerRefresh` and `ViewerRefresh.updateState`, pinned AnkiDroid 2.25.3
+  commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later` and no separate copyright line;
+  no method-specific authorship is asserted. The value and accumulated refresh
+  flag update are adapted in `lib/src/viewer_refresh.dart`, with focused
+  source-derived cases in `test/viewer_refresh_test.dart`. The pinned
+  `AbstractFlashcardViewerCommandTest.kt` constructs a full refresh value and
+  checks lifecycle consumption but does not directly test `updateState`. The
+  host retains generated `OpChanges` field extraction, Activity/View lifecycle,
+  deferred refresh storage and consumption, and collection-backed rendering.
+  The Dart adaptation and focused tests are Copyright © 2026 John Tsui and
+  marked `GPL-3.0-or-later`. Root `COPYING` is unchanged.

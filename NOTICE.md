@@ -166,6 +166,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   count, and review-only current-interval visibility are adapted in
   `lib/src/set_due_date_view_model.dart`. Collection access, scheduler mutation,
   undo handling, and Android UI remain host-side.
+- `AnkiDroid/src/main/java/com/ichi2/anki/scheduling/Fsrs.kt` is marked
+  `GPL-3.0-or-later` upstream and names no separate copyright holder. Its
+  exact FSRS library-version label mapping is adapted in
+  `lib/src/fsrs_version.dart`, with focused cases in
+  `test/fsrs_version_test.dart`. Backend `BuildConfig`, scheduler calculations,
+  and scheduler execution remain host-side.
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditorState.kt` and
   `CardTemplateEditorViewModel.kt` are Copyright © 2025 Snowiee
   <xenonnn4w@gmail.com> and marked `GPL-3.0-or-later` upstream. Their portable

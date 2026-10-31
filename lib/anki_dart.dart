@@ -108,6 +108,7 @@ export 'src/study_options_refresh_data_callbacks.dart';
 export 'src/media_check_unused_deletion.dart';
 export 'src/media_check_missing_tagging.dart';
 export 'src/media_check_result_publication.dart';
+export 'src/note_fields_check_result.dart';
 export 'src/media_check_trash_actions.dart';
 export 'src/empty_cards_search_state.dart';
 export 'src/import_action_routing.dart';

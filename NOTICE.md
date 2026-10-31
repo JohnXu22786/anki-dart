@@ -105,7 +105,19 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `forNumber` resolution and protobuf serialization, collection queries and
   mutations, lifecycle, asynchronous flows, query validation/execution, Android
   UI, and filtered-deck building remain host-side; Dart does not recreate the
-  generated backend or collection behavior.
+  generated backend or collection behavior. The same ViewModel’s
+  `onSearchInBrowser` request/result projection is adapted by
+  `FilteredDeckBrowserSearchRequest`, `FilteredDeckInvalidSearchException`,
+  and its success/failure functions in `lib/src/filtered_deck_options.dart`;
+  `test/filtered_deck_browser_search_result_test.dart` covers exact request
+  search strings, absent second filters, and result field preservation. The
+  pinned method is tested by `FilteredDeckOptionsViewModelTest.kt` cases
+  “filter search in browser produces expected state” and “invalid search in
+  browser produces state with error”. The ViewModel and test headers mark
+  `GPL-3.0-or-later` and attribute copyright to lukstbit (2025); the host
+  supplies `safeBuildSearchString` outcomes and localized messages, while
+  collection access, coroutine/StateFlow delivery, and Android UI remain
+  host-side. `AnkiDroid/src/main/java/com/ichi2/anki/exception/InvalidSearchException.kt` is Copyright (c) 2026 lukstbit and distributed under GPL-3.0-or-later; the Dart wrapper does not implement backend parsing or localization.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` is
   Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked

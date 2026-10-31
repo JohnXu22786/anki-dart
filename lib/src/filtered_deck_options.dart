@@ -15,6 +15,7 @@
  *
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-FileCopyrightText: Copyright (c) 2025 lukstbit <52494258+lukstbit@users.noreply.github.com>
+ * SPDX-FileCopyrightText: Copyright (c) 2026 lukstbit <52494258+lukstbit@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Behavioral reference: FilteredDeckOptionsState.kt and
@@ -198,6 +199,62 @@ enum SearchInputError { empty, notANumber }
 enum FilteredNameInputError { empty, alreadyExists }
 
 enum FilterIndex { first, second }
+
+/// Search input passed to the host's backend query builder for browser preview.
+///
+/// The host runs `safeBuildSearchString` and supplies the resulting success or
+/// failure; this package does not parse or validate search syntax.
+class FilteredDeckBrowserSearchRequest {
+  const FilteredDeckBrowserSearchRequest(this.search);
+
+  final String search;
+}
+
+/// The portable form of AnkiDroid's `InvalidSearchException` wrapper.
+///
+/// [cause] is the host's original backend exception, and [message] is its
+/// localized message as supplied by the host.
+class FilteredDeckInvalidSearchException implements Exception {
+  const FilteredDeckInvalidSearchException({
+    required this.cause,
+    required this.message,
+  });
+
+  final Object cause;
+  final String? message;
+}
+
+/// Projects `FilteredDeckOptionsViewModel.onSearchInBrowser()` input.
+///
+/// A missing second filter makes the source method return without starting
+/// backend work.
+FilteredDeckBrowserSearchRequest? filteredDeckBrowserSearchRequest({
+  required FilteredDeckOptions current,
+  required FilterIndex index,
+}) {
+  final filter = _filterState(current, index);
+  return filter == null
+      ? null
+      : FilteredDeckBrowserSearchRequest(filter.search);
+}
+
+/// Projects a successful host `safeBuildSearchString()` result.
+FilteredDeckOptions onSearchInBrowserSuccess({
+  required FilteredDeckOptions current,
+  required String browserQuery,
+}) => current.copyWith(browserQuery: browserQuery);
+
+/// Projects a failed host `safeBuildSearchString()` result.
+FilteredDeckOptions onSearchInBrowserFailure({
+  required FilteredDeckOptions current,
+  required Object cause,
+  required String? localizedMessage,
+}) => current.copyWith(
+  throwable: FilteredDeckInvalidSearchException(
+    cause: cause,
+    message: localizedMessage,
+  ),
+);
 
 enum RescheduleDelay { again, hard, good }
 

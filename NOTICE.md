@@ -487,6 +487,15 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/browser_row_collection.dart` adapts its ordered, distinct pane-row
   lookup to current adapter positions; pane-state mutation and Android adapter
   notifications remain host-side.
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragmentViewModel.kt`
+  declares `GPL-3.0-or-later` and has no separate copyright holder in its source
+  header. Its `openDeckSelectionDialog()` request, annotated
+  `@NeedsTest("default usage")`, is represented by the payload-free
+  `BrowserOpenDeckSelectionDialogRequest` in
+  `lib/src/browser_open_deck_selection_dialog_request.dart`. No direct unit test
+  for this request was found upstream; the Dart declaration is source-derived.
+  The host retains SharedFlow delivery, coroutine/Job scheduling, dialog
+  construction, Fragment lifecycle, and UI; no Android flow runtime is ported.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`
   declares `GPL-3.0-or-later`. Its `RowSelection` value and selected-row toggle
   state projection are adapted in `lib/src/browser_row_selection.dart`, which

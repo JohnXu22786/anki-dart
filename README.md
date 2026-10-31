@@ -1828,16 +1828,18 @@ pinned test for this method was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPS
 `CardTemplateEditor.kt:294–333` in AnkiDroid 2.25.3 commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves Kotlin default
 ordinal evaluation before the fragmented guard, then schedules the task only
-for fragmented mode. Inside the task it creates the notetype file, selects the
-current fragment note or falls back only on null, builds preview arguments in
-source order, and commits the new fragment synchronously. After commit it reads
-the fragment view and posts layout work only for a non-null view. The posted
-callback updates the Show Answer height to host-converted 80dp, requests layout,
-then reads and casts the web container's margin params before applying the
-reviewer side margin and assigning the same params back. Callback and runtime
-cast failures stop later effects and propagate through the host boundaries.
-Android, collection, models, fragment manager, resources, layout params,
-coroutines, and task/error handling remain host-side. Focused source-derived
+for fragmented mode. Inside the task it creates the notetype file, then awaits
+the host collection Future. Current-fragment lookup and null-only note fallback
+stay inside the synchronous collection block. After that Future resolves, the
+projection reads note properties, builds preview arguments in source order,
+creates the fragment, and commits synchronously. It then reads the fragment
+view and posts layout work only for a non-null view. The posted callback updates
+the Show Answer height to host-converted 80dp, requests layout, then reads and
+casts the web container's margin params before applying the reviewer side
+margin and assigning the same params back. Callback and runtime cast failures
+stop later effects and propagate through the host boundaries. Android,
+collection, models, fragment manager, resources, layout params, coroutine
+scheduling, and task/error handling remain host-side. Focused source-derived
 cases are in
 `test/card_template_fragment_load_previewer_if_fragmented_test.dart`; see
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).

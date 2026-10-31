@@ -17,7 +17,7 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   focused source-derived cases in
   `test/card_template_fragment_load_previewer_if_fragmented_test.dart`. Android
   context, notetype/note/collection, fragment manager, resources, layout params,
-  coroutine scheduling and task/error handling remain host-side.
+  suspending collection/task scheduling and task/error handling remain host-side.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:875–916`
   (`CardTemplateFragment.showInsertFieldDialog`; pinned AnkiDroid 2.25.3 commit

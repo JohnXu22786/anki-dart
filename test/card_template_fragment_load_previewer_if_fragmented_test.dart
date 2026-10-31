@@ -21,6 +21,8 @@
  * see ANKIDROID_UPSTREAM.md.
  */
 
+import 'dart:async';
+
 import 'package:anki_dart/anki_dart.dart';
 import 'package:test/test.dart';
 
@@ -67,53 +69,119 @@ void main() {
       expect(state.calls, ['fragmented']);
     });
 
-    test('schedules task and uses fallback for an absent current fragment', () {
-      final state = _State(absentFragment: true);
-      cardTemplateFragmentLoadPreviewerIfFragmented(
-        callbacks: state.callbacks(),
-      );
-      expect(state.calls, ['pager current item', 'fragmented', 'launch']);
-      expect(state.task, isNotNull);
-      state.task!();
-      expect(state.calls, [
-        'pager current item',
-        'fragmented',
-        'launch',
-        'assert notetype',
-        'activity context',
-        'notetype file',
-        'withCol',
-        'current fragment',
-        'notetype id',
-        'note from notetype',
-        'note id',
-        'note fields',
-        'note tags',
-        'arguments',
-        'create fragment',
-        'commit now',
-        'fragment view',
-        'post callback',
-      ]);
-      expect(state.fallbackInput, (state.collection, state.notetypeId));
-      expect(state.argumentsInput, (
-        state.notetypeFile,
-        state.fallbackNote,
-        state.pagerOrdinal,
-        state.fields,
-        state.tags,
-        true,
-      ));
-    });
+    test(
+      'schedules task and uses fallback for an absent current fragment',
+      () async {
+        final state = _State(absentFragment: true);
+        cardTemplateFragmentLoadPreviewerIfFragmented(
+          callbacks: state.callbacks(),
+        );
+        expect(state.calls, ['pager current item', 'fragmented', 'launch']);
+        expect(state.task, isNotNull);
+        await state.task!();
+        expect(state.calls, [
+          'pager current item',
+          'fragmented',
+          'launch',
+          'assert notetype',
+          'activity context',
+          'notetype file',
+          'withCol',
+          'withCol block',
+          'current fragment',
+          'notetype id',
+          'note from notetype',
+          'note id',
+          'note fields',
+          'note tags',
+          'arguments',
+          'create fragment',
+          'commit now',
+          'fragment view',
+          'post callback',
+        ]);
+        expect(state.fallbackInput, (state.collection, state.notetypeId));
+        expect(state.argumentsInput, (
+          state.notetypeFile,
+          state.fallbackNote,
+          state.pagerOrdinal,
+          state.fields,
+          state.tags,
+          true,
+        ));
+      },
+    );
+
+    test(
+      'awaits deferred collection completion before reading notes or committing',
+      () async {
+        final collectionCompletion = Completer<void>();
+        final state = _State(
+          absentFragment: true,
+          collectionCompletion: collectionCompletion,
+        );
+        cardTemplateFragmentLoadPreviewerIfFragmented(
+          callbacks: state.callbacks(),
+        );
+
+        final task = state.task!();
+        await Future<void>.delayed(Duration.zero);
+        expect(state.calls, [
+          'pager current item',
+          'fragmented',
+          'launch',
+          'assert notetype',
+          'activity context',
+          'notetype file',
+          'withCol',
+        ]);
+        expect(state.argumentsInput, isNull);
+        expect(state.committedContainer, isNull);
+
+        collectionCompletion.complete();
+        await task;
+        expect(
+          state.calls,
+          containsAllInOrder([
+            'withCol',
+            'withCol block',
+            'current fragment',
+            'notetype id',
+            'note from notetype',
+            'arguments',
+            'create fragment',
+            'commit now',
+          ]),
+        );
+      },
+    );
+
+    test(
+      'asynchronous withCol failure stops preview construction and commit',
+      () async {
+        final failure = StateError('collection failed');
+        final state = _State(collectionFailure: failure);
+        cardTemplateFragmentLoadPreviewerIfFragmented(
+          callbacks: state.callbacks(),
+        );
+
+        await expectLater(state.task!(), throwsA(same(failure)));
+        expect(state.calls, contains('withCol'));
+        expect(state.calls, isNot(contains('withCol block')));
+        expect(state.calls, isNot(contains('note id')));
+        expect(state.calls, isNot(contains('arguments')));
+        expect(state.calls, isNot(contains('commit now')));
+      },
+    );
 
     test(
       'uses current fragment note, falling back only when its result is null',
-      () {
+      () async {
         final existing = _State();
         cardTemplateFragmentLoadPreviewerIfFragmented(
           callbacks: existing.callbacks(),
         );
-        existing.task!();
+        await existing.task!();
         expect(existing.calls, contains('get note'));
         expect(existing.calls, isNot(contains('note from notetype')));
         expect(existing.argumentsInput, (
@@ -129,7 +197,7 @@ void main() {
         cardTemplateFragmentLoadPreviewerIfFragmented(
           callbacks: nullResult.callbacks(),
         );
-        nullResult.task!();
+        await nullResult.task!();
         expect(nullResult.calls, contains('note from notetype'));
         expect(nullResult.fallbackInput, (
           nullResult.collection,
@@ -138,44 +206,47 @@ void main() {
       },
     );
 
-    test('preserves preview argument and synchronous commit order', () {
-      final state = _State();
-      cardTemplateFragmentLoadPreviewerIfFragmented(
-        callbacks: state.callbacks(),
-        ordinal: state.explicitOrdinal,
-      );
-      state.task!();
-      expect(
-        state.calls.indexOf('arguments'),
-        lessThan(state.calls.indexOf('create fragment')),
-      );
-      expect(
-        state.calls.indexOf('create fragment'),
-        lessThan(state.calls.indexOf('commit now')),
-      );
-      expect(
-        state.calls.indexOf('commit now'),
-        lessThan(state.calls.indexOf('fragment view')),
-      );
-      expect(state.argumentsInput, (
-        state.notetypeFile,
-        state.noteFromFragment,
-        state.explicitOrdinal,
-        state.fields,
-        state.tags,
-        true,
-      ));
-      expect(state.committedContainer, same(state.fragmentContainerId));
-    });
+    test(
+      'preserves preview argument and synchronous commit order after collection',
+      () async {
+        final state = _State();
+        cardTemplateFragmentLoadPreviewerIfFragmented(
+          callbacks: state.callbacks(),
+          ordinal: state.explicitOrdinal,
+        );
+        await state.task!();
+        expect(
+          state.calls.indexOf('arguments'),
+          lessThan(state.calls.indexOf('create fragment')),
+        );
+        expect(
+          state.calls.indexOf('create fragment'),
+          lessThan(state.calls.indexOf('commit now')),
+        );
+        expect(
+          state.calls.indexOf('commit now'),
+          lessThan(state.calls.indexOf('fragment view')),
+        );
+        expect(state.argumentsInput, (
+          state.notetypeFile,
+          state.noteFromFragment,
+          state.explicitOrdinal,
+          state.fields,
+          state.tags,
+          true,
+        ));
+        expect(state.committedContainer, same(state.fragmentContainerId));
+      },
+    );
 
     test(
       'does not post layout callback when committed fragment has null view',
-      () {
+      () async {
         final state = _State(nullView: true);
         cardTemplateFragmentLoadPreviewerIfFragmented(
           callbacks: state.callbacks(),
         );
-        state.task!();
+        await state.task!();
         expect(state.calls, isNot(contains('post callback')));
         expect(state.calls, isNot(contains('show answer')));
       },
@@ -183,12 +254,12 @@ void main() {
 
     test(
       'defers layout effects and applies button then web margin changes in order',
-      () {
+      () async {
         final state = _State();
         cardTemplateFragmentLoadPreviewerIfFragmented(
           callbacks: state.callbacks(),
         );
-        state.task!();
+        await state.task!();
         expect(state.calls, isNot(contains('show answer')));
         final posted = state.postedCallback!;
         posted();
@@ -216,7 +287,7 @@ void main() {
 
     test(
       'callback failures stop later effects and margin cast failures propagate',
-      () {
+      () async {
         for (final stage in [
           'assert notetype',
           'withCol',
@@ -251,7 +322,7 @@ void main() {
                 stage == 'margin params cast' ||
                 stage == 'reviewer margin resource' ||
                 stage == 'set top margin') {
-              state.task!();
+              await state.task!();
               expect(state.postedCallback, isNotNull);
               expect(
                 state.postedCallback,
@@ -259,7 +330,11 @@ void main() {
                 reason: stage,
               );
             } else {
-              expect(state.task, throwsA(same(failure)), reason: stage);
+              await expectLater(
+                state.task!(),
+                throwsA(same(failure)),
+                reason: stage,
+              );
             }
           } else {
             expect(() {}, returnsNormally);
@@ -271,7 +346,7 @@ void main() {
         cardTemplateFragmentLoadPreviewerIfFragmented(
           callbacks: state.callbacks(),
         );
-        state.task!();
+        await state.task!();
         expect(state.postedCallback, throwsA(same(failure)));
         expect(state.calls, isNot(contains('reviewer margin resource')));
       },
@@ -288,6 +363,8 @@ final class _State {
     this.failAt,
     this.failure,
     this.failCast = false,
+    this.collectionCompletion,
+    this.collectionFailure,
   }) : currentFragmentValue = absentFragment ? null : existingFragment,
        noteFromFragment = nullFragmentNote ? null : existingNote,
        viewValue = nullView ? null : _view;
@@ -303,6 +380,8 @@ final class _State {
   final String? failAt;
   final Object? failure;
   final bool failCast;
+  final Completer<void>? collectionCompletion;
+  final Object? collectionFailure;
   final calls = <String>[];
   final pagerOrdinal = Object();
   final explicitOrdinal = Object();
@@ -323,7 +402,7 @@ final class _State {
   final webContainer = Object();
   final containerLayoutParams = Object();
   final int reviewerMargin = 23;
-  void Function()? task;
+  Future<void> Function()? task;
   void Function()? postedCallback;
   Object? fallbackInput;
   Object? argumentsInput;
@@ -365,7 +444,19 @@ final class _State {
     },
     withCol: <TResult>(action) {
       hit('withCol');
-      return action(collection);
+      if (collectionFailure != null) {
+        return Future<TResult>.error(collectionFailure!);
+      }
+      if (collectionCompletion != null) {
+        return collectionCompletion!.future.then((_) {
+          hit('withCol block');
+          return action(collection);
+        });
+      }
+      return Future<TResult>.sync(() {
+        hit('withCol block');
+        return action(collection);
+      });
     },
     currentFragment: () {
       hit('current fragment');

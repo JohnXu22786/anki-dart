@@ -86,12 +86,12 @@ final class CardTemplateFragmentLoadPreviewerIfFragmentedCallbacks<
   final bool Function() fragmented;
 
   /// The host owns asynchronous task scheduling and error handling.
-  final void Function(void Function() action) launchCatchingTask;
+  final void Function(Future<void> Function() action) launchCatchingTask;
   final TNotetype Function() notetype;
   final TContext Function() activityContext;
   final TNotetypeFile Function(TContext context, TNotetype notetype)
   createNotetypeFile;
-  final TResult Function<TResult>(
+  final Future<TResult> Function<TResult>(
     TResult Function(TCollection collection) action,
   )
   withCol;
@@ -188,13 +188,13 @@ void cardTemplateFragmentLoadPreviewerIfFragmented<
     return;
   }
 
-  callbacks.launchCatchingTask(() {
+  callbacks.launchCatchingTask(() async {
     final notetype = callbacks.notetype();
     final notetypeFile = callbacks.createNotetypeFile(
       callbacks.activityContext(),
       notetype,
     );
-    final note = callbacks.withCol((collection) {
+    final note = await callbacks.withCol((collection) {
       final fragment = callbacks.currentFragment();
       final currentNote = fragment == null
           ? null

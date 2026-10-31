@@ -96,6 +96,12 @@ states, source defaults, load/error/finish transitions, and Loaded-only updates.
 The host supplies opaque exception data and retains Android lifecycle, StateFlow,
 template loading and persistence, rendering, and UI.
 
+The Card Template Editor `flipQA` transformation preserves the source's greedy
+DOTALL answer-separator match, literal `{{FrontSide}}` fallback removal,
+U+0020-and-below edge trimming, and question-before-answer setter order. The
+host supplies the original strings and setters; template mutation, storage, and
+UI remain host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 Manage Tags remove, rename, and clear-unused actions preserve the selected host
 operation, count-bearing event, captured search query, synchronous Loading
 transition, and operation → event → reload order. Cancellation is rethrown and

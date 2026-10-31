@@ -252,6 +252,7 @@ export 'src/type_answer_question.dart';
 export 'src/type_answer_tags.dart';
 export 'src/tags_dialog_initialization.dart';
 export 'src/card_template_editor_state.dart';
+export 'src/card_template_editor_flip_qa.dart';
 export 'src/tts_voice_filter_projection.dart';
 export 'src/tts_text_selection.dart';
 export 'src/instant_editor_cloze_state.dart';

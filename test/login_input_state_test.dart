@@ -70,11 +70,12 @@ void main() {
       expect(LoginStateSuccess.instance, same(LoginStateSuccess.instance));
     });
 
-    test('Error retains the opaque exception object by identity', () {
-      final exception = Object();
+    test('Error retains its Exception payload by identity', () {
+      final exception = FormatException('opaque');
       final state = LoginStateError(exception);
+      final Exception retainedException = state.exception;
 
-      expect(state.exception, same(exception));
+      expect(retainedException, same(exception));
     });
   });
 }

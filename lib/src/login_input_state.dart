@@ -83,5 +83,5 @@ final class LoginStateSuccess extends LoginState {
 final class LoginStateError extends LoginState {
   const LoginStateError(this.exception);
 
-  final Object exception;
+  final Exception exception;
 }

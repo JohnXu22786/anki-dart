@@ -40,6 +40,7 @@ export 'src/logged_in_logout_plan.dart';
 export 'src/switch_profiles_dialog_state.dart';
 export 'src/edit_deck_description_state.dart';
 export 'src/export_ready_request_state.dart';
+export 'src/multimedia_view_model_state.dart';
 export 'src/deck_picker_reload_deck_counts_plan.dart';
 export 'src/deck_picker_empty_card_deletion.dart';
 export 'src/deck_node.dart';

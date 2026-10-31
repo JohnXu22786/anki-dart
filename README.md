@@ -1224,6 +1224,10 @@ slice models the initially empty request, unchanged immutable parameters, and
 clearing to null. It preserves the exact export path and `asText` default;
 SavedStateHandle/StateFlow/Parcelable, Android lifecycle and logging,
 dialog/navigation, file access, and export execution remain host-side.
+The portable Multimedia ViewModel state slice preserves nullable opaque URI and
+path values, the saved values used by restore, and signed media lengths.
+SharedFlow action emission/coroutines, String-to-File conversion, Android
+media/file/URI operations, lifecycle, and UI remain host-side.
 The source project has thousands of files, so this repository does not claim
 full feature parity.
 

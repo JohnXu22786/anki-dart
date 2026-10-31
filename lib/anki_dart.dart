@@ -174,6 +174,7 @@ export 'src/browser_launch_options.dart';
 export 'src/browser_row_collection.dart';
 export 'src/browser_row_interaction.dart';
 export 'src/browser_row_selection.dart';
+export 'src/browser_row_transform.dart';
 export 'src/browser_row_activation.dart';
 export 'src/browser_editor_card_ids.dart';
 export 'src/browser_saved_selection_payload.dart';

@@ -930,7 +930,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   The host retains SharedFlow delivery, coroutine/Job scheduling, dialog
   construction, Fragment lifecycle, and UI; no Android flow runtime is ported.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`
-  declares `GPL-3.0-or-later`. Its `RowSelection` value and selected-row toggle
+  declares `GPL-3.0-or-later`; its pinned file header contains no file-level
+  copyright text, so no method-specific authorship is asserted. Its
+  `transformBrowserRow(id)` at lines 883–890 of AnkiDroid 2.25.3
+  (`d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted by
+  `transformBrowserRow()` in `lib/src/browser_row_transform.dart`, preserving
+  the row-lookup-before-selection order, exact opaque ID and host row object,
+  Boolean result, and unchanged callback failures. The sound-tags regression
+  test directly checks rendered row content but not selected state or callback
+  order; the focused Dart cases are source-derived. Generated rows, backend
+  access, selected-row membership, and Android rendering remain host-side.
+  Its `RowSelection` value and selected-row toggle
   state projection are adapted in `lib/src/browser_row_selection.dart`, which
   retains source insertion order, mode-change causes, last-selected ID, and
   refresh behavior. Upstream `CardBrowserViewModelTest.kt` directly exercises

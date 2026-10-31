@@ -96,6 +96,10 @@ states, source defaults, load/error/finish transitions, and Loaded-only updates.
 The host supplies opaque exception data and retains Android lifecycle, StateFlow,
 template loading and persistence, rendering, and UI.
 
+The Card Template Editor `EditTab` enum preserves the source values and order
+`FRONT`, `BACK`, `STYLING`. Android view IDs, current-tab resolution,
+rendering/editing, and host integration remain host-side.
+
 The Card Template Editor `flipQA` transformation preserves the source's greedy
 DOTALL answer-separator match, literal `{{FrontSide}}` fallback removal,
 U+0020-and-below edge trimming, and question-before-answer setter order. The
@@ -1438,6 +1442,17 @@ first match; callback and iteration failures propagate in source order. The host
 retains `CardTemplates`, its length and names, and localization. Focused tests in
 `test/card_template_editor_new_card_name_test.dart` are source-derived; no
 direct pinned test for `newCardName` was found.
+
+## Card Template Editor EditTab
+
+`CardTemplateEditorEditTab` in `lib/src/card_template_editor_edit_tab.dart`
+maps `EditTab` at `CardTemplateEditor.kt:1680–1684` from AnkiDroid v2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves exactly three
+distinct values in source order: `FRONT`, `BACK`, `STYLING`; Dart's enum index
+therefore retains the source ordinal. Android view IDs, current-tab resolution,
+rendering/editing, and host integration remain host-side. Focused cases in
+`test/card_template_editor_edit_tab_test.dart` are source-derived; the pinned
+source has no direct enum-focused test. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 
 ## Card Template Editor Markdown

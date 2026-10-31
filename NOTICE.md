@@ -22,8 +22,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1305–1314`
   (`CardTemplateFragment.onModelSaved`; pinned AnkiDroid 2.25.3 commit
-  `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked
-  `GPL-3.0-or-later` upstream and names no separate copyright holder. Its
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked
+  `GPL-3.0-or-later` with SPDX copyright notices for Timothy Rae (2014) and
+  Mike Hardy (2018); the method itself states no separate attribution. Its
   source-ordered log, lazy confirm-button lookup/enable, temporary note type
   clear, and Activity finish are adapted in
   `lib/src/card_template_fragment_on_model_saved.dart`, with source-derived

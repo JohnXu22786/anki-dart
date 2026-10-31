@@ -840,6 +840,25 @@ lifecycle, and resource types remain host-side. Focused cases are in
 © 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING`
 remains byte-identical.
 
+## CardTemplateFragment initial selected editor tab
+
+The initial selected-item expression in
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:733–735`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateFragmentInitialSelectedTab()` in
+`lib/src/card_template_fragment_initial_selected_tab.dart`. The projection
+reads `cardIndex` once, looks up the source tab map, lazily reads required
+arguments and the editor-view ID only when the mapping is null, then assigns the
+exact result once to the host bottom navigation. Android Bundle, generated key,
+tab map, bottom navigation, and listener effects remain host-side. Focused Dart
+cases are in `test/card_template_fragment_initial_selected_tab_test.dart` and
+are source-derived; `AnkiDroid/src/test/java/com/ichi2/anki/CardTemplateEditorTest.kt`
+contains no direct test for this expression. The source file is marked
+`GPL-3.0-or-later` and its file-level SPDX header credits © 2014 Timothy Rae
+and © 2018 Mike Hardy; no method-specific authorship is asserted. Root
+`COPYING` remains byte-identical.
+
 ## CardTemplateFragment bottom-navigation selection
 
 The bottom-navigation `setOnItemSelectedListener` callback at

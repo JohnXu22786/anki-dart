@@ -7,6 +7,19 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:733–735`
+  (`CardTemplateFragment.onViewCreated()` initial selected-item expression;
+  pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked
+  `GPL-3.0-or-later`. Its file-level SPDX credits Copyright © 2014 Timothy Rae
+  and © 2018 Mike Hardy; no method-specific authorship is asserted. Its
+  source-ordered lazy fallback and single host setter call are adapted in
+  `lib/src/card_template_fragment_initial_selected_tab.dart`, with focused
+  source-derived cases in
+  `test/card_template_fragment_initial_selected_tab_test.dart`. Android Bundle,
+  generated key, tab map, bottom navigation, listener behavior, and UI remain
+  host-side. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:708–732`
   (bottom-navigation `setOnItemSelectedListener`; pinned AnkiDroid 2.25.3
   commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked

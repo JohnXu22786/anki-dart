@@ -1911,6 +1911,21 @@ source-derived. The pinned `CardTemplateEditorTest.testInsertFieldInCorrectFragm
 covers successful insertion into the intended fragment. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment initial selected editor tab
+
+`cardTemplateFragmentInitialSelectedTab()` in
+`lib/src/card_template_fragment_initial_selected_tab.dart` follows the initial
+selected-item expression in `CardTemplateFragment.onViewCreated()` at
+`CardTemplateEditor.kt:733–735` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads `cardIndex` once, looks
+up that index in the host tab map, and reads required arguments plus the editor
+view ID only when the mapping is null. It assigns the exact resolved ID to the
+host bottom navigation once; any listener effects remain host-side. Android
+Bundle, generated key, tab map and UI remain host-side. Focused Dart tests in
+`test/card_template_fragment_initial_selected_tab_test.dart` are source-derived.
+The pinned `CardTemplateEditorTest.kt` has no direct test for this initial
+selection expression. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment bottom-navigation selection
 
 `cardTemplateFragmentBottomNavigationSelection()` in

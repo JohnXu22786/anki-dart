@@ -100,6 +100,11 @@ The Card Template Editor `EditTab` enum preserves the source values and order
 `FRONT`, `BACK`, `STYLING`. Android view IDs, current-tab resolution,
 rendering/editing, and host integration remain host-side.
 
+The Card Template Editor page-selected callback preserves the selected position,
+performs one fragment lookup, and, when present, resolves its binding and edit
+field before requesting focus once. Android fragments, views, bindings, and focus
+remain host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 The Card Template Editor `flipQA` transformation preserves the source's greedy
 DOTALL answer-separator match, literal `{{FrontSide}}` fallback removal,
 U+0020-and-below edge trimming, and question-before-answer setter order. The

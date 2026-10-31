@@ -7,6 +7,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:261–263`
+  (`CardTemplateEditor.onPageSelected`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a
+  `GPL-3.0-or-later` source file with file-level SPDX copyright notices for
+  Timothy Rae (2014) and Mike Hardy (2018); no method-specific authorship is
+  asserted. Its selected-fragment focus callback is adapted in
+  `lib/src/card_template_editor_page_selected_focus.dart`, with focused
+  source-derived cases in
+  `test/card_template_editor_page_selected_focus_test.dart`. Android ViewPager2,
+  Fragment, view binding, EditText, and focus remain host-side. Root `COPYING`
+  remains unchanged.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:361–404`
   (`CardTemplateEditor.onCollectionLoaded`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a

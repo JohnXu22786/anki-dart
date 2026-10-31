@@ -77,6 +77,8 @@ final class ManageNoteTypesState {
     this.noteTypes = const [],
     this.searchQuery = '',
     this.destination,
+    this.error,
+    this.message,
     this.isInMultiSelectMode = false,
   });
 
@@ -84,6 +86,8 @@ final class ManageNoteTypesState {
   final List<NoteTypeItemState> noteTypes;
   final String searchQuery;
   final ManageNoteTypesDestination? destination;
+  final Object? error;
+  final Object? message;
   final bool isInMultiSelectMode;
 
   /// Selected rows in their original list order.
@@ -182,24 +186,47 @@ final class ManageNoteTypesState {
   static bool _hasSelectedItem(List<NoteTypeItemState> noteTypes) =>
       noteTypes.any((noteType) => noteType.isSelected);
 
+  /// Copies the state while retaining omitted host-owned fields.
+  ManageNoteTypesState copyWith({
+    bool? isLoading,
+    List<NoteTypeItemState>? noteTypes,
+    String? searchQuery,
+    Object? destination = _unchangedValue,
+    Object? error = _unchangedValue,
+    Object? message = _unchangedValue,
+    bool? isInMultiSelectMode,
+  }) => _copyWith(
+    isLoading: isLoading,
+    noteTypes: noteTypes,
+    searchQuery: searchQuery,
+    destination: destination,
+    error: error,
+    message: message,
+    isInMultiSelectMode: isInMultiSelectMode,
+  );
+
   ManageNoteTypesState _copyWith({
     bool? isLoading,
     List<NoteTypeItemState>? noteTypes,
     String? searchQuery,
-    Object? destination = _unchangedDestination,
+    Object? destination = _unchangedValue,
+    Object? error = _unchangedValue,
+    Object? message = _unchangedValue,
     bool? isInMultiSelectMode,
   }) => ManageNoteTypesState(
     isLoading: isLoading ?? this.isLoading,
     noteTypes: noteTypes ?? this.noteTypes,
     searchQuery: searchQuery ?? this.searchQuery,
-    destination: identical(destination, _unchangedDestination)
+    destination: identical(destination, _unchangedValue)
         ? this.destination
         : destination as ManageNoteTypesDestination?,
+    error: identical(error, _unchangedValue) ? this.error : error,
+    message: identical(message, _unchangedValue) ? this.message : message,
     isInMultiSelectMode: isInMultiSelectMode ?? this.isInMultiSelectMode,
   );
 }
 
-const Object _unchangedDestination = Object();
+const Object _unchangedValue = Object();
 
 bool _containsIgnoringCase(String value, String query) {
   if (query.length > value.length) return false;

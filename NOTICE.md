@@ -42,8 +42,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   requests are adapted in `lib/src/manage_note_types_state.dart`. The host
   supplies note-type rows and retains collection loading/refresh, use-count
   queries, rename/delete/undo, exception aggregation, StateFlow/coroutines,
-  Android UI/lifecycle, and note-type mutations. The pinned
-  `ManageNoteTypesViewModelTest.kt` is Copyright © 2025 lukstbit and marked
+  Android UI/lifecycle, and note-type mutations. Selected deletion choreography
+  is adapted in `lib/src/manage_note_types_delete_plan.dart`; the host retains
+  `safeRemoveNoteType`, undoable database operations, `OpChanges`, Kotlin
+  exception wrappers, mutable state/StateFlow, coroutine scheduling, Timber,
+  and Android UI/lifecycle. Focused Dart cases are source-derived from
+  `ManageNoteTypesViewModelTest.kt`, Copyright © 2025 lukstbit and marked
   `GPL-3.0-or-later`.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/InsertFieldDialogViewModel.kt`,

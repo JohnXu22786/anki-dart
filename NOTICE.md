@@ -383,7 +383,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   adapted in `lib/src/review_timebox.dart`; localized text and the Android
   dialog are not included.
 - `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt` and
-  `CardViewerViewModel.kt` declare `GPL-3.0-or-later`. `servicelayer/NoteService.kt`
+  `CardViewerViewModel.kt` declare `GPL-3.0-or-later`. The portable
+  `CardViewerViewModel.setSoundPlayerEnabled()` and `playSoundFromUrl()` callback
+  order is adapted in `lib/src/card_viewer_sound_actions.dart`, with
+  source-derived cases in `test/card_viewer_sound_actions_test.dart`. The host
+  retains task scheduling, AV URL parsing and collection callbacks, player
+  implementation, and asynchronous error handling. `servicelayer/NoteService.kt`
   is Copyright © 2013 Bibek Shrestha, Zaur Molotnikov, Nicolas Raoul, and Flavio
   Lerda and declares `GPL-3.0-or-later`. Previewer navigation
   formulas and side/card transitions are adapted in

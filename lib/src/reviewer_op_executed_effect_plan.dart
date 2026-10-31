@@ -34,9 +34,10 @@ enum ReviewerOpExecutedEffect {
 
 /// Projects `ReviewerViewModel.opExecuted(changes, handler)` into host requests.
 ///
-/// The host reads [OpChanges] fields and handler identity, then supplies those
-/// decisions here. The first label request always precedes the source handler
-/// early return and all exclusive change branches. The host executes each
+/// The host reads [OpChanges] fields and evaluates the source `handler == this`
+/// comparison, then supplies those decisions here. The first label request
+/// always precedes the early return when that comparison is true and all
+/// exclusive change branches. The host executes each
 /// returned request in order; a callback failure naturally prevents later
 /// requests. Current-card and collection access, card/media loading, Flows,
 /// coroutine/error handling, label updates, rendering, and lifecycle remain

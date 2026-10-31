@@ -913,9 +913,10 @@ Android lifecycle, StateFlow, localization, and UI.
   Undo availability and execution, protobuf extraction, localization,
   Reviewer action dispatch, and feedback Flow delivery remain host-side.
 - Reviewer operation-executed effects: `planReviewerOpExecutedEffects` always
-  requests undo/redo labels first, returns after that request for the source
-  handler, then selects study-queue, note-text, or card effects in source
-  precedence. Note-text requests reload the card, load AV tags, update the mark
+  requests undo/redo labels first, returns after that request when the host's
+  source `handler == this` comparison is true, then selects study-queue,
+  note-text, or card effects in source precedence. Note-text requests reload
+  the card, load AV tags, update the mark
   icon, and render the host-selected side; card requests reload before updating
   the flag icon. The host owns change/handler reads and executes callbacks in
   order, stopping naturally on failure; see `ANKIDROID_UPSTREAM.md`.

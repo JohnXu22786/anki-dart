@@ -11,6 +11,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/EditDeckDescriptionDialogViewModel.kt` is marked `GPL-3.0-or-later` upstream. Its portable description/Markdown state, initialization and change comparison, back/close decisions, and save-before-dismissal actions are adapted in `lib/src/edit_deck_description_state.dart`. The host supplies persisted values and applies the returned actions; SavedStateHandle, collection access and updates, coroutine/Flow delivery, Android lifecycle, and dialog UI remain host-side. The pinned `EditDeckDescriptionDialogViewModelTest.kt` is also marked `GPL-3.0-or-later`. The upstream files state no separate copyright holder.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/preferences/profiles/SwitchProfilesViewModel.kt` is Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked `GPL-3.0-or-later` upstream. Its empty profile-list state and add-dialog visibility transitions are adapted in `lib/src/switch_profiles_dialog_state.dart`; profile creation remains TODO, matching the pinned source. ProfileManager/profile IO, ProfileName validation, logging, StateFlow, lifecycle, and Android UI remain host-side. The pinned `SwitchProfilesViewModelTest.kt` is also Copyright © 2026 Ashish Yadav and marked `GPL-3.0-or-later`.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesState.kt`
   and `ManageNoteTypesViewModel.kt` are Copyright © 2025 lukstbit and marked
   `GPL-3.0-or-later` upstream. Their portable row/state values, filter and
@@ -1046,9 +1048,9 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   derived from `SingleAxisDetector.kt` and `BindingMap.kt`. AnkiDroid 2.25.3 has
   no direct `SingleAxisDetector` unit test; Android `MotionEvent` extraction is
   outside this model.
-- Dart adaptations, the review-session controller, timer, Auto Advance, leech,
-  whiteboard and record-voice toggle models, gesture models, and new test code
-  are Copyright © 2026 John Tsui.
+- Dart adaptations, including the Switch Profiles dialog state, the review-session
+  controller, timer, Auto Advance, leech, whiteboard and record-voice toggle
+  models, gesture models, and new test code are Copyright © 2026 John Tsui.
 
 ## Unicode property data
 

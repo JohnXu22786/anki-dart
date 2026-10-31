@@ -1699,6 +1699,32 @@ remain host-side. Focused source-derived callback tests cover the early returns,
 argument identity, order, and failure boundaries; see
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment common menu routing
+
+`handleCardTemplateCommonMenuItemSelected()` in
+`lib/src/card_template_fragment_common_menu.dart` follows
+`CardTemplateFragment.handleCommonMenuItemSelected(menuItem)` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1179–1268` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves source menu branch
+order, info logs before actions, the reposition branch without a log, callback
+Boolean returns, lazy temporary-model and stock-kind reads, and unmatched-ID
+handling. Restore-to-default logs before reading the original kind. Known kinds
+show confirmation with a null kind; unknown kinds schedule stock-kind/name
+lookup before showing the picker. The selected host kind is carried to the
+confirmation, and positive confirmation schedules restore while cancellation
+does nothing. Callback and scheduled-task failures propagate.
+
+The host supplies Android menu IDs and unknown-kind sentinel, maps logs to
+Timber, reads host models and stock kinds, resolves stock names under
+`withCol`, schedules work through `launchCatchingTask`, and builds Android
+Dialogs with translated resources. `StockNotetype`, collection/model access,
+confirmation/picker UI, and restore operations remain host-side. Focused cases
+in `test/card_template_fragment_common_menu_test.dart` are source-derived. The
+pinned source marks this method `@NeedsTest("Restore to default option")`; no
+focused direct pinned restore test was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor deck selection
 
 `cardTemplateEditorDeckSelected()` in

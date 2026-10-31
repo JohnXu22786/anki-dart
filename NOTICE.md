@@ -7,6 +7,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/account/LoginViewModel.kt` is Copyright (c) 2025 Ashish Yadav <mailtoashish693@gmail.com> and marked `GPL-3.0-or-later` upstream. Its local input focus validation, button-enabled predicate, error values, and Idle/Success/Error state variants are adapted in `lib/src/login_input_state.dart`. The host retains authentication/network requests, preference persistence, PII-sensitive exception handling, Android string resources, StateFlow/coroutines, lifecycle, and UI. The pinned source has no direct tests for these input/state paths; focused Dart cases are source-derived.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/EditDeckDescriptionDialogViewModel.kt` is marked `GPL-3.0-or-later` upstream. Its portable description/Markdown state, initialization and change comparison, back/close decisions, and save-before-dismissal actions are adapted in `lib/src/edit_deck_description_state.dart`. The host supplies persisted values and applies the returned actions; SavedStateHandle, collection access and updates, coroutine/Flow delivery, Android lifecycle, and dialog UI remain host-side. The pinned `EditDeckDescriptionDialogViewModelTest.kt` is also marked `GPL-3.0-or-later`. The upstream files state no separate copyright holder.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesState.kt`

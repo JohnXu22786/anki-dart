@@ -69,6 +69,11 @@ Media Check result publication uses `CHECKING_MEDIA` progress and passes the
 opaque backend result through only after the host check returns successfully.
 The host retains the backend call, progress execution, and result storage.
 
+Login input validation preserves the focus-loss-only empty-field errors, the
+nonempty-string button predicate without trimming, and Idle/Success/Error state
+variants with opaque error payloads. Authentication, persistence, logging,
+localization, lifecycle, and UI remain host-side.
+
 Card Template Editor state preserves the Initializing, Loaded, and Finished
 states, source defaults, load/error/finish transitions, and Loaded-only updates.
 The host supplies opaque exception data and retains Android lifecycle, StateFlow,

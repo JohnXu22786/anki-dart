@@ -1499,6 +1499,25 @@ fields, mapping and note-ID boundaries, ordinal laziness, exact dialog inputs,
 callback order, asynchronous query waiting/failure, and failure stopping. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment rename dialog
+
+`cardTemplateFragmentShowRenameDialog()` in
+`lib/src/card_template_fragment_show_rename_dialog.dart` follows
+`CardTemplateFragment.showRenameDialog()` at `CardTemplateEditor.kt:922–953` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reuses the mapped dynamic-note
+predicate and preserves its warning/early return, ordinal and temporary-model
+reads, ordered eager existing-name conversion, and separate selected-template
+name reads for prefill and current-name conversion. Dialog confirmation remains
+deferred; it assigns the name, updates discard state, logs, notifies the pager
+adapter, then reloads the previewer in source order. The host retains models,
+template/name conversion, Context/dialog and UI, Timber, adapter/pager, and
+previewer behavior. Focused source-derived cases in
+`test/card_template_fragment_show_rename_dialog_test.dart` cover early return,
+read order and repeated names, name-list ordering, deferred effects, and
+failure stopping. The source marks this method `@NeedsTest`; no direct pinned
+rename-dialog test was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment delete template
 
 `cardTemplateFragmentDeleteTemplate()` in

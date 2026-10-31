@@ -649,3 +649,27 @@ execution, and UI remain host-side. Focused source-derived cases are in
 pinned test for this callback was found. The source file SPDX-notices Copyright
 © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is
 asserted. Root `COPYING` remains unchanged.
+
+## CardTemplateFragment.showRenameDialog
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:922–953`
+(`CardTemplateFragment.showRenameDialog`; pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted by
+`cardTemplateFragmentShowRenameDialog()` and its callback type in
+`lib/src/card_template_fragment_show_rename_dialog.dart`. It reuses the mapped
+dynamic-note predicate and returns after the exact warning for dynamic note
+types. Otherwise it reads the ordinal, selects the template from the asserted
+temporary model, re-reads that model for its templates, and eagerly converts
+their names in order while preserving duplicates. After requiring Context, it
+reads the selected template name separately for prefill and current-name
+conversion, then registers the dialog with the unchanged existing-name list.
+The confirmation callback is lazy and preserves name assignment, discard-state
+update, exact info/debug log calls, asserted pager-adapter notification, and
+fragmented preview reload order. Callback failures propagate and stop later
+work. The host retains temporary models/templates/JSON, `CardTypeName`, Context,
+dialog/UI, Timber, adapter/pager, previewer, and Activity behavior. Focused
+source-derived cases are in
+`test/card_template_fragment_show_rename_dialog_test.dart`. The source marks
+the method `@NeedsTest`; no direct pinned rename-dialog test was found. The
+source file SPDX-notices Copyright © 2014 Timothy Rae and © 2018 Mike Hardy;
+no method-specific authorship is asserted. Root `COPYING` remains unchanged.

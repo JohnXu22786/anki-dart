@@ -7,6 +7,19 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:708–732`
+  (bottom-navigation `setOnItemSelectedListener`; pinned AnkiDroid 2.25.3
+  commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked
+  `GPL-3.0-or-later`. Its file-level SPDX credits Copyright © 2014 Timothy Rae
+  and © 2018 Mike Hardy; no method-specific authorship is asserted. The
+  source-ordered callback orchestration is in
+  `lib/src/card_template_fragment_bottom_navigation_selection.dart`, with
+  focused source-derived cases in
+  `test/card_template_fragment_bottom_navigation_selection_test.dart`. Android
+  MenuItem/title, resource IDs, tab map, fragment/model/template mutation, view
+  state, and menu invalidation remain host-side. Root `COPYING` remains
+  byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:747–764`
   (`CardTemplateFragment`'s `TextWatcher.afterTextChanged`; pinned AnkiDroid
   2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked

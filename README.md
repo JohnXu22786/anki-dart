@@ -1911,6 +1911,26 @@ source-derived. The pinned `CardTemplateEditorTest.testInsertFieldInCorrectFragm
 covers successful insertion into the intended fragment. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment bottom-navigation selection
+
+`cardTemplateFragmentBottomNavigationSelection()` in
+`lib/src/card_template_fragment_bottom_navigation_selection.dart` follows the
+bottom-navigation item-selection callback at `CardTemplateEditor.kt:708–732` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the item ID once, writes
+the current card index's tab mapping before reading/logging the item title, then
+branches on that captured ID. Styling uses the fragment-held `tempModel.css`;
+Back and other IDs use the current template's `afmt` and `qfmt` respectively,
+with a fresh card-index read in each branch. It invalidates the host options menu
+once after the selected-view call and returns true. Callback failures propagate
+and stop later work. Android `MenuItem` and title, resource IDs, tab map,
+fragment/model/template mutation, view state, and menu invalidation remain
+host-side. Focused Dart cases are source-derived. The pinned
+`CardTemplateEditorTest.testContentPreservedAfterChangingEditorView` and
+`testBottomNavigationViewLayoutTransition` call `setCurrentEditorView()`
+directly; neither exercises this listener callback. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment editor view
 
 `cardTemplateFragmentSetCurrentEditorView()` in

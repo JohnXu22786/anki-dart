@@ -1275,6 +1275,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`; card and collection
   access remain host-side.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1320–1337` (`CardTemplateFragment.performPreview`; pinned AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted as the ordered host callback boundary `CardTemplateFragmentPerformPreviewCallbacks` and `cardTemplateFragmentPerformPreview()` in `lib/src/card_template_fragment_perform_preview.dart`, with focused source-derived cases in `test/card_template_fragment_perform_preview_test.dart`. The host retains Android context, `NotetypeFile`, note type and note models, collection access, preview argument creation, Intent, Activity, and `launchCatchingTask` error handling. No Android Activity implementation or model copies are provided. Pinned integration tests at `CardTemplateEditorTest.kt:160–170, 251–289, 1118–1126` cover preview launch and current-tab ordinal selection.
+
 ## Unicode property data
 
 The locale-casing property ranges and full lowercase mappings in

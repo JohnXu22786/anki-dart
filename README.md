@@ -1537,6 +1537,26 @@ callback failures propagate immediately. Focused tests in
 `test/card_template_fragment_get_note_test.dart` are source-derived; no direct
 pinned test for this method was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment preview orchestration
+
+`cardTemplateFragmentPerformPreview()` in
+`lib/src/card_template_fragment_perform_preview.dart` follows
+`CardTemplateFragment.performPreview()` at `CardTemplateEditor.kt:1320–1337`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the source callback
+order from `launchCatchingTask` through note-type file creation, collection
+lookup, preview argument creation, Intent construction, and Activity start. A
+fallback note is created only when `getNote(col)` returns null; preview
+arguments receive the original note ID, current ordinal, fields, and tags, with
+`fillEmpty` set to true. Callback failures propagate immediately and stop later
+effects. Android context, `NotetypeFile`, note type/note/collection access,
+`TemplatePreviewerArguments`, Intent, Activity, and task/error handling remain
+host-side. The helper represents these as opaque callback values and does not
+provide an Android Activity implementation. Focused Dart tests are
+source-derived; pinned `CardTemplateEditorTest.kt:160–170, 251–289` covers
+preview launch and `:1118–1126` covers current-tab ordinal selection. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment field insertion
 
 `cardTemplateFragmentInsertField()` in

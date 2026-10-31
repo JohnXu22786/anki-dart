@@ -1461,6 +1461,25 @@ failures propagate. The host callback resolves the pager ordinal and accesses
 source-derived; no direct pinned test was found. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Editor deck-override dialog
+
+`cardTemplateFragmentDisplayDeckOverrideDialog()` in
+`lib/src/card_template_fragment_display_deck_override_dialog.dart` follows
+`CardTemplateFragment.displayDeckOverrideDialog()` at
+`CardTemplateEditor.kt:1339–1353` from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It validates the host Activity
+before reading the supplied model. Cloze models show the localized multimedia
+error in a short Snackbar and return without reading template name or dialog
+text. Other models resolve the current name once through the existing
+`cardTemplateEditorCurrentTemplateName()` helper, then resolve the localized
+title and formatted explanation in order before opening the host deck-selection
+dialog with `allowAll` and `allowFiltered` false. The pinned
+`CardTemplateEditorTest.testDeckOverride` covers valid selection and null deck
+mutation after selection, not this dialog method; focused callback-order, cloze,
+flag, and failure tests are source-derived. Activity, model access, tasks,
+localization, Snackbar, and Android dialog UI remain host-side. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor current template read
 
 `cardTemplateEditorCurrentTemplate()` follows `getCurrentTemplate()` in

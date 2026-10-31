@@ -724,6 +724,26 @@ SPDX-notices Copyright © 2014 Timothy Rae and © 2018 Mike Hardy; no
 method-specific authorship is asserted. Root `COPYING` remains unchanged.
 
 
+## CardTemplateEditor.templateFragment lookup
+
+`CardTemplateEditor.templateFragment(position)` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:544–548`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateEditorTemplateFragment()` in
+`lib/src/card_template_editor_template_fragment.dart`. It reads the pager adapter
+once and returns null immediately when absent. Otherwise it calls the host
+adapter's `getItemId(position)` once with the original position, constructs the
+exact lowercase `f` plus decimal ID tag using `BigInt` to retain the full JVM
+`Long` range on Dart VM and web, and calls the host fragment manager's
+`findFragmentByTag` once. A missing fragment or a fragment that is not the host's
+`CardTemplateFragment` returns null; callback failures propagate unchanged in
+source order. Android pager, adapter, FragmentManager, and Fragment remain
+host-side. Focused source-derived cases are in
+`test/card_template_editor_template_fragment_test.dart`. The source-file SPDX
+credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship
+is asserted. Root `COPYING` remains byte-identical.
+
 ## CardTemplateEditor page-selected focus
 
 `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:261–263`

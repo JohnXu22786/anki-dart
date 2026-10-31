@@ -2190,3 +2190,19 @@ keeps the full JVM `Long` range exact on Dart VM and web. The host retains
 `baseId` storage, initialized to `initialTemplatePagerBaseId` (`BigInt.zero`).
 Focused tests are source-derived because no pinned test covers
 these adapter methods. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+
+## Card Template Editor fragment lookup
+
+`cardTemplateEditorTemplateFragment()` ports the source-ordered lookup from
+`CardTemplateEditor.templateFragment(position)` in AnkiDroid 2.25.3. It reads the
+pager adapter once, uses the unchanged position to obtain one stable item ID,
+uses `BigInt` to preserve the entire JVM `Long` range on Dart VM and web,
+looks up the exact `f`-prefixed decimal tag, and returns only a host-typed
+`CardTemplateFragment`. A missing adapter or fragment returns null. Android
+pager, adapter, FragmentManager, and Fragment remain host-side. The focused
+source-derived tests are in
+[`test/card_template_editor_template_fragment_test.dart`](test/card_template_editor_template_fragment_test.dart).
+The adapted source is GPL-3.0-or-later; file-level copyright attribution and
+source pin are recorded in [NOTICE.md](NOTICE.md) and
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.

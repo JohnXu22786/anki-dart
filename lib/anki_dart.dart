@@ -310,3 +310,4 @@ export 'src/reminder_log_projection.dart';
 export 'src/fsrs_version.dart';
 export 'src/tts_voice_playback_effects.dart';
 export 'src/card_template_fragment_common_menu.dart';
+export 'src/card_template_fragment_setup_menu.dart';

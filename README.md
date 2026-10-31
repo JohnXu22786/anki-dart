@@ -2223,6 +2223,23 @@ The adapted source is GPL-3.0-or-later; file-level copyright attribution and
 source pin are recorded in [NOTICE.md](NOTICE.md) and
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.
 
+## Card template fragment menu registration
+
+`cardTemplateFragmentSetupMenu()` in
+`lib/src/card_template_fragment_setup_menu.dart` follows
+`CardTemplateFragment.setupMenu()` at `CardTemplateEditor.kt:1008–1024` in
+AnkiDroid 2.25.3, commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+performs one Activity lookup and the host MenuHost cast before creating a
+single deferred MenuProvider, then registers it with the view lifecycle owner
+at `Lifecycle.State.RESUMED`. Menu inflation precedes common-menu setup, and
+item selection returns the common handler's result unchanged. Android menu,
+resource, and lifecycle types stay host-side; callback failures propagate in
+source order. Focused cases are in
+[`test/card_template_fragment_setup_menu_test.dart`](test/card_template_fragment_setup_menu_test.dart).
+The adaptation follows the pinned GPL-3.0-or-later source file; file-level
+copyright attribution appears in [NOTICE.md](NOTICE.md), with the source pin in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.
+
 ## TemplatePagerAdapter fragment creation
 
 `cardTemplateEditorCreateFragment()` in

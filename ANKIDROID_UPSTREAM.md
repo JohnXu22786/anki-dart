@@ -795,3 +795,24 @@ host responsibilities. Focused source-derived cases are in
 `test/card_template_editor_page_selected_focus_test.dart`. The source file
 SPDX credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific
 authorship is asserted. Root `COPYING` remains unchanged.
+
+## CardTemplateFragment.setupMenu
+
+`CardTemplateFragment.setupMenu()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1008–1024`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateFragmentSetupMenu()` in
+`lib/src/card_template_fragment_setup_menu.dart`. It reads the host Activity
+once, applies the host's MenuHost cast, constructs one provider with deferred
+callbacks, and registers that provider with the same `viewLifecycleOwner` and
+`Lifecycle.State.RESUMED`. The creation callback inflates
+`R.menu.card_template_editor` before configuring the common menu with the same
+Menu. The selection callback returns the common handler's result unchanged for
+the same MenuItem. Callback failures propagate and stop later source work;
+Android Activity, MenuHost, MenuProvider, Menu, MenuInflater, MenuItem,
+lifecycle, and resource types remain host-side. Focused cases are in
+`test/card_template_fragment_setup_menu_test.dart`. The source file is marked
+`GPL-3.0-or-later` and its file-level SPDX credits © 2014 Timothy Rae and
+© 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING`
+remains byte-identical.

@@ -7,6 +7,19 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1008–1024`
+  (`CardTemplateFragment.setupMenu`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a
+  `GPL-3.0-or-later` source file with file-level SPDX copyright notices for
+  Timothy Rae (2014) and Mike Hardy (2018); no method-specific authorship is
+  asserted. Its Activity/MenuHost cast, deferred provider callbacks, menu
+  inflation then common-menu setup, item-selection return, and RESUMED lifecycle
+  registration are adapted in
+  `lib/src/card_template_fragment_setup_menu.dart`, with focused source-derived
+  cases in `test/card_template_fragment_setup_menu_test.dart`. Android Activity,
+  MenuHost, MenuProvider, Menu, MenuInflater, MenuItem, lifecycle, and resource
+  types remain host-side. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:261–263`
   (`CardTemplateEditor.onPageSelected`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a

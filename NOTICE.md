@@ -59,6 +59,13 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   operation effects and affected-note counts; Dart cases for orchestration and
   failure ordering are source-derived.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/EmptyCardsViewModel.kt` is
+  Copyright (c) 2025 lukstbit <52494258+lukstbit@users.noreply.github.com> and
+  marked `GPL-3.0-or-later` upstream. The portable Empty Cards state and query
+  publication behavior are adapted in `lib/src/empty_cards_search_state.dart`.
+  The host retains collection access, the generated report type, query
+  execution, coroutine/job, StateFlow, lifecycle, and UI.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsState.kt` and `FilteredDeckOptionsViewModel.kt` are marked `GPL-3.0-or-later` upstream; `FilteredDeckOptionsState.kt` attributes source copyright to lukstbit. The portable option/filter values and name/limit validation, build-eligibility, and second-filter toggle projections are adapted in `lib/src/filtered_deck_options.dart`. Collection access, SavedStateHandle, asynchronous flows, backend query parsing/execution, Android UI, and filtered-deck build mutations remain host-side.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` is

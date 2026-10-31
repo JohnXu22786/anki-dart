@@ -91,6 +91,12 @@ selection and run the chosen host operation inside unlabeled progress and the
 collection host. Backend work, coroutine launch, and progress lifecycle remain
 host-side.
 
+Empty Cards search preserves the shared Searching state and publishes the exact
+host report or thrown object. Cancellation is rethrown through a host-supplied
+predicate, and publication errors propagate outside the query catch. Collection
+access, query execution, coroutine/job, StateFlow, lifecycle, and UI remain
+host-side.
+
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and

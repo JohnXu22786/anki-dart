@@ -1599,3 +1599,16 @@ CSS fence has no final LF. Android `Context`, generated localization, and
 Markdown rendering remain host-side; see
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Focused exact-output tests are
 source-derived because the pinned source has no direct test for this formatter.
+
+`copyCardTemplateMarkdownToClipboard()` in
+`lib/src/card_template_editor_markdown_clipboard.dart` tracks
+`CardTemplateFragment.copyMarkdownTemplateToClipboard()` at
+`CardTemplateEditor.kt:1293–1300` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the
+current template before context, returns immediately when either is absent, then
+renders Markdown, projects it through the host truncation type, and invokes the
+host clipboard callback in source order. Callback failures propagate and stop
+later work. Android `Context`, `TruncatedString`, clipboard services, and UI
+remain host-side. Focused source-derived callback tests cover the early returns,
+argument identity, order, and failure boundaries; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).

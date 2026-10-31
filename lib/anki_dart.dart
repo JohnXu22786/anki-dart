@@ -276,6 +276,7 @@ export 'src/card_template_fragment_current_template.dart';
 export 'src/card_template_fragment_get_note.dart';
 export 'src/card_template_fragment_perform_preview.dart';
 export 'src/card_template_fragment_save_note_type.dart';
+export 'src/card_template_fragment_on_model_saved.dart';
 export 'src/card_template_fragment_display_deck_override_dialog.dart';
 export 'src/card_template_fragment_delete_card_template.dart';
 export 'src/card_template_fragment_confirm_delete_cards.dart';

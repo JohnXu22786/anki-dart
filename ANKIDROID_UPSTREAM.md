@@ -27,6 +27,20 @@ button re-enable, null-button behavior, and `Error` propagation. The pinned
 160–185, 237–243, 293–300, 488–493, 588–595, and 694–700, but does not cover
 these branch/error details; the focused Dart cases are source-derived.
 
+## CardTemplateFragment.onModelSaved
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1305–1314`
+(`onModelSaved`, pinned commit `d9bf072f814a0c37d30a694192593b31ff2df875`)
+is adapted by `cardTemplateFragmentOnModelSaved()` in
+`lib/src/card_template_fragment_on_model_saved.dart`. It preserves the exact
+log, confirm-button lookup, non-null same-button enable, temporary note type
+clear, and Activity finish order. The button branch remains lazy; callback
+failures propagate and stop later effects. Android view/resource lookup, Timber,
+temporary-model mutation, and Activity lifecycle remain host-side. Focused cases
+in `test/card_template_fragment_on_model_saved_test.dart` cover source order,
+null-button behavior, and callback failure stopping; no direct pinned upstream
+test for this callback was found, so the Dart cases are source-derived.
+
 This repository is a partial Dart port of that exact source snapshot. The
 current implementation covers deck-picker filtering and visible-row
 construction, the headless review-session action lifecycle, reviewer count and

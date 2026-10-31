@@ -1582,6 +1582,20 @@ database save through callbacks. The pinned `CardTemplateEditorTest` covers
 successful confirm/save flows in context; these additional branch/error cases
 are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment model saved callback
+
+`cardTemplateFragmentOnModelSaved()` in
+`lib/src/card_template_fragment_on_model_saved.dart` follows
+`CardTemplateFragment.onModelSaved()` at `CardTemplateEditor.kt:1305–1314`
+in AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It logs
+first, resolves the host confirm button and enables that same button only when
+present, then clears the temporary note type and finishes the Activity. Callback
+failures propagate immediately and prevent later effects. Android view lookup and
+IDs, Timber, temporary-model mutation, and Activity lifecycle remain host-side.
+Focused cases in `test/card_template_fragment_on_model_saved_test.dart` cover
+source order, the null-button branch, and failure stopping. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor current template name
 
 `cardTemplateEditorCurrentTemplateName()` in

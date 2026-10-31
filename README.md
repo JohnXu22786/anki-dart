@@ -1584,6 +1584,22 @@ rendering/editing, and host integration remain host-side. Focused cases in
 `test/card_template_editor_edit_tab_test.dart` are source-derived; the pinned
 source has no direct enum-focused test. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Editor Ctrl shortcuts
+
+`dispatchCardTemplateEditorCtrlShortcut()` in
+`lib/src/card_template_editor_ctrl_shortcut.dart` follows
+`CardTemplateEditor.onKeyUp()` at `CardTemplateEditor.kt:478–541` from
+AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves the current fragment
+once before reading Ctrl state, preserves the superclass fallback for a missing
+fragment, non-Ctrl event, or unknown Ctrl key, and for recognized Ctrl keys logs
+before one action on that same fragment. Android keycode values are supplied by
+the host. The host retains `KeyEvent`, Activity superclass dispatch, logging,
+tabs, dialogs, model access, and all effects; the deck-override host action uses
+the same fragment's temporary model. Focused tests cover every routing branch.
+Only Ctrl+2 has a directly pinned upstream test; the remaining test cases are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor note type change check
 
 `cardTemplateNoteTypeHasChanged()` in

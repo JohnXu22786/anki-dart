@@ -1463,6 +1463,25 @@ Pinned `CardTemplateEditorTest` cases cover the single-template guard,
 orphan prevention, and deletion confirmation. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment delete confirmation
+
+`cardTemplateFragmentConfirmDeleteCards()` in
+`lib/src/card_template_fragment_confirm_delete_cards.dart` follows
+`CardTemplateFragment.confirmDeleteCards()` at `CardTemplateEditor.kt:1453–1480`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates the host dialog, resolves
+the quantity string with the unchanged affected-card count, formats it with
+that count and the host-projected template name, then resolves title and
+positive-button text before setting dialog arguments. It registers a lazy
+confirmation that passes the host delete action through its sync check, then
+shows the same dialog. Android `ConfirmationDialog`, resources and localization,
+generated template JSON, sync/schema behavior, deletion, lifecycle, and UI remain
+host-side. Focused source-derived cases in
+`test/card_template_fragment_confirm_delete_cards_test.dart` cover argument
+values, callback order, lazy confirmation, and failure stopping. The pinned
+`CardTemplateEditorTest.kt:213–220` checks the rendered message and continuation.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment add card template
 
 `cardTemplateFragmentAddCardTemplate()` in

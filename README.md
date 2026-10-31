@@ -147,6 +147,13 @@ state. Confirming a valid name hides the dialog without creating a profile,
 matching the pinned source's TODO. Profile loading, validation, logging,
 StateFlow, lifecycle, and Android UI remain host-side.
 
+Profile switching preserves the ordered safety checks, unique active blocker
+reasons, explicit skip reasons, and the host switch callback boundary. Checks
+and the switch callback are awaited sequentially; exceptions propagate
+unchanged. ProfileManager, persistence, lifecycle, and the actual switch remain
+host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) for the exact
+source pin and pinned-test coverage.
+
 Import add and replace routing preserves the chosen action and original path
 string. Flow delivery, coroutine scheduling, importer behavior, and Android UI
 remain host-side.

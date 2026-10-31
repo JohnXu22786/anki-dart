@@ -71,6 +71,7 @@ export 'src/manage_note_type_refresh_plan.dart';
 export 'src/login_input_state.dart';
 export 'src/logged_in_logout_plan.dart';
 export 'src/switch_profiles_dialog_state.dart';
+export 'src/profile_switch_guard.dart';
 export 'src/review_reminder_form_state.dart';
 export 'src/review_reminder_delivery.dart';
 export 'src/review_reminder.dart';

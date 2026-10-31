@@ -1460,6 +1460,23 @@ retains `CardTemplates`, its length and names, and localization. Focused tests i
 `test/card_template_editor_new_card_name_test.dart` are source-derived; no
 direct pinned test for `newCardName` was found.
 
+## Card Template Editor deletion orphan check
+
+`cardTemplateEditorDeletionWouldOrphanNote()` in
+`lib/src/card_template_editor_deletion_orphan_check.dart` follows
+`CardTemplateEditor.kt:1388–1412` at AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It checks the pending-add
+predicate first and returns false without calculating ordinals or querying the
+collection when the position is pending. Otherwise it calculates delete
+ordinals once, awaits the host card-ID query with the supplied note-type ID and
+the same ordinal list, and returns true only for a null query result; empty and
+nonempty lists both return false. The temporary model, including the source
+null assertion, stays in host callbacks. The host also owns `CardTemplateNotetype`,
+the collection and `withCol`; callback failures propagate unchanged. Focused
+tests in `test/card_template_editor_deletion_orphan_check_test.dart` are
+source-derived; no direct pinned test for this method was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor EditTab
 
 `CardTemplateEditorEditTab` in `lib/src/card_template_editor_edit_tab.dart`

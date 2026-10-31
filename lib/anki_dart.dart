@@ -258,6 +258,7 @@ export 'src/card_template_editor_note_type_changed.dart';
 export 'src/card_template_editor_flip_qa.dart';
 export 'src/card_template_editor_markdown.dart';
 export 'src/card_template_editor_new_card_name.dart';
+export 'src/card_template_editor_deletion_orphan_check.dart';
 export 'src/tts_voice_filter_projection.dart';
 export 'src/tts_text_selection.dart';
 export 'src/instant_editor_cloze_state.dart';

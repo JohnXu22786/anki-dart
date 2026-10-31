@@ -7,6 +7,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/EditDeckDescriptionDialogViewModel.kt` is marked `GPL-3.0-or-later` upstream. Its portable description/Markdown state, initialization and change comparison, back/close decisions, and save-before-dismissal actions are adapted in `lib/src/edit_deck_description_state.dart`. The host supplies persisted values and applies the returned actions; SavedStateHandle, collection access and updates, coroutine/Flow delivery, Android lifecycle, and dialog UI remain host-side. The pinned `EditDeckDescriptionDialogViewModelTest.kt` is also marked `GPL-3.0-or-later`. The upstream files state no separate copyright holder.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesState.kt`
   and `ManageNoteTypesViewModel.kt` are Copyright © 2025 lukstbit and marked
   `GPL-3.0-or-later` upstream. Their portable row/state values, filter and

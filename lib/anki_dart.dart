@@ -35,6 +35,7 @@ export 'src/deck_picker_schedule_review_reminders_request.dart';
 export 'src/deck_picker_export_deck_request.dart';
 export 'src/deck_picker_manage_note_types_request.dart';
 export 'src/manage_note_types_state.dart';
+export 'src/edit_deck_description_state.dart';
 export 'src/deck_picker_reload_deck_counts_plan.dart';
 export 'src/deck_picker_empty_card_deletion.dart';
 export 'src/deck_node.dart';

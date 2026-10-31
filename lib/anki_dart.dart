@@ -65,6 +65,7 @@ export 'src/auto_advance.dart';
 export 'src/reviewer_auto_advance_toggle.dart';
 export 'src/reviewer_auto_advance_action.dart';
 export 'src/reviewer_answer_card_effect_plan.dart';
+export 'src/reviewer_op_executed_effect_plan.dart';
 export 'src/reviewer_leech_feedback.dart';
 export 'src/reviewer_undo_redo_feedback.dart';
 export 'src/reviewer_previous_card_info_directive.dart';

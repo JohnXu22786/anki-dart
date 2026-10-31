@@ -263,6 +263,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `lib/src/reviewer_answer_buttons_next_time_update.dart`; host settings and
   queue reads, scheduler calculation, coroutine and Flow delivery, call sites,
   and answer-button layout remain outside.
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
+  is marked `GPL-3.0-or-later` upstream. Its source-ordered operation-change
+  callback requests are projected by `lib/src/reviewer_op_executed_effect_plan.dart`;
+  the host retains `OpChanges` and handler reads, collection/card/media access,
+  coroutine and Flow handling, labels, rendering, and lifecycle.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimer.kt`
   and `AnswerTimerState.kt` are marked `GPL-3.0-or-later` upstream. Their
   hidden/running/paused/stopped state machine is adapted in

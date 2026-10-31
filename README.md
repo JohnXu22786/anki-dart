@@ -25,9 +25,8 @@ structured search-node planning, the
 answer-timer state machine,
 reviewer Auto Advance scheduling and toggle effects, leech-feedback
 composition, whiteboard and record-voice toggle effects, the headless reviewer
-reset-progress, stop-auto-advance, statistics-destination, and edited-tag
-request projections,
-gesture parser,
+reset-progress, stop-auto-advance, statistics-destination, edited-tag request
+projections, operation-executed effect ordering, gesture parser,
 parsed-gesture command
 routing, reviewer binding codec/map and
 default definitions, headless
@@ -913,6 +912,13 @@ Android lifecycle, StateFlow, localization, and UI.
   matching undo/redo message callback with a nonempty operation unchanged.
   Undo availability and execution, protobuf extraction, localization,
   Reviewer action dispatch, and feedback Flow delivery remain host-side.
+- Reviewer operation-executed effects: `planReviewerOpExecutedEffects` always
+  requests undo/redo labels first, returns after that request for the source
+  handler, then selects study-queue, note-text, or card effects in source
+  precedence. Note-text requests reload the card, load AV tags, update the mark
+  icon, and render the host-selected side; card requests reload before updating
+  the flag icon. The host owns change/handler reads and executes callbacks in
+  order, stopping naturally on failure; see `ANKIDROID_UPSTREAM.md`.
 - Reviewer media replay side: `reviewerReplayMediaSide` maps the host-supplied
   `showingAnswer` value to `back` when true and `front` when false, matching the
   pinned `replayMedia()` side choice. The pinned Reviewer tests have no direct

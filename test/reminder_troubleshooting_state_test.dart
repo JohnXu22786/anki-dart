@@ -76,6 +76,187 @@ void main() {
       expect((result as CheckResultError).exception, same(exception));
     });
 
+    test(
+      'refresh reads in source order and returns the complete projection',
+      () {
+        final reads = <String>[];
+        final original = ReminderTroubleshootingState();
+
+        final refreshed = refreshReminderTroubleshootingChecks(
+          currentState: original,
+          readNotificationPermission: () {
+            reads.add('notification permission');
+            return true;
+          },
+          readNotificationChannelEnabled: () {
+            reads.add('notification channel');
+            return null;
+          },
+          readDoNotDisturbOff: () {
+            reads.add('do not disturb');
+            return false;
+          },
+          readBatteryOptimization: () {
+            reads.add('battery optimization');
+            return BatteryOptimizationState.restricted;
+          },
+          readPowerSavingModeOff: () {
+            reads.add('power saving');
+            return false;
+          },
+          readExactAlarmPermission: () {
+            reads.add('exact alarm');
+            return true;
+          },
+        );
+
+        expect(reads, [
+          'notification permission',
+          'notification channel',
+          'do not disturb',
+          'battery optimization',
+          'power saving',
+          'exact alarm',
+        ]);
+        expect(
+          refreshed,
+          const ReminderTroubleshootingState(
+            notificationPermission: NotificationPermissionCheck(
+              result: CheckResult.passed,
+            ),
+            notificationChannelEnabled: NotificationChannelEnabledCheck(
+              result: CheckResult.unavailable,
+            ),
+            doNotDisturbOff: DoNotDisturbOffCheck(result: CheckResult.warning),
+            batteryOptimizationDisabled: BatteryOptimizationCheck(
+              result: CheckResult.failed,
+            ),
+            powerSavingModeOff: PowerSavingModeOffCheck(
+              result: CheckResult.warning,
+            ),
+            exactAlarmPermission: ExactAlarmPermissionCheck(
+              result: CheckResult.passed,
+            ),
+          ),
+        );
+        expect(original, const ReminderTroubleshootingState());
+      },
+    );
+
+    test('refresh maps false using blocking and warning source policies', () {
+      final refreshed = refreshReminderTroubleshootingChecks(
+        currentState: const ReminderTroubleshootingState(),
+        readNotificationPermission: () => false,
+        readNotificationChannelEnabled: () => false,
+        readDoNotDisturbOff: () => false,
+        readBatteryOptimization: () => BatteryOptimizationState.optimized,
+        readPowerSavingModeOff: () => false,
+        readExactAlarmPermission: () => false,
+      );
+
+      expect(refreshed.notificationPermission.result, CheckResult.failed);
+      expect(refreshed.notificationChannelEnabled.result, CheckResult.failed);
+      expect(refreshed.doNotDisturbOff.result, CheckResult.warning);
+      expect(refreshed.batteryOptimizationDisabled.result, CheckResult.warning);
+      expect(refreshed.powerSavingModeOff.result, CheckResult.warning);
+      expect(refreshed.exactAlarmPermission.result, CheckResult.warning);
+    });
+
+    test(
+      'refresh keeps each read exception and applies its fallback policy',
+      () {
+        for (var throwingIndex = 0; throwingIndex < 6; throwingIndex++) {
+          final reads = <int>[];
+          final exception = FormatException('read $throwingIndex');
+
+          void record(int index) {
+            reads.add(index);
+            if (index == throwingIndex) throw exception;
+          }
+
+          final refreshed = refreshReminderTroubleshootingChecks(
+            currentState: const ReminderTroubleshootingState(),
+            readNotificationPermission: () {
+              record(0);
+              return true;
+            },
+            readNotificationChannelEnabled: () {
+              record(1);
+              return true;
+            },
+            readDoNotDisturbOff: () {
+              record(2);
+              return true;
+            },
+            readBatteryOptimization: () {
+              record(3);
+              return BatteryOptimizationState.unrestricted;
+            },
+            readPowerSavingModeOff: () {
+              record(4);
+              return true;
+            },
+            readExactAlarmPermission: () {
+              record(5);
+              return true;
+            },
+          );
+
+          expect(reads, [0, 1, 2, 3, 4, 5]);
+          final result = refreshed.checks[throwingIndex].result;
+          expect(result, isA<CheckResultError>());
+          expect((result as CheckResultError).exception, same(exception));
+        }
+      },
+    );
+
+    test('refresh propagates a non-Exception Error without later reads', () {
+      for (var throwingIndex = 0; throwingIndex < 6; throwingIndex++) {
+        final reads = <int>[];
+        final error = StateError('read $throwingIndex');
+        final original = const ReminderTroubleshootingState();
+
+        void record(int index) {
+          reads.add(index);
+          if (index == throwingIndex) throw error;
+        }
+
+        expect(
+          () => refreshReminderTroubleshootingChecks(
+            currentState: original,
+            readNotificationPermission: () {
+              record(0);
+              return true;
+            },
+            readNotificationChannelEnabled: () {
+              record(1);
+              return true;
+            },
+            readDoNotDisturbOff: () {
+              record(2);
+              return true;
+            },
+            readBatteryOptimization: () {
+              record(3);
+              return BatteryOptimizationState.unrestricted;
+            },
+            readPowerSavingModeOff: () {
+              record(4);
+              return true;
+            },
+            readExactAlarmPermission: () {
+              record(5);
+              return true;
+            },
+          ),
+          throwsA(same(error)),
+        );
+
+        expect(reads, List<int>.generate(throwingIndex + 1, (index) => index));
+        expect(original, const ReminderTroubleshootingState());
+      }
+    });
+
     test('defaults retain all six Loading checks in source order', () {
       const state = ReminderTroubleshootingState();
 

@@ -80,6 +80,13 @@ Media Check result publication uses `CHECKING_MEDIA` progress and passes the
 opaque backend result through only after the host check returns successfully.
 The host retains the backend call, progress execution, and result storage.
 
+Reminder troubleshooting now also projects the six source-ordered permission
+and device-setting reads into one complete state value. The host supplies the
+synchronous reads and publishes the returned value; Android APIs, repository
+access, ViewModel/StateFlow lifecycle, localization, and UI remain host-side.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) for the exact source pin and
+the pinned-test coverage boundary.
+
 Login input validation preserves the focus-loss-only empty-field errors, the
 nonempty-string button predicate without trimming, and Idle/Success/Error state
 variants with opaque error payloads. Authentication, persistence, logging,

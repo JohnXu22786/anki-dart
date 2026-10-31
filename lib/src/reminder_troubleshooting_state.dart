@@ -188,6 +188,23 @@ final class ReminderTroubleshootingState {
   final PowerSavingModeOffCheck powerSavingModeOff;
   final ExactAlarmPermissionCheck exactAlarmPermission;
 
+  /// Returns a state with all six check results replaced together.
+  ReminderTroubleshootingState copyWith({
+    required NotificationPermissionCheck notificationPermission,
+    required NotificationChannelEnabledCheck notificationChannelEnabled,
+    required DoNotDisturbOffCheck doNotDisturbOff,
+    required BatteryOptimizationCheck batteryOptimizationDisabled,
+    required PowerSavingModeOffCheck powerSavingModeOff,
+    required ExactAlarmPermissionCheck exactAlarmPermission,
+  }) => ReminderTroubleshootingState(
+    notificationPermission: notificationPermission,
+    notificationChannelEnabled: notificationChannelEnabled,
+    doNotDisturbOff: doNotDisturbOff,
+    batteryOptimizationDisabled: batteryOptimizationDisabled,
+    powerSavingModeOff: powerSavingModeOff,
+    exactAlarmPermission: exactAlarmPermission,
+  );
+
   /// Checks in the source's stable display and summary order.
   List<TroubleshootingCheck> get checks => [
     notificationPermission,
@@ -233,3 +250,53 @@ final class ReminderTroubleshootingState {
     exactAlarmPermission,
   );
 }
+
+/// Runs the source-ordered reminder checks against [currentState] and returns
+/// their complete updated value without publishing it.
+///
+/// The host supplies synchronous reads and publishes the returned state. If a
+/// read throws an [Exception], its result follows the source fallback policy;
+/// other errors propagate and prevent the projection from returning.
+ReminderTroubleshootingState refreshReminderTroubleshootingChecks({
+  required ReminderTroubleshootingState currentState,
+  required bool? Function() readNotificationPermission,
+  required bool? Function() readNotificationChannelEnabled,
+  required bool? Function() readDoNotDisturbOff,
+  required BatteryOptimizationState? Function() readBatteryOptimization,
+  required bool? Function() readPowerSavingModeOff,
+  required bool? Function() readExactAlarmPermission,
+}) => currentState.copyWith(
+  notificationPermission: NotificationPermissionCheck(
+    result: CheckResult.from(
+      readNotificationPermission,
+      onFailure: CheckResult.failed,
+    ),
+  ),
+  notificationChannelEnabled: NotificationChannelEnabledCheck(
+    result: CheckResult.from(
+      readNotificationChannelEnabled,
+      onFailure: CheckResult.failed,
+    ),
+  ),
+  doNotDisturbOff: DoNotDisturbOffCheck(
+    result: CheckResult.from(
+      readDoNotDisturbOff,
+      onFailure: CheckResult.warning,
+    ),
+  ),
+  batteryOptimizationDisabled: BatteryOptimizationCheck(
+    result: mapBatteryOptimizationState(readBatteryOptimization),
+  ),
+  powerSavingModeOff: PowerSavingModeOffCheck(
+    result: CheckResult.from(
+      readPowerSavingModeOff,
+      onFailure: CheckResult.warning,
+    ),
+  ),
+  exactAlarmPermission: ExactAlarmPermissionCheck(
+    result: CheckResult.from(
+      readExactAlarmPermission,
+      onFailure: CheckResult.warning,
+    ),
+  ),
+);

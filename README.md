@@ -41,7 +41,7 @@ sequences and saved-search submission effects, saved-search
 outcome-message mapping, search-result message selection, and save-search
 prompt decisions,
 CardTemplate marker-based string composition and
-verbatim card-content QA wrapping,
+verbatim card-content QA wrapping, browser-appearance result extraction,
 card-template type-answer modifier parsing, cloze-index derivation and
 cloze-content extraction, question-side type-answer placeholder removal,
 the host-input field/result decision, and answer-side placeholder

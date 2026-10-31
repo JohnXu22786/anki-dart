@@ -13,6 +13,8 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/preferences/profiles/SwitchProfilesViewModel.kt` is Copyright © 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked `GPL-3.0-or-later` upstream. Its empty profile-list state and add-dialog visibility transitions are adapted in `lib/src/switch_profiles_dialog_state.dart`; profile creation remains TODO, matching the pinned source. ProfileManager/profile IO, ProfileName validation, logging, StateFlow, lifecycle, and Android UI remain host-side. The pinned `SwitchProfilesViewModelTest.kt` is also Copyright © 2026 Ashish Yadav and marked `GPL-3.0-or-later`.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ImportViewModel.kt` is Copyright © 2026 Georgios Michelakis <michelakisgio@gmail.com> and marked `GPL-3.0-or-later` upstream. Its add/replace action selection and unchanged path request are adapted in `lib/src/import_action_routing.dart`. SharedFlow delivery, coroutine/Job scheduling, importer/backend work, and Android UI remain host-side. The pinned source has no tests for these methods; focused Dart cases are source-derived.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesState.kt`
   and `ManageNoteTypesViewModel.kt` are Copyright © 2025 lukstbit and marked
   `GPL-3.0-or-later` upstream. Their portable row/state values, filter and

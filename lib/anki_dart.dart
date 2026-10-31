@@ -80,6 +80,7 @@ export 'src/media_check_missing_tagging.dart';
 export 'src/media_check_result_publication.dart';
 export 'src/media_check_trash_actions.dart';
 export 'src/empty_cards_search_state.dart';
+export 'src/import_action_routing.dart';
 export 'src/custom_study_card_state.dart';
 export 'src/filtered_deck_options.dart';
 export 'src/reviewer_edited_tags_directive.dart';

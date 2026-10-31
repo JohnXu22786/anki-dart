@@ -102,6 +102,10 @@ state. Confirming a valid name hides the dialog without creating a profile,
 matching the pinned source's TODO. Profile loading, validation, logging,
 StateFlow, lifecycle, and Android UI remain host-side.
 
+Import add and replace routing preserves the chosen action and original path
+string. Flow delivery, coroutine scheduling, importer behavior, and Android UI
+remain host-side.
+
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and
@@ -144,6 +148,7 @@ StateFlow, lifecycle, and Android UI remain host-side.
 - Manage Note Types list state: `ManageNoteTypesState` maps case-insensitive filtering, display flags, row selection and multi-select mode, source-order selected rows, Fields Editor and Card Editor destinations, and destination clearing. The host supplies note-type rows and retains collection loading/refresh, use-count queries, rename/delete/undo, exception aggregation, asynchronous flows, lifecycle, UI, and note-type mutations. Its cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Edit Deck Description state: `EditDeckDescriptionDialogState` retains restored edits when marked dirty, otherwise initializes from persisted values; it compares both fields only after initialization, distinguishes same-value dirty marking from actual changes, and returns back/close/save decisions with persistence ordered before Saved dismissal. The host supplies persistence values and applies actions; collection access/update, SavedStateHandle, flows/coroutines, lifecycle, and dialog UI remain host-side. Its focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Switch Profiles dialog state: `SwitchProfilesDialogState` starts with no profiles and the add dialog hidden, projects show/dismiss visibility changes, and hides on confirmation without creating a profile because creation remains TODO in the pinned source. ProfileManager/profile IO, ProfileName validation, logging, StateFlow, lifecycle, and Android UI remain host-side. Its focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Import action routing: `projectImportAdd` and `projectImportReplace` produce distinct host-facing actions and carry the supplied path string unchanged. SharedFlow delivery, coroutine/Job scheduling, import backend and importer behavior, and Android UI remain host-side. The focused Dart cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker reload-count publication: `planDeckPickerReloadDeckCounts` stages host reads and publications in source order, so a later read failure leaves earlier publications intact. It publishes due-tree and no-cards state before reading studied-today, then stages scheduler config, focused deck, and undo-menu reads around their corresponding updates. It composes the existing scheduler and undo-menu projections and replaces only literal LF characters in studied-today text, preserving CR and other whitespace. The host owns cancellation, IO/jobs, reads, and flow updates; cases are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker options-menu refresh: `planDeckPickerOptionsMenuRefresh` maps
   collection accessibility, the ten-deck search-icon threshold, undo values,

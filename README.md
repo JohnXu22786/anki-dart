@@ -1503,6 +1503,25 @@ values, callback order, lazy confirmation, and failure stopping. The pinned
 `CardTemplateEditorTest.kt:213–220` checks the rendered message and continuation.
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment add confirmation
+
+`cardTemplateFragmentConfirmAddCards()` in
+`lib/src/card_template_fragment_confirm_add_cards.dart` follows
+`CardTemplateFragment.confirmAddCards()` at `CardTemplateEditor.kt:1485–1508`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates the host dialog,
+resolves the quantity string with the unchanged affected-card count and formats
+it with that count, then resolves title and positive-button text before setting
+dialog arguments. It registers a lazy confirmation that passes the host add
+action through its sync check, then shows the same dialog. No template is added
+before confirmation. Android `ConfirmationDialog`, resources/localization,
+quantity formatting, note-type/models, sync and actual add behavior, lifecycle,
+and UI remain host-side. Focused source-derived cases in
+`test/card_template_fragment_confirm_add_cards_test.dart` cover argument values,
+callback order, lazy add, and failure stopping. The pinned
+`CardTemplateEditorTest.testTemplateAdd` covers the integrated add flow. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment execute with sync check
 
 `cardTemplateFragmentExecuteWithSyncCheck()` in

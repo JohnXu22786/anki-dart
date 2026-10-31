@@ -36,6 +36,7 @@ export 'src/deck_picker_export_deck_request.dart';
 export 'src/deck_picker_manage_note_types_request.dart';
 export 'src/manage_note_types_state.dart';
 export 'src/manage_note_types_delete_plan.dart';
+export 'src/manage_note_type_delete_plan.dart';
 export 'src/login_input_state.dart';
 export 'src/logged_in_logout_plan.dart';
 export 'src/switch_profiles_dialog_state.dart';

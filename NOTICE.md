@@ -48,7 +48,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   exception wrappers, mutable state/StateFlow, coroutine scheduling, Timber,
   and Android UI/lifecycle. Focused Dart cases are source-derived from
   `ManageNoteTypesViewModelTest.kt`, Copyright © 2025 lukstbit and marked
-  `GPL-3.0-or-later`.
+  `GPL-3.0-or-later`. The single-note-type delete decision and outcome are
+  adapted in `lib/src/manage_note_type_delete_plan.dart`; the host retains the
+  undoable operation, safe removal, generated result, reportable exception,
+  coroutine/state-flow, logging, and Android/UI lifecycle. No direct pinned
+  test covers this method; focused Dart cases are source-derived.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/InsertFieldDialogViewModel.kt`,
   `AnkiDroid/src/main/java/com/ichi2/anki/model/FieldName.kt`,

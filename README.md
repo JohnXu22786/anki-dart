@@ -1444,6 +1444,25 @@ the boolean reads. Focused tests in
 `test/card_template_editor_dynamic_note_type_test.dart` are source-derived; the
 pinned method is marked `@NeedsTest`. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment delete card template
+
+`cardTemplateFragmentDeleteCardTemplate()` in
+`lib/src/card_template_fragment_delete_card_template.dart` follows
+`CardTemplateFragment.deleteCardTemplate()` at `CardTemplateEditor.kt:1026–1048`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the temporary model,
+ordinal, and template in source order. The single-template and orphan guards
+show their host dialogs and return before count confirmation. Pending-add
+ordinals confirm with zero; ordinary ordinals log, query the exact host
+template-use count, and confirm with the captured template and model notetype.
+The host retains lifecycle launch, resources, model/notetype access, collection
+callbacks, Timber, dialogs, and confirmation UI. Focused Dart cases in
+`test/card_template_fragment_delete_card_template_test.dart` cover the guards,
+pending-add and ordinary-count paths, callback order, and failure stopping.
+Pinned `CardTemplateEditorTest` cases cover the single-template guard,
+orphan prevention, and deletion confirmation. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment add card template
 
 `cardTemplateFragmentAddCardTemplate()` in

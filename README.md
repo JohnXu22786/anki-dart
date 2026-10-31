@@ -1508,6 +1508,25 @@ Focused tests in `test/card_template_fragment_arguments_test.dart` are
 source-derived; no direct pinned test for this factory was found. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment current template
+
+`cardTemplateFragmentCurrentTemplate()` in
+`lib/src/card_template_fragment_current_template.dart` follows the nested
+`CardTemplateFragment.currentTemplate` getter at `CardTemplateEditor.kt:1276–1290`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Its single host callback keeps the
+source sequence together: read and assert `tempNoteType`, resolve the current
+ordinal, fetch the template, read `qfmt`, `afmt`, then `css`, and construct the
+host-projected CardTemplate with front, back, and style in that order. Any
+`Exception` from those operations is passed unchanged to the host warning
+callback once with the source warning message, then null is returned. `Error`s
+and warning callback failures propagate. Android ordinal access, backend model
+access, `BackendCardTemplate`, CardTemplate construction, and Timber remain
+host-side; Dart does not normalize the field values. Focused tests in
+`test/card_template_fragment_current_template_test.dart` are source-derived; no
+direct pinned test for this getter was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor deletion orphan check
 
 `cardTemplateEditorDeletionWouldOrphanNote()` in

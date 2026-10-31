@@ -236,3 +236,4 @@ export 'src/profile_name.dart';
 export 'src/reviewer_full_screen_mode.dart';
 export 'src/reminder_log_projection.dart';
 export 'src/fsrs_version.dart';
+export 'src/tts_voice_playback_effects.dart';

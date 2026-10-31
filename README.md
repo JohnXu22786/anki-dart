@@ -1493,6 +1493,24 @@ propagate unchanged and stop later effects. Focused source-derived cases in
 order, identity, resources, null listener, Unit return and failure stopping.
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment text-selection action mode callback
+
+`cardTemplateFragmentActionModeOnCreate()`,
+`cardTemplateFragmentActionModeOnPrepare()`,
+`cardTemplateFragmentActionModeOnActionItemClicked()`, and
+`cardTemplateFragmentActionModeOnDestroy()` in
+`lib/src/card_template_fragment_action_mode_callback.dart` follow
+`CardTemplateFragment.ActionModeCallback` at `CardTemplateEditor.kt:831–869`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The projection preserves the
+existing-item early return, menu-size reads, styling-editor exclusion,
+localized item insertion, single item-ID read, dialog-before-finish order, and
+exception propagation. Android `ActionMode`, `Menu`, `MenuItem`, resources, and
+the dialog remain host-side. Focused source-derived tests are in
+`test/card_template_fragment_action_mode_callback_test.dart`; pinned tests
+exercise the dialog integration but do not directly test this callback. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Fragment insert-field dialog
 
 `cardTemplateFragmentShowInsertFieldDialog()` in

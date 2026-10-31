@@ -32,6 +32,7 @@ export 'src/card_template_fragment_after_text_changed.dart';
 export 'src/card_template_fragment_delete_template.dart';
 export 'src/card_template_fragment_show_orphan_note_dialog.dart';
 export 'src/card_template_fragment_show_insert_field_dialog.dart';
+export 'src/card_template_fragment_action_mode_callback.dart';
 export 'src/card_template_fragment_show_rename_dialog.dart';
 export 'src/card_template_fragment_show_reposition_dialog.dart';
 export 'src/card_template_fragment_confirm_add_cards.dart';

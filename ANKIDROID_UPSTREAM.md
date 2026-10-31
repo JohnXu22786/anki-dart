@@ -674,6 +674,27 @@ comparisons, callback reads/writes, and failure order. The host retains
 methods; Dart host storage starts from `initialTemplatePagerBaseId`
 (`BigInt.zero`) and focused Dart coverage is source-derived.
 
+## CardTemplateFragment.ActionModeCallback
+
+`CardTemplateFragment.ActionModeCallback` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:831–869` (pinned
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is projected
+by `cardTemplateFragmentActionModeOnCreate()`,
+`cardTemplateFragmentActionModeOnPrepare()`,
+`cardTemplateFragmentActionModeOnActionItemClicked()`, and
+`cardTemplateFragmentActionModeOnDestroy()` in
+`lib/src/card_template_fragment_action_mode_callback.dart`. It preserves the
+existing-item early return, source-ordered menu-size/editor/title reads and
+insertion, size-based return value, one item-ID read, dialog-before-finish
+order, and empty destroy callback. Android action mode/menu objects, resources,
+and dialog behavior remain host-side. Focused source-derived tests are in
+`test/card_template_fragment_action_mode_callback_test.dart`. The pinned
+`CardTemplateEditorTest.kt` was searched for ActionMode callback and insert-field
+references: it tests dialog integration but has no direct callback test. The
+source file is marked `GPL-3.0-or-later` and its file-level SPDX header credits
+Timothy Rae (2014) and Mike Hardy (2018); no method-specific authorship is
+asserted. Root `COPYING` remains byte-identical.
+
 ## CardTemplateFragment.showInsertFieldDialog
 
 `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:875–916`

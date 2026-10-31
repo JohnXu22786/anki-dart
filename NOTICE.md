@@ -98,6 +98,19 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   context, notetype/note/collection, fragment manager, resources, layout params,
   suspending collection/task scheduling and task/error handling remain host-side.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:831–869`
+  (`CardTemplateFragment.ActionModeCallback`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked
+  `GPL-3.0-or-later` with file-level SPDX copyright notices for Timothy Rae
+  (2014) and Mike Hardy (2018); no method-specific authorship is asserted. Its
+  source-ordered action-mode callback projection is adapted in
+  `lib/src/card_template_fragment_action_mode_callback.dart`, with focused
+  source-derived cases in
+  `test/card_template_fragment_action_mode_callback_test.dart`. Android action
+  mode/menu objects, resources, and the dialog remain host-side. Pinned
+  `CardTemplateEditorTest.kt` tests dialog integration but has no direct test
+  for this callback.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:875–916`
   (`CardTemplateFragment.showInsertFieldDialog`; pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) comes from a source file marked

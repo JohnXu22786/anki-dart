@@ -69,6 +69,11 @@ Media Check result publication uses `CHECKING_MEDIA` progress and passes the
 opaque backend result through only after the host check returns successfully.
 The host retains the backend call, progress execution, and result storage.
 
+Card Template Editor state preserves the Initializing, Loaded, and Finished
+states, source defaults, load/error/finish transitions, and Loaded-only updates.
+The host supplies opaque exception data and retains Android lifecycle, StateFlow,
+template loading and persistence, rendering, and UI.
+
 Media Check trash actions preserve `deleteTrash()` / `restoreTrash()` operation
 selection and run the chosen host operation inside unlabeled progress and the
 collection host. Backend work, coroutine launch, and progress lifecycle remain

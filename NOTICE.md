@@ -68,6 +68,20 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   count, and review-only current-interval visibility are adapted in
   `lib/src/set_due_date_view_model.dart`. Collection access, scheduler mutation,
   undo handling, and Android UI remain host-side.
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditorState.kt` and
+  `CardTemplateEditorViewModel.kt` are Copyright © 2025 Snowiee
+  <xenonnn4w@gmail.com> and marked `GPL-3.0-or-later` upstream. Their portable
+  Initializing / Loaded / Finished state variants, editor-view and message
+  enums, opaque reportable-exception data, and Loaded-only transitions are
+  adapted in `lib/src/card_template_editor_state.dart`. The exception source
+  is preserved with its reportable flag; host error conversion, StateFlow,
+  logging, Android lifecycle, template loading/saving, rendering, and UI remain
+  host-side. `AnkiDroid/src/main/java/com/ichi2/anki/exception/ReportableException.kt`
+  is Copyright © 2025 lukstbit
+  <52494258+lukstbit@users.noreply.github.com> and marked `GPL-3.0-or-later`;
+  its opaque source value and `isReportable` flag are represented in the Dart
+  data wrapper. The pinned source has no tests for these methods; Dart cases
+  are source-derived.
 - `AnkiDroid/src/main/java/com/ichi2/anki/mediacheck/MediaCheckViewModel.kt`
   is Copyright (c) 2025 Ashish Yadav <mailtoashish693@gmail.com> and marked
   `GPL-3.0-or-later` upstream. Its portable unused-file deletion and

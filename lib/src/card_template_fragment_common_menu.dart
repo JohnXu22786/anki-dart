@@ -20,6 +20,8 @@
  * see ANKIDROID_UPSTREAM.md.
  */
 
+import 'card_template_editor_dynamic_note_type.dart';
+
 /// Host-supplied Android menu IDs and the source unknown stock-kind sentinel.
 final class CardTemplateCommonMenuItemIds {
   const CardTemplateCommonMenuItemIds({
@@ -70,6 +72,133 @@ abstract final class cardTemplateCommonMenuLogMessages {
   static const askingToRestore = 'Asking to restore to original stock kind %s';
   static const unknownStockKind =
       'Unknown stock kind: asking which kind to restore to';
+  static const dynamicNoteTypeSetup =
+      'Editing cloze/occlusion note type, disabling add/delete card template and deck override functionality';
+}
+
+/// The source menu entries configured by `CardTemplateFragment.setupCommonMenu`.
+enum CardTemplateCommonMenuSetupItem {
+  restoreToDefault,
+  browserAppearance,
+  add,
+  rename,
+  addDeckOverride,
+  delete,
+  preview,
+  insertField,
+}
+
+/// Host callbacks for projecting `CardTemplateFragment.setupCommonMenu(menu)`.
+///
+/// The host resolves menu items and localized titles, and reads Android/model
+/// state. The setup function keeps those callbacks lazy and source ordered;
+/// callback failures propagate immediately.
+final class CardTemplateCommonMenuSetupCallbacks<TTemplate, TMenuItem> {
+  const CardTemplateCommonMenuSetupCallbacks({
+    required this.findItem,
+    required this.setTitle,
+    required this.setVisible,
+    required this.restoreToDefaultTitle,
+    required this.browserAppearanceTitle,
+    required this.deckOverrideTitle,
+    required this.debugLog,
+    required this.isCloze,
+    required this.isImageOcclusion,
+    required this.currentTemplate,
+    required this.templateHasDid,
+    required this.templateDidIsNull,
+    required this.templateCount,
+    required this.fragmented,
+    required this.currentEditorViewId,
+    required this.stylingViewId,
+  });
+
+  final TMenuItem Function(CardTemplateCommonMenuSetupItem item) findItem;
+  final void Function(TMenuItem item, String title) setTitle;
+  final void Function(TMenuItem item, bool visible) setVisible;
+  final String Function() restoreToDefaultTitle;
+  final String Function() browserAppearanceTitle;
+  final String Function(bool hasOverride) deckOverrideTitle;
+  final void Function(String message) debugLog;
+  final bool Function() isCloze;
+  final bool Function() isImageOcclusion;
+  final TTemplate? Function() currentTemplate;
+  final bool Function(TTemplate template) templateHasDid;
+  final bool Function(TTemplate template) templateDidIsNull;
+  final int Function() templateCount;
+  final bool Function() fragmented;
+  final int Function() currentEditorViewId;
+  final int Function() stylingViewId;
+}
+
+/// Applies the common menu titles and visibility predicates in source order.
+void setupCardTemplateCommonMenu<TTemplate, TMenuItem>({
+  required CardTemplateCommonMenuSetupCallbacks<TTemplate, TMenuItem> callbacks,
+}) {
+  final restoreItem = callbacks.findItem(
+    CardTemplateCommonMenuSetupItem.restoreToDefault,
+  );
+  callbacks.setTitle(restoreItem, callbacks.restoreToDefaultTitle());
+
+  final browserAppearanceItem = callbacks.findItem(
+    CardTemplateCommonMenuSetupItem.browserAppearance,
+  );
+  callbacks.setTitle(browserAppearanceItem, callbacks.browserAppearanceTitle());
+
+  final createsDynamicNotes =
+      cardTemplateEditorNoteTypeCreatesDynamicNumberOfNotes(
+        isCloze: callbacks.isCloze,
+        isImageOcclusion: callbacks.isImageOcclusion,
+      );
+  if (createsDynamicNotes) {
+    callbacks.debugLog(cardTemplateCommonMenuLogMessages.dynamicNoteTypeSetup);
+    callbacks.setVisible(
+      callbacks.findItem(CardTemplateCommonMenuSetupItem.add),
+      false,
+    );
+    callbacks.setVisible(
+      callbacks.findItem(CardTemplateCommonMenuSetupItem.rename),
+      false,
+    );
+    callbacks.setVisible(
+      callbacks.findItem(CardTemplateCommonMenuSetupItem.addDeckOverride),
+      false,
+    );
+  } else {
+    final template = callbacks.currentTemplate();
+    final hasOverride =
+        template != null &&
+        callbacks.templateHasDid(template) &&
+        !callbacks.templateDidIsNull(template);
+    final deckOverrideItem = callbacks.findItem(
+      CardTemplateCommonMenuSetupItem.addDeckOverride,
+    );
+    callbacks.setTitle(
+      deckOverrideItem,
+      callbacks.deckOverrideTitle(hasOverride),
+    );
+  }
+
+  if (callbacks.templateCount() < 2) {
+    callbacks.setVisible(
+      callbacks.findItem(CardTemplateCommonMenuSetupItem.delete),
+      false,
+    );
+  }
+
+  if (callbacks.fragmented()) {
+    callbacks.setVisible(
+      callbacks.findItem(CardTemplateCommonMenuSetupItem.preview),
+      false,
+    );
+  }
+
+  final isInsertFieldItemVisible =
+      callbacks.currentEditorViewId() != callbacks.stylingViewId();
+  callbacks.setVisible(
+    callbacks.findItem(CardTemplateCommonMenuSetupItem.insertField),
+    isInsertFieldItemVisible,
+  );
 }
 
 /// Host callbacks for `CardTemplateFragment.handleCommonMenuItemSelected`.

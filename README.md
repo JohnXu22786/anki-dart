@@ -1822,6 +1822,21 @@ pinned source marks this method `@NeedsTest("Restore to default option")`; no
 focused direct pinned restore test was found. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+`setupCardTemplateCommonMenu()` in
+`lib/src/card_template_fragment_common_menu.dart` follows
+`CardTemplateFragment.setupCommonMenu(menu)` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1127–1160` in
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It keeps
+the title, dynamic-note, deck-override, template-count, fragmented-preview,
+and styling-view branches in source order, including lazy current-template and
+JSON `did` reads. Host callbacks retain menu lookup/mutation, localization,
+logging, Android view IDs, and model access; callback failures propagate.
+Focused cases in
+`test/card_template_fragment_setup_common_menu_test.dart` are source-derived.
+Pinned `CardTemplateEditorTest` covers visible add, delete, and preview actions
+but does not isolate this configuration method's branches. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor deck selection
 
 `cardTemplateEditorDeckSelected()` in

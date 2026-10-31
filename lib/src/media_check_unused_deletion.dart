@@ -21,7 +21,7 @@
  */
 
 /// Progress messages used while AnkiDroid applies Media Check actions.
-enum MediaCheckProgress { addingTags, deletingMedia }
+enum MediaCheckProgress { checkingMedia, addingTags, deletingMedia }
 
 /// A host operation in the unused-media deletion plan.
 sealed class MediaCheckUnusedDeletionEffect {

@@ -73,13 +73,16 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `GPL-3.0-or-later` upstream. Its portable unused-file deletion and
   missing-media tagging plans are adapted in
   `lib/src/media_check_unused_deletion.dart` and
-  `lib/src/media_check_missing_tagging.dart`. They preserve null-result
-  fallbacks, exact host inputs, `DELETING_MEDIA` / `ADDING_TAGS` progress, and
-  count publication only after successful host operations. The tagging plan
-  uses the host bulk-add result count. Media scanning, filesystem/tag backend
-  operations, progress execution, StateFlow/coroutines, lifecycle, and UI remain
-  host-side. The pinned `MediaCheckViewModelTest.kt` is Copyright (c) 2026
-  Ashish Yadav <mailtoashish693@gmail.com> and marked `GPL-3.0-or-later`.
+  `lib/src/media_check_missing_tagging.dart`; the check-result publication
+  sequence is adapted in `lib/src/media_check_result_publication.dart`. These
+  preserve opaque result publication only after the check succeeds, null-result
+  fallbacks, exact host inputs, `CHECKING_MEDIA` / `DELETING_MEDIA` /
+  `ADDING_TAGS` progress, and count publication only after successful host
+  operations. The tagging plan uses the host bulk-add result count. Media
+  scanning, backend operations, progress execution, StateFlow/coroutines,
+  lifecycle, and UI remain host-side. The pinned `MediaCheckViewModelTest.kt`
+  is Copyright (c) 2026 Ashish Yadav <mailtoashish693@gmail.com> and marked
+  `GPL-3.0-or-later`.
 - `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckFilters.kt` is
   Copyright © 2026 Arthur Milchior <arthur@milchior.fr>. Its Dart adaptation is
   `lib/src/deck_filters.dart`, with locale-sensitive case handling in

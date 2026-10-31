@@ -65,6 +65,10 @@ an empty list when absent) and caller tag for the host bulk-add under
 only after success; tag storage, progress execution, and state delivery remain
 host-side.
 
+Media Check result publication uses `CHECKING_MEDIA` progress and passes the
+opaque backend result through only after the host check returns successfully.
+The host retains the backend call, progress execution, and result storage.
+
 - Deck-picker search: token and deck-path matching, with locale-invariant query
   casing and locale-aware deck-name casing, including contextual
   and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and

@@ -9,6 +9,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1550–1574` (`CardTemplateFragment.deleteTemplate`) is Copyright © 2014 Timothy Rae and © 2018 Mike Hardy and marked `GPL-3.0-or-later` upstream. Its source-ordered collection filtering, per-match log and temporary-note-type removal, assignment/update, and pager effects are adapted in `lib/src/card_template_fragment_delete_template.dart`; focused source-derived cases are in `test/card_template_fragment_delete_template_test.dart`. The host retains `NotetypeJson`, `CardTemplates`/JSONArray, the null assertion, Timber, ordinal updater, adapter, pager, animation, and UI. Pinned `CardTemplateEditorTest.testDeleteTemplate` and `testDeleteTemplateWithSelectivelyGeneratedCards` cover integration behavior.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:418–430`
+  (`isKeyboardOpen`, `updateDiscardChangesCallback`; pinned AnkiDroid 2.25.3
+  commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is from a source file
+  marked `GPL-3.0-or-later` with SPDX copyright notices for Timothy Rae (2014)
+  and Mike Hardy (2018). The narrow callback sequence is adapted in
+  `lib/src/card_template_editor_keyboard_discard_gate.dart`, with focused
+  source-derived cases in
+  `test/card_template_editor_keyboard_discard_gate_test.dart`. No
+  method-specific authorship is asserted. Android Fragment/View/binding/bottom
+  navigation, lifecycle, and callback object remain host-side.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt`
   (`CardTemplateFragment.saveNoteType`, lines 1091–1119) is marked
   `GPL-3.0-or-later` upstream and names no separate copyright holder. Its

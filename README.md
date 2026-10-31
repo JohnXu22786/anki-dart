@@ -1901,6 +1901,22 @@ normalized. Focused cases in
 `CardTemplateEditorTest.kt` behavior and source logic. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Editor keyboard discard gate
+
+`cardTemplateEditorUpdateDiscardChangesCallback()` in
+`lib/src/card_template_editor_keyboard_discard_gate.dart` preserves
+`CardTemplateEditor.kt:418–430` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the current fragment once
+and follows the nullable view, binding, and bottom-navigation callbacks in
+source order. Keyboard-open is true only when navigation visibility is exactly
+false. An open keyboard disables the discard callback without checking the note
+type; otherwise the existing note-type-change projection runs once, and its
+result is written once. Callback failures propagate unchanged. Android Fragment,
+View, binding, bottom navigation, lifecycle, and the callback object remain
+host-side. Focused source-derived cases are in
+`test/card_template_editor_keyboard_discard_gate_test.dart`; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 
 ## Card Template Editor Markdown
 

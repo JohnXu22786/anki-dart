@@ -18,8 +18,9 @@
  * SPDX-FileCopyrightText: 2026 Eric Li <ericli3690@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from ReviewReminderGroup.kt in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md.
+ * Source-derived from ReviewReminderGroup.kt, ReviewReminder.kt, and the
+ * current-schema fixture in ReviewRemindersDatabaseTest.kt in AnkiDroid
+ * 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 import 'package:anki_dart/anki_dart.dart';
@@ -35,6 +36,73 @@ ReviewReminder reminder(int id, {bool enabled = true}) =>
 
 void main() {
   group('ReviewReminderGroup', () {
+    test('decodes and re-encodes the current-schema database golden JSON', () {
+      const rawJson =
+          '{"22":{"id":22,"time":{"hour":14,"minute":16},'
+          '"cardTriggerThreshold":1,"scope":{"type":"com.ichi2.anki.'
+          'reviewreminders.ReviewReminderScope.Global"},"enabled":true,'
+          '"latestNotifTime":1771193761002,"profileID":"",'
+          '"onlyNotifyIfNoReviews":false}}';
+
+      final group = ReviewReminderGroup.fromJsonString(rawJson);
+
+      expect(
+        group[ReviewReminderId(22)],
+        ReviewReminder.createReviewReminder(
+          id: ReviewReminderId(22),
+          time: ReviewReminderTime(hour: 14, minute: 16),
+          cardTriggerThreshold: ReviewReminderCardTriggerThreshold(1),
+          latestNotifTime: 1771193761002,
+        ),
+      );
+      expect(group.serializeToString(), rawJson);
+    });
+
+    test('round trips DeckSpecific scope discriminator and deck payload', () {
+      final group = ReviewReminderGroup.fromPairs([
+        MapEntry(
+          ReviewReminderId(7),
+          ReviewReminder.createReviewReminder(
+            id: ReviewReminderId(7),
+            time: ReviewReminderTime(hour: 9, minute: 30),
+            cardTriggerThreshold: ReviewReminderCardTriggerThreshold(12),
+            scope: const DeckSpecificReminderScope(-42),
+            enabled: false,
+            latestNotifTime: 1234,
+            profileID: 'profile-a',
+            onlyNotifyIfNoReviews: true,
+          ),
+        ),
+      ]);
+
+      const expectedJson =
+          '{"7":{"id":7,"time":{"hour":9,"minute":30},'
+          '"cardTriggerThreshold":12,"scope":{"type":"com.ichi2.anki.'
+          'reviewreminders.ReviewReminderScope.DeckSpecific","did":-42},'
+          '"enabled":false,"latestNotifTime":1234,'
+          '"profileID":"profile-a","onlyNotifyIfNoReviews":true}}';
+
+      expect(group.serializeToString(), expectedJson);
+      expect(ReviewReminderGroup.fromJsonString(expectedJson), group);
+    });
+
+    test('malformed and wrongly typed JSON fails during decoding', () {
+      expect(
+        () => ReviewReminderGroup.fromJsonString('{'),
+        throwsFormatException,
+      );
+      expect(
+        () => ReviewReminderGroup.fromJsonString(
+          '{"22":{"id":22,"time":{"hour":14,"minute":16},'
+          '"cardTriggerThreshold":1,"scope":{"type":"com.ichi2.anki.'
+          'reviewreminders.ReviewReminderScope.Global"},"enabled":"true",'
+          '"latestNotifTime":1771193761002,"profileID":"",'
+          '"onlyNotifyIfNoReviews":false}}',
+        ),
+        throwsA(isA<TypeError>()),
+      );
+    });
+
     test(
       'copies map associations and retains values without key validation',
       () {

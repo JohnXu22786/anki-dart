@@ -18,12 +18,15 @@
  * SPDX-FileCopyrightText: 2026 Eric Li <ericli3690@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from ReviewReminderGroup.kt in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md.
+ * Source-derived from ReviewReminderGroup.kt and ReviewReminder.kt in
+ * AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
+
+import 'dart:convert';
 
 import 'review_reminder.dart';
 import 'review_reminder_id.dart';
+import 'review_reminder_form_state.dart';
 
 /// A mutable map wrapper for reminders sharing one host-selected scope.
 ///
@@ -42,7 +45,20 @@ final class ReviewReminderGroup {
   ReviewReminderGroup.fromGroups(Iterable<ReviewReminderGroup> groups)
     : _reminders = {for (final group in groups) ...group._reminders};
 
+  /// Decodes the current-schema reminder map from AnkiDroid's JSON string.
+  ///
+  /// Malformed JSON and values that do not match the source schema throw;
+  /// database-level recovery and logging remain the caller's responsibility.
+  ReviewReminderGroup.fromJsonString(String serializedString)
+    : _reminders = _decodeReminderMap(serializedString);
+
   final Map<ReviewReminderId, ReviewReminder> _reminders;
+
+  /// Encodes this group's reminders using AnkiDroid's current JSON schema.
+  String serializeToString() => jsonEncode({
+    for (final entry in _reminders.entries)
+      entry.key.value.toString(): _reminderToJson(entry.value),
+  });
 
   /// Returns a new group, with [other]'s values replacing colliding keys.
   ReviewReminderGroup operator +(ReviewReminderGroup other) =>
@@ -92,6 +108,108 @@ final class ReviewReminderGroup {
   int get hashCode => Object.hashAllUnordered(
     _reminders.entries.map((entry) => Object.hash(entry.key, entry.value)),
   );
+}
+
+const _globalScopeType =
+    'com.ichi2.anki.reviewreminders.ReviewReminderScope.Global';
+const _deckSpecificScopeType =
+    'com.ichi2.anki.reviewreminders.ReviewReminderScope.DeckSpecific';
+
+Map<ReviewReminderId, ReviewReminder> _decodeReminderMap(String json) {
+  final decoded = jsonDecode(json) as Map<String, dynamic>;
+  return {
+    for (final entry in decoded.entries)
+      ReviewReminderId(int.parse(entry.key)): _reminderFromJson(
+        entry.value as Map<String, dynamic>,
+      ),
+  };
+}
+
+ReviewReminder _reminderFromJson(Map<String, dynamic> json) {
+  _requireJsonKeys(json, const {
+    'id',
+    'time',
+    'cardTriggerThreshold',
+    'scope',
+    'enabled',
+    'latestNotifTime',
+    'profileID',
+    'onlyNotifyIfNoReviews',
+  });
+  final time = json['time'] as Map<String, dynamic>;
+  _requireJsonKeys(time, const {'hour', 'minute'});
+
+  final scopeJson = json['scope'] as Map<String, dynamic>;
+  final scope = switch (scopeJson['type'] as String) {
+    _globalScopeType => _globalScopeFromJson(scopeJson),
+    _deckSpecificScopeType => _deckSpecificScopeFromJson(scopeJson),
+    _ => throw FormatException('Unknown review reminder scope type'),
+  };
+
+  return ReviewReminder.createReviewReminder(
+    id: ReviewReminderId(_int32(json['id'])),
+    time: ReviewReminderTime(
+      hour: _int32(time['hour']),
+      minute: _int32(time['minute']),
+    ),
+    cardTriggerThreshold: ReviewReminderCardTriggerThreshold(
+      _int32(json['cardTriggerThreshold']),
+    ),
+    scope: scope,
+    enabled: json['enabled'] as bool,
+    latestNotifTime: _int64(json['latestNotifTime']),
+    profileID: json['profileID'] as String,
+    onlyNotifyIfNoReviews: json['onlyNotifyIfNoReviews'] as bool,
+  );
+}
+
+ReviewReminderScope _globalScopeFromJson(Map<String, dynamic> json) {
+  _requireJsonKeys(json, const {'type'});
+  return const GlobalReminderScope();
+}
+
+ReviewReminderScope _deckSpecificScopeFromJson(Map<String, dynamic> json) {
+  _requireJsonKeys(json, const {'type', 'did'});
+  return DeckSpecificReminderScope(_int64(json['did']));
+}
+
+Map<String, Object?> _reminderToJson(ReviewReminder reminder) => {
+  'id': reminder.id.value,
+  'time': {'hour': reminder.time.hour, 'minute': reminder.time.minute},
+  'cardTriggerThreshold': reminder.cardTriggerThreshold.threshold,
+  'scope': switch (reminder.scope) {
+    GlobalReminderScope() => {'type': _globalScopeType},
+    DeckSpecificReminderScope(:final deckId) => {
+      'type': _deckSpecificScopeType,
+      'did': deckId,
+    },
+  },
+  'enabled': reminder.enabled,
+  'latestNotifTime': reminder.latestNotifTime,
+  'profileID': reminder.profileID,
+  'onlyNotifyIfNoReviews': reminder.onlyNotifyIfNoReviews,
+};
+
+int _int32(Object? value) {
+  final number = value as int;
+  if (number < -2147483648 || number > 2147483647) {
+    throw FormatException('Expected a signed 32-bit integer');
+  }
+  return number;
+}
+
+int _int64(Object? value) {
+  final number = value as int;
+  if (number < -9223372036854775808 || number > 9223372036854775807) {
+    throw FormatException('Expected a signed 64-bit integer');
+  }
+  return number;
+}
+
+void _requireJsonKeys(Map<String, dynamic> json, Set<String> expected) {
+  if (json.length != expected.length || !json.keys.every(expected.contains)) {
+    throw FormatException('JSON fields do not match the reminder schema');
+  }
 }
 
 /// Merges a list of groups, with later groups replacing values at shared keys.

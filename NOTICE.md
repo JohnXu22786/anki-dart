@@ -1232,7 +1232,7 @@ source-compatible nested time/scope string forms are derived from AnkiDroid's
 `ReviewReminder.kt` and `ReviewReminderTest.kt`, Copyright © 2025 Eric Li
 <ericli3690@gmail.com>, licensed `GPL-3.0-or-later` upstream. The host supplies
 the allocated reminder ID and epoch-millisecond timestamps and retains clock,
-preference access, serialization, Parcelable, persistence, collection access,
+preference access, Parcelable, persistence, collection access,
 and notification scheduling. The focused Dart cases are source-derived behavior
 tests, not a port of the Android test harness.
 
@@ -1240,11 +1240,16 @@ tests, not a port of the Android test harness.
 `lib/src/review_reminder_group.dart` are derived from AnkiDroid's
 `ReviewReminderGroup.kt`, Copyright © 2026 Eric Li
 <ericli3690@gmail.com>, licensed `GPL-3.0-or-later` upstream. The map wrapper
-and merge operations are represented in memory; JSON serialization,
-SharedPreferences, schema/database handling, mutexes/coroutines, scheduling, and
-Android UI remain host-side. Value iteration order is not a contract. The
-focused Dart cases are source-derived behavior tests, not a port of an Android
-group test harness.
+and merge operations are represented in memory. The current-schema JSON codec
+is derived from `ReviewReminder.kt`, Copyright © 2025 Eric Li
+<ericli3690@gmail.com>, and the golden fixture in
+`ReviewRemindersDatabaseTest.kt`, Copyright © 2025 Eric Li
+<ericli3690@gmail.com>; both are licensed `GPL-3.0-or-later` upstream. It
+preserves the reminder-ID-keyed map, source field order and names, and the
+polymorphic scope discriminator and payload. SharedPreferences,
+schema/database handling, mutexes/coroutines, scheduling, and Android UI remain
+host-side. Value iteration order is not a contract. The focused Dart cases are
+source-derived behavior tests, not a port of an Android group test harness.
 
 The schema version values, V1/V2 reminder schemas, and current-schema migration
 projection in `lib/src/review_reminder_schema_migration.dart` are derived from

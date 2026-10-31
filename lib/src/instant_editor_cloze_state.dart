@@ -41,6 +41,15 @@ final class InstantEditorClozeState {
     unicode: true,
   );
 
+  static final RegExp _spaceRegex = RegExp(r'[ \t\n\x0B\f\r]+');
+  static final RegExp _punctuationPattern = RegExp(
+    r'^[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]+$',
+  );
+  static final RegExp _kotlinUnicodeWhitespace = RegExp(
+    r'[\p{Zs}\p{Zl}\p{Zp}]',
+    unicode: true,
+  );
+
   final List<int> _clozeOrdinals = [];
   int _currentClozeNumber = 1;
   ClozeNumberMode _currentClozeMode = ClozeNumberMode.increment;
@@ -96,6 +105,79 @@ final class InstantEditorClozeState {
         '${match.group(3) ?? ''}'
         '${match.group(4) ?? ''}',
   );
+
+  /// Splits nullable field text around full cloze matches like the source.
+  ///
+  /// Kotlin's default JVM `\\s` is ASCII-only, while `trim()` also removes
+  /// Java whitespace separators. Preserve both behaviors before applying the
+  /// source's stateful punctuation merge.
+  List<String> getWordsFromFieldText() {
+    final sentence = _actualClozeFieldText ?? '';
+    final words = <String>[];
+    var lastIndex = 0;
+
+    for (final match in _clozePattern.allMatches(sentence)) {
+      final between = _trimKotlinWhitespace(
+        sentence.substring(lastIndex, match.start),
+      );
+      words.addAll(between.split(_spaceRegex).where((word) => word.isNotEmpty));
+      words.add(match.group(0)!);
+      lastIndex = match.end;
+    }
+
+    if (lastIndex < sentence.length) {
+      final remaining = _trimKotlinWhitespace(sentence.substring(lastIndex));
+      words.addAll(
+        remaining.split(_spaceRegex).where((word) => word.isNotEmpty),
+      );
+    }
+
+    return _combineWordsWithPunctuation(words);
+  }
+
+  List<String> _combineWordsWithPunctuation(List<String> words) {
+    final combinedWords = <String>[];
+    var clozeEncountered = false;
+
+    for (final word in words) {
+      if (_punctuationPattern.hasMatch(word) && clozeEncountered) {
+        combinedWords[combinedWords.length - 1] += word;
+      } else {
+        clozeEncountered = _isFullClozeMatch(word);
+        combinedWords.add(word);
+      }
+    }
+
+    return combinedWords;
+  }
+
+  static bool _isFullClozeMatch(String word) {
+    final match = _clozePattern.matchAsPrefix(word);
+    return match != null && match.end == word.length;
+  }
+
+  static String _trimKotlinWhitespace(String value) {
+    var start = 0;
+    var end = value.length;
+    while (start < end && _isKotlinWhitespace(value.codeUnitAt(start))) {
+      start++;
+    }
+    while (end > start && _isKotlinWhitespace(value.codeUnitAt(end - 1))) {
+      end--;
+    }
+    return value.substring(start, end);
+  }
+
+  static bool _isKotlinWhitespace(int codeUnit) {
+    if ((codeUnit >= 0x09 && codeUnit <= 0x0d) ||
+        (codeUnit >= 0x1c && codeUnit <= 0x20)) {
+      return true;
+    }
+    if (codeUnit == 0x00a0 || codeUnit == 0x2007 || codeUnit == 0x202f) {
+      return false;
+    }
+    return _kotlinUnicodeWhitespace.hasMatch(String.fromCharCode(codeUnit));
+  }
 
   /// Adds a cloze around the first source-regex word, or removes an existing
   /// cloze using the source's match and counter/list update order.

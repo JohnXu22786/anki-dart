@@ -41,6 +41,72 @@ void main() {
       }
     });
 
+    test('testExtractWordsIncludingClozes', () {
+      final state = InstantEditorClozeState();
+      state.setClozeFieldText(
+        'This is a {{c1::test}} sentence with {{c2::multiple}} clozes.',
+      );
+
+      expect(state.getWordsFromFieldText(), [
+        'This',
+        'is',
+        'a',
+        '{{c1::test}}',
+        'sentence',
+        'with',
+        '{{c2::multiple}}',
+        'clozes.',
+      ]);
+    });
+
+    test('testExtractWordsIncludingPunctuations', () {
+      final state = InstantEditorClozeState();
+      state.setClozeFieldText(
+        'This is a {{c1::test}}!! sentence with {{c2::multiple}} clozes?',
+      );
+
+      expect(state.getWordsFromFieldText(), [
+        'This',
+        'is',
+        'a',
+        '{{c1::test}}!!',
+        'sentence',
+        'with',
+        '{{c2::multiple}}',
+        'clozes?',
+      ]);
+    });
+
+    test(
+      'word extraction preserves empty input and punctuation transitions',
+      () {
+        final state = InstantEditorClozeState();
+
+        state.setClozeFieldText(null);
+        expect(state.getWordsFromFieldText(), isEmpty);
+        state.setClozeFieldText('');
+        expect(state.getWordsFromFieldText(), isEmpty);
+
+        state.setClozeFieldText('{{c1::one}}{{c2::two}}');
+        // The source's greedy optional trailing punctuation consumes the next
+        // cloze opener when two matches touch.
+        expect(state.getWordsFromFieldText(), ['{{c1::one}}{{', 'c2::two}}']);
+
+        state.setClozeFieldText('{{c1::one}} ! ? word !!!');
+        expect(state.getWordsFromFieldText(), ['{{c1::one}}!?', 'word', '!!!']);
+      },
+    );
+
+    test('word extraction keeps JVM whitespace split and trim semantics', () {
+      final state = InstantEditorClozeState();
+
+      state.setClozeFieldText(' \u2003alpha\u2003beta\u2003 ');
+      expect(state.getWordsFromFieldText(), ['alpha\u2003beta']);
+
+      state.setClozeFieldText('alpha\u00a0');
+      expect(state.getWordsFromFieldText(), ['alpha\u00a0']);
+    });
+
     test(
       'field text replaces ordinals in source order and keeps duplicates',
       () {

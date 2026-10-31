@@ -1556,6 +1556,26 @@ host-side; Dart does not normalize the field values. Focused tests in
 direct pinned test for this getter was found. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Template Fragment browser appearance result
+
+`applyBrowserAppearanceResult()` in
+`lib/src/card_template_browser_appearance_result_application.dart` follows
+`CardTemplateFragment.onCardBrowserAppearanceResult(data)` at
+`CardTemplateEditor.kt:1430–1441` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host parser once;
+when parsing returns null, it emits the outer warning and returns. For a result,
+it emits the info log, asks the host to read the current template once, and
+returns without mutation when none is available. Otherwise it applies BQ then BA
+formats from `BrowserAppearanceResult` and updates discard-change state.
+Callback failures propagate and stop later work. Android `Intent` reads, the
+parser's inner warning, current-index/backend lookup and its source exception
+boundary, Android logging, `BackendCardTemplate`, and its setters remain
+host-side; the current template itself never enters Dart. Focused cases in
+`test/card_template_browser_appearance_result_application_test.dart` are
+source-derived. The pinned `CardTemplateEditorTest` integrates appearance
+results and subsequent discard confirmation, but does not isolate every
+orchestration branch. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Card Template Editor deletion orphan check
 
 `cardTemplateEditorDeletionWouldOrphanNote()` in

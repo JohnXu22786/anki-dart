@@ -25,6 +25,7 @@ export 'src/card_template_browser_appearance_menu_routing.dart';
 export 'src/card_template_browser_appearance_dialog_actions.dart';
 export 'src/card_template_browser_appearance_state_transfer.dart';
 export 'src/card_template_browser_appearance_result.dart';
+export 'src/card_template_browser_appearance_result_application.dart';
 export 'src/deck_picker_previous_version.dart';
 export 'src/deck_position.dart';
 export 'src/deck_picker_sync_icon_projection.dart';

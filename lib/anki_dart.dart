@@ -171,6 +171,7 @@ export 'src/browser_selection_export.dart';
 export 'src/card_appearance_css.dart';
 export 'src/card_media_markup.dart';
 export 'src/card_viewer_show_answer_effects.dart';
+export 'src/card_viewer_show_question_effects.dart';
 export 'src/card_template.dart';
 export 'src/card_template_change_tracking.dart';
 export 'src/browser_availability.dart';

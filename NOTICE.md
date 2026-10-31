@@ -394,7 +394,12 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   The `toggleMark()` operation order is adapted as host effects in
   `lib/src/previewer_mark_effects.dart`; current note resolution, tag mutation,
   undoable persistence, marked-state lookup, error handling, and StateFlow
-  delivery remain outside. `AnkiDroid/src/main/java/com/ichi2/anki/servicelayer/NoteService.kt`
+  delivery remain outside. `CardViewerViewModel.showQuestion()` order is adapted
+  in `lib/src/card_viewer_show_question_effects.dart`, with source-derived tests
+  in `test/card_viewer_show_question_effects_test.dart`; collection/card access,
+  media operations, type-answer filtering, JSON encoding, body-class lookup,
+  eval delivery, coroutines, media/lifecycle, and UI remain with the host.
+  `AnkiDroid/src/main/java/com/ichi2/anki/servicelayer/NoteService.kt`
   is Copyright © 2013 Bibek Shrestha <bibekshrestha@gmail.com>, Zaur
   Molotnikov <qutorial@gmail.com>, Nicolas Raoul <nicolas.raoul@gmail.com>, and
   Flavio Lerda <flerda@gmail.com>. Its pure mark-tag action and

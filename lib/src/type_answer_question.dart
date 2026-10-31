@@ -102,6 +102,29 @@ String _inputPrompt({
   return output.toString();
 }
 
+/// Replaces every Reviewer question marker with its HTML type-answer input.
+///
+/// The host supplies the resolved font and font size. The Reviewer-specific
+/// prompt is interpolated directly into a Java `Matcher` replacement string,
+/// preserving its `$` group and backslash behavior. Reviewer dispatch,
+/// TypeAnswer lookup/state, and HTML/WebView rendering remain host-side.
+String filterReviewerTypeAnswerQuestion(
+  String text, {
+  required String font,
+  required int fontSize,
+}) {
+  final replacement =
+      '<center>\n'
+      '<input type="text" id="typeans" '
+      'onkeydown="ankidroid.onTypeAnswerKeyDown(event);" \n'
+      '   style="font-family: \'$font\'; font-size: ${fontSize}px;">\n'
+      '</center>';
+  return text.replaceAllMapped(
+    _questionTypeAnswerPattern,
+    (match) => _expandJavaMatcherReplacement(replacement, match),
+  );
+}
+
 String _expandJavaMatcherReplacement(String replacement, Match match) {
   final output = StringBuffer();
   var index = 0;

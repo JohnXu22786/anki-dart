@@ -24,6 +24,87 @@ import 'package:anki_dart/anki_dart.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('filterReviewerTypeAnswerQuestion', () {
+    test('uses the exact Reviewer prompt and trimIndent whitespace', () {
+      expect(
+        filterReviewerTypeAnswerQuestion(
+          '[[type:Front]]',
+          font: 'Open Sans',
+          fontSize: 23,
+        ),
+        '<center>\n'
+        '<input type="text" id="typeans" '
+        'onkeydown="ankidroid.onTypeAnswerKeyDown(event);" \n'
+        '   style="font-family: \'Open Sans\'; font-size: 23px;">\n'
+        '</center>',
+      );
+    });
+
+    test('replaces each nonempty marker and preserves nonmatching text', () {
+      expect(
+        filterReviewerTypeAnswerQuestion(
+          'before [[type:Front]] / [[type:Back]] after '
+          '[[TYPE:No]] [[type:broken\nmarker]]',
+          font: 'Serif',
+          fontSize: 18,
+        ),
+        'before <center>\n'
+        '<input type="text" id="typeans" '
+        'onkeydown="ankidroid.onTypeAnswerKeyDown(event);" \n'
+        '   style="font-family: \'Serif\'; font-size: 18px;">\n'
+        '</center> / <center>\n'
+        '<input type="text" id="typeans" '
+        'onkeydown="ankidroid.onTypeAnswerKeyDown(event);" \n'
+        '   style="font-family: \'Serif\'; font-size: 18px;">\n'
+        '</center> after [[TYPE:No]] [[type:broken\nmarker]]',
+      );
+    });
+
+    test('leaves empty and every Java line-broken marker unmatched', () {
+      for (final text in [
+        '[[type:]]',
+        for (final lineTerminator in ['\n', '\r', '\u0085', '\u2028', '\u2029'])
+          '[[type:Front${lineTerminator}Back]]',
+      ]) {
+        expect(
+          filterReviewerTypeAnswerQuestion(text, font: 'Serif', fontSize: 18),
+          text,
+        );
+      }
+    });
+
+    test('font interpolation retains Java Matcher group and escape behavior',
+        () {
+      expect(
+        filterReviewerTypeAnswerQuestion(
+          '[[type:Front]]',
+          font: r'Open$10\Mono',
+          fontSize: 12,
+        ),
+        contains("font-family: 'OpenFront0Mono'; font-size: 12px;"),
+      );
+    });
+
+    test('invalid font groups fail only when a marker is replaced', () {
+      expect(
+        () => filterReviewerTypeAnswerQuestion(
+          '[[type:Front]]',
+          font: r'Open$2',
+          fontSize: 12,
+        ),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        filterReviewerTypeAnswerQuestion(
+          'no marker',
+          font: r'Open$2',
+          fontSize: 12,
+        ),
+        'no marker',
+      );
+    });
+  });
+
   group('filterTypeAnswerQuestion', () {
     test('uses the span prompt for every placeholder without trimming text',
         () {

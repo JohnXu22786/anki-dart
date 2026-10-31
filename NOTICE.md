@@ -9,7 +9,7 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/FullScreenMode.kt` declares `GPL-3.0-or-later` and does not name a separate copyright holder. Its exact mode strings, default/null/unknown decoding, fullscreen predicate, legacy boolean migration decision, and ordered string-write/key-removal plan are adapted in `lib/src/reviewer_full_screen_mode.dart`; source-derived cases are in `test/reviewer_full_screen_mode_test.dart`. The host reads SharedPreferences and applies the ordered actions inside its Android edit transaction. SharedPreferences, Android window/insets/UI effects, and unrelated Reviewer behavior remain host-side.
 
-- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt` is marked `GPL-3.0-or-later` upstream and names no separate copyright holder. Its `onPageFinished(isAfterRecreation)` branch and request order are adapted in `lib/src/reviewer_page_finished_effects.dart`; source-derived cases are in `test/reviewer_page_finished_effects_test.dart`. The host retains the lifecycle callback, IO coroutine scheduling, actual current-card refresh and rendering, mutation signal/JavaScript, coroutine cancellation/errors, Flow delivery, WebView, and Android lifecycle/UI. The upstream TODO about "Don't keep activities" is not extended.
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt` is marked `GPL-3.0-or-later` upstream and names no separate copyright holder. Its `onPageFinished(isAfterRecreation)` branch and request order are adapted in `lib/src/reviewer_page_finished_effects.dart`; source-derived cases are in `test/reviewer_page_finished_effects_test.dart`. Its `typeAnsQuestionFilter` HTML transformation is adapted in `lib/src/type_answer_question.dart`, with focused source-derived cases in `test/type_answer_question_test.dart`. The host retains the lifecycle callback, IO coroutine scheduling, actual current-card refresh and rendering, mutation signal/JavaScript, coroutine cancellation/errors, Flow delivery, WebView, Android input lifecycle, Reviewer dispatch/state, and TypeAnswer lookup/comparison. The upstream TODO about "Don't keep activities" is not extended.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/instantnoteeditor/InstantEditorViewModel.kt` is Copyright © 2024 Ashish Yadav <mailtoashish693@gmail.com> and marked `GPL-3.0-or-later` upstream. Its cloze field-text state, ordinal extraction, mode and counter changes, cloze wrapping/removal text, and punctuation behavior are adapted in `lib/src/instant_editor_cloze_state.dart`. Note/collection mutation, undoable save, editor selection/fields, Android StateFlow/lifecycle, and UI remain host-side. The pinned `InstantEditorViewModelTest.kt` and `InstantEditorViewModelParameterizedTest.kt` provide source cases; focused Dart tests also cover integer bounds and source-regex unmatched behavior.
 
@@ -924,6 +924,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `TypeAnswer.filterQuestion`, including prompt formatting and Java Matcher
   replacement strings. The pinned `TypeAnswerTest.kt` has no direct
   `filterQuestion` tests; its answer-filter cases are only adjacent evidence.
+- The same file contains focused source-derived checks for the separate
+  Reviewer `ReviewerViewModel.typeAnsQuestionFilter` HTML transformation,
+  including exact prompt whitespace, multiple/nonmatching markers, and direct
+  font interpolation with Kotlin replacement-string semantics. The pinned
+  `ReviewerViewModelTest.kt` has no direct assertion for this private helper.
 - The same file contains source-derived checks for the question branch of
   `TemplatePreviewerViewModel.typeAnsFilter`, which has no direct pinned test;
   it verifies first-input/later-warning order, replacement-string behavior,

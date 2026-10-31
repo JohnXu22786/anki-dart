@@ -32,7 +32,7 @@ routing, reviewer binding codec/map and
 default definitions, headless
 reviewer keyboard and axis-button dispatch, answer-button command mapping and
 AutomaticAnswer action decoding, and reviewer binding preference/default
-resolution, Reviewer state-mutation hook decisions, and Card Browser
+resolution, Reviewer state-mutation hook decisions, ordered Reviewer question-display effects, and Card Browser
 launch-option precedence. Card Browser search-text
 transitions, text-edit/sync/reset/history-selection/request-submission effect
 sequences and saved-search submission effects, saved-search
@@ -942,6 +942,14 @@ Android lifecycle, StateFlow, localization, and UI.
   the JavaScript, SharedFlow emission/delivery, callback failure propagation,
   mutation-signal completion, scheduler execution, WebView and lifecycle remain
   host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Reviewer question display: `planReviewerShowQuestionEffects()` requests a new
+  mutation signal only when the current one is complete, then preserves the
+  source order for showing the question, running the state-mutation hook,
+  updating mark and flag icons, and conditionally notifying Auto Advance.
+  Waiting for audio omits that notification so the host's existing media-group
+  completion callback remains responsible. The host retains signal lifecycle,
+  rendering, hook execution, collection reads and Flow publication, coroutine
+  and error boundaries, media callbacks, and UI; see `ANKIDROID_UPSTREAM.md`.
 - Reviewer media replay side: `reviewerReplayMediaSide` maps the host-supplied
   `showingAnswer` value to `back` when true and `front` when false, matching the
   pinned `replayMedia()` side choice. The pinned Reviewer tests have no direct

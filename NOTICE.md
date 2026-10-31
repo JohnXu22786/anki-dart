@@ -1200,6 +1200,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   from the callback, scheduler execution, callback error propagation, logging,
   WebView, and lifecycle.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
+  (`showQuestion`, lines 465–478; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) is marked `GPL-3.0-or-later`
+  and states no separate copyright holder. Its ordered show-question host
+  requests are adapted in `lib/src/reviewer_show_question_effects.dart`, with
+  focused cases in `test/reviewer_show_question_effects_test.dart`. The pinned
+  `ReviewerViewModelTest.kt:45–112` covers restoration and custom-scheduler
+  behavior, but not completed/pending mutation-signal selection, callback
+  order, or the wait-for-audio gate. The host retains signal lifecycle,
+  rendering, hook execution, mark/flag collection reads and Flow publication,
+  Auto Advance, coroutine/error boundaries, media callbacks, and UI.
+
 ## Unicode property data
 
 The locale-casing property ranges and full lowercase mappings in

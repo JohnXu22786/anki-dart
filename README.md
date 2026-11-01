@@ -3847,3 +3847,19 @@ cover callback order, exact token forwarding, identity, single invocation, and
 callback failures. No direct pinned test for this method was found. Source provenance and license details are in
 [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
 root `COPYING` remains byte-identical.
+
+## Changelog destination Intent
+
+[`ChangelogDestination.instance.toIntent()`](lib/src/changelog_destination_to_intent.dart)
+adapts the `ChangelogDestination` singleton and
+`ChangelogDestination.toIntent(context)` from AnkiDroid 2.25.3. It delegates
+once to the host Intent builder with the exact context and `Info::class.java`
+token and returns the callback's exact result. Callback failures propagate
+unchanged. Android Context, the Info activity class, and Intent construction and
+behavior remain host-side. Focused tests in
+[`test/changelog_destination_to_intent_test.dart`](test/changelog_destination_to_intent_test.dart)
+cover singleton identity, exact token/result forwarding, single invocation, and
+failure propagation. The pinned Kotlin sources declare `GPL-3.0-or-later` with
+no separate copyright line; the Dart implementation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) for pinned source paths.

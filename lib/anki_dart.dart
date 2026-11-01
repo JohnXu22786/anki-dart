@@ -417,5 +417,6 @@ export 'src/fragment_window.dart';
 export 'src/fragment_shared_prefs.dart';
 export 'src/note_editor_intent_launched_with_image.dart';
 export 'src/launcher_destination_to_intent.dart';
+export 'src/changelog_destination_to_intent.dart';
 export 'src/review_deck_destination.dart';
 export 'src/preferences_destination.dart';

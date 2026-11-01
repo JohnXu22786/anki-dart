@@ -512,6 +512,28 @@ direct pinned test for this method was found; focused source-derived cases are i
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `ChangelogDestination.toIntent(context)`
+
+`ChangelogDestination.instance.toIntent()` in
+`lib/src/changelog_destination_to_intent.dart` adapts the common singleton
+`ChangelogDestination` from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/ChangelogDestination.kt:6`
+and its `toIntent(context)` projection from
+`AnkiDroid/src/main/java/com/ichi2/anki/InfoDestination.kt:10`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It delegates once to the host
+Intent builder with the exact supplied context and `Info::class.java` token,
+then returns the exact callback result; callback failures propagate unchanged.
+Android Context, the Info activity class, Intent construction, and Intent
+behavior remain host-side. Focused source-derived tests in
+`test/changelog_destination_to_intent_test.dart` cover singleton identity,
+exact token and result identity, one callback invocation, and unchanged failure
+propagation. No direct pinned test for this projection was found. The Kotlin
+sources declare `GPL-3.0-or-later` and have no separate copyright line; this
+identifies upstream provenance and does not claim authorship of the Dart
+adaptation. The Dart implementation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
 ## `BrowserDestination.toIntent(context)`
 
 `lib/src/browser_destination.dart` and its source-derived cases in

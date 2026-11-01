@@ -3286,3 +3286,26 @@ writes. Android Context, Intent, Activity target, extra keys and semantics
 remain host-side. Both Kotlin sources declare `GPL-3.0-or-later` and have no
 separate copyright line. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+
+## Schedule Reminders destination
+
+`lib/src/schedule_reminders_destination.dart` and
+`test/schedule_reminders_destination_test.dart` adapt
+`ScheduleRemindersDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ScheduleRemindersDestination.kt:19–25`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The destination retains the
+supplied deck ID unchanged and creates a fresh existing
+`DeckSpecificReminderScope` for each projection call, passing it with the exact
+context to the host Intent builder and returning that exact callback result.
+Host callback failures propagate unchanged. `ScheduleRemindersFragment.getIntent`,
+Context, Android Intent/Parcelable extras, activity, fragment, and reminder
+behavior remain host-side. The Kotlin source declares `GPL-3.0-or-later` and
+Copyright (c) 2025 Eric Li; this identifies the Kotlin source and does not
+attribute the Dart adaptation to him. The Dart implementation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical. No direct pinned test for this class was found; focused
+source-derived cases cover unchanged deck IDs, fresh scope construction, exact
+context and scope forwarding, single host invocation, result identity, and
+callback failure propagation.

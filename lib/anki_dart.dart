@@ -421,4 +421,5 @@ export 'src/changelog_destination_to_intent.dart';
 export 'src/study_options_destination_to_intent.dart';
 export 'src/statistics_destination_to_intent.dart';
 export 'src/review_deck_destination.dart';
+export 'src/schedule_reminders_destination.dart';
 export 'src/preferences_destination.dart';

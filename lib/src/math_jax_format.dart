@@ -46,9 +46,9 @@ enum MathJaxFormat {
 
 /// Mutable result matching `Toolbar.StringFormat`'s Kotlin data-class values.
 class StringFormat {
-  StringFormat(this.text, this.selectionStart, this.selectionEnd);
+  StringFormat(this.result, this.selectionStart, this.selectionEnd);
 
-  String text;
+  String result;
   int selectionStart;
   int selectionEnd;
 
@@ -56,13 +56,13 @@ class StringFormat {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is StringFormat &&
-          text == other.text &&
+          result == other.result &&
           selectionStart == other.selectionStart &&
           selectionEnd == other.selectionEnd;
 
   @override
   int get hashCode {
-    var hash = _kotlinStringHashCode(text);
+    var hash = _kotlinStringHashCode(result);
     hash = (hash * 31 + selectionStart) & 0xffffffff;
     hash = (hash * 31 + selectionEnd) & 0xffffffff;
     return hash >= 0x80000000 ? hash - 0x100000000 : hash;
@@ -70,7 +70,7 @@ class StringFormat {
 
   @override
   String toString() =>
-      'StringFormat(text=$text, selectionStart=$selectionStart, '
+      'StringFormat(result=$result, selectionStart=$selectionStart, '
       'selectionEnd=$selectionEnd)';
 }
 

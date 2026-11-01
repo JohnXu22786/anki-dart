@@ -26,12 +26,12 @@ import 'package:test/test.dart';
 void main() {
   group('MathJaxFormat pinned output strings', () {
     test('BLOCK wraps nonempty input exactly', () {
-      expect(MathJaxFormat.BLOCK.toTextWrapper('x^2').text, r'\[x^2\]');
+      expect(MathJaxFormat.BLOCK.toTextWrapper('x^2').result, r'\[x^2\]');
     });
 
     test('CHEMISTRY wraps nonempty input exactly', () {
       expect(
-        MathJaxFormat.CHEMISTRY.toTextWrapper('H2O').text,
+        MathJaxFormat.CHEMISTRY.toTextWrapper('H2O').result,
         r'\( \ce{H2O} \)',
       );
     });
@@ -41,7 +41,7 @@ void main() {
     test('empty BLOCK selection is at the prefix end', () {
       final result = MathJaxFormat.BLOCK.toTextWrapper('');
 
-      expect(result.text, r'\[\]');
+      expect(result.result, r'\[\]');
       expect(result.selectionStart, 2);
       expect(result.selectionEnd, 2);
     });
@@ -49,7 +49,7 @@ void main() {
     test('empty CHEMISTRY selection is at the prefix end', () {
       final result = MathJaxFormat.CHEMISTRY.toTextWrapper('');
 
-      expect(result.text, r'\( \ce{} \)');
+      expect(result.result, r'\( \ce{} \)');
       expect(result.selectionStart, 7);
       expect(result.selectionEnd, 7);
     });
@@ -59,10 +59,10 @@ void main() {
       final chemistry = MathJaxFormat.CHEMISTRY.toTextWrapper('🙂');
 
       expect(block.selectionStart, 0);
-      expect(block.selectionEnd, block.text.length);
+      expect(block.selectionEnd, block.result.length);
       expect(block.selectionEnd, 6);
       expect(chemistry.selectionStart, 0);
-      expect(chemistry.selectionEnd, chemistry.text.length);
+      expect(chemistry.selectionEnd, chemistry.result.length);
       expect(chemistry.selectionEnd, 13);
     });
   });
@@ -78,14 +78,14 @@ void main() {
       expect(first.hashCode, 231602518);
       expect(
         first.toString(),
-        'StringFormat(text=value, selectionStart=1, selectionEnd=6)',
+        'StringFormat(result=value, selectionStart=1, selectionEnd=6)',
       );
 
-      first.text = 'changed';
+      first.result = 'changed';
       first.selectionStart = 2;
       first.selectionEnd = 4;
 
-      expect(first.text, 'changed');
+      expect(first.result, 'changed');
       expect(first.selectionStart, 2);
       expect(first.selectionEnd, 4);
       expect(first, isNot(equal));

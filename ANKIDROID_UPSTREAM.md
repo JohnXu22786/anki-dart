@@ -1053,6 +1053,9 @@ source pin is AnkiDroid 2.25.3 commit
 (`\\[` / `\\]`) and CHEMISTRY (`\\( \\ce{` / `} \\)`) wrappers, empty-input
 prefix-end selection, nonempty full-text selection, and mutable result values.
 Dart `String.length` and Kotlin `String.length` both count UTF-16 code units.
+The public Dart field is named `StringFormat.result`, matching the Kotlin data
+class and its generated `StringFormat(result=..., selectionStart=...,
+selectionEnd=...)` string form.
 
 The pinned `AnkiDroid/src/test/java/com/ichi2/anki/noteeditor/MathJaxFormatTest.kt`
 contains two direct nonempty output-string cases (BLOCK and CHEMISTRY); it does

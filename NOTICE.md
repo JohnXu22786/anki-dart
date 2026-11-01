@@ -1902,8 +1902,9 @@ and focused tests are Copyright © 2026 John Tsui and marked
   2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`, declare
   `SPDX-License-Identifier: GPL-3.0-or-later` and have no separate copyright
   line; no method-specific authorship is asserted. The exact wrapper strings,
-  empty/nonempty selection indices, mutable result, and Kotlin data-class value
-  behavior are adapted in `lib/src/math_jax_format.dart`. The two direct pinned
+  empty/nonempty selection indices, mutable `result` field, and Kotlin
+  data-class value behavior and string form are adapted in
+  `lib/src/math_jax_format.dart`. The two direct pinned
   nonempty output-string cases from
   `AnkiDroid/src/test/java/com/ichi2/anki/noteeditor/MathJaxFormatTest.kt` are
   covered distinctly from source-derived empty-input, selection, UTF-16 length,

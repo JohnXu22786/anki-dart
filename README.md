@@ -12,7 +12,8 @@ commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Android localized label looku
 toolbar/editor insertion, cursor application, and Activity lifecycle stay on the
 host. The two pinned upstream tests cover nonempty wrapped output; focused Dart
 tests also cover source-derived empty-input selection, UTF-16 selection length,
-and mutable value semantics. The Kotlin sources and test declare
+and mutable value semantics. `StringFormat.result` matches the Kotlin field name
+and generated data-class string form. The Kotlin sources and test declare
 `GPL-3.0-or-later` without separate copyright lines. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and license details.

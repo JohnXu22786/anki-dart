@@ -1210,8 +1210,9 @@ parsing, UI, and logging remain host-side. Root `COPYING` remains unchanged.
 
 ## AnkiDroid JavaScript API compatibility contract
 
-`ApiContract` and `requireJsApiVersion()` in
-`lib/src/ankidroid_js_api_contract.dart` adapt the field projection and
+`ApiContract`, `ApiResult`, and `requireJsApiVersion()` in
+`lib/src/ankidroid_js_api_contract.dart` adapt the field projection,
+`AnkiDroidJsAPI.ApiResult` at lines 616–679, and
 `AnkiDroidJsAPI.requireApiVersion()` control flow at lines 150–189 and 681–686
 of `AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPI.kt`, pinned to
 AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The ordinary
@@ -1227,6 +1228,13 @@ JSON-byte decoding, Android thread scheduling and UI strings remain host-side.
 `test/ankidroid_js_api_contract_test.dart`. The upstream API source declares
 `GPL-3.0-or-later` and Copyright (c) 2020 Mani
 <infinyte01@gmail.com>; the pinned `AnkiDroidJsAPITest.kt` helper constructs a
-valid `0.0.3` contract, but no direct compatibility-gate test was found. The
+valid `0.0.3` contract and has Boolean, Int, Long, and String JSON helper
+overloads; it has no direct test of `ApiResult` variants or Float. The Dart
+variants retain Boolean, Integer, Float, Long, and String identity, status, and
+value, and their ordered host map projects `success` before `value`. Pure
+Boolean, Int, Long, and String overload projections select their matching
+variants. Android `JSONObject` encoding, Java `Number` formatting and
+exceptions, UTF-8 conversion, JVM boxed numeric widths, and bridge dispatch
+remain host-side; the Dart map does not claim identical JSON formatting. The
 Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

@@ -213,6 +213,100 @@ void main() {
       expect(VALUE_KEY, 'value');
       expect(SUCCESS_KEY, 'success');
     });
+
+    test('retains each source result variant, status, value, and identity', () {
+      final floatValue = double.nan;
+      final results = <ApiResult>[
+        ApiResultBoolean(true, true),
+        ApiResultInteger(false, 42),
+        ApiResultFloat(true, floatValue),
+        ApiResultLong(false, 42),
+        ApiResultString(true, 'value'),
+      ];
+
+      expect(results.map((result) => result.runtimeType), [
+        ApiResultBoolean,
+        ApiResultInteger,
+        ApiResultFloat,
+        ApiResultLong,
+        ApiResultString,
+      ]);
+      expect(results.map((result) => result.status), [
+        true,
+        false,
+        true,
+        false,
+        true,
+      ]);
+      expect((results[0] as ApiResultBoolean).value, isTrue);
+      expect((results[1] as ApiResultInteger).value, 42);
+      expect((results[2] as ApiResultFloat).value, same(floatValue));
+      expect((results[3] as ApiResultLong).value, 42);
+      expect((results[4] as ApiResultString).value, 'value');
+
+      final first = ApiResultInteger(false, 42);
+      final second = ApiResultInteger(false, 42);
+      expect(first, isNot(same(second)));
+      expect(first, isNot(second));
+    });
+
+    test(
+      'projects ordered success then value entries without JSON encoding',
+      () {
+        final result = ApiResultString(false, 'a"b');
+
+        final projection = result.toOrderedHostMap();
+
+        expect(projection.keys.toList(), [SUCCESS_KEY, VALUE_KEY]);
+        expect(projection[SUCCESS_KEY], isFalse);
+        expect(projection[VALUE_KEY], same(result.value));
+      },
+    );
+
+    test('success and failure factories construct String variants', () {
+      final success = ApiResult.success('ok');
+      final failure = ApiResult.failure('failed');
+
+      expect(success, isA<ApiResultString>());
+      expect(success.status, isTrue);
+      expect((success as ApiResultString).value, 'ok');
+      expect(failure, isA<ApiResultString>());
+      expect(failure.status, isFalse);
+      expect((failure as ApiResultString).value, 'failed');
+    });
+
+    test(
+      'typed conversion projections select only source overload variants',
+      () {
+        final contract = ApiContract(
+          isValid: false,
+          cardSuppliedDeveloperContact: 'author',
+          cardSuppliedData: '',
+        );
+
+        expect(apiResultFromBoolean(contract, true), isA<ApiResultBoolean>());
+        expect(apiResultFromInteger(contract, 8), isA<ApiResultInteger>());
+        expect(apiResultFromLong(contract, 8), isA<ApiResultLong>());
+        expect(apiResultFromString(contract, '8'), isA<ApiResultString>());
+        expect(apiResultFromBoolean(contract, true).status, isFalse);
+        expect(apiResultFromInteger(contract, 8).status, isFalse);
+        expect(apiResultFromLong(contract, 8).status, isFalse);
+        expect(apiResultFromString(contract, '8').status, isFalse);
+      },
+    );
+
+    test('host projection leaves formatting and encoding to the host', () {
+      final result = ApiResultFloat(true, double.infinity);
+      final projected = result.toOrderedHostMap();
+
+      expect(projected[VALUE_KEY], double.infinity);
+      final stringValue = 'a"b';
+      final stringProjection = ApiResultString(
+        true,
+        stringValue,
+      ).toOrderedHostMap();
+      expect(stringProjection[VALUE_KEY], same(stringValue));
+    });
   });
 }
 

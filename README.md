@@ -74,6 +74,14 @@ contract cases in `test/ankidroid_js_api_contract_test.dart`. The adapted source
 and [NOTICE.md](NOTICE.md) for the exact source paths, test boundary, and
 license record; root `COPYING` remains unchanged.
 
+`ApiResult` preserves AnkiDroid's Boolean, Integer, Float, Long, and String
+variants, their status/value fields, identity semantics, and ordered `success`,
+`value` host projection. The Boolean, Int, Long, and String conversion
+projections select their corresponding variants; Android `JSONObject` encoding,
+Java number formatting and exceptions, boxed numeric widths, and UTF-8 byte
+conversion remain host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source, test, and license details.
+
 ## npm package-name validation
 
 `validateNpmPackageName` ports `NpmUtils.validateName()` from AnkiDroid 2.25.3

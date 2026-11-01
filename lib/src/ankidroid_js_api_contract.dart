@@ -16,7 +16,7 @@
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from AnkiDroidJsAPI.kt:150–189, 681–686; see
+ * Source-derived from AnkiDroidJsAPI.kt:83–100, 150–189, 616–686; see
  * ANKIDROID_UPSTREAM.md.
  */
 
@@ -36,6 +36,95 @@ class ApiContract {
   final String cardSuppliedDeveloperContact;
   final String cardSuppliedData;
 }
+
+/// The source `ApiResult` envelope without Android `JSONObject` encoding.
+///
+/// [toOrderedHostMap] provides the fields in source insertion order. The Android
+/// host remains responsible for Java number formatting, JSON encoding, and
+/// UTF-8 conversion. These variants deliberately use identity equality.
+sealed class ApiResult {
+  ApiResult(this.status);
+
+  final bool status;
+
+  /// Projects the source envelope as ordered fields for host-side encoding.
+  Map<String, Object> toOrderedHostMap() => {
+    SUCCESS_KEY: status,
+    VALUE_KEY: _value,
+  };
+
+  Object get _value;
+
+  factory ApiResult.success(String value) => ApiResultString(true, value);
+
+  factory ApiResult.failure(String value) => ApiResultString(false, value);
+}
+
+/// Source `ApiResult.Boolean`; the value remains distinct from numeric variants.
+final class ApiResultBoolean extends ApiResult {
+  ApiResultBoolean(super.status, this.value);
+
+  final bool value;
+
+  @override
+  bool get _value => value;
+}
+
+/// Source `ApiResult.Integer` (a JVM `Int`).
+final class ApiResultInteger extends ApiResult {
+  ApiResultInteger(super.status, this.value);
+
+  final int value;
+
+  @override
+  int get _value => value;
+}
+
+/// Source `ApiResult.Float` (a JVM `Float`), retained as its own variant.
+final class ApiResultFloat extends ApiResult {
+  ApiResultFloat(super.status, this.value);
+
+  final double value;
+
+  @override
+  double get _value => value;
+}
+
+/// Source `ApiResult.Long`; distinct from `Integer` despite Dart's shared type.
+final class ApiResultLong extends ApiResult {
+  ApiResultLong(super.status, this.value);
+
+  final int value;
+
+  @override
+  int get _value => value;
+}
+
+/// Source `ApiResult.String`.
+final class ApiResultString extends ApiResult {
+  ApiResultString(super.status, this.value);
+
+  final String value;
+
+  @override
+  String get _value => value;
+}
+
+/// Projects the source Boolean `convertToByteArray` overload to its variant.
+ApiResultBoolean apiResultFromBoolean(ApiContract contract, bool value) =>
+    ApiResultBoolean(contract.isValid, value);
+
+/// Projects the source Int `convertToByteArray` overload to its variant.
+ApiResultInteger apiResultFromInteger(ApiContract contract, int value) =>
+    ApiResultInteger(contract.isValid, value);
+
+/// Projects the source Long `convertToByteArray` overload to its variant.
+ApiResultLong apiResultFromLong(ApiContract contract, int value) =>
+    ApiResultLong(contract.isValid, value);
+
+/// Projects the source String `convertToByteArray` overload to its variant.
+ApiResultString apiResultFromString(ApiContract contract, String value) =>
+    ApiResultString(contract.isValid, value);
 
 /// Host-provided parsing and comparison operations for Java semver versions.
 ///

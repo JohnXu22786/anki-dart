@@ -25,6 +25,23 @@ the Dart adaptation. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under `GPL-3.0-or-later`. No direct pinned test for `fromValue()` was found.
 Root `COPYING` remains byte-identical.
 
+## Note Editor newline replacement preference
+
+`lib/src/note_editor_should_replace_newlines.dart` and
+`test/note_editor_should_replace_newlines_test.dart` adapt
+`NoteEditorFragment.Companion.shouldReplaceNewlines()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2759–2762`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+adapter performs one host shared-preferences lookup followed by one Boolean
+read for key `noteEditorNewlineReplace` with default `true`, returns the exact
+stored value, and propagates callback failures unchanged. Android app context
+and preference storage remain host-side. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; those are source-file attributions and do not assign
+those authorship claims to the Dart files. The Dart implementation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## Generic out-of-memory guard
 
 `lib/src/run_with_oom_check.dart` and `test/run_with_oom_check_test.dart`

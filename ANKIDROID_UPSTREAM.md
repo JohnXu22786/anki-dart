@@ -31,6 +31,25 @@ names identify the provenance of the Kotlin source only; the Dart adaptation
 and focused test are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
 `COPYING` remains byte-identical.
 
+## `NoteEditorFragment.Companion.shouldReplaceNewlines()`
+
+`noteEditorShouldReplaceNewlines()` in
+`lib/src/note_editor_should_replace_newlines.dart` adapts
+`NoteEditorFragment.Companion.shouldReplaceNewlines()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2759–2762`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+calls the host shared-preferences lookup once, then reads Boolean key
+`noteEditorNewlineReplace` once with default `true`, returning the exact result.
+Both callback failures propagate unchanged and stop later reads; app context,
+SharedPreferences, and preference storage remain host-side. Source-derived
+focused tests in `test/note_editor_should_replace_newlines_test.dart` cover both
+stored values and callback ordering/failure propagation; no direct pinned test
+for this helper was found. The Kotlin source declares `GPL-3.0-or-later` and
+carries file-level Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae;
+those names describe the Kotlin source provenance, not authorship of the Dart
+adaptation. The Dart implementation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
 ## `runWithOOMCheck(action, onError)`
 
 `runWithOomCheck()` in `lib/src/run_with_oom_check.dart` adapts the generic

@@ -501,6 +501,23 @@ navigation. Source provenance, license, and copyright details are in
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md); root
 `COPYING` remains byte-identical.
 
+## Note Editor newline replacement preference
+
+`noteEditorShouldReplaceNewlines()` in
+[`lib/src/note_editor_should_replace_newlines.dart`](lib/src/note_editor_should_replace_newlines.dart)
+reads the `noteEditorNewlineReplace` Boolean from the host-provided shared
+preferences with the source default `true`. It looks up shared preferences once,
+then reads that exact key once and returns the stored value unchanged; callback
+failures propagate without fallback. Android app context and preference storage
+remain host-side. Focused source-derived cases are in
+[`test/note_editor_should_replace_newlines_test.dart`](test/note_editor_should_replace_newlines_test.dart).
+The pinned Kotlin source declares `GPL-3.0-or-later` and carries file-level
+Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae; these identify the
+source file and do not claim authorship of the Dart adaptation. The Dart code
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Current port scope
 
 The language-tag value and parser also follow AnkiDroid 2.25.3, including its

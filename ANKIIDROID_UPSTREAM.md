@@ -367,6 +367,30 @@ declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `ReviewDeckDestination.toIntent(context)`
+
+`ReviewDeckDestination.currentDeck` and
+`ReviewDeckDestination.externalLaunch(deckId)` in
+`lib/src/review_deck_destination.dart` adapt the `CurrentDeck` singleton and
+`ExternalLaunch(deckId)` variant from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/ReviewDeckDestination.kt:10–26`,
+and `toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/ReviewDeckDestination.kt:11–19`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. `CurrentDeck` delegates once to the
+host `Reviewer.getIntent(context)` and returns its exact Intent. `ExternalLaunch`
+creates one `IntentHandler` Intent, sets `Intent.ACTION_VIEW`, writes the exact
+DeckId under `IntentHandler.EXTRA_DECK_ID`, then returns that same Intent; zero
+and negative IDs are preserved. Callback failures propagate unchanged and stop
+later operations. Reviewer screen selection, preferences, Activity selection,
+Android Context, and Intent behavior remain host-side. Focused source-derived
+tests in `test/review_deck_destination_test.dart` cover variant values, callback
+order and identity, edge IDs, and failure short circuits. No direct pinned test
+for these `toIntent` branches was found. Both Kotlin files declare
+`GPL-3.0-or-later` and have no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## `Scheduler.answerCard(card, states, rating)`
 
 `lib/src/scheduler_answer_card.dart` and its focused cases in

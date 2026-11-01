@@ -499,6 +499,21 @@ Intent identity, and exception propagation. No direct pinned test for this
 in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
 root `COPYING` remains byte-identical.
 
+## Review deck destination
+
+[`ReviewDeckDestination`](lib/src/review_deck_destination.dart) preserves the
+`CurrentDeck` singleton and `ExternalLaunch(deckId)` source variant. The current
+deck choice delegates once to the host Reviewer's Intent callback and returns
+its exact Intent. External launches create the host Intent, set VIEW, then
+write the exact deck ID extra, preserving zero and negative values and
+returning the same Intent. Reviewer screen, preferences, Activity selection,
+and Android Intent behavior remain host-side. Focused tests in
+[`test/review_deck_destination_test.dart`](test/review_deck_destination_test.dart)
+cover variants, callback order and identity, edge IDs, and exception
+propagation. Source provenance and license details are recorded in
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
+root `COPYING` remains byte-identical.
+
 ## Note Editor caller codes
 
 `NoteEditorCaller` in [`lib/src/note_editor_caller.dart`](lib/src/note_editor_caller.dart)

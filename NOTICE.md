@@ -3236,3 +3236,22 @@ forwarding, identity, single invocation, and callback failures. The Kotlin
 source declares `GPL-3.0-or-later` and has no separate source copyright line.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
+
+## Review deck destination Intent
+
+`lib/src/review_deck_destination.dart` and
+`test/review_deck_destination_test.dart` adapt the `CurrentDeck` singleton and
+`ExternalLaunch(deckId)` variant from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/ReviewDeckDestination.kt:10–26`,
+and `toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/ReviewDeckDestination.kt:11–19`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The current-deck branch delegates
+to the host `Reviewer.getIntent`; the external branch constructs its host Intent,
+sets VIEW, writes the exact deck ID, and returns that Intent. Callback failures
+propagate unchanged and stop later operations. Reviewer screen/preferences,
+Activity selection, Context, and Android Intent behavior remain host-side. Both
+Kotlin files declare `GPL-3.0-or-later` and have no separate copyright line;
+that provenance identifies the Kotlin sources and not the Dart author. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

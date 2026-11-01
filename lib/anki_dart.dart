@@ -404,6 +404,7 @@ export 'src/string_ellipsize.dart';
 export 'src/numeric_helpers.dart';
 export 'src/json_content_equals.dart';
 export 'src/root_cause.dart';
+export 'src/json_object_adapters.dart';
 export 'src/reviewer_full_screen_mode.dart';
 export 'src/reminder_log_projection.dart';
 export 'src/fsrs_version.dart';

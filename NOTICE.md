@@ -1,5 +1,19 @@
 # Notices
 
+## JSONObject host adapters
+
+`lib/src/json_object_adapters.dart` and
+`test/json_object_adapters_test.dart` adapt `getStringOrNull()` and
+`jsonObjectIterable()` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/JSONObject.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source
+file is Copyright © 2020 Arthur Milchior and © 2024 Ashish Yadav under
+GPL-3.0-or-later. Android JSON conversion and typed object access remain host
+callbacks. The source file includes a JSON.org permission notice for other
+code, but no JSON.org code is copied into this adapter. The Dart implementation
+and tests are Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING`
+remains byte-identical.
+
 ## Throwable root cause
 
 `lib/src/root_cause.dart` and `test/root_cause_test.dart` adapt

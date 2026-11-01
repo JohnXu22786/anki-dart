@@ -492,9 +492,14 @@ preserves the enum names, integer values, and declaration order from
 `fromValue()` lookup requires an exact code and throws `StateError` for an
 unknown value; the intentionally nonnumeric source order is retained. Focused
 cases are in [`test/note_editor_caller_test.dart`](test/note_editor_caller_test.dart).
-The host remains responsible for Note Editor navigation and launch arguments.
-Source and license details are in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
-and [NOTICE.md](NOTICE.md); root `COPYING` remains byte-identical.
+[`addNoteArgs()`](lib/src/note_editor_add_note_args.dart) returns a fresh map
+containing only `CALLER: 3`, matching the Note Editor add-note source helper;
+focused cases are in
+[`test/note_editor_add_note_args_test.dart`](test/note_editor_add_note_args_test.dart).
+The host constructs the Android `Bundle` and remains responsible for
+navigation. Source provenance, license, and copyright details are in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md); root
+`COPYING` remains byte-identical.
 
 ## Current port scope
 

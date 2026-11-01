@@ -19,11 +19,17 @@ of `REVIEWER_ADD(11)` before `CARDBROWSER_ADD(7)`. `fromValue()` returns the
 first exact match and throws `StateError` for an unknown value, matching the
 source's `first` lookup. Focused source-derived cases are in
 `test/note_editor_caller_test.dart`; no direct pinned test for `fromValue()` was
-found. Navigation and launch-argument handling remain host-side. The Kotlin
-source declares `GPL-3.0-or-later` and carries file-level Copyright (c) 2012
-Norbert Nagold and (c) 2014 Timothy Rae. These names identify the provenance
-of the Kotlin source only; the Dart adaptation and focused test are Copyright
-© 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+found. `addNoteArgs()` in `lib/src/note_editor_add_note_args.dart` projects the
+source `NoteEditorFragment.Companion.addNoteArgs()` at
+`NoteEditorFragment.kt:2757` to a fresh map containing only `CALLER` with the
+`DECKPICKER` caller code (`3`). Android `Bundle` construction and navigation
+remain host-side. Its focused source-derived tests are in
+`test/note_editor_add_note_args_test.dart`; no direct pinned test for this
+helper was found. The Kotlin source declares `GPL-3.0-or-later` and carries
+file-level Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae. These
+names identify the provenance of the Kotlin source only; the Dart adaptation
+and focused test are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
+`COPYING` remains byte-identical.
 
 ## `runWithOOMCheck(action, onError)`
 

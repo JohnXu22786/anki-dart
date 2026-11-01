@@ -12,8 +12,13 @@ adapt `NoteEditorFragment.Companion.NoteEditorCaller` from
 `AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2716–2735`, pinned
 to AnkiDroid 2.25.3 commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. The enum names, values, declaration
-order, exact lookup, and unknown-value failure are retained. Navigation and
-launch-argument handling remain host-side. The Kotlin source declares
+order, exact lookup, and unknown-value failure are retained.
+`lib/src/note_editor_add_note_args.dart` adapts
+`NoteEditorFragment.Companion.addNoteArgs()` at `NoteEditorFragment.kt:2757` to
+a fresh map containing only `CALLER` with the `DECKPICKER` caller code (`3`);
+the Android host still constructs the `Bundle` and handles navigation. Focused
+source-derived cases are in `test/note_editor_add_note_args_test.dart`; no
+direct pinned test for this helper was found. The Kotlin source declares
 `GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
 (c) 2014 Timothy Rae; those names refer to the Kotlin source, not authorship of
 the Dart adaptation. The Dart adaptation and tests are Copyright © 2026 John

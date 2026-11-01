@@ -2388,6 +2388,21 @@ Unicode License V3 notice in `LICENSES/Unicode-License-V3.txt`.
   host-side. The Dart adaptation and tests are Copyright © 2026 John Tsui and
   marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
+`lib/src/collection_card_state_customizer.dart` and
+`test/collection_card_state_customizer_test.dart` adapt
+`Collection.cardStateCustomizer` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+forwards the host token for `ConfigKey.String.CARD_STATE_CUSTOMIZER` once to the
+Config getter or setter, preserves the exact String, and propagates callback
+exceptions unchanged. Generated Config keys, persistence, and JavaScript
+execution remain host-side. The pinned `StudyScreenRepositoryCollectionTest.kt`
+exercises setting reads and writes through the integration path; focused Dart
+cases are source-derived adapter checks. `Collection.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 `lib/src/collection_get_card_or_null.dart` and
 `test/collection_get_card_or_null_test.dart` adapt
 `Collection.getCardOrNull(id)` from

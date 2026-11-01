@@ -2919,6 +2919,19 @@ under the same license. Root `COPYING` remains byte-identical. See
 [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source and license record.
 
+## Collection.cardStateCustomizer
+
+`CollectionCardStateCustomizer` adapts the `Custom scheduling` global setting
+in deck options from AnkiDroid's `Collection.cardStateCustomizer`. The host
+provides the opaque `ConfigKey.String.CARD_STATE_CUSTOMIZER` token and its
+Config callbacks; the adapter forwards the exact String once and leaves Config
+storage and script execution to the host. Callback exceptions propagate
+unchanged. Focused source-derived adapter checks are in
+[`test/collection_card_state_customizer_test.dart`](test/collection_card_state_customizer_test.dart).
+The pinned `StudyScreenRepositoryCollectionTest.kt` also covers setting reads
+and writes through the integration path. The GPL-3.0-or-later source and license
+record is in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
 ## Collection.getCardOrNull
 
 `collectionGetCardOrNull()` adapts `Collection.getCardOrNull(id)` from

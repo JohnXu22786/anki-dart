@@ -75,7 +75,7 @@ final class DistInfo {
       other is DistInfo && other.tarball == tarball;
 
   @override
-  int get hashCode => tarball.hashCode;
+  int get hashCode => _kotlinStringHashCode(tarball);
 
   @override
   String toString() => 'DistInfo(tarball=$tarball)';
@@ -96,7 +96,7 @@ final class AddonValidationResultValid extends AddonValidationResult {
       other is AddonValidationResultValid && other.addonModel == addonModel;
 
   @override
-  int get hashCode => Object.hash(runtimeType, addonModel);
+  int get hashCode => addonModel.hashCode;
 
   @override
   String toString() => 'Valid(addonModel=$addonModel)';
@@ -113,7 +113,7 @@ final class AddonValidationResultInvalid extends AddonValidationResult {
       _orderedIterableEquals(other.errors, errors);
 
   @override
-  int get hashCode => Object.hash(runtimeType, Object.hashAll(errors));
+  int get hashCode => _kotlinStringListHashCode(errors);
 
   @override
   String toString() => 'Invalid(errors=$errors)';
@@ -169,21 +169,21 @@ final class AddonModel {
       other.dist == dist;
 
   @override
-  int get hashCode => Object.hash(
-    name,
-    addonTitle,
-    icon,
-    version,
-    description,
-    main,
-    ankidroidJsApi,
-    addonType,
-    Object.hashAll(keywords),
-    _stringMapHash(author),
-    license,
-    homepage,
-    dist,
-  );
+  int get hashCode => _kotlinDataClassHashCode([
+    _kotlinStringHashCode(name),
+    _kotlinStringHashCode(addonTitle),
+    _kotlinStringHashCode(icon),
+    _kotlinStringHashCode(version),
+    _kotlinStringHashCode(description),
+    _kotlinStringHashCode(main),
+    _kotlinStringHashCode(ankidroidJsApi),
+    _kotlinStringHashCode(addonType),
+    _kotlinStringListHashCode(keywords),
+    _kotlinStringMapHashCode(author),
+    _kotlinStringHashCode(license),
+    _kotlinStringHashCode(homepage),
+    dist?.hashCode ?? 0,
+  ]);
 
   @override
   String toString() =>
@@ -315,9 +315,46 @@ bool _stringMapEquals(Map<String, String> left, Map<String, String> right) {
   return true;
 }
 
-int _stringMapHash(Map<String, String> value) => Object.hashAllUnordered(
-  value.entries.map((entry) => Object.hash(entry.key, entry.value)),
-);
+int _kotlinStringHashCode(String value) {
+  var hash = 0;
+  for (final codeUnit in value.codeUnits) {
+    hash = _kotlinInt32(31 * hash + codeUnit);
+  }
+  return hash;
+}
+
+int _kotlinStringListHashCode(List<String> value) {
+  var hash = 1;
+  for (final item in value) {
+    hash = _kotlinInt32(31 * hash + _kotlinStringHashCode(item));
+  }
+  return hash;
+}
+
+int _kotlinStringMapHashCode(Map<String, String> value) {
+  var hash = 0;
+  for (final entry in value.entries) {
+    hash = _kotlinInt32(
+      hash +
+          (_kotlinStringHashCode(entry.key) ^
+              _kotlinStringHashCode(entry.value)),
+    );
+  }
+  return hash;
+}
+
+int _kotlinDataClassHashCode(List<int> fields) {
+  var hash = fields.first;
+  for (final field in fields.skip(1)) {
+    hash = _kotlinInt32(31 * hash + field);
+  }
+  return hash;
+}
+
+int _kotlinInt32(int value) {
+  final unsigned = value & 0xFFFFFFFF;
+  return unsigned >= 0x80000000 ? unsigned - 0x100000000 : unsigned;
+}
 
 String _kotlinStringMap(Map<String, String> value) =>
     '{${value.entries.map((entry) => '${entry.key}=${entry.value}').join(', ')}}';

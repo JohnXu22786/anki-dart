@@ -149,6 +149,49 @@ void main() {
     );
   });
 
+  test('matches Kotlin data-class numeric hash formulas', () {
+    expect(const DistInfo('abc').hashCode, 96354);
+    expect(const DistInfo('😀').hashCode, 1772899);
+    expect(const DistInfo('aaaaaaaaaa').hashCode, -799347552);
+    expect(const AddonValidationResultInvalid([]).hashCode, 1);
+    expect(const AddonValidationResultInvalid(['a', 'b']).hashCode, 4066);
+
+    const model = AddonModel(
+      name: 'a',
+      addonTitle: 'b',
+      icon: 'c',
+      version: 'd',
+      description: 'e',
+      main: 'f',
+      ankidroidJsApi: 'g',
+      addonType: 'h',
+      keywords: ['i', 'j'],
+      author: {'k': 'l', 'x': 'y'},
+      license: 'm',
+      homepage: 'n',
+      dist: DistInfo('o'),
+    );
+    expect(model.hashCode, 495432644);
+    expect(const AddonValidationResultValid(model).hashCode, 495432644);
+
+    const noDist = AddonModel(
+      name: 'a',
+      addonTitle: 'b',
+      icon: 'c',
+      version: 'd',
+      description: 'e',
+      main: 'f',
+      ankidroidJsApi: 'g',
+      addonType: 'h',
+      keywords: ['i', 'j'],
+      author: {'k': 'l', 'x': 'y'},
+      license: 'm',
+      homepage: 'n',
+      dist: null,
+    );
+    expect(noDist.hashCode, 495432533);
+  });
+
   test(
     'models and result variants retain Kotlin data-class value semantics',
     () {
@@ -158,10 +201,16 @@ void main() {
       expect(dist.hashCode, sameDist.hashCode);
 
       final first = _project(
-        _data(keywords: ['ankidroid-js-addon'], author: {'name': 'AnkiDroid'}),
+        _data(
+          keywords: ['ankidroid-js-addon'],
+          author: {'name': 'AnkiDroid', 'email': 'dev@example.com'},
+        ),
       );
       final second = _project(
-        _data(keywords: ['ankidroid-js-addon'], author: {'name': 'AnkiDroid'}),
+        _data(
+          keywords: ['ankidroid-js-addon'],
+          author: {'email': 'dev@example.com', 'name': 'AnkiDroid'},
+        ),
       );
       expect(first, second);
       expect(first.hashCode, second.hashCode);

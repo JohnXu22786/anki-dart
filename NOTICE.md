@@ -179,6 +179,29 @@ Sargam; this identifies the Kotlin source only and does not attribute the Dart
 adaptation to him. The Dart implementation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## Note Editor copy-note Intent
+
+`lib/src/note_editor_copy_note_to_intent.dart` and
+`test/note_editor_copy_note_to_intent_test.dart` adapt the `CopyNote` branch of
+`NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:60–65`,
+with its variant fields declared at
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/NoteEditorDestination.kt:87–94`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter creates one host
+Intent and writes `CALLER: 8`, the exact `DECK_ID`, the exact `CONTENTS` string,
+and a fresh ordered copy of the `TAGS` list, preserving empty strings, empty
+lists, order, and duplicates. It returns the same Intent; callback failures
+propagate unchanged and stop subsequent writes. Android Context, Activity,
+Intent, typed extra behavior, and JVM array allocation remain host-side.
+Focused source-derived tests cover exact extras and order, payload boundaries,
+fresh list projection, identity, and failure short circuits. The pinned
+`NoteEditorTest.kt:330–350,903–908` covers copy-note launch and selected deck
+ID, not every raw extra. The Kotlin source declares `GPL-3.0-or-later` and has
+SPDX Copyright (c) 2024 Sanjay Sargam; this identifies the Kotlin source only.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
 ## Note Editor edit-selection Intent
 
 `lib/src/note_editor_edit_selection_to_intent.dart` and

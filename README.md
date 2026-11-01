@@ -613,6 +613,25 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source and license details.
 
+[`noteEditorCopyNoteToIntent()`](lib/src/note_editor_copy_note_to_intent.dart)
+adapts `NoteEditorDestination.CopyNote.toIntent(context)`: it creates one host
+Intent, writes `CALLER: 8`, the exact `DECK_ID`, the exact fields text under
+`CONTENTS`, and a fresh ordered copy of tags under `TAGS`, preserving empty
+strings, empty lists, order, and duplicates. It returns the same Intent.
+Android Context, Activity, Intent, typed extra handling, and JVM array
+allocation remain host-side; callback failures propagate and stop later writes.
+Focused source-derived cases in
+[`test/note_editor_copy_note_to_intent_test.dart`](test/note_editor_copy_note_to_intent_test.dart)
+cover the extra keys, values and order; empty payloads; fresh tag-list
+projection; duplicates; Intent identity; and callback failure short circuits.
+Pinned `NoteEditorTest.kt:330–350,903–908` covers copy-note launch and selected
+deck ID, but does not assert every raw extra. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Note Editor newline replacement preference
 
 `noteEditorShouldReplaceNewlines()` in

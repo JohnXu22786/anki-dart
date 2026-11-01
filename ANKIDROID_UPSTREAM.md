@@ -1626,3 +1626,21 @@ cases are source-derived in
 declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## TabLayout.doOnTabSelected
+
+`doOnTabSelected()` in `lib/src/tab_layout_do_on_tab_selected.dart` adapts
+`TabLayout.doOnTabSelected(action)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/TabLayout.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It creates
+one listener, registers that identical object before returning it, calls the
+action once with the same opaque tab token only from `onTabSelected`, and leaves
+`onTabUnselected` and `onTabReselected` as no-ops. Registration and action
+failures propagate unchanged. Android Material `TabLayout`, tab, and listener
+APIs remain host-side behind the generic listener and registration callback.
+No direct test for this extension was found in the pinned source tree; focused
+Dart cases are source-derived in
+`test/tab_layout_do_on_tab_selected_test.dart`. The Kotlin source header credits
+Copyright (c) 2025 Rakshita Chauhan and declares `GPL-3.0-or-later`; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

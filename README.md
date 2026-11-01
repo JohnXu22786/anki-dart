@@ -3135,3 +3135,18 @@ Android views and lifecycle APIs stay host-side; focused source-derived cases
 are in [`test/view_on_global_layout_test.dart`](test/view_on_global_layout_test.dart).
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the pinned source and GPL attribution.
+
+## TabLayout selected-tab listener
+
+`doOnTabSelected()` in `lib/src/tab_layout_do_on_tab_selected.dart` preserves
+the pinned AnkiDroid helper's selected-only action, no-op unselected and
+reselected callbacks, and register-before-return behavior. It returns the same
+listener object passed to the host registration callback; registration and
+selection failures propagate unchanged. Android Material tab APIs remain
+host-side behind generic opaque tab tokens. Focused source-derived cases are in
+[`test/tab_layout_do_on_tab_selected_test.dart`](test/tab_layout_do_on_tab_selected_test.dart).
+The pinned Kotlin source declares `GPL-3.0-or-later` and credits Rakshita
+Chauhan (2025); the Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the exact source mapping and attribution.

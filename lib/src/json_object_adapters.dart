@@ -97,7 +97,7 @@ final class JsonObjectHostAdapter<TObject, TArray> {
   }
 
   /// Adapts top-level `fromMap(map)` using one host object and one put per entry.
-  TObject fromMap(Map<String, Object?> map) {
+  TObject fromMap(Map<String, Object> map) {
     final object = _createObject();
     for (final entry in map.entries) {
       _put(object, entry.key, entry.value);

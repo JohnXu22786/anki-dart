@@ -1159,3 +1159,32 @@ test declare `SPDX-License-Identifier: GPL-3.0-or-later` and have no separate
 copyright line; no method-specific authorship is asserted. The Dart adaptation
 and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## npm package-name validation
+
+`validateNpmPackageName()` in `lib/src/npm_package_name.dart` adapts
+`NpmUtils.validateName()` in
+`AnkiDroid/src/main/java/com/ichi2/anki/jsaddons/NpmUtils.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It keeps
+the source's ordered blank/trim, 214 UTF-16-unit length, leading punctuation,
+default-locale lowercase, scoped-name structure and recursive validation,
+Java URL-encoding, and special-character checks. False results preserve the
+source's first-invalid Timber message, including recursive scope/member errors.
+Kotlin whitespace is handled with the existing
+`lib/src/kotlin_whitespace.dart` helper; Dart and Kotlin/JVM string lengths both
+count UTF-16 code units.
+
+`test/npm_package_name_test.dart` ports all valid and invalid examples in the
+single pinned `NpmUtilsTest.validateNameTest` method. Its remaining boundary,
+ordered-log, recursive, and adapter cases are source-derived; the upstream test
+does not directly cover those behaviors. Java `String.lowercase(Locale.getDefault())`,
+`URLEncoder.encode(name, "UTF-8")`, and Timber remain host runtime boundaries,
+provided as explicit callbacks so this Dart package does not substitute its own
+locale, URL-encoding, or logging policy. Callback failures propagate unchanged.
+
+`NpmUtils.kt` declares `SPDX-License-Identifier: GPL-3.0-or-later` and
+`SPDX-FileCopyrightText: Copyright (c) 2021 Mani <infinyte01@gmail.com>`.
+`NpmUtilsTest.kt` includes GPL-3.0-or-later license text and
+`Copyright (c) 2021 Mani infinyte01@gmail.com`. The Dart adaptation and focused
+tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
+`COPYING` remains byte-identical.

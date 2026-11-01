@@ -40,6 +40,19 @@ test authorship, and GPL-3.0-or-later attribution are recorded in
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
 root `COPYING` remains unchanged.
 
+## npm package-name validation
+
+`validateNpmPackageName` ports `NpmUtils.validateName()` from AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`, preserving validation order,
+Boolean results, scoped-name recursion, and each first-invalid log message. The
+host supplies callbacks for Java default-locale lowercasing, Java UTF-8 form
+URL-encoding, and Timber info logging; callback failures propagate. Kotlin
+whitespace and UTF-16 length behavior are preserved. Its focused tests include
+the pinned `NpmUtilsTest.validateNameTest` cases and source-derived boundary and
+adapter cases. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details; root `COPYING` remains
+unchanged.
+
 ## MathJax note-editor formatting
 
 `MathJaxFormat` ports the `BLOCK` and `CHEMISTRY` string wrappers and mutable

@@ -90,6 +90,21 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   The Dart adaptation and focused tests are Copyright © 2026 John Tsui and
   marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/jsaddons/NpmUtils.kt`
+  (`NpmUtils.validateName`, pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `GPL-3.0-or-later` and Copyright © 2021 Mani
+  <infinyte01@gmail.com>. The pinned
+  `AnkiDroid/src/test/java/com/ichi2/anki/jsaddons/NpmUtilsTest.kt` carries the
+  same GPL license text and copyright. Ordered validation, scoped-name
+  recursion, and first-invalid Timber messages are adapted in
+  `lib/src/npm_package_name.dart`; the direct cases from its single
+  `validateNameTest` method and source-derived boundary/adapter cases are in
+  `test/npm_package_name_test.dart`. The host supplies Java default-locale
+  lowercase, Java UTF-8 URL encoding, and Timber logging callbacks. The Dart
+  adaptation and tests are Copyright © 2026 John Tsui and marked
+  `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/analytics/AnalyticsSamplePercentage.kt:1–38`
   (pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) declares

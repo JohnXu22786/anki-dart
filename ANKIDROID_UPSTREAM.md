@@ -50,6 +50,26 @@ those names describe the Kotlin source provenance, not authorship of the Dart
 adaptation. The Dart implementation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
 
+## `NoteEditorFragment.Companion.shouldHideToolbar()`
+
+`noteEditorShouldHideToolbar()` in
+`lib/src/note_editor_should_hide_toolbar.dart` adapts
+`NoteEditorFragment.Companion.shouldHideToolbar()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2772–2776`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+looks up host shared preferences once, reads Boolean key
+`noteEditorShowToolbar` once with default `true`, then returns the logical
+negation of that value. Both callback failures propagate unchanged and stop
+later operations; app context, SharedPreferences, and preference storage remain
+host-side. Focused source-derived tests in
+`test/note_editor_should_hide_toolbar_test.dart` cover the exact key/default,
+both stored values, operation order, negation, and failure propagation; no
+direct pinned test for this helper was found. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; these identify the source file and do not claim authorship
+of the Dart adaptation. The Dart implementation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `runWithOOMCheck(action, onError)`
 
 `runWithOomCheck()` in `lib/src/run_with_oom_check.dart` adapts the generic

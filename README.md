@@ -16,6 +16,20 @@ and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+## Integer clamp
+
+`clampInt()` in `lib/src/int_clamp.dart` adapts `Int.clamp()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Int.kt` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the source's
+ordered lower-bound and upper-bound comparisons, including the first-match
+result for reversed bounds; it does not validate or normalize the bounds.
+Focused source-derived cases are in `test/int_clamp_test.dart`. The AnkiDroid
+file is GPL-3.0-or-later and incorporates a Kotlin standard-library excerpt
+under Apache-2.0; both notices and source boundaries are recorded in
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+The Dart adaptation and test are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 ## Field filter context, built-ins, and chains
 
 `FilterContext`, the `FieldFilter` default contract, built-ins including

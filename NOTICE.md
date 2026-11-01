@@ -7,6 +7,19 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+`lib/src/int_clamp.dart` and `test/int_clamp_test.dart` adapt `Int.clamp()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Int.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The AnkiDroid file
+contains the GNU GPL version 3-or-later notice and incorporates the
+`_Ranges.kt` excerpt at line 1447 from Kotlin commit
+`6ea9f879abd61ba9578b322eb07ff6a8450de11f`, Copyright 2010–2024 JetBrains
+s.r.o. and Kotlin Programming Language contributors, under Apache-2.0. The
+Dart adaptation retains both source/license notices and preserves the source's
+ordered comparisons without validating reversed bounds. The focused tests
+cover values within and at the bounds, equal bounds, and reversed bounds. The
+Dart adaptation and tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
 `lib/src/whole_and_fraction.dart` and `test/whole_and_fraction_test.dart` adapt
 `Double.wholeAndFraction()` from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Double.kt`, pinned to

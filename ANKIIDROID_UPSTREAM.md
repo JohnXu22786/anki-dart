@@ -1,5 +1,26 @@
 # AnkiDroid upstream source record
 
+## `Int.clamp()`
+
+`clampInt()` in `lib/src/int_clamp.dart` and its source-derived tests in
+`test/int_clamp_test.dart` adapt `Int.clamp(minimumValue, maximumValue)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Int.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The implementation
+checks `value < minimumValue` first, then `value > maximumValue`, and otherwise
+returns `value`. As the Kotlin documentation specifies, it does not validate
+that the minimum is less than the maximum. Reversed bounds therefore preserve
+the first matching branch rather than raising or normalizing the range. The
+focused tests cover an interior value, both bounds, equal bounds, and a
+reversed range where both comparisons match and the minimum is returned.
+
+The AnkiDroid file carries the GPL-3.0-or-later notice and incorporates the
+`_Ranges.kt` excerpt at line 1447 from Kotlin commit
+`6ea9f879abd61ba9578b322eb07ff6a8450de11f`, Copyright 2010–2024 JetBrains
+s.r.o. and Kotlin Programming Language contributors, under Apache-2.0. The
+Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`; both source/license notices are retained in the Dart file.
+Root `COPYING` remains byte-identical.
+
 ## `Double.wholeAndFraction()`
 
 `wholeAndFraction()` in `lib/src/whole_and_fraction.dart` and its source-derived

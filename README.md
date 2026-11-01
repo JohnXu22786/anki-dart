@@ -1094,6 +1094,14 @@ Android lifecycle, StateFlow, localization, and UI.
   `GPL-3.0-or-later` with no separate copyright line; Dart attribution and
   source details are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
   and [NOTICE.md](NOTICE.md).
+- `List.indexOfOrNull(predicate)` in `lib/src/list_index_of_or_null.dart`
+  returns the first matching index, or null when no value matches. It visits
+  values in order, stops at the first match, and propagates predicate failures.
+  Focused source-derived tests are in
+  `test/list_index_of_or_null_test.dart`. The pinned source is
+  `GPL-3.0-or-later`; the Dart implementation and tests are Copyright © 2026
+  John Tsui under the same license. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
+  and [NOTICE.md](NOTICE.md) for source and license details.
 - Card Browser column-selection click toggle: `planBrowserColumnSelectionToggle`
   captures the first Available-heading index, the clicked row index, and the
   source's before-heading side test. Applying its plan removes then inserts at

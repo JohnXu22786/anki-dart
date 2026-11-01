@@ -3463,3 +3463,17 @@ byte-identical. No direct pinned test for this class was found; focused
 source-derived cases cover unchanged deck IDs, fresh scope construction, exact
 context and scope forwarding, single host invocation, result identity, and
 callback failure propagation.
+
+## `List<T>.indexOfOrNull(predicate)`
+
+`lib/src/list_index_of_or_null.dart` and
+`test/list_index_of_or_null_test.dart` adapt the predicate overload of
+`List<T>.indexOfOrNull(block)` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/List.kt:18–21`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+implementation visits values in order, stops after the first match, returns
+null for a miss or empty list, and propagates predicate failures unchanged.
+The pinned source declares `GPL-3.0-or-later` and has no distinct copyright
+line. `ListTest.kt:17–23` directly tests a matching predicate and a miss. The
+Dart implementation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

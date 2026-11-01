@@ -187,6 +187,22 @@ Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`; both source/license notices are retained in the Dart file.
 Root `COPYING` remains byte-identical.
 
+## `List<T>.indexOfOrNull(predicate)`
+
+`indexOfOrNull(predicate)` in `lib/src/list_index_of_or_null.dart` adapts the
+predicate overload of `List<T>.indexOfOrNull(block)` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/List.kt:18–21`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It visits
+values in list order, calls the predicate once per visited value, returns the
+first matching index without evaluating later values, and returns null when no
+value matches (including an empty list). Predicate failures propagate
+unchanged. Focused source-derived tests are in
+`test/list_index_of_or_null_test.dart`. The source declares
+`GPL-3.0-or-later` and has no distinct copyright line; its direct predicate
+cases are in `common/src/test/java/com/ichi2/anki/common/utils/ext/ListTest.kt:17–23`.
+The Dart implementation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
 ## `MutableList<T>.swapPositions()`
 
 `List.swapPositions(fromPosition, toPosition)` in `lib/src/mutable_list.dart`

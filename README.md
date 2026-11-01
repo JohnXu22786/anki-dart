@@ -3542,3 +3542,24 @@ no direct pinned test was found. The Kotlin source declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
+
+## Note Editor image-intent detection
+
+`intentLaunchedWithImage()` in
+[`lib/src/note_editor_intent_launched_with_image.dart`](lib/src/note_editor_intent_launched_with_image.dart)
+adapts `NoteEditorFragment.Companion.intentLaunchedWithImage(intent)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2764–2770`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+preserves the SEND/VIEW action check and its conditional second action read,
+then the invalid-VIEW gate, then one nullable MIME resolution and the
+case-sensitive `image/` prefix check. The host supplies Intent action reads,
+invalid-view policy, and MIME resolution; callback failures propagate. Android
+Intent behavior remains host-side. Focused source-derived cases are in
+[`test/note_editor_intent_launched_with_image_test.dart`](test/note_editor_intent_launched_with_image_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; those names refer to the Kotlin source, not the Dart
+adaptation. The Dart adaptation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the mapping and license record.

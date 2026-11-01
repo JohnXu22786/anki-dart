@@ -2016,3 +2016,26 @@ no direct pinned AnkiDroid test for the extension was found. The Kotlin source
 declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## NoteEditorFragment.intentLaunchedWithImage
+
+`intentLaunchedWithImage<TIntent>()` in
+[`lib/src/note_editor_intent_launched_with_image.dart`](lib/src/note_editor_intent_launched_with_image.dart)
+adapts `NoteEditorFragment.Companion.intentLaunchedWithImage(intent)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2764–2770`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+checks the action against `android.intent.action.SEND` and
+`android.intent.action.VIEW` in the source expression's order, including its
+conditional second action callback read. It then calls the invalid-view
+predicate and, only when valid, resolves MIME once and returns whether the
+nullable value starts with the case-sensitive `image/` prefix. The same opaque
+Intent token is passed to every callback; callback failures propagate
+unchanged. Intent access, `ImportUtils.isInvalidViewIntent`, MIME resolution,
+and Android behavior remain host-side. Source-derived focused cases are in
+[`test/note_editor_intent_launched_with_image_test.dart`](test/note_editor_intent_launched_with_image_test.dart);
+no direct pinned AnkiDroid test was found. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; these are source-file attributions and do not assign
+those authorship claims to the new Dart files. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

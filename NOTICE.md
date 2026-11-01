@@ -7,10 +7,11 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
-## Field filter context, non-TTS built-ins, and chain
+## Field filters and chain
 
 `lib/src/field_filter.dart` adapts `FilterContext`, the `FieldFilter` default
-contract, the non-TTS built-ins, and `FieldFilterChain` from
+contract, all built-ins including `TextToSpeechFilter`, `TextToSpeechOptions`,
+`FieldFilters.ALL`, and `FieldFilterChain` from
 `AnkiDroid/src/main/java/com/ichi2/anki/model/FieldFilters.kt`, pinned to
 AnkiDroid 2.25.3 commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves context fields,
@@ -22,10 +23,14 @@ eligible `[[type:` markers. The pinned
 `AnkiDroid/src/test/java/com/ichi2/anki/model/FieldFilterChainTest.kt` covers
 empty/single/multiple rendering, duplicate refusal, HTML/cloze/type/no-suggest/
 pronunciation constraints, and invalid TTS gating; focused Dart coverage is in
-`test/field_filter_test.dart` and `test/field_filter_chain_test.dart`. TTS
-filters/options and exact Kotlin Float formatting, `FieldFilters.ALL`, the
-template parser/rendering pipeline, `TemplateManager.fieldFilters` runtime
-registration, Android UI, and Fragment lifecycle remain host-side.
+`test/field_filter_test.dart`, `test/field_filter_chain_test.dart`, and
+`test/field_filter_tts_test.dart`. The TTS tests cover source fixture rendering,
+empty-present option values, source ordering and suffix behavior, validity,
+terminal chain behavior, binary32 values, Kotlin Float formatting boundaries
+and special values, structural nullable data-class equality/hash and mutable
+voice lists, and `FieldFilters.ALL` order. The template parser/rendering
+pipeline, `TemplateManager.fieldFilters` runtime registration, Android UI, and
+Fragment lifecycle remain host-side.
 The pinned Kotlin file and test declare `SPDX-License-Identifier: GPL-3.0-or-later` and contain no separate copyright line. The Dart adaptation
 and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
 `COPYING` remains byte-identical.

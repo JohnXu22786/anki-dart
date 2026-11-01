@@ -21,6 +21,9 @@
  */
 
 import 'insert_field_dialog_selection.dart' show FieldName;
+import 'java_float_format.dart'
+    show javaFloatToString, kotlinFloatHashCode, float32Bits, float32Value;
+import 'kotlin_string_hash_code.dart' show kotlinStringHashCode;
 
 /// Properties accumulated while applying a template field-filter chain.
 ///
@@ -232,10 +235,83 @@ final class KanjiFilter extends FieldFilter {
       input.copyWith(stripsAnkiPronunciationSyntax: true);
 }
 
-/// Access to the source's non-TTS builtin filter values.
+/// Source options for AnkiDroid's `tts` field filter.
 ///
-/// `ALL`, TTS options, and template-chain registration are host-side in this
-/// port unit.
+/// Nullable values are preserved as supplied, and [voices] remains the original
+/// list reference so its structural equality and hash reflect later mutations.
+final class TextToSpeechOptions {
+  const TextToSpeechOptions({this.language, this.voices, double? speed})
+    : _speed = speed;
+
+  final String? language;
+  final List<String>? voices;
+  final double? _speed;
+
+  /// The source Float value, narrowed to the JVM binary32 representation.
+  double? get speed => _speed == null ? null : float32Value(_speed);
+
+  bool get isValid => language != null && language!.isNotEmpty;
+
+  String render() {
+    final output = <String>[];
+    if (language != null) output.add('lang=$language');
+    if (voices != null) output.add('voices=${voices!.join(',')}');
+    final value = speed;
+    if (value != null) output.add('speed=${javaFloatToString(value)}');
+    if (output.isEmpty) return '';
+    return ' ${output.join(' ')}';
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is TextToSpeechOptions &&
+      other.language == language &&
+      _stringListsEqual(other.voices, voices) &&
+      _floatValuesEqual(other.speed, speed);
+
+  @override
+  int get hashCode => _kotlinDataClassHashCode([
+    language == null ? 0 : kotlinStringHashCode(language!),
+    voices == null ? 0 : _kotlinStringListHashCode(voices!),
+    speed == null ? 0 : kotlinFloatHashCode(speed!),
+  ]);
+
+  @override
+  String toString() =>
+      'TextToSpeechOptions(language=$language, voices=$voices, speed=$speed)';
+}
+
+/// AnkiDroid's terminal text-to-speech field filter.
+final class TextToSpeechFilter extends FieldFilter {
+  const TextToSpeechFilter({this.options = const TextToSpeechOptions()});
+
+  final TextToSpeechOptions options;
+
+  @override
+  String get name => 'tts';
+
+  @override
+  bool get isValid => options.isValid;
+
+  @override
+  FilterContext updateContext(FilterContext input) =>
+      input.copyWith(isTerminal: true);
+
+  @override
+  String render() => '$name${options.render()}';
+
+  @override
+  bool operator ==(Object other) =>
+      other is TextToSpeechFilter && other.options == options;
+
+  @override
+  int get hashCode => options.hashCode;
+
+  @override
+  String toString() => 'TextToSpeechFilter(options=$options)';
+}
+
+/// Access to the source's builtin filter values.
 abstract final class FieldFilters {
   static const text = TextFilter();
   static const cloze = ClozeFilter();
@@ -244,9 +320,25 @@ abstract final class FieldFilters {
   static const type = TypeTheAnswerFilter();
   static const typeNonCombining = TypeTheAnswerNonCombiningFilter();
   static const noSuggest = NoSuggestFilter();
+  static const textToSpeech = TextToSpeechFilter();
   static const furigana = FuriganaFilter();
   static const kana = KanaFilter();
   static const kanji = KanjiFilter();
+
+  /// Builtin filters in the exact source registration order.
+  static final List<FieldFilter> ALL = List.unmodifiable([
+    text,
+    cloze,
+    clozeOnly,
+    hint,
+    type,
+    typeNonCombining,
+    noSuggest,
+    textToSpeech,
+    furigana,
+    kana,
+    kanji,
+  ]);
 }
 
 /// An immutable chain of field filters validated against accumulated context.
@@ -314,6 +406,32 @@ int _kotlinDataClassHashCode(List<int> fields) {
 }
 
 int _kotlinBooleanHashCode(bool value) => value ? 1231 : 1237;
+
+bool _stringListsEqual(List<String>? left, List<String>? right) {
+  if (identical(left, right)) return true;
+  if (left == null || right == null || left.length != right.length) {
+    return false;
+  }
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
+}
+
+int _kotlinStringListHashCode(List<String> values) {
+  var hash = 1;
+  for (final value in values) {
+    hash = _kotlinInt32(31 * hash + kotlinStringHashCode(value));
+  }
+  return hash;
+}
+
+bool _floatValuesEqual(double? left, double? right) {
+  if (left == null || right == null) return left == right;
+  final leftBits = left.isNaN ? 0x7fc00000 : float32Bits(left);
+  final rightBits = right.isNaN ? 0x7fc00000 : float32Bits(right);
+  return leftBits == rightBits;
+}
 
 int _kotlinInt32(int value) {
   final unsigned = value & 0xFFFFFFFF;

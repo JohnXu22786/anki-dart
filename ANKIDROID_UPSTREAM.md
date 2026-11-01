@@ -8,9 +8,10 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
-## Field filter context, non-TTS built-ins, and chain
+## Field filters and chain
 
-`FilterContext`, the `FieldFilter` default contract, the non-TTS built-ins, and
+`FilterContext`, the `FieldFilter` default contract, all built-ins including
+`TextToSpeechFilter`, `TextToSpeechOptions`, `FieldFilters.ALL`, and
 `FieldFilterChain` in `lib/src/field_filter.dart` adapt
 `AnkiDroid/src/main/java/com/ichi2/anki/model/FieldFilters.kt` from AnkiDroid
 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart model
@@ -24,12 +25,16 @@ source short-circuit and callback order, invalid-chain propagation under
 `allowInvalid`, duplicate rejection by filter name, immutable append results,
 and reverse display order. The pinned
 `AnkiDroid/src/test/java/com/ichi2/anki/model/FieldFilterChainTest.kt` covers
-empty/single/multiple rendering, duplicate refusal, HTML/cloze/type/no-suggest/
-pronunciation constraints, and invalid TTS gating; the Dart chain tests map the
-applicable non-TTS behavior and source-derived branches. TTS filters/options and
-exact Kotlin Float formatting, `FieldFilters.ALL`, the template parser/rendering
-pipeline, `TemplateManager.fieldFilters` runtime registration, Android UI, and
-Fragment lifecycle remain host-side. The pinned Kotlin
+empty/single/multiple rendering, the `ja_JP` / voice-list / `0.8f` TTS
+rendering, filter name, validity and invalid-chain behavior, terminal TTS, and
+the HTML/cloze/type/no-suggest/pronunciation constraints. The focused Dart tests
+are `test/field_filter_test.dart`, `test/field_filter_chain_test.dart`, and
+`test/field_filter_tts_test.dart`. They cover the source TTS fixture, empty
+present options, source token order and suffix rules, binary32 speed values,
+Float notation thresholds and special values, structural nullable data-class
+equality/hash including mutable voice lists, and the exact `FieldFilters.ALL`
+order. Template parsing/rendering, `TemplateManager.fieldFilters` runtime
+registration, Android UI, and Fragment lifecycle remain host-side. The pinned Kotlin
 implementation and test declare `SPDX-License-Identifier: GPL-3.0-or-later`
 and have no separate copyright line. The Dart adaptation and focused tests are
 Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`

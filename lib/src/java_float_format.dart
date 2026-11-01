@@ -73,6 +73,16 @@ int float32Bits(double value) {
 
 double _float32(double value) => Float32List.fromList([value])[0];
 
+/// Returns the value represented after Kotlin/JVM `Float` binary32 narrowing.
+double float32Value(double value) => _float32(value);
+
+/// Computes Kotlin/JVM `Float.hashCode()` for a binary32 value.
+int kotlinFloatHashCode(double value) {
+  final narrowed = _float32(value);
+  final bits = narrowed.isNaN ? 0x7fc00000 : float32Bits(narrowed);
+  return bits >= 0x80000000 ? bits - 0x100000000 : bits;
+}
+
 String _roundedFloatCandidate(
   double value,
   int bits,

@@ -20,6 +20,19 @@ license. No direct pinned test for this helper or data class was found. Root
 
 ## Adapted source
 
+`lib/src/image_view_set_image_drawable_safe.dart` and
+`test/image_view_set_image_drawable_safe_test.dart` adapt
+`ImageView.setImageDrawableSafe(drawable, onError)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/ImageView.kt:14–25`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter runs the source-order
+drawable assignment inside a host-supplied OOM guard and maps its null result
+to false. Android ImageView and platform-specific OOM classification remain
+host-side. The Kotlin file declares `GPL-3.0-or-later` and has no separate
+copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. No direct pinned test for this extension was found.
+Root `COPYING` remains byte-identical.
+
 `lib/src/chip_checked_background.dart` and
 `test/chip_checked_background_test.dart` adapt the `Chip.hasCheckedBackground`
 property from

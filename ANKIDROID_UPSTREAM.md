@@ -8,6 +8,26 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## `ImageView.setImageDrawableSafe(drawable, onError)`
+
+`imageViewSetImageDrawableSafe()` in
+`lib/src/image_view_set_image_drawable_safe.dart` adapts
+`ImageView.setImageDrawableSafe(drawable, onError)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/ImageView.kt:14–25`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the supplied
+`runWithOomCheck` with an action that calls `setImageDrawable` once with the
+identical nullable drawable and then returns `true`; a null guard result maps
+to `false`. The source's `runWithOOMCheck` catches only `OutOfMemoryError`,
+invokes the optional handler with that same error, and returns null. Other
+failures, including a failure from the handler, propagate. Android ImageView
+and platform-specific OOM classification remain host-side. The source-derived
+cases are in `test/image_view_set_image_drawable_safe_test.dart`; no direct
+pinned test for this extension was found. `ImageView.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui and marked with the same license. Root
+`COPYING` remains byte-identical.
+
 ## Chip checked background state
 
 `readChipHasCheckedBackground()` and `setChipHasCheckedBackground()` in

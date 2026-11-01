@@ -4,6 +4,26 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Safely set an ImageView drawable
+
+`imageViewSetImageDrawableSafe()` in
+[`lib/src/image_view_set_image_drawable_safe.dart`](lib/src/image_view_set_image_drawable_safe.dart)
+adapts `ImageView.setImageDrawableSafe(drawable, onError)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/ImageView.kt:14–25`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It passes an action to a host OOM
+guard; the action calls the host `setImageDrawable` callback once with the
+identical nullable drawable and returns true. A null guard result maps to
+false. The host owns Android ImageView behavior and decides which platform
+failure is an out-of-memory error; the Dart adapter does not classify Dart VM
+or Android failures. Focused tests are in
+[`test/image_view_set_image_drawable_safe_test.dart`](test/image_view_set_image_drawable_safe_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.
+
 ## Chip checked background state
 
 `readChipHasCheckedBackground()` and `setChipHasCheckedBackground()` in

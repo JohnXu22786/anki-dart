@@ -7,6 +7,25 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+## Field filter context and non-TTS built-ins
+
+`lib/src/field_filter.dart` adapts `FilterContext`, the `FieldFilter` default
+contract, and the non-TTS built-ins in
+`AnkiDroid/src/main/java/com/ichi2/anki/model/FieldFilters.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves context fields,
+defaults, copy transitions, data-class value behavior, filter names,
+applicability gates, and context updates. `NoSuggestFilter.apply()` implements
+the source's guarded replacement of all eligible `[[type:` markers. TTS and
+its option formatting, `FieldFilters.ALL`, `FieldFilterChain`, parsing and
+rendering, and `TemplateManager.fieldFilters` registration remain host-side.
+The pinned Kotlin file and
+`AnkiDroid/src/test/java/com/ichi2/anki/model/FieldFilterChainTest.kt` declare
+`SPDX-License-Identifier: GPL-3.0-or-later` and contain no separate copyright
+line. Focused Dart coverage is in `test/field_filter_test.dart`; the Dart
+adaptation and test are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/notifications/NotificationId.kt` and
   `AnkiDroid/src/main/java/com/ichi2/anki/worker/UniqueWorkNames.kt` (pinned
   AnkiDroid 2.25.3 commit

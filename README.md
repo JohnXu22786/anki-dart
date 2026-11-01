@@ -4,6 +4,24 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Field filter context and built-ins
+
+`FilterContext`, the default `FieldFilter` contract, the non-TTS built-ins, and
+`NoSuggestFilter.apply()` in `lib/src/field_filter.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/model/FieldFilters.kt` at AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The port preserves
+context value behavior, filter names, applicability gates, and context
+transitions. `NoSuggestFilter.apply(fieldText, fieldName, filterName)` retains
+the source's exact-name and marker guards and transforms all eligible `[[type:`
+markers. TTS, `FieldFilters.ALL`, `FieldFilterChain`, parsing and rendering, and
+`TemplateManager.fieldFilters` registration remain host-side. The focused cases
+are in `test/field_filter_test.dart`; the pinned Kotlin source and
+`FieldFilterChainTest.kt` declare `GPL-3.0-or-later` without a separate
+copyright line. The Dart adaptation and focused test are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.
+
 ## Whiteboard pen colors
 
 `WhiteboardPenColor` in `lib/src/whiteboard_pen_color.dart` adapts

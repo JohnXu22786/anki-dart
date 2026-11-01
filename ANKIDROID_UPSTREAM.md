@@ -8,6 +8,29 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## Field filter context and non-TTS built-ins
+
+`FilterContext`, the `FieldFilter` default contract, and the non-TTS built-ins
+`Text`, `Cloze`, `ClozeOnly`, `Hint`, `Type`, `TypeTheAnswerNonCombining`,
+`NoSuggest`, `Furigana`, `Kana`, and `Kanji` in
+`lib/src/field_filter.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/model/FieldFilters.kt` from AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart model
+preserves immutable context fields and defaults, copy transitions, Kotlin
+data-class equality/hash/string behavior, exact filter names, applicability
+gates, and context updates. `NoSuggestFilter.apply(fieldText, fieldName,
+filterName)` requires all three arguments and preserves the exact `nosuggest`
+name check, `[[type:` presence check, existing `[[type:nosuggest:` guard, and
+replacement of every `[[type:` marker. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/model/FieldFilterChainTest.kt` covers
+filter names and applicability constraints. TTS/`TextToSpeechOptions`,
+`FieldFilters.ALL`, `FieldFilterChain`, the parser/rendering pipeline, and
+`TemplateManager.fieldFilters` registration remain host-side. The pinned Kotlin
+implementation and test declare `SPDX-License-Identifier: GPL-3.0-or-later` and
+have no separate copyright line. The Dart adaptation and focused tests are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical.
+
 ## Sync identifiers
 
 `NotificationId` in `lib/src/notification_id.dart` preserves the ordered public

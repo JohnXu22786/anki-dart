@@ -22,6 +22,27 @@ attribution identifies the Kotlin source and does not claim authorship of the
 Dart adaptation. The Dart implementation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## `NoteEditorDestination.AddInstantNote.toIntent(context)`
+
+`noteEditorAddInstantNoteToIntent()` in
+`lib/src/note_editor_add_instant_note_to_intent.dart` adapts the
+`AddInstantNote` branch of `NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:28–33`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host callback creates one
+`NoteEditorActivity` Intent; the adapter writes `CALLER` with the
+`INSTANT_NOTE_EDITOR` code (`14`), then always writes the exact `sharedText`
+string, including an empty string, under Android's `Intent.EXTRA_TEXT` key
+(`android.intent.extra.TEXT`), and returns that same Intent. Context, Android
+Intent and Activity construction, and typed extra writes remain host-side;
+callback failures propagate and stop subsequent operations. Focused
+source-derived cases are in
+`test/note_editor_add_instant_note_to_intent_test.dart`. The Kotlin source
+declares `GPL-3.0-or-later` and carries SPDX Copyright (c) 2024 Sanjay Sargam;
+that attribution identifies the Kotlin source and does not claim authorship of
+the Dart adaptation. The Dart implementation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `Decks.update(did, block)`
 
 `decksUpdate()` in `lib/src/decks_update.dart` adapts

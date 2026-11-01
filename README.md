@@ -511,6 +511,23 @@ navigation. Source provenance, license, and copyright details are in
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md); root
 `COPYING` remains byte-identical.
 
+[`noteEditorAddInstantNoteToIntent()`](lib/src/note_editor_add_instant_note_to_intent.dart)
+adapts the `AddInstantNote` branch of
+`NoteEditorDestination.toIntent(context)`: it creates one host Intent, writes
+`CALLER: 14`, then always writes the exact shared text (including an empty
+string) under Android's `Intent.EXTRA_TEXT` key
+(`android.intent.extra.TEXT`) and returns the same Intent. Android context,
+activity component, Intent construction, and typed extra writes remain
+host-side. Focused cases in
+[`test/note_editor_add_instant_note_to_intent_test.dart`](test/note_editor_add_instant_note_to_intent_test.dart)
+cover the exact values and order, empty and nonempty text, identity, and
+callback failure short circuits. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 [`noteEditorImageOcclusionToIntent()`](lib/src/note_editor_image_occlusion_to_intent.dart)
 adapts the `ImageOcclusion` branch of
 `NoteEditorDestination.toIntent(context)`: it creates one host Intent, writes

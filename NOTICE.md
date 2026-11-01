@@ -44,6 +44,26 @@ and does not attribute the Dart adaptation to him. The Dart implementation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## Note Editor instant-note Intent
+
+`lib/src/note_editor_add_instant_note_to_intent.dart` and
+`test/note_editor_add_instant_note_to_intent_test.dart` adapt the
+`AddInstantNote` branch of `NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:28–33`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter creates one host
+Intent, writes `CALLER` with `INSTANT_NOTE_EDITOR` (`14`), then always writes
+the exact shared text as a String extra under `Intent.EXTRA_TEXT`
+(`android.intent.extra.TEXT`), including when it is empty, and returns the
+same Intent. Context, Activity component, Android Intent, and typed extra
+handling remain host-side; callback failures propagate and stop subsequent
+operations. Focused tests cover exact values and order, empty and nonempty text,
+Intent identity, and callback failure short circuits. The Kotlin source
+declares `GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this
+identifies the Kotlin source only and does not attribute the Dart adaptation to
+him. The Dart implementation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical.
+
 ## Note Editor image-occlusion Intent
 
 `lib/src/note_editor_image_occlusion_to_intent.dart` and

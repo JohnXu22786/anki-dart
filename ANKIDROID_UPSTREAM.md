@@ -115,9 +115,10 @@ equality, Kotlin/JVM `String.hashCode()` semantics, exact `toString()` projectio
 UTF-16 code-unit `length`, and `EMPTY`. The public
 `fromValidatedBackendSearchString()` factory only wraps a search string already
 built and validated by the backend; it does not parse, validate, or normalize a
-query. Search construction, query parsing/validation, backend error translation,
-generated search types, collection search methods, and backend/Rust search
-behavior remain host-side. The pinned
+query. Backend `SearchString` construction/conversion from queries or
+`SearchNode`s via `Collection.buildSearchString`, query parsing/validation,
+backend error translation, generated search types, collection search methods,
+and backend/Rust search behavior remain host-side. The pinned
 `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchStringTest.kt`
 exercises upstream query-building paths but does not directly test the wrapper's
 value semantics; focused source-derived contract cases are in
@@ -793,11 +794,12 @@ Not yet ported: the Android app and platform lifecycle integration, Card Browser
 Intent/URI parsing and navigation for the mapped launch-option values,
 SharedPreferences IO and current-version persistence (the previous-version
 fallback projection is modeled), search-history SharedPreferences,
-saved-search config IO and UI, host deck/note-type lookup, backend SearchNode
-conversion, query parsing/validation, final SearchString serialization and
-search execution, search-string conversion, Android execution of sync/reset
-effect plans, StateFlow/coroutine integration for filter/search-text and
-history/saved-search availability,
+saved-search config IO and UI, and host deck/note-type lookup. The
+`SearchString` value wrapper is modeled; backend construction/conversion from
+queries or `SearchNode`s via `Collection.buildSearchString`, query
+parsing/validation, and search execution remain host-side. Android execution of
+sync/reset effect plans, StateFlow/coroutine integration for filter/search-text
+and history/saved-search availability,
 SavedStateHandle persistence and removal, Basic/Advanced text widgets, and
 history-list/toggle widgets, persistent mode/config lookup and the source's
 AGPL-incorporated default-column constants, backend column registry/labels/tooltips/

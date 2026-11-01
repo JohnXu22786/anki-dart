@@ -227,11 +227,13 @@ source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 `SearchString` preserves the pinned value wrapper's string equality, Kotlin/JVM
 string hash, verbatim projection, UTF-16 length, and `EMPTY` value. Its
 `fromValidatedBackendSearchString()` factory wraps an already backend-built and
-validated string without parsing, validating, or normalizing it. Search
-construction and parsing, validation and backend error translation, generated
-search types, collection search methods, and Rust/backend behavior remain
-host-side. The pinned `SearchStringTest` covers backend search-construction
-paths but not the wrapper's value semantics; focused Dart cases are
+validated string without parsing, validating, or normalizing it. Backend
+`SearchString` construction/conversion from queries or `SearchNode`s via
+`Collection.buildSearchString`, query parsing/validation, backend error
+translation, generated search types, collection search methods, and
+Rust/backend behavior remain host-side. The pinned `SearchStringTest` covers
+backend search-construction paths but not the wrapper's value semantics;
+focused Dart cases are
 source-derived. The pinned source declares `GPL-3.0-or-later` with no separate
 copyright line; this adaptation and its tests are Copyright © 2026 John Tsui
 under `GPL-3.0-or-later`. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
@@ -951,9 +953,9 @@ Android lifecycle, StateFlow, localization, and UI.
   saved-entry request restoration uses host-supplied deck/note-type maps.
   `buildBrowserSearchNodePlan` then models the query and ordered filter terms as
   typed nodes, with the source's OR groups, AND root, singleton collapse, and
-  explicit flag/card-state mappings. Backend SearchNode conversion, query
-  parsing/validation, final SearchString serialization, and execution remain
-  outside.
+  explicit flag/card-state mappings. Backend SearchNode conversion,
+  SearchString construction/conversion from queries or nodes, query
+  parsing/validation, and execution remain outside.
   `BrowserSearchHistoryDisplayModel` starts collapsed, keeps the first five
   entries visible until expanded, and exposes the toggle only above five items.
   It preserves Loading entries with null search strings and Loaded entry/string
@@ -1467,10 +1469,11 @@ const canonicalization would merge same-field instances that AnkiDroid keeps
 distinct; callers should construct ordinary mapping instances.
 The host loads and persists history and resolves current collection objects;
 `buildBrowserSearchNodePlan` returns the source-equivalent typed tree before
-backend conversion. Backend protobuf SearchNode conversion, query parsing and
-validation, final SearchString serialization, query execution, and search UI
-stay outside the model. Search text and filters may contain user-provided
-data, so storage and privacy handling remain the host's duty.
+backend conversion. The `SearchString` value wrapper is modeled separately;
+backend SearchNode conversion and SearchString construction from queries or
+nodes, query parsing/validation, query execution, and search UI stay outside the
+model. Search text and filters may contain user-provided data, so storage and
+privacy handling remain the host's duty.
 `BrowserFilterUpdate` models user-versus-system filter origins and the source's
 initial empty System state. For one supplied snapshot, its request projection
 returns nothing while the screen is open or for a System update; a closed-screen
@@ -1497,8 +1500,9 @@ the flow and SavedStateHandle operations; the pinned source marks reset
 `@NeedsTest("reset")` but has no direct reset or sync test.
 `BrowserSearchHistoryDisplayModel` separately projects the supplied Loading or
 Loaded history into a five-entry collapsed or full expanded list. The host owns
-search-string conversion, SavedStateHandle/StateFlow lifecycle, and rendering
-the list and expansion toggle.
+backend conversion from query/node inputs to `SearchString` (the value wrapper
+is modeled), SavedStateHandle/StateFlow lifecycle, and rendering the list and
+expansion toggle.
 `BrowserSavedSearchesModel` operates on a host-supplied saved-search config map.
 It returns case-sensitive name-sorted values, applies the source duplicate and
 query-normalization rules, and exposes map conversion. The saved-search message
@@ -1522,9 +1526,9 @@ complete AnkiDroid replacement: Android screens and platform lifecycle integrati
 Card Browser Intent/Uri parsing and navigation for mapped launch options,
 SharedPreferences and mode lookup, saved-search config IO, localized
 outcome-message delivery and UI,
-collection-backed deck/note-type lookup, backend query-string generation and
-backend SearchNode conversion, query parsing/validation, final SearchString
-serialization and equality, search execution, search-string conversion,
+collection-backed deck/note-type lookup, backend SearchString construction and
+conversion from query or SearchNode inputs, query parsing/validation, and search
+execution (the SearchString value wrapper is modeled),
 Android execution of Card Browser
 text-edit/request-submission/sync/reset/history-selection effects and
 close-view/submitted-search event delivery,

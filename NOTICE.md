@@ -1,5 +1,15 @@
 # Notices
 
+## Throwable root cause
+
+`lib/src/root_cause.dart` and `test/root_cause_test.dart` adapt
+`Throwable.getRootCause()` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/Throwable.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin
+source is Copyright © 2026 Ashish Yadav under GPL-3.0-or-later. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## JSON content comparison
 
 `lib/src/json_content_equals.dart` and `test/json_content_equals_test.dart`

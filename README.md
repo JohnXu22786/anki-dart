@@ -40,6 +40,26 @@ are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+## Bottom-sheet dialog behavior
+
+`bottomSheetDialogFragmentBehavior()` in
+[`lib/src/bottom_sheet_dialog_fragment_behavior.dart`](lib/src/bottom_sheet_dialog_fragment_behavior.dart)
+adapts `BottomSheetDialogFragment.behavior` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/BottomSheetDialogFragment.kt:8–13`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies its exact
+`com.google.android.material.R.id.design_bottom_sheet` value. The adapter calls
+`requireDialog()` once, looks up that ID once on the returned dialog, preserves
+the Kotlin `!!` failure if the view is absent, and passes the identical view to
+one `BottomSheetBehavior.from` callback. Android dialogs, views, resource IDs,
+and Material behavior remain host-side. Focused source-derived cases are in
+[`test/bottom_sheet_dialog_fragment_behavior_test.dart`](test/bottom_sheet_dialog_fragment_behavior_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and license record.
+
 ## Register a fragment result listener
 
 `fragmentActivitySetFragmentResultListener()` in

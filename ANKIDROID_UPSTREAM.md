@@ -1608,6 +1608,26 @@ the Dart cases are source-derived. The Kotlin source declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## BottomSheetDialogFragment.behavior
+
+`bottomSheetDialogFragmentBehavior()` in
+`lib/src/bottom_sheet_dialog_fragment_behavior.dart` adapts the
+`BottomSheetDialogFragment.behavior` getter from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/BottomSheetDialogFragment.kt:8–13`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter calls the host's
+`requireDialog()` once, looks up `com.google.android.material.R.id.design_bottom_sheet`
+once on that exact dialog, applies Dart's null assertion to preserve Kotlin's
+`!!` failure, passes the identical view to one host `BottomSheetBehavior.from`
+callback, and returns its exact result. Callback failures propagate unchanged
+and prevent later operations. Android dialog, view, resource ID, and Material
+behavior implementations remain host-side. Source-derived tests are in
+`test/bottom_sheet_dialog_fragment_behavior_test.dart`; no direct pinned test
+was found. The Kotlin source declares `SPDX-License-Identifier:
+GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## Fragment.window
 
 `fragmentWindow()` and `test/fragment_window_test.dart` adapt the

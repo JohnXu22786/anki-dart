@@ -87,6 +87,18 @@ types, answer construction, and backend behavior remain host-side.
 The Dart adaptation and focused tests are Copyright © 2026 John Tsui under
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
+`lib/src/recycler_view_run_when_not_computing_layout.dart` and
+`test/recycler_view_run_when_not_computing_layout_test.dart` adapt
+`RecyclerView.runWhenNotComputingLayout(action)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/RecyclerView.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter reads the host layout
+state once, then either posts the same action token once or runs it once;
+callback failures propagate unchanged. Android scheduling stays host-side. The
+pinned Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical.
+
 `lib/src/decks_update.dart` and `test/decks_update_test.dart` adapt
 `Decks.update(did, block)` from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Deck.kt`, pinned to AnkiDroid

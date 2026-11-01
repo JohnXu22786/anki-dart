@@ -3096,3 +3096,15 @@ host commit result, matching Kotlin's `Unit` return. Android fragment types,
 lifecycle, and commit effects remain host-side. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source pin and license record.
+
+## RecyclerView layout-safe action
+
+`runWhenNotComputingLayout()` in
+`lib/src/recycler_view_run_when_not_computing_layout.dart` preserves the pinned
+AnkiDroid helper's one layout-state read and exclusive immediate-run or posted
+action branches. The same action token is used in either branch, and host
+callback failures propagate unchanged. Android RecyclerView scheduling and
+frame execution remain host-side. Focused source-derived tests are in
+[`test/recycler_view_run_when_not_computing_layout_test.dart`](test/recycler_view_run_when_not_computing_layout_test.dart).
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the exact source pin and GPL attribution. Root `COPYING` remains byte-identical.

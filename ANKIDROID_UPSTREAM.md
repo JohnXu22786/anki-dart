@@ -1567,3 +1567,22 @@ are source-derived in `test/fragment_manager_remove_fragment_test.dart`. The
 Kotlin file declares `GPL-3.0-or-later` and has no separate copyright line. The
 Dart adaptation and test are Copyright © 2026 John Tsui under
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## RecyclerView.runWhenNotComputingLayout
+
+`runWhenNotComputingLayout()` in
+`lib/src/recycler_view_run_when_not_computing_layout.dart` adapts
+`RecyclerView.runWhenNotComputingLayout(action)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/RecyclerView.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads
+`isComputingLayout` once. When true, it passes the identical action token to the
+host `post` callback once; otherwise it calls `action.run()` once. The branches
+are exclusive, and callback failures propagate unchanged. Android
+RecyclerView scheduling and frame execution remain host-side. A search of the
+pinned AnkiDroid tests found no direct test for this extension; the focused Dart
+cases are source-derived in
+`test/recycler_view_run_when_not_computing_layout_test.dart`. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

@@ -3045,3 +3045,18 @@ ownership and operation order while delegating Android PNG compression and
 `Base64.DEFAULT` encoding to the host. The source mapping, scope boundary, and
 GPL attribution are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md).
+
+## Context styled-attribute callback
+
+`usingStyledAttributes()` preserves the pinned helper's acquisition, single
+block invocation, and success-only recycle order. Android `Context`,
+`AttributeSet`, `IntArray`, and `TypedArray` access stay host-side; the Dart
+adapter receives opaque host arguments and passes one acquired array token to
+the block and recycle callbacks. A block failure propagates unchanged without
+recycling, as in the Kotlin source. Focused source-derived cases are in
+`test/context_using_styled_attributes_test.dart`; no direct pinned test was
+found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the exact source and license mapping. The pinned
+Kotlin source declares `GPL-3.0-or-later` and has no file-level copyright line;
+the Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

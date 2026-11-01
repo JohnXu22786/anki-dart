@@ -1483,3 +1483,25 @@ closing. The Kotlin source has a full GPL-3.0-or-later notice and Copyright
 © 2024 Ashish Yadav <mailtoashish693@gmail.com>; the Dart adaptation and tests
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## Context.usingStyledAttributes
+
+`usingStyledAttributes()` in `lib/src/context_using_styled_attributes.dart`
+and `test/context_using_styled_attributes_test.dart` adapt
+`Context.usingStyledAttributes()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Context.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection forwards the host `AttributeSet`, attribute-array token, and both
+style arguments to one acquisition callback, invokes the block once with the
+identical opaque `TypedArray` token, and recycles that token once only after a
+successful block return before returning the exact result. Acquisition failures
+prevent both later callbacks; block failures propagate unchanged without
+recycling; recycle failures propagate before a result is returned. This
+preserves the source's `typedArray.block().also { typedArray.recycle() }`
+sequence rather than adding `finally` cleanup. Android `Context`,
+`AttributeSet`, `IntArray`, and `TypedArray` access and acquisition remain
+host-side. The pinned source declares `GPL-3.0-or-later` and contains no
+file-level copyright line. A search of pinned AnkiDroid tests found no direct
+test for this helper; the focused Dart cases are source-derived. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

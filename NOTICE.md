@@ -2507,3 +2507,18 @@ extension was found; the focused Dart tests are source-derived. The Kotlin file
 has a full GPL version 3-or-later notice and Copyright © 2024 Ashish Yadav
 <mailtoashish693@gmail.com>. The Dart adaptation and tests are Copyright © 2026
 John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+`lib/src/context_using_styled_attributes.dart` and
+`test/context_using_styled_attributes_test.dart` adapt
+`Context.usingStyledAttributes()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Context.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The projection preserves one host
+acquisition, one block call on the identical opaque `TypedArray` token, and one
+recycle only after successful block return; acquisition, block, and recycle
+failures stop subsequent work and propagate unchanged. Android context,
+attribute, typed-array access, and acquisition remain host-side. No direct
+pinned test for the helper was found; focused Dart tests are source-derived.
+The Kotlin source declares `GPL-3.0-or-later` and contains no file-level
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

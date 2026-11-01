@@ -49,6 +49,7 @@ export 'src/input_stream_convert_to_string.dart';
 export 'src/json_reader.dart';
 export 'src/json_writer.dart';
 export 'src/bitmap_drawable_to_base64_png.dart';
+export 'src/context_using_styled_attributes.dart';
 export 'src/ignore_accents_in_search_config.dart';
 export 'src/state_flow_var_delegate.dart';
 export 'src/scheduler_answer_card.dart';

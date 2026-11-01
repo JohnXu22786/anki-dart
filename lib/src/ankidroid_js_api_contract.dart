@@ -37,6 +37,68 @@ class ApiContract {
   final String cardSuppliedData;
 }
 
+/// Host operations used to parse and project an AnkiDroid JS API request.
+///
+/// [parseObject] captures the host byte decoding and `JSONObject` creation;
+/// [optString] must delegate to the host object's `optString` so its fallback,
+/// null, and coercion rules stay source-compatible. The remaining callbacks
+/// classify and handle the host's source-equivalent `JSONException`. In
+/// particular, [showInvalidJsonSnackbar] owns UI-thread scheduling, localized
+/// string resolution, and Snackbar display.
+class JsApiContractHostAdapter<ParsedObject> {
+  const JsApiContractHostAdapter({
+    required this.parseObject,
+    required this.optString,
+    required this.isJsonException,
+    required this.logJsonException,
+    required this.showInvalidJsonSnackbar,
+  });
+
+  final ParsedObject Function() parseObject;
+  final String Function(ParsedObject object, String key, String fallback)
+  optString;
+  final bool Function(Exception exception) isJsonException;
+  final void Function(Exception exception) logJsonException;
+  final void Function(Exception exception) showInvalidJsonSnackbar;
+}
+
+/// Projects the source `parseJsApiContract()` behavior over host-parsed JSON.
+///
+/// Parsing and all three field reads occur inside the source JSON exception
+/// boundary. Field reads are eager and ordered before [requireJsApiVersion];
+/// only a host-classified source-equivalent `JSONException` is logged and
+/// passed to the host's invalid-JSON UI callback before returning null.
+ApiContract? parseJsApiContract<ParsedObject, Version>({
+  required JsApiContractHostAdapter<ParsedObject> host,
+  required JsApiVersionOperations<Version> versions,
+  required JsApiVersionHostCallbacks versionHost,
+}) {
+  try {
+    final parsedObject = host.parseObject();
+    final version = host.optString(parsedObject, 'version', '');
+    final developer = host.optString(parsedObject, 'developer', '');
+    final data = host.optString(parsedObject, 'data', '');
+    final isValid = requireJsApiVersion(
+      apiVer: version,
+      apiDevContact: developer,
+      versions: versions,
+      host: versionHost,
+    );
+    return ApiContract(
+      isValid: isValid,
+      cardSuppliedDeveloperContact: developer,
+      cardSuppliedData: data,
+    );
+  } on Exception catch (exception) {
+    if (!host.isJsonException(exception)) {
+      rethrow;
+    }
+    host.logJsonException(exception);
+    host.showInvalidJsonSnackbar(exception);
+    return null;
+  }
+}
+
 /// The source `ApiResult` envelope without Android `JSONObject` encoding.
 ///
 /// [toOrderedHostMap] provides the fields in source insertion order. The Android

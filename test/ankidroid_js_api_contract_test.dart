@@ -307,7 +307,243 @@ void main() {
       ).toOrderedHostMap();
       expect(stringProjection[VALUE_KEY], same(stringValue));
     });
+
+    test(
+      'parseJsApiContract reads source fields in order before checking version',
+      () {
+        final calls = <String>[];
+        final parsed = <String, String>{
+          'version': '0.0.3',
+          'developer': 'author',
+          'data': '{"payload":1}',
+        };
+        final contract = parseJsApiContract<Map<String, String>, String>(
+          host: JsApiContractHostAdapter<Map<String, String>>(
+            parseObject: () {
+              calls.add('parse-object');
+              return parsed;
+            },
+            optString: (object, key, fallback) {
+              calls.add('read:$key:$fallback');
+              return object[key] ?? fallback;
+            },
+            isJsonException: (_) => false,
+            logJsonException: (_) => fail('unexpected JSON exception'),
+            showInvalidJsonSnackbar: (_) =>
+                fail('unexpected invalid-JSON snackbar'),
+          ),
+          versions: _versions(calls),
+          versionHost: _host(calls),
+        );
+
+        expect(contract, isNotNull);
+        expect(contract!.isValid, isTrue);
+        expect(contract.cardSuppliedDeveloperContact, 'author');
+        expect(contract.cardSuppliedData, '{"payload":1}');
+        expect(calls, [
+          'parse-object',
+          'read:version:',
+          'read:developer:',
+          'read:data:',
+          'parse:0.0.3',
+          'parse:0.0.3',
+        ]);
+      },
+    );
+
+    test(
+      'parseJsApiContract passes host fallback values and returns false contracts',
+      () {
+        final calls = <String>[];
+        final parsed = <String, String>{};
+        final contract = parseJsApiContract<Map<String, String>, String>(
+          host: JsApiContractHostAdapter<Map<String, String>>(
+            parseObject: () => parsed,
+            optString: (object, key, fallback) {
+              calls.add('read:$key:$fallback');
+              return object[key] ?? fallback;
+            },
+            isJsonException: (_) => false,
+            logJsonException: (_) => fail('unexpected JSON exception'),
+            showInvalidJsonSnackbar: (_) =>
+                fail('unexpected invalid-JSON snackbar'),
+          ),
+          versions: _versions(calls),
+          versionHost: _host(calls),
+        );
+
+        expect(contract, isNotNull);
+        expect(contract!.isValid, isFalse);
+        expect(contract.cardSuppliedDeveloperContact, '');
+        expect(contract.cardSuppliedData, '');
+        expect(
+          contract,
+          isNot(
+            same(
+              ApiContract(
+                isValid: false,
+                cardSuppliedDeveloperContact: '',
+                cardSuppliedData: '',
+              ),
+            ),
+          ),
+        );
+        expect(calls, [
+          'read:version:',
+          'read:developer:',
+          'read:data:',
+          'invalid:',
+        ]);
+      },
+    );
+
+    test(
+      'parseJsApiContract logs a host JSON exception before showing its message',
+      () {
+        final calls = <String>[];
+        final failure = _JsonException('bad JSON', 'localized JSON detail');
+        Exception? loggedException;
+        Exception? shownException;
+        final contract = parseJsApiContract<Map<String, String>, String>(
+          host: JsApiContractHostAdapter<Map<String, String>>(
+            parseObject: () => const {},
+            optString: (_, key, fallback) {
+              calls.add('read:$key');
+              if (key == 'developer') throw failure;
+              return fallback;
+            },
+            isJsonException: (exception) => exception is _JsonException,
+            logJsonException: (exception) {
+              loggedException = exception;
+              calls.add('log:$exception');
+            },
+            showInvalidJsonSnackbar: (exception) {
+              shownException = exception;
+              calls.add('ui:${(exception as _JsonException).localized}');
+            },
+          ),
+          versions: _versions(calls),
+          versionHost: _host(calls),
+        );
+
+        expect(contract, isNull);
+        expect(calls, [
+          'read:version',
+          'read:developer',
+          'log:$failure',
+          'ui:localized JSON detail',
+        ]);
+        expect(loggedException, same(failure));
+        expect(shownException, same(failure));
+
+        final parseFailure = _JsonException('parse failed', 'parse localized');
+        final parseCalls = <String>[];
+        final parseContract = parseJsApiContract<Map<String, String>, String>(
+          host: JsApiContractHostAdapter<Map<String, String>>(
+            parseObject: () {
+              parseCalls.add('parse');
+              throw parseFailure;
+            },
+            optString: (_, __, ___) => fail('fields follow successful parsing'),
+            isJsonException: (exception) => exception is _JsonException,
+            logJsonException: (exception) => parseCalls.add('log:$exception'),
+            showInvalidJsonSnackbar: (exception) =>
+                parseCalls.add('ui:${(exception as _JsonException).localized}'),
+          ),
+          versions: _versions(parseCalls),
+          versionHost: _host(parseCalls),
+        );
+        expect(parseContract, isNull);
+        expect(parseCalls, ['parse', 'log:parse failed', 'ui:parse localized']);
+      },
+    );
+
+    test(
+      'parseJsApiContract propagates non-JSON failures and catch-body failures',
+      () {
+        final ordinaryFailure = Exception('not JSON');
+        final calls = <String>[];
+
+        expect(
+          () => parseJsApiContract<Map<String, String>, String>(
+            host: JsApiContractHostAdapter<Map<String, String>>(
+              parseObject: () => const {},
+              optString: (_, __, ___) => throw ordinaryFailure,
+              isJsonException: (_) => false,
+              logJsonException: (_) => fail('unexpected JSON exception'),
+              showInvalidJsonSnackbar: (_) =>
+                  fail('unexpected invalid-JSON snackbar'),
+            ),
+            versions: _versions(calls),
+            versionHost: _host(calls),
+          ),
+          throwsA(same(ordinaryFailure)),
+        );
+
+        final jsonFailure = _JsonException('bad JSON', 'localized');
+        final loggingFailure = StateError('logger failed');
+        expect(
+          () => parseJsApiContract<Map<String, String>, String>(
+            host: JsApiContractHostAdapter<Map<String, String>>(
+              parseObject: () => const {},
+              optString: (_, __, ___) => throw jsonFailure,
+              isJsonException: (exception) => exception is _JsonException,
+              logJsonException: (_) => throw loggingFailure,
+              showInvalidJsonSnackbar: (_) => calls.add('ui'),
+            ),
+            versions: _versions(calls),
+            versionHost: _host(calls),
+          ),
+          throwsA(same(loggingFailure)),
+        );
+        expect(calls, isEmpty);
+
+        final uiFailure = Exception('UI failed');
+        expect(
+          () => parseJsApiContract<Map<String, String>, String>(
+            host: JsApiContractHostAdapter<Map<String, String>>(
+              parseObject: () => const {},
+              optString: (_, __, ___) => throw jsonFailure,
+              isJsonException: (exception) => exception is _JsonException,
+              logJsonException: (_) => calls.add('log'),
+              showInvalidJsonSnackbar: (_) => throw uiFailure,
+            ),
+            versions: _versions(calls),
+            versionHost: _host(calls),
+          ),
+          throwsA(same(uiFailure)),
+        );
+        expect(calls, ['log']);
+
+        final errorFailure = StateError('fatal');
+        expect(
+          () => parseJsApiContract<Map<String, String>, String>(
+            host: JsApiContractHostAdapter<Map<String, String>>(
+              parseObject: () => const {},
+              optString: (_, __, ___) => throw errorFailure,
+              isJsonException: (_) => fail('Error must bypass classification'),
+              logJsonException: (_) => fail('unexpected JSON exception'),
+              showInvalidJsonSnackbar: (_) =>
+                  fail('unexpected invalid-JSON snackbar'),
+            ),
+            versions: _versions(calls),
+            versionHost: _host(calls),
+          ),
+          throwsA(same(errorFailure)),
+        );
+      },
+    );
   });
+}
+
+class _JsonException implements Exception {
+  _JsonException(this.message, this.localized);
+
+  final String message;
+  final String localized;
+
+  @override
+  String toString() => message;
 }
 
 JsApiVersionOperations<String> _versions(

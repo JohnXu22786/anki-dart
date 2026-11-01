@@ -1222,6 +1222,18 @@ empty-string checks, current-then-supplied parsing, equal/lower/greater branches
 callback order, and the `Exception` warning boundary. The host supplies exact
 Java `Version.parse` and comparison operations plus UI/logging callbacks;
 JSON-byte decoding, Android thread scheduling and UI strings remain host-side.
+`parseJsApiContract()` also adapts `AnkiDroidJsAPI.kt:101–119`: the host parses
+the bytes to a `JSONObject`, then the adapter reads `optString("version", "")`,
+`optString("developer", "")`, and `optString("data", "")` in order before
+calling the version gate. The host `JSONObject` and its fallback, null, and
+coercion behavior remain unchanged. The Dart adapter catches only a host-
+classified `JSONException`, logs that same exception once, then invokes the
+host invalid-JSON UI callback with it so the host can schedule the source
+localized message and Snackbar. It returns null after those effects; failures
+from parsing/field reads that are not JSON exceptions, and failures in the
+catch-body host callbacks propagate. The pinned `AnkiDroidJsAPITest.kt` has a
+valid-contract helper but no direct malformed-input or field-order case; focused
+cases in `test/ankidroid_js_api_contract_test.dart` are source-derived.
 `VALUE_KEY` and `SUCCESS_KEY` in
 `lib/src/ankidroid_js_api_constants.dart` preserve the companion values
 `"value"` and `"success"`. Focused source-derived cases are in

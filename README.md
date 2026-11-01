@@ -65,8 +65,15 @@ ordered flag-name to `ViewerCommand` table. It represents enum values only;
 Android WebView/JS bridge execution, dispatch, localization, version parsing,
 UI and logging remain host-side. `ApiContract` and `requireJsApiVersion()` in
 `lib/src/ankidroid_js_api_contract.dart` add the source field projection and
-compatibility gate; host callbacks retain Java semver parsing/comparison and
-Android UI/logging effects. Focused constant/table cases are in
+compatibility gate. `parseJsApiContract()` projects the parsed request through
+host callbacks in source order (`version`, `developer`, then `data`) before
+checking compatibility. The host retains byte decoding, `JSONObject` parsing
+and `optString` fallback/coercion, `JSONException` classification, logging,
+localized invalid-JSON UI, and thread scheduling. Only a host-classified JSON
+exception logs before the invalid-JSON UI callback and returns null; other
+exceptions and callback failures propagate. Host callbacks also retain Java
+semver parsing/comparison and the other Android UI/logging effects. Focused
+constant/table cases are in
 `test/ankidroid_js_api_constants_test.dart`, with source-derived gate and
 contract cases in `test/ankidroid_js_api_contract_test.dart`. The adapted sources are
 `GPL-3.0-or-later`, with upstream source copyrights by Mani (2021, and 2020 for

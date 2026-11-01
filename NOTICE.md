@@ -76,7 +76,14 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   variants. Android `JSONObject` encoding, Java number formatting and
   exceptions, UTF-8 conversion, JVM boxed numeric widths, bridge dispatch, Java
   semver parsing/comparison, JSON byte decoding, Android UI/thread scheduling,
-  and logging remain host-side. The source companion values `VALUE_KEY = "value"` and
+  and logging remain host-side. `parseJsApiContract()` reads the host-parsed
+  `JSONObject` fields using source `optString` calls in version/developer/data
+  order before invoking the compatibility gate. The host retains byte decoding,
+  JSON parsing, fallback/null/coercion semantics, JSON exception classification,
+  Timber logging, localized UI, and UI-thread scheduling. The Dart adapter logs
+  only host-classified `JSONException` values before invoking the localized
+  invalid-JSON UI callback, then returns null; unrelated and catch-body callback
+  failures propagate. The source companion values `VALUE_KEY = "value"` and
   `SUCCESS_KEY = "success"` are in `lib/src/ankidroid_js_api_constants.dart`.
   The pinned `AnkiDroidJsAPITest.kt` helper constructs a valid `0.0.3` contract;
   its Boolean, Int, Long, and String result helpers are integration-test

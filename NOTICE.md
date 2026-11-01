@@ -7,6 +7,24 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/utils/MimeTypeUtils.kt` (pinned
+  AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) supplies the five ordered
+  `CSV_TSV_MIME_TYPES` values adapted as `MimeTypeUtils.csvTsvMimeTypes` in
+  `lib/src/mime_type_utils.dart`. The Kotlin file includes the full GNU GPL
+  version 3-or-later notice and Copyright © 2025 argon2r
+  <vincentcs008@gmail.com>, but has no SPDX identifier marker. Its direct
+  integration test,
+  `AnkiDroid/src/test/java/com/ichi2/anki/dialogs/ImportFileSelectionFragmentTest.kt:43–50`,
+  declares `GPL-3.0-or-later`, is Copyright © 2026 Ashish Yadav
+  <mailtoashish693@gmail.com>, and checks that the picker Intent receives the
+  same MIME values in order. Android Intent and import-picker construction and
+  behavior remain host-side. The Dart static final property preserves the
+  source array's stable shared mutable semantics; its focused test is in
+  `test/mime_type_utils_test.dart`. The adaptation and Dart test are Copyright
+  © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains
+  byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/startup/StoragePolicy.kt`,
   `anki-common/src/main/kotlin/com/ichi2/anki/common/storage/AnkiDroidFolder.kt`,
   and direct tests in

@@ -26,6 +26,28 @@ line; no method-specific authorship is asserted. The Dart adaptation/tests are
 Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains
 byte-identical.
 
+## CSV/TSV MIME types
+
+`MimeTypeUtils.csvTsvMimeTypes` in `lib/src/mime_type_utils.dart` adapts
+`MimeTypeUtils.CSV_TSV_MIME_TYPES` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/MimeTypeUtils.kt` at pinned
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It retains the source order:
+`text/comma-separated-values`, `text/csv`, `text/tab-separated-values`,
+`text/tsv`, `text/plain`. The Kotlin `object` property holds one mutable array;
+the Dart static final property likewise holds one shared mutable list. The
+direct integration assertion is
+`AnkiDroid/src/test/java/com/ichi2/anki/dialogs/ImportFileSelectionFragmentTest.kt:43–50`,
+which passes the array to the picker Intent and compares the Intent's MIME
+values to it in order. Android Intent and import-picker construction and
+behavior remain host-side. The Kotlin source has a full GPL version 3-or-later
+notice and Copyright © 2025 argon2r <vincentcs008@gmail.com>, but no SPDX
+identifier marker; the direct test has `SPDX-License-Identifier:
+GPL-3.0-or-later` and Copyright © 2026 Ashish Yadav
+<mailtoashish693@gmail.com>. The Dart adaptation and focused contract test are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical.
+
 ## CardStateFilter search fragments
 
 `CardStateFilter` in `lib/src/card_state_filter.dart` adapts the enum and

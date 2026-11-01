@@ -17,6 +17,17 @@ responsibilities and platform filesystem rules remain host-side. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and license details; root `COPYING` remains unchanged.
 
+## CSV/TSV MIME types
+
+`MimeTypeUtils.csvTsvMimeTypes` preserves the five ordered values from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/MimeTypeUtils.kt` at AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It remains a shared,
+mutable list like the source Kotlin array. The pinned import-picker test checks
+that these values reach the picker Intent in order; Android Intent construction
+and picker behavior remain host-side. The adapted source is GPL-3.0-or-later;
+see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+attribution and license details. Root `COPYING` remains unchanged.
+
 ## MathJax note-editor formatting
 
 `MathJaxFormat` ports the `BLOCK` and `CHEMISTRY` string wrappers and mutable

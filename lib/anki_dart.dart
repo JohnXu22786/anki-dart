@@ -21,6 +21,7 @@ export 'src/anki_backend_language.dart';
 export 'src/analytics_sample_percentage.dart';
 export 'src/card_state_filter.dart';
 export 'src/filename.dart';
+export 'src/mime_type_utils.dart';
 export 'src/deck_filters.dart';
 export 'src/card_utils.dart';
 export 'src/viewer_refresh.dart';

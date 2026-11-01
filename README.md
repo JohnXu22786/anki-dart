@@ -3085,3 +3085,14 @@ Focused source-derived cases are in
 [test/menu_item_set_icon_res_test.dart](test/menu_item_set_icon_res_test.dart);
 no direct pinned test was found. The mapping and GPL attribution are recorded in
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+
+## Fragment removal from a container
+
+`removeFragmentFromContainer()` in `lib/src/fragment_manager_remove_fragment.dart`
+ports the source ordering from AnkiDroid 2.25.3: look up once, fail with the
+source message if missing, then begin a transaction, remove the same fragment,
+and commit once. The Dart helper preserves callback failures and ignores the
+host commit result, matching Kotlin's `Unit` return. Android fragment types,
+lifecycle, and commit effects remain host-side. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source pin and license record.

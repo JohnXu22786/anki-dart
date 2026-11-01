@@ -2551,3 +2551,16 @@ was found; focused Dart tests are source-derived. The Kotlin source declares
 `GPL-3.0-or-later` and contains no separate copyright line. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+`lib/src/fragment_manager_remove_fragment.dart` and
+`test/fragment_manager_remove_fragment_test.dart` adapt
+`removeFragmentFromContainer()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentManager.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart helper preserves the
+source lookup, null failure message, transaction/remove/commit order, Unit
+result, and callback failure propagation. Android FragmentManager, Fragment,
+FragmentTransaction, lifecycle, and commit effects remain host-side. The pinned
+Kotlin source declares `GPL-3.0-or-later` and contains no separate copyright
+line. The Dart adaptation and focused source-derived tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.

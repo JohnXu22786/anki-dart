@@ -1547,3 +1547,23 @@ the Dart cases are source-derived. The Kotlin source declares
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## FragmentManager.removeFragmentFromContainer
+
+`removeFragmentFromContainer()` in
+`lib/src/fragment_manager_remove_fragment.dart` adapts the extension from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentManager.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host lookup once with
+the requested container ID. A missing fragment throws Dart `ArgumentError`
+with the source message `could not find fragment` before a transaction begins.
+For a found fragment it begins one transaction, removes that exact object, and
+commits once in source order; the host commit result is ignored, matching the
+source `Unit` return. Callback failures propagate unchanged and short-circuit
+later calls. Android `FragmentManager`, `Fragment`, `FragmentTransaction`,
+fragment lifecycle, and actual commit effects remain host-side. No direct test
+for this extension was found in the pinned source tree; its focused Dart cases
+are source-derived in `test/fragment_manager_remove_fragment_test.dart`. The
+Kotlin file declares `GPL-3.0-or-later` and has no separate copyright line. The
+Dart adaptation and test are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

@@ -26,6 +26,19 @@ this `toIntent` extension was found. The Kotlin sources declare
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## Study options and statistics destination Intents
+
+`lib/src/study_options_destination_to_intent.dart`,
+`lib/src/statistics_destination_to_intent.dart`, and
+`test/screen_destinations_test.dart` adapt the common `StudyOptionsDestination`
+and `StatisticsDestination` singleton sources and their host `toIntent`
+projections in AnkiDroid 2.25.3. The Kotlin sources declare
+`GPL-3.0-or-later` and have no separate copyright line. This identifies the
+upstream sources and does not attribute the Dart adaptations to upstream
+authors. The Dart implementations and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical. See
+`ANKIIDROID_UPSTREAM.md` for the pinned paths and behavior mapping.
+
 ## Note Editor caller codes
 
 `lib/src/note_editor_caller.dart` and `test/note_editor_caller_test.dart`

@@ -574,3 +574,32 @@ separate copyright line. This provenance identifies the upstream Kotlin
 sources and does not claim authorship of the Dart adaptation. The Dart
 implementation and tests are Copyright © 2026 John Tsui under
 `GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
+## Study options and statistics destination Intents
+
+`StudyOptionsDestination` and `StatisticsDestination` in
+`lib/src/study_options_destination_to_intent.dart` and
+`lib/src/statistics_destination_to_intent.dart` adapt the common singleton
+objects from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/StudyOptionsDestination.kt:6`
+and
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/StatisticsDestination.kt:6`,
+respectively, pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Their host projections are
+`AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsDestination.kt:10` and
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/StatisticsDestination.kt:11`.
+Study Options calls the host equivalent of `Intent(context,
+StudyOptionsActivity::class.java)`; Statistics calls the distinct host
+equivalent of `SingleFragmentActivity.getIntent(context,
+fragmentClass = Statistics::class)`. Both adapters pass the exact Context and
+target token once, return the exact host result, and propagate callback failures
+unchanged. Android Context, target classes, Activity, and Intent construction
+remain host-side. Focused source-derived cases are in
+`test/screen_destinations_test.dart`. Upstream integration coverage includes
+`AnkiDroid/src/test/java/com/ichi2/anki/pages/StatisticsTest.kt:33–64` and
+`AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewRemindersScreenshotTest.kt:138,278,303`;
+no direct pinned test for either host `toIntent` projection was found. The Kotlin
+sources declare `GPL-3.0-or-later` and have no separate copyright line; this
+records upstream provenance and does not claim authorship of the Dart
+adaptations. The Dart implementations and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

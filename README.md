@@ -3863,3 +3863,24 @@ failure propagation. The pinned Kotlin sources declare `GPL-3.0-or-later` with
 no separate copyright line; the Dart implementation and tests are Copyright ©
 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) for pinned source paths.
+
+## Study options and statistics destination Intents
+
+[`StudyOptionsDestination.instance.toIntent()`](lib/src/study_options_destination_to_intent.dart)
+and [`StatisticsDestination.instance.toIntent()`](lib/src/statistics_destination_to_intent.dart)
+adapt the corresponding AnkiDroid 2.25.3 destination singletons. Study Options
+delegates once with the exact context and `StudyOptionsActivity::class.java`
+token to the host Intent constructor callback. Statistics delegates once with
+the exact context and `Statistics::class` token to the distinct host
+`SingleFragmentActivity.getIntent` callback. Each returns the callback's exact
+result, and callback failures propagate unchanged. Android Context, target
+classes, Activity, and Intent construction and behavior remain host-side.
+`ReviewerStatisticsDestination` remains a separate reviewer action projection.
+Focused cases in [`test/screen_destinations_test.dart`](test/screen_destinations_test.dart)
+cover both singleton identities, token and result identity, invocation counts,
+and failure propagation. The upstream Kotlin files declare `GPL-3.0-or-later`
+and have no separate copyright line; this records source provenance, not Dart
+authorship. The Dart adaptations and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.

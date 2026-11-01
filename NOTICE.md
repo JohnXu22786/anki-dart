@@ -1,5 +1,17 @@
 # Notices
 
+## String title casing
+
+`lib/src/to_title_case.dart` and `test/to_title_case_test.dart` adapt
+`StringUtils.toTitleCase()` from
+`common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host
+supplies Kotlin/JVM-compatible blank detection and the current default-locale
+case operations; Dart preserves the source's null/blank early returns, UTF-16
+split, and callback order. The Kotlin source is GPL-3.0-or-later with no
+method-specific copyright line. The Dart implementation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## HTML encoding
 
 `lib/src/html_encode.dart` and `test/html_encode_test.dart` adapt

@@ -3935,3 +3935,22 @@ GPL-3.0-or-later with no separate copyright line; the Dart implementation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for provenance and license details.
+
+## Named JSON comparator
+
+`NamedObject` and `NamedJSONComparator.INSTANCE` in
+[`lib/src/named_json_comparator.dart`](lib/src/named_json_comparator.dart) port
+`NamedJSONComparator` from AnkiDroid's
+`common/src/main/java/com/ichi2/anki/common/json/NamedJSONComparator.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter reads the left and right
+names once each, in that order, then returns the host-supplied
+Kotlin/JVM-compatible case-insensitive comparison result unchanged. JVM string
+comparison remains host-side. Focused cases are in
+[`test/named_json_comparator_test.dart`](test/named_json_comparator_test.dart),
+covering the pinned equal-name and ordering assertions plus getter and callback
+order/error behavior. The source is GPL-3.0-or-later, Copyright © 2020 Arthur
+Milchior; the pinned direct test is Copyright © 2021 Shridhar Goel. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source mapping and license details.

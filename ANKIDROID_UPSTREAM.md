@@ -2291,3 +2291,23 @@ no direct pinned AnkiDroid test was found. The Kotlin source declares
 those authorship claims to the new Dart files. The Dart adaptation and tests
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## `NamedJSONComparator`
+
+Pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/json/NamedJSONComparator.kt`
+- Direct test: `common/src/test/java/com/ichi2/anki/common/json/NamedJSONComparatorTest.kt`
+- Dart adaptation: `lib/src/named_json_comparator.dart`
+- Focused Dart test: `test/named_json_comparator_test.dart`
+
+`NamedObject` exposes `name: String`. The singleton
+`NamedJSONComparator.INSTANCE.compare(lhs, rhs)` reads the left name once, then
+the right name once, and returns Kotlin/JVM
+`String.compareTo(ignoreCase = true)` unchanged. The Dart adapter delegates that
+comparison to a host callback to preserve JVM Unicode behavior; it also
+preserves getter evaluation order and propagates getter/callback failures. The
+pinned Kotlin source is GPL-3.0-or-later, Copyright © 2020 Arthur Milchior. Its
+direct test is Copyright © 2021 Shridhar Goel. The Dart adaptation and test are
+Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING` remains
+byte-identical.

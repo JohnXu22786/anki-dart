@@ -436,3 +436,4 @@ export 'src/schedule_reminders_destination.dart';
 export 'src/preferences_destination.dart';
 export 'src/json_array_adapters.dart';
 export 'src/time_utils.dart';
+export 'src/named_json_comparator.dart';

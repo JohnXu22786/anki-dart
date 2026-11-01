@@ -3493,3 +3493,18 @@ wrap. The host supplies `SimpleDateFormat` with `Locale.US` and its default
 zone, Kotlin `Duration.inWholeMilliseconds` / `String.format` behavior, and
 `Calendar` including time zone, DST and Gregorian behavior. Root `COPYING`
 remains byte-identical.
+
+## `NamedJSONComparator.compare(lhs, rhs)`
+
+`lib/src/named_json_comparator.dart` adapts `NamedJSONComparator.INSTANCE` and
+`NamedObject` from AnkiDroid 2.25.3
+`common/src/main/java/com/ichi2/anki/common/json/NamedJSONComparator.kt`, pinned
+to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter reads `lhs.name`
+once, then `rhs.name` once, and returns the host-supplied Kotlin/JVM
+`String.compareTo(ignoreCase = true)` result unchanged. JVM comparison semantics
+remain host-side; getter and callback failures propagate. Focused Dart cases are
+in `test/named_json_comparator_test.dart`. The Kotlin source is
+`GPL-3.0-or-later` and Copyright © 2020 Arthur Milchior; its pinned direct test,
+`common/src/test/java/com/ichi2/anki/common/json/NamedJSONComparatorTest.kt`, is
+Copyright © 2021 Shridhar Goel. The Dart adaptation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.

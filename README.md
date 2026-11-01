@@ -38,6 +38,28 @@ method. Root `COPYING` remains byte-identical. See
 [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source and license record.
 
+## Bundle scalar accessors
+
+`BundleUtilsScalarAccessors` adapts `getLongOrNull`, `getIntOrNull`,
+`requireLong`, `requireString`, and `requireBoolean` from AnkiDroid's
+`BundleUtils.kt`, pinned to 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. A narrow host-supplied
+`BundleUtilsAccess` provides `containsKey` and typed reads; each accessor
+preserves the source's presence check, read order, and call count. Missing
+required keys throw `StateError` with the source message, while a null required
+String throws `ArgumentError` with the source `requireNotNull` message. Host
+callback failures propagate unchanged. Android `Bundle` coercion and
+parcelable/class-loader behavior remain host-side. The pinned
+`BundleUtilsTest.kt` directly covers nullable Long access and required Long and
+Boolean presence/read cases; source-derived Dart coverage adds nullable Int,
+exact messages and ordering, null strings, and callback failures. Focused cases
+are in `test/bundle_utils_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and Copyright © 2021 Tarek Mohamed Abdalla. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source, test, and license details.
+
 ## Mutable state flow delegate
 
 `MutableValue<T>`, `StateFlowVarDelegate<T>`, and `asVar()` in

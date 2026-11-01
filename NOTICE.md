@@ -7,6 +7,26 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+`lib/src/bundle_utils.dart` and `test/bundle_utils_test.dart` adapt the five
+scalar accessors `getLongOrNull`, `getIntOrNull`, `requireLong`, `requireString`,
+and `requireBoolean` from `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/BundleUtils.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies the narrow
+`BundleUtilsAccess` interface; Android `Bundle` coercion and parcelable or
+class-loader compatibility remain host-side. Nullable access checks presence
+once and reads only when present. Required access preserves source order and
+messages; Dart `StateError` corresponds to Kotlin `IllegalStateException`, and
+Dart `ArgumentError` corresponds to the `IllegalArgumentException` from a null
+`requireString` result. Host callback failures propagate unchanged. The pinned
+`AnkiDroid/src/test/java/com/ichi2/utils/BundleUtilsTest.kt` directly covers
+nullable Long and required Long/Boolean presence and read behavior. Additional
+source-derived Dart cases cover nullable Int, exact messages and call order,
+null required strings, and callback propagation. The Kotlin implementation
+has `SPDX-License-Identifier: GPL-3.0-or-later` and Copyright © 2021 Tarek
+Mohamed Abdalla <tarekkma@gmail.com>. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains
+byte-identical.
+
 `lib/src/card_stats_no_card_clean.dart` and
 `test/card_stats_no_card_clean_test.dart` adapt
 `Translations.cardStatsNoCardClean()` from

@@ -1774,6 +1774,14 @@ separately in
 [`LICENSES/Unicode-License-V3.txt`](LICENSES/Unicode-License-V3.txt); the
 AnkiDroid code license does not replace this data notice.
 
+`normalizeForSearch()` uses `unorm_dart` 0.3.3, which provides Unicode 18.0.0
+normalization data. The pinned JVM implementation delegates NFD to the Unicode
+data available in its runtime, so JVM results can vary by platform release. The
+Dart port's normalization data is fixed at Unicode 18.0.0. The helper then
+removes only U+0300..U+036F; marks in other blocks remain. The package's MIT
+license notice is retained in
+[`LICENSES/unorm_dart-MIT.txt`](LICENSES/unorm_dart-MIT.txt), and its Unicode data is covered by the Unicode License V3 notice above.
+
 AnkiDroid's repository also identifies separately licensed components,
 including the AnkiDroid API under LGPL-3.0 and parts of the Anki backend under
 AGPL-3.0. Those components are not included in the current Dart port. If they

@@ -155,3 +155,18 @@ other `CharSequence` implementations. The pinned source declares
 `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
 focused tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`.
 Root `COPYING` remains byte-identical.
+
+## String search normalization
+
+`normalizeForSearch()` in `lib/src/string_normalization.dart` adapts
+`String.normalizeForSearch()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/String.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It applies
+NFD, then removes only runs in the `InCombiningDiacriticalMarks` block
+(U+0300..U+036F). Focused cases in
+`test/string_normalization_test.dart` include the five direct examples from
+`StringNormalizationTest.kt`, block boundaries, decomposition that preserves marks outside the block, and
+UTF-16 surrogates. The host JVM supplies its runtime's normalization data; Dart pins
+`unorm_dart` 0.3.3 with Unicode 18.0.0 data. Marks outside the specified block
+remain. The upstream source and direct test copyrights and dependency license
+obligations are recorded in `NOTICE.md`; root `COPYING` remains unchanged.

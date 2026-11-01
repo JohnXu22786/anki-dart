@@ -2213,3 +2213,26 @@ and focused tests are Copyright © 2026 John Tsui and marked
   Kotlin's `CharSequence` subtype identity cannot be represented in this
   package's String-only API. The Dart adaptation and tests are Copyright © 2026
   John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## String search normalization
+
+`normalizeForSearch()` in `lib/src/string_normalization.dart` adapts
+`String.normalizeForSearch()` from AnkiDroid 2.25.3
+(`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/String.kt`, commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`), Copyright © 2024 Ashish Yadav
+and marked `GPL-3.0-or-later`. The direct upstream cases are in
+`AnkiDroid/src/test/java/com/ichi2/anki/browser/StringNormalizationTest.kt`,
+Copyright © 2025 Ashish Yadav. The Dart adaptation and its focused source-derived
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; the source and
+test attributions remain recorded here and in the Dart source.
+
+The pinned JVM code calls `java.text.Normalizer` and delegates NFD data to its
+runtime. The Dart adaptation pins `unorm_dart` 0.3.3 (published 2026-10-04;
+archive SHA-256 `b4f4d2aff27d65a5fc37f400d4c09e55d7535359315acbe3b895a9add4de3a23`),
+which advertises Unicode 18.0.0 normalization data. It performs canonical NFD,
+then removes one or more code points only from U+0300..U+036F. Other marks are
+preserved. Results may differ from JVM runtimes using another Unicode version;
+this port makes no claim to match their version-specific additions. The
+dependency's MIT permission notice is retained verbatim in
+`LICENSES/unorm_dart-MIT.txt`; its Unicode normalization data is covered by the
+Unicode License V3 notice in `LICENSES/Unicode-License-V3.txt`.

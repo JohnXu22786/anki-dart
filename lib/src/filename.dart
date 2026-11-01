@@ -41,8 +41,16 @@ final class Filename {
       identical(this, other) || other is Filename && other.value == value;
 
   @override
-  int get hashCode => value.hashCode;
+  int get hashCode => _kotlinStringHashCode(value);
 
   @override
   String toString() => value;
+}
+
+int _kotlinStringHashCode(String value) {
+  var hash = 0;
+  for (final codeUnit in value.codeUnits) {
+    hash = (31 * hash + codeUnit) & 0xFFFFFFFF;
+  }
+  return hash >= 0x80000000 ? hash - 0x100000000 : hash;
 }

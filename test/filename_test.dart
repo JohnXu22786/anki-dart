@@ -51,6 +51,8 @@ void main() {
 
       expect(first, equal);
       expect(first.hashCode, equal.hashCode);
+      expect(first.hashCode, -1388859076);
+      expect(Filename.sanitize('😊').hashCode, 1772909);
       expect(first, isNot(different));
       expect(first.toString(), 'Japanese Vocab');
     });

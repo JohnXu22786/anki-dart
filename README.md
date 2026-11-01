@@ -2978,3 +2978,28 @@ line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the sa
 license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the
 pinned source and license record.
+
+## JsonReader object decoding
+
+`readJsonObject()` and `readSingleJsonObject()` in `lib/src/json_reader.dart`
+adapt `JsonReader.readObject()` and the single-document check in
+`File.readJson()` from AnkiDroid 2.25.3. The host maps Android `JsonReader`
+tokens and operations to `JsonReaderTokenReader`, and supplies object/array
+construction, insertion, JSON-null, and malformed-JSON exception behavior via
+`JsonReaderContainerAdapter`. The projection preserves recursive source order,
+the `JSONObject.NULL` sentinel boundary, signed 32-bit versus signed 64-bit
+integer width (`JsonIntegerValue`), finite doubles, exact source error messages,
+and parser/container failure propagation. `readJsonObject()` leaves its
+reader open; the host file helper owns and closes its UTF-8 reader and uses
+`readSingleJsonObject()` to require `END_DOCUMENT`. Android tokenization and
+`MalformedJsonException` identity, `JSONObject`/`JSONArray`, file IO and UTF-8
+reader construction remain host-side. The direct pinned
+`JsonReaderTest.kt` covers streamed nested values, large integer precision,
+exponent values, malformed/trailing input, and reader failure propagation;
+focused Dart cases are in
+[`test/json_reader_test.dart`](test/json_reader_test.dart). The Kotlin source
+and direct test declare `GPL-3.0-or-later` and have no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the pinned source and license record.

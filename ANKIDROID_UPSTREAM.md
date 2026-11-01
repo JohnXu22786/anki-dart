@@ -127,6 +127,36 @@ value semantics; focused source-derived contract cases are in
 focused tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`.
 Root `COPYING` remains byte-identical.
 
+## JsonReader object decoding
+
+`readJsonObject()` and `readSingleJsonObject()` in `lib/src/json_reader.dart`
+adapt `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/JsonReader.kt` at the
+pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The first checks for
+`BEGIN_OBJECT` before consuming it, recursively builds objects and arrays in
+input order, inserts the host's JSON-null sentinel, reads integer tokens as a
+signed 64-bit value before preserving the narrower signed 32-bit width, and
+parses remaining number tokens as finite doubles. It preserves the source
+messages for non-object input, trailing document data, non-finite numbers, and
+unexpected value tokens; token-reader, container-construction and insertion
+failures pass through unchanged. `JsonIntegerValue` records whether the source
+value was a JVM `Int` or `Long` so an Android adapter can insert the matching
+boxed type. `readJsonObject()` does not close its caller-owned reader;
+`readSingleJsonObject()` checks `END_DOCUMENT`, while the host file helper
+retains UTF-8 reader creation and ownership/closing even on failure. Android
+`JsonReader` tokenization, `MalformedJsonException` identity, `JSONObject`,
+`JSONArray`, and file IO remain host-side.
+
+The direct pinned test is
+`AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/JsonReaderTest.kt`; it checks
+large escaped Unicode strings, nested objects and arrays, integer precision,
+exponent notation, malformed and trailing input, and reader failures. The
+focused Dart source-derived cases are in `test/json_reader_test.dart`. Both
+pinned Kotlin files declare `SPDX-License-Identifier: GPL-3.0-or-later` and
+have no separate copyright line. The Dart adaptation and tests are Copyright
+© 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains
+byte-identical.
+
 ## CardStateFilter search fragments
 
 `CardStateFilter` in `lib/src/card_state_filter.dart` adapts the enum and

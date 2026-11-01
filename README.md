@@ -3168,3 +3168,21 @@ separate copyright line. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the
 source and license record.
+
+## Prepare an existing Android menu
+
+`menuHostAddPrepareMenuProvider()` in
+`lib/src/menu_host_add_prepare_menu_provider.dart` adapts
+`MenuHost.addPrepareMenuProvider(onPrepare)` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MenuHost.kt`, pinned to
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host retains the
+Android menu/provider types; opaque tokens pass through the generic callbacks.
+The adapter registers one provider, leaves menu creation empty, forwards menu
+preparation, and declines item selection exactly as the source does. Failure
+objects propagate unchanged. Source-derived tests are in
+[`test/menu_host_add_prepare_menu_provider_test.dart`](test/menu_host_add_prepare_menu_provider_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.

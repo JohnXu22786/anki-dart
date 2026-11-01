@@ -1663,3 +1663,20 @@ source-derived in
 source declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## MenuHost.addPrepareMenuProvider
+
+`menuHostAddPrepareMenuProvider()` in
+`lib/src/menu_host_add_prepare_menu_provider.dart` adapts
+`MenuHost.addPrepareMenuProvider(onPrepare)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MenuHost.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It creates
+one provider, whose menu-creation callback is empty, whose preparation callback
+forwards the identical opaque menu token to `onPrepare`, and whose item-selection
+callback returns false. It registers that provider once after construction and
+returns Unit. Android MenuHost, MenuProvider, Menu, MenuInflater, and MenuItem
+stay host-side behind generic tokens and callbacks. Source-derived Dart cases
+are in `test/menu_host_add_prepare_menu_provider_test.dart`; no direct pinned
+test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.

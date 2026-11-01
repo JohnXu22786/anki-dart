@@ -2634,3 +2634,15 @@ FragmentManager remain host-side. The pinned Kotlin source declares
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+`lib/src/menu_host_add_prepare_menu_provider.dart` and
+`test/menu_host_add_prepare_menu_provider_test.dart` adapt
+`MenuHost.addPrepareMenuProvider(onPrepare)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MenuHost.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. They preserve
+single provider construction and registration, the no-op create callback,
+prepare forwarding with the same menu token, false item selection, and callback
+failure propagation. Android menu/provider APIs stay host-side. The pinned
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

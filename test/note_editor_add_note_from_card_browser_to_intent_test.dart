@@ -36,27 +36,24 @@ void main() {
         searchTerms: 'tag:marked',
         deckId: 17,
         callbacks:
-            NoteEditorAddNoteFromCardBrowserIntentCallbacks<
-              Object,
-              Object
-            >(
-          createIntent: (actualContext) {
-            events.add(('create', actualContext));
-            return intent;
-          },
-          putIntExtra: (target, key, value) {
-            events.add(('int', target, key, value));
-          },
-          putStringExtra: (target, key, value) {
-            events.add(('string', target, key, value));
-          },
-          putBooleanExtra: (target, key, value) {
-            events.add(('boolean', target, key, value));
-          },
-          putLongExtra: (target, key, value) {
-            events.add(('long', target, key, value));
-          },
-        ),
+            NoteEditorAddNoteFromCardBrowserIntentCallbacks<Object, Object>(
+              createIntent: (actualContext) {
+                events.add(('create', actualContext));
+                return intent;
+              },
+              putIntExtra: (target, key, value) {
+                events.add(('int', target, key, value));
+              },
+              putStringExtra: (target, key, value) {
+                events.add(('string', target, key, value));
+              },
+              putBooleanExtra: (target, key, value) {
+                events.add(('boolean', target, key, value));
+              },
+              putLongExtra: (target, key, value) {
+                events.add(('long', target, key, value));
+              },
+            ),
       );
 
       expect(result, same(intent));
@@ -78,24 +75,21 @@ void main() {
         searchTerms: '',
         deckId: null,
         callbacks:
-            NoteEditorAddNoteFromCardBrowserIntentCallbacks<
-              Object,
-              Object
-            >(
-          createIntent: (_) => intent,
-          putIntExtra: (target, key, value) {
-            events.add(('int', key, value));
-          },
-          putStringExtra: (target, key, value) {
-            events.add(('string', key, value));
-          },
-          putBooleanExtra: (target, key, value) {
-            events.add(('boolean', key, value));
-          },
-          putLongExtra: (target, key, value) {
-            events.add(('long', key, value));
-          },
-        ),
+            NoteEditorAddNoteFromCardBrowserIntentCallbacks<Object, Object>(
+              createIntent: (_) => intent,
+              putIntExtra: (target, key, value) {
+                events.add(('int', key, value));
+              },
+              putStringExtra: (target, key, value) {
+                events.add(('string', key, value));
+              },
+              putBooleanExtra: (target, key, value) {
+                events.add(('boolean', key, value));
+              },
+              putLongExtra: (target, key, value) {
+                events.add(('long', key, value));
+              },
+            ),
       );
 
       expect(events, [
@@ -137,10 +131,7 @@ void main() {
         (stage: 'create', reached: ['create']),
         (stage: 'caller', reached: ['create', 'caller']),
         (stage: 'search', reached: ['create', 'caller', 'search']),
-        (
-          stage: 'browser',
-          reached: ['create', 'caller', 'search', 'browser'],
-        ),
+        (stage: 'browser', reached: ['create', 'caller', 'search', 'browser']),
         (
           stage: 'deck',
           reached: ['create', 'caller', 'search', 'browser', 'deck'],

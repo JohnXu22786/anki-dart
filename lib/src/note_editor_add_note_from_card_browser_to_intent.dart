@@ -58,7 +58,11 @@ TIntent noteEditorAddNoteFromCardBrowserToIntent<TContext, TIntent>({
   callbacks,
 }) {
   final intent = callbacks.createIntent(context);
-  callbacks.putIntExtra(intent, 'CALLER', NoteEditorCaller.CARDBROWSER_ADD.value);
+  callbacks.putIntExtra(
+    intent,
+    'CALLER',
+    NoteEditorCaller.CARDBROWSER_ADD.value,
+  );
   callbacks.putStringExtra(intent, 'SEARCH', searchTerms);
   callbacks.putBooleanExtra(intent, 'inCardBrowserActivity', false);
   if (deckId != null && deckId > 0) {

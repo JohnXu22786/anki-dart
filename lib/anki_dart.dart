@@ -380,3 +380,4 @@ export 'src/view_on_global_layout.dart';
 export 'src/view_set_background_tint.dart';
 export 'src/tab_layout_do_on_tab_selected.dart';
 export 'src/fragment_activity_on_all_fragments_loaded.dart';
+export 'src/fragment_activity_set_fragment_result_listener.dart';

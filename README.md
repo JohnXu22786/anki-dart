@@ -18,6 +18,25 @@ are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+## Register a fragment result listener
+
+`fragmentActivitySetFragmentResultListener()` in
+`lib/src/fragment_activity_set_fragment_result_listener.dart` adapts
+`FragmentActivity.setFragmentResultListener(requestKey, listener)` from
+AnkiDroid's `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentResult.kt`,
+pinned to 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves
+the current support FragmentManager once, then registers the identical request
+key, activity lifecycle owner, and listener in source order. Host callback
+failures propagate unchanged; a manager lookup failure skips registration.
+Android FragmentActivity, FragmentManager, Bundle, lifecycle, and actual result
+delivery remain host-side. Focused source-derived cases are in
+[`test/fragment_activity_set_fragment_result_listener_test.dart`](test/fragment_activity_set_fragment_result_listener_test.dart); no direct pinned
+test was found. The Kotlin source declares `GPL-3.0-or-later` and Copyright ©
+2025 lukstbit <52494258+lukstbit@users.noreply.github.com>. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and attribution.
+
 ## InputStream text conversion
 
 `inputStreamConvertToString()` in

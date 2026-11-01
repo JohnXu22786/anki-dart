@@ -2673,3 +2673,17 @@ Android fragment and lifecycle types remain host-side. No direct pinned test
 was found. The Kotlin source declares `GPL-3.0-or-later` and has no separate
 copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
+
+`lib/src/fragment_activity_set_fragment_result_listener.dart` and
+`test/fragment_activity_set_fragment_result_listener_test.dart` adapt
+`FragmentActivity.setFragmentResultListener(requestKey, listener)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentResult.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. They
+preserve one support FragmentManager lookup and forward the exact request key,
+activity lifecycle-owner token, and listener in source order. Host callback
+failures propagate unchanged. Android fragment-result delivery and lifecycle
+remain host-side. No direct pinned test was found; the focused Dart cases are
+source-derived. The Kotlin source declares `GPL-3.0-or-later` and Copyright
+© 2025 lukstbit <52494258+lukstbit@users.noreply.github.com>. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

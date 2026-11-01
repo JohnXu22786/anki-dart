@@ -296,3 +296,26 @@ construction, and the backend remain host-side. `Scheduler.kt` declares
 `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## JsonWriter serialization
+
+`writeJsonObject()` in `lib/src/json_writer.dart` and its focused cases in
+`test/json_writer_test.dart` adapt `JsonWriter.writeObject()` and its private
+recursive `writeValue()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/JsonWriter.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection calls `beginObject`, then each host object key's `name` and value in
+the key iterator's order, and finally `endObject`. Nested objects and arrays
+stream recursively; arrays snapshot the host length once after `beginArray`, then use `opt(index)`.
+Null and the host JSON-null sentinel call `nullValue`; Boolean and Number values
+use their matching callbacks; other values are converted with `toString()` and
+written as strings. Sink and host callback failures propagate unchanged and stop
+subsequent operations. No full JSON document is built. The host retains Android
+`JsonWriter` escaping, encoding and chunking, `JSONObject`/`JSONArray` key, get,
+and opt behavior, and `File.writeJson()` UTF-8 buffered writer creation and close
+ownership. The pinned direct
+`AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/JsonWriterTest.kt` covers
+streaming serialization, bounded chunks, and write failure propagation. The
+Kotlin source and direct test declare `GPL-3.0-or-later` and have no separate
+copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

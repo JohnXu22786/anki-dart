@@ -3003,3 +3003,22 @@ The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the pinned source and license record.
+
+## JsonWriter streaming serialization
+
+`writeJsonObject()` in `lib/src/json_writer.dart` adapts `JsonWriter.writeObject()`
+from AnkiDroid 2.25.3. It streams begin/name/value/end calls in source order,
+recursively traverses host objects and arrays, snapshots array length after `beginArray`, and uses the host `opt(index)`
+result (including null holes), maps both Dart null and the host `JSONObject.NULL`
+sentinel to `nullValue()`, and forwards Boolean and Number values to their matching
+writer callbacks. Other values use their source `toString()` as a JSON string.
+Android `JsonWriter` escaping, encoding and bounded output, `JSONObject` key
+iteration and access, `JSONArray`, and the `File.writeJson()` UTF-8 buffered
+writer creation and close ownership remain host-side. The pinned direct
+`JsonWriterTest.kt` covers streaming round trips, bounded chunks and write
+failures; focused source-derived Dart tests are in
+[`test/json_writer_test.dart`](test/json_writer_test.dart). The Kotlin source and
+direct test declare `GPL-3.0-or-later` and have no separate copyright line. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same license;
+root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the pinned source and license record.

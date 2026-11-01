@@ -24,6 +24,22 @@ insertion, UTF-8 file reader creation, and reader ownership/closing.
 and focused tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
 
+`lib/src/json_writer.dart` and `test/json_writer_test.dart` adapt
+`JsonWriter.writeObject()` and its recursive value writer from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/JsonWriter.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The projection preserves streaming
+operation order, recursive object/array traversal, host `JSONArray.opt(index)`
+behavior, null-sentinel handling, Boolean/Number writer dispatch, fallback
+`toString()` string conversion, and unchanged failure propagation. Android
+`JsonWriter` escaping/encoding/chunking, org.json behavior, and `File.writeJson()`
+UTF-8 buffered writer creation and close ownership remain host-side. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/JsonWriterTest.kt` covers
+streaming serialization, bounded chunks, and write failures. The Kotlin source
+and direct test declare `GPL-3.0-or-later` and have no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
 `lib/src/bundle_utils.dart` and `test/bundle_utils_test.dart` adapt the five
 scalar accessors `getLongOrNull`, `getIntOrNull`, `requireLong`, `requireString`,
 and `requireBoolean` from `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/BundleUtils.kt`,

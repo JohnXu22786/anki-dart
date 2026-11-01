@@ -1,5 +1,19 @@
 # Notices
 
+## JSON content comparison
+
+`lib/src/json_content_equals.dart` and `test/json_content_equals_test.dart`
+adapt `JSONObject.contentEquals()` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/JSONObject.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. This source
+file identifies GPL-3.0-or-later and Copyright © 2020 Arthur Milchior and ©
+2024 Ashish Yadav. The Dart behavior preserves recursive map/list comparison
+and delegates number rendering to the host's exact JSON formatter. The source
+file also carries a JSON.org permission notice for separate code; no JSON.org
+code is copied into this adaptation. The Dart implementation and tests are
+Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING` remains
+byte-identical.
+
 ## Numeric helpers
 
 `lib/src/numeric_helpers.dart` and `test/numeric_helpers_test.dart` adapt

@@ -3073,3 +3073,15 @@ attribution, and focused source-derived tests are recorded in
 The pinned Kotlin file declares `GPL-3.0-or-later` and has no separate
 copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui
 under that license. Root `COPYING` remains byte-identical.
+
+## MenuItem resource icon helper
+
+`menuItemSetIconRes()` preserves the pinned helper's drawable lookup, null
+short-circuit, mutation, layout-direction update, and final menu-icon setting
+order. Android `Context`, `MenuItem`, resource, and drawable behavior stay
+host-side behind callbacks; the exact mutated drawable token is forwarded to
+both direction and icon callbacks. Callback failures propagate unchanged.
+Focused source-derived cases are in
+[test/menu_item_set_icon_res_test.dart](test/menu_item_set_icon_res_test.dart);
+no direct pinned test was found. The mapping and GPL attribution are recorded in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).

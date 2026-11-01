@@ -1527,3 +1527,23 @@ file-level copyright line. A search of pinned AnkiDroid tests found no direct
 test for this helper; the focused Dart cases are source-derived. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## MenuItem.setIconRes
+
+`menuItemSetIconRes()` in `lib/src/menu_item_set_icon_res.dart` and its focused
+cases in `test/menu_item_set_icon_res_test.dart` adapt
+`MenuItem.setIconRes(context, resId)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MenuItem.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection calls the host drawable lookup once; a null result returns without
+mutation, configuration lookup, direction update, or icon setting. For a
+non-null result it uses the exact drawable returned by mutation, resolves the
+host configuration's layout direction, applies it to that mutated token, and
+sets that same token as the menu icon last. Callback failures propagate
+unchanged and prevent later calls. Android `Context`, `MenuItem`, resources,
+`ContextCompat`, `DrawableCompat`, and drawable objects remain host-side. A
+search of the pinned AnkiDroid tests found no direct test for this extension;
+the Dart cases are source-derived. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

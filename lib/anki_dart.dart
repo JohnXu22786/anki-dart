@@ -50,6 +50,7 @@ export 'src/json_reader.dart';
 export 'src/json_writer.dart';
 export 'src/bitmap_drawable_to_base64_png.dart';
 export 'src/context_using_styled_attributes.dart';
+export 'src/menu_item_set_icon_res.dart';
 export 'src/linear_layout_manager_visible_positions.dart';
 export 'src/ignore_accents_in_search_config.dart';
 export 'src/state_flow_var_delegate.dart';

@@ -8,6 +8,23 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## Chip checked background state
+
+`readChipHasCheckedBackground()` and `setChipHasCheckedBackground()` in
+`lib/src/chip_checked_background.dart` adapt the `Chip.hasCheckedBackground`
+extension from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Chip.kt:16–24`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The getter reads `isChecked` once.
+The setter calls `setCheckable(true)`, `setChecked(value)`, then
+`setCheckable(false)`; host callback failures propagate and stop the remaining
+calls, matching the Kotlin property setter without cleanup. The host owns the
+Android Material Chip, its visual checked-background behavior, and color
+resources. Focused source-derived cases are in
+`test/chip_checked_background_test.dart`. The pinned Kotlin source declares
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
+Tsui and marked with the same license. Root `COPYING` remains unchanged.
+
 ## Bitmap dimensions from collection media
 
 `BitmapSize` and `Context.getSizeOfBitmapFromCollection(filename)` in

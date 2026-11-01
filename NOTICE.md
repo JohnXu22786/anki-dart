@@ -20,6 +20,19 @@ license. No direct pinned test for this helper or data class was found. Root
 
 ## Adapted source
 
+`lib/src/chip_checked_background.dart` and
+`test/chip_checked_background_test.dart` adapt the `Chip.hasCheckedBackground`
+property from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Chip.kt:16–24`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The port preserves the one checked
+state read and the ordered `setCheckable(true)`, `setChecked(value)`,
+`setCheckable(false)` writes; callback failures propagate and stop later calls.
+Android Material Chip behavior and color resources remain host-side. The pinned
+Kotlin source declares `GPL-3.0-or-later`; the Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+unchanged.
+
 `lib/src/json_reader.dart` and `test/json_reader_test.dart` adapt
 `JsonReader.readObject()` and the single-document check from
 `File.readJson()` in

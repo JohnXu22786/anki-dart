@@ -38,6 +38,7 @@ export 'src/unique_work_names.dart';
 export 'src/int_clamp.dart';
 export 'src/mutable_list.dart';
 export 'src/whole_and_fraction.dart';
+export 'src/input_stream_convert_to_string.dart';
 export 'src/deck_filters.dart';
 export 'src/card_utils.dart';
 export 'src/viewer_refresh.dart';

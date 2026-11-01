@@ -195,3 +195,21 @@ is documented at the Dart API. `NoteType.kt` declares
 `NoteTypeTest.kt` is Copyright © 2024 Ashish Yadav and marked
 `GPL-3.0-or-later`. The Dart adaptation and focused tests are Copyright © 2026
 John Tsui under `GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
+## InputStream text conversion
+
+`lib/src/input_stream_convert_to_string.dart` adapts
+`InputStream.convertToString()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/InputStream.kt` at AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the
+source order: create the reader inside the try block, read and append each line
+without separators, close after EOF, then publish the accumulated text. An
+exception before publication discards all partial text. Kotlin's Java
+`Exception` catch maps here to Dart `Exception`; warning callback failures and
+Dart `Error` values propagate. The host supplies the Android
+`InputStreamReader`/`BufferedReader`, default charset and 4096-character buffer,
+byte decoding, stream closing, and Timber warning behavior. No direct pinned
+test for this method was found. The Kotlin file declares
+`SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical.

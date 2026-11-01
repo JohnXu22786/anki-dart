@@ -4,6 +4,26 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## InputStream text conversion
+
+`inputStreamConvertToString()` in
+`lib/src/input_stream_convert_to_string.dart` ports the ordered line-reading
+control flow of `InputStream.convertToString()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/InputStream.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It appends
+each line without separators, closes after EOF, and returns accumulated text
+only if close succeeds. Construction, read, close, and conversion failures
+that surface as Dart `Exception` values invoke the host warning callback once
+and return an empty string; Dart `Error` values and warning callback failures
+propagate. The host supplies the line reader, byte decoding, default charset,
+4096-character buffer, Android `InputStream` handling, and Timber logging. The
+pinned Kotlin source is GPL-3.0-or-later and has no separate copyright line;
+the Dart adaptation and source-derived tests are Copyright © 2026 John Tsui
+under `GPL-3.0-or-later`. The upstream source has no direct pinned test for this
+method. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.
+
 ## Double whole and fraction
 
 `wholeAndFraction()` in `lib/src/whole_and_fraction.dart` ports

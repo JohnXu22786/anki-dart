@@ -100,4 +100,118 @@ void main() {
       expect(assignmentCalls, 1);
     });
   });
+
+  group('noteEditorFragmentNewInstanceFromDestination', () {
+    test(
+      'converts the exact destination before creation and forwards the Bundle',
+      () {
+        final destination = Object();
+        final bundle = Object();
+        final fragment = Object();
+        final calls = <String>[];
+
+        final result = noteEditorFragmentNewInstanceFromDestination(
+          destination: destination,
+          destinationToBundle: (candidateDestination) {
+            calls.add('convert');
+            expect(identical(candidateDestination, destination), isTrue);
+            return bundle;
+          },
+          createFragment: () {
+            calls.add('create');
+            return fragment;
+          },
+          assignArguments: (candidateFragment, arguments) {
+            calls.add('assign');
+            expect(identical(candidateFragment, fragment), isTrue);
+            expect(identical(arguments, bundle), isTrue);
+          },
+        );
+
+        expect(calls, ['convert', 'create', 'assign']);
+        expect(identical(result, fragment), isTrue);
+      },
+    );
+
+    test(
+      'propagates destination conversion failure before fragment creation',
+      () {
+        final failure = StateError('conversion failed');
+        var creationCalls = 0;
+        var assignmentCalls = 0;
+
+        expect(
+          () => noteEditorFragmentNewInstanceFromDestination(
+            destination: Object(),
+            destinationToBundle: (_) => throw failure,
+            createFragment: () {
+              creationCalls++;
+              return Object();
+            },
+            assignArguments: (_, _) => assignmentCalls++,
+          ),
+          throwsA(same(failure)),
+        );
+        expect(creationCalls, 0);
+        expect(assignmentCalls, 0);
+      },
+    );
+
+    test(
+      'propagates fragment creation failure after converting destination',
+      () {
+        final failure = StateError('creation failed');
+        final bundle = Object();
+        var conversionCalls = 0;
+        var assignmentCalls = 0;
+
+        expect(
+          () => noteEditorFragmentNewInstanceFromDestination(
+            destination: Object(),
+            destinationToBundle: (_) {
+              conversionCalls++;
+              return bundle;
+            },
+            createFragment: () => throw failure,
+            assignArguments: (_, _) => assignmentCalls++,
+          ),
+          throwsA(same(failure)),
+        );
+        expect(conversionCalls, 1);
+        expect(assignmentCalls, 0);
+      },
+    );
+
+    test('propagates argument assignment failure unchanged', () {
+      final failure = StateError('assignment failed');
+      final destination = Object();
+      final bundle = Object();
+      final fragment = Object();
+      var conversionCalls = 0;
+      var creationCalls = 0;
+
+      expect(
+        () => noteEditorFragmentNewInstanceFromDestination(
+          destination: destination,
+          destinationToBundle: (candidateDestination) {
+            conversionCalls++;
+            expect(identical(candidateDestination, destination), isTrue);
+            return bundle;
+          },
+          createFragment: () {
+            creationCalls++;
+            return fragment;
+          },
+          assignArguments: (candidateFragment, arguments) {
+            expect(identical(candidateFragment, fragment), isTrue);
+            expect(identical(arguments, bundle), isTrue);
+            throw failure;
+          },
+        ),
+        throwsA(same(failure)),
+      );
+      expect(conversionCalls, 1);
+      expect(creationCalls, 1);
+    });
+  });
 }

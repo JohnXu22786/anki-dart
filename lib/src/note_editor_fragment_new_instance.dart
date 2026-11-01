@@ -36,3 +36,25 @@ TFragment noteEditorFragmentNewInstance<TFragment, TArguments>({
   assignArguments(fragment, args);
   return fragment;
 }
+
+/// Adapts `NoteEditorFragment.Companion.newInstance(destination)`.
+///
+/// The host converts the exact [destination] to its Bundle before fragment
+/// construction. The resulting Bundle is forwarded to
+/// [noteEditorFragmentNewInstance], which creates and returns the fragment.
+/// Conversion, construction, and assignment failures propagate unchanged and
+/// stop subsequent work.
+TFragment
+noteEditorFragmentNewInstanceFromDestination<TFragment, TDestination, TBundle>({
+  required TDestination destination,
+  required TBundle Function(TDestination destination) destinationToBundle,
+  required TFragment Function() createFragment,
+  required void Function(TFragment fragment, TBundle bundle) assignArguments,
+}) {
+  final bundle = destinationToBundle(destination);
+  return noteEditorFragmentNewInstance(
+    args: bundle,
+    createFragment: createFragment,
+    assignArguments: assignArguments,
+  );
+}

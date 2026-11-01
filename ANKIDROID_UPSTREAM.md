@@ -51,6 +51,27 @@ claim authorship of the Dart adaptation. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+## `NoteEditorFragment.Companion.newInstance(destination)`
+
+`noteEditorFragmentNewInstanceFromDestination()` in
+`lib/src/note_editor_fragment_new_instance.dart` adapts
+`NoteEditorFragment.Companion.newInstance(destination: NoteEditorDestination)`
+from `AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2753–2754`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes the host-supplied
+destination-to-Bundle callback first with the identical destination, then
+passes the resulting Bundle to the existing `newInstance(args)` adapter. That
+adapter creates one host fragment, assigns the exact Bundle once, and returns
+the same fragment. Conversion, creation, and assignment failures propagate
+unchanged and stop later work. The destination type, DeferredNavigation,
+Android Bundle, and Fragment behavior remain host-side. Focused tests in
+`test/note_editor_fragment_new_instance_test.dart` cover call order, object
+identity, and each failure path. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; these identify the source file and do not claim authorship
+of the Dart adaptation. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `NoteEditorFragment.Companion.shouldReplaceNewlines()`
 
 `noteEditorShouldReplaceNewlines()` in

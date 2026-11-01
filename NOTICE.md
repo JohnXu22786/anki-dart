@@ -42,6 +42,22 @@ behavior remain host-side. Focused source-derived cases are in
 authors wrote the Dart adapter. The Dart implementation and tests are Copyright
 © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## Note Editor fragment creation from a destination
+
+`noteEditorFragmentNewInstanceFromDestination()` in
+`lib/src/note_editor_fragment_new_instance.dart` adapts
+`NoteEditorFragment.Companion.newInstance(destination: NoteEditorDestination)`
+from `AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2753–2754`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host destination-to-
+Bundle conversion first, then delegates the exact Bundle to the existing
+fragment factory adapter. The host conversion callback, fragment construction,
+and argument assignment remain outside the Dart port; failures propagate
+unchanged. The Kotlin source declares `GPL-3.0-or-later` and carries file-level
+Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae. Those names record
+the Kotlin source provenance only. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Note Editor newline replacement preference
 
 `lib/src/note_editor_should_replace_newlines.dart` and

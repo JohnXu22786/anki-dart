@@ -95,6 +95,30 @@ attribute the Dart adaptation to him. The Dart implementation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+
+## `NoteEditorDestination.PassArguments.toIntent(context)`
+
+`noteEditorPassArgumentsToIntent()` in
+`lib/src/note_editor_pass_arguments_to_intent.dart` adapts the `PassArguments`
+branch of `NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:67–72`,
+with the `arguments` Bundle and nullable `action` declared at
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/NoteEditorDestination.kt:102–107`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent,
+forwards the identical Bundle once with `putExtras`, assigns the exact nullable
+action with `setAction` even when null, and returns that same Intent. Callback
+failures propagate unchanged and stop later operations. Context, Activity,
+Android Intent, Bundle, and their API behavior remain host-side. Focused
+source-derived tests in
+`test/note_editor_pass_arguments_to_intent_test.dart` cover call order, Bundle
+and Intent identity, null and non-null actions, and callback failure short
+circuits. No direct pinned test for this Intent branch was found. The Kotlin
+source declares `GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay
+Sargam; this identifies the Kotlin source only and does not attribute the Dart
+adaptation to him. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
 ## `NoteEditorDestination.EditSelection.toIntent(context)`
 
 `noteEditorEditSelectionToIntent()` in

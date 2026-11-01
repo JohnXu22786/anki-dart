@@ -632,6 +632,22 @@ Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical; see [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+
+[`noteEditorPassArgumentsToIntent()`](lib/src/note_editor_pass_arguments_to_intent.dart)
+adapts `NoteEditorDestination.PassArguments.toIntent(context)`: it creates one
+host Intent, forwards the identical `arguments` Bundle once with `putExtras`,
+then assigns the exact nullable `action` with `setAction`, including when it is
+null, and returns the same Intent. Android Context, Activity component, Intent,
+Bundle, and their API behavior remain host-side. Focused source-derived cases in
+[`test/note_editor_pass_arguments_to_intent_test.dart`](test/note_editor_pass_arguments_to_intent_test.dart)
+cover operation order, Bundle and Intent identity, null and non-null actions,
+and callback failure short circuits. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Note Editor newline replacement preference
 
 `noteEditorShouldReplaceNewlines()` in

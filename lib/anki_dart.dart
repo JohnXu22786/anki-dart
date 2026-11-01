@@ -28,6 +28,7 @@ export 'src/note_editor_add_note_from_reviewer_to_intent.dart';
 export 'src/note_editor_add_note_from_card_browser_to_intent.dart';
 export 'src/note_editor_edit_selection_to_intent.dart';
 export 'src/note_editor_copy_note_to_intent.dart';
+export 'src/note_editor_pass_arguments_to_intent.dart';
 export 'src/note_editor_image_occlusion_to_intent.dart';
 export 'src/note_editor_edit_from_previewer_to_intent.dart';
 export 'src/note_editor_fragment_new_instance.dart';

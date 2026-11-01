@@ -1152,8 +1152,16 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   is Copyright © 2013 Bibek Shrestha, Zaur Molotnikov, Nicolas Raoul, and Flavio
   Lerda and declares `GPL-3.0-or-later`. Previewer navigation
   formulas and side/card transitions are adapted in
-  `lib/src/previewer_navigation.dart`. Its flag codes and set/toggle choice with
-  ordered write-then-publish-on-success effects are adapted in
+  `lib/src/previewer_navigation.dart`. `Card.flag` from
+  `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Card.kt` is adapted as
+  `previewerCardFlag()` in `lib/src/previewer_card_flag.dart`; it calls the host
+  `userFlag` callback once and resolves the result through
+  `PreviewerFlag.fromCode()`. Callback exceptions propagate unchanged, and
+  unknown codes retain the lookup's `StateError`. `Card.kt` and `Flag.kt`
+  declare `GPL-3.0-or-later` without separate copyright lines; the Dart adapter
+  and tests are Copyright © 2026 John Tsui under that license. Root `COPYING`
+  remains byte-identical. Its flag codes and set/toggle choice with ordered
+  write-then-publish-on-success effects are adapted in
   `lib/src/previewer_flag_effects.dart`; `PreviewerFlag.fromCode(int)` follows
   `Flag.fromCode(code)` in AnkiDroid 2.25.3 `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`,
   pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`, returning the first match

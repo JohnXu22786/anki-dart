@@ -382,3 +382,4 @@ export 'src/tab_layout_do_on_tab_selected.dart';
 export 'src/fragment_activity_on_all_fragments_loaded.dart';
 export 'src/fragment_activity_set_fragment_result_listener.dart';
 export 'src/fragment_on_window_focus_changed.dart';
+export 'src/fragment_is_compact_width.dart';

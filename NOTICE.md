@@ -2702,3 +2702,16 @@ host-side. No direct pinned test was found. The Kotlin source declares
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+`lib/src/fragment_is_compact_width.dart` and
+`test/fragment_is_compact_width_test.dart` adapt `Fragment.isCompactWidth` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:26–47`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection reads the host Fragment's `screenWidthDp` once and returns whether
+it is strictly less than 600. The required callback represents
+`requireContext().resources.configuration.screenWidthDp`; callback failures
+propagate unchanged. Android Fragment, Context, Resources, Configuration, and
+lifecycle remain host-side. No direct pinned test was found. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

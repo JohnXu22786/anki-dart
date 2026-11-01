@@ -1,5 +1,20 @@
 # Notices
 
+## String collection factories
+
+`lib/src/string_list_factories.dart` and
+`test/string_list_factories_test.dart` adapt
+`emptyStringMutableList(size)` and `emptyStringArray(size)` from
+`common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The first
+factory returns a growable list; the second returns a fixed-length collection
+whose entries remain replaceable, matching the source's `MutableList<String>`
+and `Array<String>` distinction. The Kotlin file is GPL-3.0-or-later and also
+contains a separately identified Apache-2.0 AOSP `htmlEncode` excerpt; that
+excerpt is not copied into this adaptation. The Dart implementation and tests
+are Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING` remains
+byte-identical.
+
 ## Profile list item
 
 `lib/src/profile_item.dart` and `test/profile_item_test.dart` adapt

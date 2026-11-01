@@ -1625,6 +1625,28 @@ the Dart cases are source-derived. The Kotlin source declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## ViewPropertyAnimator.setDuration(Duration)
+
+`setViewPropertyAnimatorDuration()` and its focused tests adapt the extension
+`ViewPropertyAnimator.setDuration(duration)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/ViewPropertyAnimator.kt:9`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source converts Kotlin
+`Duration` once with `toLong(DurationUnit.MILLISECONDS)` and calls the
+underlying `ViewPropertyAnimator.setDuration(long)` once, returning that
+animator. The Dart adapter receives the duration as an opaque host token and
+requires a host conversion callback with the exact Kotlin conversion semantics,
+including finite and infinite representations; Dart `Duration` is not claimed
+to be equivalent. It forwards the resulting millisecond `int` once to the
+host-side setter, returns its exact animator token, and lets conversion or
+setter failures propagate unchanged. Android `ViewPropertyAnimator` remains
+host-side. The focused Dart tests cover callback order, exact forwarding, call
+count, token identity, and both failure paths. No direct pinned AnkiDroid test
+for this extension was found. The Kotlin source declares
+`SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical.
+
 ## BottomSheetDialogFragment.behavior
 
 `bottomSheetDialogFragmentBehavior()` in

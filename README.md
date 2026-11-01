@@ -3296,6 +3296,29 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+## ViewPropertyAnimator duration
+
+`setViewPropertyAnimatorDuration()` in
+[`lib/src/view_property_animator_duration.dart`](lib/src/view_property_animator_duration.dart)
+adapts `ViewPropertyAnimator.setDuration(duration)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/ViewPropertyAnimator.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies an opaque Kotlin
+`Duration` token and a converter implementing
+`Duration.toLong(DurationUnit.MILLISECONDS)`; the adapter calls that conversion
+once before forwarding its exact millisecond result to the host setter once,
+then returns the identical animator token. Conversion and setter failures
+propagate unchanged and stop subsequent work. Dart `Duration` is not treated as
+Kotlin `Duration`; the host remains responsible for precise Kotlin duration
+conversion, finite/infinite representation, and Android `ViewPropertyAnimator`.
+Focused cases are in
+[`test/view_property_animator_duration_test.dart`](test/view_property_animator_duration_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
 ## Fragment window focus listener
 
 `onWindowFocusChanged()` in

@@ -170,3 +170,28 @@ UTF-16 surrogates. The host JVM supplies its runtime's normalization data; Dart 
 `unorm_dart` 0.3.3 with Unicode 18.0.0 data. Marks outside the specified block
 remain. The upstream source and direct test copyrights and dependency license
 obligations are recorded in `NOTICE.md`; root `COPYING` remains unchanged.
+
+## NotetypeJson.getAllClozeTextFields
+
+`getAllClozeTextFields()` in `lib/src/notetype_cloze_text_fields.dart` adapts
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/NoteType.kt:getAllClozeTextFields()`
+at AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The pinned
+`AnkiDroid/src/test/java/com/ichi2/utils/NoteTypeTest.kt:testGetAllClozeTexts`
+provides the direct example for `type:cloze:` and `cloze:` markers. The Dart
+projection takes only the host `isCloze` flag and template question-format
+strings: it checks the cloze guard before reading the sole `qfmt`, then returns
+the regex's first capture from every non-overlapping match in source order.
+Its optional-prefix atom explicitly excludes CR, LF, NEL, LS, and PS so Dart
+matches Kotlin/JVM's default dot behavior. Rust `NotetypeJson`, JSON parsing,
+persistence, and backend access remain host-side.
+
+The non-cloze guard maps Kotlin `IllegalStateException` to Dart `StateError`.
+Dart `Iterable.single` also reports both zero and multiple formats as
+`StateError`; Kotlin `single()` uses `NoSuchElementException` for zero and
+`IllegalArgumentException` for multiple formats. This exception-class mapping
+is documented at the Dart API. `NoteType.kt` declares
+`SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright line.
+`NoteTypeTest.kt` is Copyright © 2024 Ashish Yadav and marked
+`GPL-3.0-or-later`. The Dart adaptation and focused tests are Copyright © 2026
+John Tsui under `GPL-3.0-or-later`; root `COPYING` remains byte-identical.

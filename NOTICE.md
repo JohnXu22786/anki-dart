@@ -7,6 +7,24 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+`lib/src/notetype_cloze_text_fields.dart` and
+`test/notetype_cloze_text_fields_test.dart` adapt
+`getAllClozeTextFields()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/NoteType.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin source declares
+`SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright line.
+Its direct test,
+`AnkiDroid/src/test/java/com/ichi2/utils/NoteTypeTest.kt:testGetAllClozeTexts`,
+is Copyright © 2024 Ashish Yadav and marked `GPL-3.0-or-later`. The Dart
+adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Rust `NotetypeJson`, JSON parsing, persistence, and backend
+access remain host-side; the Dart API accepts only the host cloze flag and
+template question formats. Its API documents that Dart maps both zero and
+multiple `Iterable.single` values to `StateError`, while Kotlin uses
+`NoSuchElementException` and `IllegalArgumentException`, respectively. Root
+`COPYING` remains byte-identical.
+
 `lib/src/int_clamp.dart` and `test/int_clamp_test.dart` adapt `Int.clamp()` from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Int.kt`, pinned to AnkiDroid
 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The AnkiDroid file

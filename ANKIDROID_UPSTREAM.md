@@ -95,6 +95,32 @@ attribute the Dart adaptation to him. The Dart implementation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+## `NoteEditorDestination.EditSelection.toIntent(context)`
+
+`noteEditorEditSelectionToIntent()` in
+`lib/src/note_editor_edit_selection_to_intent.dart` adapts the
+`EditSelection` branch from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:50–59`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `EDIT` (`1`), then writes the first card ID as `CARD_ID`, a fresh
+ordered copy of all card IDs (including duplicates) as `CARD_IDS`, the required
+animation as `finishAnimation`, and the exact `inCardBrowserActivity` Boolean.
+The first-ID access follows the caller write, so an empty list fails at that
+point and skips later extras. Callback failures propagate unchanged and stop
+subsequent operations; the same Intent is returned on success. Context,
+`NoteEditorActivity`, Android Intent, Parcelable and LongArray construction
+remain host-side. Focused source-derived cases in
+`test/note_editor_edit_selection_to_intent_test.dart` cover exact values and
+order, first-ID selection, copied array order/duplicates, empty-list failure,
+Intent identity, and callback failure short circuits. No direct pinned test for
+this `toIntent` branch was found; a `NoteEditorTest` assertion uses `toBundle()`,
+not this Intent branch. The Kotlin source declares `GPL-3.0-or-later` and has
+SPDX Copyright (c) 2024 Sanjay Sargam; this identifies the source only and does
+not attribute the Dart adaptation to him. The Dart implementation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## `NoteEditorDestination.AddNoteFromCardBrowser.toIntent(context)`
 
 `noteEditorAddNoteFromCardBrowserToIntent()` in

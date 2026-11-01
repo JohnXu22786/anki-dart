@@ -17,11 +17,13 @@ rendering. `NoSuggestFilter.apply(fieldText, fieldName, filterName)` retains the
 source's exact-name and marker guards and transforms all eligible `[[type:`
 markers. TTS preserves source token order, empty-but-present values, validity,
 terminal context, structural option equality/hash, mutable voice-list behavior,
-binary32 speed values, and Kotlin/JVM Float formatting. The focused tests are in
+binary32 speed values, Kotlin/JVM Float formatting, and source-compatible
+data-class string output. The focused tests are in
 `test/field_filter_test.dart`, `test/field_filter_chain_test.dart`, and
 `test/field_filter_tts_test.dart`; they cover source-derived TTS rendering,
-validity, chain termination, float notation boundaries/special values, data-class
-semantics, and exact `FieldFilters.ALL` order. The template parser/rendering
+validity, chain termination, float notation boundaries/special values,
+data-class equality/hash/string semantics, and exact `FieldFilters.ALL` order.
+The template parser/rendering
 pipeline, `TemplateManager.fieldFilters` runtime registration, Android UI, and
 Fragment lifecycle remain host-side. The pinned Kotlin source and
 `AnkiDroid/src/test/java/com/ichi2/anki/model/FieldFilterChainTest.kt` declare

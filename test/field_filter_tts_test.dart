@@ -117,6 +117,19 @@ void main() {
         );
       },
     );
+
+    test('uses Kotlin Float text in generated data-class toString', () {
+      final options = TextToSpeechOptions(speed: 0.8);
+      expect(
+        options.toString(),
+        'TextToSpeechOptions(language=null, voices=null, speed=0.8)',
+      );
+      expect(
+        TextToSpeechFilter(options: options).toString(),
+        'TextToSpeechFilter(options=TextToSpeechOptions('
+        'language=null, voices=null, speed=0.8))',
+      );
+    });
   });
 
   group('TextToSpeechFilter and FieldFilters.ALL', () {

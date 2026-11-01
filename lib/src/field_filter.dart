@@ -277,8 +277,12 @@ final class TextToSpeechOptions {
   ]);
 
   @override
-  String toString() =>
-      'TextToSpeechOptions(language=$language, voices=$voices, speed=$speed)';
+  String toString() {
+    final value = speed;
+    final renderedSpeed = value == null ? 'null' : javaFloatToString(value);
+    return 'TextToSpeechOptions(language=$language, voices=$voices, '
+        'speed=$renderedSpeed)';
+  }
 }
 
 /// AnkiDroid's terminal text-to-speech field filter.

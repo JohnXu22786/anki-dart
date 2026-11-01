@@ -28,7 +28,7 @@ pronunciation constraints, and invalid TTS gating; focused Dart coverage is in
 empty-present option values, source ordering and suffix behavior, validity,
 terminal chain behavior, binary32 values, Kotlin Float formatting boundaries
 and special values, structural nullable data-class equality/hash and mutable
-voice lists, and `FieldFilters.ALL` order. The template parser/rendering
+voice lists, data-class string output, and `FieldFilters.ALL` order. The template parser/rendering
 pipeline, `TemplateManager.fieldFilters` runtime registration, Android UI, and
 Fragment lifecycle remain host-side.
 The pinned Kotlin file and test declare `SPDX-License-Identifier: GPL-3.0-or-later` and contain no separate copyright line. The Dart adaptation

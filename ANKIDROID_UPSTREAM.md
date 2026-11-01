@@ -32,7 +32,7 @@ are `test/field_filter_test.dart`, `test/field_filter_chain_test.dart`, and
 `test/field_filter_tts_test.dart`. They cover the source TTS fixture, empty
 present options, source token order and suffix rules, binary32 speed values,
 Float notation thresholds and special values, structural nullable data-class
-equality/hash including mutable voice lists, and the exact `FieldFilters.ALL`
+equality/hash/string output including mutable voice lists, and the exact `FieldFilters.ALL`
 order. Template parsing/rendering, `TemplateManager.fieldFilters` runtime
 registration, Android UI, and Fragment lifecycle remain host-side. The pinned Kotlin
 implementation and test declare `SPDX-License-Identifier: GPL-3.0-or-later`

@@ -33,8 +33,9 @@ String javaFloatToString(double value) {
 
   final bits = float32Bits(floatValue);
   final absolute = floatValue.abs();
-  var decimalExponent =
-      int.parse(absolute.toStringAsExponential(1).split('e').last);
+  var decimalExponent = int.parse(
+    absolute.toStringAsExponential(1).split('e').last,
+  );
   while (absolute < math.pow(10.0, decimalExponent)) {
     decimalExponent--;
   }
@@ -126,9 +127,11 @@ String _roundedFloatCandidate(
 
   final sign = value.isNegative ? '-' : '';
   final fractionDigits = digits.substring(1);
-  final significandText =
-      fractionDigits.isEmpty ? digits[0] : '${digits[0]}.$fractionDigits';
-  return '$sign$significandText' 'e$exponent';
+  final significandText = fractionDigits.isEmpty
+      ? digits[0]
+      : '${digits[0]}.$fractionDigits';
+  return '$sign$significandText'
+      'e$exponent';
 }
 
 String _formatJavaFloatCandidate(String candidate) {
@@ -139,11 +142,13 @@ String _formatJavaFloatCandidate(String candidate) {
     text = text.substring(1);
   }
   final exponentIndex = text.indexOf('e');
-  final exponentPart =
-      exponentIndex < 0 ? '0' : text.substring(exponentIndex + 1);
+  final exponentPart = exponentIndex < 0
+      ? '0'
+      : text.substring(exponentIndex + 1);
   final decimalExponent = int.parse(exponentPart);
-  final significand =
-      exponentIndex < 0 ? text : text.substring(0, exponentIndex);
+  final significand = exponentIndex < 0
+      ? text
+      : text.substring(0, exponentIndex);
   final pointIndex = significand.indexOf('.');
   final digitsBeforePoint = pointIndex < 0 ? significand.length : pointIndex;
   final digits = significand.replaceAll('.', '');
@@ -156,15 +161,19 @@ String _formatJavaFloatCandidate(String candidate) {
 
   late final String formatted;
   if (adjustedExponent < -3 || adjustedExponent >= 7) {
-    final tail =
-        significantDigits.length == 1 ? '0' : significantDigits.substring(1);
-    formatted = '${significantDigits[0]}.$tail' 'E$adjustedExponent';
+    final tail = significantDigits.length == 1
+        ? '0'
+        : significantDigits.substring(1);
+    formatted =
+        '${significantDigits[0]}.$tail'
+        'E$adjustedExponent';
   } else if (adjustedExponent >= 0) {
     final integerDigits = adjustedExponent + 1;
     if (significantDigits.length <= integerDigits) {
       formatted = '${significantDigits.padRight(integerDigits, '0')}.0';
     } else {
-      formatted = '${significantDigits.substring(0, integerDigits)}.'
+      formatted =
+          '${significantDigits.substring(0, integerDigits)}.'
           '${significantDigits.substring(integerDigits)}';
     }
   } else {

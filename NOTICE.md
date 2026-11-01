@@ -2071,3 +2071,18 @@ and focused tests are Copyright © 2026 John Tsui and marked
   Activity lifecycle remain host-side. The Dart adaptation and focused tests are
   Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
   remains byte-identical.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/model/WhiteboardPenColor.kt`
+  (pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright
+  line. Its nullable light/dark color fields, theme-selected preference, and
+  fresh null-valued default getter are adapted in
+  `lib/src/whiteboard_pen_color.dart`; `test/whiteboard_pen_color_test.dart`
+  covers the source-derived contract. The pinned
+  `AnkiDroid/src/test/java/com/ichi2/anki/ReviewerNoParamTest.kt` exercises
+  persisted light/dark pen-color behavior but has no dedicated test for this
+  value class. Android theme lookup, Reviewer integration, MetaDB persistence,
+  drawing, and UI remain host-side. The Dart adaptation and test are Copyright
+  © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains
+  byte-identical.

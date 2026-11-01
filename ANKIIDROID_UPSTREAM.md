@@ -463,3 +463,23 @@ direct pinned test for this method was found; focused source-derived cases are i
 `GPL-3.0-or-later` and has no separate source copyright line. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## `BrowserDestination.toIntent(context)`
+
+`lib/src/browser_destination.dart` and its source-derived cases in
+`test/browser_destination_test.dart` adapt the four variants defined by
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/BrowserDestination.kt:8–35`
+and their `toIntent(context)` projection in
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserDestination.kt:10–27`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter creates a host
+`CardBrowser` Intent for each call. `Open` adds no extras; `ToDeck` writes the
+exact deck ID once; `ScrollToCard` writes deck ID then card ID; `Search` writes
+the exact query then its Boolean all-decks value. Values such as empty queries,
+zero and negative IDs pass through unchanged, callback order matches the source,
+and a callback failure stops subsequent operations. Android Context, Intent,
+`CardBrowser`, extra keys, typed writes, and Intent semantics remain host-side.
+Both Kotlin source files declare `GPL-3.0-or-later` and have no separate
+copyright line. This provenance identifies the Kotlin sources; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

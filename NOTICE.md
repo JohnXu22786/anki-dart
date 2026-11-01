@@ -3255,3 +3255,21 @@ Kotlin files declare `GPL-3.0-or-later` and have no separate copyright line;
 that provenance identifies the Kotlin sources and not the Dart author. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## Browser destination Intent
+
+`lib/src/browser_destination.dart` and `test/browser_destination_test.dart`
+adapt all four `BrowserDestination` variants from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/BrowserDestination.kt:8–35`
+and `toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserDestination.kt:10–27`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Each projection creates one
+host `CardBrowser` Intent and preserves exact source extra order: no extras for
+`Open`, deck ID for `ToDeck`, deck then card IDs for `ScrollToCard`, and query
+then all-decks Boolean for `Search`. Values, including empty queries and zero
+or negative IDs, pass through unchanged; callback failures stop subsequent
+writes. Android Context, Intent, Activity target, extra keys and semantics
+remain host-side. Both Kotlin sources declare `GPL-3.0-or-later` and have no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.

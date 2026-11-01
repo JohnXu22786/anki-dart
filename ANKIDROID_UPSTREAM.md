@@ -1784,3 +1784,16 @@ found; focused Dart cases are source-derived in
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+`lib/src/fragment_shared_prefs.dart` and
+`test/fragment_shared_prefs_test.dart` adapt `Fragment.sharedPrefs()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:17`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. They
+preserve one `requireContext()` call before one `Context.sharedPrefs()` call,
+forward the exact Context token, return the exact SharedPreferences token, and
+propagate either callback's failures unchanged. Android Fragment, Context,
+SharedPreferences, and the shared preference implementation remain host-side.
+No direct pinned test was found; the focused Dart cases are source-derived. The
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

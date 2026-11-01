@@ -385,3 +385,4 @@ export 'src/fragment_activity_set_fragment_result_listener.dart';
 export 'src/fragment_on_window_focus_changed.dart';
 export 'src/fragment_is_compact_width.dart';
 export 'src/fragment_window.dart';
+export 'src/fragment_shared_prefs.dart';

@@ -3921,3 +3921,17 @@ and license details are in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md). The source file is GPL-3.0-or-later, Copyright © 2020
 Arthur Milchior, and includes a JSON.org notice for other code. No JSON.org
 implementation code is copied. Root `COPYING` remains byte-identical.
+
+## Common time utilities
+
+[`lib/src/time_utils.dart`](lib/src/time_utils.dart) adapts the portable
+constants and helpers from AnkiDroid 2.25.3 `TimeUtils.kt`. It preserves
+formatter/calendar callback order, signed Kotlin duration arithmetic, and the
+source's hour wrapping. The host supplies `SimpleDateFormat` with `Locale.US`
+and its default time zone, Kotlin duration conversion and formatting, and the
+calendar including DST rules. Focused cases are in
+[`test/time_utils_test.dart`](test/time_utils_test.dart). The Kotlin source is
+GPL-3.0-or-later with no separate copyright line; the Dart implementation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for provenance and license details.

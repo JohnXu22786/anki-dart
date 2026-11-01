@@ -3477,3 +3477,19 @@ The pinned source declares `GPL-3.0-or-later` and has no distinct copyright
 line. `ListTest.kt:17–23` directly tests a matching predicate and a miss. The
 Dart implementation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
+
+## Common time utilities
+
+`lib/src/time_utils.dart` and `test/time_utils_test.dart` adapt the constants,
+`getTimestamp()`, `Duration.formatAsString()`, and `getDayStart()` from
+`common/src/main/java/com/ichi2/anki/common/time/TimeUtils.kt:10–46`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin
+source declares `GPL-3.0-or-later` and has no separate copyright line. The
+pinned direct test file is Copyright © 2026 Dhanush Sugganahalli under
+GPL-3.0-or-later. The Dart implementation and tests are Copyright © 2026 John
+Tsui under the same license. The adapters preserve the source's callback order,
+signed duration truncation and remainder behavior, and greater-than-59-hour
+wrap. The host supplies `SimpleDateFormat` with `Locale.US` and its default
+zone, Kotlin `Duration.inWholeMilliseconds` / `String.format` behavior, and
+`Calendar` including time zone, DST and Gregorian behavior. Root `COPYING`
+remains byte-identical.

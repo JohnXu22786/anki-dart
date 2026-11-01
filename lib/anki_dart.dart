@@ -22,6 +22,7 @@ export 'src/bundle_utils.dart';
 export 'src/notetype_cloze_text_fields.dart';
 export 'src/note_editor_caller.dart';
 export 'src/note_editor_add_note_args.dart';
+export 'src/note_editor_add_note_to_intent.dart';
 export 'src/note_editor_fragment_new_instance.dart';
 export 'src/note_editor_should_replace_newlines.dart';
 export 'src/note_editor_should_hide_toolbar.dart';

@@ -496,6 +496,16 @@ cases are in [`test/note_editor_caller_test.dart`](test/note_editor_caller_test.
 containing only `CALLER: 3`, matching the Note Editor add-note source helper;
 focused cases are in
 [`test/note_editor_add_note_args_test.dart`](test/note_editor_add_note_args_test.dart).
+[`noteEditorAddNoteToIntent()`](lib/src/note_editor_add_note_to_intent.dart)
+adapts the host-side `NoteEditorDestination.AddNote.toIntent(context)` calls:
+it creates one intent, writes `CALLER: 3`, then writes `DECK_ID` as a Long extra
+when the deck ID is non-null, and returns that same intent. Android context,
+activity component, intent construction, and typed extra operations remain
+host-side. Focused cases are in
+[`test/note_editor_add_note_to_intent_test.dart`](test/note_editor_add_note_to_intent_test.dart).
+The pinned `NoteEditorTest.kt` covers launching AddNote with a supplied deck ID
+and verifying deck selection; null, zero/negative IDs, callback order, identity,
+and failure cases are additionally source-derived Dart tests.
 The host constructs the Android `Bundle` and remains responsible for
 navigation. Source provenance, license, and copyright details are in
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md); root

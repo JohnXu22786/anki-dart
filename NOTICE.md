@@ -25,6 +25,25 @@ the Dart adaptation. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under `GPL-3.0-or-later`. No direct pinned test for `fromValue()` was found.
 Root `COPYING` remains byte-identical.
 
+`lib/src/note_editor_add_note_to_intent.dart` and
+`test/note_editor_add_note_to_intent_test.dart` adapt the `AddNote` branch of
+`NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:18–22`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter creates one host
+Intent, writes `CALLER` with `DECKPICKER` (`3`), then writes a non-null deck ID
+unchanged as the `DECK_ID` Long extra, and returns the same Intent. Context,
+Android Intent/Activity construction and typed extra writes remain host-side;
+callback failures propagate and stop later operations. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt` covers AddNote with
+a supplied deck ID and verifies selection. Focused Dart cases additionally
+cover null, zero and negative IDs, call order, intent identity and callback
+failure short circuits. The Kotlin source declares `GPL-3.0-or-later` and has
+SPDX Copyright (c) 2024 Sanjay Sargam; this identifies the Kotlin source only
+and does not attribute the Dart adaptation to him. The Dart implementation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## Note Editor fragment creation with arguments
 
 `lib/src/note_editor_fragment_new_instance.dart` adapts

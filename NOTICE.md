@@ -1,5 +1,19 @@
 # Notices
 
+## HTML encoding
+
+`lib/src/html_encode.dart` and `test/html_encode_test.dart` adapt
+`String.htmlEncode()` from
+`common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. That Kotlin
+method identifies its implementation as copied from
+`android.text.TextUtils.htmlEncode`. The adapted excerpt is Copyright © 2006
+The Android Open Source Project and licensed under Apache-2.0; its license text
+is included at `LICENSES/Apache-2.0.txt`. The containing AnkiDroid source file
+is GPL-3.0-or-later. The Dart adaptation and tests are Copyright © 2026 John
+Tsui and are distributed with this repository under GPL-3.0-or-later, which is
+compatible with Apache-2.0. Root `COPYING` remains byte-identical.
+
 ## String collection factories
 
 `lib/src/string_list_factories.dart` and

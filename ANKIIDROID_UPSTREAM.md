@@ -1,5 +1,21 @@
 # AnkiDroid upstream source record
 
+## `Decks.defaultConfig`
+
+`deckDefaultConfig()` in `lib/src/deck_default_config.dart` adapts the
+`Decks.defaultConfig` getter from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Decks.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host
+`getConfig` callback once with `confId: 1` and returns that exact result. The
+Kotlin `!!` null failure maps to Dart's `TypeError` from the null-check operator.
+Decks, deck configurations, collection/database access, and deck-picker UI
+remain host-side. The pinned `DeckPickerTest.kt` exercises
+`col.decks.defaultConfig` as integration coverage; no dedicated test for this
+getter was found. The Dart adaptation and focused tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`; the Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. Root `COPYING` remains
+byte-identical.
+
 ## `Int.clamp()`
 
 `clampInt()` in `lib/src/int_clamp.dart` and its source-derived tests in

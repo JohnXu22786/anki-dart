@@ -2802,3 +2802,12 @@ equivalent hierarchy. Focused source-derived tests are in
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source and license record.
+## Decks.defaultConfig
+
+`deckDefaultConfig()` adapts AnkiDroid's `Decks.defaultConfig` getter. It asks
+the host-supplied lookup for config ID 1 exactly once and returns the same
+object. A null result triggers Dart's `TypeError` from `!`, matching Kotlin's
+`!!` null failure. Deck and collection/database access stay on the host. Focused
+tests cover the requested ID and call count, object identity, and null failure.
+See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for the pinned source and license record.

@@ -7,6 +7,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+`lib/src/deck_default_config.dart` and
+`test/deck_default_config_test.dart` adapt `Decks.defaultConfig` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Decks.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin getter calls
+`getConfig(confId = 1)!!`; the Dart projection calls its host callback exactly
+once with ID 1 and returns the same object. A null result throws Dart's
+`TypeError` through the null-check operator, preserving Kotlin's `!!` failure.
+`Decks.kt` declares `GPL-3.0-or-later` and has no separate copyright line. The
+Dart adaptation and focused tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`. Root `COPYING` remains unchanged.
+
 `lib/src/input_stream_convert_to_string.dart` and
 `test/input_stream_convert_to_string_test.dart` adapt the ordered line-reading
 control flow of `InputStream.convertToString()` from

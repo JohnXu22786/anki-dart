@@ -17,7 +17,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Source-derived from FragmentManager.kt in AnkiDroid 2.25.3; see
- * ANKIIDROID_UPSTREAM.md.
+ * ANKIDROID_UPSTREAM.md.
  */
 
 /// Host adapter for the Fragment lookup and transaction operations used by

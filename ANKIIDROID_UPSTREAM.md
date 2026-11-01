@@ -531,3 +531,24 @@ Both Kotlin source files declare `GPL-3.0-or-later` and have no separate
 copyright line. This provenance identifies the Kotlin sources; the Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## `PreferencesDestination.toIntent(context)`
+
+`PreferencesDestination` and `toIntent()` in
+`lib/src/preferences_destination.dart` adapt the three variants from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/PreferencesDestination.kt:6–18`
+and their projection in
+`AnkiDroid/src/main/java/com/ichi2/anki/preferences/PreferencesDestination.kt:11–18`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Root delegates once to the host
+root preferences Intent builder without a screen token. Advanced and
+Accessibility delegate once to the host screen builder with the exact
+`AdvancedSettingsFragment` and `AccessibilitySettingsFragment` class tokens,
+respectively. Each branch returns the exact host result, and callback failures
+propagate unchanged. Android Context, PreferencesActivity, fragment classes,
+and Intent behavior remain host-side. Focused source-derived cases are in
+`test/preferences_destination_test.dart`; the pinned Kotlin files have no
+separate copyright line. This provenance identifies the upstream Kotlin
+sources and does not claim authorship of the Dart adaptation. The Dart
+implementation and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical.

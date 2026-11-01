@@ -16,7 +16,8 @@ matching the source getter and ordinary identity equality. Android theme lookup,
 Reviewer integration, MetaDB persistence, whiteboard drawing, and UI remain
 host-side. Source-derived cases are in `test/whiteboard_pen_color_test.dart`;
 the pinned `ReviewerNoParamTest.kt` covers persisted light/dark behavior but
-contains no dedicated tests for this value class. The pinned Kotlin file declares
+contains no dedicated tests for this ordinary class. The pinned Kotlin file
+declares
 `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
 test are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for

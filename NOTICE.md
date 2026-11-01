@@ -2082,7 +2082,7 @@ and focused tests are Copyright © 2026 John Tsui and marked
   covers the source-derived contract. The pinned
   `AnkiDroid/src/test/java/com/ichi2/anki/ReviewerNoParamTest.kt` exercises
   persisted light/dark pen-color behavior but has no dedicated test for this
-  value class. Android theme lookup, Reviewer integration, MetaDB persistence,
+  ordinary class. Android theme lookup, Reviewer integration, MetaDB persistence,
   drawing, and UI remain host-side. The Dart adaptation and test are Copyright
   © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains
   byte-identical.

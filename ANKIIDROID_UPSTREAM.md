@@ -228,6 +228,24 @@ is documented at the Dart API. `NoteType.kt` declares
 `GPL-3.0-or-later`. The Dart adaptation and focused tests are Copyright © 2026
 John Tsui under `GPL-3.0-or-later`; root `COPYING` remains byte-identical.
 
+## `Translations.cardStatsNoCardClean()`
+
+`cardStatsNoCardClean()` in `lib/src/card_stats_no_card_clean.dart` adapts
+`Translations.cardStatsNoCardClean()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Translations.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes
+the host callback that supplies `cardStatsNoCard()` exactly once, then applies
+the source character class `[().]` globally, removing only literal ASCII
+parentheses and periods. All other characters, whitespace, and line breaks are
+preserved, and callback exceptions propagate unchanged. Android translation
+resource loading remains host-side. No direct pinned test for this extension
+was found; source-derived cases are in
+`test/card_stats_no_card_clean_test.dart`. The Kotlin file declares
+`GPL-3.0-or-later` and Copyright © 2025 lukstbit
+<52494258+lukstbit@users.noreply.github.com>; the Dart adaptation and focused
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical.
+
 ## InputStream text conversion
 
 `lib/src/input_stream_convert_to_string.dart` adapts

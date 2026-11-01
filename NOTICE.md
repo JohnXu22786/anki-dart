@@ -7,6 +7,21 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+`lib/src/card_stats_no_card_clean.dart` and
+`test/card_stats_no_card_clean_test.dart` adapt
+`Translations.cardStatsNoCardClean()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Translations.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The helper
+calls the host callback for localized text once and globally removes only the
+ASCII parentheses and period in the source character class `[().]`; all other
+content, whitespace, and line breaks remain intact, and callback exceptions
+propagate. Android translation-resource loading remains host-side. No direct
+pinned test was found for this extension. The Kotlin file declares
+`GPL-3.0-or-later` and Copyright © 2025 lukstbit
+<52494258+lukstbit@users.noreply.github.com>. The Dart adaptation and focused
+tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
+`COPYING` remains byte-identical.
+
 `lib/src/scheduler_answer_card.dart` and `test/scheduler_answer_card_test.dart`
 adapt the `Scheduler.answerCard(card, states, rating)` extension from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Scheduler.kt`, pinned to

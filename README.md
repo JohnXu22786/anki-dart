@@ -4,6 +4,20 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Clean card statistics message
+
+`cardStatsNoCardClean()` in `lib/src/card_stats_no_card_clean.dart` adapts
+`Translations.cardStatsNoCardClean()` from AnkiDroid's `Translations.kt` at the
+baseline commit above. It calls the host-supplied localized-text callback once
+and removes every ASCII `(`, `)`, and `.` while preserving all other text,
+whitespace, and line breaks. Callback exceptions propagate unchanged; Android
+translation resources remain host-side. Focused tests are in
+`test/card_stats_no_card_clean_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and Copyright © 2025 lukstbit; the Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## InputStream text conversion
 
 `inputStreamConvertToString()` in

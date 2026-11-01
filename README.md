@@ -4,6 +4,24 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Run an action with an out-of-memory guard
+
+`runWithOomCheck()` in [`lib/src/run_with_oom_check.dart`](lib/src/run_with_oom_check.dart)
+adapts the generic `runWithOOMCheck(action, onError)` helper from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:46–58`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The action
+runs once; its exact result is returned on success. The host supplies the
+platform-specific OOM classifier because Dart cannot portably identify the
+JVM `OutOfMemoryError`. A classified error is passed unchanged to the optional
+handler and returns null after the handler succeeds. Non-OOM action errors,
+classifier failures, and handler failures propagate unchanged. Focused cases
+are in [`test/run_with_oom_check_test.dart`](test/run_with_oom_check_test.dart);
+Android/JVM error type resolution remains host-side. `Exceptions.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Set foreground for a CoroutineWorker
 
 `coroutineWorkerTrySetForeground()` in

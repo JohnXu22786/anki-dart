@@ -8,6 +8,26 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## `runWithOOMCheck(action, onError)`
+
+`runWithOomCheck()` in `lib/src/run_with_oom_check.dart` adapts the generic
+`runWithOOMCheck(action, onError)` helper from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:46–58`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes
+the action once and returns its exact result on success. On an action failure,
+the required host classifier decides whether it is an OOM; Dart does not
+portably classify JVM `OutOfMemoryError`. A classified error is passed
+unchanged to the nullable handler, then the adapter returns null. Non-OOM
+action failures are rethrown with their original stack trace; classifier and
+handler failures propagate unchanged. The host retains concrete Android/JVM
+error type resolution. Focused source-derived cases in
+`test/run_with_oom_check_test.dart` cover success identity and call counts,
+classified OOM handling and order, non-OOM propagation, and classifier or
+handler failure propagation. No direct pinned test for this helper was found.
+`Exceptions.kt` declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
 ## `CoroutineWorker.trySetForeground(foregroundInfo)`
 
 `coroutineWorkerTrySetForeground()` in

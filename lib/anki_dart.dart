@@ -213,6 +213,7 @@ export 'src/reviewer_show_answer_guard.dart';
 export 'src/reviewer_state_mutation_hook.dart';
 export 'src/check_pronunciation_playback_plan.dart';
 export 'src/reviewer_action_guard.dart';
+export 'src/run_with_oom_check.dart';
 export 'src/browser_active_column_update_plan.dart';
 export 'src/browser_column_collection.dart';
 export 'src/browser_column_selection_move.dart';

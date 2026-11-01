@@ -5,6 +5,21 @@ This repository contains a partial, modified Dart port of code from
 `d9bf072f814a0c37d30a694192593b31ff2df875`. It is an independent project and
 does not imply endorsement by the AnkiDroid or Anki projects.
 
+## Generic out-of-memory guard
+
+`lib/src/run_with_oom_check.dart` and `test/run_with_oom_check_test.dart`
+adapt the generic `runWithOOMCheck(action, onError)` helper from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:46–58`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Dart cannot portably identify the
+JVM `OutOfMemoryError`; the host supplies concrete platform type resolution
+through the required classifier callback. A classified error is passed
+unchanged to the nullable handler and returns null after success. The source
+declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license. No
+direct pinned test for this helper was found. Root `COPYING` remains
+byte-identical.
+
 ## CoroutineWorker foreground handling
 
 `lib/src/coroutine_worker_try_set_foreground.dart` and

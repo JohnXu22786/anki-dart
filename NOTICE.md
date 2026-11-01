@@ -1,5 +1,19 @@
 # Notices
 
+## String index helpers
+
+`lib/src/string_index_helpers.dart` and
+`test/string_index_helpers_test.dart` adapt the three `indexOfOrNull` and
+`lastIndexOfOrNull` overloads from
+`common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Results use
+UTF-16 indexes and preserve first/last and start-bound behavior. The optional
+case-insensitive comparison is supplied by the host using Kotlin/JVM Char
+semantics. The source is GPL-3.0-or-later with no method-specific copyright
+line; the separate AOSP Apache-2.0 excerpt in the same file is not copied here.
+The Dart implementation and tests are Copyright © 2026 John Tsui under
+GPL-3.0-or-later. Root `COPYING` remains byte-identical.
+
 ## String title casing
 
 `lib/src/to_title_case.dart` and `test/to_title_case_test.dart` adapt

@@ -1,5 +1,17 @@
 # Notices
 
+## String ellipsizing
+
+`lib/src/string_ellipsize.dart` and `test/string_ellipsize_test.dart` adapt
+`String.ellipsize()` from
+`common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host
+provides the same `BreakIterator.getCharacterInstance(Locale.ROOT)` safe-boundary
+calculation. The Kotlin source is GPL-3.0-or-later with no method-specific
+copyright line; this adapter copies no AOSP Apache-licensed implementation. The
+Dart implementation and tests are Copyright © 2026 John Tsui under
+GPL-3.0-or-later. Root `COPYING` remains byte-identical.
+
 ## String index helpers
 
 `lib/src/string_index_helpers.dart` and

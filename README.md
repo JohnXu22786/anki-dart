@@ -4,6 +4,24 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## TextView compound drawable resource IDs
+
+`textViewSetCompoundDrawablesRelativeWithIntrinsicBounds()` in
+[`lib/src/text_view_set_compound_drawables_relative_with_intrinsic_bounds.dart`](lib/src/text_view_set_compound_drawables_relative_with_intrinsic_bounds.dart)
+adapts AnkiDroid's `TextView.setCompoundDrawablesRelativeWithIntrinsicBoundsKt(start, top, end, bottom)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/TextView.kt`, pinned to
+version 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It forwards the four resource IDs
+in start, top, end, bottom order, with each omitted ID defaulting to zero.
+Android TextView behavior and drawable resource resolution remain host-side;
+callback failures propagate unchanged. Focused source-derived tests are in
+[`test/text_view_set_compound_drawables_relative_with_intrinsic_bounds_test.dart`](test/text_view_set_compound_drawables_relative_with_intrinsic_bounds_test.dart);
+no direct pinned AnkiDroid test was found. The upstream Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Safely set an ImageView drawable
 
 `imageViewSetImageDrawableSafe()` in

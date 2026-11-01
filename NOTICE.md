@@ -2840,3 +2840,17 @@ was found. The Kotlin source declares `SPDX-License-Identifier:
 GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+`lib/src/text_view_set_compound_drawables_relative_with_intrinsic_bounds.dart`
+and `test/text_view_set_compound_drawables_relative_with_intrinsic_bounds_test.dart`
+adapt
+`TextView.setCompoundDrawablesRelativeWithIntrinsicBoundsKt(start, top, end, bottom)`
+from `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/TextView.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+forwards the four drawable resource IDs in start/top/end/bottom order, with
+omitted IDs defaulting to zero, and propagates host callback failures. Android
+TextView behavior and resource resolution remain host-side. No direct pinned
+test for the extension was found; the focused Dart cases are source-derived.
+The Kotlin source declares `GPL-3.0-or-later` and contains no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

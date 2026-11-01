@@ -90,7 +90,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   expectations, with no direct test of the result variants or Float. Focused
   source-derived cases are in `test/ankidroid_js_api_contract_test.dart`. The
   Dart adaptation and tests are Copyright © 2026 John Tsui and marked
-  `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+  `GPL-3.0-or-later`. Its `CardDataForJsApi` container at lines 605–613 is
+  adapted as `CardDataForJsApi` in `lib/src/ankidroid_js_api_card_data.dart`,
+  retaining all eight mutable fields, declaration order, source defaults, and
+  identity equality. Focused source-derived cases in
+  `test/ankidroid_js_api_card_data_test.dart` cover defaults, mutability, and
+  identity semantics; the pinned API integration uses `nextTime1` but does not
+  directly test the data-container defaults. Activity population,
+  scheduling/time calculations, JSON response construction/encoding, and
+  WebView/JavaScript dispatch remain host-side. The Dart adaptation and tests
+  are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+  remains byte-identical.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/export/Filename.kt` and its direct
   test `AnkiDroid/src/test/java/com/ichi2/anki/export/FilenameTest.kt` (pinned

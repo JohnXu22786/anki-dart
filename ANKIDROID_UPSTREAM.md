@@ -1250,3 +1250,23 @@ exceptions, UTF-8 conversion, JVM boxed numeric widths, and bridge dispatch
 remain host-side; the Dart map does not claim identical JSON formatting. The
 Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## AnkiDroid JavaScript API card data container
+
+`CardDataForJsApi` in `lib/src/ankidroid_js_api_card_data.dart` adapts
+`AnkiDroidJsAPI.CardDataForJsApi` at
+`AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPI.kt:605–613`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves
+the source declaration order, public mutable fields, `Int`/`String` types, and
+initial values: the four count/time integers are `-1`, and `nextTime1` through
+`nextTime4` are empty strings. The ordinary Dart class keeps identity equality.
+Focused source-derived cases in
+`test/ankidroid_js_api_card_data_test.dart` check all defaults, assignment to
+every field, and distinct-instance identity semantics. The pinned
+`AnkiDroidJsAPITest.kt` integration uses the `nextTime1` API value but does not
+directly test the container defaults. Activity-side population, scheduling and
+time calculations, JSON response construction/encoding, and WebView/JavaScript
+dispatch remain host-side. The upstream Kotlin source declares
+`GPL-3.0-or-later` and Copyright (c) 2020 Mani <infinyte01@gmail.com>; the Dart
+adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

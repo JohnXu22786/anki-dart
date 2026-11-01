@@ -89,6 +89,18 @@ Java number formatting and exceptions, boxed numeric widths, and UTF-8 byte
 conversion remain host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source, test, and license details.
 
+`CardDataForJsApi` in `lib/src/ankidroid_js_api_card_data.dart` preserves the
+mutable field order and source defaults from
+`AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPI.kt:605–613`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`; the host
+retains Activity-side population, scheduling/time calculations, JSON response
+encoding, and WebView/JS dispatch. Focused tests cover all defaults, mutability,
+and identity equality. The pinned upstream API integration uses `nextTime1` but
+has no direct test for these data-container defaults. The upstream source is
+Copyright (c) 2020 Mani <infinyte01@gmail.com> and licensed
+`GPL-3.0-or-later`; the Dart class and focused tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`. Root `COPYING` remains unchanged.
+
 ## npm package-name validation
 
 `validateNpmPackageName` ports `NpmUtils.validateName()` from AnkiDroid 2.25.3

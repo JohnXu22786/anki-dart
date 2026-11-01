@@ -401,6 +401,7 @@ export 'src/html_encode.dart';
 export 'src/to_title_case.dart';
 export 'src/string_index_helpers.dart';
 export 'src/string_ellipsize.dart';
+export 'src/numeric_helpers.dart';
 export 'src/reviewer_full_screen_mode.dart';
 export 'src/reminder_log_projection.dart';
 export 'src/fsrs_version.dart';

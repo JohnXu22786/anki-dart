@@ -1,5 +1,17 @@
 # Notices
 
+## Numeric helpers
+
+`lib/src/numeric_helpers.dart` and `test/numeric_helpers_test.dart` adapt
+`Long.ifZero()` and `Float.clamp()` from the pinned AnkiDroid 2.25.3 common
+sources `Long.kt` and `Float.kt` at commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Both source files declare
+GPL-3.0-or-later and no separate copyright line for these methods. `Float.kt`
+contains a distinct Apache-2.0 Kotlin `_Ranges.kt` excerpt, which is not copied
+into the Float clamp implementation here. The Dart implementation and tests are
+Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING` remains
+byte-identical.
+
 ## String ellipsizing
 
 `lib/src/string_ellipsize.dart` and `test/string_ellipsize_test.dart` adapt

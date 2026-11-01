@@ -37,6 +37,13 @@ enum PreviewerFlag {
   const PreviewerFlag(this.code);
 
   final int code;
+
+  /// Returns the first source flag with [code].
+  ///
+  /// Unknown codes throw [StateError], matching Kotlin's `first` failure in
+  /// `Flag.fromCode()`.
+  static PreviewerFlag fromCode(int code) =>
+      values.firstWhere((flag) => flag.code == code);
 }
 
 /// One ordered effect in the Previewer flag update plan.

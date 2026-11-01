@@ -1080,7 +1080,14 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   formulas and side/card transitions are adapted in
   `lib/src/previewer_navigation.dart`. Its flag codes and set/toggle choice with
   ordered write-then-publish-on-success effects are adapted in
-  `lib/src/previewer_flag_effects.dart`; collection/undo execution, current-card
+  `lib/src/previewer_flag_effects.dart`; `PreviewerFlag.fromCode(int)` follows
+  `Flag.fromCode(code)` in AnkiDroid 2.25.3 `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`,
+  pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`, returning the first match
+  for source codes 0–7 and throwing Dart `StateError` for unknown codes to map
+  Kotlin `first`/`NoSuchElementException`. The upstream source carries
+  `GPL-3.0-or-later` with no separate copyright line; the Dart adaptation and
+  focused test are Copyright © 2026 John Tsui under that license. Root
+  `COPYING` remains byte-identical. Collection/undo execution, current-card
   lookup and StateFlow publication remain outside.
   The `toggleMark()` operation order is adapted as host effects in
   `lib/src/previewer_mark_effects.dart`; current note resolution, tag mutation,

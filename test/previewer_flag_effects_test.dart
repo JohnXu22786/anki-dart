@@ -44,6 +44,17 @@ void main() {
         ],
       );
     });
+
+    test('fromCode resolves every source flag code', () {
+      for (var code = 0; code <= 7; code++) {
+        expect(PreviewerFlag.fromCode(code), PreviewerFlag.values[code]);
+      }
+    });
+
+    test('fromCode rejects codes outside the source range', () {
+      expect(() => PreviewerFlag.fromCode(-1), throwsA(isA<StateError>()));
+      expect(() => PreviewerFlag.fromCode(8), throwsA(isA<StateError>()));
+    });
   });
 
   group('Previewer flag effects', () {

@@ -1127,8 +1127,16 @@ Android lifecycle, StateFlow, localization, and UI.
   URI and HTML-escaped filename. The host still parses media references,
   classifies tags, resolves paths and filenames, expands the card content, and
   handles Android playback and WebView integration.
-- Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and the
-  set/toggle projections return a one-card collection-write intent followed by
+- Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and
+  `PreviewerFlag.fromCode()` resolves those codes strictly; an unknown code
+  throws Dart `StateError`, corresponding to Kotlin `first` in
+  `Flag.fromCode()` at AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`. The upstream `Flag.kt` declares
+  `GPL-3.0-or-later` without a separate copyright line; the Dart adaptation and
+  focused tests are Copyright © 2026 John Tsui under the same license. See
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+  the source mapping; root `COPYING` remains byte-identical. The set/toggle
+  projections return a one-card collection-write intent followed by
   publication of the same flag only if the host write succeeds. Current-card
   lookup, the undoable collection operation, asynchronous failure handling and
   StateFlow publication remain with the host. This enum is separate from the

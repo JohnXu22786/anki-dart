@@ -373,4 +373,5 @@ export 'src/card_template_fragment_setup_menu.dart';
 export 'src/math_jax_format.dart';
 export 'src/char_sequence_if_null_or_empty.dart';
 export 'src/view_is_touch_within_bounds.dart';
+export 'src/view_on_global_layout.dart';
 export 'src/view_set_background_tint.dart';

@@ -2590,3 +2590,19 @@ Kotlin source header attributes Copyright (c) 2025 Danilo Mendes and has no
 file-level SPDX identifier; AnkiDroid is distributed under
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+`lib/src/view_on_global_layout.dart` and
+`test/view_on_global_layout_test.dart` adapt `View.onGlobalLayout(lifecycleOwner,
+action)` from `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/View.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter preserves the destroyed
+early return, one lifecycle-state read, listener-before-lifecycle registration,
+and the deferred destroy callback's lookup of the current view-tree observer.
+It checks observer liveness once and removes the identical listener only when
+alive; callback failures propagate and stop later operations. Android View,
+ViewTreeObserver, and lifecycle types remain host-side. The Kotlin source header
+credits Copyright (c) 2025 Danilo Mendes and contains no file-level SPDX
+identifier; AnkiDroid is distributed under `GPL-3.0-or-later`. No direct pinned
+test for this extension was found; focused Dart cases are source-derived. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

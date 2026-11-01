@@ -3123,3 +3123,14 @@ frame execution remain host-side. Focused source-derived tests are in
 [`test/recycler_view_run_when_not_computing_layout_test.dart`](test/recycler_view_run_when_not_computing_layout_test.dart).
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the exact source pin and GPL attribution. Root `COPYING` remains byte-identical.
+
+## View global-layout lifecycle registration
+
+`onGlobalLayout()` registers the exact callback with the current host view-tree
+observer and adds a lifecycle observer only while the owner is not destroyed.
+On destruction, it reads the current view-tree observer and removes that same
+listener only if the observer is alive. Callback failures stop later operations.
+Android views and lifecycle APIs stay host-side; focused source-derived cases
+are in [`test/view_on_global_layout_test.dart`](test/view_on_global_layout_test.dart).
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the pinned source and GPL attribution.

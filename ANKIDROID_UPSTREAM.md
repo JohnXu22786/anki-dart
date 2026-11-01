@@ -1477,13 +1477,32 @@ Kotlin/JVM `Float.toInt()` behavior (truncate toward zero, NaN to zero, and Int3
 saturation), and checks containment against the host drawing rectangle. This
 intentionally retains the pinned source's use of View left/top for translation
 while using the drawing rectangle for containment. Android View, MotionEvent,
-`Rect`, and drawing-rect retrieval remain host-side; the sibling `onGlobalLayout`
-extension remains outside this mapping. A search of pinned
+`Rect`, and drawing-rect retrieval remain host-side. A search of pinned
 AnkiDroid tests found no direct test for this extension. The source header is
 Copyright (c) 2025 Danilo Mendes and has no file-level SPDX identifier; the
 upstream repository is distributed under `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under that same license. Root `COPYING`
 remains byte-identical.
+
+## View.onGlobalLayout
+
+`onGlobalLayout()` in `lib/src/view_on_global_layout.dart` and its focused
+source-derived cases in `test/view_on_global_layout_test.dart` adapt
+`View.onGlobalLayout(lifecycleOwner, action)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/View.kt:30–48`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The helper
+reads the host lifecycle state once and returns immediately for `DESTROYED`.
+Otherwise, it creates one callback-bearing listener, adds it to the current
+view-tree observer, then creates and registers a lifecycle observer. On destroy,
+the callback reads the view's current observer, checks `isAlive` once, and
+removes the exact registered listener only when alive. Callback failures
+propagate unchanged and stop subsequent calls. Android `View`,
+`ViewTreeObserver`, `OnGlobalLayoutListener`, `LifecycleOwner`, lifecycle state,
+and `DefaultLifecycleObserver` remain host-side. The Kotlin source header is
+Copyright (c) 2025 Danilo Mendes and has no file-level SPDX identifier; the
+upstream repository is distributed under `GPL-3.0-or-later`. No direct pinned
+test for this extension was found. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under that same license. Root `COPYING` remains byte-identical.
 
 ## View.setBackgroundTint
 

@@ -1,5 +1,29 @@
 # AnkiDroid upstream source record
 
+## `DeckOptionsDestination` model, factories, and `toIntent(context)`
+
+`DeckOptionsDestination`, `DeckOptionsEntry`, and their factory/Intent
+adapters in `lib/src/deck_options_destination.dart` are source-derived from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/DeckOptionsDestination.kt:9–28`
+and
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/DeckOptionsDestination.kt:13–36`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart model preserves each deck
+ID, filtered flag, nullable entry name, options list order and reference, and
+the empty-options default. `fromDeckId` checks filtered state exactly once
+with the supplied ID. `fromCurrentDeck` resolves the current ID before checking
+that same ID once. Callback errors propagate unchanged and prevent later
+calls. `toIntent(context)` delegates exactly once to the filtered or ordinary
+host builder based on `isFiltered`, passing the same context and deck ID and
+returning its exact result. Android collection access, Context, Intent, and UI
+behavior remain host-side. Focused source-derived cases are in
+`test/deck_options_destination_test.dart`; the pinned Kotlin source has no
+matching tests for these adapter call sequences. The Kotlin sources declare
+`GPL-3.0-or-later`; that attribution identifies the upstream Kotlin source and
+does not claim authorship of the Dart adaptation. The Dart implementation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## `NoteEditorDestination.AddNote.toIntent(context)`
 
 `noteEditorAddNoteToIntent()` in `lib/src/note_editor_add_note_to_intent.dart`

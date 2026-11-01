@@ -25,6 +25,23 @@ the Dart adaptation. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under `GPL-3.0-or-later`. No direct pinned test for `fromValue()` was found.
 Root `COPYING` remains byte-identical.
 
+## Note Editor fragment creation with arguments
+
+`lib/src/note_editor_fragment_new_instance.dart` adapts
+`NoteEditorFragment.Companion.newInstance(args: Bundle)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2748–2751`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host fragment,
+assigns the exact supplied opaque Bundle value to that fragment's arguments
+once, and returns that same fragment. Construction and assignment failures
+propagate unchanged and stop subsequent work; Android Fragment and Bundle
+behavior remain host-side. Focused source-derived cases are in
+`test/note_editor_fragment_new_instance_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; these identify the Kotlin source and do not claim those
+authors wrote the Dart adapter. The Dart implementation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Note Editor newline replacement preference
 
 `lib/src/note_editor_should_replace_newlines.dart` and

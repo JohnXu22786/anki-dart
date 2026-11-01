@@ -3560,6 +3560,26 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+## Note Editor fragment creation with arguments
+
+`noteEditorFragmentNewInstance()` in
+[`lib/src/note_editor_fragment_new_instance.dart`](lib/src/note_editor_fragment_new_instance.dart)
+adapts `NoteEditorFragment.Companion.newInstance(args)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2748–2751`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+creates one host fragment, assigns the exact supplied opaque Bundle value to
+that fragment's arguments once, and returns the same fragment. Construction and
+assignment failures propagate unchanged and stop later work. Android Fragment
+and Bundle behavior remain host-side. Focused source-derived tests in
+[`test/note_editor_fragment_new_instance_test.dart`](test/note_editor_fragment_new_instance_test.dart)
+cover identity, operation order, single invocation, and both failure
+short-circuits. The Kotlin source declares `GPL-3.0-or-later` and carries
+file-level Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae; those
+names identify the source file, not authorship of the Dart adaptation. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the mapping and license record.
+
 ## Note Editor image-intent detection
 
 `intentLaunchedWithImage()` in

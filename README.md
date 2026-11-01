@@ -3895,3 +3895,20 @@ authorship. The Dart adaptations and tests are Copyright © 2026 John Tsui under
 the same license. Root `COPYING` remains byte-identical. See
 [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and license details.
+
+## JSONArray extension adapters
+
+[`JsonArrayHostAdapter`](lib/src/json_array_adapters.dart) adapts the pinned
+AnkiDroid 2.25.3 `JSONArray` helpers: deep cloning, ordered object and string
+iteration, and eager string-list extraction. The host supplies its
+`JSONArray`/`JSONObject` representation, typed reads, and JSONObject deep
+clone callback. The adapter preserves the source's initial type probe and
+repeated scalar read, live iterator length checks, index advancement only after
+a successful typed read, and eager `toStringList(key)` failure timing. Focused
+source-derived cases are in
+[`test/json_array_adapters_test.dart`](test/json_array_adapters_test.dart); no
+direct pinned AnkiDroid tests for this helper family were found. Source mapping
+and license details are in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md). The source file is GPL-3.0-or-later, Copyright © 2020
+Arthur Milchior, and includes a JSON.org notice for other code. No JSON.org
+implementation code is copied. Root `COPYING` remains byte-identical.

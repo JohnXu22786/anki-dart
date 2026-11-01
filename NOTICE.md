@@ -1,5 +1,21 @@
 # Notices
 
+## JSONArray host adapters
+
+`lib/src/json_array_adapters.dart` and `test/json_array_adapters_test.dart`
+adapt `deepClone()`, `jsonObjectIterable()`, `jsonObjectIterator()`,
+`stringIterable()`, `stringIterator()`, and `toStringList(key)` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/JSONArray.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source
+file is Copyright © 2020 Arthur Milchior under GPL-3.0-or-later. It includes a
+JSON.org permission notice for other code; no JSON.org implementation code is
+copied into this adapter. The host retains JSONArray/JSONObject values, typed
+reads, and JSONObject cloning. The Dart adapter preserves the source's repeated
+scalar reads, typed reads, lazy iterator operations, successful-read index
+advancement, and eager string-list materialization. The Dart implementation and
+tests are Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING`
+remains byte-identical.
+
 ## JSONObject host adapters
 
 `lib/src/json_object_adapters.dart` and

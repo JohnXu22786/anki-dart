@@ -2086,3 +2086,19 @@ and focused tests are Copyright © 2026 John Tsui and marked
   drawing, and UI remain host-side. The Dart adaptation and test are Copyright
   © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains
   byte-identical.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/model/ResultType.kt` (`ResultType`,
+  pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright
+  line. Its String-backed equality, Kotlin/JVM UTF-16 String hash with signed
+  32-bit overflow, and verbatim `toString()` are adapted in
+  `lib/src/result_type.dart`, with shared hashing in
+  `lib/src/kotlin_string_hash_code.dart`; cases are in
+  `test/result_type_test.dart`. The pinned source has no dedicated direct test.
+  `AdvancedSearchFieldsTab.kt` uses the values as option-map keys,
+  `AdvancedSearchFragment.kt` routes the returned key, and
+  `FieldSelectionDialog.kt` carries it with the result. Android Parcelable
+  encoding, FragmentManager/Bundle transport, dialogs, UI, and lifecycle remain
+  host-side. The Dart adaptation and tests are Copyright © 2026 John Tsui and
+  marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

@@ -23,6 +23,7 @@
 
 import 'npm_package_name.dart';
 import 'ankidroid_js_api_constants.dart';
+import 'kotlin_string_hash_code.dart';
 import 'kotlin_whitespace.dart';
 
 const ankidroidJsAddonKeyword = 'ankidroid-js-addon';
@@ -75,7 +76,7 @@ final class DistInfo {
       other is DistInfo && other.tarball == tarball;
 
   @override
-  int get hashCode => _kotlinStringHashCode(tarball);
+  int get hashCode => kotlinStringHashCode(tarball);
 
   @override
   String toString() => 'DistInfo(tarball=$tarball)';
@@ -170,18 +171,18 @@ final class AddonModel {
 
   @override
   int get hashCode => _kotlinDataClassHashCode([
-    _kotlinStringHashCode(name),
-    _kotlinStringHashCode(addonTitle),
-    _kotlinStringHashCode(icon),
-    _kotlinStringHashCode(version),
-    _kotlinStringHashCode(description),
-    _kotlinStringHashCode(main),
-    _kotlinStringHashCode(ankidroidJsApi),
-    _kotlinStringHashCode(addonType),
+    kotlinStringHashCode(name),
+    kotlinStringHashCode(addonTitle),
+    kotlinStringHashCode(icon),
+    kotlinStringHashCode(version),
+    kotlinStringHashCode(description),
+    kotlinStringHashCode(main),
+    kotlinStringHashCode(ankidroidJsApi),
+    kotlinStringHashCode(addonType),
     _kotlinStringListHashCode(keywords),
     _kotlinStringMapHashCode(author),
-    _kotlinStringHashCode(license),
-    _kotlinStringHashCode(homepage),
+    kotlinStringHashCode(license),
+    kotlinStringHashCode(homepage),
     dist?.hashCode ?? 0,
   ]);
 
@@ -315,18 +316,10 @@ bool _stringMapEquals(Map<String, String> left, Map<String, String> right) {
   return true;
 }
 
-int _kotlinStringHashCode(String value) {
-  var hash = 0;
-  for (final codeUnit in value.codeUnits) {
-    hash = _kotlinInt32(31 * hash + codeUnit);
-  }
-  return hash;
-}
-
 int _kotlinStringListHashCode(List<String> value) {
   var hash = 1;
   for (final item in value) {
-    hash = _kotlinInt32(31 * hash + _kotlinStringHashCode(item));
+    hash = _kotlinInt32(31 * hash + kotlinStringHashCode(item));
   }
   return hash;
 }
@@ -336,8 +329,7 @@ int _kotlinStringMapHashCode(Map<String, String> value) {
   for (final entry in value.entries) {
     hash = _kotlinInt32(
       hash +
-          (_kotlinStringHashCode(entry.key) ^
-              _kotlinStringHashCode(entry.value)),
+          (kotlinStringHashCode(entry.key) ^ kotlinStringHashCode(entry.value)),
     );
   }
   return hash;

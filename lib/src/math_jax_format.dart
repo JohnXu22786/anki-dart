@@ -20,6 +20,8 @@
  * see ANKIDROID_UPSTREAM.md.
  */
 
+import 'kotlin_string_hash_code.dart';
+
 /// MathJax text wrappers supported by AnkiDroid's note-editor toolbar.
 ///
 /// Localized labels and editor/UI integration remain the host's responsibility.
@@ -62,7 +64,7 @@ class StringFormat {
 
   @override
   int get hashCode {
-    var hash = _kotlinStringHashCode(result);
+    var hash = kotlinStringHashCode(result);
     hash = (hash * 31 + selectionStart) & 0xffffffff;
     hash = (hash * 31 + selectionEnd) & 0xffffffff;
     return hash >= 0x80000000 ? hash - 0x100000000 : hash;
@@ -72,12 +74,4 @@ class StringFormat {
   String toString() =>
       'StringFormat(result=$result, selectionStart=$selectionStart, '
       'selectionEnd=$selectionEnd)';
-}
-
-int _kotlinStringHashCode(String value) {
-  var hash = 0;
-  for (final codeUnit in value.codeUnits) {
-    hash = (hash * 31 + codeUnit) & 0xffffffff;
-  }
-  return hash >= 0x80000000 ? hash - 0x100000000 : hash;
 }

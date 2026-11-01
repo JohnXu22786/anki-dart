@@ -23,6 +23,24 @@ test are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source and license record. Root `COPYING` remains byte-identical.
 
+## Field-selection result identifiers
+
+`ResultType` in `lib/src/result_type.dart` ports the String-backed value class
+from `AnkiDroid/src/main/java/com/ichi2/anki/model/ResultType.kt` at AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Equality, hashing, and
+`toString()` follow the underlying String exactly; the shared hash helper
+preserves Kotlin/JVM UTF-16 code-unit and signed 32-bit overflow behavior. The
+source uses these values as option-map keys and routes field-selection results
+through `AdvancedSearchFieldsTab.kt`, `AdvancedSearchFragment.kt`, and
+`FieldSelectionDialog.kt`. Source-derived cases are in
+`test/result_type_test.dart`; the pinned source has no dedicated direct test.
+Android `Parcelable` encoding, FragmentManager/Bundle transport, dialogs, UI,
+and lifecycle remain host-side. The upstream source declares
+`GPL-3.0-or-later` with no separate copyright line; the Dart adaptation and
+focused tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
+`COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the source and license record.
+
 ## Filename sanitization
 
 `Filename.sanitize()` ports the app-side value from

@@ -2659,3 +2659,17 @@ failure propagation. Android menu/provider APIs stay host-side. The pinned
 Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
+
+`lib/src/fragment_activity_on_all_fragments_loaded.dart` and
+`test/fragment_activity_on_all_fragments_loaded_test.dart` adapt
+`FragmentActivity.onAllFragmentsLoaded(block)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt:48–73`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. They preserve the manager lookup
+before callback creation, one recursive registration, super-before-predicate
+ordering, current-manager view checks, false-check retention, block/finally
+unregistration with identical callback identity, and repeated-event behavior.
+Android fragment and lifecycle types remain host-side. No direct pinned test
+was found. The Kotlin source declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

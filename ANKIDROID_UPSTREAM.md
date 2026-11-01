@@ -1699,3 +1699,27 @@ are in `test/menu_host_add_prepare_menu_provider_test.dart`; no direct pinned
 test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
 separate copyright line. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## FragmentActivity.onAllFragmentsLoaded
+
+`onAllFragmentsLoaded()` in
+`lib/src/fragment_activity_on_all_fragments_loaded.dart` adapts
+`FragmentActivity.onAllFragmentsLoaded(block)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt:48–73`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter reads the current
+support FragmentManager once before constructing one lifecycle callback and
+registers that exact callback recursively. Each `onFragmentViewCreated` event
+forwards its four tokens to the host super callback first, reads the current
+manager once, and invokes the host `fragments.all { it.view != null }`
+predicate. A false result leaves the callback registered. A true result calls
+`block()` and, in `finally`, reads the manager again and unregisters the same
+callback. Failures before the `try` skip the block and unregister operation; a
+cleanup failure follows normal `finally` propagation. Repeated qualifying
+events remain unguarded. The host predicate inspects fragment views, while
+Android FragmentActivity, FragmentManager, Fragment, View, Bundle, and callback
+classes remain host-side. No direct pinned test was found; source-derived Dart
+cases are in `test/fragment_activity_on_all_fragments_loaded_test.dart`. The
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

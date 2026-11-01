@@ -127,6 +127,28 @@ value semantics; focused source-derived contract cases are in
 focused tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`.
 Root `COPYING` remains byte-identical.
 
+## LinearLayoutManager visible positions
+
+`VisibleItemPositionRange`, `visibleItemPositions()`, and
+`positionIsVisible()` in `lib/src/linear_layout_manager_visible_positions.dart`
+adapt the `LinearLayoutManager.visibleItemPositions` property and
+`positionIsVisible(position)` extension from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/LinearLayoutManager.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The callbacks map directly to the
+host's first-visible and last-visible adapter-position queries and run once
+each in that order. If either result is `RecyclerView.NO_POSITION` (`-1`), the
+adapter returns Kotlin's `IntRange.EMPTY`; otherwise it preserves the inclusive
+`first..last` endpoints, including the empty membership of reversed bounds.
+`positionIsVisible()` checks membership in that same range. Android
+`LinearLayoutManager`, `RecyclerView`, and layout state/querying remain
+host-side; the adapter does not inspect child views or recompute layout. The
+pinned file declares `GPL-3.0-or-later` and has no separate copyright line. A
+search of the pinned source tree found no direct test for this extension; the
+focused Dart tests are source-derived. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## JsonReader object decoding
 
 `readJsonObject()` and `readSingleJsonObject()` in `lib/src/json_reader.dart`

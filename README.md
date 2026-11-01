@@ -3060,3 +3060,16 @@ found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 Kotlin source declares `GPL-3.0-or-later` and has no file-level copyright line;
 the Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
+
+## LinearLayoutManager visible positions
+
+`visibleItemPositions()` and `positionIsVisible()` preserve the pinned
+AnkiDroid helper's first-then-last host query order, `NO_POSITION` empty result,
+and inclusive range membership, including reversed empty ranges. Android
+layout-manager APIs and layout state stay host-side. Source mapping, GPL
+attribution, and focused source-derived tests are recorded in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md), [NOTICE.md](NOTICE.md), and
+[test/linear_layout_manager_visible_positions_test.dart](test/linear_layout_manager_visible_positions_test.dart).
+The pinned Kotlin file declares `GPL-3.0-or-later` and has no separate
+copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui
+under that license. Root `COPYING` remains byte-identical.

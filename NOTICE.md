@@ -2522,3 +2522,17 @@ pinned test for the helper was found; focused Dart tests are source-derived.
 The Kotlin source declares `GPL-3.0-or-later` and contains no file-level
 copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+`lib/src/linear_layout_manager_visible_positions.dart` and
+`test/linear_layout_manager_visible_positions_test.dart` adapt
+`LinearLayoutManager.visibleItemPositions` and `positionIsVisible()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/LinearLayoutManager.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter preserves first-then-last
+query order, maps either `NO_POSITION` result to an empty range, and retains
+inclusive and reversed-range membership behavior. Android layout-manager and
+RecyclerView APIs remain host-side. No direct pinned test for the extension
+was found; focused Dart tests are source-derived. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

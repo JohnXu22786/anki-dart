@@ -16,7 +16,7 @@
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from View.kt in AnkiDroid 2.25.3; see ANKIIDROID_UPSTREAM.md.
+ * Source-derived from View.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
 import 'dart:typed_data';

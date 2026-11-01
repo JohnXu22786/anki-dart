@@ -2188,3 +2188,14 @@ and focused tests are Copyright © 2026 John Tsui and marked
   encoding, FragmentManager/Bundle transport, dialogs, UI, and lifecycle remain
   host-side. The Dart adaptation and tests are Copyright © 2026 John Tsui and
   marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/CharSequence.kt` (`<C :
+  CharSequence> C?.ifNullOrEmpty(defaultValue: () -> C)`, pinned to AnkiDroid
+  2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright
+  line. Its null/empty fallback and lazy callback behavior are adapted for
+  String in `lib/src/char_sequence_if_null_or_empty.dart`, with focused
+  source-derived cases in `test/char_sequence_if_null_or_empty_test.dart`.
+  Kotlin's `CharSequence` subtype identity cannot be represented in this
+  package's String-only API. The Dart adaptation and tests are Copyright © 2026
+  John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

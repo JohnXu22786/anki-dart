@@ -2343,3 +2343,17 @@ this port makes no claim to match their version-specific additions. The
 dependency's MIT permission notice is retained verbatim in
 `LICENSES/unorm_dart-MIT.txt`; its Unicode normalization data is covered by the
 Unicode License V3 notice in `LICENSES/Unicode-License-V3.txt`.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Config.kt`
+  (`Config.ignoreAccentsInSearch`, pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright
+  line. The getter/setter forward the exact generated key
+  `ConfigKey.Bool.IGNORE_ACCENTS_IN_SEARCH`; the Dart callback adapter is in
+  `lib/src/ignore_accents_in_search_config.dart`, with focused cases in
+  `test/config_ignore_accents_in_search_test.dart`. The pinned
+  `AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/ConfigTest.kt` tests
+  accent-insensitive search integration, but does not isolate fixed-key
+  forwarding. Generated keys, Config storage, and search execution remain
+  host-side. The Dart adaptation and tests are Copyright © 2026 John Tsui and
+  marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

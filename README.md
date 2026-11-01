@@ -2859,6 +2859,23 @@ tests cover the requested ID and call count, object identity, and null failure.
 See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
 for the pinned source and license record.
 
+## Config.ignoreAccentsInSearch
+
+`IgnoreAccentsInSearchConfig<TConfigKey>` in
+`lib/src/ignore_accents_in_search_config.dart` adapts the Boolean getter/setter
+from AnkiDroid 2.25.3 `Config.kt`. Pass the exact host token for
+`ConfigKey.Bool.IGNORE_ACCENTS_IN_SEARCH`; the adapter forwards each read or
+write once and returns/passes the Boolean unchanged. The host retains generated
+Config keys, storage, and search behavior. Focused source-derived tests are in
+[`test/config_ignore_accents_in_search_test.dart`](test/config_ignore_accents_in_search_test.dart).
+Pinned `ConfigTest.kt` exercises accent-insensitive search after enabling the
+setting, while the Dart tests isolate key forwarding, invocation count, values,
+and callback failures. The pinned Kotlin file declares `GPL-3.0-or-later` and
+has no separate copyright line. The Dart adaptation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for the source and license record.
+
 ## Scheduler.answerCard
 
 `schedulerAnswerCard()` in `lib/src/scheduler_answer_card.dart` adapts the

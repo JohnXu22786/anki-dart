@@ -40,6 +40,7 @@ export 'src/mutable_list.dart';
 export 'src/whole_and_fraction.dart';
 export 'src/card_stats_no_card_clean.dart';
 export 'src/input_stream_convert_to_string.dart';
+export 'src/ignore_accents_in_search_config.dart';
 export 'src/state_flow_var_delegate.dart';
 export 'src/scheduler_answer_card.dart';
 export 'src/deck_filters.dart';

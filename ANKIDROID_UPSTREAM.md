@@ -1328,3 +1328,24 @@ dispatch remain host-side. The upstream Kotlin source declares
 `GPL-3.0-or-later` and Copyright (c) 2020 Mani <infinyte01@gmail.com>; the Dart
 adaptation and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## Config.ignoreAccentsInSearch
+
+`ignoreAccentsInSearch` in
+`lib/src/ignore_accents_in_search_config.dart` adapts the getter and setter from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Config.kt` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host passes the opaque
+token for `ConfigKey.Bool.IGNORE_ACCENTS_IN_SEARCH`; the Dart adapter forwards
+that exact token once to `getBool` or `setBool`, passes and returns the Boolean
+unchanged, and lets callback failures propagate. Generated Config keys, the
+collection-backed Config implementation, persistence, and search execution
+remain host-side. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/ConfigTest.kt` sets this
+preference and verifies accent-insensitive matching for Latin and Japanese
+searches; the focused Dart adapter contract is in
+`test/config_ignore_accents_in_search_test.dart`. `ConfigTest.kt` covers the
+integration behavior but does not isolate the extension's key-forwarding
+contract. `Config.kt` declares `SPDX-License-Identifier: GPL-3.0-or-later`
+with no separate copyright line. The Dart adaptation and focused tests are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical.

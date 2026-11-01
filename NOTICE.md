@@ -1192,6 +1192,13 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   literal target-position-zero guard and accepted same-position no-op; the host
   applies swaps and handles RecyclerView notifications, drag lifecycle and the
   column-selection UI.
+- `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MutableList.kt` also declares
+  `GPL-3.0-or-later` with no separate copyright line. Its in-place
+  `MutableList<T>.swapPositions(fromPosition, toPosition)` operation is adapted
+  as the `List.swapPositions()` extension in `lib/src/mutable_list.dart`, which
+  preserves the ordered adjacent swaps and natural index failures. The Dart
+  adaptation and focused tests are Copyright © 2026 John Tsui under
+  `GPL-3.0-or-later`; root `COPYING` remains byte-identical.
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionAdapter.kt`
   and `BrowserColumnSelectionFragment.kt` declare `GPL-3.0-or-later`. The pure
   click-toggle target/side projection is adapted in

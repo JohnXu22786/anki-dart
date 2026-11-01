@@ -598,6 +598,12 @@ Android lifecycle, StateFlow, localization, and UI.
   applies the swaps and handles RecyclerView notifications, drag lifecycle, and
   the column-selection dialog. The pinned tests cover drop-refresh timing, not
   this guard or swap sequence, so these Dart assertions are source-derived.
+- `swapPositions()` in `lib/src/mutable_list.dart` applies AnkiDroid's ordered
+  adjacent swaps in place, without position validation or normalization. It is
+  available as a `List` extension for callers applying movement plans. The
+  source `MutableList.kt` declares `GPL-3.0-or-later` with no separate copyright
+  line; Dart attribution and source details are recorded in
+  [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
 - Card Browser column-selection click toggle: `planBrowserColumnSelectionToggle`
   captures the first Available-heading index, the clicked row index, and the
   source's before-heading side test. Applying its plan removes then inserts at

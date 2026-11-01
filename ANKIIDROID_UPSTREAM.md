@@ -21,6 +21,21 @@ Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`; both source/license notices are retained in the Dart file.
 Root `COPYING` remains byte-identical.
 
+## `MutableList<T>.swapPositions()`
+
+`List.swapPositions(fromPosition, toPosition)` in `lib/src/mutable_list.dart`
+adapts `MutableList<T>.swapPositions()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MutableList.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It mutates
+the list by applying `Collections.swap` to adjacent positions in ascending order
+when moving forward and descending order otherwise. It does not validate or
+normalize positions. Equal positions ordinarily produce no swaps; the
+`Int.MAX_VALUE` endpoint preserves Kotlin's signed-32-bit range overflow and
+attempts a swap. Focused coverage is in `test/mutable_list_test.dart`. The
+Kotlin source declares `GPL-3.0-or-later` with no separate copyright line; the
+Dart adaptation and test are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## `Double.wholeAndFraction()`
 
 `wholeAndFraction()` in `lib/src/whole_and_fraction.dart` and its source-derived

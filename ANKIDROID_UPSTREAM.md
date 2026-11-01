@@ -28,6 +28,28 @@ handler failure propagation. No direct pinned test for this helper was found.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
 
+## `Context.getUserFriendlyErrorText(e)`
+
+`contextGetUserFriendlyErrorText()` in
+`lib/src/context_get_user_friendly_error_text.dart` adapts
+`Context.getUserFriendlyErrorText(e)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:18–37`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It checks
+once whether the host classifies the exception as translatable and, if so,
+returns that host-provided translated message immediately, even if blank.
+Otherwise it reads `localizedMessage`, `message`, and exception class simple
+name in that order, returning the first non-null value for which the
+host-provided `isBlank` callback returns false. If none qualifies, it returns
+the host-localized `R.string.error__etc__unknown_error` text. Each property is
+read at most once; callback failures propagate and stop later operations. The
+host retains `TranslatableException`, JVM exception property semantics, Kotlin
+blank classification, Android `Context`, and resource localization. Focused
+cases are in `test/context_get_user_friendly_error_text_test.dart`; no direct
+pinned test for this method was found. `Exceptions.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## `CoroutineWorker.trySetForeground(foregroundInfo)`
 
 `coroutineWorkerTrySetForeground()` in

@@ -22,6 +22,26 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+## User-friendly exception text
+
+`contextGetUserFriendlyErrorText()` in
+[`lib/src/context_get_user_friendly_error_text.dart`](lib/src/context_get_user_friendly_error_text.dart)
+adapts `Context.getUserFriendlyErrorText(e)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:18–37`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It returns
+a translatable exception's message directly, including a blank message;
+otherwise it checks `localizedMessage`, `message`, then the exception class
+simple name, returning the first nonblank value before the host-localized
+unknown-error resource. The host provides exception classification and property
+access, Kotlin-compatible blank checking, and Android resource lookup; callback
+failures propagate and stop later reads. Focused cases are in
+[`test/context_get_user_friendly_error_text_test.dart`](test/context_get_user_friendly_error_text_test.dart);
+no direct pinned AnkiDroid test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Set foreground for a CoroutineWorker
 
 `coroutineWorkerTrySetForeground()` in

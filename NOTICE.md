@@ -20,6 +20,22 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license. No
 direct pinned test for this helper was found. Root `COPYING` remains
 byte-identical.
 
+## User-friendly exception text
+
+`lib/src/context_get_user_friendly_error_text.dart` and
+`test/context_get_user_friendly_error_text_test.dart` adapt
+`Context.getUserFriendlyErrorText(e)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:18–37`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The port preserves the direct
+translatable-message return, including blank messages, followed by ordered
+`localizedMessage`, `message`, simple-name, and host-localized unknown-error
+fallbacks. Exception classification and JVM property access, Kotlin blank
+semantics, and Android resource resolution remain host-side. The source declares
+`GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. No direct pinned
+AnkiDroid test for this method was found. Root `COPYING` remains byte-identical.
+
 ## CoroutineWorker foreground handling
 
 `lib/src/coroutine_worker_try_set_foreground.dart` and

@@ -52,6 +52,7 @@ export 'src/json_reader.dart';
 export 'src/json_writer.dart';
 export 'src/bitmap_drawable_to_base64_png.dart';
 export 'src/context_bitmap_size.dart';
+export 'src/context_get_user_friendly_error_text.dart';
 export 'src/coroutine_worker_try_set_foreground.dart';
 export 'src/context_using_styled_attributes.dart';
 export 'src/menu_item_set_icon_res.dart';

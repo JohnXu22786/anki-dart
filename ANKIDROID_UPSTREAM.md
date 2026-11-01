@@ -1797,3 +1797,20 @@ No direct pinned test was found; the focused Dart cases are source-derived. The
 Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
+
+## Fragment.packageManager
+
+`fragmentPackageManager()` in `lib/src/fragment_package_manager.dart` adapts
+the `Fragment.packageManager` property from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:19–20`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls
+the host `requireContext()` once, reads `packageManager` on that exact Context
+once, and returns the identical opaque PackageManager token. Context lookup and
+property-read failures propagate unchanged in source order. Android Fragment,
+Context, PackageManager, and their concrete implementations remain host-side.
+Source-derived cases are in
+[`test/fragment_package_manager_test.dart`](test/fragment_package_manager_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

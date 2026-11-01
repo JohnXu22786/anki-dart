@@ -3329,3 +3329,21 @@ no direct pinned test was found. The Kotlin source declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source and license record.
+
+## Fragment package manager
+
+`fragmentPackageManager()` in
+[`lib/src/fragment_package_manager.dart`](lib/src/fragment_package_manager.dart)
+adapts `Fragment.packageManager` from AnkiDroid 2.25.3's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:19–20`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves the host
+Fragment's Context once, reads `packageManager` from that same Context once,
+and returns the identical opaque token. Failures propagate unchanged in source
+order. Android Fragment, Context, PackageManager, and concrete implementations
+remain host-side. Source-derived cases are in
+[`test/fragment_package_manager_test.dart`](test/fragment_package_manager_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.

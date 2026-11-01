@@ -53,6 +53,7 @@ export 'src/context_using_styled_attributes.dart';
 export 'src/menu_item_set_icon_res.dart';
 export 'src/menu_host_add_prepare_menu_provider.dart';
 export 'src/fragment_manager_remove_fragment.dart';
+export 'src/fragment_package_manager.dart';
 export 'src/fragment_activity_dismiss_all_dialog_fragments.dart';
 export 'src/fragment_activity_show_dialog_fragment.dart';
 export 'src/fragment_show_dialog_fragment.dart';

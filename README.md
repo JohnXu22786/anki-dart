@@ -3037,3 +3037,11 @@ The Dart adaptation and tests are Copyright © 2026 John Tsui under
 `GPL-3.0-or-later`; root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and attribution details.
+
+## BitmapDrawable PNG Base64 conversion
+
+`bitmapDrawableToBase64Png()` preserves the pinned AnkiDroid wrapper's stream
+ownership and operation order while delegating Android PNG compression and
+`Base64.DEFAULT` encoding to the host. The source mapping, scope boundary, and
+GPL attribution are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md).

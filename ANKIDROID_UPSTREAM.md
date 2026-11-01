@@ -1462,3 +1462,24 @@ Copyright (c) 2025 Danilo Mendes and has no file-level SPDX identifier; the
 upstream repository is distributed under `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under that same license. Root `COPYING`
 remains byte-identical.
+
+## BitmapDrawable.toBase64Png
+
+`bitmapDrawableToBase64Png()` in `lib/src/bitmap_drawable_to_base64_png.dart`
+and its source-derived tests in `test/bitmap_drawable_to_base64_png_test.dart`
+adapt `BitmapDrawable.toBase64Png()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/BitmapDrawable.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection creates one host output stream, calls compression with the host PNG
+format and quality `100`, ignores the compression Boolean, snapshots the byte
+array once, passes that identical array to the host encoder with its
+`Base64.DEFAULT` flag, returns the exact encoded string, and closes the stream
+afterward or when an earlier operation throws. Android `BitmapDrawable`,
+`Bitmap`, `CompressFormat`, `ByteArrayOutputStream`, Base64 behavior, and WebView
+integration remain host-side. A search of pinned AnkiDroid tests found no direct
+test for this extension; the Dart cases cover callback order, ignored false
+compression, byte-array identity, failure short-circuiting/identity, and stream
+closing. The Kotlin source has a full GPL-3.0-or-later notice and Copyright
+© 2024 Ashish Yadav <mailtoashish693@gmail.com>; the Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

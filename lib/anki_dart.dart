@@ -24,6 +24,7 @@ export 'src/note_editor_caller.dart';
 export 'src/note_editor_add_note_args.dart';
 export 'src/note_editor_add_note_to_intent.dart';
 export 'src/note_editor_add_instant_note_to_intent.dart';
+export 'src/note_editor_add_note_from_reviewer_to_intent.dart';
 export 'src/note_editor_image_occlusion_to_intent.dart';
 export 'src/note_editor_edit_from_previewer_to_intent.dart';
 export 'src/note_editor_fragment_new_instance.dart';

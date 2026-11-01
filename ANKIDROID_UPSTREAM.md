@@ -73,6 +73,28 @@ identifies the source only and does not attribute the Dart adaptation to him.
 The Dart implementation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
 
+## `NoteEditorDestination.AddNoteFromReviewer.toIntent(context)`
+
+`noteEditorAddNoteFromReviewerToIntent()` in
+`lib/src/note_editor_add_note_from_reviewer_to_intent.dart` adapts the
+`AddNoteFromReviewer` branch from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:38–43`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `NoteEditorCaller.REVIEWER_ADD` (`11`), then writes the exact
+non-null animation as the `finishAnimation` Parcelable extra; a null animation
+omits that extra. It returns the same Intent. Callback failures propagate
+unchanged and stop later operations. Context, `NoteEditorActivity`, Android
+Intent, and Parcelable handling remain host-side. Focused source-derived tests
+in `test/note_editor_add_note_from_reviewer_to_intent_test.dart` cover caller
+mapping, null omission, animation identity, source order, Intent identity, and
+failure short circuits. No direct pinned test for this `toIntent` branch was
+found. The Kotlin source declares `GPL-3.0-or-later` and has SPDX Copyright
+(c) 2024 Sanjay Sargam; this identifies the Kotlin source only and does not
+attribute the Dart adaptation to him. The Dart implementation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## `NoteEditorFragment.Companion.newInstance(args)`
 
 `noteEditorFragmentNewInstance()` in

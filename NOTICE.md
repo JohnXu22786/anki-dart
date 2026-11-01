@@ -136,6 +136,26 @@ Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae. Those names record
 the Kotlin source provenance only. The Dart adaptation and tests are Copyright
 © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## Note Editor Reviewer add-note Intent
+
+`lib/src/note_editor_add_note_from_reviewer_to_intent.dart` and
+`test/note_editor_add_note_from_reviewer_to_intent_test.dart` adapt the
+`AddNoteFromReviewer` branch of `NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:38–43`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter creates one host
+Intent, writes `CALLER` with `REVIEWER_ADD` (`11`), and writes the exact
+non-null animation as the `finishAnimation` Parcelable extra; null omits the
+animation extra. Context, Activity component, Android Intent, and Parcelable
+behavior remain host-side; callback failures propagate and stop subsequent
+operations. Focused source-derived tests cover caller key/value, null omission,
+exact animation forwarding, source order, Intent identity, and failure short
+circuits. No direct pinned test for this `toIntent` branch was found. The Kotlin
+source declares `GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay
+Sargam; this identifies the Kotlin source only and does not attribute the Dart
+adaptation to him. The Dart implementation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Note Editor newline replacement preference
 
 `lib/src/note_editor_should_replace_newlines.dart` and

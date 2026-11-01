@@ -558,6 +558,23 @@ The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical; see
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
 
+[`noteEditorAddNoteFromReviewerToIntent()`](lib/src/note_editor_add_note_from_reviewer_to_intent.dart)
+adapts `NoteEditorDestination.AddNoteFromReviewer.toIntent(context)`: it creates
+one host Intent, writes `CALLER: 11`, then writes the exact non-null animation
+as the `finishAnimation` Parcelable extra; a null animation omits that extra.
+It returns the same Intent. Android context, Activity component, Intent
+construction, and Parcelable handling remain host-side. Focused source-derived
+cases in
+[`test/note_editor_add_note_from_reviewer_to_intent_test.dart`](test/note_editor_add_note_from_reviewer_to_intent_test.dart)
+cover the caller key/value, null omission, exact animation pass-through, order,
+Intent identity, and callback failure short circuits. No direct pinned test for
+this `toIntent` branch was found. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md).
+
 ## Note Editor newline replacement preference
 
 `noteEditorShouldReplaceNewlines()` in

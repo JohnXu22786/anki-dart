@@ -7,6 +7,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+`lib/src/scheduler_answer_card.dart` and `test/scheduler_answer_card_test.dart`
+adapt the `Scheduler.answerCard(card, states, rating)` extension from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Scheduler.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection invokes the host answer builder first, increments the recorded
+answer count only after it succeeds, uses signed 32-bit Kotlin `Int` wrap
+semantics, and returns the identical answer object. Scheduler, card/state/rating
+types, answer construction, and backend behavior remain host-side.
+`Scheduler.kt` declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and focused tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 `lib/src/decks_update.dart` and `test/decks_update_test.dart` adapt
 `Decks.update(did, block)` from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Deck.kt`, pinned to AnkiDroid

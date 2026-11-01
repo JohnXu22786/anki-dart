@@ -262,3 +262,19 @@ coverage is in `test/state_flow_var_delegate_test.dart`. The Kotlin source
 declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## `Scheduler.answerCard(card, states, rating)`
+
+`lib/src/scheduler_answer_card.dart` and its focused cases in
+`test/scheduler_answer_card_test.dart` adapt the extension
+`Scheduler.answerCard(card, states, rating)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Scheduler.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection invokes the host answer builder before reading the recorded-answer
+counter, increments once using signed 32-bit Kotlin `Int` wrap semantics, writes
+once, and returns the exact answer object. Builder, getter, and setter failures
+propagate in that source order. Scheduler, card/state/rating types, answer
+construction, and the backend remain host-side. `Scheduler.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

@@ -2841,3 +2841,21 @@ object. A null result triggers Dart's `TypeError` from `!`, matching Kotlin's
 tests cover the requested ID and call count, object identity, and null failure.
 See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
 for the pinned source and license record.
+
+## Scheduler.answerCard
+
+`schedulerAnswerCard()` in `lib/src/scheduler_answer_card.dart` adapts the
+`Scheduler.answerCard(card, states, rating)` extension from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Scheduler.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+It calls the host answer builder once, then reads and increments the recorded
+answer count, and returns the builder's identical answer object. The counter
+uses signed 32-bit Kotlin `Int` wrap semantics; callback failures propagate in
+source order. Card and scheduling-state types, `Scheduler`, answer construction,
+and backend behavior remain host-side. Focused cases are in
+[`test/scheduler_answer_card_test.dart`](test/scheduler_answer_card_test.dart).
+The pinned Kotlin source declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.

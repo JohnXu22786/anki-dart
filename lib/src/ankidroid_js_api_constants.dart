@@ -36,6 +36,8 @@ const ANKI_JS_ERROR_CODE_SEARCH_CARD = 8;
 
 const currentJsApiVersion = '0.0.3';
 const minimumJsApiVersion = '0.0.3';
+const VALUE_KEY = 'value';
+const SUCCESS_KEY = 'success';
 
 /// Maps the JS API flag names to source-identical reviewer command values.
 const flagCommands = <String, ViewerCommand>{

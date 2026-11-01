@@ -63,9 +63,13 @@ ported. `lib/src/ankidroid_js_api_constants.dart` also preserves the source JS
 API error codes (including `BURT_NOTE`), current/minimum version `0.0.3`, and
 ordered flag-name to `ViewerCommand` table. It represents enum values only;
 Android WebView/JS bridge execution, dispatch, localization, version parsing,
-UI and logging remain host-side. Focused constant/table cases are in
-`test/ankidroid_js_api_constants_test.dart`. The adapted sources are
-GPL-3.0-or-later, with upstream source copyrights by Mani (2021, and 2020 for
+UI and logging remain host-side. `ApiContract` and `requireJsApiVersion()` in
+`lib/src/ankidroid_js_api_contract.dart` add the source field projection and
+compatibility gate; host callbacks retain Java semver parsing/comparison and
+Android UI/logging effects. Focused constant/table cases are in
+`test/ankidroid_js_api_constants_test.dart`, with source-derived gate and
+contract cases in `test/ankidroid_js_api_contract_test.dart`. The adapted sources are
+`GPL-3.0-or-later`, with upstream source copyrights by Mani (2021, and 2020 for
 `AnkiDroidJsAPIConstants.kt`). See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for the exact source paths, test boundary, and
 license record; root `COPYING` remains unchanged.

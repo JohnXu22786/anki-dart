@@ -1207,3 +1207,26 @@ declares `SPDX-License-Identifier: GPL-3.0-or-later`. The Dart adaptation and
 tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Android
 WebView/JavaScript bridge execution, command dispatch, localization, version
 parsing, UI, and logging remain host-side. Root `COPYING` remains unchanged.
+
+## AnkiDroid JavaScript API compatibility contract
+
+`ApiContract` and `requireJsApiVersion()` in
+`lib/src/ankidroid_js_api_contract.dart` adapt the field projection and
+`AnkiDroidJsAPI.requireApiVersion()` control flow at lines 150–189 and 681–686
+of `AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPI.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The ordinary
+Dart class retains identity equality and the source field order
+`isValid`, `cardSuppliedDeveloperContact`, `cardSuppliedData`. The gate preserves
+empty-string checks, current-then-supplied parsing, equal/lower/greater branches,
+callback order, and the `Exception` warning boundary. The host supplies exact
+Java `Version.parse` and comparison operations plus UI/logging callbacks;
+JSON-byte decoding, Android thread scheduling and UI strings remain host-side.
+`VALUE_KEY` and `SUCCESS_KEY` in
+`lib/src/ankidroid_js_api_constants.dart` preserve the companion values
+`"value"` and `"success"`. Focused source-derived cases are in
+`test/ankidroid_js_api_contract_test.dart`. The upstream API source declares
+`GPL-3.0-or-later` and Copyright (c) 2020 Mani
+<infinyte01@gmail.com>; the pinned `AnkiDroidJsAPITest.kt` helper constructs a
+valid `0.0.3` contract, but no direct compatibility-gate test was found. The
+Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

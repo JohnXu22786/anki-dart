@@ -62,6 +62,23 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   focused tests are Copyright © 2026 John Tsui and marked
   `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPI.kt` (pinned AnkiDroid
+  2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `GPL-3.0-or-later` and Copyright (c) 2020 Mani
+  <infinyte01@gmail.com>. Its `ApiContract` field projection and
+  `requireApiVersion()` policy are adapted in
+  `lib/src/ankidroid_js_api_contract.dart`, preserving identity equality,
+  source field order, empty-string handling, version branch behavior, callback
+  order, and the `Exception` warning boundary. Java semver parsing/comparison,
+  JSON byte decoding, Android UI/thread scheduling, and logging remain
+  host-side. The source companion values `VALUE_KEY = "value"` and
+  `SUCCESS_KEY = "success"` are in `lib/src/ankidroid_js_api_constants.dart`.
+  The pinned `AnkiDroidJsAPITest.kt` helper constructs a valid `0.0.3` contract;
+  no direct compatibility-gate test was found. Focused source-derived cases are
+  in `test/ankidroid_js_api_contract_test.dart`. The Dart adaptation and tests
+  are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+  remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/export/Filename.kt` and its direct
   test `AnkiDroid/src/test/java/com/ichi2/anki/export/FilenameTest.kt` (pinned
   AnkiDroid 2.25.3 commit

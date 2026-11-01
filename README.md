@@ -37,12 +37,15 @@ source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 
 `CardStateFilter` preserves the source enum order and names, and the exact
 `toSearch` fragments (`''`, `'is:new '`, and `'is:due '`, including trailing
-spaces) from AnkiDroid 2.25.3. The host retains filter selection, query
-composition, and search execution. The pinned `CardBrowserViewModelTest`
-passes `ALL_CARDS` through tag filtering but does not directly assert
-`toSearch`; no dedicated `CardStateFilter` test was found, so focused Dart cases
-are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
-[NOTICE.md](NOTICE.md) for the exact source pin and license record.
+spaces) from `AnkiDroid/src/main/java/com/ichi2/anki/model/CardStateFilter.kt`
+at AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The host retains filter selection, query composition, and search execution.
+The pinned `CardBrowserViewModelTest` passes `ALL_CARDS` through tag filtering
+but does not directly assert `toSearch`; no dedicated `CardStateFilter` test was
+found, so focused Dart cases are source-derived. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the full source and license record.
 
 The current port includes selected source-mapped slices: deck-picker behavior,
 review-reminder Add/Edit form state,

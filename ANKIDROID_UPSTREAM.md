@@ -8,6 +8,25 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## CSV importer destination
+
+`CsvImporterDestination` in `lib/src/csv_importer_destination.dart` adapts
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/CsvImporterDestination.kt:1–8`
+and its `toIntent(context)` extension in
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/CsvImporter.kt:105–110`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+destination retains its exact `filePath`; `toIntent` delegates once to the
+host-supplied equivalent of `CsvImporter.getIntent(context, filePath)` and
+returns that exact result. Context, Android Intent construction, Bundle/key and
+activity behavior remain host-side. `Import.kt:55–63` remains host-side as
+well, including cached-file copying and TaskStackBuilder navigation. Focused
+source-derived tests cover empty and unusual paths, exact context/path
+forwarding, one callback, returned-object identity, and unchanged exception
+propagation. No direct pinned test for this `toIntent` extension was found. The
+Kotlin sources declare `GPL-3.0-or-later` and have no separate copyright line;
+the Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
 ## `NoteEditorFragment.Companion.NoteEditorCaller`
 
 `NoteEditorCaller` in `lib/src/note_editor_caller.dart` ports the enum from

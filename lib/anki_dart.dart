@@ -34,6 +34,7 @@ export 'src/note_editor_image_occlusion_to_intent.dart';
 export 'src/note_editor_edit_from_previewer_to_intent.dart';
 export 'src/note_editor_fragment_new_instance.dart';
 export 'src/note_editor_should_replace_newlines.dart';
+export 'src/csv_importer_destination.dart';
 export 'src/note_editor_should_hide_toolbar.dart';
 export 'src/addon_model.dart';
 export 'src/ankidroid_js_api_constants.dart';

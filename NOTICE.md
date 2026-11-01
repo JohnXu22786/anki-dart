@@ -5,6 +5,27 @@ This repository contains a partial, modified Dart port of code from
 `d9bf072f814a0c37d30a694192593b31ff2df875`. It is an independent project and
 does not imply endorsement by the AnkiDroid or Anki projects.
 
+## CSV importer destination
+
+`lib/src/csv_importer_destination.dart` and
+`test/csv_importer_destination_test.dart` adapt
+`CsvImporterDestination(filePath)` from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/CsvImporterDestination.kt:1–8`
+and `toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/CsvImporter.kt:105–110`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter retains the exact path
+and delegates once to the host equivalent of `CsvImporter.getIntent(context,
+filePath)`, returning its exact result. Android Context, Intent construction,
+Bundle/key and activity behavior remain host-side; so do cached-file copying
+and TaskStackBuilder navigation in `Import.kt:55–63`. Focused source-derived
+tests cover empty and unusual paths, exact context/path forwarding, callback
+count, Intent identity and exception propagation. No direct pinned test for
+this `toIntent` extension was found. The Kotlin sources declare
+`GPL-3.0-or-later` and have no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## Note Editor caller codes
 
 `lib/src/note_editor_caller.dart` and `test/note_editor_caller_test.dart`

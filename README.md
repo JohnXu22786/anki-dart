@@ -484,6 +484,21 @@ and generated data-class string form. The Kotlin sources and test declare
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and license details.
 
+## CSV importer destination
+
+[`CsvImporterDestination`](lib/src/csv_importer_destination.dart) retains the
+exact CSV path and delegates once to the host-provided equivalent of
+`CsvImporter.getIntent(context, filePath)`, returning the exact Intent object.
+Android Context, Intent construction, Bundle/key and activity behavior remain
+host-side, as do cached-file copying and TaskStackBuilder navigation. Focused
+source-derived tests in
+[`test/csv_importer_destination_test.dart`](test/csv_importer_destination_test.dart)
+cover empty and unusual paths, exact context/path forwarding, callback count,
+Intent identity, and exception propagation. No direct pinned test for this
+`toIntent` extension was found. Source provenance and authorship are recorded
+in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
+root `COPYING` remains byte-identical.
+
 ## Note Editor caller codes
 
 `NoteEditorCaller` in [`lib/src/note_editor_caller.dart`](lib/src/note_editor_caller.dart)

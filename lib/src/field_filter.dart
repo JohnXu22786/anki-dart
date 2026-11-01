@@ -20,10 +20,12 @@
  * ANKIDROID_UPSTREAM.md.
  */
 
+import 'insert_field_dialog_selection.dart' show FieldName;
+
 /// Properties accumulated while applying a template field-filter chain.
 ///
 /// The value and transitions match the corresponding Kotlin data class. Filter
-/// execution and chain construction remain responsibilities of the host.
+/// execution remains the host's responsibility.
 final class FilterContext {
   const FilterContext({
     required this.isClozeNoteType,
@@ -245,6 +247,62 @@ abstract final class FieldFilters {
   static const furigana = FuriganaFilter();
   static const kana = KanaFilter();
   static const kanji = KanjiFilter();
+}
+
+/// An immutable chain of field filters validated against accumulated context.
+///
+/// Filter rendering follows the source's right-to-left application order.
+final class FieldFilterChain {
+  FieldFilterChain._({
+    required this.fieldName,
+    required List<FieldFilter> filters,
+    required this.context,
+    required this.isValid,
+  }) : filters = List<FieldFilter>.unmodifiable(filters);
+
+  final FieldName fieldName;
+  final List<FieldFilter> filters;
+  final FilterContext context;
+  final bool isValid;
+
+  /// Returns a new chain when [filter] can be appended, or `null` otherwise.
+  FieldFilterChain? tryAdd(FieldFilter filter, {bool allowInvalid = false}) {
+    if (!allowInvalid && (!filter.isValid || !isValid)) return null;
+    if (!filter.canApplyTo(context)) return null;
+    if (filters
+        .map((existing) => existing.name)
+        .toList()
+        .contains(filter.name)) {
+      return null;
+    }
+
+    return FieldFilterChain._(
+      fieldName: fieldName,
+      filters: [...filters, filter],
+      context: filter.updateContext(context),
+      isValid: isValid && filter.isValid,
+    );
+  }
+
+  String render() => toString();
+
+  @override
+  String toString() {
+    if (filters.isEmpty) return '{{$fieldName}}';
+    final renderedFilters = filters.reversed.map((filter) => filter.render());
+    return '{{${renderedFilters.join(':')}:$fieldName}}';
+  }
+
+  /// Creates an empty chain with the default context for [fieldName].
+  static FieldFilterChain build(
+    FieldName fieldName, {
+    required bool isClozeNoteType,
+  }) => FieldFilterChain._(
+    fieldName: fieldName,
+    filters: const [],
+    context: FilterContext(isClozeNoteType: isClozeNoteType),
+    isValid: true,
+  );
 }
 
 int _kotlinDataClassHashCode(List<int> fields) {

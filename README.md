@@ -4,23 +4,27 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
-## Field filter context and built-ins
+## Field filter context, built-ins, and chains
 
-`FilterContext`, the default `FieldFilter` contract, the non-TTS built-ins, and
-`NoSuggestFilter.apply()` in `lib/src/field_filter.dart` adapt
+`FilterContext`, the `FieldFilter` default contract, non-TTS built-ins, and
+`FieldFilterChain` in `lib/src/field_filter.dart` adapt
 `AnkiDroid/src/main/java/com/ichi2/anki/model/FieldFilters.kt` at AnkiDroid
-2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The port preserves
-context value behavior, filter names, applicability gates, and context
-transitions. `NoSuggestFilter.apply(fieldText, fieldName, filterName)` retains
-the source's exact-name and marker guards and transforms all eligible `[[type:`
-markers. TTS, `FieldFilters.ALL`, `FieldFilterChain`, parsing and rendering, and
-`TemplateManager.fieldFilters` registration remain host-side. The focused cases
-are in `test/field_filter_test.dart`; the pinned Kotlin source and
-`FieldFilterChainTest.kt` declare `GPL-3.0-or-later` without a separate
-copyright line. The Dart adaptation and focused test are Copyright © 2026 John
-Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See
-[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
-the source and license record.
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The chain preserves
+source validity and applicability short-circuit order, duplicate-by-name
+rejection, context updates, immutable append results, and reverse filter
+rendering. `NoSuggestFilter.apply(fieldText, fieldName, filterName)` retains the
+source's exact-name and marker guards and transforms all eligible `[[type:`
+markers. The focused tests are in `test/field_filter_test.dart` and
+`test/field_filter_chain_test.dart`; they cover the mapped non-TTS gates and
+source-derived chain branches/order. TTS filters/options and exact Kotlin Float
+formatting, `FieldFilters.ALL`, the template parser/rendering pipeline,
+`TemplateManager.fieldFilters` runtime registration, Android UI, and Fragment
+lifecycle remain host-side. The pinned Kotlin source and
+`AnkiDroid/src/test/java/com/ichi2/anki/model/FieldFilterChainTest.kt` declare
+`GPL-3.0-or-later` without a separate copyright line. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
+`COPYING` remains unchanged. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the source and license record.
 
 ## Whiteboard pen colors
 

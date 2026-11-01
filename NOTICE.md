@@ -1190,7 +1190,17 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   `GPL-3.0-or-later` with no separate copyright line; the Dart adaptation and
   focused test are Copyright © 2026 John Tsui under that license. Root
   `COPYING` remains byte-identical. Collection/undo execution, current-card
-  lookup and StateFlow publication remain outside.
+  lookup and StateFlow publication remain outside. `Collection.setUserFlagForCards(cids, flag)`
+  from `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt` is
+  adapted as `collectionSetUserFlagForCards()` in
+  `lib/src/collection_set_user_flag_for_cards.dart`: it forwards the same ID
+  iterable and `PreviewerFlag.code` to the host overload once and returns its
+  exact result, with callback failures unchanged. It does not traverse or copy
+  IDs; collection mutation, undo and backend behavior remain host-side. No
+  direct pinned test of this overload was found. `Collection.kt` declares
+  `GPL-3.0-or-later` with no separate copyright line; the Dart adapter and
+  focused tests are Copyright © 2026 John Tsui under that license. Root
+  `COPYING` remains byte-identical.
   The `toggleMark()` operation order is adapted as host effects in
   `lib/src/previewer_mark_effects.dart`; current note resolution, tag mutation,
   undoable persistence, marked-state lookup, error handling, and StateFlow

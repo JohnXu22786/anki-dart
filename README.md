@@ -1216,7 +1216,10 @@ Android lifecycle, StateFlow, localization, and UI.
   publication of the same flag only if the host write succeeds. Current-card
   lookup, the undoable collection operation, asynchronous failure handling and
   StateFlow publication remain with the host. This enum is separate from the
-  Card Browser backend search flag values.
+  Card Browser backend search flag values. `collectionSetUserFlagForCards()`
+  forwards the same card-ID iterable and flag code to the host collection
+  overload once, returning its result unchanged and propagating failures. The
+  host retains collection mutation, undo, and backend behavior.
 - Previewer mark toggle: `previewerToggleMarkEffects` orders the host-resolved
   current-note mark toggle before a post-toggle marked-state read and publication.
   The host stops the sequence when an operation fails; note lookup, `marked` tag

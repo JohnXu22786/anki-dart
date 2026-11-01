@@ -28,6 +28,7 @@ export 'src/analytics_sample_percentage.dart';
 export 'src/card_state_filter.dart';
 export 'src/card_type_name.dart';
 export 'src/collection_get_card_or_null.dart';
+export 'src/collection_set_user_flag_for_cards.dart';
 export 'src/filename.dart';
 export 'src/field_filter.dart';
 export 'src/result_type.dart';

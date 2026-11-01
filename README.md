@@ -2915,3 +2915,17 @@ copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical. See
 [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source and license record.
+
+## Collection.getCardOrNull
+
+`collectionGetCardOrNull()` adapts `Collection.getCardOrNull(id)` from
+AnkiDroid 2.25.3 `Collection.kt`. It forwards the exact host-supplied ID once,
+returns the identical card object on success, and returns null for any thrown
+Dart object, matching Kotlin `runCatching`. Collection, card, and ID types stay
+on the host. Source-derived cases are in
+[`test/collection_get_card_or_null_test.dart`](test/collection_get_card_or_null_test.dart);
+no direct pinned upstream test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the pinned source and license record.

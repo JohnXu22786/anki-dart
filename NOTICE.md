@@ -2377,3 +2377,17 @@ Unicode License V3 notice in `LICENSES/Unicode-License-V3.txt`.
   forwarding. Generated keys, Config storage, and search execution remain
   host-side. The Dart adaptation and tests are Copyright © 2026 John Tsui and
   marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+`lib/src/collection_get_card_or_null.dart` and
+`test/collection_get_card_or_null_test.dart` adapt
+`Collection.getCardOrNull(id)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection invokes the host `getCard` callback exactly once with the supplied
+ID, returns the identical card on success, and catches every thrown Dart
+`Object` to return null, matching Kotlin `runCatching`. The Anki collection,
+card, and ID types remain host-side. No direct pinned test was found for this
+extension; focused cases are source-derived. `Collection.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

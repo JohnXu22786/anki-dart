@@ -1893,3 +1893,22 @@ and focused tests are Copyright © 2026 John Tsui and marked
   deferred refresh storage and consumption, and collection-backed rendering.
   The Dart adaptation and focused tests are Copyright © 2026 John Tsui and
   marked `GPL-3.0-or-later`. Root `COPYING` is unchanged.
+
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/MathJaxFormat.kt`
+  (`MathJaxFormat.BLOCK`, `CHEMISTRY`, and `toTextWrapper()`) and
+  `AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/Toolbar.kt:418–462`
+  (`Toolbar.TextWrapper.format()` / `Toolbar.StringFormat`), pinned to AnkiDroid
+  2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`, declare
+  `SPDX-License-Identifier: GPL-3.0-or-later` and have no separate copyright
+  line; no method-specific authorship is asserted. The exact wrapper strings,
+  empty/nonempty selection indices, mutable result, and Kotlin data-class value
+  behavior are adapted in `lib/src/math_jax_format.dart`. The two direct pinned
+  nonempty output-string cases from
+  `AnkiDroid/src/test/java/com/ichi2/anki/noteeditor/MathJaxFormatTest.kt` are
+  covered distinctly from source-derived empty-input, selection, UTF-16 length,
+  and mutable-value cases in `test/math_jax_format_test.dart`. Android localized
+  label lookup, toolbar/editor insertion, selection application, cursor, and
+  Activity lifecycle remain host-side. The Dart adaptation and focused tests are
+  Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+  remains byte-identical.

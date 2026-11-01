@@ -4,6 +4,19 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## MathJax note-editor formatting
+
+`MathJaxFormat` ports the `BLOCK` and `CHEMISTRY` string wrappers and mutable
+`StringFormat` selection values from `AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/MathJaxFormat.kt` and `AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/Toolbar.kt:418–462` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Android localized label lookup,
+toolbar/editor insertion, cursor application, and Activity lifecycle stay on the
+host. The two pinned upstream tests cover nonempty wrapped output; focused Dart
+tests also cover source-derived empty-input selection, UTF-16 selection length,
+and mutable value semantics. The Kotlin sources and test declare
+`GPL-3.0-or-later` without separate copyright lines. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
 ## Current port scope
 
 The language-tag value and parser also follow AnkiDroid 2.25.3, including its

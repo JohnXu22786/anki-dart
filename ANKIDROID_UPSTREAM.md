@@ -1038,3 +1038,30 @@ source-derived. No direct pinned test for this method was found in
 file is marked `GPL-3.0-or-later` and its file-level SPDX header credits Timothy
 Rae (2014) and Mike Hardy (2018); no method-specific authorship is asserted.
 Root `COPYING` remains byte-identical.
+
+
+## MathJax note-editor formatting
+
+`MathJaxFormat` in `lib/src/math_jax_format.dart` ports the string and selection
+behavior of `MathJaxFormat.BLOCK`, `MathJaxFormat.CHEMISTRY`, and
+`MathJaxFormat.toTextWrapper()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/MathJaxFormat.kt`, together
+with `Toolbar.TextWrapper.format()` and `Toolbar.StringFormat` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/Toolbar.kt:418–462`. The
+source pin is AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the exact BLOCK
+(`\\[` / `\\]`) and CHEMISTRY (`\\( \\ce{` / `} \\)`) wrappers, empty-input
+prefix-end selection, nonempty full-text selection, and mutable result values.
+Dart `String.length` and Kotlin `String.length` both count UTF-16 code units.
+
+The pinned `AnkiDroid/src/test/java/com/ichi2/anki/noteeditor/MathJaxFormatTest.kt`
+contains two direct nonempty output-string cases (BLOCK and CHEMISTRY); it does
+not cover selection behavior or empty input. `test/math_jax_format_test.dart`
+keeps those two direct-output cases distinct from source-derived focused cases
+for empty selection, nonempty UTF-16 selection, and mutable Kotlin data-class
+value behavior (equality, hash consistency, and string form).
+`MathJaxFormat.kt`, `Toolbar.kt`, and the pinned test declare
+`SPDX-License-Identifier: GPL-3.0-or-later` and have no separate copyright
+line; no method-specific authorship is asserted. Localized `label()` lookup,
+toolbar UI/editor insertion, Android selection application, cursor handling, and
+Activity lifecycle remain host-side. Root `COPYING` remains byte-identical.

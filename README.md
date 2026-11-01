@@ -239,6 +239,18 @@ copyright line; this adaptation and its tests are Copyright © 2026 John Tsui
 under `GPL-3.0-or-later`. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+## Card type names
+
+`CardTypeName` preserves the pinned AnkiDroid 2.25.3 value contract: the
+`fromString()` factory applies Kotlin `String.trim()` whitespace rules,
+case-insensitive equality and lowercase hashing follow their separate source
+operations, and `toString()` preserves the trimmed spelling. It does not
+validate names or handle duplicates. Card template editing, duplicate-name
+discovery/resolution, rename UI/localization, and persistence/backend work
+remain host-side. Focused cases are in `test/card_type_name_test.dart`; source
+and license details are in [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md). Root `COPYING` remains byte-identical.
+
 `CardStateFilter` preserves the source enum order and names, and the exact
 `toSearch` fragments (`''`, `'is:new '`, and `'is:due '`, including trailing
 spaces) from `AnkiDroid/src/main/java/com/ichi2/anki/model/CardStateFilter.kt`

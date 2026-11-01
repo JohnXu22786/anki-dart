@@ -7,6 +7,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+`lib/src/card_type_name.dart` and `test/card_type_name_test.dart` adapt the
+`CardTypeName` wrapper from
+`AnkiDroid/src/main/java/com/ichi2/anki/notetype/CardTypeName.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Kotlin trim,
+case-insensitive equality, lowercase hashing, and preserved spelling are
+documented with the source boundary in [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md).
+Template editing, duplicate-name handling, rename UI/localization, and backend
+or persistence work remain host-side. Root `COPYING` remains byte-identical.
+
 ## Field filters and chain
 
 `lib/src/field_filter.dart` adapts `FilterContext`, the `FieldFilter` default

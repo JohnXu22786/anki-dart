@@ -3,9 +3,9 @@
 This repository is a partial, modified Dart port of AnkiDroid 2.25.3. The
 upstream source baseline is commit
 `d9bf072f814a0c37d30a694192593b31ff2df875` from
-[AnkiDroid](https://github.com/ankidroid/Anki-Android). This file records the
-source scope for the add-on manifest projection implemented in this change;
-other mapped units are summarized in the repository README and NOTICE.
+[AnkiDroid](https://github.com/ankidroid/Anki-Android). This file records
+source scopes for mapped units; additional unit summaries are in the repository
+README and NOTICE.
 
 ## JavaScript add-on manifest projection
 
@@ -45,5 +45,28 @@ filesystem behavior remain the host's responsibility. This unit does not port
 `GPL-3.0-or-later` and Copyright © 2021 Mani <infinyte01@gmail.com>.
 `AnkiDroidJsAPIConstants.kt` carries its GPL license notice and Copyright
 © 2020 Mani <infinyte01@gmail.com>. The Dart adaptation and focused test are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` is
+unchanged.
+
+## Card type name value
+
+`lib/src/card_type_name.dart` adapts `CardTypeName` from
+`AnkiDroid/src/main/java/com/ichi2/anki/notetype/CardTypeName.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It retains
+the private constructor and `fromString(value)` factory, trims with Kotlin
+`String.trim()` whitespace rules, compares retained strings with Kotlin/JVM
+`String.equals(ignoreCase = true)`, independently hashes the retained
+`String.lowercase()` result using Kotlin/JVM string hashing, and returns the
+trimmed spelling from `toString()`. Equality and hashing intentionally follow
+those separate source operations, including their Unicode edge behavior. The
+case-insensitive comparison uses the repository's Unicode 15 simple BMP case
+mapping tables to model the JVM's UTF-16 character comparison.
+
+The source has an SPDX `GPL-3.0-or-later` notice and no separate copyright
+line. The focused Dart cases are in `test/card_type_name_test.dart`; the pinned
+source tree has no dedicated `CardTypeName` test. Card template editing,
+duplicate-name discovery and resolution, rename UI and localization, and
+backend/persistence operations remain host-side. This wrapper does not validate
+names or impose uniqueness policy. The Dart adaptation and focused test are
 Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` is
 unchanged.

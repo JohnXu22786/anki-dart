@@ -1,5 +1,21 @@
 # AnkiDroid upstream source record
 
+## `Decks.update(did, block)`
+
+`decksUpdate()` in `lib/src/decks_update.dart` adapts
+`Decks.update(did, block)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Deck.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host
+lookup once with the requested ID, applies the block to that exact non-null deck,
+then saves that same deck. Kotlin's `!!` maps to Dart's `TypeError` from the `!`
+null-check operator. Lookup failure or a null result skips the block and save;
+a block failure skips save without rollback; save failures propagate after the
+block. `Decks`, `Deck`, `DeckId`, collection/database access, and storage remain
+host-side. No direct pinned test for this helper was found. The Dart adaptation
+and focused tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; the
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+Root `COPYING` remains byte-identical.
+
 ## `Decks.defaultConfig`
 
 `deckDefaultConfig()` in `lib/src/deck_default_config.dart` adapts the

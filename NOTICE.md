@@ -7,6 +7,17 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+`lib/src/decks_update.dart` and `test/decks_update_test.dart` adapt
+`Decks.update(did, block)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Deck.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The helper looks up
+once, null-checks the deck, invokes the mutation block, then saves the same
+object. Dart's null-check `TypeError` corresponds to Kotlin's `!!`; failures
+propagate and stop later operations in source order. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
+`COPYING` remains byte-identical.
+
 `lib/src/deck_default_config.dart` and
 `test/deck_default_config_test.dart` adapt `Decks.defaultConfig` from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Decks.kt`, pinned to AnkiDroid

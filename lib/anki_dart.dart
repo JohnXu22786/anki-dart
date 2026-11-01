@@ -114,6 +114,7 @@ export 'src/deck_picker_empty_card_deletion.dart';
 export 'src/deck_node.dart';
 export 'src/deck_name_path.dart';
 export 'src/deck_default_config.dart';
+export 'src/decks_update.dart';
 export 'src/tag_tree_projection.dart';
 export 'src/tags_list.dart';
 export 'src/manage_tags_operation_plan.dart';

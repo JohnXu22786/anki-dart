@@ -2819,6 +2819,19 @@ equivalent hierarchy. Focused source-derived tests are in
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source and license record.
+
+## Decks.update
+
+`decksUpdate()` in `lib/src/decks_update.dart` adapts `Decks.update(did,
+block)` from AnkiDroid 2.25.3. It resolves the requested deck once, applies the
+mutation callback to that exact object, then saves the same object. A null
+lookup triggers Dart's `TypeError` through `!`, corresponding to Kotlin's `!!`;
+lookup and mutation failures skip later callbacks, and save failures propagate.
+The host retains `Decks`, `Deck`, `DeckId`, database access, and storage. Focused
+cases cover order, identity, and failure behavior. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the pinned source and license record. Root `COPYING` remains byte-identical.
+
 ## Decks.defaultConfig
 
 `deckDefaultConfig()` adapts AnkiDroid's `Decks.defaultConfig` getter. It asks

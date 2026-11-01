@@ -187,6 +187,18 @@ Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`; both source/license notices are retained in the Dart file.
 Root `COPYING` remains byte-identical.
 
+## `Int.ifNotZero`
+
+`intIfNotZero()` in `lib/src/int_if_not_zero.dart` and its source-derived cases
+in `test/int_if_not_zero_test.dart` adapt `Int.ifNotZero` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/Int.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source
+returns without invoking the callback for zero; for nonzero values it invokes
+the callback once with the receiver. Callback failures propagate unchanged.
+The upstream file is marked `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
 ## `List<T>.indexOfOrNull(predicate)`
 
 `indexOfOrNull(predicate)` in `lib/src/list_index_of_or_null.dart` adapts the

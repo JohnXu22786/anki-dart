@@ -295,6 +295,18 @@ under Apache-2.0; both notices and source boundaries are recorded in
 The Dart adaptation and test are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
+## Integer if-not-zero callback
+
+`intIfNotZero()` in `lib/src/int_if_not_zero.dart` adapts `Int.ifNotZero()` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/Int.kt` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It skips the callback for
+zero and passes each nonzero value to the callback once. Focused source-derived
+cases are in `test/int_if_not_zero_test.dart`. The upstream file is marked
+`GPL-3.0-or-later` and names no separate copyright holder; the Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
 ## Field filter context, built-ins, and chains
 
 `FilterContext`, the `FieldFilter` default contract, built-ins including

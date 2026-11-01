@@ -728,6 +728,16 @@ cover values within and at the bounds, equal bounds, and reversed bounds. The
 Dart adaptation and tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`; root `COPYING` remains byte-identical.
 
+`lib/src/int_if_not_zero.dart` and `test/int_if_not_zero_test.dart` adapt
+`Int.ifNotZero` from AnkiDroid 2.25.3
+`common/src/main/java/com/ichi2/anki/common/utils/ext/Int.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The upstream method returns without
+calling its block for zero and invokes it once with every nonzero receiver;
+callback failures propagate unchanged. The source is marked
+`GPL-3.0-or-later` and names no separate copyright holder. The Dart adaptation
+and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`; root
+`COPYING` remains byte-identical.
+
 `lib/src/whole_and_fraction.dart` and `test/whole_and_fraction_test.dart` adapt
 `Double.wholeAndFraction()` from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Double.kt`, pinned to

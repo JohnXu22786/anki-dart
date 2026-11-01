@@ -145,6 +145,24 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   Root `COPYING` remains byte-identical; redistribution of this adapted code is
   subject to the GPL-3.0-or-later terms in that file.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchString.kt` and
+  its direct test
+  `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchStringTest.kt`
+  (pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declare
+  `SPDX-License-Identifier: GPL-3.0-or-later` and have no separate copyright
+  line. The private-constructor inline value wrapper is adapted in
+  `lib/src/search_string.dart`, preserving value equality, Kotlin/JVM string
+  hashing, exact string projection, UTF-16 code-unit length, and `EMPTY`.
+  `fromValidatedBackendSearchString()` only wraps a string already built and
+  validated by the backend; query construction, parsing/validation, backend
+  exception translation, generated search types, collection methods, and
+  backend/Rust search behavior remain host-side. The pinned test exercises
+  backend query-building paths without directly asserting wrapper semantics;
+  focused source-derived cases are in `test/search_string_test.dart`. The Dart
+  adaptation and focused test are Copyright © 2026 John Tsui and marked
+  `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/model/CardStateFilter.kt` (pinned
   AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) declares

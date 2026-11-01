@@ -224,6 +224,19 @@ but does not directly test `updateState()`; focused Dart behavior tests are
 source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+`SearchString` preserves the pinned value wrapper's string equality, Kotlin/JVM
+string hash, verbatim projection, UTF-16 length, and `EMPTY` value. Its
+`fromValidatedBackendSearchString()` factory wraps an already backend-built and
+validated string without parsing, validating, or normalizing it. Search
+construction and parsing, validation and backend error translation, generated
+search types, collection search methods, and Rust/backend behavior remain
+host-side. The pinned `SearchStringTest` covers backend search-construction
+paths but not the wrapper's value semantics; focused Dart cases are
+source-derived. The pinned source declares `GPL-3.0-or-later` with no separate
+copyright line; this adaptation and its tests are Copyright © 2026 John Tsui
+under `GPL-3.0-or-later`. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 `CardStateFilter` preserves the source enum order and names, and the exact
 `toSearch` fragments (`''`, `'is:new '`, and `'is:due '`, including trailing
 spaces) from `AnkiDroid/src/main/java/com/ichi2/anki/model/CardStateFilter.kt`

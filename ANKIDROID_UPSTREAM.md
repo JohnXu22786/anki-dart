@@ -104,6 +104,28 @@ GPL-3.0-or-later` and Copyright © 2026 Ashish Yadav
 Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
 remains byte-identical.
 
+## SearchString value contract
+
+`SearchString` in `lib/src/search_string.dart` adapts the private-constructor
+Kotlin inline value wrapper from
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchString.kt` at
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves wrapped-string value
+equality, Kotlin/JVM `String.hashCode()` semantics, exact `toString()` projection,
+UTF-16 code-unit `length`, and `EMPTY`. The public
+`fromValidatedBackendSearchString()` factory only wraps a search string already
+built and validated by the backend; it does not parse, validate, or normalize a
+query. Search construction, query parsing/validation, backend error translation,
+generated search types, collection search methods, and backend/Rust search
+behavior remain host-side. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchStringTest.kt`
+exercises upstream query-building paths but does not directly test the wrapper's
+value semantics; focused source-derived contract cases are in
+`test/search_string_test.dart`. The Kotlin source and test declare
+`GPL-3.0-or-later` and have no separate copyright line. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`.
+Root `COPYING` remains byte-identical.
+
 ## CardStateFilter search fragments
 
 `CardStateFilter` in `lib/src/card_state_filter.dart` adapts the enum and

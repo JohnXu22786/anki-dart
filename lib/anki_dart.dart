@@ -27,6 +27,7 @@ export 'src/card_state_filter.dart';
 export 'src/filename.dart';
 export 'src/field_filter.dart';
 export 'src/result_type.dart';
+export 'src/search_string.dart';
 export 'src/mime_type_utils.dart';
 export 'src/npm_package_name.dart';
 export 'src/notification_id.dart';

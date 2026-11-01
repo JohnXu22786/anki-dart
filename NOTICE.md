@@ -2715,3 +2715,17 @@ lifecycle remain host-side. No direct pinned test was found. The Kotlin source
 declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+`lib/src/fragment_show_dialog_fragment.dart` and
+`test/fragment_show_dialog_fragment_test.dart` adapt
+`Fragment.showDialogFragment(newFragment)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:27`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. They
+preserve one `requireActivity()` call before scheduling, capture that same
+Activity for the scheduler and deferred manager lookup, and forward the
+identical dialog token through the already-adapted Activity helper. Host
+callbacks and failures remain host-controlled. Android fragment, activity,
+manager, dialog, lifecycle, and display classes stay host-side. No direct pinned
+test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.

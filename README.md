@@ -3273,3 +3273,23 @@ remain host-side. Source-derived tests are in
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source mapping and license record.
+
+## Show a dialog fragment from a Fragment
+
+`fragmentShowDialogFragment()` in
+`lib/src/fragment_show_dialog_fragment.dart` adapts
+`Fragment.showDialogFragment(newFragment)` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:27`, pinned to
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves the
+host Activity once before scheduling and captures that Activity for both the
+existing `showDialogFragment()` adapter's UI scheduler and deferred manager
+lookup. The exact dialog token is forwarded to the host display adapter. The
+Activity adapter owns scheduling and manager lookup; Android Fragment,
+FragmentActivity, FragmentManager, DialogFragment, and display implementation
+remain host-side. Callback failures propagate unchanged. Source-derived tests
+are in
+[`test/fragment_show_dialog_fragment_test.dart`](test/fragment_show_dialog_fragment_test.dart); no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.

@@ -1748,3 +1748,24 @@ pinned AnkiDroid test tree; focused Dart cases are source-derived in
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## Fragment.showDialogFragment
+
+`fragmentShowDialogFragment()` in
+`lib/src/fragment_show_dialog_fragment.dart` adapts
+`Fragment.showDialogFragment(newFragment)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:27`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls
+`requireActivity()` once before scheduling and forwards the returned Activity
+through the existing `showDialogFragment()` adapter. That Activity instance is
+captured for both the UI-thread scheduler and the support FragmentManager read
+when the scheduled action runs. The exact dialog token reaches the existing
+host display callback unchanged. Scheduling, manager lookup and display remain
+implemented once in the Activity adapter. Android Fragment, FragmentActivity,
+FragmentManager, DialogFragment, lifecycle and display implementation stay
+host-side. Callback failures propagate unchanged. No direct pinned test was
+found; focused Dart cases are source-derived in
+`test/fragment_show_dialog_fragment_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

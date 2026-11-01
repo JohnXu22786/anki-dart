@@ -2416,3 +2416,17 @@ extension; focused cases are source-derived. `Collection.kt` declares
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+`lib/src/collection_build_search_string.dart` and
+`test/collection_build_search_string_test.dart` adapt
+`Collection.buildSearchString(node)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+wraps the identical opaque host SearchNode in a read-only singleton list and
+calls the host collection string builder once, returning its exact String and
+propagating failures unchanged. SearchNode construction and query-string
+generation remain host-side. No direct pinned test was found for this
+extension; focused Dart cases are source-derived. `Collection.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
+tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains
+byte-identical.

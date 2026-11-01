@@ -2945,3 +2945,18 @@ no direct pinned upstream test was found. The Kotlin source declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the pinned source and license record.
+
+## Collection.buildSearchString
+
+`collectionBuildSearchString()` adapts AnkiDroid 2.25.3
+`Collection.buildSearchString(node)` by wrapping the identical opaque host node
+in a read-only singleton list and passing it once to the host collection string
+builder. It returns the exact host String and lets failures propagate. Search
+node construction and backend query-string generation stay host-side. Focused
+source-derived cases are in
+[`test/collection_build_search_string_test.dart`](test/collection_build_search_string_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the
+pinned source and license record.

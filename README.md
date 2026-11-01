@@ -3293,3 +3293,20 @@ are in
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source and license record.
+
+## Fragment window
+
+`fragmentWindow()` in `lib/src/fragment_window.dart` adapts the
+`Fragment.window` property from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:29–31`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves
+the host Activity once, reads that same Activity's window once, and returns the
+identical opaque Window token. Lookup and read failures propagate unchanged;
+an Activity lookup failure prevents the window read. Android Fragment,
+FragmentActivity, and Window remain host-side. Source-derived cases are in
+[`test/fragment_window_test.dart`](test/fragment_window_test.dart); no direct
+pinned test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source mapping and license record.

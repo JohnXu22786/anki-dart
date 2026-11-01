@@ -1588,6 +1588,21 @@ the Dart cases are source-derived. The Kotlin source declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## Fragment.window
+
+`fragmentWindow()` and `test/fragment_window_test.dart` adapt the
+`Fragment.window` property from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:29–31`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+calls the host `requireActivity` once, then reads the window of that exact
+Activity once and returns the identical opaque token. Lookup or read failures
+propagate unchanged, and a lookup failure prevents the later read. Android
+Fragment, FragmentActivity, and Window remain host-side. No direct pinned test
+was found; the focused Dart tests are source-derived. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## FragmentManager.removeFragmentFromContainer
 
 `removeFragmentFromContainer()` in

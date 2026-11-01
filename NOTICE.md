@@ -2449,6 +2449,19 @@ cases are source-derived adapter checks. `Collection.kt` declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+`lib/src/fragment_window.dart` and `test/fragment_window_test.dart` adapt the
+`Fragment.window` property from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:29–31`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. They
+preserve one `requireActivity()` call before one window read on that same
+Activity and return the identical opaque Window token. Callback failures
+propagate unchanged and stop subsequent reads. Android Fragment,
+FragmentActivity, and Window remain host-side. No direct pinned test was found;
+the focused Dart cases are source-derived. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 `lib/src/collection_get_card_or_null.dart` and
 `test/collection_get_card_or_null_test.dart` adapt
 `Collection.getCardOrNull(id)` from

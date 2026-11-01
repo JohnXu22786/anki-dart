@@ -2621,3 +2621,16 @@ focused Dart cases are source-derived. The Kotlin source header credits
 Copyright (c) 2025 Rakshita Chauhan and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+`lib/src/fragment_activity_dismiss_all_dialog_fragments.dart` and
+`test/fragment_activity_dismiss_all_dialog_fragments_test.dart` adapt
+`FragmentActivity.dismissAllDialogFragments()` and `DIALOG_FRAGMENT_TAG` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. They preserve the one-time saved
+state check, saved-state no-op, exact `dialog` tag and inclusive flag `1`,
+callback order, and failure propagation. Android FragmentActivity and
+FragmentManager remain host-side. The pinned Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

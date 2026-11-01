@@ -3150,3 +3150,21 @@ Chauhan (2025); the Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the exact source mapping and attribution.
+
+## Dismiss dialog fragments
+
+`dismissAllDialogFragments()` in
+`lib/src/fragment_activity_dismiss_all_dialog_fragments.dart` adapts
+`FragmentActivity.dismissAllDialogFragments()` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt`, pinned
+to 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It checks the host
+fragment-manager state once and skips popping when state is saved; otherwise it
+pops the `dialog` back-stack tag once with the inclusive flag value `1`.
+Callback failures propagate unchanged. Android `FragmentActivity` and
+`FragmentManager` remain host-side behind callbacks. Source-derived tests are in
+[`test/fragment_activity_dismiss_all_dialog_fragments_test.dart`](test/fragment_activity_dismiss_all_dialog_fragments_test.dart); no direct
+pinned test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the
+source and license record.

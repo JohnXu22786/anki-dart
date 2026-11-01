@@ -1644,3 +1644,22 @@ Dart cases are source-derived in
 Copyright (c) 2025 Rakshita Chauhan and declares `GPL-3.0-or-later`; the Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## FragmentActivity.dismissAllDialogFragments
+
+`dismissAllDialogFragments()` in
+`lib/src/fragment_activity_dismiss_all_dialog_fragments.dart` adapts
+`FragmentActivity.dismissAllDialogFragments()` and `DIALOG_FRAGMENT_TAG` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter reads the host
+`isStateSaved` predicate once; when true it returns without popping. Otherwise
+it invokes the host pop callback once with tag `dialog` and the inclusive flag
+value `1`, preserving argument and operation order. Callback failures propagate
+unchanged. Android `FragmentActivity` and `FragmentManager` stay host-side. No
+direct pinned test for this method was found; focused Dart cases are
+source-derived in
+`test/fragment_activity_dismiss_all_dialog_fragments_test.dart`. The Kotlin
+source declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

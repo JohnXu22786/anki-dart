@@ -52,6 +52,7 @@ export 'src/bitmap_drawable_to_base64_png.dart';
 export 'src/context_using_styled_attributes.dart';
 export 'src/menu_item_set_icon_res.dart';
 export 'src/fragment_manager_remove_fragment.dart';
+export 'src/fragment_activity_dismiss_all_dialog_fragments.dart';
 export 'src/linear_layout_manager_visible_positions.dart';
 export 'src/recycler_view_run_when_not_computing_layout.dart';
 export 'src/ignore_accents_in_search_config.dart';

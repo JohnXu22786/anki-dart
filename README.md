@@ -35,6 +35,15 @@ but does not directly test `updateState()`; focused Dart behavior tests are
 source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+`CardStateFilter` preserves the source enum order and names, and the exact
+`toSearch` fragments (`''`, `'is:new '`, and `'is:due '`, including trailing
+spaces) from AnkiDroid 2.25.3. The host retains filter selection, query
+composition, and search execution. The pinned `CardBrowserViewModelTest`
+passes `ALL_CARDS` through tag filtering but does not directly assert
+`toSearch`; no dedicated `CardStateFilter` test was found, so focused Dart cases
+are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the exact source pin and license record.
+
 The current port includes selected source-mapped slices: deck-picker behavior,
 review-reminder Add/Edit form state,
 the headless review-session lifecycle, reviewer count/next-time presentation

@@ -8,6 +8,24 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## CardStateFilter search fragments
+
+`CardStateFilter` in `lib/src/card_state_filter.dart` adapts the enum and
+`toSearch` property from
+`AnkiDroid/src/main/java/com/ichi2/anki/model/CardStateFilter.kt` at pinned
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the enum names and
+order `ALL_CARDS`, `NEW`, `DUE`, with exact search fragments `''`, `'is:new '`,
+and `'is:due '` respectively, including the latter two trailing spaces. The
+host retains Card Browser UI selection, query composition, and search execution.
+Focused source-derived contract cases are in
+`test/card_state_filter_test.dart`. The pinned
+`CardBrowserViewModelTest.kt` passes `ALL_CARDS` through tag filtering but does
+not directly assert `toSearch`; no dedicated `CardStateFilter` test source was
+found. The Kotlin file declares `SPDX-License-Identifier:
+GPL-3.0-or-later` and has no separate copyright line; no method-specific
+authorship is asserted. Root `COPYING` remains byte-identical.
+
 ## AnalyticsSamplePercentage value contract
 
 `AnalyticsSamplePercentage` in `lib/src/analytics_sample_percentage.dart`

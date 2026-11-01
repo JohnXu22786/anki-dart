@@ -543,6 +543,21 @@ source only. The Dart adaptation and tests are Copyright © 2026 John Tsui under
 the same license. Root `COPYING` remains byte-identical; see
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
 
+[`noteEditorEditFromPreviewerToIntent()`](lib/src/note_editor_edit_from_previewer_to_intent.dart)
+adapts the `EditNoteFromPreviewer` branch of
+`NoteEditorDestination.toIntent(context)`: it creates one host Intent, writes
+`CALLER: 9`, then writes the exact card ID as a Long extra under `editCid`, and
+returns the same Intent. Android context, Activity component, Intent, and typed
+extra handling remain host-side. Focused cases in
+[`test/note_editor_edit_from_previewer_to_intent_test.dart`](test/note_editor_edit_from_previewer_to_intent_test.dart)
+cover keys and values, caller-before-card order, exact zero/negative/large IDs,
+Intent identity, and callback failure short circuits. No direct pinned test for
+this branch was found. The Kotlin source declares `GPL-3.0-or-later` and has
+SPDX Copyright (c) 2024 Sanjay Sargam; this identifies the Kotlin source only.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+
 ## Note Editor newline replacement preference
 
 `noteEditorShouldReplaceNewlines()` in

@@ -52,6 +52,27 @@ the Kotlin source only and do not attribute the Dart adaptation to him. The
 Dart implementation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
 
+## `NoteEditorDestination.EditNoteFromPreviewer.toIntent(context)`
+
+`noteEditorEditFromPreviewerToIntent()` in
+`lib/src/note_editor_edit_from_previewer_to_intent.dart` adapts the
+`EditNoteFromPreviewer` branch from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:33–38`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `NoteEditorCaller.PREVIEWER_EDIT` (`9`), then writes the exact
+`cardId` as the `editCid` Long extra, and returns that same Intent. Callback
+failures propagate unchanged and stop later operations. Context,
+`NoteEditorActivity`, Android Intent, and typed extra behavior remain host-side.
+Focused source-derived tests in
+`test/note_editor_edit_from_previewer_to_intent_test.dart` cover keys and values,
+source order, zero/negative/large IDs, identity, and failure short circuits. No
+direct pinned test for this branch was found. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this
+identifies the source only and does not attribute the Dart adaptation to him.
+The Dart implementation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
 ## `NoteEditorFragment.Companion.newInstance(args)`
 
 `noteEditorFragmentNewInstance()` in

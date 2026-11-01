@@ -503,9 +503,12 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   source-ordered host callback projection is adapted in
   `lib/src/card_template_fragment_show_rename_dialog.dart`, with focused
   source-derived cases in
-  `test/card_template_fragment_show_rename_dialog_test.dart`. Temporary
-  models/templates/JSON, `CardTypeName`, Context/dialog and UI, Timber,
-  adapter/pager, previewer, and Activity behavior remain host-side.
+  `test/card_template_fragment_show_rename_dialog_test.dart`. The
+  `CardTypeName` trim/equality/hash/`toString()` contract is adapted in
+  `lib/src/card_type_name.dart`, while the CardTemplate editor still obtains
+  names. Temporary model/template/JSON access, Android Context/dialog and UI,
+  logs, adapter/pager/previewer, and Activity/lifecycle behavior remain
+  host-side.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:955–965`
   (`CardTemplateFragment.showRepositionDialog`; pinned AnkiDroid 2.25.3 commit

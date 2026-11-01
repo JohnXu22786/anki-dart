@@ -1851,13 +1851,16 @@ predicate and preserves its warning/early return, ordinal and temporary-model
 reads, ordered eager existing-name conversion, and separate selected-template
 name reads for prefill and current-name conversion. Dialog confirmation remains
 deferred; it assigns the name, updates discard state, logs, notifies the pager
-adapter, then reloads the previewer in source order. The host retains models,
-template/name conversion, Context/dialog and UI, Timber, adapter/pager, and
-previewer behavior. Focused source-derived cases in
+adapter, then reloads the previewer in source order. Focused source-derived
+cases in
 `test/card_template_fragment_show_rename_dialog_test.dart` cover early return,
 read order and repeated names, name-list ordering, deferred effects, and
 failure stopping. The source marks this method `@NeedsTest`; no direct pinned
-rename-dialog test was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+rename-dialog test was found. The `CardTypeName` trim/equality/hash/`toString()`
+contract is adapted in `lib/src/card_type_name.dart`; the CardTemplate editor
+still obtains names. The host retains model/template access, Android
+Context/dialog and UI, Timber/logging, adapter/pager/previewer behavior, and
+Activity/lifecycle. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
 ## Card Template Fragment reposition dialog
 

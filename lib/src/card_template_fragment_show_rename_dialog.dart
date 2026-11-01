@@ -26,7 +26,9 @@ import 'card_template_editor_dynamic_note_type.dart';
 
 /// Host callbacks for `CardTemplateFragment.showRenameDialog`.
 ///
-/// Android models, `CardTypeName`, Context/dialog, logging, pager adapter, and
+/// The `CardTypeName` trim/equality/hash/`toString()` contract is adapted in
+/// `card_type_name.dart`; this flow still obtains names from host-side models.
+/// Android model/template access, Context/dialog, logging, pager adapter, and
 /// previewer remain host-side. The callbacks expose lazy reads and effects in
 /// the order used by the pinned source.
 final class CardTemplateFragmentShowRenameDialogCallbacks<

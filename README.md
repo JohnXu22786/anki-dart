@@ -28,6 +28,18 @@ and picker behavior remain host-side. The adapted source is GPL-3.0-or-later;
 see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 attribution and license details. Root `COPYING` remains unchanged.
 
+## Sync identifiers
+
+`NotificationId.SYNC` / `SYNC_MEDIA` and `UniqueWorkNames.SYNC` /
+`SYNC_MEDIA` preserve the values and declaration order in AnkiDroid 2.25.3 at
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Focused Dart tests verify
+those exact values and uniqueness within each group, matching the direct
+uniqueness check in the pinned `ConstantUniquenessTest.kt`. Android notification
+APIs, WorkManager, sync execution, and scheduling remain host-side. The source,
+test authorship, and GPL-3.0-or-later attribution are recorded in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
+root `COPYING` remains unchanged.
+
 ## MathJax note-editor formatting
 
 `MathJaxFormat` ports the `BLOCK` and `CHEMISTRY` string wrappers and mutable

@@ -7,6 +7,25 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/notifications/NotificationId.kt` and
+  `AnkiDroid/src/main/java/com/ichi2/anki/worker/UniqueWorkNames.kt` (pinned
+  AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declare
+  `SPDX-License-Identifier: GPL-3.0-or-later` and have no separate copyright
+  line. Their ordered public constants are adapted as `NotificationId` in
+  `lib/src/notification_id.dart` (`SYNC = 101`, `SYNC_MEDIA = 123`) and
+  `UniqueWorkNames` in `lib/src/unique_work_names.dart` (`SYNC = "sync"`,
+  `SYNC_MEDIA = "syncMedia"`). The pinned
+  `AnkiDroid/src/test/java/com/ichi2/anki/ConstantUniquenessTest.kt` declares
+  `GPL-3.0-or-later` and Copyright © 2024 WPum
+  <27683756+WPum@users.noreply.github.com>; its reflection helper directly
+  checks uniqueness for these two objects plus two other, unported objects.
+  `test/sync_constants_test.dart` asserts exact values and order and uniqueness
+  for each selected group. Android notification APIs, WorkManager, sync
+  execution, and scheduling remain host-side. The Dart adaptation and focused
+  test are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
+  `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/utils/MimeTypeUtils.kt` (pinned
   AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) supplies the five ordered

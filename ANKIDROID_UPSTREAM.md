@@ -8,6 +8,30 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## Sync identifiers
+
+`NotificationId` in `lib/src/notification_id.dart` preserves the ordered public
+constants `SYNC = 101` and `SYNC_MEDIA = 123` from
+`AnkiDroid/src/main/java/com/ichi2/anki/notifications/NotificationId.kt`.
+`UniqueWorkNames` in `lib/src/unique_work_names.dart` preserves `SYNC = "sync"`
+and `SYNC_MEDIA = "syncMedia"` from
+`AnkiDroid/src/main/java/com/ichi2/anki/worker/UniqueWorkNames.kt`. Both sources
+are pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`; each declares
+`SPDX-License-Identifier: GPL-3.0-or-later` with no separate copyright line.
+
+The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/ConstantUniquenessTest.kt` uses Kotlin
+reflection to assert uniqueness of public constants in `NotificationId` and
+`UniqueWorkNames`, along with two unrelated objects not ported here. That test
+declares `GPL-3.0-or-later` and Copyright © 2024 WPum
+<27683756+WPum@users.noreply.github.com>. The focused Dart test
+`test/sync_constants_test.dart` asserts source-exact values and order and checks
+that each selected group's values are unique. Notification APIs, WorkManager,
+sync execution, and scheduling remain host-side. The Dart adaptation and test
+are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING` remains
+byte-identical.
+
 ## Filename sanitization
 
 `Filename` and `Filename.sanitize()` in `lib/src/filename.dart` adapt
@@ -289,6 +313,7 @@ undo, StateFlow, RecyclerView/lifecycle, and user messages remain host-side.
 
 | AnkiDroid 2.25.3 source | Dart port | Covered behavior |
 | --- | --- | --- |
+| `AnkiDroid/src/main/java/com/ichi2/anki/notifications/NotificationId.kt` and `AnkiDroid/src/main/java/com/ichi2/anki/worker/UniqueWorkNames.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); direct uniqueness evidence in `AnkiDroid/src/test/java/com/ichi2/anki/ConstantUniquenessTest.kt` | `NotificationId` in `lib/src/notification_id.dart` and `UniqueWorkNames` in `lib/src/unique_work_names.dart`; cases in `test/sync_constants_test.dart` | Preserves source declaration order and exact `SYNC` / `SYNC_MEDIA` values for notification IDs (`101`, `123`) and unique-work names (`"sync"`, `"syncMedia"`), with a direct Dart uniqueness assertion for each group. The pinned test's reflection helper checks these two objects and two additional unported objects; those remain outside scope. Notification APIs, WorkManager, sync execution, and scheduling remain host-side. Source/test authorship and GPL details are recorded above and in `NOTICE.md`; root `COPYING` remains byte-identical. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:374–387` (`loadDeckList`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `loadDeckList()` in `lib/src/deck_picker_load_deck_list.dart`; focused cases in `test/deck_picker_load_deck_list_test.dart` | Checks collection-open state first and returns without later reads/effects when closed. For an open collection it reads the fingerprint once, skips backup only for the exact `robolectric` value, otherwise requests asynchronous backup launch without awaiting it, logs `updateDeckList`, then waits for exactly one host reload. Callback failures propagate unchanged and stop later effects. The host retains `launchCatchingIO`, Android collection/fingerprint access, backup execution, Timber, reload implementation/Job semantics, IO dispatch, and lifecycle. A bounded search of pinned tests found no direct `loadDeckList` test; `DeckPickerViewModelTest.kt` covers related `reloadDeckCounts` and `updateDeckList` behavior. The source declares `SPDX-License-Identifier: GPL-3.0-or-later` and has no file-level copyright text; no method-specific authorship is asserted. Root `COPYING` remains byte-identical. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:180–182` (`OnBackPressedCallback.handleOnBackPressed`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateEditorBackDispatcherPressed()` in `lib/src/card_template_editor_back_dispatcher.dart`; focused cases in `test/card_template_editor_back_dispatcher_test.dart` | Invokes the host discard-dialog callback exactly once and propagates its failure unchanged. The separate dispatcher enabled state and keyboard gate remain in their existing projections; Android dispatcher, callback lifecycle, and dialog remain host-side. The pinned source file is `GPL-3.0-or-later` and its file-level SPDX credits Timothy Rae (2014) and Mike Hardy (2018); no method-specific author is asserted. Root `COPYING` is unchanged. No direct pinned test for this callback was found; the focused Dart case is source-derived. |
 | `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:361–404` (`CardTemplateEditor.onCollectionLoaded`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateEditorOnCollectionLoadedCallbacks` and `cardTemplateEditorOnCollectionLoaded()` in `lib/src/card_template_editor_on_collection_loaded.dart`; focused cases in `test/card_template_editor_on_collection_loaded_test.dart` | Preserves superclass callback and notetype-cache clear order; only when the temporary note type is absent, looks up by the original ID, delegates the source assertion and deep clone to the host, then assigns the clone. It then assigns current field names, creates/assigns the adapter, sets offscreen limit 7, creates the mediator with a deferred callback that reads the current temporary note type/template/name, and attaches it. Optional ActionBar title then current-note-type subtitle precede the exact success and starting-tab log calls. Only ordinals other than `-1` read the pager/animation setting and set its current page; discard-change callback update is last. Host failures propagate and stop later operations. Collection/models, cloning/mutation, Android pager/adapter/mediator/ActionBar/resources, logging, and Activity lifecycle remain host-side. The source marks the method `@NeedsTest`; no direct pinned test covers it, so Dart cases are source-derived. Source-file SPDX credits Copyright © 2014 Timothy Rae and © 2018 Mike Hardy; no method-level authorship is asserted. Root `COPYING` remains byte-identical. |

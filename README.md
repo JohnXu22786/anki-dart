@@ -74,6 +74,20 @@ found, so focused Dart cases are source-derived. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the full source and license record.
 
+## Collection folder policy
+
+`AnkiDroidFolder` and `StoragePolicy` project the folder and fresh-install
+selection rules from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. A fixed folder is persisted either
+way; a user choice yields `PUBLIC` only when required permissions are present,
+and remains deferred otherwise. The first two direct `StoragePolicyTest.kt`
+behaviors are covered in Dart. Android permission checks, permission-set policy
+mapping, startup and path persistence, and filesystem behavior remain
+host-side. The pinned sources declare `GPL-3.0-or-later` with no separate
+copyright line; this Dart adaptation and its tests are Copyright © 2026 John
+Tsui and marked under the same license. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for exact paths and license details.
+
 The current port includes selected source-mapped slices: deck-picker behavior,
 review-reminder Add/Edit form state,
 the headless review-session lifecycle, reviewer count/next-time presentation

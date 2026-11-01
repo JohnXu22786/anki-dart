@@ -7,6 +7,24 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/startup/StoragePolicy.kt`,
+  `anki-common/src/main/kotlin/com/ichi2/anki/common/storage/AnkiDroidFolder.kt`,
+  and direct tests in
+  `AnkiDroid/src/test/java/com/ichi2/anki/startup/StoragePolicyTest.kt` (pinned
+  AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declare
+  `SPDX-License-Identifier: GPL-3.0-or-later` and have no separate copyright
+  line; no method-specific authorship is asserted. The portable folder enum,
+  `Fixed` and `UserChoosesOnPermissionScreen` policies, and
+  `folderToPersist()` behavior are adapted in `lib/src/storage_policy.dart`.
+  `test/storage_policy_test.dart` ports the first two direct upstream behaviors
+  and checks equality/string projections. Android permission querying,
+  `StoragePermissionSet.storagePolicy` mapping, startup/path persistence,
+  collection opening, and filesystem behavior remain host-side; the KDoc link
+  to `StorageDecision` is not a runtime dependency. The Dart adaptation and
+  focused tests are Copyright © 2026 John Tsui and marked
+  `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/export/Filename.kt` and its direct
   test `AnkiDroid/src/test/java/com/ichi2/anki/export/FilenameTest.kt` (pinned
   AnkiDroid 2.25.3 commit

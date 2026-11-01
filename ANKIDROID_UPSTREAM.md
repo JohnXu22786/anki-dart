@@ -1086,3 +1086,29 @@ value behavior (equality, hash consistency, and string form).
 line; no method-specific authorship is asserted. Localized `label()` lookup,
 toolbar UI/editor insertion, Android selection application, cursor handling, and
 Activity lifecycle remain host-side. Root `COPYING` remains byte-identical.
+
+## StoragePolicy folder projection
+
+`AnkiDroidFolder` and `StoragePolicy` in `lib/src/storage_policy.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/startup/StoragePolicy.kt` and
+`anki-common/src/main/kotlin/com/ichi2/anki/common/storage/AnkiDroidFolder.kt`
+from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The folder values remain `PUBLIC`
+and `APP_PRIVATE`. `Fixed(folder)` always yields its folder, while
+`UserChoosesOnPermissionScreen` yields `PUBLIC` when required permissions are
+present and null otherwise. The Dart model preserves value equality and the
+Kotlin enum/data-class/data-object string forms.
+
+`test/storage_policy_test.dart` directly ports the first two behaviors from
+`AnkiDroid/src/test/java/com/ichi2/anki/startup/StoragePolicyTest.kt`: fixed
+folder persistence with granted and denied permissions, and deferred user
+choice. Its third test adds source-derived equality and string-form checks. The
+third upstream test's `StoragePermissionSet.storagePolicy` cases are excluded:
+Android permission-set mapping, permission querying, startup application and
+path persistence, collection opening, and filesystem behavior remain
+host-side. The KDoc reference to `StorageDecision` does not add that state
+model as a dependency. Both pinned Kotlin implementation files and the pinned
+test declare `SPDX-License-Identifier: GPL-3.0-or-later` and have no separate
+copyright line; no method-specific authorship is asserted. The Dart adaptation
+and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

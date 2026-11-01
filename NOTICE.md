@@ -2430,3 +2430,16 @@ extension; focused Dart cases are source-derived. `Collection.kt` declares
 `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
 tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains
 byte-identical.
+
+`lib/src/saved_state_handle.dart` and `test/saved_state_handle_test.dart` adapt
+`require(key)` and `getLongOrNull(key)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/SavedStateHandle.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+host getter is called once for required values; null throws `StateError` with
+the source message. Nullable Long lookup checks presence once and casts only a
+present getter result to `int?`. Callback failures propagate unchanged, and
+host generic type checks, Android SavedStateHandle, and lifecycle remain
+host-side. The pinned Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. No direct pinned tests were found; the Dart cases are
+source-derived. The adaptation and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

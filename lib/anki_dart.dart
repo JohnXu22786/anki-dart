@@ -34,6 +34,7 @@ export 'src/collection_set_user_flag_for_cards.dart';
 export 'src/filename.dart';
 export 'src/field_filter.dart';
 export 'src/result_type.dart';
+export 'src/saved_state_handle.dart';
 export 'src/search_string.dart';
 export 'src/string_normalization.dart';
 export 'src/mime_type_utils.dart';

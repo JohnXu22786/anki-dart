@@ -60,6 +60,24 @@ Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source, test, and license details.
 
+## SavedStateHandle scalar helpers
+
+`savedStateHandleRequire<T>()` and `savedStateHandleGetLongOrNull()` in
+`lib/src/saved_state_handle.dart` adapt `require(key)` and
+`getLongOrNull(key)` from AnkiDroid's `SavedStateHandle.kt`, pinned to 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The required-value helper
+calls the host getter once and throws `StateError` with the exact source message
+for null; the nullable Long helper checks presence once, skips an absent read,
+and casts a present value to `int?`. Host callback failures propagate
+unchanged, and generic type checks remain the host's responsibility. Android
+SavedStateHandle and lifecycle behavior remain host-side. Source-derived cases
+are in `test/saved_state_handle_test.dart`; no direct pinned tests were found.
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.
+
 ## Mutable state flow delegate
 
 `MutableValue<T>`, `StateFlowVarDelegate<T>`, and `asVar()` in

@@ -8,6 +8,24 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## Filename sanitization
+
+`Filename` and `Filename.sanitize()` in `lib/src/filename.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/export/Filename.kt` from AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The implementation preserves
+the exact invalid-character regex `[\\/?<>:*|"^]`, replacing every occurrence
+with `_`; the private constructor prevents exposing an unsanitized value. Its
+value equality, hash, and `toString()` projection follow the Kotlin value class.
+`test/filename_test.dart` ports the four direct cases from
+`AnkiDroid/src/test/java/com/ichi2/anki/export/FilenameTest.kt` (valid name,
+all invalid characters, colon, and repeated subdeck separator) and separately
+checks value semantics. The host remains responsible for file creation, paths,
+extensions, and platform filesystem rules. Both pinned Kotlin files declare
+`SPDX-License-Identifier: GPL-3.0-or-later` and contain no separate copyright
+line; no method-specific authorship is asserted. The Dart adaptation/tests are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains
+byte-identical.
+
 ## CardStateFilter search fragments
 
 `CardStateFilter` in `lib/src/card_state_filter.dart` adapts the enum and

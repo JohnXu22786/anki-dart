@@ -4,6 +4,19 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Filename sanitization
+
+`Filename.sanitize()` ports the app-side value from
+`AnkiDroid/src/main/java/com/ichi2/anki/export/Filename.kt` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It replaces each
+source-invalid character (`\\/?<>:*|"^`) with `_`, preserving other text. The
+pinned four `FilenameTest.kt` cases are ported directly; focused Dart tests also
+check value equality, hashing, and string projection. This GPL-3.0-or-later
+adaptation does not create files or interpret paths/extensions; those
+responsibilities and platform filesystem rules remain host-side. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details; root `COPYING` remains unchanged.
+
 ## MathJax note-editor formatting
 
 `MathJaxFormat` ports the `BLOCK` and `CHEMISTRY` string wrappers and mutable

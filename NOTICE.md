@@ -7,6 +7,21 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/export/Filename.kt` and its direct
+  test `AnkiDroid/src/test/java/com/ichi2/anki/export/FilenameTest.kt` (pinned
+  AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) both declare
+`SPDX-License-Identifier: GPL-3.0-or-later` and contain no separate copyright
+line; no method-specific authorship is asserted. `Filename.sanitize()` in
+`lib/src/filename.dart` adapts the exact invalid-character replacement and the
+value equality/hash/string projection, with focused cases in
+`test/filename_test.dart`. That test ports the four pinned direct cases and
+separately checks value semantics. The host retains file creation, path and
+extension handling, and platform filesystem rules. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`.
+Root `COPYING` remains byte-identical; redistribution of this adapted code is
+subject to the GPL-3.0-or-later terms in that file.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/model/CardStateFilter.kt` (pinned
   AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) declares

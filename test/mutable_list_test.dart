@@ -97,6 +97,39 @@ void main() {
       },
     );
   });
+
+  group('MutableList.replaceWith', () {
+    test('replaces existing values and clears for an empty iterable', () {
+      final items = ['old', 'values'];
+
+      items.replaceWith(['new', 'values']);
+      expect(items, ['new', 'values']);
+
+      items.replaceWith(const []);
+      expect(items, isEmpty);
+    });
+
+    test('clears before consuming the same list as the input iterable', () {
+      final items = ['first', 'second'];
+
+      items.replaceWith(items);
+
+      expect(items, isEmpty);
+    });
+
+    test('keeps yielded values after input iteration throws', () {
+      final items = ['old', 'values'];
+
+      expect(() => items.replaceWith(_yieldThenThrow()), throwsStateError);
+      expect(items, ['first', 'second']);
+    });
+  });
+}
+
+Iterable<String> _yieldThenThrow() sync* {
+  yield 'first';
+  yield 'second';
+  throw StateError('iteration failed');
 }
 
 class _RecordingList<T> extends ListBase<T> {

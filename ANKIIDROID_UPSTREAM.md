@@ -36,6 +36,19 @@ Kotlin source declares `GPL-3.0-or-later` with no separate copyright line; the
 Dart adaptation and test are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `MutableList<T>.replaceWith()`
+
+`List.replaceWith(items)` in `lib/src/mutable_list.dart` adapts
+`MutableList<T>.replaceWith(items)` from the same pinned `MutableList.kt` source.
+The source clears the destination before calling `addAll`; the Dart adaptation
+preserves that operation order by calling `clear()` before `addAll(items)`. As a
+result, passing the destination itself clears it before consumption, and an
+iteration failure leaves values already appended in place. Focused coverage is
+in `test/mutable_list_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` with no separate copyright line; the Dart adaptation and test
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## `Double.wholeAndFraction()`
 
 `wholeAndFraction()` in `lib/src/whole_and_fraction.dart` and its source-derived

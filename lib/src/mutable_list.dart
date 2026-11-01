@@ -22,6 +22,15 @@
 
 /// Mutable-list operations adapted from AnkiDroid.
 extension MutableListSwapPositions<T> on List<T> {
+  /// Replaces this list's contents with [items].
+  ///
+  /// The current contents are cleared before [items] is consumed. If consuming
+  /// [items] throws, the list retains any values already appended.
+  void replaceWith(Iterable<T> items) {
+    clear();
+    addAll(items);
+  }
+
   /// Moves the item at [fromPosition] to [toPosition] by swapping neighbors.
   ///
   /// Positions are not validated or normalized. An invalid position fails

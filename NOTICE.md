@@ -2635,6 +2635,19 @@ FragmentManager remain host-side. The pinned Kotlin source declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+`lib/src/fragment_activity_show_dialog_fragment.dart` and
+`test/fragment_activity_show_dialog_fragment_test.dart` adapt
+`FragmentActivity.showDialogFragment(newFragment)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt:28–32`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. They preserve one UI-thread
+scheduler call, deferred current-manager lookup, exact manager/fragment token
+forwarding, source order, and failure propagation. Android FragmentActivity,
+FragmentManager, DialogFragment, and display implementation stay host-side. No
+direct pinned test was found. The Kotlin source declares `GPL-3.0-or-later` and
+has no separate copyright line. The Dart adaptation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 `lib/src/menu_host_add_prepare_menu_provider.dart` and
 `test/menu_host_add_prepare_menu_provider_test.dart` adapt
 `MenuHost.addPrepareMenuProvider(onPrepare)` from

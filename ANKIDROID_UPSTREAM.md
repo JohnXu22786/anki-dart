@@ -1664,6 +1664,25 @@ source declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## FragmentActivity.showDialogFragment
+
+`showDialogFragment()` in `lib/src/fragment_activity_show_dialog_fragment.dart`
+adapts `FragmentActivity.showDialogFragment(newFragment)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt:28–32`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host UI-thread
+scheduler once with one action and returns without waiting. When the action
+runs, it reads the current host support FragmentManager once and passes that
+manager and the identical fragment token to the host display adapter in source
+order. Callback failures propagate unchanged and stop subsequent work. The
+scheduler, Android FragmentActivity, FragmentManager, DialogFragment, and
+fragment display implementation stay host-side. No direct pinned test was
+found; source-derived Dart cases are in
+`test/fragment_activity_show_dialog_fragment_test.dart`. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## MenuHost.addPrepareMenuProvider
 
 `menuHostAddPrepareMenuProvider()` in

@@ -3169,6 +3169,20 @@ John Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the
 source and license record.
 
+## Show a dialog fragment through the host
+
+`showDialogFragment()` in
+`lib/src/fragment_activity_show_dialog_fragment.dart` adapts
+`FragmentActivity.showDialogFragment(newFragment)` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt:28–32`,
+pinned to 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls
+the host UI-thread scheduler once and returns without waiting. The scheduled
+action reads the current support FragmentManager once, then forwards that exact
+manager and fragment token to the host display adapter. Callback failures
+propagate unchanged. Android FragmentActivity, FragmentManager, DialogFragment,
+and display implementation remain host-side. Source-derived tests are in
+[`test/fragment_activity_show_dialog_fragment_test.dart`](test/fragment_activity_show_dialog_fragment_test.dart); no direct pinned test was found. The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the source and license record.
+
 ## Prepare an existing Android menu
 
 `menuHostAddPrepareMenuProvider()` in

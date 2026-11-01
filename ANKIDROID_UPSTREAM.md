@@ -8,6 +8,26 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## `CoroutineWorker.trySetForeground(foregroundInfo)`
+
+`coroutineWorkerTrySetForeground()` in
+`lib/src/coroutine_worker_try_set_foreground.dart` adapts
+`CoroutineWorker.trySetForeground(foregroundInfo)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/CoroutineWorker.kt:13–19`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It awaits the supplied host
+foreground callback once with the same `foregroundInfo`. A failure from that
+callback is passed unchanged to the host warning callback once and swallowed
+when warning succeeds; warning failures propagate unchanged. The host remains
+responsible for Android WorkManager's `CoroutineWorker.setForeground` and
+Timber logging. The Kotlin file declares `GPL-3.0-or-later` and has no separate
+copyright line. Focused source-derived cases in
+`test/coroutine_worker_try_set_foreground_test.dart` cover callback completion,
+argument identity and ordering, broad failure logging and swallowing, and
+warning failure propagation; no direct pinned AnkiDroid test was found. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## `ImageView.setImageDrawableSafe(drawable, onError)`
 
 `imageViewSetImageDrawableSafe()` in

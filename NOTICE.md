@@ -5,6 +5,19 @@ This repository contains a partial, modified Dart port of code from
 `d9bf072f814a0c37d30a694192593b31ff2df875`. It is an independent project and
 does not imply endorsement by the AnkiDroid or Anki projects.
 
+## CoroutineWorker foreground handling
+
+`lib/src/coroutine_worker_try_set_foreground.dart` and
+`test/coroutine_worker_try_set_foreground_test.dart` adapt
+`CoroutineWorker.trySetForeground(foregroundInfo)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/CoroutineWorker.kt:13–19`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. WorkManager foreground execution
+and Timber logging remain host-side. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. No direct pinned
+test for this helper was found. Root `COPYING` remains byte-identical.
+
 ## Bitmap dimensions from collection media
 
 `lib/src/context_bitmap_size.dart` and `test/context_bitmap_size_test.dart`

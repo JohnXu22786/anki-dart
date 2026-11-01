@@ -4,6 +4,25 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Set foreground for a CoroutineWorker
+
+`coroutineWorkerTrySetForeground()` in
+[`lib/src/coroutine_worker_try_set_foreground.dart`](lib/src/coroutine_worker_try_set_foreground.dart)
+adapts `CoroutineWorker.trySetForeground(foregroundInfo)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/CoroutineWorker.kt:13–19`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It awaits the host foreground
+callback once with the identical info token. Any thrown object is passed once
+to the host warning callback and swallowed if warning succeeds; warning
+callback failures propagate. WorkManager and Timber remain host-side. Focused
+source-derived tests are in
+[`test/coroutine_worker_try_set_foreground_test.dart`](test/coroutine_worker_try_set_foreground_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## TextView compound drawable resource IDs
 
 `textViewSetCompoundDrawablesRelativeWithIntrinsicBounds()` in

@@ -3022,3 +3022,18 @@ direct test declare `GPL-3.0-or-later` and have no separate copyright line. The
 Dart adaptation and tests are Copyright © 2026 John Tsui under the same license;
 root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for the pinned source and license record.
+
+## View touch bounds
+
+`isTouchWithinBounds()` in `lib/src/view_is_touch_within_bounds.dart` projects
+AnkiDroid 2.25.3 `View.isTouchWithinBounds()` over host-supplied View origin,
+drawing rectangle, and MotionEvent local coordinates. It preserves Float32
+addition, Kotlin `Float.toInt()` truncation/saturation, and Android's half-open
+rectangle edges, including the source coordinate behavior. The host retains
+`View`, `MotionEvent`, `Rect`, and `getDrawingRect()` access. No direct pinned unit test
+was found; focused source-derived cases are in
+[test/view_is_touch_within_bounds_test.dart](test/view_is_touch_within_bounds_test.dart).
+The Dart adaptation and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and attribution details.

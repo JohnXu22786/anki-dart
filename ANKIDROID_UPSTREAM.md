@@ -1440,3 +1440,25 @@ streaming serialization, bounded chunks, and write failure propagation. The
 Kotlin source and direct test declare `GPL-3.0-or-later` and have no separate
 copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
+
+## View.isTouchWithinBounds
+
+`isTouchWithinBounds()` in `lib/src/view_is_touch_within_bounds.dart` and its
+source-derived cases in `test/view_is_touch_within_bounds_test.dart` adapt
+`View.isTouchWithinBounds(event)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/View.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies
+View left/top, all four values from `getDrawingRect()`, and MotionEvent local
+x/y. The projection first requires a nonempty half-open drawing rectangle,
+then converts View-origin-plus-event coordinates using Float32 rounding and
+Kotlin/JVM `Float.toInt()` behavior (truncate toward zero, NaN to zero, and Int32
+saturation), and checks containment against the host drawing rectangle. This
+intentionally retains the pinned source's use of View left/top for translation
+while using the drawing rectangle for containment. Android View, MotionEvent,
+`Rect`, and drawing-rect retrieval remain host-side; the sibling `onGlobalLayout`
+and `setBackgroundTint` extensions are not included. A search of pinned
+AnkiDroid tests found no direct test for this extension. The source header is
+Copyright (c) 2025 Danilo Mendes and has no file-level SPDX identifier; the
+upstream repository is distributed under `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under that same license. Root `COPYING`
+remains byte-identical.

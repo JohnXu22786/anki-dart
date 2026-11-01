@@ -182,4 +182,215 @@ void main() {
       expect(iterable, isEmpty);
     });
   });
+
+  group('JsonObjectHostAdapter cloning and map construction', () {
+    test(
+      'deepClone clones nested objects and arrays and retains scalar values',
+      () {
+        final trace = <String>[];
+        final innerObject = _TestJsonObject({'leaf': 'value'});
+        final array = _TestJsonArray([innerObject, 'opaque']);
+        final source = _TestJsonObject({
+          'nested': innerObject,
+          'items': array,
+          'scalar': Object(),
+        });
+        final scalar = source.values['scalar'];
+        var createdObjects = 0;
+        var clonedArrays = 0;
+        late final JsonObjectHostAdapter<_TestJsonObject, _TestJsonArray>
+        adapter;
+        adapter = _testJsonObjectAdapter(
+          trace,
+          createObject: () {
+            createdObjects++;
+            return _TestJsonObject({});
+          },
+          cloneArray: (value) {
+            clonedArrays++;
+            return _TestJsonArray(
+              value.values
+                  .map(
+                    (element) => element is _TestJsonObject
+                        ? adapter.deepClone(element)
+                        : element,
+                  )
+                  .toList(),
+            );
+          },
+        );
+
+        final clone = adapter.deepClone(source);
+
+        expect(clone, isNot(same(source)));
+        expect(clone.values.keys, ['nested', 'items', 'scalar']);
+        expect(clone.values['nested'], isNot(same(innerObject)));
+        expect(clone.values['items'], isNot(same(array)));
+        expect(
+          (clone.values['items']! as _TestJsonArray).values.first,
+          isNot(same(innerObject)),
+        );
+        expect(clone.values['scalar'], same(scalar));
+        expect(createdObjects, 3);
+        expect(clonedArrays, 1);
+        expect(trace.where((call) => call.startsWith('put:')), hasLength(5));
+      },
+    );
+
+    test(
+      'deepClonedInto preserves ordered callback trace and clone identity',
+      () {
+        final trace = <String>[];
+        final source = _TestJsonObject({
+          'first': 'scalar',
+          'second': _TestJsonObject({'inside': 'nested scalar'}),
+          'third': _TestJsonArray(['array value']),
+        });
+        final clone = _TestJsonSubtype({});
+        final adapter = _testJsonObjectAdapter(trace);
+
+        final result = adapter.deepClonedInto(source, clone);
+
+        expect(result, same(clone));
+        expect(clone.values.keys, ['first', 'second', 'third']);
+        expect(trace, [
+          'keys:source',
+          'get:first',
+          'get:first',
+          'put:clone:first',
+          'get:second',
+          'getJSONObject:second',
+          'createObject',
+          'keys:source',
+          'get:inside',
+          'get:inside',
+          'put:source:inside',
+          'put:clone:second',
+          'get:third',
+          'getJSONArray:third',
+          'cloneArray',
+          'put:clone:third',
+        ]);
+      },
+    );
+
+    test('deepClonedInto stops after a failed put and retains exact error', () {
+      final trace = <String>[];
+      final failure = StateError('put failed');
+      final source = _TestJsonObject({'first': 1, 'later': 2});
+      final adapter = _testJsonObjectAdapter(
+        trace,
+        put: (target, key, value) {
+          trace.add('put:${target.label}:$key');
+          throw failure;
+        },
+      );
+
+      expect(
+        () => adapter.deepClonedInto(
+          source,
+          _TestJsonObject({}, label: 'target'),
+        ),
+        throwsA(same(failure)),
+      );
+      expect(trace, [
+        'keys:source',
+        'get:first',
+        'get:first',
+        'put:target:first',
+      ]);
+    });
+
+    test('deepClone of an empty object creates and returns an empty clone', () {
+      final trace = <String>[];
+      final adapter = _testJsonObjectAdapter(trace);
+
+      final clone = adapter.deepClone(_TestJsonObject({}));
+
+      expect(clone.values, isEmpty);
+      expect(trace, ['createObject', 'keys:source']);
+    });
+
+    test('fromMap preserves map order and performs one put for each entry', () {
+      final trace = <String>[];
+      final adapter = _testJsonObjectAdapter(trace);
+
+      final result = adapter.fromMap({'third': 3, 'first': 1, 'second': 2});
+
+      expect(result.values.keys, ['third', 'first', 'second']);
+      expect(trace, [
+        'createObject',
+        'put:source:third',
+        'put:source:first',
+        'put:source:second',
+      ]);
+    });
+
+    test('fromMap creates an empty object for an empty map', () {
+      final trace = <String>[];
+      final adapter = _testJsonObjectAdapter(trace);
+
+      final result = adapter.fromMap(const {});
+
+      expect(result.values, isEmpty);
+      expect(trace, ['createObject']);
+    });
+  });
 }
+
+final class _TestJsonObject {
+  _TestJsonObject(this.values, {this.label = 'source'});
+
+  final Map<String, Object?> values;
+  final String label;
+}
+
+final class _TestJsonSubtype extends _TestJsonObject {
+  _TestJsonSubtype(super.values) : super(label: 'clone');
+}
+
+final class _TestJsonArray {
+  _TestJsonArray(this.values);
+
+  final List<Object?> values;
+}
+
+JsonObjectHostAdapter<_TestJsonObject, _TestJsonArray> _testJsonObjectAdapter(
+  List<String> trace, {
+  _TestJsonObject Function()? createObject,
+  _TestJsonArray Function(_TestJsonArray)? cloneArray,
+  void Function(_TestJsonObject, String, Object?)? put,
+}) => JsonObjectHostAdapter(
+  keys: (object) {
+    trace.add('keys:${object.label}');
+    return object.values.keys;
+  },
+  get: (object, key) {
+    trace.add('get:$key');
+    return object.values[key];
+  },
+  isJsonObject: (value) => value is _TestJsonObject,
+  isJsonArray: (value) => value is _TestJsonArray,
+  getJsonObject: (object, key) {
+    trace.add('getJSONObject:$key');
+    return object.values[key]! as _TestJsonObject;
+  },
+  getJsonArray: (object, key) {
+    trace.add('getJSONArray:$key');
+    return object.values[key]! as _TestJsonArray;
+  },
+  deepCloneJsonArray: (array) {
+    trace.add('cloneArray');
+    return cloneArray?.call(array) ?? _TestJsonArray(List.of(array.values));
+  },
+  createObject: () {
+    trace.add('createObject');
+    return createObject?.call() ?? _TestJsonObject({});
+  },
+  put:
+      put ??
+      (object, key, value) {
+        trace.add('put:${object.label}:$key');
+        object.values[key] = value;
+      },
+);

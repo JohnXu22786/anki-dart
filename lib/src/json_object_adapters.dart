@@ -40,6 +40,72 @@ String? jsonObjectGetStringOrNull({
   }
 }
 
+/// Host operations needed to adapt AnkiDroid's JSONObject copy helpers.
+///
+/// The host retains its JSON representations, typed accessors, conversions,
+/// and JSONArray cloning behavior. This adapter preserves the source helper's
+/// key iteration, read, and write order around those operations.
+final class JsonObjectHostAdapter<TObject, TArray> {
+  const JsonObjectHostAdapter({
+    required Iterable<String> Function(TObject object) keys,
+    required Object? Function(TObject object, String key) get,
+    required bool Function(Object? value) isJsonObject,
+    required bool Function(Object? value) isJsonArray,
+    required TObject Function(TObject object, String key) getJsonObject,
+    required TArray Function(TObject object, String key) getJsonArray,
+    required TArray Function(TArray array) deepCloneJsonArray,
+    required TObject Function() createObject,
+    required void Function(TObject object, String key, Object? value) put,
+  }) : _keys = keys,
+       _get = get,
+       _isJsonObject = isJsonObject,
+       _isJsonArray = isJsonArray,
+       _getJsonObject = getJsonObject,
+       _getJsonArray = getJsonArray,
+       _deepCloneJsonArray = deepCloneJsonArray,
+       _createObject = createObject,
+       _put = put;
+
+  final Iterable<String> Function(TObject object) _keys;
+  final Object? Function(TObject object, String key) _get;
+  final bool Function(Object? value) _isJsonObject;
+  final bool Function(Object? value) _isJsonArray;
+  final TObject Function(TObject object, String key) _getJsonObject;
+  final TArray Function(TObject object, String key) _getJsonArray;
+  final TArray Function(TArray array) _deepCloneJsonArray;
+  final TObject Function() _createObject;
+  final void Function(TObject object, String key, Object? value) _put;
+
+  /// Adapts `JSONObject.deepClone()` by creating one host object first.
+  TObject deepClone(TObject object) => deepClonedInto(object, _createObject());
+
+  /// Copies [object] into [clone], preserving [clone]'s identity.
+  ///
+  /// Nested objects and arrays use the host's typed reads. Scalar values are
+  /// read again after type probing, matching the source callback sequence.
+  TClone deepClonedInto<TClone extends TObject>(TObject object, TClone clone) {
+    for (final key in _keys(object)) {
+      final value = _get(object, key);
+      final clonedValue = _isJsonObject(value)
+          ? deepClone(_getJsonObject(object, key))
+          : _isJsonArray(value)
+          ? _deepCloneJsonArray(_getJsonArray(object, key))
+          : _get(object, key);
+      _put(clone, key, clonedValue);
+    }
+    return clone;
+  }
+
+  /// Adapts top-level `fromMap(map)` using one host object and one put per entry.
+  TObject fromMap(Map<String, Object?> map) {
+    final object = _createObject();
+    for (final entry in map.entries) {
+      _put(object, entry.key, entry.value);
+    }
+    return object;
+  }
+}
+
 /// Lazily projects `JSONObject.jsonObjectIterable()` as a re-iterable sequence.
 ///
 /// The host supplies fresh object keys and typed object reads on each iteration.

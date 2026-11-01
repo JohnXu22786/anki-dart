@@ -3235,3 +3235,24 @@ no direct pinned test was found. The Kotlin source declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
+
+## Fragment window focus listener
+
+`onWindowFocusChanged()` in
+`lib/src/fragment_on_window_focus_changed.dart` adapts
+`Fragment.onWindowFocusChanged(action)` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:56–69`, pinned to
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one
+listener with the same action, registers it on the required view's current tree
+observer, then registers one lifecycle observer. On destruction it reads the
+fragment's current view and current nullable tree observer, and removes the
+same listener only if the observer is alive. Null values short-circuit; callback
+failures propagate and stop later work. Android views, observers, lifecycle,
+and listener classes remain host-side behind generic tokens and callbacks.
+Source-derived focused tests are in
+[`test/fragment_on_window_focus_changed_test.dart`](test/fragment_on_window_focus_changed_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.

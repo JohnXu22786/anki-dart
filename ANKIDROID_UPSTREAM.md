@@ -1723,3 +1723,28 @@ cases are in `test/fragment_activity_on_all_fragments_loaded_test.dart`. The
 Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
+
+## Fragment.onWindowFocusChanged
+
+`onWindowFocusChanged()` in
+`lib/src/fragment_on_window_focus_changed.dart` adapts
+`Fragment.onWindowFocusChanged(action)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:56–69`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates exactly one focus
+listener carrying the identical action, calls the host `requireView` once,
+reads that view's current observer once, and registers the listener before
+reading the view lifecycle owner and its lifecycle, creating one lifecycle
+observer, and registering it. No cleanup is attempted if a later setup step
+fails. On destruction, the observer ignores its owner argument and reads the
+fragment's current view; a missing view returns before observer lookup. A
+missing current observer returns before liveness is read. Otherwise liveness is
+checked once, and the identical listener is removed only when true. Callback
+failures propagate unchanged and stop subsequent calls. Android Fragment, View,
+ViewTreeObserver, LifecycleOwner, lifecycle, and actual listener/observer
+classes remain host-side. No direct test for this extension was found in the
+pinned AnkiDroid test tree; focused Dart cases are source-derived in
+`test/fragment_on_window_focus_changed_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

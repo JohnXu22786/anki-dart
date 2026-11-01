@@ -5,6 +5,19 @@ This repository contains a partial, modified Dart port of code from
 `d9bf072f814a0c37d30a694192593b31ff2df875`. It is an independent project and
 does not imply endorsement by the AnkiDroid or Anki projects.
 
+## Bitmap dimensions from collection media
+
+`lib/src/context_bitmap_size.dart` and `test/context_bitmap_size_test.dart`
+adapt `BitmapSize` and `Context.getSizeOfBitmapFromCollection(filename)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Context.kt:43–64`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Android Context,
+CollectionHelper, File, BitmapFactory, Options, and decoding remain host-side.
+The source declares `GPL-3.0-or-later` and has no separate copyright line; the
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. No direct pinned test for this helper or data class was found. Root
+`COPYING` remains byte-identical.
+
 ## Adapted source
 
 `lib/src/json_reader.dart` and `test/json_reader_test.dart` adapt

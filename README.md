@@ -4,6 +4,28 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Bitmap dimensions from collection media
+
+`BitmapSize` and `getSizeOfBitmapFromCollection()` in
+`lib/src/context_bitmap_size.dart` adapt
+`Context.getSizeOfBitmapFromCollection(filename)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Context.kt:43–64`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+preserves the source order: resolve the current directory from the exact
+Context, create one file, check existence once, create bounds-only options,
+read the absolute path, decode once while ignoring its result, then read width
+and height. A missing file returns null before options are created; callback
+failures propagate unchanged and stop later operations. Android Context,
+CollectionHelper, File, BitmapFactory, Options, and bitmap decoding remain
+host-side. `BitmapSize` preserves the Kotlin data-class value projection and
+documents that dimensions may be `-1` after decode errors. Focused cases are
+in [`test/context_bitmap_size_test.dart`](test/context_bitmap_size_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and license record.
+
 ## Clean card statistics message
 
 `cardStatsNoCardClean()` in `lib/src/card_stats_no_card_clean.dart` adapts

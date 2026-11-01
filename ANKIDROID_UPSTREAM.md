@@ -8,6 +8,26 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## Bitmap dimensions from collection media
+
+`BitmapSize` and `Context.getSizeOfBitmapFromCollection(filename)` in
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Context.kt:43–64` are pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart adapter
+`lib/src/context_bitmap_size.dart` preserves the one directory lookup, one
+`File(directory, filename)`, one existence check with an immediate null return
+when absent, one bounds-only `BitmapFactory.Options`, absolute-path lookup,
+one `decodeFile` call whose return is ignored, and ordered `outWidth` then
+`outHeight` reads. Context, CollectionHelper, File, BitmapFactory, Options, and
+decoding remain host-side. The source `BitmapSize` is a Kotlin data class with
+`Int` width and height; `-1` may indicate decode errors. The focused Dart cases
+in `test/context_bitmap_size_test.dart` cover found/missing files, callback
+order and failure short-circuits, bounds mode, ignored decode return, dimension
+read order, and value semantics. No direct pinned test for this method or data
+class was found. `Context.kt` declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
 ## Field filters and chain
 
 `FilterContext`, the `FieldFilter` default contract, all built-ins including

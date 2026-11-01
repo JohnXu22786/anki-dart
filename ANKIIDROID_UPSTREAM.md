@@ -68,6 +68,24 @@ Sargam; this identifies the Kotlin source only and does not attribute the Dart
 adaptation to him. The Dart implementation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## `NoteEditorDestination.PassArguments.from(intent, extras)`
+
+`noteEditorPassArgumentsFromIntent()` in
+`lib/src/note_editor_pass_arguments_from_intent.dart` adapts the
+`PassArguments.from(intent, extras)` projection from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/NoteEditorDestination.kt:106–121`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the supplied Intent's
+action once and retains the exact caller-supplied extras Bundle. The caller
+remains responsible for obtaining extras and performing the null check; Android
+Intent and Bundle behavior remain host-side, and getter failures propagate
+unchanged. Focused source-derived cases are in
+`test/note_editor_pass_arguments_from_intent_test.dart`. The pinned app tests
+cover PassArguments construction and `toIntent`, but no `from` factory tests.
+The Kotlin source declares `GPL-3.0-or-later` and carries no distinct copyright
+line. The Dart implementation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical.
+
 ## `Decks.update(did, block)`
 
 `decksUpdate()` in `lib/src/decks_update.dart` adapts

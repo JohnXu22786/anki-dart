@@ -20,14 +20,20 @@
  * ANKIIDROID_UPSTREAM.md.
  */
 
-/// Returns [defaultValue] when [value] is null or empty; otherwise returns
-/// [value] unchanged.
+/// Returns [defaultValue] when [value] is null or empty; otherwise returns the
+/// exact [value] object supplied by the host.
 ///
-/// The callback is evaluated exactly once only when the fallback is needed,
-/// and its exceptions propagate. Kotlin's source extension accepts any
-/// `CharSequence` subtype; this Dart helper is limited to [String] because this
-/// package does not expose an equivalent `CharSequence` hierarchy.
-String ifNullOrEmpty(String? value, String Function() defaultValue) {
-  if (value == null || value.isEmpty) return defaultValue();
-  return value;
+/// The host supplies [isEmpty] because Dart has no equivalent of Kotlin's
+/// `CharSequence` interface. For a null [value], [isEmpty] is not called. For a
+/// nonnull [value], it is called once. [defaultValue] is called once only when
+/// the value is null or empty. Callback exceptions propagate unchanged.
+T ifNullOrEmpty<T extends Object>(
+  T? value, {
+  required bool Function(T value) isEmpty,
+  required T Function() defaultValue,
+}) {
+  if (identical(value, null)) return defaultValue();
+  final nonNullValue = value;
+  if (isEmpty(nonNullValue)) return defaultValue();
+  return nonNullValue;
 }

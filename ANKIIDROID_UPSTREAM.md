@@ -178,12 +178,12 @@ source-derived tests in `test/char_sequence_if_null_or_empty_test.dart` adapt
 `<C : CharSequence> C?.ifNullOrEmpty(defaultValue: () -> C)` from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/CharSequence.kt`, pinned to
 AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The helper
-returns the fallback for null or empty Strings, preserves nonempty String
-values, and invokes the callback lazily exactly once only when needed;
-exceptions thrown by it propagate. Kotlin accepts every `CharSequence` subtype,
-while this Dart API accepts only `String` because the package exposes no
-corresponding type hierarchy. It makes no claim of preserving identity for
-other `CharSequence` implementations. The pinned source declares
+accepts an opaque generic value and a host-provided emptiness callback, keeping
+the Kotlin `CharSequence` implementation host-side while preserving exact
+object identity for nonempty inputs and fallback results. Null skips the
+emptiness callback; a nonnull value is checked once. The fallback runs once only
+for null or empty inputs, in source order, and callback exceptions propagate
+unchanged. The pinned source declares
 `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
 focused tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`.
 Root `COPYING` remains byte-identical.

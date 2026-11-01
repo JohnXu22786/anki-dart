@@ -25,38 +25,107 @@ import 'package:test/test.dart';
 
 void main() {
   group('ifNullOrEmpty', () {
-    test('uses the fallback for null and empty receivers exactly once', () {
-      var callbackCount = 0;
-      String fallback() {
-        callbackCount++;
-        return 'fallback';
-      }
+    test('null bypasses emptiness and returns the single fallback result', () {
+      final events = <String>[];
+      final fallback = _HostCharSequence();
 
-      expect(ifNullOrEmpty(null, fallback), 'fallback');
-      expect(callbackCount, 1);
-      expect(ifNullOrEmpty('', fallback), 'fallback');
-      expect(callbackCount, 2);
+      final result = ifNullOrEmpty<_HostCharSequence>(
+        null,
+        isEmpty: (_) {
+          events.add('isEmpty');
+          return false;
+        },
+        defaultValue: () {
+          events.add('defaultValue');
+          return fallback;
+        },
+      );
+
+      expect(identical(result, fallback), isTrue);
+      expect(events, ['defaultValue']);
     });
 
-    test('returns a nonempty receiver without evaluating the fallback', () {
-      var callbackCount = 0;
+    test('empty input checks once then returns the single fallback result', () {
+      final events = <String>[];
+      final receiver = _HostCharSequence();
+      final fallback = _HostCharSequence();
 
-      final result = ifNullOrEmpty('kept', () {
-        callbackCount++;
-        return 'fallback';
-      });
+      final result = ifNullOrEmpty<_HostCharSequence>(
+        receiver,
+        isEmpty: (value) {
+          events.add('isEmpty');
+          expect(identical(value, receiver), isTrue);
+          return true;
+        },
+        defaultValue: () {
+          events.add('defaultValue');
+          return fallback;
+        },
+      );
 
-      expect(result, 'kept');
-      expect(callbackCount, 0);
+      expect(identical(result, fallback), isTrue);
+      expect(events, ['isEmpty', 'defaultValue']);
     });
 
-    test('propagates exceptions from the fallback', () {
+    test(
+      'nonempty input is returned unchanged without evaluating fallback',
+      () {
+        final events = <String>[];
+        final receiver = _HostCharSequence();
+
+        final result = ifNullOrEmpty<_HostCharSequence>(
+          receiver,
+          isEmpty: (_) {
+            events.add('isEmpty');
+            return false;
+          },
+          defaultValue: () {
+            events.add('defaultValue');
+            return _HostCharSequence();
+          },
+        );
+
+        expect(identical(result, receiver), isTrue);
+        expect(events, ['isEmpty']);
+      },
+    );
+
+    test('emptiness failure propagates and prevents fallback evaluation', () {
+      final events = <String>[];
+      final exception = StateError('emptiness failed');
+
+      expect(
+        () => ifNullOrEmpty<_HostCharSequence>(
+          _HostCharSequence(),
+          isEmpty: (_) {
+            events.add('isEmpty');
+            throw exception;
+          },
+          defaultValue: () {
+            events.add('defaultValue');
+            return _HostCharSequence();
+          },
+        ),
+        throwsA(same(exception)),
+      );
+      expect(events, ['isEmpty']);
+    });
+
+    test('fallback failure propagates unchanged', () {
       final exception = StateError('fallback failed');
 
       expect(
-        () => ifNullOrEmpty(null, () => throw exception),
+        () => ifNullOrEmpty<_HostCharSequence>(
+          null,
+          isEmpty: (_) => fail('null input must bypass isEmpty'),
+          defaultValue: () => throw exception,
+        ),
         throwsA(same(exception)),
       );
     });
   });
+}
+
+class _HostCharSequence {
+  _HostCharSequence();
 }

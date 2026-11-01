@@ -2869,11 +2869,12 @@ No direct pinned test for `setupEdgeToEdge()` was found in
 
 `ifNullOrEmpty()` in `lib/src/char_sequence_if_null_or_empty.dart` adapts
 `CharSequence.kt` from AnkiDroid 2.25.3 commit
-`d9bf072f814a0c37d30a694192593b31ff2df875`. It lazily calls the fallback once
-for a null or empty String, returns nonempty Strings unchanged, and propagates
-fallback exceptions. The Dart API accepts only `String`; it cannot preserve
-identity for other Kotlin `CharSequence` subtypes because this package has no
-equivalent hierarchy. Focused source-derived tests are in
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart adapter accepts an opaque
+generic value plus a host-provided emptiness callback, so it preserves identity
+for any host `CharSequence` subtype without implementing Android/Kotlin types
+in Dart. It skips the emptiness callback for null, checks a nonnull value once,
+and lazily calls the fallback once only for null or empty inputs. Callback
+exceptions propagate unchanged. Focused source-derived tests are in
 `test/char_sequence_if_null_or_empty_test.dart`. The upstream file declares
 `GPL-3.0-or-later` with no separate copyright line; the Dart adaptation and test
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains

@@ -2389,12 +2389,13 @@ and focused tests are Copyright © 2026 John Tsui and marked
   CharSequence> C?.ifNullOrEmpty(defaultValue: () -> C)`, pinned to AnkiDroid
   2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
   `SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright
-  line. Its null/empty fallback and lazy callback behavior are adapted for
-  String in `lib/src/char_sequence_if_null_or_empty.dart`, with focused
-  source-derived cases in `test/char_sequence_if_null_or_empty_test.dart`.
-  Kotlin's `CharSequence` subtype identity cannot be represented in this
-  package's String-only API. The Dart adaptation and tests are Copyright © 2026
-  John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+  line. Its null/empty fallback, lazy callback behavior, and value identity are
+  adapted for opaque generic host values in
+  `lib/src/char_sequence_if_null_or_empty.dart`, with focused source-derived
+  cases in `test/char_sequence_if_null_or_empty_test.dart`. The Dart adapter
+  receives the host's emptiness callback and leaves Kotlin `CharSequence`
+  subtypes host-side. The Dart adaptation and tests are Copyright © 2026 John
+  Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
 ## String search normalization
 

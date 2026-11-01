@@ -1,5 +1,22 @@
 # Notices
 
+## Profile list item
+
+`lib/src/profile_item.dart` and `test/profile_item_test.dart` adapt
+`ProfileItem` from
+`AnkiDroid/src/main/java/com/ichi2/anki/preferences/profiles/ProfileItem.kt`
+and the behavior of `String.firstGraphemeOrNull()` from
+`common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart
+model preserves ProfileId/name value equality and uppercases the exact first
+grapheme supplied by the host, returning `?` when absent. The host continues to
+use the pinned BreakIterator behavior; the Apache-2.0 StringUtils implementation
+is not copied into this repository. `ProfileItem.kt` is Copyright © 2026 Ashish
+Yadav under GPL-3.0-or-later; this attributes the Kotlin source and does not
+assign authorship of the Dart adaptation to Ashish Yadav. The Dart implementation
+and tests are Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING`
+remains byte-identical.
+
 This repository contains a partial, modified Dart port of code from
 [AnkiDroid](https://github.com/ankidroid/Anki-Android), release 2.25.3, commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. It is an independent project and

@@ -575,6 +575,25 @@ Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md).
 
+[`noteEditorAddNoteFromCardBrowserToIntent()`](lib/src/note_editor_add_note_from_card_browser_to_intent.dart)
+adapts `NoteEditorDestination.AddNoteFromCardBrowser.toIntent(context)`: it
+creates one host Intent, writes `CALLER: 7`, writes the exact search terms under
+`SEARCH` (including an empty string), then writes
+`inCardBrowserActivity: false`. It writes `DECK_ID` as a Long extra only for a
+positive deck ID and returns the same Intent. Android context, Activity
+component, Intent construction, and typed extra operations remain host-side;
+callback failures propagate and stop subsequent operations. Focused cases in
+[`test/note_editor_add_note_from_card_browser_to_intent_test.dart`](test/note_editor_add_note_from_card_browser_to_intent_test.dart)
+cover keys, values, order, empty search, null/zero/negative/positive deck IDs,
+the strict positive threshold, Intent identity, and failure short circuits.
+Pinned `CardBrowserViewModelTest.kt:288` covers creation of the typed
+destination fields, not this `toIntent` branch. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Note Editor newline replacement preference
 
 `noteEditorShouldReplaceNewlines()` in

@@ -95,6 +95,31 @@ attribute the Dart adaptation to him. The Dart implementation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+## `NoteEditorDestination.AddNoteFromCardBrowser.toIntent(context)`
+
+`noteEditorAddNoteFromCardBrowserToIntent()` in
+`lib/src/note_editor_add_note_from_card_browser_to_intent.dart` adapts the
+`AddNoteFromCardBrowser` branch from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:43–50`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `NoteEditorCaller.CARDBROWSER_ADD` (`7`), writes the exact
+`searchTerms` String under `SEARCH` (including an empty string), then writes
+`inCardBrowserActivity` as Boolean `false`. It writes `DECK_ID` as a Long only
+when `deckId != null && deckId > 0`, and returns the same Intent. Callback
+failures propagate unchanged and stop later operations. Context,
+`NoteEditorActivity`, Android Intent, and typed extra behavior remain host-side.
+Focused source-derived tests in
+`test/note_editor_add_note_from_card_browser_to_intent_test.dart` cover the
+extra keys, types, values and order; empty search; null, zero, negative and
+positive deck IDs; Intent identity; and failure short circuits. The pinned
+`CardBrowserViewModelTest.kt:288` covers creation of the typed destination
+fields, not this `toIntent` branch. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this
+identifies the Kotlin source only and does not attribute the Dart adaptation to
+him. The Dart implementation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical.
+
 ## `NoteEditorFragment.Companion.newInstance(args)`
 
 `noteEditorFragmentNewInstance()` in

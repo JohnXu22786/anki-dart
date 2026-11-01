@@ -1814,8 +1814,18 @@ Android lifecycle, StateFlow, localization, and UI.
   `EntryPoint.CURRENT_CARD_STUDY`. The pinned Reviewer tests have no direct
   assertion for this action, so the ID pass-through and entry-point cases are
   source-derived in `test/reviewer_current_card_info_destination_test.dart`.
-  Current-card lookup, concrete `CardInfoDestination` construction, navigation
-  Flow, and Android/lifecycle handling remain host-side.
+  Current-card lookup, navigation Flow, and Android/lifecycle handling remain
+  host-side.
+- Card Info destination: `CardInfoDestination.toIntent()` preserves the source
+  entry point and card ID, resolves its backend title and sentence-case
+  resource through host callbacks, strips Unicode isolation markers only for
+  the comparison, and retains the original marked title when sentence casing
+  returns the simplified title unchanged. It writes `title` then `cardId` to
+  one host Bundle before delegating Intent creation. Translations, Android
+  Context, Bundle, fragment, Intent, and lifecycle behavior remain host-side;
+  source-derived cases are in
+  `test/card_info_destination_to_intent_test.dart`. See
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Reviewer edit-note destination: `reviewerEditNoteFromPreviewerDirective`
   carries the host-resolved current card ID unchanged in a typed directive
   corresponding to `NoteEditorDestination.EditNoteFromPreviewer(cardId)`.

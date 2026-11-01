@@ -43,6 +43,30 @@ that attribution identifies the Kotlin source and does not claim authorship of
 the Dart adaptation. The Dart implementation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## `CardInfoDestination.toIntent(context)`
+
+`CardInfoDestination.toIntent()` in `lib/src/card_info_destination.dart`
+adapts `CardInfoDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/CardInfoDestination.kt:15–55`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Its typed model preserves the exact
+card ID and one of `CURRENT_CARD_STUDY`, `CURRENT_CARD_BROWSE`, or
+`PREVIOUS_CARD_STUDY`. Host callbacks resolve that entry point's backend title
+and matching sentence-case resource. The adapter strips every FSI and PDI
+marker only for the sentence-case comparison; when that callback returns the
+simplified title unchanged, the original title including its markers is
+retained. It then creates one host Bundle, writes `title` before the `cardId`
+Long, and delegates the exact Bundle and `CardInfoFragment` token to the host
+Intent builder. Callback failures propagate and stop later operations.
+Translations, Android Context, sentence-case resources, Bundle, fragment class,
+Intent creation, and lifecycle behavior remain host-side. Source-derived cases
+are in `test/card_info_destination_to_intent_test.dart`; the pinned source has no
+test covering this projection. The Kotlin sources declare `GPL-3.0-or-later`;
+that attribution identifies the upstream Kotlin source and does not claim
+authorship of the Dart adaptation. The Dart implementation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## `NoteEditorDestination.CopyNote.toIntent(context)`
 
 `noteEditorCopyNoteToIntent()` in

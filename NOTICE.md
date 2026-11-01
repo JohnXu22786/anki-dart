@@ -111,10 +111,15 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   `GPL-3.0-or-later` and Copyright © 2021 Mani
   <infinyte01@gmail.com>. `AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPIConstants.kt`
   carries the GPL license notice and Copyright © 2020 Mani
-  <infinyte01@gmail.com>. Only the parsed `AddonData`/`DistInfo` values,
+  <infinyte01@gmail.com>. The parsed `AddonData`/`DistInfo` values,
   `AddonModel`, the `AddonValidationResult` variants, the three add-on
-  constants, current JS API version, and `getAddonModelFromAddonData()` are
-  adapted in `lib/src/addon_model.dart`. The Dart projection supplies
+  constants, and `getAddonModelFromAddonData()` are adapted in
+  `lib/src/addon_model.dart`. The JS API error codes (including the source
+  spelling `ANKI_JS_ERROR_CODE_BURT_NOTE`), current/minimum API versions, and
+  ordered flag-name to `ViewerCommand` mapping are adapted in
+  `lib/src/ankidroid_js_api_constants.dart`. Only the referenced enum values
+  are used; Android bindings and default actions are not ported here. The Dart
+  projection supplies
   `validateNpmPackageName()`'s locale-lowercase, URL-encoding, and logging
   callbacks; it preserves the early required-field guard, ordered accumulated
   errors, defaults, and nullable registry `dist`.

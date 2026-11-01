@@ -59,11 +59,16 @@ missing registry `dist`, and absent optional metadata, plus valid projection
 semantics. Manifest file reads and JSON decoding, unknown-key handling,
 directory listing, URL parsing/fetching, HTTP, listing logs, and filesystem
 errors remain host-side; JSON-file and URL-list integration tests are not
-ported. The adapted sources are GPL-3.0-or-later, with upstream source
-copyrights by Mani (2021, and 2020 for `AnkiDroidJsAPIConstants.kt`). See
-[ANKIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
-the exact source paths, test boundary, and license record; root `COPYING`
-remains unchanged.
+ported. `lib/src/ankidroid_js_api_constants.dart` also preserves the source JS
+API error codes (including `BURT_NOTE`), current/minimum version `0.0.3`, and
+ordered flag-name to `ViewerCommand` table. It represents enum values only;
+Android WebView/JS bridge execution, dispatch, localization, version parsing,
+UI and logging remain host-side. Focused constant/table cases are in
+`test/ankidroid_js_api_constants_test.dart`. The adapted sources are
+GPL-3.0-or-later, with upstream source copyrights by Mani (2021, and 2020 for
+`AnkiDroidJsAPIConstants.kt`). See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the exact source paths, test boundary, and
+license record; root `COPYING` remains unchanged.
 
 ## npm package-name validation
 

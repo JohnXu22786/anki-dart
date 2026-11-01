@@ -1188,3 +1188,22 @@ locale, URL-encoding, or logging policy. Callback failures propagate unchanged.
 `Copyright (c) 2021 Mani infinyte01@gmail.com`. The Dart adaptation and focused
 tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
 `COPYING` remains byte-identical.
+
+## AnkiDroid JavaScript API constants
+
+`lib/src/ankidroid_js_api_constants.dart` preserves the ten integer error codes,
+the source-spelled `ANKI_JS_ERROR_CODE_BURT_NOTE`, current and minimum API
+versions (`0.0.3`), and insertion-ordered `flagCommands` table from
+`AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPIConstants.kt` at pinned
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The table
+uses only the eight referenced `ViewerCommand` enum values from
+`AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerCommand.kt`; command
+bindings and default actions are outside this value-only port. The focused
+source-derived cases in `test/ankidroid_js_api_constants_test.dart` check each
+error code, both version constants, table key order and mapping, and nullable
+lookup for an unknown key. The pinned constants file carries the GNU GPL
+license notice and Copyright (c) 2020 Mani <infinyte01@gmail.com>; the enum
+declares `SPDX-License-Identifier: GPL-3.0-or-later`. The Dart adaptation and
+tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Android
+WebView/JavaScript bridge execution, command dispatch, localization, version
+parsing, UI, and logging remain host-side. Root `COPYING` remains unchanged.

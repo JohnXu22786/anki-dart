@@ -22,12 +22,12 @@
  */
 
 import 'npm_package_name.dart';
+import 'ankidroid_js_api_constants.dart';
 import 'kotlin_whitespace.dart';
 
 const ankidroidJsAddonKeyword = 'ankidroid-js-addon';
 const reviewerAddon = 'reviewer';
 const noteEditorAddon = 'note-editor';
-const currentJsApiVersion = '0.0.3';
 
 /// Parsed package manifest fields consumed by AnkiDroid's add-on projection.
 ///

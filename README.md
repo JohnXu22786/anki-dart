@@ -40,6 +40,31 @@ test authorship, and GPL-3.0-or-later attribution are recorded in
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
 root `COPYING` remains unchanged.
 
+## JavaScript add-on manifest validation and projection
+
+`AddonData`, `DistInfo`, `AddonModel`, and the pure
+`getAddonModelFromAddonData()` projection preserve the parsed-manifest rules
+from `AddonData.kt` and `AddonModel.kt` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The projection checks required
+fields first, then accumulates npm-name, add-on type, note-editor icon, keyword,
+and JS API version errors in source order. Reviewer icons default to empty;
+optional description, author, and license values retain their source defaults,
+and registry `dist` remains nullable. The host supplies the three callbacks
+used by `validateNpmPackageName()` for locale-sensitive lowercasing, URL
+encoding, and logging.
+
+The focused Dart tests port the direct pure cases in
+`AddonModelTest.kt` for missing name, keywords and version, invalid add-on type,
+missing registry `dist`, and absent optional metadata, plus valid projection
+semantics. Manifest file reads and JSON decoding, unknown-key handling,
+directory listing, URL parsing/fetching, HTTP, listing logs, and filesystem
+errors remain host-side; JSON-file and URL-list integration tests are not
+ported. The adapted sources are GPL-3.0-or-later, with upstream source
+copyrights by Mani (2021, and 2020 for `AnkiDroidJsAPIConstants.kt`). See
+[ANKIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the exact source paths, test boundary, and license record; root `COPYING`
+remains unchanged.
+
 ## npm package-name validation
 
 `validateNpmPackageName` ports `NpmUtils.validateName()` from AnkiDroid 2.25.3

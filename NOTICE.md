@@ -105,6 +105,34 @@ does not imply endorsement by the AnkiDroid or Anki projects.
   adaptation and tests are Copyright © 2026 John Tsui and marked
   `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/jsaddons/AddonData.kt`,
+  `AddonModel.kt`, and `AddonsConst.kt` (pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declare
+  `GPL-3.0-or-later` and Copyright © 2021 Mani
+  <infinyte01@gmail.com>. `AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPIConstants.kt`
+  carries the GPL license notice and Copyright © 2020 Mani
+  <infinyte01@gmail.com>. Only the parsed `AddonData`/`DistInfo` values,
+  `AddonModel`, the `AddonValidationResult` variants, the three add-on
+  constants, current JS API version, and `getAddonModelFromAddonData()` are
+  adapted in `lib/src/addon_model.dart`. The Dart projection supplies
+  `validateNpmPackageName()`'s locale-lowercase, URL-encoding, and logging
+  callbacks; it preserves the early required-field guard, ordered accumulated
+  errors, defaults, and nullable registry `dist`.
+
+  The pinned
+  `AnkiDroid/src/test/java/com/ichi2/anki/jsaddons/AddonModelTest.kt` is
+  Copyright © 2021 Mani <infinyte01@gmail.com> and marked
+  `GPL-3.0-or-later`. The Dart cases in `test/addon_model_test.dart` port its
+  direct pure missing-name, missing-keywords, missing-version, invalid-type,
+  missing-`dist`, and absent-optional-metadata checks and cover successful
+  parsed-data projection. JSON-file valid/invalid mapping, unreadable-file
+  handling, URL-list loading, JSON decoding/unknown-key behavior, directory
+  listing, URL parsing/fetching, HTTP, Timber listing logs, and filesystem
+  handling remain host-side; `getAddonModelFromJson()` and
+  `getAddonModelListFromJson()` are not ported. The adaptation and focused test
+  are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+  remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/analytics/AnalyticsSamplePercentage.kt:1–38`
   (pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) declares

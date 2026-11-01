@@ -18,6 +18,7 @@
  */
 
 export 'src/anki_backend_language.dart';
+export 'src/addon_model.dart';
 export 'src/analytics_sample_percentage.dart';
 export 'src/card_state_filter.dart';
 export 'src/filename.dart';

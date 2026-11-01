@@ -3038,6 +3038,21 @@ The Dart adaptation and tests are Copyright © 2026 John Tsui under
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and attribution details.
 
+## View background tint
+
+`setBackgroundTint()` preserves AnkiDroid's Kotlin Float32 multiplication and
+`Float.toInt()` truncation, NaN, and Int32 saturation behavior without clamping
+alpha. It calls the host MaterialColors composite, ColorStateList factory, and
+View tint assignment in source order, preserving callback failures and the
+exact tint token. Android color and View objects remain host-side. Focused
+source-derived cases are in
+[test/view_set_background_tint_test.dart](test/view_set_background_tint_test.dart);
+no direct pinned test was found. The source mapping and attribution are recorded
+in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+The Kotlin source header attributes Copyright © 2025 Danilo Mendes and the
+upstream code is GPL-3.0-or-later; the Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## BitmapDrawable PNG Base64 conversion
 
 `bitmapDrawableToBase64Png()` preserves the pinned AnkiDroid wrapper's stream

@@ -2576,3 +2576,17 @@ FragmentTransaction, lifecycle, and commit effects remain host-side. The pinned
 Kotlin source declares `GPL-3.0-or-later` and contains no separate copyright
 line. The Dart adaptation and focused source-derived tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+`lib/src/view_set_background_tint.dart` and
+`test/view_set_background_tint_test.dart` adapt `View.setBackgroundTint(color,
+alpha)` from `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/View.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+Dart projection preserves Float32 multiplication and Kotlin `Float.toInt()`
+truncation, NaN, and Int32 saturation semantics, does not clamp alpha, and
+preserves the source host call order and failure behavior. MaterialColors,
+Android ColorStateList/View, and tint state remain host-side. No direct pinned
+test for this extension was found; the Dart cases are source-derived. The
+Kotlin source header attributes Copyright (c) 2025 Danilo Mendes and has no
+file-level SPDX identifier; AnkiDroid is distributed under
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.

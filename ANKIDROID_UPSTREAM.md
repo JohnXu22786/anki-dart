@@ -1478,12 +1478,33 @@ saturation), and checks containment against the host drawing rectangle. This
 intentionally retains the pinned source's use of View left/top for translation
 while using the drawing rectangle for containment. Android View, MotionEvent,
 `Rect`, and drawing-rect retrieval remain host-side; the sibling `onGlobalLayout`
-and `setBackgroundTint` extensions are not included. A search of pinned
+extension remains outside this mapping. A search of pinned
 AnkiDroid tests found no direct test for this extension. The source header is
 Copyright (c) 2025 Danilo Mendes and has no file-level SPDX identifier; the
 upstream repository is distributed under `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under that same license. Root `COPYING`
 remains byte-identical.
+
+## View.setBackgroundTint
+
+`setBackgroundTint()` in `lib/src/view_set_background_tint.dart` and its
+source-derived cases in `test/view_set_background_tint_test.dart` adapt
+`View.setBackgroundTint(color, alpha)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/View.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The projection
+rounds the Dart alpha input to the source Kotlin `Float`, multiplies by 255 with
+binary32 rounding, then converts with Kotlin `Float.toInt()` semantics:
+truncate toward zero, map NaN to zero, and saturate to signed Int32 bounds. It
+does not clamp or validate alpha despite the source KDoc range. It then calls
+the host `MaterialColors.compositeARGBWithAlpha`, `ColorStateList.valueOf`, and
+View tint assignment once each in source order; host failures propagate
+unchanged and short-circuit later operations. MaterialColors, Android
+ColorStateList/View, and actual tint state remain host-side. A search of pinned
+AnkiDroid tests found no direct test for this extension. The Kotlin source has
+Copyright (c) 2025 Danilo Mendes and no file-level SPDX identifier; the
+upstream repository is distributed under `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under that same license.
+Root `COPYING` remains byte-identical.
 
 ## BitmapDrawable.toBase64Png
 

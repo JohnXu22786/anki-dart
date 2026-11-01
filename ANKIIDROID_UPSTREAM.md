@@ -229,3 +229,20 @@ test for this method was found. The Kotlin file declares
 `SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright line.
 The Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
 `GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
+## `MutableStateFlow<T>.asVar()`
+
+`MutableValue<T>`, `StateFlowVarDelegate<T>`, and `asVar()` in
+`lib/src/state_flow_var_delegate.dart` adapt `MutableStateFlow<T>.asVar()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MutableStateFlow.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Each
+`asVar()` call allocates a delegate retaining the exact mutable host object;
+reads return that object's current `value`, and writes assign the supplied
+value once. Kotlin's receiver and property metadata are accepted but ignored.
+Dart has no Kotlin `by` syntax, so callers use `getValue()` and `setValue()`
+explicitly. `MutableStateFlow` itself, emissions, conflation, dispatch, saved
+state, Android ViewModels, and lifecycle behavior remain host-side. Focused
+coverage is in `test/state_flow_var_delegate_test.dart`. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

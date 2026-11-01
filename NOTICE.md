@@ -32,6 +32,17 @@ The host retains byte decoding, the default charset, Android
 `InputStreamReader`/4096-character `BufferedReader`, stream closing, and Timber
 logging. Root `COPYING` remains byte-identical.
 
+`lib/src/state_flow_var_delegate.dart` and
+`test/state_flow_var_delegate_test.dart` adapt `MutableStateFlow<T>.asVar()`
+from `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MutableStateFlow.kt`,
+pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line; the Dart adaptation and focused tests are Copyright © 2026 John Tsui and
+marked `GPL-3.0-or-later`. The delegate retains a host mutable-value object and
+forwards direct reads and writes, while the host retains flow emission,
+conflation, dispatch, Android saved state, and lifecycle behavior. Root
+`COPYING` remains byte-identical.
+
 `lib/src/notetype_cloze_text_fields.dart` and
 `test/notetype_cloze_text_fields_test.dart` adapt
 `getAllClozeTextFields()` from

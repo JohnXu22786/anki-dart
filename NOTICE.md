@@ -7,6 +7,18 @@ does not imply endorsement by the AnkiDroid or Anki projects.
 
 ## Adapted source
 
+`lib/src/whole_and_fraction.dart` and `test/whole_and_fraction_test.dart` adapt
+`Double.wholeAndFraction()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Double.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin source declares
+`GPL-3.0-or-later` and Copyright © 2026 Shaan Narendran
+<shaannaren06@gmail.com>. The Dart adaptation and focused tests are Copyright
+© 2026 John Tsui and marked `GPL-3.0-or-later`. The method keeps Kotlin/JVM
+`Double.toLong()` behavior (truncate, NaN to zero, and saturation at signed
+64-bit bounds), followed by binary64 subtraction of the converted whole value.
+Root `COPYING` remains byte-identical.
+
 `lib/src/card_type_name.dart` and `test/card_type_name_test.dart` adapt the
 `CardTypeName` wrapper from
 `AnkiDroid/src/main/java/com/ichi2/anki/notetype/CardTypeName.kt`, pinned to

@@ -33,6 +33,7 @@ export 'src/mime_type_utils.dart';
 export 'src/npm_package_name.dart';
 export 'src/notification_id.dart';
 export 'src/unique_work_names.dart';
+export 'src/whole_and_fraction.dart';
 export 'src/deck_filters.dart';
 export 'src/card_utils.dart';
 export 'src/viewer_refresh.dart';

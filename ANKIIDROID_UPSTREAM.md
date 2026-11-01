@@ -1,5 +1,24 @@
 # AnkiDroid upstream source record
 
+## `Double.wholeAndFraction()`
+
+`wholeAndFraction()` in `lib/src/whole_and_fraction.dart` and its source-derived
+cases in `test/whole_and_fraction_test.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Double.kt` from AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source computes
+`whole = this.toLong()`, then `fraction = this - whole`, and returns
+`Pair(whole, fraction)`; the Dart named record preserves these fields and this
+operation order. The conversion truncates finite in-range values toward zero,
+maps NaN to zero, and saturates infinities and out-of-range values to signed
+64-bit Long bounds. The subtraction then uses binary64 arithmetic, including
+the conversion of the saturated Long back to double. The focused tests exercise
+signed fractional inputs, negative zero, NaN, infinities, both Long bounds, and
+remainder calculation beyond those bounds. No direct test for this upstream
+extension was found in the pinned checkout. The upstream source declares
+`GPL-3.0-or-later` and Copyright © 2026 Shaan Narendran
+<shaannaren06@gmail.com>; the Dart adaptation and test are Copyright © 2026
+John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 This repository is a partial, modified Dart port of AnkiDroid 2.25.3. The
 upstream source baseline is commit
 `d9bf072f814a0c37d30a694192593b31ff2df875` from

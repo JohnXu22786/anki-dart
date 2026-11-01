@@ -4,6 +4,18 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Double whole and fraction
+
+`wholeAndFraction()` in `lib/src/whole_and_fraction.dart` ports
+`Double.wholeAndFraction()` from AnkiDroid 2.25.3. It truncates toward zero,
+maps NaN to zero, saturates at signed 64-bit bounds, then computes the
+fraction by binary64 subtraction. Focused cases are in
+`test/whole_and_fraction_test.dart`. The upstream method declares
+`GPL-3.0-or-later` and Copyright © 2026 Shaan Narendran; the Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Field filter context, built-ins, and chains
 
 `FilterContext`, the `FieldFilter` default contract, built-ins including

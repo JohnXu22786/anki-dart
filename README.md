@@ -3806,3 +3806,19 @@ direct pinned test for this helper was found. The Kotlin source declares
 (c) 2014 Timothy Rae; these identify the source file and do not claim authorship
 of the Dart adaptation. The Dart implementation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Launcher destination Intent
+
+[`LauncherDestination.instance.toIntent()`](lib/src/launcher_destination_to_intent.dart)
+adapts `LauncherDestination.toIntent(context)`: it creates one host Intent with
+the exact context and target token, sets the supplied action, adds the supplied
+category, and returns that same Intent. The host supplies the equivalent of
+`IntentHandler::class.java`, `Intent.ACTION_MAIN`, and
+`Intent.CATEGORY_LAUNCHER`. The adapter does not add flags or resolve or change
+the component; Android Intent behavior and launcher handling remain host-side.
+Focused source-derived tests in
+[`test/launcher_destination_to_intent_test.dart`](test/launcher_destination_to_intent_test.dart)
+cover callback order, exact token forwarding, identity, single invocation, and
+callback failures. No direct pinned test for this method was found. Source provenance and license details are in
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
+root `COPYING` remains byte-identical.

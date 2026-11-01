@@ -3217,3 +3217,22 @@ was found; focused Dart cases are source-derived. The Kotlin source declares
 (c) 2014 Timothy Rae; those names refer to the Kotlin source, not authorship of
 the Dart adaptation. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Launcher destination Intent
+
+`lib/src/launcher_destination_to_intent.dart` and
+`test/launcher_destination_to_intent_test.dart` adapt
+`LauncherDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/LauncherDestination.kt:9–14`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter creates one host
+Intent with the exact context and target token, sets the host-supplied main
+action, adds the host-supplied launcher category, and returns that same Intent.
+Callback failures propagate unchanged and stop later operations. The adapter
+does not add flags or resolve or change the component; Android IntentHandler,
+action/category constants and semantics, and launcher handling remain
+host-side. No direct pinned test for this method was found; focused source-derived cases cover callback order, exact token
+forwarding, identity, single invocation, and callback failures. The Kotlin
+source declares `GPL-3.0-or-later` and has no separate source copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

@@ -413,3 +413,4 @@ export 'src/fragment_is_compact_width.dart';
 export 'src/fragment_window.dart';
 export 'src/fragment_shared_prefs.dart';
 export 'src/note_editor_intent_launched_with_image.dart';
+export 'src/launcher_destination_to_intent.dart';

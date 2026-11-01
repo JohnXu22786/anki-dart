@@ -20,6 +20,7 @@
 export 'src/anki_backend_language.dart';
 export 'src/bundle_utils.dart';
 export 'src/notetype_cloze_text_fields.dart';
+export 'src/note_editor_caller.dart';
 export 'src/addon_model.dart';
 export 'src/ankidroid_js_api_constants.dart';
 export 'src/ankidroid_js_api_card_data.dart';

@@ -5,6 +5,21 @@ This repository contains a partial, modified Dart port of code from
 `d9bf072f814a0c37d30a694192593b31ff2df875`. It is an independent project and
 does not imply endorsement by the AnkiDroid or Anki projects.
 
+## Note Editor caller codes
+
+`lib/src/note_editor_caller.dart` and `test/note_editor_caller_test.dart`
+adapt `NoteEditorFragment.Companion.NoteEditorCaller` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2716–2735`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The enum names, values, declaration
+order, exact lookup, and unknown-value failure are retained. Navigation and
+launch-argument handling remain host-side. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; those names refer to the Kotlin source, not authorship of
+the Dart adaptation. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`. No direct pinned test for `fromValue()` was found.
+Root `COPYING` remains byte-identical.
+
 ## Generic out-of-memory guard
 
 `lib/src/run_with_oom_check.dart` and `test/run_with_oom_check_test.dart`

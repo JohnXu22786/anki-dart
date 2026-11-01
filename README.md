@@ -484,6 +484,18 @@ and generated data-class string form. The Kotlin sources and test declare
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and license details.
 
+## Note Editor caller codes
+
+`NoteEditorCaller` in [`lib/src/note_editor_caller.dart`](lib/src/note_editor_caller.dart)
+preserves the enum names, integer values, and declaration order from
+`NoteEditorFragment.Companion.NoteEditorCaller` in AnkiDroid 2.25.3. Its
+`fromValue()` lookup requires an exact code and throws `StateError` for an
+unknown value; the intentionally nonnumeric source order is retained. Focused
+cases are in [`test/note_editor_caller_test.dart`](test/note_editor_caller_test.dart).
+The host remains responsible for Note Editor navigation and launch arguments.
+Source and license details are in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md); root `COPYING` remains byte-identical.
+
 ## Current port scope
 
 The language-tag value and parser also follow AnkiDroid 2.25.3, including its

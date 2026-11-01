@@ -8,6 +8,23 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## `NoteEditorFragment.Companion.NoteEditorCaller`
+
+`NoteEditorCaller` in `lib/src/note_editor_caller.dart` ports the enum from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2716–2735`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves every enum name,
+integer value, and source declaration order, including the deliberate ordering
+of `REVIEWER_ADD(11)` before `CARDBROWSER_ADD(7)`. `fromValue()` returns the
+first exact match and throws `StateError` for an unknown value, matching the
+source's `first` lookup. Focused source-derived cases are in
+`test/note_editor_caller_test.dart`; no direct pinned test for `fromValue()` was
+found. Navigation and launch-argument handling remain host-side. The Kotlin
+source declares `GPL-3.0-or-later` and carries file-level Copyright (c) 2012
+Norbert Nagold and (c) 2014 Timothy Rae. These names identify the provenance
+of the Kotlin source only; the Dart adaptation and focused test are Copyright
+© 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 ## `runWithOOMCheck(action, onError)`
 
 `runWithOomCheck()` in `lib/src/run_with_oom_check.dart` adapts the generic

@@ -511,6 +511,21 @@ navigation. Source provenance, license, and copyright details are in
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md); root
 `COPYING` remains byte-identical.
 
+[`noteEditorImageOcclusionToIntent()`](lib/src/note_editor_image_occlusion_to_intent.dart)
+adapts the `ImageOcclusion` branch of
+`NoteEditorDestination.toIntent(context)`: it creates one host Intent, writes
+`CALLER: 12`, then always writes the nullable URI unchanged as the `image_uri`
+Parcelable extra, and returns the same Intent. Android context, activity
+component, Intent construction, and Parcelable behavior remain host-side.
+Focused cases in
+[`test/note_editor_image_occlusion_to_intent_test.dart`](test/note_editor_image_occlusion_to_intent_test.dart)
+cover the exact order, null and non-null URI values, identity, and callback
+failure short circuits. The Kotlin source declares `GPL-3.0-or-later` and has
+SPDX Copyright (c) 2024 Sanjay Sargam; this is attribution for the Kotlin
+source only. The Dart adaptation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+
 ## Note Editor newline replacement preference
 
 `noteEditorShouldReplaceNewlines()` in

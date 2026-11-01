@@ -31,6 +31,27 @@ names identify the provenance of the Kotlin source only; the Dart adaptation
 and focused test are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
 `COPYING` remains byte-identical.
 
+## `NoteEditorDestination.ImageOcclusion.toIntent(context)`
+
+`noteEditorImageOcclusionToIntent()` in
+`lib/src/note_editor_image_occlusion_to_intent.dart` adapts the
+`ImageOcclusion` branch of `NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:23–27`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `NoteEditorCaller.IMG_OCCLUSION` (`12`), then always writes the
+nullable `imageUri` unchanged as the `image_uri` Parcelable extra, and returns
+the same Intent. Callback failures propagate unchanged and stop later
+operations. Context, `NoteEditorActivity`, Android Intent, and Uri/Parcelable
+behavior remain host-side. Focused source-derived tests in
+`test/note_editor_image_occlusion_to_intent_test.dart` cover call order, null
+and non-null URI forwarding, Intent identity, and failure short circuits. No
+direct pinned test for this branch was found. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; these identify
+the Kotlin source only and do not attribute the Dart adaptation to him. The
+Dart implementation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
 ## `NoteEditorFragment.Companion.newInstance(args)`
 
 `noteEditorFragmentNewInstance()` in

@@ -2311,3 +2311,23 @@ pinned Kotlin source is GPL-3.0-or-later, Copyright © 2020 Arthur Milchior. Its
 direct test is Copyright © 2021 Shridhar Goel. The Dart adaptation and test are
 Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING` remains
 byte-identical.
+
+## `JSONObjectHolder` and `JSONContainer<T>`
+
+Pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/json/JSONContainer.kt`
+- Direct test: none found for `JSONContainer`
+- Dart adaptation: `lib/src/json_container.dart`
+- Focused Dart test: `test/json_container_test.dart`
+
+`JSONObjectHolder` exposes its opaque host JSON object. `JSONContainer<T>`
+retains its host array and object constructor, lazily maps the host object
+iterator, reads one typed object at the exact requested index, writes the
+holder's JSON object at the exact requested index, and delegates length to the
+host array. The `indices` property preserves the source's `this.toList().indices`
+eagerness and constructor failure timing. The host retains JSON.org values,
+storage, accessors, and exceptions; no JSON.org implementation code is copied.
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and test are Copyright © 2026 John Tsui under
+GPL-3.0-or-later. Root `COPYING` remains byte-identical.

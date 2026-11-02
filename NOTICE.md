@@ -34,6 +34,21 @@ JSON.org code is copied or attributed to the host or this adapter. The Dart
 implementation and tests are Copyright © 2026 John Tsui under GPL-3.0-or-later.
 Root `COPYING` remains byte-identical.
 
+## JSONContainer
+
+`lib/src/json_container.dart` and `test/json_container_test.dart` adapt
+`JSONObjectHolder` and `JSONContainer<T>` from
+`common/src/main/java/com/ichi2/anki/common/json/JSONContainer.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source
+declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation keeps host JSON objects, arrays, typed reads, and indexed writes on
+the host side. It preserves lazy holder construction during iteration, exact
+index forwarding, and eager construction for `indices`. Dart's
+`Iterable.length` getter represents the Kotlin `length()` operation. No
+JSON.org implementation code is copied. The Dart implementation and tests are
+Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING` remains
+byte-identical.
+
 ## Throwable root cause
 
 `lib/src/root_cause.dart` and `test/root_cause_test.dart` adapt

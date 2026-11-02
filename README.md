@@ -3934,6 +3934,25 @@ and license details are in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 Arthur Milchior, and includes a JSON.org notice for other code. No JSON.org
 implementation code is copied. Root `COPYING` remains byte-identical.
 
+## JSONContainer
+
+[`JSONObjectHolder` and `JSONContainer`](lib/src/json_container.dart) adapt
+`JSONObjectHolder` and `JSONContainer<T>` from AnkiDroid 2.25.3's
+`common/src/main/java/com/ichi2/anki/common/json/JSONContainer.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter leaves JSON.org
+objects and arrays, typed object reads, indexed writes, and their failure
+behavior with the host. It maps the host iterator lazily, preserves direct
+index forwarding for get and set, and keeps `indices` eager by constructing
+every holder before returning the index sequence. Dart's `Iterable.length`
+getter represents the Kotlin `length()` operation, and `size` delegates to it.
+Focused source-derived tests are in
+[`test/json_container_test.dart`](test/json_container_test.dart); no direct
+pinned AnkiDroid JSONContainer test was found. The source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Common time utilities
 
 [`lib/src/time_utils.dart`](lib/src/time_utils.dart) adapts the portable

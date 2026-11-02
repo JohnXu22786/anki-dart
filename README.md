@@ -4349,3 +4349,13 @@ remain host-side. No direct pinned `ViewModelProgress` test was found. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under GPL-3.0-or-later;
 upstream source attribution is recorded in [NOTICE.md](NOTICE.md). Root
 `COPYING` remains unchanged.
+
+## Add note-type UI model
+
+`AddNotetypeUiModel` ports the add-note-type list's ID, name and standard-note-
+type flag with Kotlin data-class equality and hash behavior. The conversion
+helper accepts host-supplied ID and name values without generated protobuf
+types. Collection lookup and Android list/UI remain host-side. Source-derived
+tests are in [`test/add_notetype_ui_model_test.dart`](test/add_notetype_ui_model_test.dart);
+see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for the source mapping and attribution.

@@ -1,3 +1,17 @@
+## Add note-type UI model
+
+`lib/src/add_notetype_ui_model.dart` and
+`test/add_notetype_ui_model_test.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/notetype/NotetypeUiModel.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The model preserves the source
+fields and Kotlin data-class equality/hash semantics. The conversion helper
+accepts host-supplied `id` and `name` values, avoiding a dependency on generated
+protobuf classes. No direct pinned test for this model was found; the focused
+Dart tests are source-derived. The Kotlin source is Copyright © 2022 lukstbit
+and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Database check progress and result projection
 
 `lib/src/database_check_projection.dart` and

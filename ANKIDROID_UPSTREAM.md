@@ -8,6 +8,24 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## Add note-type UI model
+
+`AddNotetypeUiModel` and `addNotetypeUiModelFromNameId()` in
+`lib/src/add_notetype_ui_model.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/notetype/NotetypeUiModel.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The model
+retains the `NoteTypeId`/name/`isStandard` fields, defaults `isStandard` to
+false and implements Kotlin data-class equality and hash behavior. The helper
+maps host-supplied `id` and `name` values as the source
+`NotetypeNameId.toUiModel()` extension does, without depending on generated
+protobuf classes. Focused source-derived cases are in
+`test/add_notetype_ui_model_test.dart`; no direct pinned test for this model was
+found. Collection lookup, generated protobuf integration, and Android list/UI
+remain host-side. The Kotlin source is Copyright © 2022 lukstbit and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+`NOTICE.md` for attribution details.
+
 ## View-model progress values
 
 `ProgressAmount`, `ViewModelProgressIdle`, and `ViewModelProgressActive` in

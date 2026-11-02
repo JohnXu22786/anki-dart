@@ -38,6 +38,7 @@ export 'src/note_editor_should_replace_newlines.dart';
 export 'src/csv_importer_destination.dart';
 export 'src/note_editor_should_hide_toolbar.dart';
 export 'src/addon_model.dart';
+export 'src/add_notetype_ui_model.dart';
 export 'src/ankidroid_js_api_constants.dart';
 export 'src/ankidroid_js_api_card_data.dart';
 export 'src/ankidroid_js_api_contract.dart';

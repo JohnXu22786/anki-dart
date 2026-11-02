@@ -28,6 +28,35 @@ const TIME_MINUTE = 60.0;
 const TIME_HOUR = 60.0 * TIME_MINUTE;
 const TIME_DAY = 24.0 * TIME_HOUR;
 
+/// Creates the host date from exactly one host-provided millisecond read.
+///
+/// The host remains responsible for the concrete date type and its time-zone
+/// semantics. The clock is read before date creation, and failures propagate.
+TDate currentDate<TTime, TDate>(
+  TTime time, {
+  required int Function(TTime time) intTimeMS,
+  required TDate Function(int milliseconds) createDate,
+}) => createDate(intTimeMS(time));
+
+/// Creates a host calendar and sets it to the single date returned by
+/// [currentDate].
+///
+/// The calendar is created before the clock is read. Concrete calendar, date,
+/// and time-zone semantics remain host-provided, and callback failures
+/// propagate in source order.
+TCalendar calendar<TTime, TDate, TCalendar>(
+  TTime time, {
+  required TCalendar Function() createCalendar,
+  required int Function(TTime time) intTimeMS,
+  required TDate Function(int milliseconds) createDate,
+  required void Function(TCalendar calendar, TDate date) setTime,
+}) {
+  final cal = createCalendar();
+  final date = currentDate(time, intTimeMS: intTimeMS, createDate: createDate);
+  setTime(cal, date);
+  return cal;
+}
+
 /// Returns the host-provided current time in whole seconds.
 ///
 /// The host supplies epoch milliseconds. Its clock is read once, then Dart's

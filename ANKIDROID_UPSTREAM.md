@@ -114,6 +114,27 @@ attribute the Dart adaptation to him. The Dart implementation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+## `Time.utcOffset()`
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/time/Time.kt:54–65`
+- Direct tests: none found
+- Dart adaptation: `utcOffset()` in `lib/src/time_utils.dart`
+- Focused Dart cases: `test/time_utc_offset_test.dart`
+
+`utcOffset()` creates one default host Calendar, reads `ZONE_OFFSET` and then
+`DST_OFFSET` once each from that same Calendar, adds their millisecond values
+with signed Int32 wrapping, divides by 1000 with truncation toward zero,
+subtracts from 14,400 with signed Int32 wrapping, and returns the result as a
+Double. Calendar creation, field access, default time zone, and DST rules remain
+host-side. The focused cases cover positive and negative non-divisible values,
+Int32 overflow, one Calendar and ordered reads, and error short-circuiting.
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart implementation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical.
+
 ## `Time.genToday(utcOffset)`
 
 Pinned to AnkiDroid 2.25.3 commit
@@ -846,6 +867,7 @@ undo, StateFlow, RecyclerView/lifecycle, and user messages remain host-side.
 | AnkiDroid 2.25.3 source | Dart port | Covered behavior |
 | --- | --- | --- |
 | `common/src/main/java/com/ichi2/anki/common/time/TimeUtils.kt:10–46` and direct tests `common/src/test/java/com/ichi2/anki/common/time/TimeUtilsTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `SECONDS_PER_DAY`, `TIME_MINUTE`, `TIME_HOUR`, `TIME_DAY`, `getTimestamp()`, `formatAsString()`, and `getDayStart()` in `lib/src/time_utils.dart`; focused cases in `test/time_utils_test.dart` | Preserves the constants, Double arithmetic, formatter creation/date-read/format order, signed Kotlin Long truncation and remainder behavior, selected format patterns, and `h % 60` wrap. `getDayStart()` preserves its single calendar, 4 AM comparison, ordered roll-back and field writes, and final time read. Source-derived cases cover callback order, failure short-circuiting, negative durations and >59-hour wrapping. `SimpleDateFormat` with `Locale.US` and the default time zone, Kotlin Duration conversion/String formatting, and Calendar time zone/DST/Gregorian behavior remain host-side. The source declares `GPL-3.0-or-later` and has no separate copyright line; the direct Kotlin test file credits Dhanush Sugganahalli. Dart attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/time/Time.kt:54–65` (`utcOffset`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `utcOffset()` in `lib/src/time_utils.dart`; focused cases in `test/time_utc_offset_test.dart` | Creates one default host Calendar, reads `ZONE_OFFSET` then `DST_OFFSET` once each, preserves signed Int32 addition/subtraction wrapping and truncation toward zero, and returns the exact Double result. Calendar creation, field access, time-zone, and DST behavior remain host-side. Callback failures propagate unchanged and stop later reads. No direct pinned test was found; cases are source-derived. The source declares `GPL-3.0-or-later` and has no separate copyright line; Dart attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |
 | `common/src/main/java/com/ichi2/anki/common/time/Time.kt:intTime()` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `intTime()` in `lib/src/time_utils.dart`; focused cases in `test/int_time_test.dart` | Reads the host millisecond clock once, divides signed milliseconds by 1000 with truncation toward zero, and propagates host read failures unchanged. No direct pinned `intTime()` test was found; negative subsecond and non-multiple cases are source-derived. Host clock access remains host-side. The source declares `GPL-3.0-or-later` and has no separate copyright line. Dart attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |
 | `common/src/main/java/com/ichi2/anki/common/time/Time.kt:35–47` (`genToday`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `genToday()` in `lib/src/time_utils.dart`; focused cases in `test/gen_today_test.dart` | Preserves formatter creation, GMT lookup/assignment, one clock read, Kotlin/JVM `Double.toLong()` truncation/saturation/NaN conversion, wrapping signed 64-bit multiplication and subtraction, default-zone Gregorian calendar assignment, same-formatter Date formatting, and unchanged SQL Date input. Callback failures propagate and short-circuit. Concrete JVM formatter, time-zone, GregorianCalendar, Date, and `java.sql.Date.valueOf` behavior remain host-side. No direct pinned test was found; focused Dart cases are source-derived. The source declares `GPL-3.0-or-later` and has no separate copyright line; Dart attribution and license details are in `NOTICE.md`, and root `COPYING` remains byte-identical. |
 | `common/src/main/java/com/ichi2/anki/common/time/Time.kt:currentDate` and `calendar()` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `currentDate()` and `calendar()` in `lib/src/time_utils.dart`; focused cases in `test/time_current_date_calendar_test.dart` | `currentDate()` reads host milliseconds once before creating the host date. `calendar()` creates one calendar first, evaluates the current date once, assigns that exact date, and returns the same calendar. Creation, clock, date, and assignment failures propagate unchanged and prevent later callbacks. Concrete JVM Date/Calendar, default time zone, DST, and Gregorian behavior remain host-side. No direct pinned tests were found; focused cases are source-derived. The source declares `GPL-3.0-or-later` and has no separate copyright line. Dart attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |

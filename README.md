@@ -3982,7 +3982,9 @@ creation and `calendar()`'s calendar-first order, exact date assignment, and
 failure propagation. It also preserves formatter/calendar callback order,
 signed Kotlin duration arithmetic, and the source's hour wrapping. `intTime()`
 reads host milliseconds once and truncates signed division toward zero,
-including negative subsecond values. `genToday()` preserves the formatter,
+including negative subsecond values. `utcOffset()` creates one host calendar,
+reads its zone and DST millisecond offsets in order, and preserves Kotlin/JVM
+signed Int32 wrapping and truncating division. `genToday()` preserves the formatter,
 GMT assignment, single clock read, Kotlin `Double.toLong()` saturation, signed
 64-bit offset arithmetic, default-zone Gregorian calendar assignment, date
 formatting, and SQL date parsing sequence. The host owns the concrete JVM
@@ -3993,9 +3995,10 @@ Calendar types and time-zone behavior, Kotlin duration conversion and formatting
 and calendar DST rules remain host-side. Focused
 cases are in
 [`test/time_utils_test.dart`](test/time_utils_test.dart) and
-[`test/int_time_test.dart`](test/int_time_test.dart) and
-[`test/time_current_date_calendar_test.dart`](test/time_current_date_calendar_test.dart)
-and [`test/gen_today_test.dart`](test/gen_today_test.dart).
+[`test/int_time_test.dart`](test/int_time_test.dart),
+[`test/time_current_date_calendar_test.dart`](test/time_current_date_calendar_test.dart),
+[`test/time_utc_offset_test.dart`](test/time_utc_offset_test.dart), and
+[`test/gen_today_test.dart`](test/gen_today_test.dart).
 The Kotlin source is
 GPL-3.0-or-later with no separate copyright line; the Dart implementation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`

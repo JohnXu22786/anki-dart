@@ -418,6 +418,21 @@ SPDX Copyright (c) 2024 Sanjay Sargam; this identifies the Kotlin source only.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
 
+## `Time.utcOffset()`
+
+`utcOffset()` in `lib/src/time_utils.dart` and source-derived cases in
+`test/time_utc_offset_test.dart` adapt `Time.utcOffset()` from
+`common/src/main/java/com/ichi2/anki/common/time/Time.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host creates one
+default Calendar and reads `ZONE_OFFSET` then `DST_OFFSET` from it once each.
+The adapter preserves signed Int32 addition and subtraction wrapping, truncating
+division toward zero, the exact Double result, and failure propagation in source
+order. Default time-zone, DST, and Calendar behavior remain host-side. No direct
+pinned test was found; the focused cases are source-derived. The Kotlin source
+is GPL-3.0-or-later with no separate copyright line. The Dart implementation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## `Time.genToday(utcOffset)`
 
 `genToday()` in `lib/src/time_utils.dart` and source-derived cases in

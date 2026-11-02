@@ -57,6 +57,26 @@ TCalendar calendar<TTime, TDate, TCalendar>(
   return cal;
 }
 
+/// Returns AnkiDroid's UTC offset in seconds as a [double].
+///
+/// The host creates one default calendar and reads its zone and DST offsets in
+/// source order. Signed Int32 wrapping and truncating division match Kotlin/JVM;
+/// calendar, time-zone, and DST behavior remain host-provided.
+double utcOffset<TCalendar>({
+  required TCalendar Function() createCalendar,
+  required int Function(TCalendar calendar) getZoneOffset,
+  required int Function(TCalendar calendar) getDstOffset,
+}) {
+  final cal = createCalendar();
+  final zoneOffset = getZoneOffset(cal);
+  final dstOffset = getDstOffset(cal);
+  final offsetSeconds = _wrapSignedInt32(zoneOffset + dstOffset) ~/ 1000;
+  return _wrapSignedInt32(14_400 - offsetSeconds).toDouble();
+}
+
+int _wrapSignedInt32(int value) =>
+    ((value + 0x80000000) % 0x100000000) - 0x80000000;
+
 /// Returns AnkiDroid's effective SQL date for [utcOffset] seconds.
 ///
 /// Host callbacks provide the JVM formatter, time zone, Gregorian calendar,

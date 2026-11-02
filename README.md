@@ -38,6 +38,23 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and attribution details.
 
+## ViewModel delayed initialization
+
+`InitStatus` and `projectViewModelDelayedInit()` in
+[`lib/src/view_model_delayed_initializer.dart`](lib/src/view_model_delayed_initializer.dart)
+project the state and callback order from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ViewModelUtils.kt` in AnkiDroid
+2.25.3. The host supplies the launch scheduler, state publication, Timber
+logging, and async init block; the projection passes work to the host scheduler
+and preserves deferred execution, callback order, and Exception boundaries.
+`ChangeNoteTypeViewModel.kt` uses this contract to initialize its model
+properties. Focused cases are in
+[`test/view_model_delayed_initializer_test.dart`](test/view_model_delayed_initializer_test.dart).
+The source declares `GPL-3.0-or-later` and has no separate copyright line. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source and attribution details.
+
 ## Non-leading-zero input filter decision
 
 `nonLeadingZeroInputFilter()` in

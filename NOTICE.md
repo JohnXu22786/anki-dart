@@ -111,6 +111,17 @@ declare `GPL-3.0-or-later` and contain no separate copyright line. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 The host retains coroutine scheduling and Timber logging.
 
+## ViewModel delayed initialization
+
+`lib/src/view_model_delayed_initializer.dart` and
+`test/view_model_delayed_initializer_test.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ViewModelUtils.kt` from AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The contract is used
+by `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt`.
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. The host retains coroutine scheduling, StateFlow, and Timber logging.
+
 ## View-model progress values
 
 `lib/src/view_model_progress.dart` and `test/view_model_progress_test.dart`

@@ -15,6 +15,24 @@ copyright line. The Dart adaptation and focused source-derived tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+## ViewModel delayed initialization
+
+`InitStatus` and `projectViewModelDelayedInit()` in
+`lib/src/view_model_delayed_initializer.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ViewModelUtils.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+contract is used by
+`AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:152,280–300`
+to expose delayed model initialization progress. The Dart projection passes its
+work closure to the host launch callback, preserving deferred scheduling, then
+publishes InProgress before the try region and mirrors the source's debug logs,
+success publication, and Exception handling. Host scheduling, StateFlow,
+ViewModel lifecycle, and Timber remain host-side. Focused cases are in
+`test/view_model_delayed_initializer_test.dart`; no direct pinned test for
+`ViewModelUtils.kt` was found. The Kotlin source declares `GPL-3.0-or-later` and
+has no separate copyright line. The Dart adaptation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `DeckOptionsDestination` model, factories, and `toIntent(context)`
 
 `DeckOptionsDestination`, `DeckOptionsEntry`, and their factory/Intent

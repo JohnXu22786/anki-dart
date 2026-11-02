@@ -3950,3 +3950,20 @@ to AnkiDroid 2.25.3 commit
 `GPL-3.0-or-later` and has no separate copyright line. The Dart projection and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## Language locale parsing and RTL projection
+
+`lib/src/language_utils.dart` and `test/language_utils_test.dart` adapt
+`localeFromStringIgnoringScriptAndExtensions()` and `appLanguageIsRTL()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/LanguageUtils.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart adapter
+preserves first-`#` truncation, underscore split field counts and text,
+constructor callback shape, and the first UTF-16 code-unit directionality
+lookup. The host retains `Locale.forLanguageTag`, default-locale display-name
+resolution, and Java Character directionality. The pinned
+`LanguageUtilsTest.kt` has no direct coverage for these methods; the focused
+Dart cases are source-derived. The Kotlin source declares `GPL-3.0-or-later`
+and carries Copyright (c) 2021 mikunimaru; this identifies the upstream source
+and does not claim authorship of the Dart adaptation. The Dart implementation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

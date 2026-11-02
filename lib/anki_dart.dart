@@ -18,6 +18,7 @@
  */
 
 export 'src/anki_backend_language.dart';
+export 'src/language_utils.dart';
 export 'src/bundle_utils.dart';
 export 'src/notetype_cloze_text_fields.dart';
 export 'src/note_editor_caller.dart';

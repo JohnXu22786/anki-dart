@@ -4265,3 +4265,18 @@ order and joins labels, including empty labels. The host retains exception
 objects and any actual platform `CombinedException`. Source-derived tests are in
 [`test/combined_exception_projection_test.dart`](test/combined_exception_projection_test.dart);
 no direct pinned test was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Language utilities
+
+[`localeFromStringIgnoringScriptAndExtensions`](lib/src/language_utils.dart)
+truncates locale strings at the first `#` and preserves Kotlin's underscore
+split fields before calling the host's Locale constructor with a normalized
+tag shape. [`appLanguageIsRTL`](lib/src/language_utils.dart) checks the first
+UTF-16 code unit of the host-resolved display name and recognizes only Java's
+right-to-left and right-to-left-Arabic directionality values. Locale creation,
+default-locale resolution, and Java Character semantics remain host-side.
+Source-derived boundary and callback tests are in
+[`test/language_utils_test.dart`](test/language_utils_test.dart); no direct
+pinned test for these LanguageUtils methods was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details. Root `COPYING` remains unchanged.

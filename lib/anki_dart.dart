@@ -44,6 +44,7 @@ export 'src/undo_status.dart';
 export 'src/ankidroid_js_api_constants.dart';
 export 'src/ankidroid_js_api_card_data.dart';
 export 'src/ankidroid_js_api_contract.dart';
+export 'src/javascript_evaluator.dart';
 export 'src/analytics_sample_percentage.dart';
 export 'src/analytics_event.dart';
 export 'src/analytics_routing.dart';

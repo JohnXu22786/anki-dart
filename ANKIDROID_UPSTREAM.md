@@ -2959,3 +2959,18 @@ credits Norbert Nagold (2011) and Houssam Salem (2014) and uses the same
 license. The Dart adaptation and tests are Copyright © 2026 John Tsui under
 the same license. Root `COPYING` remains byte-identical. See `NOTICE.md` for
 the source attribution.
+
+
+## JavaScript evaluator wrapper
+
+`lib/src/javascript_evaluator.dart` and
+`test/javascript_evaluator_test.dart` adapt `eval(js)` and
+`evaluateAfterDOMContentLoaded(script)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/JavascriptEvaluator.kt` in
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The wrapper string preserves the
+source raw literal's exact newlines, indentation, blank lines, and trailing
+spaces; the script is inserted verbatim and sent to the host callback once. The
+host retains WebView document state and JavaScript execution. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line. Dart attribution
+and license details are in `NOTICE.md`; root `COPYING` remains byte-identical.

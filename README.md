@@ -4604,3 +4604,19 @@ widgets and preference storage remain host-side. Focused cases are in
 [`test/custom_toolbar_button_test.dart`](test/custom_toolbar_button_test.dart).
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and attribution details. Root `COPYING` remains byte-identical.
+
+
+## JavaScript evaluator wrapper
+
+[`JavascriptEvaluator`](lib/src/javascript_evaluator.dart) adapts `eval(js)` and
+`evaluateAfterDOMContentLoaded(script)` from AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It forwards the
+source's exact raw multiline wrapper once, preserving all indentation, blank
+lines, and trailing spaces while inserting the script verbatim. WebView document
+state and JavaScript execution remain host-side. Focused source-derived cases are
+in [`test/javascript_evaluator_test.dart`](test/javascript_evaluator_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line; the Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and attribution record.

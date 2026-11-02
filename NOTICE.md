@@ -4254,3 +4254,15 @@ pinned tree; that file credits Copyright (c) 2011 Norbert Nagold
 Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical. Backend
 protobuf types, builder construction, collection access, and transport remain
 host-side.
+
+
+## JavaScript evaluator wrapper
+
+`lib/src/javascript_evaluator.dart` and
+`test/javascript_evaluator_test.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/JavascriptEvaluator.kt` in
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains byte-identical.

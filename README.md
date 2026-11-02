@@ -1596,6 +1596,15 @@ Android lifecycle, StateFlow, localization, and UI.
   only in the selected buffer, and saved queries gain one trailing ASCII space.
   Android SavedStateHandle, flow scheduling, text widgets, and saved-search
   lookup remain with the host.
+- Card Browser saved-state flow bindings: `bindBrowserSearchStateFlows` calls
+  the host's Boolean and String flow factories in source order for
+  `advancedSearch=false`, `advancedSearchText=""`, `basicSearchText=""`, and
+  `historyExpanded=false`. `BrowserSearchStateFlowBindings` retains each exact
+  host token. Factory errors propagate and stop later calls; SavedStateHandle,
+  MutableStateFlow, persistence, `searchTextFlow`, coroutine/lifecycle behavior,
+  and UI remain host-side. Source-derived cases are in
+  `test/browser_search_state_bindings_test.dart` because no pinned test directly
+  covers this initializer.
 - Card Browser text-edit effects: `browserOnSearchTextChangedEffects` emits a
   shallow-copied User filter update before the LF-sanitized text for the active
   buffer. It preserves every filter list and leaves the inactive buffer alone;

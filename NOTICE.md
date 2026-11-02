@@ -2430,6 +2430,16 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   Basic/Advanced text buffers and transition methods are adapted in
   `lib/src/browser_search_text_state.dart`; SavedStateHandle persistence,
   flow scheduling, and Android text widgets remain with the host.
+  The four `getMutableStateFlow` initializer bindings from
+  `CardBrowserSearchViewModel.kt:47–68` are adapted in
+  `lib/src/browser_search_state_bindings.dart`. They call typed host factories
+  for `advancedSearch=false`, `advancedSearchText=""`, `basicSearchText=""`,
+  and `historyExpanded=false` in source order, retaining each exact returned
+  token and stopping immediately on callback failure. The host still owns
+  SavedStateHandle, MutableStateFlow, persistence, combined `searchTextFlow`,
+  coroutine/lifecycle scheduling, and UI. No pinned test directly covers this
+  initializer; source-derived callback-order, argument, identity, and failure
+  cases are in `test/browser_search_state_bindings_test.dart`.
   The ordered `onSearchTextChanged` effects are projected in
   `lib/src/browser_search_state_effects.dart`: a shallow-copied User filter
   update precedes text replacement in the active buffer. LF is replaced while

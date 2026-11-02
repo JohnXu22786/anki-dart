@@ -3576,3 +3576,16 @@ was found; the Dart tests are source-derived. The Kotlin source declares
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## `Time.intTime()` seconds conversion
+
+`lib/src/time_utils.dart` and `test/int_time_test.dart` adapt `intTime()` from
+`common/src/main/java/com/ichi2/anki/common/time/Time.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter reads the
+host millisecond clock exactly once and divides the signed result by 1000 with
+truncation toward zero, including negative subsecond values and negative
+non-multiples; host read failures propagate unchanged. No direct pinned
+`intTime()` test was found, so the focused Dart cases are source-derived. The
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart implementation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

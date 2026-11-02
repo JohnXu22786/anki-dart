@@ -3976,12 +3976,16 @@ source and license details.
 ## Common time utilities
 
 [`lib/src/time_utils.dart`](lib/src/time_utils.dart) adapts the portable
-constants and helpers from AnkiDroid 2.25.3 `TimeUtils.kt`. It preserves
+constants and helpers from AnkiDroid 2.25.3 `TimeUtils.kt` and
+`Time.kt`. It preserves
 formatter/calendar callback order, signed Kotlin duration arithmetic, and the
-source's hour wrapping. The host supplies `SimpleDateFormat` with `Locale.US`
+source's hour wrapping. `intTime()` also reads host milliseconds once and
+truncates signed division toward zero, including negative subsecond values.
+The host supplies `SimpleDateFormat` with `Locale.US`
 and its default time zone, Kotlin duration conversion and formatting, and the
 calendar including DST rules. Focused cases are in
-[`test/time_utils_test.dart`](test/time_utils_test.dart). The Kotlin source is
+[`test/time_utils_test.dart`](test/time_utils_test.dart) and
+[`test/int_time_test.dart`](test/int_time_test.dart). The Kotlin source is
 GPL-3.0-or-later with no separate copyright line; the Dart implementation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and

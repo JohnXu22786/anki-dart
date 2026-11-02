@@ -28,6 +28,13 @@ const TIME_MINUTE = 60.0;
 const TIME_HOUR = 60.0 * TIME_MINUTE;
 const TIME_DAY = 24.0 * TIME_HOUR;
 
+/// Returns the host-provided current time in whole seconds.
+///
+/// The host supplies epoch milliseconds. Its clock is read once, then Dart's
+/// integer division preserves the source's signed truncation toward zero.
+int intTime<TTime>(TTime time, {required int Function(TTime time) intTimeMS}) =>
+    intTimeMS(time) ~/ 1000;
+
 /// Formats [time]'s host-provided current date as `yyyyMMddHHmmss`.
 ///
 /// The host creates a `SimpleDateFormat` with `Locale.US`; its default time

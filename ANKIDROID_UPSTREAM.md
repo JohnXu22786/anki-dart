@@ -2739,3 +2739,20 @@ derived cases are in `test/combined_exception_projection_test.dart`. The Kotlin
 source declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
 projection and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+
+## Multimedia field type
+
+`EFieldType` in `lib/src/e_field_type.dart` ports the pure enum from
+`AnkiDroid/src/main/java/com/ichi2/anki/multimediacard/fields/EFieldType.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the declaration
+order and names `TEXT`, `IMAGE`, `AUDIO_RECORDING`, and `MEDIA_CLIP`; Dart enum
+`name` and `index` correspond to Kotlin `name` and `ordinal`. Focused
+source-derived coverage is in `test/e_field_type_test.dart`; no direct pinned
+test for `EFieldType` was found. Multimedia field implementations, UI and
+storage remain host-side. The Kotlin source carries 2013 copyright notices for
+Bibek Shrestha, Zaur Molotnikov, Nicolas Raoul, and Flavio Lerda and is
+GPL-3.0-or-later. The Dart enum and focused test are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical; see
+`NOTICE.md` for the full attribution.

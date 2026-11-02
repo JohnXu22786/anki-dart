@@ -4359,3 +4359,13 @@ types. Collection lookup and Android list/UI remain host-side. Source-derived
 tests are in [`test/add_notetype_ui_model_test.dart`](test/add_notetype_ui_model_test.dart);
 see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
 for the source mapping and attribution.
+
+## Multimedia field type
+
+[`EFieldType`](lib/src/e_field_type.dart) preserves the four AnkiDroid field
+types and their order. Dart enum `name` and `index` correspond to Kotlin
+`name` and `ordinal`. Focused source-derived coverage is in
+[`test/e_field_type_test.dart`](test/e_field_type_test.dart). Multimedia field
+implementations, UI and storage remain host-side. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source mapping and attribution; root `COPYING` remains unchanged.

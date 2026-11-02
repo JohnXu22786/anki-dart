@@ -4036,3 +4036,18 @@ and carries Copyright (c) 2021 mikunimaru; this identifies the upstream source
 and does not claim authorship of the Dart adaptation. The Dart implementation
 and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## Multimedia field type
+
+`lib/src/e_field_type.dart` and `test/e_field_type_test.dart` adapt the pure
+`EFieldType` enum from
+`AnkiDroid/src/main/java/com/ichi2/anki/multimediacard/fields/EFieldType.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source declares
+`GPL-3.0-or-later` and carries these 2013 notices: Copyright (c) 2013 Bibek
+Shrestha <bibekshrestha@gmail.com>; Copyright (c) 2013 Zaur Molotnikov
+<qutorial@gmail.com>; Copyright (c) 2013 Nicolas Raoul <nicolas.raoul@gmail.com>;
+and Copyright (c) 2013 Flavio Lerda <flerda@gmail.com>. The Dart adaptation
+and test are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. The Dart enum preserves all source names and order; multimedia
+field implementations, UI and storage remain host-side.

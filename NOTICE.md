@@ -1901,9 +1901,12 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   scheduler computation, collection access, undoable persistence, leech
   detection, card reload/queue lookup, localization, feedback delivery,
   logging and lifecycle remain host-side. The source's negative-queue-code
-  suspension decision is projected in that helper. Leech feedback text
-  composition is projected in `lib/src/reviewer_leech_feedback.dart`;
-  localization and flow delivery remain host-side. Whiteboard toggle
+  suspension decision is projected in that helper. Leech feedback message
+  composition is projected in `lib/src/reviewer_leech_feedback.dart`: the base
+  localized text callback runs once, followed by the suspended text callback
+  only when suspended, with the source's literal ASCII space. Localization,
+  leech detection, StateFlow delivery, scheduling and card suspension remain
+  host-side. Whiteboard toggle
   state/preference ordering is
   projected in `lib/src/reviewer_whiteboard_toggle.dart`; StateFlow mutation,
   repository access/write, action dispatch and UI remain host-side.
@@ -2831,8 +2834,9 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   state/message/effect ordering, audio wait, and shown-side scheduling cases.
   No direct ReviewerViewModel toggle test was found; AutoAdvance's delegated
   scheduling remains covered separately by `AutoAdvanceTest.kt`.
-- `test/reviewer_leech_feedback_test.dart` adds source-derived base/suspended
-  message composition, separator, whitespace and empty-string cases. No direct
+- `test/reviewer_leech_feedback_test.dart` covers source-derived message
+  composition, exact separator/whitespace, callback count and order, conditional
+  localization requests, empty strings, and exception propagation. No direct
   pinned test for `onLeech()` or its message resources was found.
 - `test/reviewer_answer_card_effect_plan_test.dart` adds source-derived cases
   for the null-queue early return and the answer persistence, feedback, saved

@@ -1860,11 +1860,11 @@ Android lifecycle, StateFlow, localization, and UI.
   wait-for-audio and active playback; otherwise it retains the source request
   even when disabled. Settings, localization, media state, timer operations,
   and StateFlow delivery remain host-side.
-- Reviewer leech feedback: `reviewerLeechFeedbackMessage` returns the base
-  localized string unchanged unless the host reports suspension. For suspended
-  cards, it appends one literal ASCII space and the supplied suspended message
-  without normalization. Detection, card reload, queue lookup, localization,
-  logging, and feedback delivery remain host-side.
+- Reviewer leech feedback: `reviewerLeechFeedbackMessage` requests the base
+  localized text once, then requests the suspended text once only when the host
+  reports suspension. It appends exactly one literal ASCII space before that
+  text and propagates callback failures. Leech detection, localization,
+  StateFlow delivery, logging, scheduling and card suspension remain host-side.
 - Reviewer delete-note effects: `executeReviewerDeleteNotePlan` sends the
   host-resolved current card ID as a singleton list to the undoable removal
   callback, passes its returned count into host localization, delivers that

@@ -7,8 +7,9 @@
  * version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
@@ -20,13 +21,21 @@
  * ANKIDROID_UPSTREAM.md.
  */
 
-/// Composes the source leech feedback from host-localized message strings.
+/// Composes the source leech feedback using host-localized message callbacks.
 ///
-/// When [isSuspended] is true, the source appends one literal ASCII space
-/// followed by [suspendedMessage]. The supplied strings are otherwise preserved
-/// exactly; localization and feedback delivery remain host-side.
+/// The base message is requested once. When [isSuspended] is true, the
+/// suspended message is then requested once and appended after one literal
+/// ASCII space. Localization, leech detection, and feedback delivery remain
+/// host-side. Callback exceptions propagate unchanged.
 String reviewerLeechFeedbackMessage({
-  required String baseMessage,
-  required String suspendedMessage,
   required bool isSuspended,
-}) => isSuspended ? '$baseMessage $suspendedMessage' : baseMessage;
+  required String Function() studyingCardWasALeech,
+  required String Function() studyingItHasBeenSuspended,
+}) {
+  final message = StringBuffer(studyingCardWasALeech());
+  if (isSuspended) {
+    message.write(' ');
+    message.write(studyingItHasBeenSuspended());
+  }
+  return message.toString();
+}

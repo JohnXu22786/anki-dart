@@ -7,8 +7,9 @@
  * version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
@@ -24,37 +25,98 @@ import 'package:test/test.dart';
 
 void main() {
   group('Reviewer leech feedback message', () {
-    test('returns the base message unchanged when not suspended', () {
-      expect(
-        reviewerLeechFeedbackMessage(
-          baseMessage: '  leech message  ',
-          suspendedMessage: 'suspended',
-          isSuspended: false,
-        ),
-        '  leech message  ',
+    test('requests only the base text once when not suspended', () {
+      final calls = <String>[];
+
+      final message = reviewerLeechFeedbackMessage(
+        isSuspended: false,
+        studyingCardWasALeech: () {
+          calls.add('leech');
+          return '  leech message  ';
+        },
+        studyingItHasBeenSuspended: () {
+          calls.add('suspended');
+          return 'unused';
+        },
       );
+
+      expect(message, '  leech message  ');
+      expect(calls, ['leech']);
     });
 
-    test('adds one literal separator without normalizing either string', () {
-      expect(
-        reviewerLeechFeedbackMessage(
-          baseMessage: 'leech ',
-          suspendedMessage: ' suspended',
-          isSuspended: true,
-        ),
-        'leech   suspended',
+    test('requests both texts once in order and inserts one ASCII space', () {
+      final calls = <String>[];
+
+      final message = reviewerLeechFeedbackMessage(
+        isSuspended: true,
+        studyingCardWasALeech: () {
+          calls.add('leech');
+          return 'leech ';
+        },
+        studyingItHasBeenSuspended: () {
+          calls.add('suspended');
+          return ' suspended';
+        },
       );
+
+      expect(message, 'leech   suspended');
+      expect(calls, ['leech', 'suspended']);
     });
 
-    test('keeps the separator when both localized strings are empty', () {
+    test('preserves the separator for empty localized texts', () {
       expect(
         reviewerLeechFeedbackMessage(
-          baseMessage: '',
-          suspendedMessage: '',
           isSuspended: true,
+          studyingCardWasALeech: () => '',
+          studyingItHasBeenSuspended: () => '',
         ),
         ' ',
       );
+    });
+
+    test(
+      'propagates base callback failure without requesting suspended text',
+      () {
+        final error = StateError('base failed');
+        final calls = <String>[];
+
+        expect(
+          () => reviewerLeechFeedbackMessage(
+            isSuspended: true,
+            studyingCardWasALeech: () {
+              calls.add('leech');
+              throw error;
+            },
+            studyingItHasBeenSuspended: () {
+              calls.add('suspended');
+              return 'suspended';
+            },
+          ),
+          throwsA(same(error)),
+        );
+        expect(calls, ['leech']);
+      },
+    );
+
+    test('propagates suspended callback failure after the base callback', () {
+      final error = StateError('suspended failed');
+      final calls = <String>[];
+
+      expect(
+        () => reviewerLeechFeedbackMessage(
+          isSuspended: true,
+          studyingCardWasALeech: () {
+            calls.add('leech');
+            return 'leech';
+          },
+          studyingItHasBeenSuspended: () {
+            calls.add('suspended');
+            throw error;
+          },
+        ),
+        throwsA(same(error)),
+      );
+      expect(calls, ['leech', 'suspended']);
     });
   });
 }

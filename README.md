@@ -1557,8 +1557,14 @@ Android lifecycle, StateFlow, localization, and UI.
   search, and trims history to the source's 30-entry cap.
   `BrowserSearchHistoryJsonCodec` encodes the compact v1/v2 JSON fields in
   source order, omits empty optional arrays, and returns an empty history when
-  any decoded entry is invalid. The host handles SharedPreferences. Structured
-  saved-entry request restoration uses host-supplied deck/note-type maps.
+  any decoded entry is invalid. `BrowserSearchHistoryPersistence` adapts the
+  `SearchHistory.entries` preference boundary: it reads once with the source's
+  `[]` default, falls back on null or decode failure, and encodes before one
+  write. The host supplies the Android resource key and SharedPreferences
+  callbacks; host read/write failures propagate. Focused source-derived cases
+  cover callback count/order, null and malformed values, exact JSON, and
+  failures. Structured saved-entry request restoration uses host-supplied
+  deck/note-type maps.
   `buildBrowserSearchNodePlan` then models the query and ordered filter terms as
   typed nodes, with the source's OR groups, AND root, singleton collapse, and
   explicit flag/card-state mappings. Backend SearchNode conversion,

@@ -1,3 +1,20 @@
+## Card Browser search history persistence
+
+`lib/src/browser_search_history_persistence.dart` and
+`test/browser_search_history_persistence_test.dart` adapt the `entries`
+SharedPreferences property boundary in
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/SearchHistory.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source
+has an SPDX `GPL-3.0-or-later` declaration and no separate copyright line. The
+host supplies the Android resource key and preference callbacks. The adapter
+preserves the one `getString(key, "[]")` read, null fallback, whole-decode
+failure fallback, encode-before-one-`putString` order, and unchanged propagation
+of host callback failures. Existing `BrowserSearchHistoryJsonCodec` remains the
+codec authority. The Dart adapter and focused tests are Copyright © 2026 John
+Tsui under GPL-3.0-or-later; root `COPYING` remains byte-identical. The pinned
+`SearchHistoryTest.kt` has no direct test for preference persistence; the
+callback-specific test cases are source-derived.
+
 # Notices
 
 ## AnimationPreferences interface

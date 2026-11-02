@@ -26,13 +26,13 @@ sealed class InitStatus {
   const InitStatus();
 
   /// Initialization has not started.
-  static const InitStatus pending = InitStatusPending();
+  static const InitStatus pending = InitStatusPending._();
 
   /// Initialization is running.
-  static const InitStatus inProgress = InitStatusInProgress();
+  static const InitStatus inProgress = InitStatusInProgress._();
 
   /// Initialization completed successfully.
-  static const InitStatus completed = InitStatusCompleted();
+  static const InitStatus completed = InitStatusCompleted._();
 
   /// Initialization failed with [exception].
   static InitStatusFailed failed(Exception exception) =>
@@ -41,7 +41,7 @@ sealed class InitStatus {
 
 /// Singleton state before initialization begins.
 final class InitStatusPending extends InitStatus {
-  const InitStatusPending();
+  const InitStatusPending._();
 
   @override
   bool operator ==(Object other) => other is InitStatusPending;
@@ -52,7 +52,7 @@ final class InitStatusPending extends InitStatus {
 
 /// Singleton state while initialization is running.
 final class InitStatusInProgress extends InitStatus {
-  const InitStatusInProgress();
+  const InitStatusInProgress._();
 
   @override
   bool operator ==(Object other) => other is InitStatusInProgress;
@@ -63,7 +63,7 @@ final class InitStatusInProgress extends InitStatus {
 
 /// Singleton state after initialization completes successfully.
 final class InitStatusCompleted extends InitStatus {
-  const InitStatusCompleted();
+  const InitStatusCompleted._();
 
   @override
   bool operator ==(Object other) => other is InitStatusCompleted;

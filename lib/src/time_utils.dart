@@ -57,6 +57,21 @@ TCalendar calendar<TTime, TDate, TCalendar>(
   return cal;
 }
 
+/// Creates a host Gregorian calendar and assigns [timeInMS] to it.
+///
+/// Calendar creation precedes the single millisecond assignment, and the same
+/// calendar is returned. JVM Gregorian calendar and default time-zone behavior
+/// remain host-provided; callback failures propagate unchanged.
+TCalendar gregorianCalendar<TCalendar>(
+  int timeInMS, {
+  required TCalendar Function() createGregorianCalendar,
+  required void Function(TCalendar calendar, int milliseconds) setTimeInMillis,
+}) {
+  final calendar = createGregorianCalendar();
+  setTimeInMillis(calendar, timeInMS);
+  return calendar;
+}
+
 /// Returns AnkiDroid's UTC offset in seconds as a [double].
 ///
 /// The host creates one default calendar and reads its zone and DST offsets in

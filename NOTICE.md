@@ -448,6 +448,21 @@ the host SQL-date parser. Formatter, time-zone, calendar, Date, and
 separate copyright line. The Dart implementation and tests are Copyright ©
 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## `Time.gregorianCalendar(timeInMS)`
+
+`gregorianCalendar()` in `lib/src/time_utils.dart` and focused source-derived
+cases in `test/time_gregorian_calendar_test.dart` adapt `Time.gregorianCalendar(timeInMS)`
+from `common/src/main/java/com/ichi2/anki/common/time/Time.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It creates
+one host default Gregorian calendar, assigns the exact supplied milliseconds
+once to that same calendar, and returns it. Creation and assignment failures
+propagate unchanged and stop later operations. Concrete JVM GregorianCalendar
+and default time-zone behavior remain host-side; the adapter does not normalize
+the timestamp. No direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart implementation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## `Time.currentDate` and `Time.calendar()`
 
 `currentDate()` and `calendar()` in `lib/src/time_utils.dart`, with focused

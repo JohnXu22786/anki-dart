@@ -3979,7 +3979,10 @@ source and license details.
 constants and helpers from AnkiDroid 2.25.3 `TimeUtils.kt` and
 `Time.kt`. It preserves `currentDate()`'s single clock read before date
 creation and `calendar()`'s calendar-first order, exact date assignment, and
-failure propagation. It also preserves formatter/calendar callback order,
+failure propagation. `gregorianCalendar()` creates one host Gregorian calendar,
+assigns the exact supplied milliseconds once, and returns that same object;
+JVM Gregorian and default time-zone behavior remain host-side. It also preserves
+formatter/calendar callback order,
 signed Kotlin duration arithmetic, and the source's hour wrapping. `intTime()`
 reads host milliseconds once and truncates signed division toward zero,
 including negative subsecond values. `utcOffset()` creates one host calendar,
@@ -3997,6 +4000,7 @@ cases are in
 [`test/time_utils_test.dart`](test/time_utils_test.dart) and
 [`test/int_time_test.dart`](test/int_time_test.dart),
 [`test/time_current_date_calendar_test.dart`](test/time_current_date_calendar_test.dart),
+[`test/time_gregorian_calendar_test.dart`](test/time_gregorian_calendar_test.dart),
 [`test/time_utc_offset_test.dart`](test/time_utc_offset_test.dart), and
 [`test/gen_today_test.dart`](test/gen_today_test.dart).
 The Kotlin source is

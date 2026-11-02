@@ -82,4 +82,296 @@ void main() {
       );
     });
   });
+
+  group('collectionBuildSearchStringFromTerms', () {
+    test(
+      'validates every entry before constructing any node or calling backend',
+      () {
+        final events = <String>[];
+        final first = Object();
+        final invalid = 42;
+        final terms = ['tag:one', first, invalid];
+
+        expect(
+          () => collectionBuildSearchStringFromTerms<Object, String, String>(
+            stringsOrSearchNodes: terms,
+            joiner: 'OR',
+            isSearchNode: (value) {
+              events.add('is:${identical(value, first) ? 'node' : value}');
+              return identical(value, first);
+            },
+            searchNodeFromString: (term) {
+              events.add('text:$term');
+              return Object();
+            },
+            toBackendJoiner: (joiner) {
+              events.add('joiner');
+              return joiner;
+            },
+            groupSearchNodes: (nodes, joiner) {
+              events.add('group');
+              return Object();
+            },
+            buildSearchString: (_) {
+              events.add('backend');
+              return 'unreachable';
+            },
+          ),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.message,
+              'message',
+              'buildSearchString expects a list containing Strings or '
+                  'SearchNodes: $terms',
+            ),
+          ),
+        );
+
+        expect(events, ['is:node', 'is:42']);
+      },
+    );
+
+    test('rejects an empty list before backend construction', () {
+      final events = <String>[];
+
+      expect(
+        () => collectionBuildSearchStringFromTerms<Object, String, String>(
+          stringsOrSearchNodes: const [],
+          joiner: 'AND',
+          isSearchNode: (_) {
+            events.add('is');
+            return false;
+          },
+          searchNodeFromString: (_) {
+            events.add('text');
+            return Object();
+          },
+          toBackendJoiner: (joiner) {
+            events.add('joiner');
+            return joiner;
+          },
+          groupSearchNodes: (_, _) {
+            events.add('group');
+            return Object();
+          },
+          buildSearchString: (_) {
+            events.add('backend');
+            return 'unreachable';
+          },
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(events, isEmpty);
+    });
+
+    test(
+      'converts mixed terms once in order and groups with the supplied joiner',
+      () {
+        final events = <String>[];
+        final nodeA = Object();
+        final nodeB = Object();
+        final joiner = 'OR';
+        final backendJoiner = Object();
+        final grouped = Object();
+        final result = String.fromCharCodes([113, 117, 101, 114, 121]);
+
+        final actual =
+            collectionBuildSearchStringFromTerms<Object, String, Object>(
+              stringsOrSearchNodes: ['tag:first', nodeA, 'deck:second', nodeB],
+              joiner: joiner,
+              isSearchNode: (value) {
+                events.add('is:${identical(value, nodeA) ? 'a' : 'b'}');
+                return identical(value, nodeA) || identical(value, nodeB);
+              },
+              searchNodeFromString: (term) {
+                events.add('text:$term');
+                return term == 'tag:first' ? nodeB : nodeA;
+              },
+              toBackendJoiner: (actualJoiner) {
+                events.add('joiner');
+                expect(identical(actualJoiner, joiner), isTrue);
+                return backendJoiner;
+              },
+              groupSearchNodes: (nodes, actualJoiner) {
+                events.add('group');
+                expect(nodes, hasLength(4));
+                expect(identical(nodes[0], nodeB), isTrue);
+                expect(identical(nodes[1], nodeA), isTrue);
+                expect(identical(nodes[2], nodeA), isTrue);
+                expect(identical(nodes[3], nodeB), isTrue);
+                expect(identical(actualJoiner, backendJoiner), isTrue);
+                expect(() => nodes.add(Object()), throwsUnsupportedError);
+                return grouped;
+              },
+              buildSearchString: (node) {
+                events.add('backend');
+                expect(identical(node, grouped), isTrue);
+                return result;
+              },
+            );
+
+        expect(actual, same(result));
+        expect(events, [
+          'is:a',
+          'is:b',
+          'text:tag:first',
+          'text:deck:second',
+          'joiner',
+          'group',
+          'backend',
+        ]);
+      },
+    );
+
+    test(
+      'passes one accepted node through without grouping or joiner conversion',
+      () {
+        final events = <String>[];
+        final node = Object();
+        final result = String.fromCharCodes([111, 107]);
+
+        final actual =
+            collectionBuildSearchStringFromTerms<Object, Object, Object>(
+              stringsOrSearchNodes: [node],
+              joiner: Object(),
+              isSearchNode: (value) {
+                events.add('validate');
+                return identical(value, node);
+              },
+              searchNodeFromString: (_) {
+                events.add('text');
+                return Object();
+              },
+              toBackendJoiner: (_) {
+                events.add('joiner');
+                return Object();
+              },
+              groupSearchNodes: (_, _) {
+                events.add('group');
+                return Object();
+              },
+              buildSearchString: (actualNode) {
+                events.add('backend');
+                expect(identical(actualNode, node), isTrue);
+                return result;
+              },
+            );
+
+        expect(actual, same(result));
+        expect(events, ['validate', 'backend']);
+      },
+    );
+
+    test('converts one String then passes the converted node directly', () {
+      final events = <String>[];
+      final node = Object();
+
+      collectionBuildSearchStringFromTerms<Object, Object, Object>(
+        stringsOrSearchNodes: ['tag:one'],
+        joiner: Object(),
+        isSearchNode: (_) => fail('String should not be checked as SearchNode'),
+        searchNodeFromString: (term) {
+          events.add('text:$term');
+          return node;
+        },
+        toBackendJoiner: (_) => fail('single node should not convert joiner'),
+        groupSearchNodes: (_, _) => fail('single node should not be grouped'),
+        buildSearchString: (actualNode) {
+          events.add('backend');
+          expect(identical(actualNode, node), isTrue);
+          return 'query';
+        },
+      );
+
+      expect(events, ['text:tag:one', 'backend']);
+    });
+
+    test('propagates text-node, group, and backend failures unchanged', () {
+      final textFailure = StateError('node construction failed');
+      final textEvents = <String>[];
+      expect(
+        () => collectionBuildSearchStringFromTerms<Object, String, String>(
+          stringsOrSearchNodes: ['tag:one', 'tag:two'],
+          joiner: 'OR',
+          isSearchNode: (_) => false,
+          searchNodeFromString: (_) {
+            textEvents.add('text');
+            throw textFailure;
+          },
+          toBackendJoiner: (_) => 'OR',
+          groupSearchNodes: (_, _) {
+            textEvents.add('group');
+            return Object();
+          },
+          buildSearchString: (_) {
+            textEvents.add('backend');
+            return 'unreachable';
+          },
+        ),
+        throwsA(same(textFailure)),
+      );
+      expect(textEvents, ['text']);
+
+      final groupFailure = StateError('group construction failed');
+      final groupEvents = <String>[];
+      expect(
+        () => collectionBuildSearchStringFromTerms<Object, String, String>(
+          stringsOrSearchNodes: ['tag:one', 'tag:two'],
+          joiner: 'OR',
+          isSearchNode: (_) => false,
+          searchNodeFromString: (term) => Object(),
+          toBackendJoiner: (_) => 'OR',
+          groupSearchNodes: (_, _) {
+            groupEvents.add('group');
+            throw groupFailure;
+          },
+          buildSearchString: (_) {
+            groupEvents.add('backend');
+            return 'unreachable';
+          },
+        ),
+        throwsA(same(groupFailure)),
+      );
+      expect(groupEvents, ['group']);
+
+      final joinerFailure = StateError('joiner conversion failed');
+      final joinerEvents = <String>[];
+      expect(
+        () => collectionBuildSearchStringFromTerms<Object, String, String>(
+          stringsOrSearchNodes: ['tag:one', 'tag:two'],
+          joiner: 'OR',
+          isSearchNode: (_) => false,
+          searchNodeFromString: (_) => Object(),
+          toBackendJoiner: (_) {
+            joinerEvents.add('joiner');
+            throw joinerFailure;
+          },
+          groupSearchNodes: (_, _) {
+            joinerEvents.add('group');
+            return Object();
+          },
+          buildSearchString: (_) {
+            joinerEvents.add('backend');
+            return 'unreachable';
+          },
+        ),
+        throwsA(same(joinerFailure)),
+      );
+      expect(joinerEvents, ['joiner']);
+
+      final backendFailure = StateError('backend failed');
+      expect(
+        () => collectionBuildSearchStringFromTerms<Object, String, String>(
+          stringsOrSearchNodes: ['tag:one'],
+          joiner: 'OR',
+          isSearchNode: (_) => false,
+          searchNodeFromString: (_) => Object(),
+          toBackendJoiner: (_) => 'OR',
+          groupSearchNodes: (_, _) => fail('single node should not be grouped'),
+          buildSearchString: (_) => throw backendFailure,
+        ),
+        throwsA(same(backendFailure)),
+      );
+    });
+  });
 }

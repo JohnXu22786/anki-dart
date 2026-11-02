@@ -3246,18 +3246,22 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
 `lib/src/collection_build_search_string.dart` and
-`test/collection_build_search_string_test.dart` adapt
-`Collection.buildSearchString(node)` from
-`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt`, pinned to
+`test/collection_build_search_string_test.dart` adapt the wrapper orchestration
+in `buildSearchString()` and `groupSearches()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:924–1008`, pinned to
 AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
-wraps the identical opaque host SearchNode in a read-only singleton list and
-calls the host collection string builder once, returning its exact String and
-propagating failures unchanged. SearchNode construction and query-string
-generation remain host-side. No direct pinned test was found for this
-extension; focused Dart cases are source-derived. `Collection.kt` declares
-`GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
-tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains
-byte-identical.
+validates all mixed String/opaque SearchNode entries through the host predicate
+before constructing nodes, converts String terms once in order, preserves node
+identity, skips grouping and joiner conversion for a single node, and invokes
+the supplied joiner converter/group builder once for multiple nodes. The exact
+resulting node is passed once to the host backend string builder; results and
+failures propagate unchanged. Generated SearchNode, joiner, backend string
+builder, search grammar/parsing/validation, serialization, and execution remain
+host-side; no Rust backend code is included. No direct pinned tests were found
+for these Collection wrapper methods; focused Dart cases are source-derived.
+`Collection.kt` declares `GPL-3.0-or-later` and has no separate copyright line;
+the Dart adaptation and tests are Copyright © 2026 John Tsui under that license.
+Root `COPYING` remains byte-identical.
 
 `lib/src/saved_state_handle.dart` and `test/saved_state_handle_test.dart` adapt
 `require(key)` and `getLongOrNull(key)` from

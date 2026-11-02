@@ -28,3 +28,49 @@ String collectionBuildSearchString<TSearchNode>(
   TSearchNode node,
   String Function(List<TSearchNode> nodes) buildSearchString,
 ) => buildSearchString(List<TSearchNode>.unmodifiable([node]));
+
+/// Builds a host search string from an ordered mixture of strings and nodes.
+///
+/// [isSearchNode] validates opaque host nodes. [searchNodeFromString] creates
+/// generated host nodes for text terms. When there is more than one node,
+/// [toBackendJoiner] converts [joiner] and [groupSearchNodes] creates the host
+/// group. The host backend receives the resulting node through
+/// [buildSearchString]. This adapter does not implement search-node or backend
+/// behavior itself.
+String
+collectionBuildSearchStringFromTerms<TSearchNode, TJoiner, TBackendJoiner>({
+  required List<Object?> stringsOrSearchNodes,
+  required TJoiner joiner,
+  required bool Function(Object? value) isSearchNode,
+  required TSearchNode Function(String term) searchNodeFromString,
+  required TBackendJoiner Function(TJoiner joiner) toBackendJoiner,
+  required TSearchNode Function(List<TSearchNode> nodes, TBackendJoiner joiner)
+  groupSearchNodes,
+  required String Function(TSearchNode node) buildSearchString,
+}) {
+  for (final value in stringsOrSearchNodes) {
+    if (value is! String && !isSearchNode(value)) {
+      throw ArgumentError(
+        'buildSearchString expects a list containing Strings or SearchNodes: '
+        '$stringsOrSearchNodes',
+      );
+    }
+  }
+
+  if (stringsOrSearchNodes.isEmpty) {
+    throw ArgumentError('At least one entry must be provided!');
+  }
+
+  final nodes = List<TSearchNode>.unmodifiable(
+    stringsOrSearchNodes.map((value) {
+      if (value is String) {
+        return searchNodeFromString(value);
+      }
+      return value as TSearchNode;
+    }),
+  );
+  final term = nodes.length == 1
+      ? nodes.single
+      : groupSearchNodes(nodes, toBackendJoiner(joiner));
+  return buildSearchString(term);
+}

@@ -3482,14 +3482,20 @@ remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 
 ## Collection.buildSearchString
 
-`collectionBuildSearchString()` adapts AnkiDroid 2.25.3
-`Collection.buildSearchString(node)` by wrapping the identical opaque host node
-in a read-only singleton list and passing it once to the host collection string
-builder. It returns the exact host String and lets failures propagate. Search
-node construction and backend query-string generation stay host-side. Focused
-source-derived cases are in
+`collectionBuildSearchStringFromTerms()` adapts the ordered wrapper orchestration
+in AnkiDroid 2.25.3 `Collection.buildSearchString()` and `groupSearches()`.
+It validates every entry through a host SearchNode predicate before creating
+nodes, converts String terms once in order, retains accepted host node identity,
+passes one result through directly, and groups multiple results once using the
+host joiner converter and group builder. The exact resulting node is passed once
+to the host backend string builder; its result or failure is returned unchanged.
+`collectionBuildSearchString()` remains source-compatible for one opaque node.
+Generated SearchNode and joiner behavior, the backend, query grammar and
+parsing/validation, serialization, and execution remain host-side; no Rust
+backend code is included. Focused source-derived cases are in
 [`test/collection_build_search_string_test.dart`](test/collection_build_search_string_test.dart).
-The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+No direct pinned tests were found for these Collection wrapper methods. The
+pinned Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
 line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the

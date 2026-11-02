@@ -50,6 +50,24 @@ remains byte-identical.
 
 # Notices
 
+## Reviewer mark-toggle callback operation
+
+`lib/src/reviewer_mark_toggle_operation.dart` and
+`test/reviewer_mark_toggle_operation_test.dart` port callback ordering from
+`AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:239–245`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The operation awaits the current
+card once, resolves its note once, calls `NoteService.toggleMark` once with that
+note, reads `NoteService.isMarked` once with the same note after a successful
+toggle, then publishes the exact Boolean after a successful read. Failures
+propagate unchanged and stop later callbacks. Actual current-card and
+collection access, NoteService mutation, coroutine scheduling, and Flow delivery
+remain host-side. The source-derived tests cover callback order/count,
+card/note identity, true/false publication, and failure short-circuits. The
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains unchanged.
+
 ## Reviewer answer-button next-time lookup
 
 `lib/src/reviewer_answer_buttons_next_time_update.dart` and

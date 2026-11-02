@@ -1755,12 +1755,15 @@ Android lifecycle, StateFlow, localization, and UI.
   The host stops the sequence when an operation fails; note lookup, `marked` tag
   mutation, undoable persistence, error handling, and StateFlow delivery remain
   host-side.
-- Reviewer mark toggle: `planReviewerMarkToggle` exposes the host-resolved note
-  toggle, a marked-state read only after toggle success, and publication only
-  after read success. The pinned Reviewer tests do not assert this effect order;
-  source-derived cases cover both failure gates. Card/note lookup, NoteService
-  calls, `marked` tag mutation, persistence, action dispatch, and StateFlow
-  delivery remain host-side.
+- Reviewer mark toggle: `executeReviewerMarkToggleOperation` awaits the
+  current-card callback once, resolves its note once, toggles that exact note,
+  reads its marked state only after toggle success, and publishes the exact
+  returned Boolean only after the read succeeds. Callback failures propagate
+  unchanged and stop later callbacks. Source-derived cases cover callback
+  counts/order, card/note identity, both Boolean values, and failure gates.
+  Current-card and collection access, NoteService mutation, coroutine
+  scheduling, and StateFlow delivery remain host-side; `planReviewerMarkToggle`
+  remains the effect-only projection.
 - Reviewer mark/flag icon presentation: `reviewerMarkIconVisibilityUpdate`
   preserves toolbar suppression and otherwise follows the marked Boolean;
   `reviewerFlagIconPresentation` preserves toolbar suppression, hides for NONE,

@@ -2823,3 +2823,23 @@ order; no direct pinned `LogType` test was found. The Kotlin source declares
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## Deprecated `Ease` enum
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `libanki/src/main/java/com/ichi2/anki/libanki/sched/Ease.kt`
+- Direct test: `AnkiDroid/src/test/java/com/ichi2/anki/EaseTest.kt`
+- Dart adaptation: `Ease` in `lib/src/ease.dart`
+- Focused Dart tests: `test/ease_test.dart`
+
+The Dart enum preserves the source names and order `AGAIN`, `HARD`, `GOOD`,
+`EASY` and their integer values 1 through 4. `fromValue()` scans entries in
+declaration order and throws `StateError` when no value matches, rather than
+returning a fallback. The enum remains deprecated with the source guidance to
+use `CardAnswer.Rating`; the separate `ReviewRating` model and rating dispatch
+are unchanged. The Kotlin source declares `GPL-3.0-or-later` and has no separate
+copyright line. The direct upstream test is Copyright (c) 2024 Ben Wicks and
+declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.

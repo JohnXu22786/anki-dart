@@ -4160,3 +4160,14 @@ and tests are Copyright © 2026 John Tsui and distributed under this repository'
 GPL-3.0-or-later policy, compatible with Apache-2.0. The host supplies the
 Kotlin/JVM `Any.toString()` conversion for non-String values. Root `COPYING`
 remains byte-identical.
+
+## Deprecated Ease compatibility values
+
+`lib/src/ease.dart` and `test/ease_test.dart` adapt
+`libanki/src/main/java/com/ichi2/anki/libanki/sched/Ease.kt` and its direct test
+`AnkiDroid/src/test/java/com/ichi2/anki/EaseTest.kt`, pinned to AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source declares
+`GPL-3.0-or-later` and has no separate copyright line. The direct upstream test
+is Copyright (c) 2024 Ben Wicks and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains unchanged.

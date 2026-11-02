@@ -4502,3 +4502,17 @@ Copyright (C) 2010 The Android Open Source Project under Apache-2.0. The Dart
 adaptation and tests follow this repository's GPL-3.0-or-later policy, which is
 compatible with Apache-2.0. The license text and full source mapping are in
 [NOTICE.md](NOTICE.md) and [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Deprecated Ease compatibility values
+
+`Ease` in [`lib/src/ease.dart`](lib/src/ease.dart) preserves AnkiDroid's
+deprecated answer-button values `AGAIN(1)`, `HARD(2)`, `GOOD(3)`, and `EASY(4)`
+in source order. `Ease.fromValue()` returns the first entry with a matching
+value and throws `StateError` for unsupported values. The enum is marked
+deprecated for `CardAnswer.Rating`; the existing `ReviewRating` API and rating
+dispatch are unchanged. Focused tests are in
+[`test/ease_test.dart`](test/ease_test.dart). The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains unchanged. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and attribution.

@@ -467,6 +467,7 @@ export 'src/time_manager.dart';
 export 'src/system_time.dart';
 export 'src/directory.dart';
 export 'src/animation_preferences.dart';
+export 'src/ease.dart';
 export 'src/e_field_type.dart';
 export 'src/shortcut_projection.dart';
 export 'src/shortcut_group_projection.dart';

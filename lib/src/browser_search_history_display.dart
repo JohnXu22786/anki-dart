@@ -44,9 +44,9 @@ sealed class BrowserSearchHistoryItems {
 final class BrowserSearchHistoryLoading extends BrowserSearchHistoryItems {
   /// Captures the entry-to-null pairs at construction, as the source data class.
   BrowserSearchHistoryLoading(this.input)
-      : entryToSearchString = [
-          for (final entry in input) (entry: entry, searchString: null),
-        ];
+    : entryToSearchString = [
+        for (final entry in input) (entry: entry, searchString: null),
+      ];
 
   final List<BrowserSearchHistoryEntry> input;
 
@@ -123,12 +123,10 @@ final class BrowserSearchHistoryDisplayModel {
 
   BrowserSearchHistoryDisplayProjection project(
     BrowserSearchHistoryItems items,
-  ) =>
-      BrowserSearchHistoryDisplayProjection(
-        items: _historyExpanded ? items : items.truncated(maxCollapsedEntries),
-        showHistoryToggle:
-            items.entryToSearchString.length > maxCollapsedEntries,
-      );
+  ) => BrowserSearchHistoryDisplayProjection(
+    items: _historyExpanded ? items : items.truncated(maxCollapsedEntries),
+    showHistoryToggle: items.entryToSearchString.length > maxCollapsedEntries,
+  );
 }
 
 bool _listEquals<T>(List<T> left, List<T> right) {

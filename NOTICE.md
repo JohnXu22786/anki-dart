@@ -1,3 +1,19 @@
+## Deck-picker version preference orchestration
+
+`lib/src/deck_picker_previous_version.dart` and
+`test/deck_picker_previous_version_test.dart` adapt the remaining preference
+orchestration from AnkiDroid 2.25.3 `DeckPicker.kt:1871–1880` and
+`DeckPickerViewModel.kt:659–692`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter checks whether
+`lastUpgradeVersion` exists once, composes the existing typed Long/Int/String
+fallback only when present, then writes the current version once through the
+Long callback and returns the selected previous version. Host callback failures
+propagate and stop later callbacks. Android SharedPreferences IO and
+ClassCastException translation remain host-side. The focused source-derived
+cases cover present and missing keys, callback order, fallback composition,
+and failure propagation. The Dart adaptation and tests are Copyright © 2026
+John Tsui under GPL-3.0-or-later; root `COPYING` remains unchanged.
+
 ## Card Browser search history persistence
 
 `lib/src/browser_search_history_persistence.dart` and

@@ -16,7 +16,8 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from AnkiDroid 2.25.3 DeckPickerViewModel.kt:659–692.
+ * Source-derived from AnkiDroid 2.25.3 DeckPicker.kt:1871–1880 and
+ * DeckPickerViewModel.kt:659–692.
  */
 
 /// Signals that a preference getter found a stored value of another JVM type.
@@ -100,4 +101,25 @@ DeckPickerVersionLong getPreviousDeckPickerVersion({
     preferences.remove(key);
     return previousVersion;
   }
+}
+
+/// Selects and returns the previous version, then persists [current].
+///
+/// The source checks whether `lastUpgradeVersion` exists before invoking the
+/// typed fallback adapter. When absent, [current] is returned without reading
+/// or removing the preference. In either case, the current version is written
+/// once as a Long after selection succeeds. Host callback failures propagate
+/// unchanged and stop subsequent callbacks.
+DeckPickerVersionLong orchestrateDeckPickerVersionPreference({
+  required DeckPickerVersionLong current,
+  required bool Function(String key) contains,
+  required DeckPickerVersionPreferenceCallbacks preferences,
+  required void Function(String key, DeckPickerVersionLong value) setLong,
+}) {
+  const key = 'lastUpgradeVersion';
+  final previousVersion = contains(key)
+      ? getPreviousDeckPickerVersion(current: current, preferences: preferences)
+      : current;
+  setLong(key, current);
+  return previousVersion;
 }

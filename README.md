@@ -1026,9 +1026,12 @@ Android lifecycle, StateFlow, localization, and UI.
   so its Dart cases are source-derived.
 - Deck-picker previous-version lookup: `getPreviousDeckPickerVersion` preserves
   the source's Long, Int, and String getter order, typed mismatch catch
-  boundaries, exact `"2.0.2"` mapping, and fallback-only key removal. The host
-  supplies typed SharedPreferences callbacks and persists the current version;
-  Android preference IO stays host-side. Its cases are source-derived.
+  boundaries, exact `"2.0.2"` mapping, and fallback-only key removal.
+  `orchestrateDeckPickerVersionPreference` checks key presence once, runs that
+  fallback only when present, then writes the current version once as a Long
+  and returns the selected previous version. Callback failures propagate and
+  stop later work. The host supplies typed SharedPreferences callbacks and
+  performs Android preference IO. Its cases are source-derived.
 - Deck-picker sync icon: `planDeckPickerSyncIconFetch` gates auth lookup and
   backend status requests in source order. The lazy
   `projectDeckPickerSyncIconResponse` iterable emits a nonempty endpoint effect
@@ -2169,7 +2172,8 @@ Rust backend, collection storage, and scheduling algorithm remain external.
 callbacks; it does not load settings or collection state. This is not yet a
 complete AnkiDroid replacement: Android screens and platform lifecycle integration,
 Card Browser Intent/Uri parsing and navigation for mapped launch options,
-SharedPreferences and mode lookup, saved-search config IO, localized
+Android SharedPreferences implementation and mode lookup, collection-backed
+saved-search persistence, localized
 outcome-message delivery and UI,
 collection-backed deck/note-type lookup, backend SearchString construction and
 conversion from query or SearchNode inputs, query parsing/validation, and search

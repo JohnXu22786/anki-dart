@@ -16,7 +16,8 @@
  * SPDX-FileCopyrightText: 2026 John Tsui
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from AnkiDroid 2.25.3 DeckPickerViewModel.kt:659–692.
+ * Source-derived from AnkiDroid 2.25.3 DeckPicker.kt:1871–1880 and
+ * DeckPickerViewModel.kt:659–692.
  */
 
 import 'package:anki_dart/anki_dart.dart';
@@ -24,6 +25,160 @@ import 'package:test/test.dart';
 
 void main() {
   group('Deck Picker previous version preference', () {
+    test(
+      'checks for the stored key once before falling back and writing current',
+      () {
+        final calls = <String>[];
+        final previousVersion = orchestrateDeckPickerVersionPreference(
+          current: const DeckPickerVersionLong(25000000),
+          contains: (key) {
+            calls.add('contains:$key');
+            return true;
+          },
+          preferences: DeckPickerVersionPreferenceCallbacks(
+            getLong: (key, defaultValue) {
+              calls.add('long:$key:${defaultValue.value}');
+              throw const DeckPickerPreferenceTypeMismatch();
+            },
+            getInt: (key, defaultValue) {
+              calls.add('int:$key:${defaultValue.value}');
+              return const DeckPickerVersionInt(20900203);
+            },
+            getString: (_, _) => fail('did not attempt String fallback'),
+            remove: (key) => calls.add('remove:$key'),
+          ),
+          setLong: (key, value) => calls.add('setLong:$key:${value.value}'),
+        );
+
+        expect(previousVersion.value, 20900203);
+        expect(calls, [
+          'contains:lastUpgradeVersion',
+          'long:lastUpgradeVersion:25000000',
+          'int:lastUpgradeVersion:20900203',
+          'remove:lastUpgradeVersion',
+          'setLong:lastUpgradeVersion:25000000',
+        ]);
+      },
+    );
+
+    test('uses current without getters or removal when the key is missing', () {
+      final calls = <String>[];
+      final previousVersion = orchestrateDeckPickerVersionPreference(
+        current: const DeckPickerVersionLong(25000000),
+        contains: (key) {
+          calls.add('contains:$key');
+          return false;
+        },
+        preferences: DeckPickerVersionPreferenceCallbacks(
+          getLong: (_, _) => fail('did not read Long'),
+          getInt: (_, _) => fail('did not read Int'),
+          getString: (_, _) => fail('did not read String'),
+          remove: (_) => fail('did not remove the key'),
+        ),
+        setLong: (key, value) => calls.add('setLong:$key:${value.value}'),
+      );
+
+      expect(previousVersion.value, 25000000);
+      expect(calls, [
+        'contains:lastUpgradeVersion',
+        'setLong:lastUpgradeVersion:25000000',
+      ]);
+    });
+
+    test(
+      'propagates contains failure without reading or writing preferences',
+      () {
+        final failure = StateError('contains failed');
+        var laterCallbackCalled = false;
+
+        expect(
+          () => orchestrateDeckPickerVersionPreference(
+            current: const DeckPickerVersionLong(25000000),
+            contains: (_) => throw failure,
+            preferences: DeckPickerVersionPreferenceCallbacks(
+              getLong: (_, _) {
+                laterCallbackCalled = true;
+                return const DeckPickerVersionLong(1);
+              },
+              getInt: (_, _) => const DeckPickerVersionInt(1),
+              getString: (_, _) => '',
+              remove: (_) {},
+            ),
+            setLong: (_, _) => laterCallbackCalled = true,
+          ),
+          throwsA(same(failure)),
+        );
+        expect(laterCallbackCalled, isFalse);
+      },
+    );
+
+    test('does not write current after a present-key fallback failure', () {
+      final failure = StateError('fallback failed');
+      final calls = <String>[];
+
+      expect(
+        () => orchestrateDeckPickerVersionPreference(
+          current: const DeckPickerVersionLong(25000000),
+          contains: (key) {
+            calls.add('contains:$key');
+            return true;
+          },
+          preferences: DeckPickerVersionPreferenceCallbacks(
+            getLong: (key, _) {
+              calls.add('long:$key');
+              throw const DeckPickerPreferenceTypeMismatch();
+            },
+            getInt: (key, _) {
+              calls.add('int:$key');
+              throw failure;
+            },
+            getString: (key, _) {
+              calls.add('string:$key');
+              return '';
+            },
+            remove: (key) => calls.add('remove:$key'),
+          ),
+          setLong: (key, value) => calls.add('setLong:$key:${value.value}'),
+        ),
+        throwsA(same(failure)),
+      );
+      expect(calls, [
+        'contains:lastUpgradeVersion',
+        'long:lastUpgradeVersion',
+        'int:lastUpgradeVersion',
+      ]);
+    });
+
+    test('propagates current-version write failure after selection', () {
+      final failure = StateError('write failed');
+      final calls = <String>[];
+
+      expect(
+        () => orchestrateDeckPickerVersionPreference(
+          current: const DeckPickerVersionLong(25000000),
+          contains: (key) {
+            calls.add('contains:$key');
+            return false;
+          },
+          preferences: DeckPickerVersionPreferenceCallbacks(
+            getLong: (_, _) => fail('did not read Long'),
+            getInt: (_, _) => fail('did not read Int'),
+            getString: (_, _) => fail('did not read String'),
+            remove: (_) => fail('did not remove the key'),
+          ),
+          setLong: (key, value) {
+            calls.add('setLong:$key:${value.value}');
+            throw failure;
+          },
+        ),
+        throwsA(same(failure)),
+      );
+      expect(calls, [
+        'contains:lastUpgradeVersion',
+        'setLong:lastUpgradeVersion:25000000',
+      ]);
+    });
+
     test('returns a Long read directly without removing the preference', () {
       final reads = <String>[];
       var removed = false;

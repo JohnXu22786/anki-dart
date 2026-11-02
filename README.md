@@ -4399,3 +4399,14 @@ localized labels, and constructs `KeyboardShortcutInfo`. Focused source-derived
 cases are in [test/shortcut_projection_test.dart](test/shortcut_projection_test.dart);
 see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
 for the source mapping and attribution. Root `COPYING` remains unchanged.
+
+`ShortcutGroup` in [`lib/src/shortcut_group_projection.dart`](lib/src/shortcut_group_projection.dart)
+preserves the source data-class equality and ordered shortcut-list hashing.
+`toShortcutGroup()` converts each shortcut in order before asking the host to
+resolve the exact group string resource ID, then returns a host-independent
+label and ordered shortcut projection list. Conversion and title lookup errors
+propagate and stop subsequent work. Android resource lookup and
+`KeyboardShortcutGroup` construction remain host-side. Focused source-derived
+cases are in [`test/shortcut_group_projection_test.dart`](test/shortcut_group_projection_test.dart).
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for the source mapping and attribution; root `COPYING` remains unchanged.

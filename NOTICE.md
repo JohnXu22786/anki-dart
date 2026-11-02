@@ -4076,3 +4076,22 @@ resolver. Android constants, key-name resolution, localized labels, and
 source-derived; no direct pinned test for `Shortcut` was found. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## Android shortcut group projection
+
+`lib/src/shortcut_group_projection.dart` and
+`test/shortcut_group_projection_test.dart` adapt the pure `ShortcutGroup` value
+and `toShortcutGroup()` ordering from
+`AnkiDroid/src/main/java/com/ichi2/anki/android/input/ShortcutGroup.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source declares
+`GPL-3.0-or-later` and Copyright (c) 2024 Sanjay Sargam
+<sargamsanjaykumar@gmail.com>. The Dart value preserves ordered structural
+shortcut-list equality/hash and the group ID. Projection converts every
+shortcut in order before resolving the exact resource ID through the host, then
+returns the label with ordered `ShortcutInfoProjection` values; failures
+propagate without running later work. Android resource lookup and
+`KeyboardShortcutGroup` construction remain host-side. Focused Dart cases are
+source-derived; no direct pinned `ShortcutGroup` test was found. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

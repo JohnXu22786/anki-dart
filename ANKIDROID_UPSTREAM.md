@@ -2757,3 +2757,21 @@ Bibek Shrestha, Zaur Molotnikov, Nicolas Raoul, and Flavio Lerda and is
 GPL-3.0-or-later. The Dart enum and focused test are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical; see
 `NOTICE.md` for the full attribution.
+
+## Android shortcut group projection
+
+`ShortcutGroup` and `ShortcutGroupProjection` in
+`lib/src/shortcut_group_projection.dart` adapt the pure value and conversion
+order from `AnkiDroid/src/main/java/com/ichi2/anki/android/input/ShortcutGroup.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. `ShortcutGroup` compares and hashes
+its `Shortcut` list structurally in order and includes the resource ID. Its
+projection eagerly converts each shortcut in order before calling the
+host-supplied title resolver once with that exact ID; conversion and resolver
+failures propagate and prevent later steps. Android resource lookup and
+`KeyboardShortcutGroup` construction remain host-side. Focused source-derived
+cases are in `test/shortcut_group_projection_test.dart`; no direct pinned test
+for `ShortcutGroup` was found. The Kotlin source declares `GPL-3.0-or-later` and
+Copyright (c) 2024 Sanjay Sargam. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+See `NOTICE.md` for attribution details.

@@ -2535,3 +2535,26 @@ callback failures propagate unchanged. The Kotlin source declares
 `GPL-3.0-or-later` and has no separate copyright line. The Dart implementation
 and tests are Copyright © 2026 John Tsui under the same license. See `NOTICE.md`;
 root `COPYING` remains byte-identical.
+
+## `Directory` host-file adapter
+
+Pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/model/Directory.kt`
+- Direct tests: `compat/src/test/java/com/ichi2/anki/model/DirectoryTest.kt`
+- Dart adaptation: `Directory<TFile>` in `lib/src/directory.dart`
+- Focused Dart tests: `test/directory_test.dart`
+
+The adapter leaves `java.io.File` and filesystem access on the host. The path
+factory constructs exactly one host file and delegates to file validation; the
+file factory checks existence once, short-circuits before the directory check
+when absent, and retains the exact accepted file object. `listFiles()` calls the
+host once and returns its exact non-null list, or a fresh empty list for null.
+`toString()` calls the host canonical-path operation on each invocation and
+returns its exact string. Callback order and failures are preserved; no Dart path
+normalization or filesystem operation is performed. The pinned test suite
+covers directory acceptance/rejection and listing; source-derived Dart tests also
+cover callback counts, short circuits, identity, null-list freshness, and failure
+propagation. The Kotlin source declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart implementation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

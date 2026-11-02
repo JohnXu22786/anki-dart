@@ -4,6 +4,27 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Directory host-file adapter
+
+`Directory<TFile>` in [`lib/src/directory.dart`](lib/src/directory.dart) ports
+`Directory` from
+`common/src/main/java/com/ichi2/anki/model/Directory.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies
+file creation, existence and directory checks, listing, and canonical-path
+callbacks. The adapter constructs one host file for a path, checks existence
+once and directory status only when it exists, and retains the exact accepted
+file object. Listing returns the host's exact non-null list or a fresh empty list
+for null; `toString()` reads the host canonical path on every call. Host
+filesystem behavior and callback failures remain host-side and propagate
+unchanged. Focused source-derived tests are in
+[`test/directory_test.dart`](test/directory_test.dart); the pinned upstream
+test covers directory creation and listing, while adapter-specific callback
+ordering, identity, null, and failure cases are source-derived. The Kotlin
+source declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source and license details.
+
 ## Run an action with an out-of-memory guard
 
 `runWithOomCheck()` in [`lib/src/run_with_oom_check.dart`](lib/src/run_with_oom_check.dart)

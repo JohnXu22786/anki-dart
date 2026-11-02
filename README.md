@@ -4473,3 +4473,15 @@ installs Timber trees. Focused source-derived cases are in
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains unchanged. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and attribution details.
+
+## AOSP JSON string conversion
+
+[`jsonToString()`](lib/src/json_to_string.dart) adapts AnkiDroid 2.25.3's
+AOSP `JSON.toString(value)`. It preserves String values, returns null without
+conversion, and requires a host callback for Kotlin/JVM `Any.toString()` on
+other values; the callback result and errors pass through. Focused tests are in
+[`test/json_to_string_test.dart`](test/json_to_string_test.dart). The source is
+Copyright (C) 2010 The Android Open Source Project under Apache-2.0. The Dart
+adaptation and tests follow this repository's GPL-3.0-or-later policy, which is
+compatible with Apache-2.0. The license text and full source mapping are in
+[NOTICE.md](NOTICE.md) and [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).

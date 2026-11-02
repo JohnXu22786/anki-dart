@@ -4137,3 +4137,15 @@ AnkiDroid 2.25.3 commit
 and Robolectric flags and installs Timber trees. The Dart adaptation and tests
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 unchanged.
+
+## AOSP JSON string conversion
+
+`lib/src/json_to_string.dart` adapts `JSON.toString(value)` from
+`AnkiDroid/src/main/java/com/ichi2/utils/JSON.kt` in AnkiDroid 2.25.3, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The original helper is Copyright
+(C) 2010 The Android Open Source Project and licensed under Apache-2.0; its
+license text is included at `LICENSES/Apache-2.0.txt`. The adapted implementation
+and tests are Copyright © 2026 John Tsui and distributed under this repository's
+GPL-3.0-or-later policy, compatible with Apache-2.0. The host supplies the
+Kotlin/JVM `Any.toString()` conversion for non-String values. Root `COPYING`
+remains byte-identical.

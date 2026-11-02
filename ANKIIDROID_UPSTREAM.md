@@ -683,3 +683,20 @@ tests are in `test/note_field_decorator_test.dart`; no direct pinned test was
 found. The Kotlin source is Copyright © 2020 Mike Hardy and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
+
+## AOSP `JSON.toString(value)`
+
+`jsonToString()` in `lib/src/json_to_string.dart` adapts
+`JSON.toString(value)` from
+`AnkiDroid/src/main/java/com/ichi2/utils/JSON.kt`, pinned to AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It returns a `String` input
+unchanged, delegates a non-null non-String value to the required host callback
+for Kotlin/JVM `Any.toString()`, and returns null without calling the callback
+for null input. Callback results and failures pass through unchanged. The host
+owns the concrete object representation and Kotlin/JVM-compatible conversion.
+Focused cases are in `test/json_to_string_test.dart`; no direct pinned test for
+this helper was found. The original helper is Copyright (C) 2010 The Android
+Open Source Project and licensed under Apache-2.0; the license text is included
+at `LICENSES/Apache-2.0.txt`. The Dart adaptation and tests are Copyright © 2026
+John Tsui and distributed under this repository's GPL-3.0-or-later policy,
+which is compatible with Apache-2.0. Root `COPYING` remains byte-identical.

@@ -2579,3 +2579,26 @@ credits Mike Hardy (2018) and Ashish Yadav (2026); the direct test credits
 Mrudul Tora (2021) and Ashish Yadav (2026). These names identify the upstream
 Kotlin files only. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Common analytics routing
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/analytics/Analytics.kt`
+- Direct test: `common/src/test/java/com/ichi2/anki/common/analytics/AnalyticsTest.kt`
+- Dart adaptation: `UsageAnalytics` and `Analytics` in `lib/src/analytics_routing.dart`
+- Focused Dart tests: `test/analytics_routing_test.dart`
+
+`UsageAnalytics` retains event, screen-view, and exception entry points;
+`Analytics` dispatches to the registered implementation and safely drops calls
+before registration. The source opt-in preference key is exactly
+`analytics_opt_in_v2`. Dart cannot portably derive Java's
+`screen.javaClass.simpleName`, so the object screen-view method accepts a
+host-provided simple-class-name callback; explicit screen-name calls pass
+through unchanged. Consent storage, application setup, exception types,
+Android/UI naming, and analytics backends remain host-side. The Kotlin source
+declares `GPL-3.0-or-later` and credits Ashish Yadav (2026); its direct test
+also declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

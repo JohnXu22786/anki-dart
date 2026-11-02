@@ -3716,3 +3716,13 @@ credits Mike Hardy (2018) and Ashish Yadav (2026); the direct test credits
 Mrudul Tora (2021) and Ashish Yadav (2026). These names identify the upstream
 Kotlin files only. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Common analytics routing
+
+`lib/src/analytics_routing.dart` and `test/analytics_routing_test.dart` adapt
+`Analytics.kt` and `AnalyticsTest.kt` from AnkiDroid 2.25.3, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source declares
+`GPL-3.0-or-later` and credits Ashish Yadav (2026); the direct test declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical.

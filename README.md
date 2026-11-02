@@ -1923,21 +1923,25 @@ Android lifecycle, StateFlow, localization, and UI.
   current flag once, selects NONE only when it matches the request, and runs
   the same set sequence. Callback failures propagate unchanged and stop later
   callbacks. Card lookup, undoable collection mutation, StateFlow delivery,
-  action routing, and lifecycle remain host-side; focused source-derived cases
-  are in `test/reviewer_flag_operation_test.dart`.
+  execution of the selected flag operation, and lifecycle remain host-side;
+  `reviewerViewActionRoute()` separately maps actions to operations. Focused
+  source-derived cases are in `test/reviewer_flag_operation_test.dart`.
 - Reviewer flag command mapping: `reviewerFlagCommandOperation` maps each
   existing `ViewerCommand.TOGGLE_FLAG_*` to a typed Toggle operation carrying
   its corresponding source `Flag`, and `UNSET_FLAG` to a typed Set operation
   carrying `Flag.NONE`. The pinned `ReviewerViewModelTest.kt` has no direct
   assertion for this command-to-outcome mapping, so focused cases are
-  source-derived. The host retains action dispatch, flag-flow reads,
+  source-derived. The host retains command execution, flag-flow reads,
   current-card lookup, undoable collection writes, and publication; menu-only
-  `FLAG_*` actions are outside `ViewerCommand`. See `ANKIDROID_UPSTREAM.md`.
+  `FLAG_*` actions are outside `ViewerCommand`. Central `ViewerAction` route
+  selection is modeled by `reviewerViewActionRoute()`. See `ANKIDROID_UPSTREAM.md`.
 - Reviewer undo/redo feedback: `reviewerUndoRedoFeedbackMessage` selects the
   host-localized no-operation string for an empty operation, or invokes the
   matching undo/redo message callback with a nonempty operation unchanged.
   Undo availability and execution, protobuf extraction, localization,
-  Reviewer action dispatch, and feedback Flow delivery remain host-side.
+  execution of selected reviewer operations and feedback Flow delivery remain
+  host-side; action-to-operation selection is projected by
+  `reviewerViewActionRoute()`.
 - Reviewer operation-executed effects: `planReviewerOpExecutedEffects` always
   requests undo/redo labels first, returns after that request when the host's
   source `handler == this` comparison is true, then selects study-queue,
@@ -2081,6 +2085,17 @@ Android lifecycle, StateFlow, localization, and UI.
   case is source-derived. Flow delivery, Android intent/activity navigation,
   and statistics UI/collection access remain host-side. `STATISTICS` is not a
   `ViewerCommand` and adds no binding. See `ANKIDROID_UPSTREAM.md`.
+- Reviewer action routing: `ReviewerViewAction` retains every `ViewerAction`
+  identifier in source declaration order, and `reviewerViewActionRoute()` maps
+  each to a typed host operation and optional flag, answer, user-action ordinal,
+  JavaScript, or result argument. It preserves the source menu aliases, the
+  `SHOW_ANSWER` visibility guard, exact hint scripts, and EXIT result `50`.
+  `test/reviewer_view_action_routing_test.dart` checks the complete route table;
+  no direct exhaustive pinned `executeAction` test was found. The host executes
+  each operation and retains coroutine/error handling, mutex serialization,
+  actual ViewModel methods, collection access, Flow delivery, JavaScript/UI
+  effects, and lifecycle. Binding eligibility and `processAction` metadata are
+  outside this projection. See `ANKIDROID_UPSTREAM.md`.
 - Reviewer whiteboard toggle: `planReviewerWhiteboardToggle` inverts the
   host-supplied state, publishes the new value, then requests assigning that
   same value to the repository preference. StateFlow mutation, repository

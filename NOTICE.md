@@ -1915,7 +1915,7 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   contract, action codes, delay dispatch, and cooperative in-flight cancellation
   signal are adapted
   in `lib/src/auto_advance.dart`; the Android collection settings lookup and
-  reviewer action routing are not included. `toggleAutoAdvance()` state/effect
+  `toggleAutoAdvance()` state/effect
   ordering is separately projected in
   `lib/src/reviewer_auto_advance_toggle.dart`; settings, localization, media
   state, timer operations, and StateFlow remain host-side. The
@@ -1936,6 +1936,11 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   Record-voice toggle state/preference ordering is projected in
   `lib/src/reviewer_record_voice_toggle.dart`; StateFlow mutation, repository
   access/write, action dispatch and recorder lifecycle remain host-side.
+  `ReviewerViewAction` and `reviewerViewActionRoute()` in
+  `lib/src/reviewer_view_action_routing.dart` cover the source-ordered
+  `ViewerAction` dispatch projection, including its typed payloads and source
+  aliases. The host retains execution, synchronization, Android/collection
+  effects, Flows, JavaScript/UI effects, and lifecycle.
 - `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/whiteboard/WhiteboardViewModel.kt`
   declares `SPDX-License-Identifier: GPL-3.0-or-later`; its header contains no
   separate copyright line. Completed-add, clear, undo, redo and reset history
@@ -2067,7 +2072,9 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   both operations resolve one card ID, perform one singleton update, and publish
   the exact effective flag only after update success. Callback failures
   propagate unchanged. Actual card lookup, undoable collection mutation,
-  StateFlow delivery and action routing stay with the host. The pinned source
+  StateFlow delivery and execution of the selected flag operation stay with
+  the host; action-to-operation selection is projected by
+  `reviewerViewActionRoute()`. The pinned source
   and Dart adaptation/tests are GPL-3.0-or-later; the Dart files are Copyright
   © 2026 John Tsui. Root `COPYING` remains byte-identical.
   The `toggleMark()` operation order is adapted as host effects in

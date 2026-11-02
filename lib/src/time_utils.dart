@@ -148,6 +148,130 @@ int _wrapSignedInt64(BigInt value) {
   return signed.toInt();
 }
 
+/// A test clock that advances by [step] milliseconds after each read.
+///
+/// Values and arithmetic follow the source's signed JVM `Long` wraparound;
+/// [step] is first narrowed to the source's signed 32-bit `Int`. The host
+/// supplies the time zone and Gregorian calendar used by [timeStamp], so JVM
+/// calendar normalization, defaults, and failures remain host-side.
+final class MockTime<TTimeZone, TCalendar> {
+  MockTime(int initialMilliseconds, {int step = 0})
+    : _time = _wrapSignedInt64(BigInt.from(initialMilliseconds)),
+      _step = _wrapSignedInt32(step);
+
+  /// Creates a clock from date components using the source GMT calendar path.
+  MockTime.fromComponents({
+    required int year,
+    required int month,
+    required int date,
+    required int hourOfDay,
+    required int minute,
+    required int second,
+    int milliseconds = 0,
+    int step = 0,
+    required TTimeZone Function(String id) getTimeZone,
+    required TCalendar Function(
+      int year,
+      int month,
+      int date,
+      int hourOfDay,
+      int minute,
+      int second,
+    )
+    createGregorianCalendar,
+    required void Function(TCalendar calendar, TTimeZone timeZone) setTimeZone,
+    required void Function(TCalendar calendar, int milliseconds) setMillisecond,
+    required int Function(TCalendar calendar) getTimeInMillis,
+  }) : this(
+         timeStamp(
+           year,
+           month,
+           date,
+           hourOfDay,
+           minute,
+           second,
+           milliseconds: milliseconds,
+           getTimeZone: getTimeZone,
+           createGregorianCalendar: createGregorianCalendar,
+           setTimeZone: setTimeZone,
+           setMillisecond: setMillisecond,
+           getTimeInMillis: getTimeInMillis,
+         ),
+         step: step,
+       );
+
+  final int _step;
+  int _time;
+
+  /// Returns the current milliseconds, then advances by the configured step.
+  int intTimeMS() {
+    final currentTime = _time;
+    _time = _wrapSignedInt64(BigInt.from(_time) + BigInt.from(_step));
+    return currentTime;
+  }
+
+  /// Adds [minutes] using the source's nested Long multiplications.
+  void addM(int minutes) {
+    final seconds = _wrapSignedInt64(BigInt.from(minutes) * BigInt.from(60));
+    final milliseconds = _wrapSignedInt64(
+      BigInt.from(seconds) * BigInt.from(1000),
+    );
+    _time = _wrapSignedInt64(BigInt.from(_time) + BigInt.from(milliseconds));
+  }
+
+  /// Adds [days] using the source's nested Long multiplications.
+  void addD(int days) {
+    final hours = _wrapSignedInt64(BigInt.from(days) * BigInt.from(24));
+    final minutes = _wrapSignedInt64(BigInt.from(hours) * BigInt.from(60));
+    final seconds = _wrapSignedInt64(BigInt.from(minutes) * BigInt.from(60));
+    final milliseconds = _wrapSignedInt64(
+      BigInt.from(seconds) * BigInt.from(1000),
+    );
+    _time = _wrapSignedInt64(BigInt.from(_time) + BigInt.from(milliseconds));
+  }
+
+  /// Returns a timestamp from a host Gregorian calendar set to GMT.
+  ///
+  /// The time zone is resolved before constructing the calendar. That exact
+  /// zone object is assigned before the millisecond field is set and the
+  /// calendar time is read. Callback failures propagate and skip later calls.
+  static int timeStamp<TTimeZone, TCalendar>(
+    int year,
+    int month,
+    int date,
+    int hourOfDay,
+    int minute,
+    int second, {
+    int milliseconds = 0,
+    required TTimeZone Function(String id) getTimeZone,
+    required TCalendar Function(
+      int year,
+      int month,
+      int date,
+      int hourOfDay,
+      int minute,
+      int second,
+    )
+    createGregorianCalendar,
+    required void Function(TCalendar calendar, TTimeZone timeZone) setTimeZone,
+    required void Function(TCalendar calendar, int milliseconds) setMillisecond,
+    required int Function(TCalendar calendar) getTimeInMillis,
+  }) {
+    final timeZone = getTimeZone('GMT');
+    final calendar = createGregorianCalendar(
+      year,
+      month,
+      date,
+      hourOfDay,
+      minute,
+      second,
+    );
+    setTimeZone(calendar, timeZone);
+    setMillisecond(calendar, milliseconds);
+    return getTimeInMillis(calendar);
+  }
+}
+
 /// Returns the host-provided current time in whole seconds.
 ///
 /// The host supplies epoch milliseconds. Its clock is read once, then Dart's

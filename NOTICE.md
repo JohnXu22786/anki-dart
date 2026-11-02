@@ -463,6 +463,26 @@ the timestamp. No direct pinned test was found. The Kotlin source declares
 and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## `MockTime`
+
+`MockTime` in `lib/src/time_utils.dart` and focused cases in
+`test/time_mock_time_test.dart` adapt
+`common/src/main/java/com/ichi2/anki/common/time/MockTime.kt` from AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+returns the current milliseconds before advancing by the signed Int32 step,
+and preserves the source's nested signed Int64 arithmetic in `addM()` and
+`addD()`. Its component constructor uses the same timestamp path: resolve GMT,
+construct a host Gregorian calendar with the exact date components, assign the
+same time-zone object, set milliseconds, then read the calendar time. Callback
+failures propagate unchanged and stop later calls. Host JVM TimeZone and
+GregorianCalendar normalization, defaults, and failures remain host-side. The
+pinned `MockTimeTest.dateTest` checks `2020-08-07 07:00 GMT` as
+`1596783600000L`; source-derived cases also cover stepping, overflow, callback
+order, and short-circuiting. `MockTime.kt` declares `GPL-3.0-or-later` without
+a separate copyright line; the direct test credits Arthur Milchior (2021).
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
 ## `Time.currentDate` and `Time.calendar()`
 
 `currentDate()` and `calendar()` in `lib/src/time_utils.dart`, with focused

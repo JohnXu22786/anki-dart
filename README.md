@@ -3992,6 +3992,10 @@ GMT assignment, single clock read, Kotlin `Double.toLong()` saturation, signed
 64-bit offset arithmetic, default-zone Gregorian calendar assignment, date
 formatting, and SQL date parsing sequence. The host owns the concrete JVM
 formatter, time-zone, calendar, Date, and `java.sql.Date.valueOf` behavior.
+`MockTime` preserves read-before-step behavior, signed Int32 step narrowing,
+signed Int64 arithmetic in `addM()` and `addD()`, and the GMT timestamp
+callback order while leaving concrete JVM time-zone and Gregorian calendar
+behavior host-side.
 The host supplies `SimpleDateFormat` with `Locale.US` and its default time zone
 for `getTimestamp()`; `genToday()` explicitly assigns GMT. Concrete Date and
 Calendar types and time-zone behavior, Kotlin duration conversion and formatting,
@@ -4001,6 +4005,7 @@ cases are in
 [`test/int_time_test.dart`](test/int_time_test.dart),
 [`test/time_current_date_calendar_test.dart`](test/time_current_date_calendar_test.dart),
 [`test/time_gregorian_calendar_test.dart`](test/time_gregorian_calendar_test.dart),
+[`test/time_mock_time_test.dart`](test/time_mock_time_test.dart),
 [`test/time_utc_offset_test.dart`](test/time_utc_offset_test.dart), and
 [`test/gen_today_test.dart`](test/gen_today_test.dart).
 The Kotlin source is

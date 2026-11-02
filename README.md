@@ -4620,3 +4620,19 @@ line; the Dart adaptation and tests are Copyright © 2026 John Tsui under the
 same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source and attribution record.
+
+## Audio recording timer
+
+`AudioTimer` in [`lib/src/audio_timer.dart`](lib/src/audio_timer.dart) adapts
+`AudioTimer.kt` and its direct test from AnkiDroid 2.25.3. It reports elapsed
+time from a monotonic clock and preserves the independent immediate UI (16 ms)
+and waveform (50 ms) loops plus an optional notification loop (1 second before
+its first callback, then every second). Pause saves elapsed time; custom-duration
+start replaces the previous run; stop resets and emits one zero tick. The host
+supplies an `AudioTimerScheduler` tied to its actual lifecycle and owns the
+recording, UI, waveform, and notification consumers. The Kotlin source is
+Copyright © 2023 Ashish Yadav; its direct test is Copyright © 2025 Ashish Yadav;
+both are GPL-3.0-or-later. The Dart adaptation and focused tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains unchanged. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for the source pin and attribution details.

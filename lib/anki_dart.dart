@@ -353,6 +353,7 @@ export 'src/browser_search_history_persistence.dart';
 export 'src/browser_sort_type.dart';
 export 'src/browser_sort_notification.dart';
 export 'src/answer_timer.dart';
+export 'src/audio_timer.dart';
 export 'src/gesture_parser.dart';
 export 'src/gesture_command_router.dart';
 export 'src/reviewer_command_defaults.dart';

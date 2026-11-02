@@ -4266,3 +4266,15 @@ AnkiDroid 2.25.3, pinned to commit
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 focused tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
+
+## Audio recording timer
+
+`lib/src/audio_timer.dart` and `test/audio_timer_test.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/recorder/AudioTimer.kt` and
+`AnkiDroid/src/test/java/com/ichi2/anki/recorder/AudioTimerTest.kt` from
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+Kotlin source is Copyright © 2023 Ashish Yadav and the test is Copyright © 2025
+Ashish Yadav; both are licensed under GPL-3.0-or-later. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui under the same license. The host
+owns the actual lifecycle scope and audio, UI, waveform, and notification
+consumers. Root `COPYING` remains unchanged.

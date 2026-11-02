@@ -2974,3 +2974,20 @@ spaces; the script is inserted verbatim and sent to the host callback once. The
 host retains WebView document state and JavaScript execution. The Kotlin source
 declares `GPL-3.0-or-later` and has no separate copyright line. Dart attribution
 and license details are in `NOTICE.md`; root `COPYING` remains byte-identical.
+
+## Audio recording timer
+
+`lib/src/audio_timer.dart` and `test/audio_timer_test.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/recorder/AudioTimer.kt` and its direct
+test `AnkiDroid/src/test/java/com/ichi2/anki/recorder/AudioTimerTest.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+port keeps a monotonic session start and accumulated duration, starts the UI and
+waveform callbacks immediately on separate 16 ms and 50 ms loops, and delays
+the optional notification loop's first callback until one second. It preserves
+idempotent start, custom-duration replacement, pause/resume, and stop reset
+behavior. `AudioTimerScheduler` is the host-owned monotonic clock and lifecycle
+scheduling boundary; Android, coroutines, and recording/UI/notification
+consumers remain host-side. The Kotlin source is Copyright © 2023 Ashish Yadav
+and its direct test is Copyright © 2025 Ashish Yadav; both are GPL-3.0-or-later.
+The Dart adaptation and focused tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains unchanged.

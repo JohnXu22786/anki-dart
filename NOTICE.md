@@ -692,7 +692,6 @@ members were found. The source declares `GPL-3.0-or-later` and has no separate
 copyright line. The Dart implementation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
 
-
 ## Note Editor pass-arguments Intent
 
 `lib/src/note_editor_pass_arguments_to_intent.dart` and
@@ -4126,3 +4125,15 @@ source is Copyright © 2020 Mike Hardy and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Android randomness and Kotlin/JVM string comparison remain host-provided. Root
 `COPYING` remains byte-identical.
+
+
+## LogType logging mode selection
+
+`lib/src/log_type.dart` and `test/log_type_test.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/logging/LogType.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source declares
+`GPL-3.0-or-later` and has no separate copyright line. The host supplies build
+and Robolectric flags and installs Timber trees. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+unchanged.

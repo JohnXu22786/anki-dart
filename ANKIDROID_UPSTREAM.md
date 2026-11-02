@@ -263,7 +263,6 @@ host responsibilities. The source declares `GPL-3.0-or-later` and has no
 separate copyright line. The Dart implementation and tests are Copyright ©
 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
-
 ## `Time.gregorianCalendar(timeInMS)`
 
 Pinned to AnkiDroid 2.25.3 commit
@@ -2807,3 +2806,20 @@ for `ShortcutGroup` was found. The Kotlin source declares `GPL-3.0-or-later` and
 Copyright (c) 2024 Sanjay Sargam. The Dart adaptation and tests are Copyright
 © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 See `NOTICE.md` for attribution details.
+
+
+## `LogType` logging mode selection
+
+`lib/src/log_type.dart` and `test/log_type_test.dart` port the `LogType` enum
+and companion selection from
+`AnkiDroid/src/main/java/com/ichi2/anki/logging/LogType.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+Dart enum preserves the source order and names `DEBUG`, `ROBOLECTRIC`,
+`PRODUCTION`. Selection first returns `PRODUCTION` when the host build is not
+debug; in debug builds, it returns `ROBOLECTRIC` for Robolectric and `DEBUG`
+otherwise. Build flags are supplied by the host, which also installs the
+Timber trees. Focused Dart cases cover all three selection branches and enum
+order; no direct pinned `LogType` test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

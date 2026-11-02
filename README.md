@@ -3290,7 +3290,6 @@ host-side. Focused source-derived cases are in
 `test/card_template_editor_keyboard_discard_gate_test.dart`; see
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
-
 ## Card Template Editor discard confirmation
 
 `cardTemplateEditorShowDiscardChangesDialog()` in
@@ -4456,3 +4455,21 @@ preserved. Focused coverage is in
 [`test/note_field_decorator_test.dart`](test/note_field_decorator_test.dart).
 See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
 for source mapping and attribution. Root `COPYING` remains unchanged.
+
+
+## Logging mode selection
+
+`LogType` in [`lib/src/log_type.dart`](lib/src/log_type.dart) ports the enum
+and companion selection from
+`AnkiDroid/src/main/java/com/ichi2/anki/logging/LogType.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves `DEBUG`,
+`ROBOLECTRIC`, `PRODUCTION` declaration order and chooses `PRODUCTION` when
+the host build is not debug; otherwise it chooses `ROBOLECTRIC` for a
+Robolectric host and `DEBUG` for other hosts. The host supplies both flags and
+installs Timber trees. Focused source-derived cases are in
+[`test/log_type_test.dart`](test/log_type_test.dart). The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains unchanged. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and attribution details.

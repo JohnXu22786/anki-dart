@@ -2133,15 +2133,21 @@ privacy handling remain the host's duty.
 `BrowserFilterUpdate` models user-versus-system filter origins and the source's
 initial empty System state. For one supplied snapshot, its request projection
 returns nothing while the screen is open or for a System update; a closed-screen
-User update carries the exact filters and Kotlin-trimmed text into a request.
+User update creates one `BrowserSearchRequest` with the exact filters and the
+displayed text trimmed using Kotlin `String.trim()` semantics. Blank text still
+creates a request, and trimming does not normalize the query's interior.
 The pure `browserSetDecksFilter`, `browserSetTagsFilter`,
 `browserSetCardStateFilter`, and `browserSetFlagsFilter` projections match the
 source copy behavior: each returns a User update even for equal values, keeps
 the incoming category list, and reuses the other field lists. The host supplies
-the snapshot and owns StateFlow/coroutine timing, collection access, and search
-execution. The pinned `SearchFiltersTest.kt` covers active-filter presence but
-does not directly test these ViewModel setters; their Dart cases are
-source-derived.
+the current text/filter/screen snapshot. This is the pure decision from pinned
+AnkiDroid 2.25.3 `CardBrowserSearchViewModel.kt:112–131`; upstream has no direct
+test for `updateSearchFlow` (the adjacent `SearchFiltersTest.kt` and
+`SearchRequestTest.kt` cover separate behavior). Focused Dart cases are
+source-derived in `test/browser_filter_update_test.dart`. The host retains
+StateFlow and coroutine combination, cancellation, scheduling, `withCol` and
+Collection access, backend query creation/execution, and request delivery; this
+projection does not perform those operations.
 `BrowserSearchTextState` separately models the Basic/Advanced text buffers:
 mode toggles retain both values, Advanced appending uses the source's spacing
 rules, text edits replace LF without normalizing CR, and saved-query application

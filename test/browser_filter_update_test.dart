@@ -27,7 +27,7 @@ import 'package:anki_dart/anki_dart.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('Card Browser filter update projection', () {
+  group('Card Browser updateSearchFlow decision', () {
     test('starts as an empty System update and does not initiate a search', () {
       final update = BrowserFilterUpdate.initial;
 
@@ -95,6 +95,20 @@ void main() {
 
       expect(request, isNotNull);
       expect(request!.query, 'query');
+      expect(request.filters, same(filters));
+    });
+
+    test('closed-screen User updates trim only the outer query whitespace', () {
+      final filters = BrowserSearchFilters(tags: ['exact']);
+
+      final request = browserSearchRequestFromFilterUpdate(
+        text: '\t deck:one  tag:two \n',
+        update: BrowserFilterUpdateUser(filters),
+        isScreenOpen: false,
+      );
+
+      expect(request, isNotNull);
+      expect(request!.query, 'deck:one  tag:two');
       expect(request.filters, same(filters));
     });
 

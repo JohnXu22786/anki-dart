@@ -2419,9 +2419,17 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   instances retain identity semantics rather than Dart const canonicalization;
   callers should construct ordinary mapping instances. No pinned test directly
   checks this equality rule; the added assertion is source-derived. The view
-  model's `FilterUpdate` origin and one-snapshot request projection are adapted
-  in `lib/src/browser_filter_update.dart`; StateFlow/coroutine timing and
-  application of field-specific setter updates remain with the host. The four
+  model's `FilterUpdate` origin and the pure decision from
+  `CardBrowserSearchViewModel.kt:112–131` are adapted in
+  `lib/src/browser_filter_update.dart`: open-screen and System snapshots emit
+  no request, while a closed-screen User snapshot creates one request from the
+  Kotlin-trimmed displayed text and the identical filter object. Blank input
+  still creates a request, and interior query text is preserved. Focused
+  source-derived cases are in `test/browser_filter_update_test.dart`; the
+  pinned `CardBrowserSearchViewModelTest.kt` has no direct `updateSearchFlow`
+  test. This projection consumes one supplied snapshot only. StateFlow/flow
+  combination, cancellation, scheduling, `withCol`, Collection/backend query
+  construction and execution, and request delivery remain host-side. The four
   Card Browser filter setter projections in that file preserve the source
   `SearchFilters.copy(field = incomingList)` behavior: each returns a User
   update without equality suppression, retains the incoming list reference,

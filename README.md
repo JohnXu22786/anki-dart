@@ -1872,14 +1872,15 @@ Android lifecycle, StateFlow, localization, and UI.
   order assertion; source-derived cases are in
   `test/reviewer_delete_note_plan_test.dart`. Card Browser bulk deletion is a
   separate operation.
-- Reviewer flag toggle effects: `planReviewerToggleFlag` composes the existing
-  flag target decision with the Reviewer singleton write and publish-on-success
-  plan. A matching requested/current flag selects NONE; a different request is
-  preserved. The pinned Reviewer tests do not directly cover this action, so
-  source-derived cases cover target selection, exact card targeting, success
-  ordering, and write-failure suppression. Dispatch, flag-state reads, card
-  lookup, undoable collection mutation, exceptions, StateFlow delivery, and
-  lifecycle remain host-side; see `ANKIDROID_UPSTREAM.md`.
+- Reviewer flag operations: `executeReviewerSetFlagOperation` and
+  `executeReviewerToggleFlagOperation` run host callbacks in source order. Set
+  resolves one current-card ID, performs one singleton-card update with the
+  exact flag, then publishes that flag after update success. Toggle reads the
+  current flag once, selects NONE only when it matches the request, and runs
+  the same set sequence. Callback failures propagate unchanged and stop later
+  callbacks. Card lookup, undoable collection mutation, StateFlow delivery,
+  action routing, and lifecycle remain host-side; focused source-derived cases
+  are in `test/reviewer_flag_operation_test.dart`.
 - Reviewer flag command mapping: `reviewerFlagCommandOperation` maps each
   existing `ViewerCommand.TOGGLE_FLAG_*` to a typed Toggle operation carrying
   its corresponding source `Flag`, and `UNSET_FLAG` to a typed Set operation

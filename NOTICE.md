@@ -2015,6 +2015,17 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   `GPL-3.0-or-later` with no separate copyright line; the Dart adapter and
   focused tests are Copyright © 2026 John Tsui under that license. Root
   `COPYING` remains byte-identical.
+  Reviewer `setFlag` / `toggleFlag` callback orchestration from
+  `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:247–263`
+  is adapted in `lib/src/reviewer_flag_operation.dart`, composing the existing
+  target/effect plans. Source-derived cases are in
+  `test/reviewer_flag_operation_test.dart`. Toggle reads the current flag once;
+  both operations resolve one card ID, perform one singleton update, and publish
+  the exact effective flag only after update success. Callback failures
+  propagate unchanged. Actual card lookup, undoable collection mutation,
+  StateFlow delivery and action routing stay with the host. The pinned source
+  and Dart adaptation/tests are GPL-3.0-or-later; the Dart files are Copyright
+  © 2026 John Tsui. Root `COPYING` remains byte-identical.
   The `toggleMark()` operation order is adapted as host effects in
   `lib/src/previewer_mark_effects.dart`; current note resolution, tag mutation,
   undoable persistence, marked-state lookup, error handling, and StateFlow

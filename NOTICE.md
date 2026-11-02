@@ -3726,3 +3726,18 @@ Tsui under the same license. Root `COPYING` remains byte-identical.
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING`
 remains byte-identical.
+
+## Manually reported exception
+
+`lib/src/manually_reported_exception.dart` and
+`test/manually_reported_exception_test.dart` adapt the nullable-message
+`ManuallyReportedException` class from
+`common/src/main/java/com/ichi2/anki/common/exception/ManuallyReportedException.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart value retains its nullable
+message and implements `Exception`. The upstream source comment describes its
+manual-reporting purpose; ACRA routing and Android call sites are not part of
+this adaptation. No direct pinned test was found, so the focused Dart tests are
+source-derived. The Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.

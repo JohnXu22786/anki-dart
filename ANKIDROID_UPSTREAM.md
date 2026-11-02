@@ -2602,3 +2602,18 @@ declares `GPL-3.0-or-later` and credits Ashish Yadav (2026); its direct test
 also declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## `ManuallyReportedException`
+
+`ManuallyReportedException` in `lib/src/manually_reported_exception.dart` ports
+the nullable-message exception value from
+`common/src/main/java/com/ichi2/anki/common/exception/ManuallyReportedException.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart type remains an
+`Exception` and preserves a nullable `message`. No direct pinned test was found;
+`test/manually_reported_exception_test.dart` contains source-derived nullable
+and non-null construction and runtime exception-type cases. This scope is only
+the exception value; ACRA routing and Android call sites remain outside the
+port. The Kotlin source declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

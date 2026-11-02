@@ -4118,3 +4118,17 @@ direct pinned TimeManager test was found. The Kotlin source declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
+
+## Manually reported exception
+
+`ManuallyReportedException` in
+[`lib/src/manually_reported_exception.dart`](lib/src/manually_reported_exception.dart)
+ports the nullable-message exception value from AnkiDroid 2.25.3. It remains a
+Dart `Exception`; ACRA routing and Android call sites are outside this port.
+Source-derived construction tests are in
+[`test/manually_reported_exception_test.dart`](test/manually_reported_exception_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.

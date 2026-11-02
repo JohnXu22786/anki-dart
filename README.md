@@ -4552,3 +4552,23 @@ Copyright (c) 2022 Ankitects Pty Ltd and declares `GPL-3.0-or-later`; the Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source mapping and attribution.
+
+## HttpFetcher request configuration
+
+httpFetcherRequestConfiguration() in
+[lib/src/http_fetcher_request_policy.dart](lib/src/http_fetcher_request_policy.dart)
+projects the timeout and ordered request-header policy from AnkiDroid's
+HttpFetcher.getOkHttpBuilder() in AnkiDroid 2.25.3. It preserves the source's
+numeric timeout value 30000 with the seconds unit for connect, write, and
+read timeouts. The fake user-agent branch retains the exact Referer,
+User-Agent (including its trailing space), and Accept values in source order;
+the other branch emits only the versioned AnkiDroid User-Agent. The host
+supplies its package version string. OkHttp, network interceptors, requests,
+responses, charset handling, exception strings, and Timber remain host-side.
+Focused source-derived cases are in
+[test/http_fetcher_request_policy_test.dart](test/http_fetcher_request_policy_test.dart).
+The source declares GPL-3.0-or-later and credits Bibek Shrestha, Zaur
+Molotnikov, Nicolas Raoul, Flavio Lerda (2013), and Mike Hardy (2020). The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root COPYING remains byte-identical; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source attribution.

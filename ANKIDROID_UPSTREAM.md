@@ -2890,3 +2890,28 @@ direct pinned test for these helpers was found. `BackendUndo.kt` is Copyright
 (c) 2022 Ankitects Pty Ltd and declares `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See `NOTICE.md` for attribution details.
+
+## HttpFetcher request configuration
+
+lib/src/http_fetcher_request_policy.dart and
+test/http_fetcher_request_policy_test.dart adapt the portable builder policy
+from HttpFetcher.getOkHttpBuilder(fakeUserAgent) in
+AnkiDroid/src/main/java/com/ichi2/anki/web/HttpFetcher.kt, pinned to AnkiDroid
+2.25.3 commit d9bf072f814a0c37d30a694192593b31ff2df875. The projection keeps
+the source's CONN_TIMEOUT = 30000 value and its use with the seconds unit for
+connect, write, and read timeouts. It represents header insertion order
+explicitly: fake mode emits Referer: com.ichi2.anki, User-Agent: Mozilla/5.0
+( compatible ) (including the trailing space), and Accept: */*; normal mode
+emits only User-Agent: AnkiDroid-$packageVersionName. The host supplies the
+package version string. OkHttp client construction and network-interceptor
+execution, URL/body access, charset decoding, exception/result text, and Timber
+remain host-side; the port does not alter source behavior.
+
+The upstream source declares GPL-3.0-or-later and lists Copyright (c) 2013
+Bibek Shrestha <bibekshrestha@gmail.com>, Zaur Molotnikov
+<qutorial@gmail.com>, Nicolas Raoul <nicolas.raoul@gmail.com>, Flavio Lerda
+<flerda@gmail.com>, and Copyright (c) 2020 Mike Hardy
+<github@mikehardy.net>. These notices identify the Kotlin source and not the
+Dart adaptation. The Dart implementation and tests are Copyright © 2026 John
+Tsui under the same license. Root COPYING remains byte-identical. See
+NOTICE.md for the attribution record.

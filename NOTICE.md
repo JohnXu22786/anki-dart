@@ -4201,3 +4201,21 @@ conversion and collection helpers in
 text. The Dart adaptation and focused tests are Copyright © 2026 John Tsui under
 GPL-3.0-or-later. Root `COPYING` remains byte-identical. Collection/backend/
 protobuf access, translation, and undo/redo effects remain host-side.
+
+## HttpFetcher request configuration
+
+lib/src/http_fetcher_request_policy.dart and
+test/http_fetcher_request_policy_test.dart adapt the portable request-builder
+policy from AnkiDroid/src/main/java/com/ichi2/anki/web/HttpFetcher.kt, pinned
+to AnkiDroid 2.25.3 commit d9bf072f814a0c37d30a694192593b31ff2df875. The
+Kotlin source declares GPL-3.0-or-later and contains these notices:
+
+- Copyright (c) 2013 Bibek Shrestha <bibekshrestha@gmail.com>
+- Copyright (c) 2013 Zaur Molotnikov <qutorial@gmail.com>
+- Copyright (c) 2013 Nicolas Raoul <nicolas.raoul@gmail.com>
+- Copyright (c) 2013 Flavio Lerda <flerda@gmail.com>
+- Copyright (c) 2020 Mike Hardy <github@mikehardy.net>
+
+These notices identify the upstream Kotlin source and do not attribute the Dart
+adaptation. The Dart implementation and focused tests are Copyright © 2026 John
+Tsui under GPL-3.0-or-later. Root COPYING remains byte-identical.

@@ -476,3 +476,4 @@ export 'src/shortcut_group_projection.dart';
 export 'src/note_field_decorator.dart';
 export 'src/json_to_string.dart';
 export 'src/view_model_delayed_initializer.dart';
+export 'src/http_fetcher_request_policy.dart';

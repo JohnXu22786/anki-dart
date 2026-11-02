@@ -114,40 +114,42 @@ void main() {
       expect(calls, ['mode', 'basic', 'advanced', 'filters']);
     });
 
-    test('sync awaits the exact System update before submitting the request',
-        () async {
-      final filters = BrowserSearchFilters(tags: ['sync-tag']);
-      final request = BrowserSearchRequest(query: 'sync', filters: filters);
-      final filterUpdateFinished = Completer<void>();
-      final calls = <String>[];
-      BrowserSearchFilters? updatedFilters;
-      BrowserSearchRequest? submittedSearch;
+    test(
+      'sync awaits the exact System update before submitting the request',
+      () async {
+        final filters = BrowserSearchFilters(tags: ['sync-tag']);
+        final request = BrowserSearchRequest(query: 'sync', filters: filters);
+        final filterUpdateFinished = Completer<void>();
+        final calls = <String>[];
+        BrowserSearchFilters? updatedFilters;
+        BrowserSearchRequest? submittedSearch;
 
-      final application = browserSyncSearchState(
-        request,
-        callbacks: BrowserSyncSearchStateCallbacks(
-          updateSystemFilters: (value) {
-            calls.add('filters');
-            updatedFilters = value;
-            return filterUpdateFinished.future;
-          },
-          submitSearch: (value) async {
-            calls.add('submit');
-            submittedSearch = value;
-          },
-        ),
-      );
+        final application = browserSyncSearchState(
+          request,
+          callbacks: BrowserSyncSearchStateCallbacks(
+            updateSystemFilters: (value) {
+              calls.add('filters');
+              updatedFilters = value;
+              return filterUpdateFinished.future;
+            },
+            submitSearch: (value) async {
+              calls.add('submit');
+              submittedSearch = value;
+            },
+          ),
+        );
 
-      expect(calls, ['filters']);
-      expect(calls, hasLength(1));
-      expect(identical(updatedFilters, filters), isTrue);
-      filterUpdateFinished.complete();
-      await application;
+        expect(calls, ['filters']);
+        expect(calls, hasLength(1));
+        expect(identical(updatedFilters, filters), isTrue);
+        filterUpdateFinished.complete();
+        await application;
 
-      expect(calls, ['filters', 'submit']);
-      expect(calls, hasLength(2));
-      expect(identical(submittedSearch, request), isTrue);
-    });
+        expect(calls, ['filters', 'submit']);
+        expect(calls, hasLength(2));
+        expect(identical(submittedSearch, request), isTrue);
+      },
+    );
 
     test('sync stops before submission when filter update fails', () async {
       final error = StateError('filter update failed');

@@ -2444,11 +2444,15 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   covered by source-derived Dart cases rather than a direct upstream test. No
   pinned test directly covers host-map restoration through `SearchFilters.from`.
   The source `syncState` and `resetSearchState` method call order is projected
-  as typed effects in `lib/src/browser_search_state_effects.dart`. The reset
-  preserves the exact query and omits `historyExpanded` from the three ordered
-  key removals. The host performs the StateFlow and SavedStateHandle operations;
-  the source marks reset `@NeedsTest("reset")` and has no direct reset or sync
-  test. The `submitCurrentSearch(SearchRequest)` overload is also projected in
+  as typed effects in `lib/src/browser_search_state_effects.dart` and applied
+  through host callbacks in `lib/src/browser_search_state_effect_application.dart`.
+  Sync awaits the System filter callback before submitting the exact request;
+  reset invokes its callbacks immediately in source order. Reset preserves the
+  exact query and omits `historyExpanded` from the three ordered key removals.
+  The host supplies the StateFlow and SavedStateHandle operations and owns
+  coroutine scheduling. The source marks reset `@NeedsTest("reset")` and has
+  no direct reset or sync test, so focused Dart application cases are
+  source-derived. The `submitCurrentSearch(SearchRequest)` overload is also projected in
   `lib/src/browser_search_state_effects.dart`: it records the trimmed ID-based
   history entry using the existing recency rules, publishes the updated history
   as Loading, then emits the close-view event and exact submitted request. It
@@ -2690,8 +2694,12 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
 - `test/browser_search_state_effects_test.dart` adds source-derived cases for
   `syncState`/`resetSearchState` effect order, verbatim request/filter values,
   and the exact three SavedState keys removed. The pinned source marks reset
-  `@NeedsTest("reset")` but has no direct test for either method; host execution
-  and coroutine scheduling remain outside this test.
+  `@NeedsTest("reset")` but has no direct test for either method.
+- `test/browser_search_state_effect_application_test.dart` adds source-derived
+  callback tests for immediate reset order, sequential async sync order, exact
+  request/filter identity, callback counts, and first-error short-circuiting.
+  Android StateFlow/SavedStateHandle implementations and coroutine scheduling
+  remain host-side.
 - The same `test/browser_search_state_effects_test.dart` also checks the
   source-derived internal effect order for `submitSavedSearch`. Pinned
   `CardBrowserSearchViewModelTest.kt` directly covers the resulting query text,

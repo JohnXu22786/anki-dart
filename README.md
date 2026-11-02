@@ -1605,9 +1605,13 @@ Android lifecycle, StateFlow, localization, and UI.
 - Card Browser sync/reset: `browserSyncStateEffects` emits the source System
   filter update before submitting the exact request. Reset emits mode, both
   exact text values, System filters, screen closure, and three SavedState key
-  removals in source order; it leaves `historyExpanded` untouched. The host
-  applies these effects to StateFlows and SavedStateHandle. The pinned source
-  marks reset `@NeedsTest("reset")`; neither method has a direct upstream test.
+  removals in source order; it leaves `historyExpanded` untouched.
+  `browserResetSearchState` applies reset callbacks immediately in that order;
+  `browserSyncSearchState` awaits filter update before request submission. The
+  host supplies the actual StateFlow and SavedStateHandle operations and owns
+  coroutine scheduling. The pinned source marks reset `@NeedsTest("reset")`;
+  neither method has a direct upstream test, so focused callback-application
+  cases are source-derived.
 - Card Browser history selection: `browserSelectSearchHistoryEntryEffects`
   emits the source-ordered copied-current User update, LF-sanitized edit to the
   active text buffer, restored User filters, and screen closure. It uses the
@@ -2134,11 +2138,15 @@ adds one space before taking the same edit path. The host owns
 SavedStateHandle persistence, StateFlow scheduling, text widgets, and saved
 search lookup.
 `browserSyncStateEffects` and `browserResetSearchStateEffects` return typed
-ordered effects for synchronization and reset. Reset preserves the submitted
-query verbatim, removes only `advancedSearch`, `basicSearchText`, then
-`advancedSearchText`, and does not remove `historyExpanded`. The host performs
-the flow and SavedStateHandle operations; the pinned source marks reset
-`@NeedsTest("reset")` but has no direct reset or sync test.
+ordered effects for synchronization and reset. `browserSyncSearchState` applies
+the System filter update and request submission through sequential asynchronous
+callbacks; `browserResetSearchState` applies its callbacks immediately in source
+order. Reset preserves the submitted query verbatim, removes only
+`advancedSearch`, `basicSearchText`, then `advancedSearchText`, and does not
+remove `historyExpanded`. The host supplies the actual StateFlow and
+SavedStateHandle operations and owns coroutine scheduling. The pinned source
+marks reset `@NeedsTest("reset")` but has no direct reset or sync test; Dart
+callback-application cases are source-derived.
 `BrowserSearchHistoryDisplayModel` separately projects the supplied Loading or
 Loaded history into a five-entry collapsed or full expanded list. The host owns
 backend conversion from query/node inputs to `SearchString` (the value wrapper

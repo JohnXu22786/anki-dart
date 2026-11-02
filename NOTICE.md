@@ -4219,3 +4219,20 @@ Kotlin source declares GPL-3.0-or-later and contains these notices:
 These notices identify the upstream Kotlin source and do not attribute the Dart
 adaptation. The Dart implementation and focused tests are Copyright © 2026 John
 Tsui under GPL-3.0-or-later. Root COPYING remains byte-identical.
+
+## Backend note field projection
+
+The Dart files `lib/src/backend_note_projection.dart` and
+`test/backend_note_projection_test.dart` derive from the portable mapping in
+`libanki/src/main/java/com/ichi2/anki/libanki/backend/model/NoteUtil.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source is Copyright (c) 2021
+David Allison <davidallisongithub@gmail.com> and licensed under
+`GPL-3.0-or-later`. The referenced `Note.kt` source fields are from the same
+pinned tree; that file credits Copyright (c) 2011 Norbert Nagold
+<norbert.nagold@gmail.com> and Copyright (c) 2014 Houssam Salem
+<houssam.salem.au@gmail.com>, and is also licensed under
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical. Backend
+protobuf types, builder construction, collection access, and transport remain
+host-side.

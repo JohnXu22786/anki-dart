@@ -4,6 +4,25 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Backend note field projection
+
+`BackendNoteProjection.fromNote()` in
+[`lib/src/backend_note_projection.dart`](lib/src/backend_note_projection.dart)
+ports the portable field mapping from `Note.toBackendNote()` in AnkiDroid
+2.25.3. It maps `id`, the asserted non-null `guId`, `noteTypeId`, `mod`, and
+`usn` to backend fields and snapshots tags and fields in source order. A null
+`guId` fails, matching the source assertion. Generated backend protobuf types,
+protobuf construction, and collection transport remain host-side. Focused
+source-derived tests are in
+[`test/backend_note_projection_test.dart`](test/backend_note_projection_test.dart).
+The upstream Kotlin source declares `GPL-3.0-or-later` and `NoteUtil.kt` credits
+David Allison (2021); the referenced `Note.kt` fields also retain the 2011
+Norbert Nagold and 2014 Houssam Salem source notices. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for source mapping and attribution details.
+
 ## Key selection modifier filter
 
 `disallowModifierKeyCodes()` in

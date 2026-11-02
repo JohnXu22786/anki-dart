@@ -2915,3 +2915,21 @@ Bibek Shrestha <bibekshrestha@gmail.com>, Zaur Molotnikov
 Dart adaptation. The Dart implementation and tests are Copyright © 2026 John
 Tsui under the same license. Root COPYING remains byte-identical. See
 NOTICE.md for the attribution record.
+
+## Backend note field projection
+
+`lib/src/backend_note_projection.dart` and
+`test/backend_note_projection_test.dart` adapt the portable field mapping in
+`libanki/src/main/java/com/ichi2/anki/libanki/backend/model/NoteUtil.kt` from
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source maps `id`, asserted
+`guId!!`, `noteTypeId`, `mod`, and `usn`, then appends tags and fields in
+source order. The Dart snapshot makes independent ordered copies; null `guId`
+continues to fail at the assertion point. Generated backend protobuf types,
+builder construction, collection access, and protobuf transport remain
+host-side. `NoteUtil.kt` is Copyright (c) 2021 David Allison and declares
+`GPL-3.0-or-later`; the referenced fields are declared in `Note.kt`, which
+credits Norbert Nagold (2011) and Houssam Salem (2014) and uses the same
+license. The Dart adaptation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical. See `NOTICE.md` for
+the source attribution.

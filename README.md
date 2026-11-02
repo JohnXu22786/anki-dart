@@ -4,6 +4,23 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Card Browser search-history Loading conversion
+
+`convertBrowserSearchHistoryLoading()` in
+[`lib/src/browser_search_history_display.dart`](lib/src/browser_search_history_display.dart)
+ports the per-entry Loading-to-Loaded mapping from
+`CardBrowserSearchViewModel.kt:168–185` in AnkiDroid 2.25.3. It visits the
+Loading snapshot in source order, calls the host's nullable-string conversion
+once for each original entry, and returns the Loaded snapshot after all
+conversions succeed; callback failures propagate and stop later entries.
+SearchString/backend conversion, flow publication, coroutine scheduling,
+lifecycle, and Android widgets remain host-side. Source-derived cases are in
+[`test/browser_search_history_loading_conversion_test.dart`](test/browser_search_history_loading_conversion_test.dart).
+The source declares `GPL-3.0-or-later` with no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license;
+root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source and test details.
+
 ## Animation preferences
 
 `AnimationPreferences` in

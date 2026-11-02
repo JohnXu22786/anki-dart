@@ -85,6 +85,16 @@ final class BrowserSearchHistoryLoaded extends BrowserSearchHistoryItems {
       BrowserSearchHistoryLoaded(entryToSearchString.take(max).toList());
 }
 
+/// Converts each Loading entry with the host callback and returns one Loaded
+/// snapshot after every conversion succeeds.
+BrowserSearchHistoryLoaded convertBrowserSearchHistoryLoading(
+  BrowserSearchHistoryLoading loading,
+  String? Function(BrowserSearchHistoryEntry) entryToSearchString,
+) => BrowserSearchHistoryLoaded([
+  for (final entry in loading.input)
+    (entry: entry, searchString: entryToSearchString(entry)),
+]);
+
 /// A headless projection of the Card Browser's visible history controls.
 final class BrowserSearchHistoryDisplayProjection {
   const BrowserSearchHistoryDisplayProjection({

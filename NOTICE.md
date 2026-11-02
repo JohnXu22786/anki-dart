@@ -31,6 +31,23 @@ Tsui under GPL-3.0-or-later; root `COPYING` remains byte-identical. The pinned
 `SearchHistoryTest.kt` has no direct test for preference persistence; the
 callback-specific test cases are source-derived.
 
+## Card Browser search-history Loading conversion
+
+`lib/src/browser_search_history_display.dart` and
+`test/browser_search_history_loading_conversion_test.dart` adapt the pure
+per-entry conversion from `CardBrowserSearchViewModel.kt:168–185`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+reuses the existing Loading, Loaded, and entry types; it converts entries in
+source order using one host callback call per entry and constructs one Loaded
+value after success. Null, empty, and non-empty strings pass through unchanged;
+callback failures propagate and stop later conversion. The host supplies
+SearchString/backend conversion and owns flow publication, coroutine/lifecycle
+behavior, and Android widgets. No direct pinned test for this mapping was found;
+the focused cases are source-derived. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 # Notices
 
 ## Saved-search config orchestration

@@ -57,6 +57,7 @@ export 'src/collection_set_user_flag_for_cards.dart';
 export 'src/filename.dart';
 export 'src/field_filter.dart';
 export 'src/result_type.dart';
+export 'src/advanced_search_fields.dart';
 export 'src/saved_state_handle.dart';
 export 'src/search_string.dart';
 export 'src/string_normalization.dart';

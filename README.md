@@ -443,6 +443,22 @@ focused tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
 `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for the source and license record.
 
+## Advanced field-search options
+
+`advancedSearchFieldsOptions` in `lib/src/advanced_search_fields.dart` ports
+the five ordered option keys, titles, examples, and field-text projections from
+`AdvancedSearchFieldsTab.kt`. It passes a host-built field node to the host
+search-string serializer once. For wildcard options, it wraps the node text in
+the exact source placeholders and globally replaces both placeholders in the
+serialized query with the source's raw wildcard strings, including collisions
+with repeated placeholder text. Generated SearchNode/protobuf construction,
+Collection/backend serialization, and field-tab UI remain host-side. Focused
+source-derived cases are in `test/advanced_search_fields_test.dart`; the pinned
+source has `@NeedsTest` but no direct test was found. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
+
 ## Filename sanitization
 
 `Filename.sanitize()` ports the app-side value from

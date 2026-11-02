@@ -3233,6 +3233,20 @@ and focused tests are Copyright © 2026 John Tsui and marked
   host-side. The Dart adaptation and tests are Copyright © 2026 John Tsui and
   marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/AdvancedSearchFieldsTab.kt`
+  (`options` and `FieldSearch.buildSearchString`, pinned AnkiDroid 2.25.3
+  commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `GPL-3.0-or-later` and has no separate copyright line. The five ordered
+  field-search options, exact titles/examples, field-text projections, and
+  global `!!BEFORE!!`/`!!AFTER!!` replacement behavior are adapted in
+  `lib/src/advanced_search_fields.dart`; source-derived cases are in
+  `test/advanced_search_fields_test.dart`. The source carries `@NeedsTest` and
+  no direct test for `AdvancedSearchFieldsTab` was found. Generated SearchNode
+  and protobuf construction, `Collection.buildSearchString()` and Rust backend
+  query behavior, field selection UI, localization, and Fragment lifecycle
+  remain host-side. The Dart adaptation and tests are Copyright © 2026 John
+  Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/CharSequence.kt` (`<C :
   CharSequence> C?.ifNullOrEmpty(defaultValue: () -> C)`, pinned to AnkiDroid
   2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares

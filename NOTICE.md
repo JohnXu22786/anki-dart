@@ -418,6 +418,21 @@ SPDX Copyright (c) 2024 Sanjay Sargam; this identifies the Kotlin source only.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
 
+## `Time.genToday(utcOffset)`
+
+`genToday()` in `lib/src/time_utils.dart` and source-derived cases in
+`test/gen_today_test.dart` adapt `Time.genToday(utcOffset: Double)` from
+`common/src/main/java/com/ichi2/anki/common/time/Time.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter preserves
+the formatter and GMT setup, one clock read, Kotlin/JVM `Double.toLong()`
+truncation and saturation, wrapping signed 64-bit offset arithmetic, default-zone
+Gregorian calendar assignment, formatting, and the unchanged string passed to
+the host SQL-date parser. Formatter, time-zone, calendar, Date, and
+`java.sql.Date.valueOf` semantics remain host-side. No direct pinned test for
+`genToday` was found. The Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart implementation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `Time.currentDate` and `Time.calendar()`
 
 `currentDate()` and `calendar()` in `lib/src/time_utils.dart`, with focused

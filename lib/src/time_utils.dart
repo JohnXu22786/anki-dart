@@ -57,6 +57,62 @@ TCalendar calendar<TTime, TDate, TCalendar>(
   return cal;
 }
 
+/// Returns AnkiDroid's effective SQL date for [utcOffset] seconds.
+///
+/// Host callbacks provide the JVM formatter, time zone, Gregorian calendar,
+/// Date, and `java.sql.Date.valueOf` behavior. The source reads the clock once,
+/// converts the offset with Kotlin/JVM `Double.toLong()` semantics, and uses
+/// wrapping signed 64-bit arithmetic before assigning the calendar time.
+TSqlDate genToday<TTime, TFormatter, TTimeZone, TCalendar, TDate, TSqlDate>(
+  TTime time,
+  double utcOffset, {
+  required TFormatter Function(String pattern, String locale)
+  createSimpleDateFormat,
+  required TTimeZone Function(String id) getTimeZone,
+  required void Function(TFormatter formatter, TTimeZone timeZone) setTimeZone,
+  required int Function(TTime time) intTimeMS,
+  required TCalendar Function() createGregorianCalendar,
+  required void Function(TCalendar calendar, int milliseconds) setTimeInMillis,
+  required TDate Function(TCalendar calendar) getTime,
+  required String Function(TFormatter formatter, TDate date) format,
+  required TSqlDate Function(String value) sqlDateValueOf,
+}) {
+  final formatter = createSimpleDateFormat('yyyy-MM-dd', 'US');
+  final timeZone = getTimeZone('GMT');
+  setTimeZone(formatter, timeZone);
+  final currentTimeMS = intTimeMS(time);
+  final offsetMS = _wrapSignedInt64(
+    BigInt.from(_kotlinDoubleToLong(utcOffset)) * BigInt.from(1000),
+  );
+  final calendarTimeMS = _wrapSignedInt64(
+    BigInt.from(currentTimeMS) - BigInt.from(offsetMS),
+  );
+  final calendar = createGregorianCalendar();
+  setTimeInMillis(calendar, calendarTimeMS);
+  final date = getTime(calendar);
+  final formattedDate = format(formatter, date);
+  return sqlDateValueOf(formattedDate);
+}
+
+const _longMin = -9223372036854775808;
+const _longMax = 9223372036854775807;
+const _longMinAsDouble = -9223372036854775808.0;
+const _longMaxExclusiveAsDouble = 9223372036854775808.0;
+
+int _kotlinDoubleToLong(double value) {
+  if (value.isNaN) return 0;
+  if (value <= _longMinAsDouble) return _longMin;
+  if (value >= _longMaxExclusiveAsDouble) return _longMax;
+  return value.toInt();
+}
+
+int _wrapSignedInt64(BigInt value) {
+  final modulus = BigInt.one << 64;
+  final unsigned = value % modulus;
+  final signed = unsigned >= (BigInt.one << 63) ? unsigned - modulus : unsigned;
+  return signed.toInt();
+}
+
 /// Returns the host-provided current time in whole seconds.
 ///
 /// The host supplies epoch milliseconds. Its clock is read once, then Dart's

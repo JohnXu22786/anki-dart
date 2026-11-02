@@ -89,101 +89,113 @@ void main() {
       });
     }
 
-    test('current-card failure propagates unchanged and stops callbacks', () async {
-      final events = <String>[];
-      final failure = StateError('current card failed');
+    test(
+      'current-card failure propagates unchanged and stops callbacks',
+      () async {
+        final events = <String>[];
+        final failure = StateError('current card failed');
 
-      await expectLater(
-        executeReviewerMarkToggleOperation<Object, Object>(
-          currentCard: () {
-            events.add('currentCard');
-            throw failure;
-          },
-          noteForCard: (_) {
-            events.add('noteForCard');
-            return Object();
-          },
-          toggleMark: (_) => events.add('toggleMark'),
-          isMarked: (_) => false,
-          publishMarkState: (_) => events.add('publishMarkState'),
-        ),
-        throwsA(same(failure)),
-      );
-      expect(events, ['currentCard']);
-    });
+        await expectLater(
+          executeReviewerMarkToggleOperation<Object, Object>(
+            currentCard: () {
+              events.add('currentCard');
+              throw failure;
+            },
+            noteForCard: (_) {
+              events.add('noteForCard');
+              return Object();
+            },
+            toggleMark: (_) => events.add('toggleMark'),
+            isMarked: (_) => false,
+            publishMarkState: (_) => events.add('publishMarkState'),
+          ),
+          throwsA(same(failure)),
+        );
+        expect(events, ['currentCard']);
+      },
+    );
 
-    test('note-lookup failure propagates unchanged and stops callbacks', () async {
-      final events = <String>[];
-      final failure = StateError('note lookup failed');
+    test(
+      'note-lookup failure propagates unchanged and stops callbacks',
+      () async {
+        final events = <String>[];
+        final failure = StateError('note lookup failed');
 
-      await expectLater(
-        executeReviewerMarkToggleOperation<Object, Object>(
-          currentCard: () {
-            events.add('currentCard');
-            return Object();
-          },
-          noteForCard: (_) {
-            events.add('noteForCard');
-            throw failure;
-          },
-          toggleMark: (_) => events.add('toggleMark'),
-          isMarked: (_) => false,
-          publishMarkState: (_) => events.add('publishMarkState'),
-        ),
-        throwsA(same(failure)),
-      );
-      expect(events, ['currentCard', 'noteForCard']);
-    });
+        await expectLater(
+          executeReviewerMarkToggleOperation<Object, Object>(
+            currentCard: () {
+              events.add('currentCard');
+              return Object();
+            },
+            noteForCard: (_) {
+              events.add('noteForCard');
+              throw failure;
+            },
+            toggleMark: (_) => events.add('toggleMark'),
+            isMarked: (_) => false,
+            publishMarkState: (_) => events.add('publishMarkState'),
+          ),
+          throwsA(same(failure)),
+        );
+        expect(events, ['currentCard', 'noteForCard']);
+      },
+    );
 
-    test('toggle failure propagates unchanged and skips read and publish', () async {
-      final events = <String>[];
-      final failure = StateError('toggle failed');
-      final note = Object();
+    test(
+      'toggle failure propagates unchanged and skips read and publish',
+      () async {
+        final events = <String>[];
+        final failure = StateError('toggle failed');
+        final note = Object();
 
-      await expectLater(
-        executeReviewerMarkToggleOperation<Object, Object>(
-          currentCard: () => Object(),
-          noteForCard: (_) => note,
-          toggleMark: (value) {
-            events.add('toggleMark');
-            expect(value, same(note));
-            throw failure;
-          },
-          isMarked: (_) {
-            events.add('isMarked');
-            return true;
-          },
-          publishMarkState: (_) => events.add('publishMarkState'),
-        ),
-        throwsA(same(failure)),
-      );
-      expect(events, ['toggleMark']);
-    });
+        await expectLater(
+          executeReviewerMarkToggleOperation<Object, Object>(
+            currentCard: () => Object(),
+            noteForCard: (_) => note,
+            toggleMark: (value) {
+              events.add('toggleMark');
+              expect(value, same(note));
+              throw failure;
+            },
+            isMarked: (_) {
+              events.add('isMarked');
+              return true;
+            },
+            publishMarkState: (_) => events.add('publishMarkState'),
+          ),
+          throwsA(same(failure)),
+        );
+        expect(events, ['toggleMark']);
+      },
+    );
 
-    test('marked-state read failure propagates and skips publication', () async {
-      final events = <String>[];
-      final failure = StateError('marked-state read failed');
-      final note = Object();
+    test(
+      'marked-state read failure propagates and skips publication',
+      () async {
+        final events = <String>[];
+        final failure = StateError('marked-state read failed');
+        final note = Object();
 
-      await expectLater(
-        executeReviewerMarkToggleOperation<Object, Object>(
-          currentCard: () => Object(),
-          noteForCard: (_) => note,
-          toggleMark: (value) {
-            events.add('toggleMark');
-            expect(value, same(note));
-          },
-          isMarked: (value) {
-            events.add('isMarked');
-            expect(value, same(note));
-            throw failure;
-          },
-          publishMarkState: (_) => events.add('publishMarkState'),
-        ),
-        throwsA(same(failure)),
-      );
-      expect(events, ['toggleMark', 'isMarked']);
-    });
+        await expectLater(
+          executeReviewerMarkToggleOperation<Object, Object>(
+            currentCard: () => Object(),
+            noteForCard: (_) => note,
+            toggleMark: (value) {
+              events.add('toggleMark');
+              expect(value, same(note));
+            },
+            isMarked: (value) {
+              events.add('isMarked');
+              expect(value, same(note));
+              throw failure;
+            },
+            publishMarkState: (_) => events.add('publishMarkState'),
+          ),
+          throwsA(same(failure)),
+        );
+        expect(events, ['toggleMark', 'isMarked']);
+      },
+    );
 
     test('publication failure propagates unchanged', () async {
       final events = <String>[];

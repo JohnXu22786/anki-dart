@@ -17,6 +17,23 @@ callback-specific test cases are source-derived.
 
 # Notices
 
+## Saved-search config orchestration
+
+`lib/src/browser_saved_searches_config.dart` and
+`test/browser_saved_searches_config_test.dart` adapt the source-level
+`loadFromConfig`, `saveToConfig`, `byName`, `add`, `removeByName`, and `clear`
+operations from
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SavedSearches.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+adapter reuses `BrowserSavedSearch` and delegates config access through host
+callbacks. CollectionManager, Rust config serialization/storage, query
+execution, Timber logging, and UI remain host-side. The focused tests pin
+callback order/count, list identity and values, duplicate and missing-name
+no-ops, query normalization, and unchanged callback error propagation. The
+source declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains unchanged.
+
 ## AnimationPreferences interface
 
 `lib/src/animation_preferences.dart` and

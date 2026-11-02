@@ -2145,8 +2145,15 @@ expansion toggle.
 It returns case-sensitive name-sorted values, applies the source duplicate and
 query-normalization rules, and exposes map conversion. The saved-search message
 projection maps the mutation result's success flag to the source message kind;
-the host owns collection config loading/persistence, localized UI message
-delivery, and query parsing/execution.
+`BrowserSavedSearchesConfig` coordinates one host load/save callback at a time
+and preserves AnkiDroid's add, remove, lookup, and clear callback order. The
+adapter is source-derived from `SavedSearches.kt` in AnkiDroid 2.25.3, pinned
+to commit `d9bf072f814a0c37d30a694192593b31ff2df875`, under
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. The host owns collection config
+loading/persistence, localized UI message delivery, and query parsing/execution.
+Focused orchestration tests are in
+[`test/browser_saved_searches_config_test.dart`](test/browser_saved_searches_config_test.dart).
 `browserSaveSearchPromptQuery` returns no prompt query only for null or exactly
 empty temporary input; every other string is passed through unchanged, including
 whitespace-only text. The host emits the prompt and owns Android UI, saved-search

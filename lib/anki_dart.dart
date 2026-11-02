@@ -89,6 +89,7 @@ export 'src/fragment_show_dialog_fragment.dart';
 export 'src/linear_layout_manager_visible_positions.dart';
 export 'src/recycler_view_run_when_not_computing_layout.dart';
 export 'src/ignore_accents_in_search_config.dart';
+export 'src/browser_saved_searches_config.dart';
 export 'src/state_flow_var_delegate.dart';
 export 'src/scheduler_answer_card.dart';
 export 'src/deck_filters.dart';

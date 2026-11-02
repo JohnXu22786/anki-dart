@@ -1992,7 +1992,7 @@ Android lifecycle, StateFlow, localization, and UI.
   `showingAnswer` value to `back` when true and `front` when false, matching the
   pinned `replayMedia()` side choice. The pinned Reviewer tests have no direct
   PLAY_MEDIA action assertion, so both cases are source-derived in
-  `test/reviewer_replay_media_side_test.dart`. State access, action dispatch,
+  `test/reviewer_replay_media_side_test.dart`. State access, selected media-operation execution,
   `cardMediaPlayer.replayAll`, media playback, and lifecycle remain host-side.
 - Reviewer current-card info: `reviewerCurrentCardInfoDestination` pairs the
   host-resolved current card ID unchanged with the source
@@ -2040,8 +2040,8 @@ Android lifecycle, StateFlow, localization, and UI.
   `ReviewerFragment.kt:626–628` passes `listOf(noteId)` to the dialog factory.
   No direct pinned `ReviewerViewModelTest` assertion covers this flow payload;
   the Dart pass-through and singleton cases are source-derived. Current-card and
-  collection reads, action dispatch, SharedFlow delivery, Android dialog
-  creation, and lifecycle remain host-side. This opening request is separate
+  collection reads, execution of the selected tag-edit operation, SharedFlow
+  delivery, Android dialog creation, and lifecycle remain host-side. This opening request is separate
   from the F131 `reviewerEditedTagsDirective()` result decision below.
 - Reviewer edited tags: `reviewerEditedTagsDirective()` returns no request for
   structurally equal ordered tag lists; otherwise it carries the selected tags
@@ -2099,11 +2099,11 @@ Android lifecycle, StateFlow, localization, and UI.
 - Reviewer whiteboard toggle: `planReviewerWhiteboardToggle` inverts the
   host-supplied state, publishes the new value, then requests assigning that
   same value to the repository preference. StateFlow mutation, repository
-  access/write, action dispatch, and UI remain host-side.
+  access/write and execution of the selected operation/UI remain host-side.
 - Reviewer record-voice toggle: `planReviewerRecordVoiceToggle` inverts the
   host-supplied state, publishes the new value, then requests assigning that
   same value to the repository preference. StateFlow mutation, repository
-  access/write, action dispatch, recorder lifecycle, and UI remain host-side.
+  access/write and execution of the selected operation, recorder lifecycle, and UI remain host-side.
 - Reviewer gestures: decoded gesture inputs map to two-, three-, and
   four-finger taps, four- or nine-point taps, and directional swipes. The model
   preserves viewport scale and scroll adjustment, strict swipe thresholds,

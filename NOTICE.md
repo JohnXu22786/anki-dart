@@ -1932,10 +1932,10 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   host-side. Whiteboard toggle
   state/preference ordering is
   projected in `lib/src/reviewer_whiteboard_toggle.dart`; StateFlow mutation,
-  repository access/write, action dispatch and UI remain host-side.
+  repository access/write and execution of the selected operation/UI remain host-side.
   Record-voice toggle state/preference ordering is projected in
   `lib/src/reviewer_record_voice_toggle.dart`; StateFlow mutation, repository
-  access/write, action dispatch and recorder lifecycle remain host-side.
+  access/write and execution of the selected operation/recorder lifecycle remain host-side.
   `ReviewerViewAction` and `reviewerViewActionRoute()` in
   `lib/src/reviewer_view_action_routing.dart` cover the source-ordered
   `ViewerAction` dispatch projection, including its typed payloads and source

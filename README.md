@@ -11,8 +11,9 @@ project the ordered guards from `AnkiDroid/src/main/java/com/ichi2/anki/utils/On
 in AnkiDroid 2.25.3. The `OnlyOnceMethod` enum retains `ANSWER_CARD` and
 `UNIT_TEST` declaration order. The host supplies job creation, active status,
 completion registration, and logging; coroutine scheduling and Timber remain
-host-side. The projection preserves the source's blocked-set behavior, callback
-order, synchronous failure behavior, and assignment after a successful launch.
+host-side. All `OnlyOnce` instances share one blocked-method set, matching the
+source singleton. The projection preserves the source's callback order,
+synchronous failure behavior, and assignment after a successful launch.
 Focused source-derived tests are in [`test/only_once_test.dart`](test/only_once_test.dart);
 the pinned `OnlyOnceTest.kt` covers successful, simultaneous, exceptional, and
 sequential execution. The Kotlin source and direct test declare

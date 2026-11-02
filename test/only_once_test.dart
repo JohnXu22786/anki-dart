@@ -76,19 +76,55 @@ void main() {
 
         job!.onCompletion!();
         expect(events.last, 'verbose:completed UNIT_TEST');
+        _Job? secondJob;
         onlyOnce.preventSimultaneousExecutions<_Job>(
           name: OnlyOnceMethod.UNIT_TEST,
           function: () {
             calls++;
-            return _Job(false);
+            return secondJob = _Job(false);
           },
           invokeOnCompletion: (job, callback) => job.onCompletion = callback,
           logWarning: (message) => events.add('warning:$message'),
           logVerbose: (message) => events.add('verbose:$message'),
         );
         expect(calls, 2);
+        secondJob!.onCompletion!();
       },
     );
+
+    test('shares method blocks and completion release across instances', () {
+      final first = OnlyOnce();
+      final second = OnlyOnce();
+      final events = <String>[];
+      var calls = 0;
+      final heldJob = _Job(false);
+
+      void invoke(OnlyOnce onlyOnce) =>
+          onlyOnce.preventSimultaneousExecutions<_Job>(
+            name: OnlyOnceMethod.ANSWER_CARD,
+            function: () {
+              calls++;
+              return heldJob;
+            },
+            invokeOnCompletion: (job, callback) => job.onCompletion = callback,
+            logWarning: (message) => events.add('warning:$message'),
+            logVerbose: (message) => events.add('verbose:$message'),
+          );
+
+      invoke(first);
+      invoke(second);
+      expect(calls, 1);
+      expect(
+        events,
+        contains('warning:simultaneously executions of ANSWER_CARD blocked'),
+      );
+
+      heldJob.onCompletion!();
+      invoke(second);
+      expect(calls, 2);
+      expect(events.last, 'verbose:executing ANSWER_CARD');
+      heldJob.onCompletion!();
+    });
 
     test(
       'synchronous function failures propagate and keep the method blocked',
@@ -99,7 +135,7 @@ void main() {
         var warnings = 0;
 
         void invoke() => onlyOnce.preventSimultaneousExecutions<_Job>(
-          name: OnlyOnceMethod.ANSWER_CARD,
+          name: OnlyOnceMethod.UNIT_TEST,
           function: () {
             calls++;
             throw error;

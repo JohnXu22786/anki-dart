@@ -6,7 +6,8 @@
 single-execution guards from `AnkiDroid/src/main/java/com/ichi2/anki/utils/OnlyOnce.kt`
 and its direct test `AnkiDroid/src/test/java/com/ichi2/anki/utils/OnlyOnceTest.kt`,
 pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
-The Dart projection preserves method declaration order, blocked-set transitions,
+The Dart projection preserves method declaration order and shares its blocked
+set across `OnlyOnce` instances, matching the Kotlin singleton. It also preserves
 logging and callback order, synchronous failure behavior, and job assignment
 after successful launch. The host supplies job state and behavior, completion
 registration, and logging; Kotlin coroutines and Timber remain host-side. Both

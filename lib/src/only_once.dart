@@ -25,9 +25,9 @@ enum OnlyOnceMethod { ANSWER_CARD, UNIT_TEST }
 /// Guards host work by method name until its host job completes.
 ///
 /// The host supplies job creation, completion registration, and logging. The
-/// adapter preserves the source callback order and propagates callback errors.
+/// shared blocked set mirrors the Kotlin singleton; callback errors propagate.
 class OnlyOnce {
-  final Set<OnlyOnceMethod> _blockedFunctions = {};
+  static final Set<OnlyOnceMethod> _blockedFunctions = {};
 
   /// Runs [function] only if [name] is not currently blocked.
   ///

@@ -1,5 +1,20 @@
 # AnkiDroid upstream source record
 
+## Non-leading-zero input filter decision
+
+`nonLeadingZeroInputFilter()` in `lib/src/non_leading_zero_input_filter.dart`
+ports the pure replacement decision from
+`AnkiDroid/src/main/java/com/ichi2/anki/ui/NonLeadingZeroInputFilter.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+replaces the selected destination range with the selected source range, then
+returns an empty replacement only when the result has more than one UTF-16 code
+unit and starts with ASCII `0`; otherwise it returns null to accept the source.
+Android `InputFilter`/`Spanned` behavior, widgets, and text delivery remain
+host-side. The Kotlin source declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and focused source-derived tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## `DeckOptionsDestination` model, factories, and `toIntent(context)`
 
 `DeckOptionsDestination`, `DeckOptionsEntry`, and their factory/Intent

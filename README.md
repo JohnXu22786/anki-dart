@@ -4,6 +4,23 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Non-leading-zero input filter decision
+
+`nonLeadingZeroInputFilter()` in
+[`lib/src/non_leading_zero_input_filter.dart`](lib/src/non_leading_zero_input_filter.dart)
+adapts the replacement decision from
+`NonLeadingZeroInputFilter.kt` in AnkiDroid 2.25.3. It checks the destination
+after replacing the requested range with the selected source text, returning an
+empty replacement only when the result has multiple UTF-16 code units and
+starts with ASCII `0`; otherwise it returns `null` to accept the source.
+Android `InputFilter`/`Spanned`, widgets, and text delivery remain host-side.
+Focused source-derived cases are in
+[`test/non_leading_zero_input_filter_test.dart`](test/non_leading_zero_input_filter_test.dart).
+The source declares `GPL-3.0-or-later` and has no separate copyright line. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same license;
+root `COPYING` remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the source mapping and attribution.
+
 ## Database check progress and result projection
 
 `projectDatabaseCheckProgress()` and `databaseCheckResultMessage()` in

@@ -3263,6 +3263,21 @@ for these Collection wrapper methods; focused Dart cases are source-derived.
 the Dart adaptation and tests are Copyright © 2026 John Tsui under that license.
 Root `COPYING` remains byte-identical.
 
+`lib/src/collection_join_searches.dart` and
+`test/collection_join_searches_test.dart` adapt
+`Collection.joinSearches(existingNode, additionalNode, operator)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1024–1039`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The operator is converted before
+the host callback receives the exact existing and additional SearchNode objects
+in their named roles; the exact backend string and conversion/backend failures
+propagate unchanged. Generated SearchNode/separator values and Rust/backend
+query joining, parsing, validation, and execution remain host-side. No direct
+pinned test was found, so the focused Dart cases are source-derived. The Kotlin
+source declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 `lib/src/saved_state_handle.dart` and `test/saved_state_handle_test.dart` adapt
 `require(key)` and `getLongOrNull(key)` from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/SavedStateHandle.kt`, pinned

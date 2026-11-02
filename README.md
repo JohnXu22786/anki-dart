@@ -801,8 +801,10 @@ validated string without parsing, validating, or normalizing it. Backend
 translation, generated search types, collection search methods, and
 Rust/backend behavior remain host-side. The pinned `SearchStringTest` covers
 backend search-construction paths but not the wrapper's value semantics;
-focused Dart cases are
-source-derived. The pinned source declares `GPL-3.0-or-later` with no separate
+focused Dart cases are source-derived. The `Collection.buildSearchString()`,
+`groupSearches()`, and `joinSearches()` wrapper orchestration is modeled; the
+host supplies generated search types and backend operations. The pinned source
+declares `GPL-3.0-or-later` with no separate
 copyright line; this adaptation and its tests are Copyright © 2026 John Tsui
 under `GPL-3.0-or-later`. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
@@ -3502,6 +3504,25 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the
 pinned source and license record.
+
+## Collection.joinSearches
+
+`collectionJoinSearches()` adapts `Collection.joinSearches(existingNode,
+additionalNode, operator)` from AnkiDroid 2.25.3. It converts the operator to
+the host backend separator first, calls the host `joinSearchNodes` callback
+once with the exact existing and additional SearchNode objects in their named
+roles, and returns the exact backend string. Conversion and callback failures
+propagate unchanged. Generated SearchNode/separator values and backend query
+joining, parsing, validation, and execution remain host-side; this adapter does
+not copy Rust backend code. Focused source-derived cases are in
+[`test/collection_join_searches_test.dart`](test/collection_join_searches_test.dart).
+The pinned method has no direct upstream test. `Collection.kt` is at
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1024–1039` in AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`; it declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains
+byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
 
 ## JsonReader object decoding
 

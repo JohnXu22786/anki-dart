@@ -25,45 +25,175 @@ import 'package:test/test.dart';
 
 void main() {
   group('projectReviewerAnswerButtonsNextTimeUpdate', () {
-    const nextTimes = AnswerButtonsNextTime(
+    final state = ReviewQueueState<int>(
+      card: const ReviewCard(id: 1, questionHtml: 'q', answerHtml: 'a'),
+      schedulingSnapshot: 7,
+      counts: const ReviewQueueCounts(
+        newCount: 1,
+        learnCount: 2,
+        reviewCount: 3,
+      ),
+      activeQueue: ReviewQueueKind.learning,
+    );
+    final nextTimes = AnswerButtonsNextTime(
       again: '1m',
       hard: '2m',
       good: '3m',
       easy: '4m',
     );
 
-    test('suppresses a computed value when next times are hidden', () {
-      final result = projectReviewerAnswerButtonsNextTimeUpdate(
-        shouldShowNextTimes: false,
-        nextTimes: nextTimes,
+    test('false visibility skips queue and next-time callbacks', () async {
+      final calls = <String>[];
+
+      final result = await projectReviewerAnswerButtonsNextTimeUpdate<int>(
+        shouldShowNextTimes: () async {
+          calls.add('visibility');
+          await Future<void>.delayed(Duration.zero);
+          return false;
+        },
+        currentQueueState: () {
+          calls.add('queue');
+          return state;
+        },
+        computeNextTimes: (_) {
+          calls.add('next-times');
+          return nextTimes;
+        },
       );
 
       expect(result, isA<NoReviewerAnswerButtonsNextTimeUpdate>());
+      expect(calls, ['visibility']);
+    });
+
+    test('null queue state skips next-time computation', () async {
+      final calls = <String>[];
+
+      final result = await projectReviewerAnswerButtonsNextTimeUpdate<int>(
+        shouldShowNextTimes: () async {
+          calls.add('visibility');
+          await Future<void>.delayed(Duration.zero);
+          return true;
+        },
+        currentQueueState: () async {
+          calls.add('queue');
+          await Future<void>.delayed(Duration.zero);
+          return null;
+        },
+        computeNextTimes: (_) {
+          calls.add('next-times');
+          return nextTimes;
+        },
+      );
+
+      expect(result, isA<NoReviewerAnswerButtonsNextTimeUpdate>());
+      expect(calls, ['visibility', 'queue']);
     });
 
     test(
-      'suppresses publication when visible times have no computed value',
-      () {
-        final result = projectReviewerAnswerButtonsNextTimeUpdate(
-          shouldShowNextTimes: true,
-          nextTimes: null,
+      'awaits callbacks in order and publishes the identical value',
+      () async {
+        final calls = <String>[];
+        ReviewQueueState<int>? receivedState;
+        final result = await projectReviewerAnswerButtonsNextTimeUpdate<int>(
+          shouldShowNextTimes: () async {
+            calls.add('visibility');
+            await Future<void>.delayed(Duration.zero);
+            return true;
+          },
+          currentQueueState: () async {
+            calls.add('queue');
+            await Future<void>.delayed(Duration.zero);
+            return state;
+          },
+          computeNextTimes: (actualState) async {
+            calls.add('next-times');
+            receivedState = actualState;
+            await Future<void>.delayed(Duration.zero);
+            return nextTimes;
+          },
         );
 
-        expect(result, isA<NoReviewerAnswerButtonsNextTimeUpdate>());
+        expect(calls, ['visibility', 'queue', 'next-times']);
+        expect(receivedState, same(state));
+        expect(result, isA<PublishReviewerAnswerButtonsNextTime>());
+        expect(
+          (result as PublishReviewerAnswerButtonsNextTime).nextTimes,
+          same(nextTimes),
+        );
       },
     );
 
-    test('publishes the exact computed value when visible', () {
-      final result = projectReviewerAnswerButtonsNextTimeUpdate(
-        shouldShowNextTimes: true,
-        nextTimes: nextTimes,
+    test('visibility failure propagates and stops later callbacks', () async {
+      final error = StateError('preference failed');
+      final calls = <String>[];
+
+      final result = projectReviewerAnswerButtonsNextTimeUpdate<int>(
+        shouldShowNextTimes: () async {
+          calls.add('visibility');
+          throw error;
+        },
+        currentQueueState: () {
+          calls.add('queue');
+          return state;
+        },
+        computeNextTimes: (_) {
+          calls.add('next-times');
+          return nextTimes;
+        },
       );
 
-      expect(result, isA<PublishReviewerAnswerButtonsNextTime>());
-      expect(
-        (result as PublishReviewerAnswerButtonsNextTime).nextTimes,
-        same(nextTimes),
+      await expectLater(result, throwsA(same(error)));
+      expect(calls, ['visibility']);
+    });
+
+    test(
+      'queue-state failure propagates and skips next-time computation',
+      () async {
+        final error = StateError('queue read failed');
+        final calls = <String>[];
+
+        final result = projectReviewerAnswerButtonsNextTimeUpdate<int>(
+          shouldShowNextTimes: () {
+            calls.add('visibility');
+            return true;
+          },
+          currentQueueState: () async {
+            calls.add('queue');
+            throw error;
+          },
+          computeNextTimes: (_) {
+            calls.add('next-times');
+            return nextTimes;
+          },
+        );
+
+        await expectLater(result, throwsA(same(error)));
+        expect(calls, ['visibility', 'queue']);
+      },
+    );
+
+    test('next-time failure propagates unchanged', () async {
+      final error = StateError('scheduler failed');
+      final calls = <String>[];
+
+      final result = projectReviewerAnswerButtonsNextTimeUpdate<int>(
+        shouldShowNextTimes: () {
+          calls.add('visibility');
+          return true;
+        },
+        currentQueueState: () async {
+          calls.add('queue');
+          return state;
+        },
+        computeNextTimes: (actualState) async {
+          calls.add('next-times');
+          expect(actualState, same(state));
+          throw error;
+        },
       );
+
+      await expectLater(result, throwsA(same(error)));
+      expect(calls, ['visibility', 'queue', 'next-times']);
     });
   });
 }

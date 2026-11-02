@@ -1994,17 +1994,18 @@ Android lifecycle, StateFlow, localization, and UI.
   cases are source-derived. Current-card/note/collection lookup,
   `note.setTagsFromStr`, undoable `updateNote`, logging, and coroutine delivery
   remain host-side. Card Browser and Previewer mark-tag paths are separate.
-- Reviewer answer-button next-time publication:
-  `projectReviewerAnswerButtonsNextTimeUpdate()` returns no update when the
-  host-resolved setting hides times or the host has no computed value; when
-  visible, it carries the existing `AnswerButtonsNextTime` unchanged. The
-  source gate is `ReviewerViewModel.kt:651–658`, with a nullable flow at `:138`
-  and callers at `:148–149` and `:224`. No direct pinned
-  `ReviewerViewModelTest` assertion covers the gate/publication decision;
-  `ReviewerTest.kt:383–390` checks a button-label update end to end, so these
-  Dart cases are source-derived. Settings and queue reads, scheduler
-  calculation, coroutine and StateFlow delivery, and answer-button sizing
-  remain host-side.
+- Reviewer answer-button next-time lookup:
+  `projectReviewerAnswerButtonsNextTimeUpdate()` awaits the host preference
+  callback first, skips the queue callback when hidden, then awaits the queue
+  state and skips label computation when it is null. For a non-null state, it
+  awaits the host `AnswerButtonsNextTime.from`/scheduler callback once and
+  carries its exact result for publication; callback failures propagate
+  unchanged and stop later callbacks. The source is
+  `ReviewerViewModel.kt:651–658`, with a nullable flow at `:138` and callers at
+  `:148–149` and `:224`. Focused source-derived tests cover callback order,
+  short-circuits, identity, and failures; `ReviewerTest.kt:383–390` also checks
+  a button-label update end to end. Preference/backend access, Flow emission,
+  coroutine scheduling, and answer-button sizing remain host-side.
 - Reviewer previous-card info: `reviewerPreviousCardInfoDirective` selects
   host-localized no-card feedback for a null saved previous-card ID and carries
   every non-null ID unchanged into a navigation directive. SavedStateHandle,

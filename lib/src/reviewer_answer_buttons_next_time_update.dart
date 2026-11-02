@@ -20,7 +20,10 @@
  * ANKIDROID_UPSTREAM.md.
  */
 
+import 'dart:async';
+
 import 'review_presentation.dart';
+import 'review_session.dart';
 
 /// The pure outcome of Reviewer `updateNextTimes()` after host lookups finish.
 sealed class ReviewerAnswerButtonsNextTimeUpdate {
@@ -41,20 +44,36 @@ final class PublishReviewerAnswerButtonsNextTime
   final AnswerButtonsNextTime nextTimes;
 }
 
-/// Projects the source's visibility and nullable queue-state gates.
+/// Runs the source-ordered host lookups for `ReviewerViewModel.updateNextTimes`.
 ///
-/// The host resolves `shouldShowNextTimes`, reads the queue state, and computes
-/// [nextTimes] with `AnswerButtonsNextTime.from`. This helper only decides
-/// whether that already-computed value should be published. In the source,
-/// `updateNextTimes()` returns when times are hidden or the queue state is null,
-/// then emits the calculated value to `answerButtonsNextTimeFlow`.
-ReviewerAnswerButtonsNextTimeUpdate projectReviewerAnswerButtonsNextTimeUpdate({
-  required bool shouldShowNextTimes,
-  required AnswerButtonsNextTime? nextTimes,
-}) {
-  if (!shouldShowNextTimes || nextTimes == null) {
+/// Awaits [shouldShowNextTimes] first. A false result skips both remaining
+/// callbacks; a null [currentQueueState] skips [computeNextTimes]. Otherwise,
+/// it passes the identical queue state to [computeNextTimes] exactly once and
+/// publishes that callback's exact result. Callback failures propagate
+/// unchanged and stop later work.
+///
+/// The host supplies preference, queue-state, and `AnswerButtonsNextTime.from`
+/// callbacks. It retains preference/backend access, Flow emission, coroutine
+/// scheduling, and answer-button presentation.
+Future<ReviewerAnswerButtonsNextTimeUpdate>
+projectReviewerAnswerButtonsNextTimeUpdate<TSchedulingSnapshot>({
+  required FutureOr<bool> Function() shouldShowNextTimes,
+  required FutureOr<ReviewQueueState<TSchedulingSnapshot>?> Function()
+  currentQueueState,
+  required FutureOr<AnswerButtonsNextTime> Function(
+    ReviewQueueState<TSchedulingSnapshot> state,
+  )
+  computeNextTimes,
+}) async {
+  if (!await shouldShowNextTimes()) {
     return const NoReviewerAnswerButtonsNextTimeUpdate();
   }
 
+  final state = await currentQueueState();
+  if (state == null) {
+    return const NoReviewerAnswerButtonsNextTimeUpdate();
+  }
+
+  final nextTimes = await computeNextTimes(state);
   return PublishReviewerAnswerButtonsNextTime(nextTimes: nextTimes);
 }

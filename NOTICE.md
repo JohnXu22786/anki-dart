@@ -50,6 +50,24 @@ remains byte-identical.
 
 # Notices
 
+## Reviewer answer-button next-time lookup
+
+`lib/src/reviewer_answer_buttons_next_time_update.dart` and
+`test/reviewer_answer_buttons_next_time_update_test.dart` port the sequential
+lookup orchestration from `ReviewerViewModel.kt:651–658` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter awaits
+the visibility callback, then the nullable queue-state callback only when
+visible, then the next-time callback once only for a non-null state. It
+preserves queue-state and computed-value identity; callback failures propagate
+unchanged and stop later callbacks. The host retains preference and backend
+access, `AnswerButtonsNextTime.from`/scheduler integration, nullable Flow
+publication, coroutine scheduling, and answer-button presentation. The focused
+cases are source-derived; no direct pinned `ReviewerViewModelTest` assertion
+covers these gates, while `ReviewerTest.kt:383–390` checks an end-to-end button
+update. The Kotlin source declares `GPL-3.0-or-later`; the Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains unchanged.
+
 ## Saved-search config orchestration
 
 `lib/src/browser_saved_searches_config.dart` and

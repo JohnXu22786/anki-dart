@@ -36,10 +36,10 @@ abstract class JavascriptEvaluator {
     // Restore the initial newline Kotlin keeps; Dart drops it after triple quotes.
     eval(
       '\n' +
-          '''                var codeToRun = function() { 
+          '''                var codeToRun = function() {\x20
                     $script
                 }
-                
+\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20
                 if (document.readyState === "loading") {
                   document.addEventListener("DOMContentLoaded", codeToRun);
                 } else {

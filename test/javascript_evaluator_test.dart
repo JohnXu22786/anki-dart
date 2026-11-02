@@ -33,10 +33,10 @@ void main() {
 
       expect(calls, [
         '\n' +
-            '''                var codeToRun = function() { 
-                    
+            '''                var codeToRun = function() {\x20
+\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20
                 }
-                
+\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20
                 if (document.readyState === "loading") {
                   document.addEventListener("DOMContentLoaded", codeToRun);
                 } else {
@@ -56,11 +56,11 @@ run(total);''';
 
       expect(calls, [
         '\n' +
-            '''                var codeToRun = function() { 
+            '''                var codeToRun = function() {\x20
                     const total = `\${answer} + \${bonus}`;
 run(total);
                 }
-                
+\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20
                 if (document.readyState === "loading") {
                   document.addEventListener("DOMContentLoaded", codeToRun);
                 } else {

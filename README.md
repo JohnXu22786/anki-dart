@@ -4444,3 +4444,15 @@ propagate and stop subsequent work. Android resource lookup and
 cases are in [`test/shortcut_group_projection_test.dart`](test/shortcut_group_projection_test.dart).
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
 for the source mapping and attribution; root `COPYING` remains unchanged.
+
+## Note field decorator
+
+[`aplicaHuevo()`](lib/src/note_field_decorator.dart) ports the pure easter-egg
+behavior of AnkiDroid 2.25.3 `NoteFieldDecorator.aplicaHuevo()`. It preserves
+ASCII ROT13 and source option/decorations order. Supply host callbacks for
+Kotlin/JVM-compatible case-insensitive string equality and bounded random
+index selection; the matched field text and source decoration concatenation are
+preserved. Focused coverage is in
+[`test/note_field_decorator_test.dart`](test/note_field_decorator_test.dart).
+See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for source mapping and attribution. Root `COPYING` remains unchanged.

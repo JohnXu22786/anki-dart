@@ -4114,3 +4114,15 @@ propagate without running later work. Android resource lookup and
 source-derived; no direct pinned `ShortcutGroup` test was found. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## Note field decorator
+
+`lib/src/note_field_decorator.dart` and
+`test/note_field_decorator_test.dart` adapt the platform-independent
+`NoteFieldDecorator.aplicaHuevo()` behavior from
+`AnkiDroid/src/main/java/com/ichi2/utils/NoteFieldDecorator.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The upstream
+source is Copyright © 2020 Mike Hardy and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Android randomness and Kotlin/JVM string comparison remain host-provided. Root
+`COPYING` remains byte-identical.

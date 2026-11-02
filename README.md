@@ -4023,3 +4023,19 @@ Milchior. The Dart adaptation and tests are Copyright © 2026 John Tsui under
 the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source mapping and license record.
+
+## Time manager override state
+
+`TimeManager<T>` in [`lib/src/time_manager.dart`](lib/src/time_manager.dart)
+ports the override state in `TimeManager.kt` from AnkiDroid 2.25.3, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies the stable
+default time object; `time` returns the exact active override or that same
+default object, `reset()` clears overrides, and `resetWith()` clears then stores
+the exact supplied instance. Clock construction, Android/JVM behavior,
+synchronization, and application lifecycle remain host-side. Source-derived
+tests are in [`test/time_manager_test.dart`](test/time_manager_test.dart); no
+direct pinned TimeManager test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.

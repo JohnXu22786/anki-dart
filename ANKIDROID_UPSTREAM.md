@@ -2843,3 +2843,22 @@ are unchanged. The Kotlin source declares `GPL-3.0-or-later` and has no separate
 copyright line. The direct upstream test is Copyright (c) 2024 Ben Wicks and
 declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Undo status projection
+
+`lib/src/undo_status.dart` and `test/undo_status_test.dart` adapt
+`BackendUndo.kt` and `Collection.kt` (`undoStatus()`, `UndoStepCounter`,
+`undoAvailable()`, `redoAvailable()`, `undoLabel()`, and `redoLabel()`) from
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The public `UndoStatus` value
+retains nullable undo/redo actions and `lastStep` with Kotlin data-class
+equality/hash behavior. Its host-field adapter maps only empty action strings
+to null, preserving whitespace and the step value without importing generated
+protobuf classes. Availability reads one host status callback; label helpers
+read one status and call the matching localization callback once only when an
+action is present. Collection/backend/protobuf access, translations, and
+undo/redo side effects remain host-side. Focused tests are source-derived; no
+direct pinned test for these helpers was found. `BackendUndo.kt` is Copyright
+(c) 2022 Ankitects Pty Ltd and declares `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See `NOTICE.md` for attribution details.

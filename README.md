@@ -4532,3 +4532,19 @@ dispatch are unchanged. Focused tests are in
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains unchanged. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source mapping and attribution.
+
+## Undo status projection
+
+`UndoStatus`, `undoStatusFromFields()`, `undoAvailable()`, `redoAvailable()`,
+`undoLabel()`, and `redoLabel()` in [`lib/src/undo_status.dart`](lib/src/undo_status.dart)
+adapt the status conversion and collection helpers from `BackendUndo.kt` and
+`Collection.kt` in AnkiDroid 2.25.3. Empty backend action strings map to null;
+whitespace and `lastStep` are preserved. Availability and label helpers read
+one host status snapshot per call, and label helpers request host localization
+only when their action exists. The host retains collection/backend/protobuf
+access, translation, and undo effects. Focused source-derived tests are in
+[`test/undo_status_test.dart`](test/undo_status_test.dart). The Kotlin source is
+Copyright (c) 2022 Ankitects Pty Ltd and declares `GPL-3.0-or-later`; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source mapping and attribution.

@@ -22,6 +22,7 @@
 
 import 'dart:collection';
 
+import 'gesture_parser.dart' show parseKotlinInt32;
 import 'math_jax_format.dart';
 
 /// Unit separator used between custom toolbar button fields.
@@ -59,19 +60,12 @@ class CustomToolbarButton {
     final fields = _splitKeepingTrailingEmpty(value, fieldSeparator, limit);
     if (fields.length != 4) return null;
 
-    try {
-      final index = int.parse(fields[0]);
-      if (index < -0x80000000 || index > 0x7fffffff) {
-        throw FormatException(
-          'Index is outside the signed Int32 range',
-          fields[0],
-        );
-      }
-      return CustomToolbarButton(index, fields[1], fields[2], fields[3]);
-    } on FormatException catch (error) {
-      warn?.call(error);
+    final index = parseKotlinInt32(fields[0]);
+    if (index == null) {
+      warn?.call(FormatException('Invalid signed Int32 index', fields[0]));
       return null;
     }
+    return CustomToolbarButton(index, fields[1], fields[2], fields[3]);
   }
 
   /// Parses entries in their supplied iteration order, then stably sorts them.

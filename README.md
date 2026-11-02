@@ -4597,7 +4597,8 @@ and [NOTICE.md](NOTICE.md) for source attribution.
 [`CustomToolbarButton`](lib/src/custom_toolbar_button.dart) ports AnkiDroid's
 portable toolbar-button parsing, ordering, serialization, and text wrapping.
 It preserves empty trailing fields in the U+001F-separated format, Kotlin
-signed Int32 parsing and model bounds, stable ordering for duplicate indices, separator removal
+signed Int32 parsing (including BMP Unicode decimal digits) and model bounds,
+stable ordering for duplicate indices, separator removal
 before serialization, and the toolbar's cursor/selection rules. Android toolbar
 widgets and preference storage remain host-side. Focused cases are in
 [`test/custom_toolbar_button_test.dart`](test/custom_toolbar_button_test.dart).

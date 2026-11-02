@@ -1932,7 +1932,8 @@ Activity lifecycle remain host-side. Root `COPYING` remains byte-identical.
 `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt`, pinned to AnkiDroid
 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves four
 field parsing, null/empty and wrong-count rejection, parse warnings, signed
-Kotlin Int32 indices at parsing and model boundaries, stable sorting of equal indices in the supplied
+Kotlin Int32 indices (including BMP Unicode decimal digits) at parsing and
+model boundaries, stable sorting of equal indices in the supplied
 iteration order, sequential reindexing, separator removal from every
 serialized field, and set deduplication. The split helper mirrors Kotlin
 `Regex.split` after `KEEP_EMPTY_ENTRIES` (-1) is coerced to 0: a trailing

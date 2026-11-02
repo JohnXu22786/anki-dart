@@ -53,6 +53,17 @@ void main() {
       );
     });
 
+    test('parses BMP Unicode decimal digits like Kotlin String.toInt', () {
+      final button = CustomToolbarButton.fromString(
+        '٢\u001ftext\u001fprefix\u001fsuffix',
+      );
+
+      expect(button?.index, 2);
+      expect(button?.buttonText, 'text');
+      expect(button?.prefix, 'prefix');
+      expect(button?.suffix, 'suffix');
+    });
+
     test('rejects null, empty, and any non-four-field record', () {
       expect(CustomToolbarButton.fromString(null), isNull);
       expect(CustomToolbarButton.fromString(''), isNull);
@@ -117,6 +128,14 @@ void main() {
           isNull,
         );
         expect(warnings, hasLength(3));
+        expect(
+          CustomToolbarButton.fromString(
+            '٢١٤٧٤٨٣٦٤٨\u001ft\u001fp\u001fs',
+            warn: warnings.add,
+          ),
+          isNull,
+        );
+        expect(warnings, hasLength(4));
       },
     );
   });

@@ -22,15 +22,15 @@
  * CardTemplateEditorViewModel.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
-/// The template editor view shown by AnkiDroid's Card Template Editor.
-enum EditorViewType { front, back, styling }
+/// The template editor views, preserving the source names and order.
+enum EditorViewType { FRONT, BACK, STYLING }
 
-/// Messages emitted by AnkiDroid's Card Template Editor state.
+/// User-message cases, preserving the source names and declaration order.
 enum CardTemplateEditorUserMessage {
-  cantDeleteLastTemplate,
-  cantAddTemplateToDynamic,
-  saveSuccess,
-  deletionWouldOrphanNote,
+  CantDeleteLastTemplate,
+  CantAddTemplateToDynamic,
+  SaveSuccess,
+  DeletionWouldOrphanNote,
 }
 
 /// Opaque host exception data carried by the source's ReportableException.
@@ -79,7 +79,7 @@ final class CardTemplateEditorInitializing extends CardTemplateEditorState {
 final class CardTemplateEditorLoaded extends CardTemplateEditorState {
   const CardTemplateEditorLoaded({
     this.currentTemplateOrd = 0,
-    this.currentEditorView = EditorViewType.front,
+    this.currentEditorView = EditorViewType.FRONT,
     this.message,
     this.error,
   });

@@ -960,10 +960,15 @@ failures propagate and stop later callbacks without rolling back earlier host
 effects. Preference storage, collection/media access, coroutine scheduling,
 lifecycle, and UI remain host-side.
 
-Card Template Editor state preserves the Initializing, Loaded, and Finished
-states, source defaults, load/error/finish transitions, and Loaded-only updates.
-The host supplies opaque exception data and retains Android lifecycle, StateFlow,
-template loading and persistence, rendering, and UI.
+Card Template Editor state preserves Initializing with a nullable exception,
+Loaded defaults (template ordinal `0`, `FRONT`, null message and error), and the
+Finished singleton. Its view and user-message enums retain source case order;
+state values use value equality, and updates affect only Loaded while preserving
+the other fields. Initialization errors carry the supplied opaque reportable
+exception unchanged. The Dart state machine models the transitions only: the
+host supplies exception values and retains error conversion, StateFlow, logging,
+Android lifecycle, template loading and persistence, rendering, and UI. The
+pinned ViewModel has no direct tests; focused Dart tests are source-derived.
 
 The Card Template Editor `EditTab` enum preserves the source values and order
 `FRONT`, `BACK`, `STYLING`. Android view IDs, current-tab resolution,

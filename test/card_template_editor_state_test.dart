@@ -27,6 +27,20 @@ import 'package:test/test.dart';
 
 void main() {
   group('Card Template Editor state', () {
+    test('enum cases preserve source order', () {
+      expect(EditorViewType.values, [
+        EditorViewType.FRONT,
+        EditorViewType.BACK,
+        EditorViewType.STYLING,
+      ]);
+      expect(CardTemplateEditorUserMessage.values, [
+        CardTemplateEditorUserMessage.CantDeleteLastTemplate,
+        CardTemplateEditorUserMessage.CantAddTemplateToDynamic,
+        CardTemplateEditorUserMessage.SaveSuccess,
+        CardTemplateEditorUserMessage.DeletionWouldOrphanNote,
+      ]);
+    });
+
     test('starts initializing and exposes source defaults', () {
       final model = CardTemplateEditorStateMachine();
       expect(model.state, isA<CardTemplateEditorInitializing>());
@@ -34,7 +48,7 @@ void main() {
 
       const loaded = CardTemplateEditorLoaded();
       expect(loaded.currentTemplateOrd, 0);
-      expect(loaded.currentEditorView, EditorViewType.front);
+      expect(loaded.currentEditorView, EditorViewType.FRONT);
       expect(loaded.message, isNull);
       expect(loaded.error, isNull);
     });
@@ -48,6 +62,10 @@ void main() {
       model.onError(exception);
       expect(model.state, CardTemplateEditorInitializing(exception));
       expect(
+        (model.state as CardTemplateEditorInitializing).exception,
+        same(exception),
+      );
+      expect(
         (model.state as CardTemplateEditorInitializing).exception!.isReportable,
         isFalse,
       );
@@ -55,6 +73,8 @@ void main() {
       model.onLoadComplete();
       expect(model.state, const CardTemplateEditorLoaded());
       model.setCurrentTemplateOrd(3);
+      model.onError(exception);
+      expect(model.state, CardTemplateEditorInitializing(exception));
       model.onLoadComplete();
       expect(model.state, const CardTemplateEditorLoaded());
 
@@ -63,12 +83,12 @@ void main() {
     });
 
     test('loaded updates change only the requested field', () {
-      const message = CardTemplateEditorUserMessage.saveSuccess;
+      const message = CardTemplateEditorUserMessage.SaveSuccess;
       final error = ReportableExceptionData(source: StateError('save failed'));
       final model = CardTemplateEditorStateMachine(
         initialState: CardTemplateEditorLoaded(
           currentTemplateOrd: 2,
-          currentEditorView: EditorViewType.back,
+          currentEditorView: EditorViewType.BACK,
           message: message,
           error: error,
         ),
@@ -79,17 +99,17 @@ void main() {
         model.state,
         CardTemplateEditorLoaded(
           currentTemplateOrd: 4,
-          currentEditorView: EditorViewType.back,
+          currentEditorView: EditorViewType.BACK,
           message: message,
           error: error,
         ),
       );
-      model.setCurrentEditorView(EditorViewType.styling);
+      model.setCurrentEditorView(EditorViewType.STYLING);
       expect(
         model.state,
         CardTemplateEditorLoaded(
           currentTemplateOrd: 4,
-          currentEditorView: EditorViewType.styling,
+          currentEditorView: EditorViewType.STYLING,
           message: message,
           error: error,
         ),
@@ -99,7 +119,7 @@ void main() {
         model.state,
         CardTemplateEditorLoaded(
           currentTemplateOrd: 4,
-          currentEditorView: EditorViewType.styling,
+          currentEditorView: EditorViewType.STYLING,
           error: error,
         ),
       );
@@ -108,7 +128,7 @@ void main() {
         model.state,
         const CardTemplateEditorLoaded(
           currentTemplateOrd: 4,
-          currentEditorView: EditorViewType.styling,
+          currentEditorView: EditorViewType.STYLING,
         ),
       );
     });
@@ -140,13 +160,115 @@ void main() {
       );
       _applyEveryUpdate(finishedModel);
       expect(finishedModel.state, same(finished));
+
+      for (final terminalState in [initializing, finished]) {
+        final model = CardTemplateEditorStateMachine(
+          initialState: terminalState,
+        );
+        model.onLoadComplete();
+        expect(model.state, const CardTemplateEditorLoaded());
+        model.onError(
+          ReportableExceptionData(source: StateError('next failure')),
+        );
+        expect(model.state, isA<CardTemplateEditorInitializing>());
+        model.onFinish();
+        expect(model.state, same(CardTemplateEditorFinished.instance));
+      }
+    });
+
+    test('state values preserve Kotlin data-class equality semantics', () {
+      final hostError = StateError('same host error');
+      final exception = ReportableExceptionData(source: hostError);
+      final equalException = ReportableExceptionData(source: hostError);
+      expect(exception, equalException);
+      expect(exception.hashCode, equalException.hashCode);
+      expect(
+        CardTemplateEditorInitializing(exception),
+        CardTemplateEditorInitializing(equalException),
+      );
+      expect(
+        CardTemplateEditorInitializing(exception).hashCode,
+        CardTemplateEditorInitializing(equalException).hashCode,
+      );
+      final valueException = ReportableExceptionData(
+        source: const _ValueException(7),
+      );
+      final equalValueException = ReportableExceptionData(
+        source: const _ValueException(7),
+      );
+      expect(valueException, equalValueException);
+      expect(valueException.hashCode, equalValueException.hashCode);
+      expect(valueException.isReportable, isTrue);
+      expect(
+        ReportableExceptionData(source: hostError, isReportable: false),
+        isNot(exception),
+      );
+
+      const loaded = CardTemplateEditorLoaded(
+        currentTemplateOrd: 5,
+        currentEditorView: EditorViewType.BACK,
+        message: CardTemplateEditorUserMessage.SaveSuccess,
+      );
+      const equalLoaded = CardTemplateEditorLoaded(
+        currentTemplateOrd: 5,
+        currentEditorView: EditorViewType.BACK,
+        message: CardTemplateEditorUserMessage.SaveSuccess,
+      );
+      expect(loaded, equalLoaded);
+      expect(loaded.hashCode, equalLoaded.hashCode);
+      for (final differentField in [
+        const CardTemplateEditorLoaded(
+          currentTemplateOrd: 6,
+          currentEditorView: EditorViewType.BACK,
+          message: CardTemplateEditorUserMessage.SaveSuccess,
+        ),
+        const CardTemplateEditorLoaded(
+          currentTemplateOrd: 5,
+          currentEditorView: EditorViewType.FRONT,
+          message: CardTemplateEditorUserMessage.SaveSuccess,
+        ),
+        const CardTemplateEditorLoaded(
+          currentTemplateOrd: 5,
+          currentEditorView: EditorViewType.BACK,
+          message: CardTemplateEditorUserMessage.CantDeleteLastTemplate,
+        ),
+        CardTemplateEditorLoaded(
+          currentTemplateOrd: 5,
+          currentEditorView: EditorViewType.BACK,
+          message: CardTemplateEditorUserMessage.SaveSuccess,
+          error: exception,
+        ),
+      ]) {
+        expect(loaded, isNot(differentField));
+      }
+      expect(
+        CardTemplateEditorFinished.instance,
+        CardTemplateEditorFinished.instance,
+      );
+      expect(
+        CardTemplateEditorFinished.instance.hashCode,
+        CardTemplateEditorFinished.instance.hashCode,
+      );
     });
   });
 }
 
 void _applyEveryUpdate(CardTemplateEditorStateMachine model) {
   model.setCurrentTemplateOrd(8);
-  model.setCurrentEditorView(EditorViewType.styling);
+  model.setCurrentEditorView(EditorViewType.STYLING);
   model.clearMessage();
   model.clearError();
+}
+
+final class _ValueException {
+  const _ValueException(this.code);
+
+  final int code;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _ValueException && other.code == code;
+
+  @override
+  int get hashCode => code.hashCode;
 }

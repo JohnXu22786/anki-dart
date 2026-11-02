@@ -1787,12 +1787,16 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditorState.kt` and
   `CardTemplateEditorViewModel.kt` are Copyright © 2025 Snowiee
   <xenonnn4w@gmail.com> and marked `GPL-3.0-or-later` upstream. Their portable
-  Initializing / Loaded / Finished state variants, editor-view and message
-  enums, opaque reportable-exception data, and Loaded-only transitions are
-  adapted in `lib/src/card_template_editor_state.dart`. The exception source
-  is preserved with its reportable flag; host error conversion, StateFlow,
-  logging, Android lifecycle, template loading/saving, rendering, and UI remain
-  host-side. `AnkiDroid/src/main/java/com/ichi2/anki/exception/ReportableException.kt`
+  Initializing / Loaded / Finished state variants, `FRONT` / `BACK` / `STYLING`
+  view order, `CantDeleteLastTemplate` / `CantAddTemplateToDynamic` /
+  `SaveSuccess` / `DeletionWouldOrphanNote` message order, Kotlin data-class
+  value equality, the Finished singleton, and Loaded-only transitions are
+  adapted in `lib/src/card_template_editor_state.dart`. Loaded defaults are
+  ordinal 0 with FRONT and null message/error; initialization errors retain the
+  exact supplied exception wrapper, whose opaque source and reportable flag are
+  preserved. Host error conversion, StateFlow, logging, Android lifecycle,
+  template loading/saving, rendering, and UI remain host-side.
+  `AnkiDroid/src/main/java/com/ichi2/anki/exception/ReportableException.kt`
   is Copyright © 2025 lukstbit
   <52494258+lukstbit@users.noreply.github.com> and marked `GPL-3.0-or-later`;
   its opaque source value and `isReportable` flag are represented in the Dart

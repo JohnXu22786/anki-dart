@@ -1,0 +1,13 @@
+name: anki_dart
+description: A Dart port of selected AnkiDroid behavior.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+
+dependencies:
+  unorm_dart: 0.3.3
+
+dev_dependencies:
+  test: ^1.25.8

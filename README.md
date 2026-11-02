@@ -1,2 +1,4059 @@
 # anki-dart
-Anki-compatible flashcard app and tooling in Dart/Flutter
+
+This repository is an in-progress Dart port of AnkiDroid. Its source baseline
+is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
+far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Run an action with an out-of-memory guard
+
+`runWithOomCheck()` in [`lib/src/run_with_oom_check.dart`](lib/src/run_with_oom_check.dart)
+adapts the generic `runWithOOMCheck(action, onError)` helper from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:46–58`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The action
+runs once; its exact result is returned on success. The host supplies the
+platform-specific OOM classifier because Dart cannot portably identify the
+JVM `OutOfMemoryError`. A classified error is passed unchanged to the optional
+handler and returns null after the handler succeeds. Non-OOM action errors,
+classifier failures, and handler failures propagate unchanged. Focused cases
+are in [`test/run_with_oom_check_test.dart`](test/run_with_oom_check_test.dart);
+Android/JVM error type resolution remains host-side. `Exceptions.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## User-friendly exception text
+
+`contextGetUserFriendlyErrorText()` in
+[`lib/src/context_get_user_friendly_error_text.dart`](lib/src/context_get_user_friendly_error_text.dart)
+adapts `Context.getUserFriendlyErrorText(e)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:18–37`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It returns
+a translatable exception's message directly, including a blank message;
+otherwise it checks `localizedMessage`, `message`, then the exception class
+simple name, returning the first nonblank value before the host-localized
+unknown-error resource. The host provides exception classification and property
+access, Kotlin-compatible blank checking, and Android resource lookup; callback
+failures propagate and stop later reads. Focused cases are in
+[`test/context_get_user_friendly_error_text_test.dart`](test/context_get_user_friendly_error_text_test.dart);
+no direct pinned AnkiDroid test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Set foreground for a CoroutineWorker
+
+`coroutineWorkerTrySetForeground()` in
+[`lib/src/coroutine_worker_try_set_foreground.dart`](lib/src/coroutine_worker_try_set_foreground.dart)
+adapts `CoroutineWorker.trySetForeground(foregroundInfo)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/CoroutineWorker.kt:13–19`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It awaits the host foreground
+callback once with the identical info token. Any thrown object is passed once
+to the host warning callback and swallowed if warning succeeds; warning
+callback failures propagate. WorkManager and Timber remain host-side. Focused
+source-derived tests are in
+[`test/coroutine_worker_try_set_foreground_test.dart`](test/coroutine_worker_try_set_foreground_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## TextView compound drawable resource IDs
+
+`textViewSetCompoundDrawablesRelativeWithIntrinsicBounds()` in
+[`lib/src/text_view_set_compound_drawables_relative_with_intrinsic_bounds.dart`](lib/src/text_view_set_compound_drawables_relative_with_intrinsic_bounds.dart)
+adapts AnkiDroid's `TextView.setCompoundDrawablesRelativeWithIntrinsicBoundsKt(start, top, end, bottom)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/TextView.kt`, pinned to
+version 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It forwards the four resource IDs
+in start, top, end, bottom order, with each omitted ID defaulting to zero.
+Android TextView behavior and drawable resource resolution remain host-side;
+callback failures propagate unchanged. Focused source-derived tests are in
+[`test/text_view_set_compound_drawables_relative_with_intrinsic_bounds_test.dart`](test/text_view_set_compound_drawables_relative_with_intrinsic_bounds_test.dart);
+no direct pinned AnkiDroid test was found. The upstream Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Safely set an ImageView drawable
+
+`imageViewSetImageDrawableSafe()` in
+[`lib/src/image_view_set_image_drawable_safe.dart`](lib/src/image_view_set_image_drawable_safe.dart)
+adapts `ImageView.setImageDrawableSafe(drawable, onError)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/ImageView.kt:14–25`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It passes an action to a host OOM
+guard; the action calls the host `setImageDrawable` callback once with the
+identical nullable drawable and returns true. A null guard result maps to
+false. The host owns Android ImageView behavior and decides which platform
+failure is an out-of-memory error; the Dart adapter does not classify Dart VM
+or Android failures. Focused tests are in
+[`test/image_view_set_image_drawable_safe_test.dart`](test/image_view_set_image_drawable_safe_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.
+
+## Chip checked background state
+
+`readChipHasCheckedBackground()` and `setChipHasCheckedBackground()` in
+[`lib/src/chip_checked_background.dart`](lib/src/chip_checked_background.dart)
+adapt `Chip.hasCheckedBackground` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Chip.kt:16–24`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The getter reads the host
+`isChecked` value once. The setter enables checkability, writes the requested
+checked value, then disables checkability, in that order; callback failures
+propagate and stop subsequent operations. The Android Material Chip, its
+visual checked state, and color resources remain host-side. Focused tests are
+in [`test/chip_checked_background_test.dart`](test/chip_checked_background_test.dart).
+The Kotlin source declares `GPL-3.0-or-later`; the Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+unchanged. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Bitmap dimensions from collection media
+
+`BitmapSize` and `getSizeOfBitmapFromCollection()` in
+`lib/src/context_bitmap_size.dart` adapt
+`Context.getSizeOfBitmapFromCollection(filename)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Context.kt:43–64`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+preserves the source order: resolve the current directory from the exact
+Context, create one file, check existence once, create bounds-only options,
+read the absolute path, decode once while ignoring its result, then read width
+and height. A missing file returns null before options are created; callback
+failures propagate unchanged and stop later operations. Android Context,
+CollectionHelper, File, BitmapFactory, Options, and bitmap decoding remain
+host-side. `BitmapSize` preserves the Kotlin data-class value projection and
+documents that dimensions may be `-1` after decode errors. Focused cases are
+in [`test/context_bitmap_size_test.dart`](test/context_bitmap_size_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and license record.
+
+## Clean card statistics message
+
+`cardStatsNoCardClean()` in `lib/src/card_stats_no_card_clean.dart` adapts
+`Translations.cardStatsNoCardClean()` from AnkiDroid's `Translations.kt` at the
+baseline commit above. It calls the host-supplied localized-text callback once
+and removes every ASCII `(`, `)`, and `.` while preserving all other text,
+whitespace, and line breaks. Callback exceptions propagate unchanged; Android
+translation resources remain host-side. Focused tests are in
+`test/card_stats_no_card_clean_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and Copyright © 2025 lukstbit; the Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Bottom-sheet dialog behavior
+
+`bottomSheetDialogFragmentBehavior()` in
+[`lib/src/bottom_sheet_dialog_fragment_behavior.dart`](lib/src/bottom_sheet_dialog_fragment_behavior.dart)
+adapts `BottomSheetDialogFragment.behavior` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/BottomSheetDialogFragment.kt:8–13`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies its exact
+`com.google.android.material.R.id.design_bottom_sheet` value. The adapter calls
+`requireDialog()` once, looks up that ID once on the returned dialog, preserves
+the Kotlin `!!` failure if the view is absent, and passes the identical view to
+one `BottomSheetBehavior.from` callback. Android dialogs, views, resource IDs,
+and Material behavior remain host-side. Focused source-derived cases are in
+[`test/bottom_sheet_dialog_fragment_behavior_test.dart`](test/bottom_sheet_dialog_fragment_behavior_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and license record.
+
+## Register a fragment result listener
+
+`fragmentActivitySetFragmentResultListener()` in
+`lib/src/fragment_activity_set_fragment_result_listener.dart` adapts
+`FragmentActivity.setFragmentResultListener(requestKey, listener)` from
+AnkiDroid's `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentResult.kt`,
+pinned to 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves
+the current support FragmentManager once, then registers the identical request
+key, activity lifecycle owner, and listener in source order. Host callback
+failures propagate unchanged; a manager lookup failure skips registration.
+Android FragmentActivity, FragmentManager, Bundle, lifecycle, and actual result
+delivery remain host-side. Focused source-derived cases are in
+[`test/fragment_activity_set_fragment_result_listener_test.dart`](test/fragment_activity_set_fragment_result_listener_test.dart); no direct pinned
+test was found. The Kotlin source declares `GPL-3.0-or-later` and Copyright ©
+2025 lukstbit <52494258+lukstbit@users.noreply.github.com>. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and attribution.
+
+## InputStream text conversion
+
+`inputStreamConvertToString()` in
+`lib/src/input_stream_convert_to_string.dart` ports the ordered line-reading
+control flow of `InputStream.convertToString()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/InputStream.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It appends
+each line without separators, closes after EOF, and returns accumulated text
+only if close succeeds. Construction, read, close, and conversion failures
+that surface as Dart `Exception` values invoke the host warning callback once
+and return an empty string; Dart `Error` values and warning callback failures
+propagate. The host supplies the line reader, byte decoding, default charset,
+4096-character buffer, Android `InputStream` handling, and Timber logging. The
+pinned Kotlin source is GPL-3.0-or-later and has no separate copyright line;
+the Dart adaptation and source-derived tests are Copyright © 2026 John Tsui
+under `GPL-3.0-or-later`. The upstream source has no direct pinned test for this
+method. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.
+
+## Bundle scalar accessors
+
+`BundleUtilsScalarAccessors` adapts `getLongOrNull`, `getIntOrNull`,
+`requireLong`, `requireString`, and `requireBoolean` from AnkiDroid's
+`BundleUtils.kt`, pinned to 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. A narrow host-supplied
+`BundleUtilsAccess` provides `containsKey` and typed reads; each accessor
+preserves the source's presence check, read order, and call count. Missing
+required keys throw `StateError` with the source message, while a null required
+String throws `ArgumentError` with the source `requireNotNull` message. Host
+callback failures propagate unchanged. Android `Bundle` coercion and
+parcelable/class-loader behavior remain host-side. The pinned
+`BundleUtilsTest.kt` directly covers nullable Long access and required Long and
+Boolean presence/read cases; source-derived Dart coverage adds nullable Int,
+exact messages and ordering, null strings, and callback failures. Focused cases
+are in `test/bundle_utils_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and Copyright © 2021 Tarek Mohamed Abdalla. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source, test, and license details.
+
+## SavedStateHandle scalar helpers
+
+`savedStateHandleRequire<T>()` and `savedStateHandleGetLongOrNull()` in
+`lib/src/saved_state_handle.dart` adapt `require(key)` and
+`getLongOrNull(key)` from AnkiDroid's `SavedStateHandle.kt`, pinned to 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The required-value helper
+calls the host getter once and throws `StateError` with the exact source message
+for null; the nullable Long helper checks presence once, skips an absent read,
+and casts a present value to `int?`. Host callback failures propagate
+unchanged, and generic type checks remain the host's responsibility. Android
+SavedStateHandle and lifecycle behavior remain host-side. Source-derived cases
+are in `test/saved_state_handle_test.dart`; no direct pinned tests were found.
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.
+
+## Mutable state flow delegate
+
+`MutableValue<T>`, `StateFlowVarDelegate<T>`, and `asVar()` in
+`lib/src/state_flow_var_delegate.dart` adapt `MutableStateFlow<T>.asVar()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MutableStateFlow.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+delegate retains the host object, reads its current `value`, and writes each
+assigned value directly. Dart has no Kotlin `by` property delegation syntax, so
+callers invoke `getValue()` and `setValue()` explicitly. The host remains
+responsible for `MutableStateFlow`, emissions, conflation, dispatch, and Android
+ViewModel integration. Focused cases are in
+`test/state_flow_var_delegate_test.dart`. The pinned Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
+
+## Double whole and fraction
+
+`wholeAndFraction()` in `lib/src/whole_and_fraction.dart` ports
+`Double.wholeAndFraction()` from AnkiDroid 2.25.3. It truncates toward zero,
+maps NaN to zero, saturates at signed 64-bit bounds, then computes the
+fraction by binary64 subtraction. Focused cases are in
+`test/whole_and_fraction_test.dart`. The upstream method declares
+`GPL-3.0-or-later` and Copyright © 2026 Shaan Narendran; the Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Integer clamp
+
+`clampInt()` in `lib/src/int_clamp.dart` adapts `Int.clamp()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Int.kt` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the source's
+ordered lower-bound and upper-bound comparisons, including the first-match
+result for reversed bounds; it does not validate or normalize the bounds.
+Focused source-derived cases are in `test/int_clamp_test.dart`. The AnkiDroid
+file is GPL-3.0-or-later and incorporates a Kotlin standard-library excerpt
+under Apache-2.0; both notices and source boundaries are recorded in
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+The Dart adaptation and test are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## Integer if-not-zero callback
+
+`intIfNotZero()` in `lib/src/int_if_not_zero.dart` adapts `Int.ifNotZero()` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/Int.kt` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It skips the callback for
+zero and passes each nonzero value to the callback once. Focused source-derived
+cases are in `test/int_if_not_zero_test.dart`. The upstream file is marked
+`GPL-3.0-or-later` and names no separate copyright holder; the Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
+## Field filter context, built-ins, and chains
+
+`FilterContext`, the `FieldFilter` default contract, built-ins including
+`TextToSpeechFilter` and `TextToSpeechOptions`, `FieldFilters.ALL`, and
+`FieldFilterChain` in `lib/src/field_filter.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/model/FieldFilters.kt` at AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The chain preserves
+source validity and applicability short-circuit order, duplicate-by-name
+rejection, context updates, immutable append results, and reverse filter
+rendering. `NoSuggestFilter.apply(fieldText, fieldName, filterName)` retains the
+source's exact-name and marker guards and transforms all eligible `[[type:`
+markers. TTS preserves source token order, empty-but-present values, validity,
+terminal context, structural option equality/hash, mutable voice-list behavior,
+binary32 speed values, Kotlin/JVM Float formatting, and source-compatible
+data-class string output. The focused tests are in
+`test/field_filter_test.dart`, `test/field_filter_chain_test.dart`, and
+`test/field_filter_tts_test.dart`; they cover source-derived TTS rendering,
+validity, chain termination, float notation boundaries/special values,
+data-class equality/hash/string semantics, and exact `FieldFilters.ALL` order.
+The template parser/rendering
+pipeline, `TemplateManager.fieldFilters` runtime registration, Android UI, and
+Fragment lifecycle remain host-side. The pinned Kotlin source and
+`AnkiDroid/src/test/java/com/ichi2/anki/model/FieldFilterChainTest.kt` declare
+`GPL-3.0-or-later` without a separate copyright line. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
+`COPYING` remains unchanged. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the source and license record.
+
+## Whiteboard pen colors
+
+`WhiteboardPenColor` in `lib/src/whiteboard_pen_color.dart` adapts
+`AnkiDroid/src/main/java/com/ichi2/anki/model/WhiteboardPenColor.kt` from
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It keeps nullable light and dark
+integer preferences and selects one using the host-supplied `isNightTheme`
+Boolean. `defaultColor` creates a fresh `(null, null)` value on each access,
+matching the source getter and ordinary identity equality. Android theme lookup,
+Reviewer integration, MetaDB persistence, whiteboard drawing, and UI remain
+host-side. Source-derived cases are in `test/whiteboard_pen_color_test.dart`;
+the pinned `ReviewerNoParamTest.kt` covers persisted light/dark behavior but
+contains no dedicated tests for this ordinary class. The pinned Kotlin file
+declares
+`GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
+test are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record. Root `COPYING` remains byte-identical.
+
+## Field-selection result identifiers
+
+`ResultType` in `lib/src/result_type.dart` ports the String-backed value class
+from `AnkiDroid/src/main/java/com/ichi2/anki/model/ResultType.kt` at AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Equality, hashing, and
+`toString()` follow the underlying String exactly; the shared hash helper
+preserves Kotlin/JVM UTF-16 code-unit and signed 32-bit overflow behavior. The
+source uses these values as option-map keys and routes field-selection results
+through `AdvancedSearchFieldsTab.kt`, `AdvancedSearchFragment.kt`, and
+`FieldSelectionDialog.kt`. Source-derived cases are in
+`test/result_type_test.dart`; the pinned source has no dedicated direct test.
+Android `Parcelable` encoding, FragmentManager/Bundle transport, dialogs, UI,
+and lifecycle remain host-side. The upstream source declares
+`GPL-3.0-or-later` with no separate copyright line; the Dart adaptation and
+focused tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
+`COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the source and license record.
+
+## Filename sanitization
+
+`Filename.sanitize()` ports the app-side value from
+`AnkiDroid/src/main/java/com/ichi2/anki/export/Filename.kt` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It replaces each
+source-invalid character (`\\/?<>:*|"^`) with `_`, preserving other text. The
+pinned four `FilenameTest.kt` cases are ported directly; focused Dart tests also
+check value equality, hashing, and string projection. This GPL-3.0-or-later
+adaptation does not create files or interpret paths/extensions; those
+responsibilities and platform filesystem rules remain host-side. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details; root `COPYING` remains unchanged.
+
+## CSV/TSV MIME types
+
+`MimeTypeUtils.csvTsvMimeTypes` preserves the five ordered values from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/MimeTypeUtils.kt` at AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It remains a shared,
+mutable list like the source Kotlin array. The pinned import-picker test checks
+that these values reach the picker Intent in order; Android Intent construction
+and picker behavior remain host-side. The adapted source is GPL-3.0-or-later;
+see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+attribution and license details. Root `COPYING` remains unchanged.
+
+## Sync identifiers
+
+`NotificationId.SYNC` / `SYNC_MEDIA` and `UniqueWorkNames.SYNC` /
+`SYNC_MEDIA` preserve the values and declaration order in AnkiDroid 2.25.3 at
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Focused Dart tests verify
+those exact values and uniqueness within each group, matching the direct
+uniqueness check in the pinned `ConstantUniquenessTest.kt`. Android notification
+APIs, WorkManager, sync execution, and scheduling remain host-side. The source,
+test authorship, and GPL-3.0-or-later attribution are recorded in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
+root `COPYING` remains unchanged.
+
+## JavaScript add-on manifest validation and projection
+
+`AddonData`, `DistInfo`, `AddonModel`, and the pure
+`getAddonModelFromAddonData()` projection preserve the parsed-manifest rules
+from `AddonData.kt` and `AddonModel.kt` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The projection checks required
+fields first, then accumulates npm-name, add-on type, note-editor icon, keyword,
+and JS API version errors in source order. Reviewer icons default to empty;
+optional description, author, and license values retain their source defaults,
+and registry `dist` remains nullable. The host supplies the three callbacks
+used by `validateNpmPackageName()` for locale-sensitive lowercasing, URL
+encoding, and logging.
+
+The focused Dart tests port the direct pure cases in
+`AddonModelTest.kt` for missing name, keywords and version, invalid add-on type,
+missing registry `dist`, and absent optional metadata, plus valid projection
+semantics. Manifest file reads and JSON decoding, unknown-key handling,
+directory listing, URL parsing/fetching, HTTP, listing logs, and filesystem
+errors remain host-side; JSON-file and URL-list integration tests are not
+ported. `lib/src/ankidroid_js_api_constants.dart` also preserves the source JS
+API error codes (including `BURT_NOTE`), current/minimum version `0.0.3`, and
+ordered flag-name to `ViewerCommand` table. It represents enum values only;
+Android WebView/JS bridge execution, dispatch, localization, version parsing,
+UI and logging remain host-side. `ApiContract` and `requireJsApiVersion()` in
+`lib/src/ankidroid_js_api_contract.dart` add the source field projection and
+compatibility gate. `parseJsApiContract()` projects the parsed request through
+host callbacks in source order (`version`, `developer`, then `data`) before
+checking compatibility. The host retains byte decoding, `JSONObject` parsing
+and `optString` fallback/coercion, `JSONException` classification, logging,
+localized invalid-JSON UI, and thread scheduling. Only a host-classified JSON
+exception logs before the invalid-JSON UI callback and returns null; other
+exceptions and callback failures propagate. Host callbacks also retain Java
+semver parsing/comparison and the other Android UI/logging effects. Focused
+constant/table cases are in
+`test/ankidroid_js_api_constants_test.dart`, with source-derived gate and
+contract cases in `test/ankidroid_js_api_contract_test.dart`. The adapted sources are
+`GPL-3.0-or-later`, with upstream source copyrights by Mani (2021, and 2020 for
+`AnkiDroidJsAPIConstants.kt`). See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the exact source paths, test boundary, and
+license record; root `COPYING` remains unchanged.
+
+`ApiResult` preserves AnkiDroid's Boolean, Integer, Float, Long, and String
+variants, their status/value fields, identity semantics, and ordered `success`,
+`value` host projection. The Boolean, Int, Long, and String conversion
+projections select their corresponding variants; Android `JSONObject` encoding,
+Java number formatting and exceptions, boxed numeric widths, and UTF-8 byte
+conversion remain host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source, test, and license details.
+
+`CardDataForJsApi` in `lib/src/ankidroid_js_api_card_data.dart` preserves the
+mutable field order and source defaults from
+`AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPI.kt:605–613`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`; the host
+retains Activity-side population, scheduling/time calculations, JSON response
+encoding, and WebView/JS dispatch. Focused tests cover all defaults, mutability,
+and identity equality. The pinned upstream API integration uses `nextTime1` but
+has no direct test for these data-container defaults. The upstream source is
+Copyright (c) 2020 Mani <infinyte01@gmail.com> and licensed
+`GPL-3.0-or-later`; the Dart class and focused tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`. Root `COPYING` remains unchanged.
+
+## npm package-name validation
+
+`validateNpmPackageName` ports `NpmUtils.validateName()` from AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`, preserving validation order,
+Boolean results, scoped-name recursion, and each first-invalid log message. The
+host supplies callbacks for Java default-locale lowercasing, Java UTF-8 form
+URL-encoding, and Timber info logging; callback failures propagate. Kotlin
+whitespace and UTF-16 length behavior are preserved. Its focused tests include
+the pinned `NpmUtilsTest.validateNameTest` cases and source-derived boundary and
+adapter cases. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details; root `COPYING` remains
+unchanged.
+
+## MathJax note-editor formatting
+
+`MathJaxFormat` ports the `BLOCK` and `CHEMISTRY` string wrappers and mutable
+`StringFormat` selection values from `AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/MathJaxFormat.kt` and `AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/Toolbar.kt:418–462` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Android localized label lookup,
+toolbar/editor insertion, cursor application, and Activity lifecycle stay on the
+host. The two pinned upstream tests cover nonempty wrapped output; focused Dart
+tests also cover source-derived empty-input selection, UTF-16 selection length,
+and mutable value semantics. `StringFormat.result` matches the Kotlin field name
+and generated data-class string form. The Kotlin sources and test declare
+`GPL-3.0-or-later` without separate copyright lines. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
+## CSV importer destination
+
+[`CsvImporterDestination`](lib/src/csv_importer_destination.dart) retains the
+exact CSV path and delegates once to the host-provided equivalent of
+`CsvImporter.getIntent(context, filePath)`, returning the exact Intent object.
+Android Context, Intent construction, Bundle/key and activity behavior remain
+host-side, as do cached-file copying and TaskStackBuilder navigation. Focused
+source-derived tests in
+[`test/csv_importer_destination_test.dart`](test/csv_importer_destination_test.dart)
+cover empty and unusual paths, exact context/path forwarding, callback count,
+Intent identity, and exception propagation. No direct pinned test for this
+`toIntent` extension was found. Source provenance and authorship are recorded
+in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
+root `COPYING` remains byte-identical.
+
+## Review deck destination
+
+[`ReviewDeckDestination`](lib/src/review_deck_destination.dart) preserves the
+`CurrentDeck` singleton and `ExternalLaunch(deckId)` source variant. The current
+deck choice delegates once to the host Reviewer's Intent callback and returns
+its exact Intent. External launches create the host Intent, set VIEW, then
+write the exact deck ID extra, preserving zero and negative values and
+returning the same Intent. Reviewer screen, preferences, Activity selection,
+and Android Intent behavior remain host-side. Focused tests in
+[`test/review_deck_destination_test.dart`](test/review_deck_destination_test.dart)
+cover variants, callback order and identity, edge IDs, and exception
+propagation. Source provenance and license details are recorded in
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
+root `COPYING` remains byte-identical.
+
+## Note Editor caller codes
+
+`NoteEditorCaller` in [`lib/src/note_editor_caller.dart`](lib/src/note_editor_caller.dart)
+preserves the enum names, integer values, and declaration order from
+`NoteEditorFragment.Companion.NoteEditorCaller` in AnkiDroid 2.25.3. Its
+`fromValue()` lookup requires an exact code and throws `StateError` for an
+unknown value; the intentionally nonnumeric source order is retained. Focused
+cases are in [`test/note_editor_caller_test.dart`](test/note_editor_caller_test.dart).
+[`addNoteArgs()`](lib/src/note_editor_add_note_args.dart) returns a fresh map
+containing only `CALLER: 3`, matching the Note Editor add-note source helper;
+focused cases are in
+[`test/note_editor_add_note_args_test.dart`](test/note_editor_add_note_args_test.dart).
+[`noteEditorAddNoteToIntent()`](lib/src/note_editor_add_note_to_intent.dart)
+adapts the host-side `NoteEditorDestination.AddNote.toIntent(context)` calls:
+it creates one intent, writes `CALLER: 3`, then writes `DECK_ID` as a Long extra
+when the deck ID is non-null, and returns that same intent. Android context,
+activity component, intent construction, and typed extra operations remain
+host-side. Focused cases are in
+[`test/note_editor_add_note_to_intent_test.dart`](test/note_editor_add_note_to_intent_test.dart).
+The pinned `NoteEditorTest.kt` covers launching AddNote with a supplied deck ID
+and verifying deck selection; null, zero/negative IDs, callback order, identity,
+and failure cases are additionally source-derived Dart tests.
+The host constructs the Android `Bundle` and remains responsible for
+navigation. Source provenance, license, and copyright details are in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md); root
+`COPYING` remains byte-identical.
+
+[`noteEditorAddInstantNoteToIntent()`](lib/src/note_editor_add_instant_note_to_intent.dart)
+adapts the `AddInstantNote` branch of
+`NoteEditorDestination.toIntent(context)`: it creates one host Intent, writes
+`CALLER: 14`, then always writes the exact shared text (including an empty
+string) under Android's `Intent.EXTRA_TEXT` key
+(`android.intent.extra.TEXT`) and returns the same Intent. Android context,
+activity component, Intent construction, and typed extra writes remain
+host-side. Focused cases in
+[`test/note_editor_add_instant_note_to_intent_test.dart`](test/note_editor_add_instant_note_to_intent_test.dart)
+cover the exact values and order, empty and nonempty text, identity, and
+callback failure short circuits. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+[`noteEditorImageOcclusionToIntent()`](lib/src/note_editor_image_occlusion_to_intent.dart)
+adapts the `ImageOcclusion` branch of
+`NoteEditorDestination.toIntent(context)`: it creates one host Intent, writes
+`CALLER: 12`, then always writes the nullable URI unchanged as the `image_uri`
+Parcelable extra, and returns the same Intent. Android context, activity
+component, Intent construction, and Parcelable behavior remain host-side.
+Focused cases in
+[`test/note_editor_image_occlusion_to_intent_test.dart`](test/note_editor_image_occlusion_to_intent_test.dart)
+cover the exact order, null and non-null URI values, identity, and callback
+failure short circuits. The Kotlin source declares `GPL-3.0-or-later` and has
+SPDX Copyright (c) 2024 Sanjay Sargam; this is attribution for the Kotlin
+source only. The Dart adaptation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+
+[`noteEditorEditFromPreviewerToIntent()`](lib/src/note_editor_edit_from_previewer_to_intent.dart)
+adapts the `EditNoteFromPreviewer` branch of
+`NoteEditorDestination.toIntent(context)`: it creates one host Intent, writes
+`CALLER: 9`, then writes the exact card ID as a Long extra under `editCid`, and
+returns the same Intent. Android context, Activity component, Intent, and typed
+extra handling remain host-side. Focused cases in
+[`test/note_editor_edit_from_previewer_to_intent_test.dart`](test/note_editor_edit_from_previewer_to_intent_test.dart)
+cover keys and values, caller-before-card order, exact zero/negative/large IDs,
+Intent identity, and callback failure short circuits. No direct pinned test for
+this branch was found. The Kotlin source declares `GPL-3.0-or-later` and has
+SPDX Copyright (c) 2024 Sanjay Sargam; this identifies the Kotlin source only.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+
+[`noteEditorAddNoteFromReviewerToIntent()`](lib/src/note_editor_add_note_from_reviewer_to_intent.dart)
+adapts `NoteEditorDestination.AddNoteFromReviewer.toIntent(context)`: it creates
+one host Intent, writes `CALLER: 11`, then writes the exact non-null animation
+as the `finishAnimation` Parcelable extra; a null animation omits that extra.
+It returns the same Intent. Android context, Activity component, Intent
+construction, and Parcelable handling remain host-side. Focused source-derived
+cases in
+[`test/note_editor_add_note_from_reviewer_to_intent_test.dart`](test/note_editor_add_note_from_reviewer_to_intent_test.dart)
+cover the caller key/value, null omission, exact animation pass-through, order,
+Intent identity, and callback failure short circuits. No direct pinned test for
+this `toIntent` branch was found. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md).
+
+[`noteEditorAddNoteFromCardBrowserToIntent()`](lib/src/note_editor_add_note_from_card_browser_to_intent.dart)
+adapts `NoteEditorDestination.AddNoteFromCardBrowser.toIntent(context)`: it
+creates one host Intent, writes `CALLER: 7`, writes the exact search terms under
+`SEARCH` (including an empty string), then writes
+`inCardBrowserActivity: false`. It writes `DECK_ID` as a Long extra only for a
+positive deck ID and returns the same Intent. Android context, Activity
+component, Intent construction, and typed extra operations remain host-side;
+callback failures propagate and stop subsequent operations. Focused cases in
+[`test/note_editor_add_note_from_card_browser_to_intent_test.dart`](test/note_editor_add_note_from_card_browser_to_intent_test.dart)
+cover keys, values, order, empty search, null/zero/negative/positive deck IDs,
+the strict positive threshold, Intent identity, and failure short circuits.
+Pinned `CardBrowserViewModelTest.kt:288` covers creation of the typed
+destination fields, not this `toIntent` branch. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+[`noteEditorEditSelectionToIntent()`](lib/src/note_editor_edit_selection_to_intent.dart)
+adapts `NoteEditorDestination.EditSelection.toIntent(context)`: it creates one
+host Intent, writes `CALLER: 1`, then writes the first ID as `CARD_ID`, a fresh
+ordered copy of all IDs (including duplicates) as `CARD_IDS`, the required
+animation as `finishAnimation`, and the exact `inCardBrowserActivity` Boolean.
+The first ID is read after the caller write, so an empty list fails at that
+point without later extras. Android Context, Activity, Intent, Parcelable and
+LongArray behavior remain host-side; callback failures propagate and stop later
+operations. Focused cases in
+[`test/note_editor_edit_selection_to_intent_test.dart`](test/note_editor_edit_selection_to_intent_test.dart)
+cover keys, values, order, first-ID selection, copied array behavior, empty
+input, Intent identity, and callback failure short circuits. The pinned Note
+Editor test uses `toBundle()` and does not directly test this Intent branch.
+The Kotlin source declares `GPL-3.0-or-later` and has SPDX Copyright (c) 2024
+Sanjay Sargam; this is attribution for the Kotlin source only. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source and license details.
+
+[`noteEditorCopyNoteToIntent()`](lib/src/note_editor_copy_note_to_intent.dart)
+adapts `NoteEditorDestination.CopyNote.toIntent(context)`: it creates one host
+Intent, writes `CALLER: 8`, the exact `DECK_ID`, the exact fields text under
+`CONTENTS`, and a fresh ordered copy of tags under `TAGS`, preserving empty
+strings, empty lists, order, and duplicates. It returns the same Intent.
+Android Context, Activity, Intent, typed extra handling, and JVM array
+allocation remain host-side; callback failures propagate and stop later writes.
+Focused source-derived cases in
+[`test/note_editor_copy_note_to_intent_test.dart`](test/note_editor_copy_note_to_intent_test.dart)
+cover the extra keys, values and order; empty payloads; fresh tag-list
+projection; duplicates; Intent identity; and callback failure short circuits.
+Pinned `NoteEditorTest.kt:330–350,903–908` covers copy-note launch and selected
+deck ID, but does not assert every raw extra. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+
+[`noteEditorPassArgumentsToIntent()`](lib/src/note_editor_pass_arguments_to_intent.dart)
+adapts `NoteEditorDestination.PassArguments.toIntent(context)`: it creates one
+host Intent, forwards the identical `arguments` Bundle once with `putExtras`,
+then assigns the exact nullable `action` with `setAction`, including when it is
+null, and returns the same Intent. Android Context, Activity component, Intent,
+Bundle, and their API behavior remain host-side. Focused source-derived cases in
+[`test/note_editor_pass_arguments_to_intent_test.dart`](test/note_editor_pass_arguments_to_intent_test.dart)
+cover operation order, Bundle and Intent identity, null and non-null actions,
+and callback failure short circuits. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this is
+attribution for the Kotlin source only. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical; see [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Note Editor newline replacement preference
+
+`noteEditorShouldReplaceNewlines()` in
+[`lib/src/note_editor_should_replace_newlines.dart`](lib/src/note_editor_should_replace_newlines.dart)
+reads the `noteEditorNewlineReplace` Boolean from the host-provided shared
+preferences with the source default `true`. It looks up shared preferences once,
+then reads that exact key once and returns the stored value unchanged; callback
+failures propagate without fallback. Android app context and preference storage
+remain host-side. Focused source-derived cases are in
+[`test/note_editor_should_replace_newlines_test.dart`](test/note_editor_should_replace_newlines_test.dart).
+The pinned Kotlin source declares `GPL-3.0-or-later` and carries file-level
+Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae; these identify the
+source file and do not claim authorship of the Dart adaptation. The Dart code
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Current port scope
+
+The language-tag value and parser also follow AnkiDroid 2.25.3, including its
+exact accepted identifier syntax and aliases. Java `Locale.Builder` normalization
+and extension removal are supplied by a host callback; the Dart port does not
+substitute Dart locale rules. Source pin, GPL attribution, and the focused parser
+cases are documented in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md).
+
+`AnalyticsSamplePercentage` preserves the pinned value contract: `-1` is the
+uninitialized sentinel and percentages are limited to `0..100`, with source
+validation, initialization, equality/hash, and value-class string behavior.
+It is adapted from
+`AnkiDroid/src/main/java/com/ichi2/anki/analytics/AnalyticsSamplePercentage.kt:1–38`
+at AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`; the
+source declares `GPL-3.0-or-later` and Copyright © 2026 Ashish Yadav
+<mailtoashish693@gmail.com>. Analytics collection, configuration/resource
+lookup, Firebase, event-sampling effects, and transport remain host-side. The
+pinned source has no direct focused test; the Dart contract cases are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
+
+`ViewerRefresh` and `ViewerRefresh.updateState()` preserve the pinned deferred
+CardViewer refresh flags, including the no-change same-instance return and
+accumulation of pending flags. The host extracts `OpChanges` fields and retains
+Activity/View lifecycle, deferred refresh storage and consumption, and
+collection-backed rendering. The pinned source test checks lifecycle consumption
+but does not directly test `updateState()`; focused Dart behavior tests are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+`SearchString` preserves the pinned value wrapper's string equality, Kotlin/JVM
+string hash, verbatim projection, UTF-16 length, and `EMPTY` value. Its
+`fromValidatedBackendSearchString()` factory wraps an already backend-built and
+validated string without parsing, validating, or normalizing it. Backend
+`SearchString` construction/conversion from queries or `SearchNode`s via
+`Collection.buildSearchString`, query parsing/validation, backend error
+translation, generated search types, collection search methods, and
+Rust/backend behavior remain host-side. The pinned `SearchStringTest` covers
+backend search-construction paths but not the wrapper's value semantics;
+focused Dart cases are
+source-derived. The pinned source declares `GPL-3.0-or-later` with no separate
+copyright line; this adaptation and its tests are Copyright © 2026 John Tsui
+under `GPL-3.0-or-later`. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Card type names
+
+`CardTypeName` preserves the pinned AnkiDroid 2.25.3 value contract: the
+`fromString()` factory applies Kotlin `String.trim()` whitespace rules,
+case-insensitive equality and lowercase hashing follow their separate source
+operations, and `toString()` preserves the trimmed spelling. It does not
+validate names or handle duplicates. Card template editing, duplicate-name
+discovery/resolution, rename UI/localization, and persistence/backend work
+remain host-side. Focused cases are in `test/card_type_name_test.dart`; source
+and license details are in [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md). Root `COPYING` remains byte-identical.
+
+`CardStateFilter` preserves the source enum order and names, and the exact
+`toSearch` fragments (`''`, `'is:new '`, and `'is:due '`, including trailing
+spaces) from `AnkiDroid/src/main/java/com/ichi2/anki/model/CardStateFilter.kt`
+at AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The host retains filter selection, query composition, and search execution.
+The pinned `CardBrowserViewModelTest` passes `ALL_CARDS` through tag filtering
+but does not directly assert `toSearch`; no dedicated `CardStateFilter` test was
+found, so focused Dart cases are source-derived. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the full source and license record.
+
+## Collection folder policy
+
+`AnkiDroidFolder` and `StoragePolicy` project the folder and fresh-install
+selection rules from `AnkiDroid/src/main/java/com/ichi2/anki/startup/StoragePolicy.kt`
+and `anki-common/src/main/kotlin/com/ichi2/anki/common/storage/AnkiDroidFolder.kt`
+at AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. A fixed
+folder is persisted either way; a user choice yields `PUBLIC` only when
+required permissions are present, and remains deferred otherwise. The first
+two direct behaviors in
+`AnkiDroid/src/test/java/com/ichi2/anki/startup/StoragePolicyTest.kt` are
+covered in Dart. Android permission checks, permission-set policy mapping,
+startup and path persistence, and filesystem behavior remain host-side. The
+pinned Kotlin files declare `SPDX-License-Identifier: GPL-3.0-or-later` with no
+separate copyright line; this Dart adaptation and its tests are Copyright ©
+2026 John Tsui and marked under the same license. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.
+
+The current port includes selected source-mapped slices: deck-picker behavior,
+review-reminder Add/Edit form state,
+the headless review-session lifecycle, reviewer count/next-time presentation
+models, the collection timebox counter and rounded-minute projection, Previewer
+navigation and audio-side selection, flag decision/effect models, ordered
+Previewer mark action effects and NoteService mark-tag update effects,
+original deck-ID selection for filtered-deck cards,
+CardViewer POST request routing and Reviewer POST route selection, Card Browser
+active-column and sort preference models, recent-search ordering, JSON
+serialization, display state,
+saved-history request restoration, Cards/Notes row-ID projection/expansion,
+column-selection click-toggle planning, row-tap activation directives, bulk
+mark/bury/suspend decisions, and
+selected-card flag update effect plans, all-decks filter state,
+selected-row export data, marked/suspended preset-search plans, the Card Browser
+duplicate-query gate, flag-filter query and effect plan,
+note-editor destination payload,
+structured search-node planning, the
+answer-timer state machine,
+reviewer Auto Advance scheduling and toggle effects, leech-feedback
+composition, whiteboard and record-voice toggle effects, the headless reviewer
+reset-progress, stop-auto-advance, statistics-destination, edited-tag request
+projections, operation-executed effect ordering, gesture parser,
+parsed-gesture command
+routing, reviewer binding codec/map and
+default definitions, headless
+reviewer keyboard and axis-button dispatch, answer-button command mapping and
+AutomaticAnswer action decoding, and reviewer binding preference/default
+resolution, Reviewer state-mutation hook decisions, ordered Reviewer question-display effects, and Card Browser
+launch-option precedence. Card Browser search-text
+transitions, text-edit/sync/reset/history-selection/request-submission effect
+sequences and saved-search submission effects, saved-search
+outcome-message mapping, search-result message selection, and save-search
+prompt decisions,
+CardTemplate marker-based string composition and
+verbatim card-content QA wrapping, card-template editor unique new-name
+generation and exact Markdown projection, browser-appearance onCreate callback ordering and result extraction,
+card-template type-answer modifier parsing, cloze-index derivation and
+cloze-content extraction, question-side type-answer placeholder removal,
+the host-input field/result decision, and answer-side placeholder
+substitution using host-computed comparison HTML.
+
+The portable Set Due Date validation and parameter decisions are also included.
+Study Options data and state projections preserve buried-count derivation and
+Loading/Empty/Congrats/StudyOptions precedence. Its filtered-deck rebuild and
+empty actions preserve their diagnostics, selected-deck scheduler operation,
+and post-operation collection refresh order; collection reads, flow delivery,
+media resolution, undoable scheduling, and UI remain host-side.
+Study Options unbury preserves the current-deck lookup inside the undoable
+scheduler callback and does not refresh derived state; its host lifecycle and
+scheduler operation remain host-side. Study Options refreshData preserves the
+open-collection callback boundary for derived-state refresh; collection lookup
+and state updates remain host-side. Filtered Deck Options name and limit
+validation, second-filter toggling, and build eligibility
+are also projected from the pinned source. Collection access, SavedStateHandle,
+asynchronous flows, Android UI, query execution, and deck-building mutations
+remain host-side.
+
+Media Check unused-file deletion is also projected: a null check result yields
+an empty list, the host trashes the supplied list under `DELETING_MEDIA`, and
+the deleted count is published only after trash succeeds. Media scanning,
+filesystem/backend work, progress execution, and state delivery remain
+host-side.
+
+Media Check missing-media tagging preserves the current result's note IDs (or
+an empty list when absent) and caller tag for the host bulk-add under
+`ADDING_TAGS` and its undoable operation. The host result count is published
+only after success; tag storage, progress execution, and state delivery remain
+host-side.
+
+Media Check result publication uses `CHECKING_MEDIA` progress and passes the
+opaque backend result through only after the host check returns successfully.
+The host retains the backend call, progress execution, and result storage.
+
+Reminder troubleshooting now also projects the six source-ordered permission
+and device-setting reads into one complete state value. The host supplies the
+synchronous reads and publishes the returned value; Android APIs, repository
+access, ViewModel/StateFlow lifecycle, localization, and UI remain host-side.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) for the exact source pin and
+the pinned-test coverage boundary.
+
+Login input validation preserves the focus-loss-only empty-field errors, the
+nonempty-string button predicate without trimming, and Idle/Success/Error state
+variants with opaque error payloads. Authentication, persistence, logging,
+localization, lifecycle, and UI remain host-side.
+
+Logged-in logout preserves the host callback order: clear the saved hkey, clear
+the username, clear the current sync URI, then force media resync. Callback
+failures propagate and stop later callbacks without rolling back earlier host
+effects. Preference storage, collection/media access, coroutine scheduling,
+lifecycle, and UI remain host-side.
+
+Card Template Editor state preserves the Initializing, Loaded, and Finished
+states, source defaults, load/error/finish transitions, and Loaded-only updates.
+The host supplies opaque exception data and retains Android lifecycle, StateFlow,
+template loading and persistence, rendering, and UI.
+
+The Card Template Editor `EditTab` enum preserves the source values and order
+`FRONT`, `BACK`, `STYLING`. Android view IDs, current-tab resolution,
+rendering/editing, and host integration remain host-side.
+
+Card Template Fragment initial focus preserves the current-page check and
+`EditText.post` timing: it resolves the field once as the post receiver, then
+resolves the current field again inside the deferred focus action. The host
+retains pager state, Android views, posting, and focus behavior; no keyboard is
+shown. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+The Card Template Editor page-selected callback preserves the selected position,
+performs one fragment lookup, and, when present, resolves its binding and edit
+field before requesting focus once. Android fragments, views, bindings, and focus
+remain host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+The Card Template Editor `flipQA` transformation preserves the source's greedy
+DOTALL answer-separator match, literal `{{FrontSide}}` fallback removal,
+U+0020-and-below edge trimming, and question-before-answer setter order. The
+host supplies the original strings and setters; template mutation, storage, and
+UI remain host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+Manage Tags remove, rename, and clear-unused actions preserve the selected host
+operation, count-bearing event, captured search query, synchronous Loading
+transition, and operation → event → reload order. Cancellation is rethrown and
+other exceptions are published before the flow stops; collection mutations,
+undoable operation, coroutine/job scheduling, StateFlow, events, and UI remain
+host-side.
+
+Media Check trash actions preserve `deleteTrash()` / `restoreTrash()` operation
+selection and run the chosen host operation inside unlabeled progress and the
+collection host. Backend work, coroutine launch, and progress lifecycle remain
+host-side.
+
+Empty Cards search preserves the shared Searching state and publishes the exact
+host report or thrown object. Cancellation is rethrown through a host-supplied
+predicate, and publication errors propagate outside the query catch. Collection
+access, query execution, coroutine/job, StateFlow, lifecycle, and UI remain
+host-side.
+
+Switch Profiles preserves the empty profile list and add-dialog visibility
+state. Confirming a valid name hides the dialog without creating a profile,
+matching the pinned source's TODO. Profile loading, validation, logging,
+StateFlow, lifecycle, and Android UI remain host-side.
+
+Profile switching preserves the ordered safety checks, unique active blocker
+reasons, explicit skip reasons, and the host switch callback boundary. Checks
+and the switch callback are awaited sequentially; exceptions propagate
+unchanged. ProfileManager, persistence, lifecycle, and the actual switch remain
+host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) for the exact
+source pin and pinned-test coverage.
+
+Import add and replace routing preserves the chosen action and original path
+string. Flow delivery, coroutine scheduling, importer behavior, and Android UI
+remain host-side.
+
+Shared Decks download state preserves the source defaults, retry reset,
+Float32 progress calculation, progress-unavailable value, network-wait flag,
+and completion/failure transitions. The host retains locale resolution and
+one-decimal percentage formatting, DownloadManager/network/file operations,
+Android lifecycle, StateFlow, localization, and UI.
+
+- Deck-picker search: token and deck-path matching, with locale-invariant query
+  casing and locale-aware deck-name casing, including contextual
+  and expanding Unicode mappings, Turkish/Azeri/Lithuanian special cases, and
+  partial `:` / `::` searches. `projectDeckPickerFilterUpdate` creates the
+  fresh filter value assigned for each input; the host owns StateFlow updates.
+- Deck-picker rows and due count: flattening a deck tree into visible rows,
+  including ancestor paths, collapsed decks, counts, and selection state; the
+  aggregate preserves AnkiDroid's top-level subdeck flag. The source-equivalent
+  total due count across top-level decks includes signed 32-bit `Int` overflow
+  behavior. An omitted synthetic-root flag is derived from negative depth,
+  matching AnkiDroid's level projection.
+- Deck-picker position lookup: `findDeckPosition` returns the first visible
+  index for a deck or recursively follows the host-resolved parent chain until
+  a visible ancestor is found, defaulting to zero when the chain ends. The host
+  supplies flattened IDs and resolves parents from the due tree; tree state and
+  scrolling remain host-side. No direct pinned source test covers this helper,
+  so its Dart cases are source-derived.
+- Deck-picker previous-version lookup: `getPreviousDeckPickerVersion` preserves
+  the source's Long, Int, and String getter order, typed mismatch catch
+  boundaries, exact `"2.0.2"` mapping, and fallback-only key removal. The host
+  supplies typed SharedPreferences callbacks and persists the current version;
+  Android preference IO stays host-side. Its cases are source-derived.
+- Deck-picker sync icon: `planDeckPickerSyncIconFetch` gates auth lookup and
+  backend status requests in source order. The lazy
+  `projectDeckPickerSyncIconResponse` iterable emits a nonempty endpoint effect
+  before status mapping; the host must apply effects as it iterates so endpoint
+  persistence still happens before an unrecognized required state throws the
+  source TODO as `UnimplementedError`. Caught exceptions map to Normal. The host
+  owns auth lookup, backend IO, endpoint preference persistence, exception
+  adaptation and logging, coroutine scheduling, and UI. Cases are source-derived;
+  see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker startup: `planDeckPickerStartup` maps the permission gate and startup-job intent; `completeDeckPickerStartup` maps fatal-error and success responses after the host check, preserving source effect order. Permission denial leaves the first-refresh flag unchanged and assigns no startup job; authorized startup sets the flag and assigns its job before failure checking. Failure publishes only FatalError; success configures rendering, launches deck-list loading on IO, then publishes Success without waiting for the load. `planDeckPickerUpdateDeckList` preserves the active-job guard, one-shot first-refresh skip, and ordinary load request; `planDeckPickerScreenResumed` clears that flag. The host supplies Android permissions and startup-failure resolution, schedules IO and coroutine/job/lifecycle work, configures rendering, loads decks, and publishes MutableStateFlow values. The pinned tests directly cover the refresh guard and resume transition, not response/effect sequencing; those Dart cases are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker selection and context menus: `planDeckPickerSelection` orders collection selection, focused-deck assignment, and deck-list refresh; context-menu plans retain a separate post-join publication payload with the same deck ID, and right-click requests also retain exact coordinates. The host executes selection effects sequentially within the selection job; a selection failure skips focused-deck assignment and refresh. The source then calls `Job.join()`, which waits without rethrowing that failure, so the host publishes the menu request after the job completes even when selection failed. Collection mutation, flows, jobs, and UI stay host-side, and selection preserves the source TODO omission of resetting the Card Browser default deck. Dart cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker expansion toggle: `planDeckPickerExpandToggle` resolves the first depth-first deck match and projects in-memory collapse mutation, persistence with `Scope.REVIEWER`, then list refresh. A missing tree or target still refreshes, while a mutation or persistence failure stops later host effects. The projection leaves the node unchanged; the host applies effects sequentially and owns collection persistence, flow emission, coroutine work, and UI. Dart cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker initial state and counts: `projectDeckPickerInitialState` preserves a null due tree and otherwise requires exactly the default deck as the sole child plus an empty collection. `projectDeckPickerCardsDue` emits a due count only when its tree exists and initial state is exactly false; `projectDeckPickerResizingDividerVisible` preserves the source's nullable comparison, so a null initial-state value with cards shows the divider. The host combines flow emissions and owns StateFlow publication; cases are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker scheduler-upgrade prompt: `projectDeckPickerSchedulerUpgradePrompt` defaults a missing or wrongly typed Long config value to version 1, prompts only for that legacy version when it has not already been shown, and returns the exact next shown-version value. A null previously shown version compares unequal to 1. The host owns config access, stored-state mutation, and ordered StateFlow/SharedFlow updates; cases are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker review reminders: `projectDeckPickerScheduleReviewReminders` carries the caller-supplied deck ID unchanged in a host-facing request for deck-specific reminder routing. The host owns coroutine/flow delivery, destination and Intent construction, and reminder handling. Its focused Dart case is source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Schedule-reminder destination: `ScheduleRemindersDestination.toIntent` creates a deck-specific scope from the unchanged deck ID on every call and forwards it with the exact context to the host Intent builder. Android Intent, Parcelable, activity, fragment, and reminder behavior remain host-side; focused Dart cases are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker export: `projectDeckPickerExportDeck` carries the caller-supplied deck ID unchanged in a host-facing request for publication to the export flow. The host retains `launchCatchingIO`, flow emission, coroutine/IO/error handling, and export execution. The focused Dart case is source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker shortcut disabling: `disableDeckAndChildrenShortcuts` passes the exact deck ID once to the host's nullable due-tree subtree lookup, eagerly stringifies IDs in traversal order, and emits one list only after conversion succeeds. The host retains `launchCatchingIO`, due-tree access, lifecycle, Flow delivery, and Android shortcut handling. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker Manage Note Types: `projectDeckPickerOpenManageNoteTypes` creates a fresh host-facing destination request on every call, matching the source's plain `ManageNoteTypesDestination` class identity. The host retains coroutine/flow delivery, Intent construction, and navigation. Its focused identity case is source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker list loading: `loadDeckList` checks collection-open state before reading the fingerprint, skips backup only for the exact `robolectric` fingerprint, launches other backups without waiting, then logs and waits for the host deck-count reload. Callback failures propagate unchanged and stop later effects. Collection state, Android fingerprint, backup execution, Timber, reload Job semantics, IO dispatch and lifecycle remain host-side. Focused cases are source-derived; the pinned tests cover related `reloadDeckCounts` and `updateDeckList` behavior but do not directly test `loadDeckList`; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Manage Note Types: `ManageNoteTypesState` maps case-insensitive filtering, display flags, row selection and multi-select mode, source-order selected rows, editor destinations, destination clearing, and independent transient message/error clears that preserve every other field from the current state. `ManageNoteTypeDeletePlan` maps the single-delete decision, undoable callback order, state outcome, and result forwarding; `ManageNoteTypeDeletionPlan` maps selected-row deletion and error aggregation; `ManageNoteTypeRenamePlan` maps loading-before-scheduling, exact host arguments, latest-row name-only updates, and success/failure result choreography; `ManageNoteTypeRefreshPlan` maps loading-before-query publication and the exact success/failure state updates while retaining an existing error on success. The host supplies note-type rows and retains collection query/use-count lookup, safe-query `Exception` capture, reportable-exception construction, database mutation and undo execution, asynchronous flows, lifecycle, and UI. The focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Edit Deck Description state: `EditDeckDescriptionDialogState` retains restored edits when marked dirty, otherwise initializes from persisted values; it compares both fields only after initialization, distinguishes same-value dirty marking from actual changes, and returns back/close/save decisions with persistence ordered before Saved dismissal. The host supplies persistence values and applies actions; collection access/update, SavedStateHandle, flows/coroutines, lifecycle, and dialog UI remain host-side. Its focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Switch Profiles dialog state: `SwitchProfilesDialogState` starts with no profiles and the add dialog hidden, projects show/dismiss visibility changes, and hides on confirmation without creating a profile because creation remains TODO in the pinned source. ProfileManager/profile IO, ProfileName validation, logging, StateFlow, lifecycle, and Android UI remain host-side. Its focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Profile list item: `ProfileItem.initial` uppercases the first grapheme returned by the host's pinned `BreakIterator` adapter and uses `?` when there is none. Emoji, flags, and combining accents stay within the exact host grapheme result; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- String collection factories: `emptyStringMutableList` creates a growable list; `emptyStringArray` creates a fixed-length list whose entries can still be replaced. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- HTML text escaping: `htmlEncode` preserves the source's one-pass encoding for five HTML characters. The AOSP Apache-2.0 attribution and license text are included; see [NOTICE.md](NOTICE.md) and [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Title casing: `toTitleCase` preserves source null/blank short-circuits and first-UTF-16-unit casing order; the host supplies Kotlin-compatible blank detection and current-locale case mapping. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- String search helpers: source-compatible first/last UTF-16 indexes and `String` overload behavior are available; the host supplies Kotlin character equality for ignore-case searches. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- String ellipsizing: `ellipsize` keeps threshold checks and short-circuits in Dart, then uses the host's pinned `BreakIterator` boundary for longer strings. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Numeric helpers: `longIfZero` keeps the default callback lazy, and `clampFloat` preserves Float32 and ordered-comparison behavior without validating bounds. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- JSON content comparison: `jsonContentEquals` preserves nested object/array rules and delegates number rendering to the host's JSON implementation. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- JSONObject cloning and map construction: `JsonObjectHostAdapter` preserves the pinned source's key order, repeated scalar reads, typed nested reads, exact clone-target identity, and one-put-per-entry map construction. The host retains JSON representation, conversion, and array-cloning behavior; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+- Root causes: `getRootCause` preserves the source's cause-read sequence and direct self-cycle check. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- JSON host adapters: `jsonObjectGetStringOrNull` and lazy `jsonObjectIterable` preserve platform getter behavior and iteration timing. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Import action routing: `projectImportAdd` and `projectImportReplace` produce distinct host-facing actions and carry the supplied path string unchanged. SharedFlow delivery, coroutine/Job scheduling, import backend and importer behavior, and Android UI remain host-side. The focused Dart cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Shared Decks download state: `SharedDecksDownloadUiState` and the transition functions preserve the source's initial values, retry reset, Float32 progress arithmetic and absolute value, unavailable-progress null, network-wait-only update, and complete/failed fields while retaining all others. `formatDownloadPercent` keeps the source's integer branch and delegates one-decimal output to a host formatter because the source uses process-default locale. DownloadManager, network/file work, localization, Android lifecycle, StateFlow, locale resolution, and UI remain host-side; focused Dart cases are source-derived.
+- TTS voice-list and playback state: `projectAvailableVoices` preserves engine-error precedence and exception identity, voice-list failure and Pending behavior, then applies the installed/unavailable and network filters in source order. `planTtsVoicePlayback` keeps the unavailable-voice notification before the engine-ready playback request, including when the engine is not ready; `projectTtsPlaybackError` carries a non-null player error unchanged to the host's main-thread event path. The host supplies voice facts and executes notifications, playback, and error delivery; enumeration, sorting, engine/player setup, refresh, lifecycle, and UI remain host-side. Focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Instant Editor cloze state: `InstantEditorClozeState` preserves field-text word extraction, first cloze-number match and Kotlin Int parsing, full cloze matches, JVM whitespace behavior, source punctuation-merge transitions, ordinal parsing, duplicate/order retention, mode counter transitions, cloze wrapping/removal, clean-cloze replacement over all matches, and Kotlin Int overflow/conversion behavior. Note/collection updates, undoable saves, text selection, editor fields, StateFlow/lifecycle, and Android UI remain host-side; focused cases follow the pinned source, as mapped in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Image Occlusion arguments and state: Add/Edit arguments preserve the exact IDs and image path, and mode maps match the source JSON keys. Add mode tracks the selected deck and returns a request to restore the original ID only after a changed selection; Edit mode has no selection. Collection writes, deck-name lookup, coroutine/StateFlow behavior, and Image Occlusion UI remain host-side; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker reload-count publication: `planDeckPickerReloadDeckCounts` stages host reads and publications in source order, so a later read failure leaves earlier publications intact. It publishes due-tree and no-cards state before reading studied-today, then stages scheduler config, focused deck, and undo-menu reads around their corresponding updates. It composes the existing scheduler and undo-menu projections and replaces only literal LF characters in studied-today text, preserving CR and other whitespace. The host owns cancellation, IO/jobs, reads, and flow updates; cases are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker options-menu refresh: `planDeckPickerOptionsMenuRefresh` maps
+  collection accessibility, the ten-deck search-icon threshold, undo values,
+  the empty-collection predicate, and the intermediate Normal sync icon;
+  `completeDeckPickerOptionsMenuRefresh` replaces that icon after the host sync
+  fetch. The pinned source constructs the intermediate state before the fetch,
+  but assigns only the completed state to StateFlow. The host owns collection
+  reads, sync execution/error propagation, StateFlow assignment, and UI.
+  `planDeckPickerUndoMenuRefresh` updates only the undo fields when the
+  collection is open, preserving a null current state and doing nothing when
+  inaccessible. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker empty-card deletion: `deckPickerEmptyCardDeletionIds` flattens
+  the host report in note order and retains duplicates. With `preserveNotes`,
+  it drops the first card ID only for notes marked for deletion; empty and
+  single-card lists follow the source's ordinary `drop(1)` behavior. The host
+  supplies the report and owns the undoable deletion, orphan-note handling,
+  result count, and notification. Cases are source-derived; see
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker filtered-deck operations: `planDeckPickerEmptyFilteredDeck`
+  preserves selection in one collection block followed by a separate undoable
+  empty operation; `planDeckPickerRebuildFilteredDeck` keeps selection and
+  rebuild in one collection block. Both defer the scheduler deck ID to the
+  host's selected collection ID and publish count changes after success.
+  Collection, undo, scheduler, flow, coroutine, and exception behavior remain
+  host-side. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker unbury operation: `projectDeckPickerUnburyDeck` carries the
+  supplied deck ID unchanged for the host's undoable `sched.unburyDeck` call.
+  It does not select the deck or publish a deck-list refresh/count-change
+  notification. Undo, scheduler, coroutine, error handling, and UI behavior
+  remain host-side. Cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker deck deletion: `planDeckPickerDeleteDeck` orders exact singleton
+  removal, focus reset to default deck ID `1`, then the deck name and deleted
+  card count notification. The host resolves `decks.getLegacy(did)!!.name`
+  first, runs removal undoably, and applies later effects only after success.
+  `deleteSelectedDeck` remains host-side: it reads the selected ID, delegates
+  to `deleteDeck`, and joins that job. Collection access, the source null
+  assertion, undo, coroutine, and Flow behavior stay host-side. Cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker default-child predicate: `onlyHasDefaultDeck` returns true only
+  for exactly one child with the default deck ID (`1`); empty and multi-child
+  inputs return false. The host supplies child IDs; due-tree construction and
+  collection access remain host-side. Its cases are source-derived; see
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-node lookup and traversal: `find` checks self before descendants and
+  returns the first depth-first match, including synthetic nodes. `DeckNode` is
+  directly iterable in preorder; its lazy `preorder` iterable and `forEach`
+  visit children in order while omitting synthetic nodes and still traversing
+  their descendants. `deckIdsForShortcutDisable` maps the first matching
+  subtree to decimal ID strings in that iterator order, or returns an empty
+  list when the tree or target is missing. The host emits the flow and owns
+  tree/backend access and Android shortcut handling. Cases are source-derived;
+  backend tree construction and weak-parent behavior remain host-side. See
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-node study readiness and diagnostics: `hasCardsReadyToStudy` is true
+  when any review, learning, or new count is positive. `toString` preserves the
+  source order of full name, ID, review, learning, and new counts with decimal
+  values and comma-space separators. Cases are source-derived; see
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-name paths: `deckNamePath`, `deckNameBasename`,
+  `immediateParentDeckNamePath`, and `immediateParentDeckName` preserve
+  AnkiDroid's exact `::` split and join behavior, including empty components.
+  The host resolves a deck ID to its exact full name and passes both to
+  `ShortcutData`, which derives the short label and retains the full long label.
+  Flow emission and Android shortcut delivery remain host-side. Cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser columns: `BrowserColumnCollection` recognizes the source column
+  keys, loads an ordered `|`-separated value with load-time de-duplication and
+  fallback to caller-supplied defaults, and returns serialized update results
+  after removing null entries. Successful updates preserve duplicate entries
+  until the next load, matching the source method behavior. The host supplies
+  mode-specific default keys and persists the returned value; SharedPreferences
+  and backend/UI integration stay outside. The constructor keeps the source
+  list alias and cached count, while `backendKeys` returns a mapped snapshot.
+- Card Browser column types: `BrowserColumn.typeFor(mode)` maps all source
+  columns to TEXT, NUMERIC, DATE, or UNSPECIFIED; the `template` column is TEXT
+  in Cards mode and NUMERIC in Notes mode. The host supplies the current mode;
+  labels, tooltips, backend column data, and mode/config lookup remain outside.
+- Card Browser column-selection movement: usage-heading rows are not draggable;
+  other rows receive vertical movement capability. `planBrowserColumnSelectionMove`
+  rejects only target position zero and otherwise returns the source's ordered
+  adjacent swaps, including accepted same-position moves with no swaps. The host
+  applies the swaps and handles RecyclerView notifications, drag lifecycle, and
+  the column-selection dialog. The pinned tests cover drop-refresh timing, not
+  this guard or swap sequence, so these Dart assertions are source-derived.
+- `swapPositions()` in `lib/src/mutable_list.dart` applies AnkiDroid's ordered
+  adjacent swaps in place, without position validation or normalization. The
+  same file's `replaceWith()` clears the list before consuming its input and
+  leaves any successfully appended values when iteration fails. Both are
+  available as `List` extensions. The source `MutableList.kt` declares
+  `GPL-3.0-or-later` with no separate copyright line; Dart attribution and
+  source details are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+  and [NOTICE.md](NOTICE.md).
+- `List.indexOfOrNull(predicate)` in `lib/src/list_index_of_or_null.dart`
+  returns the first matching index, or null when no value matches. It visits
+  values in order, stops at the first match, and propagates predicate failures.
+  Focused source-derived tests are in
+  `test/list_index_of_or_null_test.dart`. The pinned source is
+  `GPL-3.0-or-later`; the Dart implementation and tests are Copyright © 2026
+  John Tsui under the same license. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
+  and [NOTICE.md](NOTICE.md) for source and license details.
+- Card Browser column-selection click toggle: `planBrowserColumnSelectionToggle`
+  captures the first Available-heading index, the clicked row index, and the
+  source's before-heading side test. Applying its plan removes then inserts at
+  that original index without validating; a missing heading remains `-1`, so
+  insertion can fail after removal as in the source. The host supplies row
+  kinds and owns the click listener, RecyclerView notifications, and dialog.
+  Upstream tests cover drag refresh and screenshots, not click toggling; these
+  Dart cases are source-derived.
+- Card Browser column-selection save: `planBrowserColumnSelectionSave`
+  compares the initial and current ordered column lists, emits a pre-update
+  dismiss effect only when unchanged, and always supplies the requested mode
+  and columns for the host update. Its completion projection dismisses on a
+  successful update or shows the source no-columns message and returns false
+  otherwise. The source's unchanged-selection fall-through is preserved, so an
+  unchanged list can dismiss and still reach the false-result message. The
+  pinned tests do not cover this handler; Dart cases are source-derived. The
+  host performs the update and delivers dialog/snackbar effects.
+- Card Browser column-selection Back: `planBrowserColumnSelectionBack` uses the
+  host callback's current enabled state to allow default Back handling or
+  request discard confirmation. Confirmation effects disable the discard guard
+  before redispatching Back; cancellation emits no effects. The pinned tests
+  cover layout only, so Dart assertions are source-derived. The Android
+  dispatcher, callback lifecycle, dialog UI and delivery remain host-side.
+- Card Browser selected-column replacement: `replaceBrowserSelectedColumn` copies the active columns and replaces every matching key, preserving order and unaffected entries; no match still returns a copy. It follows `CardBrowserViewModel.kt:1484–1497`, called by `ColumnSelectionDialogFragment.kt:102`. Dart cases cover ordinary replacement, repeated-key replacement, order, and no match; the pinned ViewModel tests have no direct assertion. The host calls `updateActiveColumns` and owns mode, guards, persistence, flows, and UI; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser active-column update decision: `planBrowserActiveColumnUpdate()` rejects empty requested columns first, then rejects ordered structural equality with the current active columns; a changed list is accepted for persistence and requests an active-flow update only for the current mode. The pinned tests exercise a changed-list round trip and use changed columns to build sort-column UI fixtures, but do not assert empty or equal-list rejection. Dart cases are source-derived. The host owns `BrowserColumnCollection.replace`, preference persistence, and the asynchronous active StateFlow update; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser preference refresh: `planBrowserRefreshColumnsFromPrefs()` first blocks preference loading and active-column updates until initialization completes, then compares the host-loaded mode columns with active columns using ordered structural equality. Changed columns are passed to the host update in stored order. Preference loading, logging, backend work, flows, and coroutine execution remain host-side. No pinned test directly covers `refreshColumnsFromPrefs()`; the Dart cases are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser reinitialization: `planBrowserReinit()` returns no effects until initialization completes, then orders host restoration of active backend columns before the host's asynchronous column refresh. The host retains backend, collection, language/label metadata, coroutine, and StateFlow work. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser find-and-replace: `planBrowserFindReplace` chooses the Tags or Collection host operation, maps the all-fields sentinel to a null field, and passes selected note IDs and search/replacement/regex/case arguments through unchanged; an unchecked selection passes an empty all-notes list. The host resolves IDs, runs the undoable operation, and returns its count unchanged. The pinned dialog and Card Browser integration tests exercise UI and replacement behavior, but a bounded search found no direct `CardBrowserViewModelTest` operation-mapping assertion; the Dart branch cases are source-derived. Dialog handling, collection access, matching, and result delivery remain host-side; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser selected-note deletion: `executeBrowserDeleteSelectedNotesPlan` clears a matching pane row before passing the exact host-resolved card-ID list to one undoable removal callback; after success it ends multi-select with the source `Other` cause, refreshes search, and returns the unchanged count. Empty and duplicate IDs are passed through, and a failed removal suppresses later effects. The pinned `CardBrowserViewModelTest` covers deletion/count and selection refresh but has no focused-pane-row assertion; Dart cases are source-derived. Card-ID resolution, pane-row state, collection/undo/count work, multi-select implementation, search refresh, coroutine/effect delivery, and UI remain host-side; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser card info: `browserCardInfoDestination` returns no destination for an empty selection or a null first resolved card ID, and never tries a later selected row. Otherwise it passes the first card ID unchanged with `CURRENT_CARD_BROWSE`. The pinned `CardBrowserViewModelTest` has no direct assertion for `queryCardInfoDestination`, so Dart cases are source-derived. Selection ordering, Cards/Notes conversion and lookup, destination construction, navigation, flows, UI, and lifecycle remain host-side; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser row transformation: `transformBrowserRow` ports the AnkiDroid 2.25.3 method, calling the host row lookup once before selected-row membership, passing the same opaque ID to both callbacks, and returning the exact host row with the selected Boolean. Callback failures propagate unchanged and stop subsequent work. The pinned sound-tags regression test calls this method and checks rendered row content, but does not assert its Boolean result or lookup order; the focused Dart branch/order tests are source-derived. Backend rows and selected-row membership remain host-side; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser column-selection rows: `projectBrowserColumnSelectionRows`
+  projects host-supplied column and usage-heading rows into ordered displayed,
+  available, and selected column types. It uses the first Available heading,
+  strict index comparisons, and the source's `-1` result when that heading is
+  absent. Row construction, labels/samples, RecyclerView behavior, saving, and
+  state restoration remain host-side; upstream tests cover layout and drag
+  callbacks, so Dart assertions are source-derived.
+- Card Browser row IDs: `BrowserRowId` associates an ID with Cards or Notes
+  mode; `BrowserRowCollection` retains and mutates the supplied list, maps card
+  rows to note IDs through a host callback, and expands note rows to cards in
+  source order. It snapshots note IDs before asynchronous expansion so later
+  row-list mutations do not alter a pending lookup. Per-row selection takes the
+  first card, while a note with no cards preserves the source failure. An empty
+  Notes-row collection returns an empty result without requiring the host lookup
+  callback. Collection lookups remain host-side. Only the
+  basic note-to-all-cards behavior has direct upstream integration coverage;
+  the dedicated row-collection tests are source-derived. The ViewModel's
+  `queryCardIdAtPosition` wrapper returns the first ID from the host query for
+  that exact row index and preserves failure when the result is empty.
+- Card Browser row position lookup: `browserRowPositionOfId` returns the first
+  index matching a host-supplied row ID, or `null` when it is absent. Android
+  scrolling, row notifications, and layout-offset calculation remain host-side.
+  The generic upstream list helper directly tests first/missing results, but
+  AnkiDroid has no direct `getPositionOfId` test; the Dart adapter cases are
+  source-derived.
+- Card Browser pane-row validity: `ensureBrowserPaneRowValid` clears the pane
+  row on phones or when the current row list is empty, falls back to the first
+  current row when the pane value is null or stale, and otherwise returns the
+  supplied pane value using the host row type's equality. The host invokes it
+  after search replacement and owns pane state, UI, and lifecycle. Pinned
+  ViewModel tests cover phone behavior and stale-row fallback, but not an empty
+  row list or direct retention; Dart tests are source-derived.
+- Card Browser post-search pane command: `browserPostSearchPaneCommand` maps a
+  host-resolved edit destination to `BrowserPostSearchPaneLoadInPane`, retaining
+  the exact destination object, or returns `BrowserPostSearchPaneHidePane` when
+  the host supplies null. The host supplies null for a missing pane row or an
+  empty/invalid editor destination and owns row lookup, destination resolution,
+  command flow delivery, and Android pane UI/lifecycle. Pinned
+  `CardBrowserViewModelTest.kt:1595–1625` covers tablet rows and an empty deck;
+  it does not assert destination identity. Dart outcome and identity cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser pane-row refresh positions: `browserPaneRowNotificationPositions`
+  projects the previous and new pane IDs to ordered positions, removing duplicate
+  IDs and omitting IDs absent from the current rows. Android pane state mutation
+  and adapter notifications remain host-side; related upstream tests assert pane
+  state but do not directly cover notification targets, so Dart cases are
+  source-derived.
+- Card Browser selected row ranges: `browserRowRangeBetweenIds` returns the
+  inclusive row slice between the first matches for two host-supplied IDs, in
+  row order even when endpoints are reversed. Missing IDs preserve the source
+  `indexOf`/indexing failure. `planBrowserSelectRowsBetween` merges that range
+  into the selected-ID set in insertion order and emits the source mode-change
+  and refresh effects only if rows were added. The host applies the set update
+  and async delivery. Upstream tests cover range-selection effects but not the
+  isolated range projection; Dart cases are source-derived.
+- Card Browser long-press and right-click selection: `planBrowserRowLongPress`
+  and `planBrowserRowRightClick` choose a range from the last selected ID to
+  the pressed row only when multi-select is active and that ID exists; both
+  otherwise pass the exact row selection to the toggle operation. Row mutation
+  remains host-side. Upstream tests cover long-press selection behavior but not
+  the isolated decision or right-click branch, so focused Dart cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser preview starting index: `browserPreviewStartingIndex` returns
+  zero for zero or multiple selected rows and otherwise uses the first matching
+  position of the single selected ID, retaining `-1` for stale IDs. The host
+  builds preview IDs and launches Android navigation. Upstream tests directly
+  cover no-selection and single-selection indices; multi-selection, stale IDs,
+  and duplicate browser rows are source-derived.
+- Card Browser tag-filter query: `browserFilterTagsQuery` wraps the exact
+  host-resolved `SearchRequest.toSearchString()` value in one pair of parentheses
+  so an OR tag clause keeps precedence when later combined with AND terms. It
+  preserves all existing query syntax and whitespace. `planBrowserTagFilterSearch`
+  then models the source order: emit the query, update the current request while
+  preserving its structured filters, and request a forced non-user search.
+  Request construction/serialization, collection access, flow delivery, request
+  state mutation, and search execution remain host-side. Pinned upstream tests
+  exercise the OR wrapper; ordered Dart effects and arbitrary-syntax preservation
+  are source-derived.
+- Card Browser preview payload: `browserPreviewPayload` uses host-supplied
+  selected card IDs with index zero for multiple selected rows; otherwise it
+  uses host-supplied one-card-per-row IDs and the existing starting-index
+  projection. It passes the ID lists through unchanged, including their order,
+  and preserves a stale selected row's `-1` index. Collection queries,
+  row-to-card mapping, `IdsFile`/cache creation, Android destination creation,
+  and activity launch remain host-side. Pinned
+  `CardBrowserViewModelTest.kt:990–1041` covers Notes mode, no-selection Cards,
+  and single-selected Cards positions; the payload choice and stale-index cases
+  are source-derived.
+- Card Browser saved selection payload: `browserSavedSelectionPayloadIds`
+  preserves a nonempty pending restore; otherwise it snapshots selected rows.
+  Empty input means no payload, and emitted IDs retain exact order and
+  duplicates. Pinned ViewModel tests cover empty selection and restore timing,
+  but do not assert restore precedence or the exact saved ID sequence. The host
+  retains the saved-state provider, Bundle/Parcelable, `IdsFile` construction,
+  cache-file writes, and restoration lifecycle.
+- Card Browser saved selection restore: `planBrowserSelectionRestore` filters
+  pending IDs to current rows, merges them after existing selections in source
+  order, and emits the `Other` mode cause then refresh only when a new row was
+  added. The host clears the pending restore after applying the transition.
+- Card Browser preview column order: `projectBrowserPreviewColumns` splits
+  host-supplied sample rows into displayed and available lists. Displayed rows
+  follow the first matching position in the host-supplied current columns,
+  with sample order retained for equal positions; available rows retain sample
+  order. It preserves sample identity and leaves both inputs unchanged. Sample
+  creation, labels, active-column resolution, preferences, and backend access
+  remain host-side. Pinned preview tests cover sample values and an active
+  column round trip, but not this list projection; Dart cases are source-derived.
+- Card Browser edit-row choice: `browserRowToEdit` returns `null` when there
+  are no browser rows; otherwise it chooses the first selected ID in
+  multi-select mode without validating membership, or the first browser row in
+  normal mode. The host routes the editor and shows the no-row snackbar.
+  Upstream tests cover successful editor entry, but not row-choice boundaries;
+  Dart cases are source-derived.
+- Card Browser multi-select toggles: `toggleBrowserRowSelection` projects the
+  selected-ID set in insertion order, the `RowSelected`/`DeselectRow` mode
+  causes, last-selected row, and the source refresh request. Removing a row
+  emits a mode change only when it was the last selected row; adding always
+  emits `RowSelected`, including when multi-select was active with zero rows.
+  Upstream ViewModel tests cover the add/remove outcomes, while exact value
+  projection tests are source-derived. Android flow scheduling, selection
+  widgets, destination lookup, and note-editor command delivery remain host-side.
+- Card Browser select all/none: `planBrowserSelectAll` and
+  `planBrowserSelectNone` preserve linked-set row order and the source's
+  no-op-on-no-change behavior. Select-all emits the `Other` multi-select cause
+  before row refresh; select-none snapshots then clears selected IDs and keeps
+  multi-select active. `planBrowserToggleSelectAllOrNone` follows the cached
+  toggle state supplied by the host. `projectBrowserSelectAllOrNoneState`
+  projects the source visible-selection rule and `>= rowCount` boundary, with
+  the initial `SELECT_NONE` value. Upstream ViewModel tests cover initial,
+  partial and full flow outcomes; hidden-selection and zero-count projection
+  cases, along with pure transition/effect and no-op assertions, are
+  source-derived. StateFlow scheduling, async delivery, and selection widgets
+  remain host-side.
+- Card Browser end-multiselect: `planBrowserEndMultiSelectMode` snapshots the
+  selected IDs in insertion order, returns an empty snapshot when none were
+  selected, clears the modeled selection, and preserves the exact supplied
+  single-select cause object for host publication. The host attaches the
+  snapshot to that cause and emits it; fragment scroll anchoring remains
+  Android-side. The source has no direct snapshot assertion, so these cases
+  are source-derived.
+- Card Browser selected-note count: `browserSelectedNoteCount` counts distinct
+  note IDs after the host resolves selected rows to notes, matching the source
+  `.distinct().size` calculation. No pinned test directly covers this count;
+  empty, duplicate, and unique-ID assertions are source-derived. Collection
+  lookup and the localized delete-menu plural remain host-side.
+- Card Browser selected-row state: `browserSelectedRowCount` and
+  `browserHasSelectedAnyRows` project the selected-ID Set's distinct count and
+  nonempty check. The host owns selection and uses these values for UI and
+  operation guards.
+- Card Browser selected-row refresh effects:
+  `runBrowserAppendSelectedRowsEffects` and
+  `runBrowserRemoveSelectedRowsEffects` preserve the pinned source's conditional
+  mode-reason emissions followed by unconditional refresh and logging. The host
+  supplies post-mutation selection state and retains selection mutation,
+  coroutine/flow delivery, and Timber. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md).
+- Card Browser all-decks state: `browserHasSelectedAllDecks` returns true exactly
+  when the deck-filter list is empty, independent of query text, other filters,
+  or available rows. Pinned ViewModel tests cover the initial/specific and
+  AllDecks states; the Dart check for unrelated filters is source-derived.
+  Current search flow, result-message delivery, localization, and UI remain
+  host-side.
+- Deck-picker navigation: `planDeckPickerBrowseCards` orders selecting the
+  supplied deck before browsing it; `planDeckPickerAddNote` selects only when
+  both the nullable deck ID and `setAsCurrent` permit it, then always preserves
+  the original nullable ID in navigation. `planDeckPickerOpenDeckOptions` uses
+  either explicit filtered value, including `false`, or asks the host to
+  resolve it from the collection when omitted. Collection access, concrete
+  Android destinations, and navigation flows remain host-side. These cases are
+  source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card Browser search result messages: `browserSearchResultMessage` returns no
+  message for non-user searches; otherwise it preserves the source order of
+  AllDecks, zero selected-deck rows, then a non-empty selected deck. AllDecks
+  therefore keeps CardCount with its all-decks action disabled even at zero
+  rows, preserving the pinned TODO/quirk. Pinned tests cover each branch except
+  AllDecks with zero rows; the Dart test covers that precedence gap. The host
+  supplies search values, composes/publishes completed state, and handles
+  localization, snackbar actions, UI, navigation, and row-count derivation.
+- Card Browser selected-row export data: `planBrowserSelectionExport` returns
+  no data for an empty selection; otherwise it maps Cards/Notes mode to the
+  matching export kind and copies IDs in the selected-set iteration order.
+  Direct ViewModel tests cover empty selection and one row in each mode; order
+  and list-copy cases are source-derived. The host still opens the export dialog
+  and handles cache files and actual export.
+- Card Browser marked/suspended preset searches: `planBrowserPresetSearch`
+  stops when the host reports selected rows; otherwise it orders the exact
+  `tag:marked` or `is:suspended` query emission, query-only request copy, and
+  default refresh-search request. It preserves all existing structured filters.
+  Pinned tests cover marked and suspended search results in Cards and Notes,
+  but not the selection guard or request/effect details; Dart cases are
+  source-derived. The host owns row-selection lookup, flow/request updates,
+  collection access, and search execution.
+- Card Browser duplicate-query gate: `planBrowserSetQuery` skips request
+  assignment and search only when refresh is not forced and the host reports
+  equal serialized SearchStrings. Otherwise it copies the exact input query,
+  preserves the structured filters, then requests search with the exact
+  `forceRefresh` and `fromUserSearch` values (defaulting to `true` and `false`,
+  respectively). The host supplies Anki SearchString equality and owns
+  request-flow mutation, collection access, search execution, and
+  coroutine/cancellation behavior. Pinned ViewModel tests exercise user
+  searches but do not directly assert this duplicate-query gate; the Dart cases
+  are source-derived.
+- Card Browser flag filtering: `browserSearchTermsWithFlag` preserves the
+  source's first-match `flag:.` replacement, nonempty-query prepend, and
+  incomplete-marker behavior. `planBrowserFlagFilterSearch` composes that
+  transformation over the exact host-supplied search terms, then orders filter
+  query emission, request update with structured filters preserved, and the
+  default refresh search request. The pinned RED flag test verifies the
+  resulting search end-to-end but does not assert this query or effect sequence;
+  those Dart cases are source-derived. Flag resolution, Flow/request state
+  mutation, and search execution remain host-side.
+- Card Browser row activation: `planBrowserRowActivation` returns the source-
+  ordered directives for normal phone/tablet editor routing and multi-select
+  toggles. A selected row tapped in fragmented mode requests a pane reload only
+  after the selection toggle; adding a row or deselecting on a phone has no
+  editor effect. Upstream ViewModel tests directly cover the major branches.
+  The host resolves collection-backed editor destinations, applies selection,
+  pane/mode state, and delivers activity or pane commands; Android row widgets,
+  flows, and navigation remain outside.
+- Card Browser editor card IDs: `browserEditorCardIds` returns no IDs when the
+  host cannot resolve the row, all host-resolved sibling IDs in Notes mode, the
+  exact selected-card list for Cards-mode multi-select, or the resolved row ID
+  alone otherwise. It preserves host list order and identity. Pinned tests
+  cover row-tap/editor routing and fragment editor integration, but do not
+  assert `getCardIdsForNoteEditor()` results; these branch cases are
+  source-derived. Row conversion, collection queries, editor destination
+  construction, and UI/lifecycle behavior remain host-side.
+- Card Browser note-editor destination: `browserEditNoteDestination` returns
+  no destination for an empty host-supplied card-ID list; otherwise it preserves
+  that exact list and builds the source `EditSelection` payload with the default
+  transition and `inCardBrowserActivity` copied from fragmented mode. The
+  pinned `CardBrowserViewModelTest` covers `onTap` command routing but does not
+  assert destination fields; the empty, payload, and fragmented cases are
+  source-derived. The host retains row/card-ID resolution, mode-specific
+  queries, warning/logging, pane-row updates, command/Flow delivery, and Android
+  navigation and lifecycle.
+- Card Browser bulk mark: `planBrowserBulkMarkToggle` returns no operation for
+  an empty selected-card list; otherwise it selects tag removal only when every
+  resolved note already has `marked`, and selects adding the tag for an unmarked
+  or mixed selection. It preserves Kotlin `all(empty)` behavior. The upstream
+  ViewModel test directly covers adding the tag to unmarked notes and retaining
+  row selection; other decision cases are source-derived. The host resolves
+  note/tag state, performs the undoable mutation, and publishes card-state
+  refresh only after success.
+- Card Browser bulk bury: `planBrowserBulkBuryToggle` returns no plan when no
+  rows are selected. Otherwise, it selects unbury only when every selected card
+  is manually or sibling buried; any unburied card selects bury. It preserves
+  the source action-valued `wasBuried` result, card count, and `all(empty)` case
+  for selected rows that resolve to no cards. Upstream ViewModel tests cover
+  the main single/mixed and no-selection branches; remaining projection cases
+  are source-derived. The host checks selection before resolving card IDs,
+  maps queue values, runs the undoable scheduler operation, and exposes the
+  result only after success.
+- Card Browser selected-card deck moves: `planBrowserSelectedCardsMove` emits
+  one `setDeck` operation with the exact host-resolved ordered card IDs and
+  target deck ID, then passes the operation result through unchanged. The pinned
+  Notes-mode test covers two selected note rows resolving to four cards and
+  leaves unselected rows unchanged; its Dart cases cover the mapping and empty
+  resolved IDs. The host resolves selection, runs the undoable collection
+  operation, and reports its changed count in the snackbar.
+- Card Browser selected-card flag updates: `planBrowserSelectedCardsFlagUpdate`
+  retains the supplied flag and selected-ID list, then orders the flag write
+  before card-state-changed publication and the eventual same-ID return. It
+  still plans both effects for an empty ID list. No pinned test directly covers
+  `updateSelectedCardsFlag`; these plan assertions are source-derived. The host
+  resolves IDs, performs the undoable write, emits the event only after success,
+  and returns the IDs after the source sequence completes.
+- Card Browser sort choice: `resolveBrowserSortType` reads caller-supplied
+  mode-specific config values, checks the key against host-supplied backend
+  columns, and returns the source sort type. It defaults missing or
+  wrong-typed values to `noteFld` and forward order, treats an unknown column as no ordering, and
+  creates ordered save plans without touching Android or collection storage.
+  The shared no-sorting flag retains the source's cross-mode behavior.
+- Card Browser sort-type change: `planBrowserSortTypeUpdate` orders save,
+  reverse-direction update, sort-change notification, and search launch. The
+  host completes each effect before advancing, so a save failure prevents the
+  later publications and search. The notification effect carries the selected
+  sort type; the host resolves the current localized label and column type
+  while applying it. Pinned `CardBrowserViewModelTest.kt:1908–1985` directly
+  covers search launch, integration ordering, and reverse-direction state for
+  collection ordering and no ordering; notification construction values are
+  not directly asserted.
+- Card Browser sort-change notification: `projectBrowserSortChangeNotification`
+  maps no ordering directly, or carries the collection sort's supplied label,
+  type, and reverse flag. Missing resolved labels use the raw sort key; missing
+  types use `unspecified`. Hosts resolve column metadata and deliver localized
+  snackbar text. Pinned tests do not directly assert notification values, so
+  the projection cases are source-derived.
+- Card Browser launch options: `browserLaunchOptionFromUriString` extracts the
+  raw URI `search` value, then applies the source order for deep-link search,
+  JavaScript search, card ID, or non-empty process text. Empty query values and
+  the first exact `search` key are preserved. The raw URI string is required
+  because Dart `Uri` canonicalizes escaped query keys. Malformed percent or
+  invalid UTF-8 values throw instead of being normalized; Android replaces
+  malformed input with U+FFFD, so this edge is outside the equivalence domain.
+  Android `Intent`, extras, process-text action, and browser navigation remain
+  host-side.
+- Card Browser launch initialization: `projectBrowserLaunchState` returns an
+  immutable patch with explicit assigned and unchanged fields. It preserves
+  exact search text, assigns the JavaScript `allDecks` value even when false,
+  and leaves search/deck state unchanged for card-scroll options. Hosts apply
+  the patch and retain deck resolution, SavedStateHandle, collection access,
+  and search execution. The pinned ViewModel tests directly cover default
+  search, system text, and deep-link text; the pure SearchQueryJs/all-decks
+  startup assignment and unchanged scroll/null fields are source-derived.
+- Card Browser search-box state: `setBrowserSearchQueryExpanded`,
+  `updateBrowserSearchQueryText`, and `removeBrowserUnsubmittedInput` emit
+  ordered, explicit changes for expansion and unsubmitted text. Collapsing
+  clears text before setting expanded false; expanding and text updates leave
+  unrelated state unchanged. The host applies the changes to StateFlows and
+  owns logging, Android focus, and widgets. Pinned ViewModel tests cover query
+  text used by save-search behavior, but do not assert these state transitions;
+  the transition assertions are source-derived.
+- Card Browser search availability: `browserQueryCanSearch` returns true only
+  for a non-null, nonempty query. Whitespace-only text remains searchable; the
+  predicate does not trim. The host retains the reactive flow and UI updates.
+  No pinned ViewModel test directly asserts this predicate, so the Dart cases
+  are source-derived.
+- Card Browser save-search prompt decision: `browserSaveSearchPromptQuery`
+  returns null for a null or exactly empty temporary query and otherwise
+  returns the exact query unchanged, including whitespace-only text. The host
+  emits the name-prompt flow and owns Android UI, saving/removing searches, and
+  persistence. Pinned ViewModel tests cover empty text and an unchanged `AAA`
+  prompt query, but not null or whitespace-only values; the complete Dart cases
+  are source-derived.
+- Card Browser initial selected deck: `planBrowserInitialDeck` reports when the
+  host must consume the launch-intent saved-state flag and chooses a valid
+  resolved intent deck, the all-decks sentinel, a host-validated persisted
+  deck, or the current host-selected deck in source order. Intent extraction,
+  deck lookup/name resolution, `SavedStateHandle`, collection access, and
+  `setSelectedDeck` persistence remain host-side. The pinned direct tests
+  assert intent deck ID selection/persistence, persisted-deck fallback for a
+  missing or unknown intent ID, and user selection persistence across process
+  death; they do not assert consumed-flag transition, deck names, all-decks
+  sentinel precedence, or fallback to the host-selected deck. The Dart cases
+  for those unasserted branches are source-derived.
+- Card Browser selected-deck updates: `planBrowserSelectedDeckUpdate` selects
+  the source `lastDeckId` value, prepares an empty AllDecks or singleton
+  host-resolved deck filter, copies only that filter into the current request,
+  then requests search with `forceRefresh = false`. The host persists the ID
+  before applying search effects and owns request-flow mutation, collection
+  access, and search execution. Pinned tests directly assert selected-deck
+  persistence and indirectly exercise search outcomes, but do not assert the
+  complete plan order, preserved request fields, or false refresh argument;
+  those Dart assertions are source-derived.
+- Card Browser post-search initial scroll: `planBrowserPostSearchScroll`
+  returns no effects without a pending target; otherwise it orders clearing the
+  target before lookup. After the host completes that lookup,
+  `completeBrowserPostSearchScrollPlan` adds a zero-offset request only when the
+  card exists and has been mapped to a row ID. Search synchronization,
+  collection lookup and Cards/Notes mapping, flow delivery, and RecyclerView
+  scrolling stay host-side. Pinned tests cover valid, missing, cleared, and
+  Notes-mode targets; absent-target, clear-before-missing, host-row-ID
+  passthrough, offset, and plan order cases are source-derived.
+- Card Browser recent searches: `BrowserSearchHistoryModel` keeps searches
+  newest-first, promotes structurally equal entries, skips the default blank
+  search, and trims history to the source's 30-entry cap.
+  `BrowserSearchHistoryJsonCodec` encodes the compact v1/v2 JSON fields in
+  source order, omits empty optional arrays, and returns an empty history when
+  any decoded entry is invalid. The host handles SharedPreferences. Structured
+  saved-entry request restoration uses host-supplied deck/note-type maps.
+  `buildBrowserSearchNodePlan` then models the query and ordered filter terms as
+  typed nodes, with the source's OR groups, AND root, singleton collapse, and
+  explicit flag/card-state mappings. Backend SearchNode conversion,
+  SearchString construction/conversion from queries or nodes, query
+  parsing/validation, and execution remain outside.
+  `BrowserSearchHistoryDisplayModel` starts collapsed, keeps the first five
+  entries visible until expanded, and exposes the toggle only above five items.
+  It preserves Loading entries with null search strings and Loaded entry/string
+  pairs, with source data-class equality/hash behavior; Loading captures its
+  null pairs at construction. The host supplies
+  converted strings and Android flow/widget integration remains outside.
+  `BrowserSavedSearchesModel` applies exact, case-sensitive
+  lookup and duplicate handling, Kotlin-compatible query trimming, and map/list
+  conversion over a host-supplied config map; collection config IO and the
+  saved-search UI remain outside. `browserSavedSearchUserMessageForMutation`
+  maps add/delete outcomes to the exact four source message identifiers; the
+  host owns localization and message-flow delivery.
+  `browserSearchHistoryIsAvailable` checks the supplied history's
+  `entryToSearchString` projection (including Loading pairs with null strings),
+  and `browserCanManageSavedSearches` checks whether the supplied saved-search
+  list is nonempty. The host owns StateFlow updates and availability-dependent
+  widgets.
+- Card Browser search text: `BrowserSearchTextState` keeps independent Basic and
+  Advanced buffers. Mode toggles preserve both, advanced appends follow the
+  source's Kotlin-blank and exact trailing-space checks, text edits replace LF
+  only in the selected buffer, and saved queries gain one trailing ASCII space.
+  Android SavedStateHandle, flow scheduling, text widgets, and saved-search
+  lookup remain with the host.
+- Card Browser text-edit effects: `browserOnSearchTextChangedEffects` emits a
+  shallow-copied User filter update before the LF-sanitized text for the active
+  buffer. It preserves every filter list and leaves the inactive buffer alone;
+  it does not submit a request or close the screen. Pinned tests cover text
+  changes but not this combined effect order, so the ordered-effect tests are
+  source-derived. The host applies the effects.
+- Card Browser sync/reset: `browserSyncStateEffects` emits the source System
+  filter update before submitting the exact request. Reset emits mode, both
+  exact text values, System filters, screen closure, and three SavedState key
+  removals in source order; it leaves `historyExpanded` untouched. The host
+  applies these effects to StateFlows and SavedStateHandle. The pinned source
+  marks reset `@NeedsTest("reset")`; neither method has a direct upstream test.
+- Card Browser history selection: `browserSelectSearchHistoryEntryEffects`
+  emits the source-ordered copied-current User update, LF-sanitized edit to the
+  active text buffer, restored User filters, and screen closure. It uses the
+  existing first-match deck/note-type ID restoration and falls back to empty
+  filters if either map cannot resolve an ID. The host supplies the current
+  state and maps and applies the effects; no search request is created or run.
+  No pinned test directly covers this selection sequence or host-map
+  restoration; the similarly named upstream test calls `submitSearch` instead.
+- Card Browser request submission: `browserSubmitCurrentSearchEffects` converts
+  the supplied request to a Kotlin-trimmed, ID-based history entry and applies
+  `BrowserSearchHistoryModel.addRecent`. It emits the resulting Loading history,
+  a close-view event, then the exact request in source order. A blank
+  unfiltered request still emits the unchanged history; this overload does not
+  set screen-open state. The host persists history, delivers events, and runs
+  the search. The pinned view-model tests' `submitSearch` helper calls the
+  no-argument overload instead, so these ordered-effect tests are source-derived
+  and do not claim direct upstream coverage of the request overload.
+- Card Browser saved-search submission: `browserSubmitSavedSearchEffects`
+  applies the direct source effects in order: a shallow-copied User filter
+  update, LF-sanitized text in the active Basic/Advanced buffer, then screen
+  closure. The host's closed-screen flow creates the trimmed request and causes
+  the separate history/submission effects. Pinned tests directly check saved
+  query text, eventual history, view closure, and submitted search; the Dart
+  internal effect-order assertion is source-derived. The host applies the
+  effects and owns StateFlow/coroutine scheduling.
+- Review session: a headless flow that loads the scheduler's current card, shows
+  its question or answer, forwards an Again/Hard/Good/Easy rating, then loads
+  the next queue item. It waits for the current card's state-mutation hook
+  before revealing or grading it, retains a non-null queue state returned by
+  that hook before exposing the answer, reads the queue state again after the
+  hook before grading, and pauses for a scheduler timebox event
+  before showing the queued card. The previously displayed side remains visible
+  during the timebox and while a queue read loads or retries. A failed queue
+  read can be retried without sending the completed card's rating again. Its
+  separate displayed queue-count snapshot starts at AnkiDroid's 0/0/0, NEW
+  defaults and updates only for normal queue states; it stays unchanged during
+  timebox, loading, and queue completion, as the source count flow does not emit
+  new values there. Count-retention tests are source-derived because the pinned
+  suite has no direct timebox count-retention case.
+- Timebox counter: adapter callbacks supply integer clock seconds, the configured
+  limit, and recorded-answer count. `ReviewTimeboxTracker` preserves the source's
+  zero-only disable check, strict elapsed-time comparison, configured-limit
+  payload, answer-count delta, and automatic restart. The display model rounds
+  seconds to minutes using Float32 division and Kotlin `roundToInt()` behavior;
+  localized strings, the Android dialog, and lifecycle wiring remain outside.
+- Previewer audio selection: `previewerAudioSide` selects both card sides
+  for autoplay in back-side-only mode, otherwise the currently shown question
+  or answer side. The host loads media tags and performs playback; see
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Previewer navigation: `PreviewerNavigationModel` applies the source button
+  enablement formulas, next/previous transitions, back-side-only mode, and
+  one-based slider selection. It returns a show-side or load-card intent for the
+  host to carry out; card lookup, rendering, and media playback remain outside.
+- Template Previewer tabs: `previewerToggleShowAnswerEffects` orders the
+  selected-side display before its audio load; the ordinal helpers preserve
+  cloze tab indexing and source lookup behavior while leaving card updates and
+  tab widgets to the host. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Card appearance projections: `appendCardAppearanceCss` preserves the supplied
+  CSS prefix, then appends nondefault font-scale, card-zoom, and image-zoom rules
+  in source order with source-compatible numeric formatting.
+  `composeCardAppearanceStyle` starts with the exact `ReviewerCustomFonts`
+  OpenSans CSS and then appends those rules. `fixCardAppearanceBoldStyle`
+  globally changes only the exact `font-weight:600;` substring to
+  `font-weight:700;`, matching the Android render caller's post-audio-expansion
+  step. The host supplies font scale and zoom preferences.
+  `cardAppearanceCssClasses` and `cardAppearanceClassName` project the source's
+  class suffixes from host-supplied theme predicates and centering state,
+  preserving class spacing/order and direct ordinal interpolation. Font
+  resource installation/selection, theme selection and preference IO, actual
+  theme CSS, vertical-centering styles, AndroidCardRenderContext's MathJax
+  handling, WebView textZoom, and full rendering remain outside.
+- Card template strings: `CardTemplate` caches the first style, script, class,
+  and content marker positions, then renders the five source-ordered segments
+  into a value-equal `RenderedCard`. Later delimiter copies remain literal.
+  Missing style maps to Dart `ArgumentError` (the Kotlin negative-`take`
+  failure); bad or missing later boundaries map to `StateError` with the source
+  message (the Kotlin caught substring failure). This only composes a host-
+  supplied template string; Android asset loading, card rendering, media, and
+  WebView integration remain outside.
+- Card content wrapper: `wrapCardContentInQaDiv` returns the exact source
+  `<div id="qa">` prefix, unchanged content, and `</div>` suffix. It does not
+  escape or normalize input. Android-side filtering, media-reference resolution,
+  bold rewriting, rendering, and orchestration remain with the host.
+- Resolved card media markup: `cardAudioPlayButtonMarkup` returns AnkiDroid's
+  exact SVG play-button fragment for host-resolved audio/TTS references and
+  returns an empty string when the audio-button option is off.
+  `cardVideoTagMarkup` returns the exact video element using a host-supplied
+  URI and HTML-escaped filename. The host still parses media references,
+  classifies tags, resolves paths and filenames, expands the card content, and
+  handles Android playback and WebView integration.
+- Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and
+  `PreviewerFlag.fromCode()` resolves those codes strictly; an unknown code
+  throws Dart `StateError`, corresponding to Kotlin `first` in
+  `Flag.fromCode()` at AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`. `previewerCardFlag()` calls the
+  host `userFlag` callback once and resolves its code with this lookup;
+  callback failures propagate unchanged. The upstream `Card.kt` and `Flag.kt`
+  declare `GPL-3.0-or-later` without separate copyright lines; the Dart
+  adaptation and focused tests are Copyright © 2026 John Tsui under the same
+  license. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+  [NOTICE.md](NOTICE.md) for the source mapping; root `COPYING` remains
+  byte-identical. The set/toggle projections return a one-card collection-write
+  intent followed by
+  publication of the same flag only if the host write succeeds. Current-card
+  lookup, the undoable collection operation, asynchronous failure handling and
+  StateFlow publication remain with the host. This enum is separate from the
+  Card Browser backend search flag values. `collectionSetUserFlagForCards()`
+  forwards the same card-ID iterable and flag code to the host collection
+  overload once, returning its result unchanged and propagating failures. The
+  host retains collection mutation, undo, and backend behavior.
+- Previewer mark toggle: `previewerToggleMarkEffects` orders the host-resolved
+  current-note mark toggle before a post-toggle marked-state read and publication.
+  The host stops the sequence when an operation fails; note lookup, `marked` tag
+  mutation, undoable persistence, error handling, and StateFlow delivery remain
+  host-side.
+- Reviewer mark toggle: `planReviewerMarkToggle` exposes the host-resolved note
+  toggle, a marked-state read only after toggle success, and publication only
+  after read success. The pinned Reviewer tests do not assert this effect order;
+  source-derived cases cover both failure gates. Card/note lookup, NoteService
+  calls, `marked` tag mutation, persistence, action dispatch, and StateFlow
+  delivery remain host-side.
+- Reviewer mark/flag icon presentation: `reviewerMarkIconVisibilityUpdate`
+  preserves toolbar suppression and otherwise follows the marked Boolean;
+  `reviewerFlagIconPresentation` preserves toolbar suppression, hides for NONE,
+  or passes through the selected flag with a show update. The pinned Reviewer
+  tests do not assert these icon collector decisions, so the Dart cases are
+  source-derived. Flow collection, preference reads, drawable lookup and
+  Android view updates remain host-side.
+- NoteService mark update: `planNoteServiceToggleMark` removes the literal
+  `marked` tag when the supplied state is true or adds it when false, then
+  requests undoable note update. The host reads state, mutates the note, and
+  performs persistence.
+- Type-answer modifiers: `TypeAnswerModifiers.parse` consumes repeated leading
+  `nosuggest:`, `cloze:`, and `nc:` prefixes in any order and returns the
+  unmodified field-name remainder. Field lookup, cloze-content invocation,
+  answer comparison, template rendering, and Android input behavior remain
+  outside.
+- Type-answer cloze index: `typeAnswerClozeIndexForQuestion` finds the first
+  source `[[type:...]]` marker in the host-supplied rendered question, parses
+  the modifier capture, returns null when no marker matches, zero without
+  `cloze:`, or signed-32-bit `cardOrdinal + 1` with `cloze:`. Overflow wraps;
+  ordinal -1 produces zero, matching the source's `index != 0` check. The host
+  supplies the question and ordinal; card/template access, field lookup,
+  warning/state delivery and cloze-content invocation remain host-side. The
+  result's warning choice is modeled separately when the host supplies field
+  values.
+- Template Previewer type-answer prompt: `filterTemplatePreviewerTypeAnswerQuestion`
+  replaces the first matching question marker with the exact source read-only
+  example input HTML, then replaces every later match with host-supplied warning
+  HTML. The host retains Previewer state, localization, and rendering.
+- Cloze content: `typeAnswerContentForCloze` extracts captures for a supplied
+  cloze index, cuts each hint at the first `::`, collapses repeated identical
+  captures to one value, and otherwise joins all captures in source order.
+  The host supplies the already-derived index; card/note lookup and invoking
+  this extraction remain host-side.
+- Type-answer field result: `resolveTypeAnswerFieldResult` selects the first
+  exact field-name match from host-supplied ordered metadata and note values,
+  applies the supplied cloze index, and returns the source's answer, matched
+  font/size/language metadata, and warning action. No match sets the supplied
+  unknown-field or empty-cloze warning without updating metadata; an empty
+  answer nulls the answer while preserving the previous warning; a nonempty
+  answer clears it. The host performs field/note/resource lookup, warning
+  localization, and state delivery. This projection does not parse the
+  question marker or obtain a card ordinal.
+- Type-answer update effects: `planTypeAnswerInfoUpdate` combines the rendered
+  question, card ordinal, ordered field metadata, note values and localized
+  warning strings into the source-ordered `updateInfo` assignments. It resets
+  combining/no-suggest/correct first, returns after those resets if there is no
+  marker, then applies parsed modifiers, answer/cloze selection, metadata and
+  the source's warning/empty-answer behavior. A missing selected note value is
+  reported after the preceding reset/modifier effects. The host applies the
+  plan and performs Android/collection/resource access and failure delivery.
+- Type-answer input eligibility: `typeAnswerValidForEditText` returns true
+  exactly when input-tag mode is disabled and the correct answer is non-null;
+  an empty string still counts as non-null. `typeAnswerAutoFocusEditText` adds
+  the source `autoFocus` condition. The host supplies these values and owns
+  Android field visibility, focus, and input lifecycle.
+- Type-answer tags: `removeTypeAnswerTags` removes every nonempty, single-line
+  `[[type:...]]` match through its first `]]`, preserving other text. This is
+  the question-side cleanup model; field lookup, cloze-index invocation,
+  answer comparison, rendering, and Android integration remain with the host.
+- Type-answer question prompt: `filterTypeAnswerQuestion` applies the exact
+  span/input prompt or first warning replacement using host-supplied state.
+  Card/note lookup, Android input events and JavaScript integration, and card
+  rendering remain host-side.
+- Type-answer answer placeholder: `filterTypeAnswerAnswer` replaces every
+  matching answer-side placeholder with comparison HTML supplied by the host.
+  It preserves the source's case-sensitive, nonempty, lazy single-line match
+  and inserts comparison text literally. The Rust answer comparator, answer
+  lookup, and Android rendering/input pipeline remain host-side.
+- Reviewer presentation: a study-count model that renders the three scheduler
+  counts as decimal strings and retains which queue is active, plus an answer
+  next-time model that displays the backend's four strings in Again/Hard/Good/
+  Easy order without deriving intervals in Dart.
+- Answer timer: the hidden/running/paused/stopped model, including card
+  configuration, elapsed-time clamping, stop/hide, and lifecycle pause/resume
+  transitions. Its state stream replays the current state and conflates rapid
+  pending updates like `MutableStateFlow`.
+  The host supplies a monotonic millisecond clock corresponding to Android
+  `SystemClock.elapsedRealtime()` and calls pause/resume; this model does not
+  drive periodic UI ticks or register lifecycle observers.
+- Auto Advance: deck-provided question/answer durations and typed actions,
+  enable/disable and card-change cancellation, and the `waitForAudio` value
+  supplied by an adapter. An injectable delay scheduler supports deterministic
+  timing. Same-side visibility events overwrite the tracked job without
+  cancelling its earlier timer, matching the pinned source behavior.
+- Reviewer stop-auto-advance request: `reviewerStopAutoAdvanceDirective`
+  returns a payload-free request for the host to cancel its existing question
+  and answer jobs. Logging, lifecycle callers, cancellation, and timer behavior
+  remain host-side. The pinned source has no direct Reviewer test for this
+  request; see the source mapping in `ANKIDROID_UPSTREAM.md`.
+- Reviewer Auto Advance toggle: `planReviewerAutoAdvanceToggle` orders the
+  enabled-state update, state publication, localized feedback, and shown-side
+  scheduling request. It skips scheduling only when the host reports both
+  wait-for-audio and active playback; otherwise it retains the source request
+  even when disabled. Settings, localization, media state, timer operations,
+  and StateFlow delivery remain host-side.
+- Reviewer leech feedback: `reviewerLeechFeedbackMessage` returns the base
+  localized string unchanged unless the host reports suspension. For suspended
+  cards, it appends one literal ASCII space and the supplied suspended message
+  without normalization. Detection, card reload, queue lookup, localization,
+  logging, and feedback delivery remain host-side.
+- Reviewer delete-note effects: `executeReviewerDeleteNotePlan` sends the
+  host-resolved current card ID as a singleton list to the undoable removal
+  callback, passes its returned count into host localization, delivers that
+  message, then requests a current-card reload. A failed removal stops before
+  localization, feedback, and reload. Current-card lookup, collection access
+  and deletion, result extraction, resource localization, feedback Flow, and
+  reload remain host-side. The pinned Reviewer tests have no direct delete-note
+  order assertion; source-derived cases are in
+  `test/reviewer_delete_note_plan_test.dart`. Card Browser bulk deletion is a
+  separate operation.
+- Reviewer flag toggle effects: `planReviewerToggleFlag` composes the existing
+  flag target decision with the Reviewer singleton write and publish-on-success
+  plan. A matching requested/current flag selects NONE; a different request is
+  preserved. The pinned Reviewer tests do not directly cover this action, so
+  source-derived cases cover target selection, exact card targeting, success
+  ordering, and write-failure suppression. Dispatch, flag-state reads, card
+  lookup, undoable collection mutation, exceptions, StateFlow delivery, and
+  lifecycle remain host-side; see `ANKIDROID_UPSTREAM.md`.
+- Reviewer flag command mapping: `reviewerFlagCommandOperation` maps each
+  existing `ViewerCommand.TOGGLE_FLAG_*` to a typed Toggle operation carrying
+  its corresponding source `Flag`, and `UNSET_FLAG` to a typed Set operation
+  carrying `Flag.NONE`. The pinned `ReviewerViewModelTest.kt` has no direct
+  assertion for this command-to-outcome mapping, so focused cases are
+  source-derived. The host retains action dispatch, flag-flow reads,
+  current-card lookup, undoable collection writes, and publication; menu-only
+  `FLAG_*` actions are outside `ViewerCommand`. See `ANKIDROID_UPSTREAM.md`.
+- Reviewer undo/redo feedback: `reviewerUndoRedoFeedbackMessage` selects the
+  host-localized no-operation string for an empty operation, or invokes the
+  matching undo/redo message callback with a nonempty operation unchanged.
+  Undo availability and execution, protobuf extraction, localization,
+  Reviewer action dispatch, and feedback Flow delivery remain host-side.
+- Reviewer operation-executed effects: `planReviewerOpExecutedEffects` always
+  requests undo/redo labels first, returns after that request when the host's
+  source `handler == this` comparison is true, then selects study-queue,
+  note-text, or card effects in source precedence. Note-text requests reload
+  the card, load AV tags, update the mark
+  icon, and render the host-selected side; card requests reload before updating
+  the flag icon. The host owns change/handler reads and executes callbacks in
+  order, stopping naturally on failure; see `ANKIDROID_UPSTREAM.md`.
+- Reviewer show-answer effects: `planReviewerShowAnswerEffects` preserves the
+  mutation wait, typed-answer result publication/default and 1,000 ms result
+  timeout, next-time update, answer display, answer-side media, audio-gated
+  Auto Advance callback, and timer hidden-state read in source order. Hidden
+  timers skip current-deck/config reads; visible timers request them before the
+  host applies `stopTimerOnAnswer`. Deferred/coroutine execution, mutable
+  Reviewer state, scheduler/deck/media/timer access, Flow/lifecycle, and UI
+  remain host-side; see `ANKIDROID_UPSTREAM.md`.
+- Reviewer state-mutation hook: `reviewerStateMutationHookDecision()` requests
+  completion only for empty JavaScript with an incomplete host signal; an already
+  completed signal produces no action. Nonempty JavaScript returns the exact
+  raw triple-quoted source template, including its leading newline, indentation,
+  and trailing newline/spaces, with raw state-key/JavaScript interpolation; it
+  leaves signal completion to the later host callback. The pinned source test
+  context at `ReviewerViewModelTest.kt:81–112` covers restored custom-scheduler
+  waiting and retained-ViewModel non-rerun behavior; it does not directly assert
+  the empty-JavaScript branch or exact script formatting, which are covered by
+  source-derived cases in `test/reviewer_state_mutation_hook_test.dart`. Awaiting
+  the JavaScript, SharedFlow emission/delivery, callback failure propagation,
+  mutation-signal completion, scheduler execution, WebView and lifecycle remain
+  host-side. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Reviewer question display: `planReviewerShowQuestionEffects()` requests a new
+  mutation signal only when the current one is complete, then preserves the
+  source order for showing the question, running the state-mutation hook,
+  updating mark and flag icons, and conditionally notifying Auto Advance.
+  Waiting for audio omits that notification so the host's existing media-group
+  completion callback remains responsible. The host retains signal lifecycle,
+  rendering, hook execution, collection reads and Flow publication, coroutine
+  and error boundaries, media callbacks, and UI; see `ANKIDROID_UPSTREAM.md`.
+- Reviewer media replay side: `reviewerReplayMediaSide` maps the host-supplied
+  `showingAnswer` value to `back` when true and `front` when false, matching the
+  pinned `replayMedia()` side choice. The pinned Reviewer tests have no direct
+  PLAY_MEDIA action assertion, so both cases are source-derived in
+  `test/reviewer_replay_media_side_test.dart`. State access, action dispatch,
+  `cardMediaPlayer.replayAll`, media playback, and lifecycle remain host-side.
+- Reviewer current-card info: `reviewerCurrentCardInfoDestination` pairs the
+  host-resolved current card ID unchanged with the source
+  `EntryPoint.CURRENT_CARD_STUDY`. The pinned Reviewer tests have no direct
+  assertion for this action, so the ID pass-through and entry-point cases are
+  source-derived in `test/reviewer_current_card_info_destination_test.dart`.
+  Current-card lookup, navigation Flow, and Android/lifecycle handling remain
+  host-side.
+- Card Info destination: `CardInfoDestination.toIntent()` preserves the source
+  entry point and card ID, resolves its backend title and sentence-case
+  resource through host callbacks, strips Unicode isolation markers only for
+  the comparison, and retains the original marked title when sentence casing
+  returns the simplified title unchanged. It writes `title` then `cardId` to
+  one host Bundle before delegating Intent creation. Translations, Android
+  Context, Bundle, fragment, Intent, and lifecycle behavior remain host-side;
+  source-derived cases are in
+  `test/card_info_destination_to_intent_test.dart`. See
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Reviewer edit-note destination: `reviewerEditNoteFromPreviewerDirective`
+  carries the host-resolved current card ID unchanged in a typed directive
+  corresponding to `NoteEditorDestination.EditNoteFromPreviewer(cardId)`.
+  The pinned Reviewer tests have no direct EDIT destination assertion, so
+  pass-through cases are source-derived in
+  `test/reviewer_edit_note_destination_test.dart`. Current-card lookup, logging,
+  concrete Android destination construction, navigation Flow, and lifecycle
+  handling remain host-side.
+- Reviewer add-note destination: `reviewerAddNoteFromReviewerDirective()`
+  returns a payload-free typed directive corresponding to
+  `NoteEditorDestination.AddNoteFromReviewer()`. The pinned Reviewer tests have
+  no direct ADD_NOTE destination assertion, so the no-payload mapping is
+  source-derived in `test/reviewer_add_note_destination_test.dart`. Logging,
+  concrete Android destination construction, navigation Flow, and lifecycle
+  handling remain host-side.
+- Reviewer reset progress: `reviewerResetProgressDirective()` returns a
+  payload-free typed directive for one `resetProgressFlow` emission. The pinned
+  Reviewer tests have no direct RESET_PROGRESS assertion, so this mapping is
+  source-derived in `test/reviewer_reset_progress_directive_test.dart`.
+  Confirmation UI, SharedFlow delivery, reset implementation, and lifecycle
+  handling remain host-side.
+- Reviewer edit-tags request: `reviewerEditTagsDirective()` carries the host-resolved
+  note ID unchanged and exposes it as the singleton `noteIds` list passed to the
+  tag-dialog factory. The pinned flow is `NoteId` at
+  `ReviewerViewModel.kt:102`; `editNoteTags()` awaits the current card and emits
+  its note ID at `:660–663`, and `ViewerAction.TAG` dispatches it at `:722`.
+  `ReviewerFragment.kt:626–628` passes `listOf(noteId)` to the dialog factory.
+  No direct pinned `ReviewerViewModelTest` assertion covers this flow payload;
+  the Dart pass-through and singleton cases are source-derived. Current-card and
+  collection reads, action dispatch, SharedFlow delivery, Android dialog
+  creation, and lifecycle remain host-side. This opening request is separate
+  from the F131 `reviewerEditedTagsDirective()` result decision below.
+- Reviewer edited tags: `reviewerEditedTagsDirective()` returns no request for
+  structurally equal ordered tag lists; otherwise it carries the selected tags
+  joined with one literal ASCII space, preserving order, duplicates, empty
+  elements, and whitespace. The pinned `onEditedTags` implementation is at
+  `ReviewerViewModel.kt:665–679`, called from `ReviewerFragment.kt:670`; no
+  direct pinned `ReviewerViewModelTest` assertion was found, so focused Dart
+  cases are source-derived. Current-card/note/collection lookup,
+  `note.setTagsFromStr`, undoable `updateNote`, logging, and coroutine delivery
+  remain host-side. Card Browser and Previewer mark-tag paths are separate.
+- Reviewer answer-button next-time publication:
+  `projectReviewerAnswerButtonsNextTimeUpdate()` returns no update when the
+  host-resolved setting hides times or the host has no computed value; when
+  visible, it carries the existing `AnswerButtonsNextTime` unchanged. The
+  source gate is `ReviewerViewModel.kt:651–658`, with a nullable flow at `:138`
+  and callers at `:148–149` and `:224`. No direct pinned
+  `ReviewerViewModelTest` assertion covers the gate/publication decision;
+  `ReviewerTest.kt:383–390` checks a button-label update end to end, so these
+  Dart cases are source-derived. Settings and queue reads, scheduler
+  calculation, coroutine and StateFlow delivery, and answer-button sizing
+  remain host-side.
+- Reviewer previous-card info: `reviewerPreviousCardInfoDirective` selects
+  host-localized no-card feedback for a null saved previous-card ID and carries
+  every non-null ID unchanged into a navigation directive. SavedStateHandle,
+  current/saved state access, `CardInfoDestination` construction, navigation
+  Flow, localization, and feedback Flow delivery remain host-side. The pinned
+  Reviewer tests have no direct assertion for this action; null/non-null cases,
+  including zero pass-through, are source-derived in
+  `test/reviewer_previous_card_info_directive_test.dart`.
+- Reviewer browse destination: `reviewerBrowseToCardDirective` carries the
+  host-resolved deck and card IDs unchanged into a browse-to-card directive,
+  corresponding to `BrowserDestination.ScrollToCard`. The pinned Reviewer
+  tests have no direct BROWSE assertion, so exact-ID cases are source-derived
+  in `test/reviewer_browse_destination_test.dart`. Collection/current-card
+  reads, Android destination construction, navigation Flow, and lifecycle
+  remain host-side.
+- Reviewer statistics destination: `reviewerStatisticsDestination()` selects
+  the payload-free statistics destination for `ViewerAction.STATISTICS`. The
+  pinned Reviewer tests have no direct assertion for this branch; the mapping
+  case is source-derived. Flow delivery, Android intent/activity navigation,
+  and statistics UI/collection access remain host-side. `STATISTICS` is not a
+  `ViewerCommand` and adds no binding. See `ANKIDROID_UPSTREAM.md`.
+- Reviewer whiteboard toggle: `planReviewerWhiteboardToggle` inverts the
+  host-supplied state, publishes the new value, then requests assigning that
+  same value to the repository preference. StateFlow mutation, repository
+  access/write, action dispatch, and UI remain host-side.
+- Reviewer record-voice toggle: `planReviewerRecordVoiceToggle` inverts the
+  host-supplied state, publishes the new value, then requests assigning that
+  same value to the repository preference. StateFlow mutation, repository
+  access/write, action dispatch, recorder lifecycle, and UI remain host-side.
+- Reviewer gestures: decoded gesture inputs map to two-, three-, and
+  four-finger taps, four- or nine-point taps, and directional swipes. The model
+  preserves viewport scale and scroll adjustment, strict swipe thresholds,
+  scrollable-content suppression, malformed-input callback behavior, and the
+  source's asynchronous single/double-tap timing and same-side timer overwrite.
+  It retains the zero-valued last-tap sentinel behavior for early event times
+  and signed 64-bit timestamp subtraction.
+- Gesture command routing: host-supplied gesture bindings resolve to the
+  source reviewer command identifiers and declaration order. Later commands
+  overwrite duplicate bindings; the four corner taps and center tap depend on
+  explicit corner-touch configuration; multi-finger taps remain unmapped. The
+  enabled flag affects `isBound` only, and an optional callback receives the
+  selected command and gesture. `ReviewerBindingCodec` decodes source-formatted
+  serialized strings, and `GestureCommandRouter.fromPreferenceValues` filters
+  them to gestures. The host supplies the preference strings; this layer does
+  not read Android `SharedPreferences`, receive touch input, or execute reviewer
+  actions.
+- Reviewer binding preferences: the headless codec preserves `1/` framing,
+  `|` list separators, reviewer prefix, gesture enum identifiers, side suffixes,
+  permissive reviewer-prefix removal, and the source's unknown-side fallback.
+  It represents key-code and Unicode bindings as typed values with source
+  modifier parsing and serialization, Kotlin Int32 bounds, UTF-16 code-unit
+  selection, and the distinction between deserialization and the guarded
+  Unicode factory. `isKey`/validity and reviewer-side serialization are modeled;
+  BOTH remains an equality wildcard, and the source's modifier/hash quirks are
+  retained. It also validates axis IDs and Java float syntax. Axis values are
+  rounded and written using the source's `Float.toString` style, and extra axis
+  tokens are ignored like the source parser. Android key events and MotionEvent
+  handling are unported.
+- Reviewer binding map: `ReviewerBindingMap` consumes explicit typed bindings
+  by command; it does not load preferences or implicitly add defaults. It
+  keeps every key and gesture registration in action order and per-command
+  list order, ignores side when matching while retaining the original side in
+  each result, skips unknown bindings, and lists axis registrations
+  separately. This differs from `GestureCommandRouter`, whose source-mapped
+  behavior lets the later command overwrite a duplicate gesture.
+  `ReviewerBindingMap` only returns registrations; Android preferences and
+  event decoding remain with the host.
+- Reviewer command defaults: `ReviewerDefaultBindings` records each
+  `ViewerCommand.defaultValue` list, including empty entries, order, card side,
+  and modifiers. Android `KeyEvent.KEYCODE_*` names stay symbolic until the
+  host supplies a name-to-integer map to `resolve`. Missing names throw rather
+  than dropping a binding. `ReviewerBindingPreferenceResolver` selects these
+  defaults only for a null preference. Any present string replaces defaults
+  and uses the existing codec, so empty, unsupported-version, and malformed
+  values do not fall back. Configured values do not require key-name mappings;
+  the host still reads preferences and supplies mappings for default resolution.
+- Reviewer answer mappings: `AnswerButtons` maps Again, Hard, Good, and Easy to
+  their corresponding `ViewerCommand`. `AutomaticAnswerAction` preserves config
+  values 0–4 and the source unknown-value fallback to Bury Card; its reminder
+  action has no command. Deck-config access, command execution, logging, and
+  localized reminder UI remain with the host.
+- Reviewer keyboard dispatch: `dispatchReviewerKeyEvent` consumes a host-
+  supplied key event projection and `ReviewerBindingMap`. It ignores repeat
+  events, tries a nonzero key code before the precomputed Unicode result,
+  constructs candidates with the event's Shift/Ctrl/Alt states, applies
+  Kotlin's low-16-bit `Int.toChar` behavior, omits the `|` separator
+  candidate, and calls registrations in source order until one returns true.
+  Binding lookup keeps source equality behavior, including shift-tolerant
+  app-defined Unicode bindings. The adapter computes
+  `getUnicodeChar(metaState & (META_SHIFT_ON | META_NUM_LOCK_ON))`; Android
+  `KeyEvent` access and keyboard-layout lookup remain outside.
+- Reviewer axis-button dispatch: `ReviewerAxisButtonDispatcher` snapshots the
+  map's axis registrations and keeps an independent debounce flag for each.
+  Positive and negative thresholds compare inclusively; positive and negative
+  zero thresholds do not fire. A registration emits once until a nonqualifying
+  Float32 sample rearms it. Every registration is evaluated in source order
+  even when a processor returns false; the result reports whether any
+  registration fired. The host supplies axis values, while Android
+  `MotionEvent` extraction and device handling remain outside.
+
+The implementation lives in `lib/` as a Dart library. The review flow requires
+a `ReviewScheduler` adapter that supplies queue items, backend counts and active
+queue, timebox events, and rating application. Auto Advance requires an
+`AutoAdvanceSettingsAdapter` that loads all five settings for the current card's
+deck; the model does not read collection storage or supply deck-config defaults.
+Its action listener receives a cancellation signal and should observe it while
+awaiting work that can be cancelled, matching the source coroutine's cooperative
+cancellation.
+`PreviewerNavigationModel` consumes the selected-card count and current index
+and side flags, then returns an intent for the host to load a card or show a
+side. It does not access card IDs, collection storage, or the WebView.
+`BrowserColumnCollection` consumes a serialized preference and default keys
+from its caller; the host resolves Cards/Notes mode and persists its returned
+value. `BrowserColumn.typeFor(mode)` maps the type of every recognized column,
+including the source's mode-dependent `template` type and `cardDue`'s
+`unspecified` type. The adapter also supplies the mode defaults, so the port
+does not copy `BrowserConfig.kt`'s AGPL-incorporated constant definitions.
+`resolveBrowserSortType` and `buildBrowserSortSavePlan` consume the shared
+no-sorting flag and the active mode's config keys/values from the host. They
+also consume the backend's available column keys. The save plan writes the
+mode-specific column and reverse keys in source order before clearing the
+global no-sorting flag; actual preference/config writes and backend sorting
+remain host responsibilities. This keeps `BrowserConfig.kt` key lookup and
+its AGPL-incorporated constants outside the Dart port.
+`BrowserSearchHistoryModel` consumes and returns the in-memory history list;
+`BrowserSearchHistoryJsonCodec` converts that list to and from AnkiDroid's
+compact JSON format. `BrowserSearchRequest` restores a structured request using
+deck and note-type ID/name mappings supplied by the host and converts requests
+back to ID-based history entries. It keeps the stored query unchanged during
+restoration and applies Kotlin `String.trim()` when saving a request to history.
+Request/filter values preserve source structural equality; note-type map
+entries retain identity equality like the upstream regular class. The public
+`BrowserNoteTypeNameId` constructor is intentionally non-const because Dart
+const canonicalization would merge same-field instances that AnkiDroid keeps
+distinct; callers should construct ordinary mapping instances.
+The host loads and persists history and resolves current collection objects;
+`buildBrowserSearchNodePlan` returns the source-equivalent typed tree before
+backend conversion. The `SearchString` value wrapper is modeled separately;
+backend SearchNode conversion and SearchString construction from queries or
+nodes, query parsing/validation, query execution, and search UI stay outside the
+model. Search text and filters may contain user-provided data, so storage and
+privacy handling remain the host's duty.
+`BrowserFilterUpdate` models user-versus-system filter origins and the source's
+initial empty System state. For one supplied snapshot, its request projection
+returns nothing while the screen is open or for a System update; a closed-screen
+User update carries the exact filters and Kotlin-trimmed text into a request.
+The pure `browserSetDecksFilter`, `browserSetTagsFilter`,
+`browserSetCardStateFilter`, and `browserSetFlagsFilter` projections match the
+source copy behavior: each returns a User update even for equal values, keeps
+the incoming category list, and reuses the other field lists. The host supplies
+the snapshot and owns StateFlow/coroutine timing, collection access, and search
+execution. The pinned `SearchFiltersTest.kt` covers active-filter presence but
+does not directly test these ViewModel setters; their Dart cases are
+source-derived.
+`BrowserSearchTextState` separately models the Basic/Advanced text buffers:
+mode toggles retain both values, Advanced appending uses the source's spacing
+rules, text edits replace LF without normalizing CR, and saved-query application
+adds one space before taking the same edit path. The host owns
+SavedStateHandle persistence, StateFlow scheduling, text widgets, and saved
+search lookup.
+`browserSyncStateEffects` and `browserResetSearchStateEffects` return typed
+ordered effects for synchronization and reset. Reset preserves the submitted
+query verbatim, removes only `advancedSearch`, `basicSearchText`, then
+`advancedSearchText`, and does not remove `historyExpanded`. The host performs
+the flow and SavedStateHandle operations; the pinned source marks reset
+`@NeedsTest("reset")` but has no direct reset or sync test.
+`BrowserSearchHistoryDisplayModel` separately projects the supplied Loading or
+Loaded history into a five-entry collapsed or full expanded list. The host owns
+backend conversion from query/node inputs to `SearchString` (the value wrapper
+is modeled), SavedStateHandle/StateFlow lifecycle, and rendering the list and
+expansion toggle.
+`BrowserSavedSearchesModel` operates on a host-supplied saved-search config map.
+It returns case-sensitive name-sorted values, applies the source duplicate and
+query-normalization rules, and exposes map conversion. The saved-search message
+projection maps the mutation result's success flag to the source message kind;
+the host owns collection config loading/persistence, localized UI message
+delivery, and query parsing/execution.
+`browserSaveSearchPromptQuery` returns no prompt query only for null or exactly
+empty temporary input; every other string is passed through unchanged, including
+whitespace-only text. The host emits the prompt and owns Android UI, saved-search
+mutation, and persistence.
+`ReviewNextStateDescriber`
+forwards the opaque scheduling state to the pinned backend's
+`describeNextStates()` API. The session exposes the timebox's elapsed-time limit
+and answer count, and can reload the queue when the caller continues. The
+AnkiDroid 2.25.3 source pins
+`io.github.david-allison:anki-android-backend` version `0.1.68-anki26.05`; the
+Rust backend, collection storage, and scheduling algorithm remain external.
+`ReviewTimeboxTracker` consumes clock, configured-limit, and answer-count
+callbacks; it does not load settings or collection state. This is not yet a
+complete AnkiDroid replacement: Android screens and platform lifecycle integration,
+Card Browser Intent/Uri parsing and navigation for mapped launch options,
+SharedPreferences and mode lookup, saved-search config IO, localized
+outcome-message delivery and UI,
+collection-backed deck/note-type lookup, backend SearchString construction and
+conversion from query or SearchNode inputs, query parsing/validation, and search
+execution (the SearchString value wrapper is modeled),
+Android execution of Card Browser
+text-edit/request-submission/sync/reset/history-selection effects and
+close-view/submitted-search event delivery,
+SavedStateHandle/StateFlow
+integration for mode, text buffers, and history/saved-search availability,
+Basic/Advanced text widgets, history-list
+and toggle widgets,
+Card Browser row-selection widgets, StateFlow scheduling/async refresh delivery,
+applying row-activation directives,
+collection-backed editor destination lookup, and note-editor/pane command delivery,
+persistent Cards/Notes mode lookup and AGPL-incorporated column defaults,
+collection-backed Card↔Note ID lookups, backend column registry and rows,
+the column-selection dialog and RecyclerView click/drag lifecycle/notifications,
+and active backend column updates (movement capability, adjacent-swap planning,
+and click-toggle planning are modeled); Card Browser sort UI, Android
+preference/synced-config IO, and actual backend row sorting,
+Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
+WebView rendering and media, CardAppearance font resource installation and
+font-selection preferences, theme selection and actual theme CSS,
+vertical-centering preference IO/styles,
+MathJax render context, WebView textZoom/lifecycle, previewer
+collection flag mutation and StateFlow
+publication (flag codes and ordered write/publish intent are modeled), Card
+Browser selected-card lookup, collection flag writes and card-state-changed
+event execution (the ordered plan is modeled), mark-state lookup, bulk tag and
+suspend writes/undo (bulk-mark and bulk-suspend target decisions are modeled),
+and note editing, Android card-template asset loading,
+card template rendering and media-reference resolution/playback (resolved
+audio-button and video-tag markup fragments are modeled), card/note-dependent
+TypeAnswer field and note-value lookup
+(the field/result projection over supplied values is modeled), rendered-question/
+Card.ord extraction and cloze-content invocation (pure cloze-index derivation
+and cloze-content extraction are modeled), answer comparison
+(placeholder substitution is modeled when comparison HTML is supplied), Android
+TypeAnswer input events and JavaScript bridge,
+answer-timer widget/tick rendering,
+Auto Advance settings
+controls and Android preference lookup, `KeyEvent` extraction and hardware/layout
+`getUnicodeChar()` calculation, binding display strings, Android
+`MotionEvent` extraction and device handling (host-projected axis-button
+debounce and dispatch are modeled), host `KEYCODE_*` resolution and preference-
+backed value lookup (symbolic defaults and null-versus-configured selection
+are modeled), Android
+`BindingProcessor` wiring, command execution, touch input and reviewer command handlers,
+study-count and answer-button widgets/layout, next-time visibility preference
+wiring, template rendering and media, localized timebox messages, dialog and
+lifecycle presentation, leech handling, undo/redo availability and execution, JavaScript custom-
+state and gesture bridges, WebView state collection, Android timeout lookup,
+sync, actual import/export, and other app features remain to be ported. The
+selected-row export-data projection is modeled, but its dialog, file handling,
+and export implementation remain host-side. The portable Export Ready ViewModel
+slice models the initially empty request, unchanged immutable parameters, and
+clearing to null. It preserves the exact export path and `asText` default;
+SavedStateHandle/StateFlow/Parcelable, Android lifecycle and logging,
+dialog/navigation, file access, and export execution remain host-side.
+The portable Multimedia ViewModel state slice preserves nullable opaque URI and
+path values, the saved values used by restore, and signed media lengths.
+SharedFlow action emission/coroutines, String-to-File conversion, Android
+media/file/URI operations, lifecycle, and UI remain host-side.
+The source project has thousands of files, so this repository does not claim
+full feature parity.
+
+The port preserves the source behavior for the covered slices, including search
+and collapse quirks, recent-search ordering and blank-search suppression,
+canonical history JSON field order, omitted defaults and whole-list decode
+fallback, the collapsed five-entry history display and untruncated toggle
+threshold, saved-search case-sensitive lookup/order, duplicate handling,
+Kotlin-compatible query trimming and map conversion, Basic/Advanced buffer
+independence, source append spacing, LF-only text replacement, saved-query
+trailing spaces, exact ordered sync/reset effects with the intentional
+historyExpanded omission, and history-selection effect order including
+unresolved-ID fallback, Card Browser bulk suspend's all-selected suspended-queue
+decision and empty-ID `all()` behavior,
+ordered Card Browser columns and load-time de-duplication,
+  sort config defaults (including wrong-typed values), per-mode column values,
+  and the global no-sorting quirk,
+reviewer action ordering, question/answer transitions, the scheduler timebox
+gate, active-count selection, and direct display of backend answer labels. The
+answer timer also keeps the source's upper-only elapsed-time
+clamp, exact limit comparison, negative elapsed values, and nonpositive-limit
+behavior. Scheduling rules remain with the backend. The timebox tracker
+consumes adapter-provided values and preserves the source's boundary conditions.
+This port does not intentionally correct upstream bugs. See the tests and
+upstream mapping for the specific behaviors and source files. Auto Advance
+preserves the integer action codes and invalid-code fallbacks, delays and
+cancellation boundaries, and the same-side job-overwrite quirk.
+An in-flight action listener also receives a cancellation signal when its tracked
+job is cancelled; asynchronous adapters must observe it to stop their pending
+work, while already-performed synchronous effects remain.
+The gesture model also keeps strict grid and diagonal boundaries, Float
+threshold and coordinate behavior, and the stale same-side tap job when a
+double tap cancels only the latest scheduled job. A canceled delay also
+suppresses its pending single-tap callback. The caller supplies tap mode,
+swipe sensitivity, and the platform double-tap timeout; the model does not read
+Android preferences or WebView properties.
+
+Card Browser appearance state transfer uses `saveBrowserAppearanceInstanceState` to read and write question format before answer format, then call superclass saving. `initializeBrowserAppearanceUiFromBundle` restores question then answer values, calls `hasChanges` once, publishes the discard-enabled state, enables the toolbar, then sets the localized title. Nullable saved values pass through unchanged, and callback failures stop later work. The host owns Bundle and EditText access, localization, toolbar and Activity lifecycle, and superclass invocation. Change detection and menu routing preserve their source callback order; only Home calls `hasChanges`, and unknown menu actions return the superclass result unchanged. The discard dialog finishes only after confirmation, and the restore-default dialog restores and closes only after confirmation; cancellation or dismissal performs no callback. Dialog construction and user-choice delivery remain host-side. It assumes changes on `Exception` while allowing Dart `Error` to propagate. Focused cases are source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+The Card Template Editor collection-loaded callback is also mapped: it keeps
+the source order for temporary notetype initialization, pager and tab setup,
+optional ActionBar updates, exact logs, starting-tab selection, and the final
+discard-change callback. Its tab configuration remains deferred and reads the
+current temporary notetype when invoked. Collection/model operations and
+Android UI remain host-side. The focused Dart tests are source-derived; the
+upstream `@NeedsTest` note remains unresolved because no direct pinned test for
+this method was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Use and verify
+
+This package currently contains library code, not a runnable app. It supports
+Dart `>=3.11.0 <4.0.0`:
+
+```sh
+dart pub get
+dart test
+```
+
+The Card Browser reposition plan projects source-ordered eligible and skipped
+card IDs from host-resolved card type and queue states. Collection access,
+queue-position calculation, and scheduler operations remain host-side.
+The selected-rows scheduler request carries the host-resolved card IDs in order
+and the exact position, step, shuffle, and shift arguments to `sched.sortCards`;
+the host scheduler result count passes through unchanged. Selection resolution,
+undo, coroutine, scheduler execution, and UI remain host-side.
+Its presentation projection maps host-supplied result values to dialog or
+snackbar directives; resource lookup and Android UI construction/delivery stay
+host-side.
+The queue-bounds projection orders two host-supplied values and preserves the
+source behavior that either missing value clears both bounds.
+The due-extrema projection preserves the source lower-only zero clamp and passes
+max due unchanged before bound ordering; database reads remain host-side.
+The summary projection joins host-localized queue lines with one newline and
+returns null when either queue bound is absent; localization remains host-side.
+The Card Browser note-type response plan checks selected IDs against a
+host-resolved membership set and preserves first-occurrence order for the
+change result. Type lookup, flows, UI, and note mutation remain host-side.
+The response presentation plan maps mixed-note-type results to a host-resolved
+snackbar resource and compatible results to a dialog carrying the same IDs;
+logging and UI delivery remain host-side.
+The ChangeNoteType conversion-direction projection maps the host's regular and
+cloze status flags across all four source combinations; note-type lookup,
+templates, conversion and sync remain host-side.
+The default field-map projection uses host-resolved ordered names and ordinals,
+preserving the source's exact-name first match, duplicate-key and fallback
+behavior. Collection access, state flow, user mapping changes, UI, note
+conversion, template mapping and persistence remain host-side.
+The discarded-fields projection consumes the host's current field map and
+ordered input names, preserving source-index filtering, duplicate names, null
+and out-of-range values. StateFlow, field lookup, localization and dialog UI
+remain host-side.
+The default template map rebuild maps matching ordinals and returns null for
+extra outputs; an empty output count produces an empty map. Template lookup,
+StateFlow, UI, persistence and conversion remain host-side.
+The template-mapping update projection consumes the host's enabled state,
+current map, output ordinal and nullable selected ordinal; it preserves the
+source collision-clearing and missing-key behavior. Flow delivery, type lookup,
+spinner/UI, persistence and note conversion remain host-side.
+The field-mapping update projection copies the host's current map and assigns
+the supplied nullable input ordinal at the output key, preserving duplicate
+and unvalidated ordinals. StateFlow, spinner/UI, logging and note conversion
+remain host-side.
+The ChangeNoteType has-changes projection compares host-supplied type IDs and
+default/current maps. It uses structural, order-independent map equality and
+distinguishes absent keys from null-valued keys. Flow composition and Save-button
+state delivery remain host-side.
+The discarded-template projection filters host-supplied ordered names by their
+source list indices. It preserves duplicate names and order; null and
+out-of-range mapping values do not remove entries. Flow and warning UI delivery
+remain host-side.
+Template changes are eligible only for the host-resolved regular-to-regular
+conversion. The settled Boolean is projected separately from the host-managed
+flow initial value and delivery.
+The ChangeNoteType tab-position projection maps 0 to Fields and 1 to Templates;
+unknown positions throw. ViewPager input and tab-state delivery remain host-side.
+The `SelectedIndex` model preserves the singleton Nothing choice and value-equal
+index choices, converting them to nullable ordinals without range checks.
+Spinner selection, map updates, StateFlow and UI lifecycle remain host-side.
+
+## License and attribution
+
+The adapted AnkiDroid code is derived from AnkiDroid and is distributed under
+**GNU GPL version 3 or, at your option, any later version** (`GPL-3.0-or-later`).
+The source repository's root `COPYING` is the GNU GPL version 3 text; the
+matching SPDX license text is included at
+[`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt). Copyright and
+SPDX notices remain in each adapted Dart source file. See [NOTICE.md](NOTICE.md)
+for source-file attribution.
+
+The locale-casing property ranges, lowercase mappings, and BMP decimal-digit
+block starts in `lib/src/unicode_15_case_data.dart`, along with simple BMP case
+mappings in `lib/src/unicode_15_simple_case_mappings.dart`, are derived from
+Unicode 15.0.0 UCD data (`UnicodeData.txt`, `PropList.txt`,
+`DerivedCoreProperties.txt`, and `SpecialCasing.txt`), Copyright © 2022 Unicode,
+Inc., and are distributed
+under Unicode License V3 (`LicenseRef-Unicode-License-V3`). Its notice is retained
+separately in
+[`LICENSES/Unicode-License-V3.txt`](LICENSES/Unicode-License-V3.txt); the
+AnkiDroid code license does not replace this data notice.
+
+`normalizeForSearch()` uses `unorm_dart` 0.3.3, which provides Unicode 18.0.0
+normalization data. The pinned JVM implementation delegates NFD to the Unicode
+data available in its runtime, so JVM results can vary by platform release. The
+Dart port's normalization data is fixed at Unicode 18.0.0. The helper then
+removes only U+0300..U+036F; marks in other blocks remain. The package's MIT
+license notice is retained in
+[`LICENSES/unorm_dart-MIT.txt`](LICENSES/unorm_dart-MIT.txt), and its Unicode data is covered by the Unicode License V3 notice above.
+
+AnkiDroid's repository also identifies separately licensed components,
+including the AnkiDroid API under LGPL-3.0 and parts of the Anki backend under
+AGPL-3.0. Those components are not included in the current Dart port. If they
+are ported later, their original file or component license and notices must be
+retained; this repository does not relicense them under `GPL-3.0-or-later`.
+
+This is an independent project and is not endorsed by or affiliated with the
+AnkiDroid or Anki projects. The names are used only to identify the source and
+compatibility target.
+
+## Card Template Editor dynamic note type predicate
+
+`cardTemplateEditorNoteTypeCreatesDynamicNumberOfNotes()` in
+`lib/src/card_template_editor_dynamic_note_type.dart` follows
+`noteTypeCreatesDynamicNumberOfNotes()` at `CardTemplateEditor.kt:1003–1006` in
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes
+lazy `isCloze` then `isImageOcclusion` callbacks with source `||` short-circuit
+behavior, so a true cloze result skips the image-occlusion read. Callback
+failures propagate unchanged. The host keeps `tempNoteType`, its generated
+notetype model, and closures over that same source note type; Dart only sequences
+the boolean reads. Focused tests in
+`test/card_template_editor_dynamic_note_type_test.dart` are source-derived; the
+pinned method is marked `@NeedsTest`. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Note-type cloze text fields
+
+`getAllClozeTextFields()` in `lib/src/notetype_cloze_text_fields.dart` ports
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/NoteType.kt` at AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`; its direct example is
+`NoteTypeTest.kt:testGetAllClozeTexts`. It preserves the non-cloze guard,
+exactly-one `qfmt` access, and ordered regex capture behavior, including JVM
+line-terminator handling and the source's optional-prefix quirks. Rust
+`NotetypeJson`, JSON parsing, persistence, and backend access remain host-side.
+The non-cloze `IllegalStateException` maps to Dart `StateError`; invalid
+`Iterable.single` cardinality also throws `StateError` for both empty and
+multiple formats, while Kotlin distinguishes those cases. The Kotlin source is
+`GPL-3.0-or-later` with no separate copyright line; its test is Copyright ©
+2024 Ashish Yadav. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for full source and attribution details.
+
+## Card Template Fragment delete card template
+
+`cardTemplateFragmentDeleteCardTemplate()` in
+`lib/src/card_template_fragment_delete_card_template.dart` follows
+`CardTemplateFragment.deleteCardTemplate()` at `CardTemplateEditor.kt:1026–1048`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the temporary model,
+ordinal, and template in source order. The single-template and orphan guards
+show their host dialogs and return before count confirmation. Pending-add
+ordinals confirm with zero; ordinary ordinals log, query the exact host
+template-use count, and confirm with the captured template and model notetype.
+The host retains lifecycle launch, resources, model/notetype access, collection
+callbacks, Timber, dialogs, and confirmation UI. Focused Dart cases in
+`test/card_template_fragment_delete_card_template_test.dart` cover the guards,
+pending-add and ordinary-count paths, callback order, and failure stopping.
+Pinned `CardTemplateEditorTest` cases cover the single-template guard,
+orphan prevention, and deletion confirmation. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment orphan note dialog
+
+`cardTemplateFragmentShowOrphanNoteDialog()` in
+`lib/src/card_template_fragment_show_orphan_note_dialog.dart` follows
+`CardTemplateFragment.showOrphanNoteDialog()` at `CardTemplateEditor.kt:1057–1066`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It obtains the required host
+context, creates a builder, applies the orphan title and message resources, sets
+the Android OK resource with a null listener, then shows that same builder. The
+host retains Context, AlertDialog.Builder, resource constants and Android UI;
+Dart sequences opaque handles and returns no dialog value. Callback failures
+propagate unchanged and stop later effects. Focused source-derived cases in
+`test/card_template_fragment_show_orphan_note_dialog_test.dart` cover callback
+order, identity, resources, null listener, Unit return and failure stopping.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment text-selection action mode callback
+
+`cardTemplateFragmentActionModeOnCreate()`,
+`cardTemplateFragmentActionModeOnPrepare()`,
+`cardTemplateFragmentActionModeOnActionItemClicked()`, and
+`cardTemplateFragmentActionModeOnDestroy()` in
+`lib/src/card_template_fragment_action_mode_callback.dart` follow
+`CardTemplateFragment.ActionModeCallback` at `CardTemplateEditor.kt:831–869`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The projection preserves the
+existing-item early return, menu-size reads, styling-editor exclusion,
+localized item insertion, single item-ID read, dialog-before-finish order, and
+exception propagation. Android `ActionMode`, `Menu`, `MenuItem`, resources, and
+the dialog remain host-side. Focused source-derived tests are in
+`test/card_template_fragment_action_mode_callback_test.dart`; pinned tests
+exercise the dialog integration but do not directly test this callback. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment insert-field dialog
+
+`cardTemplateFragmentShowInsertFieldDialog()` in
+`lib/src/card_template_fragment_show_insert_field_dialog.dart` follows
+`CardTemplateFragment.showInsertFieldDialog()` at `CardTemplateEditor.kt:875–916`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the launch callback,
+null-field early return, edit-tab to side mapping, positive note-ID rule,
+delete-sensitive selected-template ordinal read, metadata query, dialog
+construction, and final show callback in source order. The host launch callback
+receives an asynchronous task, and the metadata query is awaited before dialog
+construction. Callback failures stop later callbacks and propagate to the host
+launch boundary. Coroutine scheduling,
+template/model access and deletion scan, metadata/backend query, Android dialog,
+and UI remain host-side. Focused source-derived cases in
+`test/card_template_fragment_show_insert_field_dialog_test.dart` cover null
+fields, mapping and note-ID boundaries, ordinal laziness, exact dialog inputs,
+callback order, asynchronous query waiting/failure, and failure stopping. The
+pinned `CardTemplateEditorTest.testInsertFieldInCorrectFragmentAfterNavigation`
+directly covers successful insertion into the intended fragment after pager
+navigation, but does not isolate these callback decisions; their Dart tests are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment rename dialog
+
+`cardTemplateFragmentShowRenameDialog()` in
+`lib/src/card_template_fragment_show_rename_dialog.dart` follows
+`CardTemplateFragment.showRenameDialog()` at `CardTemplateEditor.kt:922–953` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reuses the mapped dynamic-note
+predicate and preserves its warning/early return, ordinal and temporary-model
+reads, ordered eager existing-name conversion, and separate selected-template
+name reads for prefill and current-name conversion. Dialog confirmation remains
+deferred; it assigns the name, updates discard state, logs, notifies the pager
+adapter, then reloads the previewer in source order. Focused source-derived
+cases in
+`test/card_template_fragment_show_rename_dialog_test.dart` cover early return,
+read order and repeated names, name-list ordering, deferred effects, and
+failure stopping. The source marks this method `@NeedsTest`; no direct pinned
+rename-dialog test was found. The `CardTypeName` trim/equality/hash/`toString()`
+contract is adapted in `lib/src/card_type_name.dart`; the CardTemplate editor
+still obtains names. The host retains model/template access, Android
+Context/dialog and UI, Timber/logging, adapter/pager/previewer behavior, and
+Activity/lifecycle. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment reposition dialog
+
+`cardTemplateFragmentShowRepositionDialog()` in
+`lib/src/card_template_fragment_show_reposition_dialog.dart` follows
+`CardTemplateFragment.showRepositionDialog()` at `CardTemplateEditor.kt:955–965`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It requires Context, resolves and
+asserts the pager adapter, reads its item count, then registers the host dialog
+with that Context and count. Confirmation remains deferred; it reads the current
+ordinal once, emits `moving card template %d to %d` with ordinal then requested
+position, and throws `UnimplementedError` with the source TODO message
+`CardTemplateNotetype is a complex class and requires significant testing`.
+The TODO is preserved as current source behavior; no repositioning is performed.
+The method returns Unit and callback failures propagate in order. Android
+Context, dialog, adapter, lifecycle, and Timber remain host-side. Focused cases
+in `test/card_template_fragment_show_reposition_dialog_test.dart` cover setup
+order/opaque handles, deferred confirmation, warning arguments, exact TODO
+failure, and failure stopping. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment delete template
+
+`cardTemplateFragmentDeleteTemplate()` in
+`lib/src/card_template_fragment_delete_template.dart` follows
+`CardTemplateFragment.deleteTemplate()` at `CardTemplateEditor.kt:1550–1574`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the original template
+collection once and appends unmatched template objects unchanged. Each match is
+logged and removed through the temporary note type in source order, then the new
+collection is assigned and ordinals are updated. Pager-adapter resolution,
+ordinal shift, notification, pager lookup, current index, and animation lookup
+retain their source order. The host keeps `NotetypeJson`, `CardTemplates` and
+JSONArray, null assertions, Timber, ordinal updates, adapters, pager, animation,
+and UI; Dart sequences opaque values and propagates callback failures. Focused
+source-derived cases in
+`test/card_template_fragment_delete_template_test.dart` cover ordering,
+identity, duplicate and missing matches, the empty-list index, and failure
+stopping. Pinned `CardTemplateEditorTest.testDeleteTemplate` and
+`testDeleteTemplateWithSelectivelyGeneratedCards` cover integration behavior.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment delete confirmation
+
+`cardTemplateFragmentConfirmDeleteCards()` in
+`lib/src/card_template_fragment_confirm_delete_cards.dart` follows
+`CardTemplateFragment.confirmDeleteCards()` at `CardTemplateEditor.kt:1453–1480`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates the host dialog, resolves
+the quantity string with the unchanged affected-card count, formats it with
+that count and the host-projected template name, then resolves title and
+positive-button text before setting dialog arguments. It registers a lazy
+confirmation that passes the host delete action through its sync check, then
+shows the same dialog. Android `ConfirmationDialog`, resources and localization,
+generated template JSON, sync/schema behavior, deletion, lifecycle, and UI remain
+host-side. Focused source-derived cases in
+`test/card_template_fragment_confirm_delete_cards_test.dart` cover argument
+values, callback order, lazy confirmation, and failure stopping. The pinned
+`CardTemplateEditorTest.kt:213–220` checks the rendered message and continuation.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment add confirmation
+
+`cardTemplateFragmentConfirmAddCards()` in
+`lib/src/card_template_fragment_confirm_add_cards.dart` follows
+`CardTemplateFragment.confirmAddCards()` at `CardTemplateEditor.kt:1485–1508`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates the host dialog,
+resolves the quantity string with the unchanged affected-card count and formats
+it with that count, then resolves title and positive-button text before setting
+dialog arguments. It registers a lazy confirmation that passes the host add
+action through its sync check, then shows the same dialog. No template is added
+before confirmation. Android `ConfirmationDialog`, resources/localization,
+quantity formatting, note-type/models, sync and actual add behavior, lifecycle,
+and UI remain host-side. Focused source-derived cases in
+`test/card_template_fragment_confirm_add_cards_test.dart` cover argument values,
+callback order, lazy add, and failure stopping. The pinned
+`CardTemplateEditorTest.testTemplateAdd` covers the integrated add flow. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment execute with sync check
+
+`cardTemplateFragmentExecuteWithSyncCheck()` in
+`lib/src/card_template_fragment_execute_with_sync_check.dart` follows
+`CardTemplateFragment.executeWithSyncCheck()` at `CardTemplateEditor.kt:1522–1543`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the checked schema
+change, action, discard-state update, and fragmented-only preview reload inside
+one catch boundary. Only Exceptions classified by the host as
+`ConfirmModSchemaException` open the localized full-sync dialog; Dart `Error`
+values propagate. Confirm repeats the schema change unchecked,
+runs the same action, updates discard state, and dismisses dialogs; cancel only
+dismisses. Collection/schema access, exception classification and logging,
+Android dialog/resources, lifecycle, previewer, and UI stay host-side. This
+source is Copyright © 2014 Timothy Rae and © 2018 Mike Hardy under
+`GPL-3.0-or-later`; see [NOTICE.md](NOTICE.md) for credit and
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) for the source mapping. Focused
+cases in `test/card_template_fragment_execute_with_sync_check_test.dart` cover
+the branch order, lazy callbacks, and error boundaries. Pinned
+`CardTemplateEditorTest.testDeleteTemplate` and `testTemplateAdd` exercise full
+sync confirmation integration.
+
+## Card Template Fragment add card template
+
+`cardTemplateFragmentAddCardTemplate()` in
+`lib/src/card_template_fragment_add_card_template.dart` follows
+`CardTemplateFragment.addCardTemplate()` at `CardTemplateEditor.kt:1074–1089`
+in AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+Cloze note types emit the exact source warning and return before further reads.
+Other note types preserve the repeated lazy temporary-model and ordinal reads;
+pending-add ordinals confirm with zero affected cards and skip the collection
+query, while ordinary ordinals forward the exact host template-use count. The
+host retains models, `!!` assertions, Timber, collection access, the pending-add
+predicate, count query, and confirmation UI; Dart only sequences callbacks and
+propagates failures. Focused cases in
+`test/card_template_fragment_add_card_template_test.dart` cover the callback
+branches, order, identities, and failure stopping. Pinned
+`CardTemplateEditorTest.testTemplateAdd` covers the resulting template count and
+preview, while its helper asserts the confirmation quantity. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment save note type
+
+`cardTemplateFragmentSaveNoteType()` in
+`lib/src/card_template_fragment_save_note_type.dart` follows
+`CardTemplateFragment.saveNoteType()` at `CardTemplateEditor.kt:1091–1119`
+in AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+Unchanged note types log and finish immediately. Changed note types preserve
+the confirm-button guard and disable-before-task order, then validate the
+Activity, resolve progress text, save the non-null temporary model, and call
+the success callback. The task catches only `Exception`, logs the same object,
+posts re-enabling the same button when present, and rethrows it. Android views,
+resources, lifecycle, task/progress UI, model/database, logging, and host effects
+remain host-side. Focused tests cover unchanged/disabled branches, success
+ordering, caught exception identity and re-enable, null-button behavior, and
+`Error` propagation. The host performs the temporary-model `!!` read and
+database save through callbacks. The pinned `CardTemplateEditorTest` covers
+successful confirm/save flows in context; these additional branch/error cases
+are source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment model saved callback
+
+`cardTemplateFragmentOnModelSaved()` in
+`lib/src/card_template_fragment_on_model_saved.dart` follows
+`CardTemplateFragment.onModelSaved()` at `CardTemplateEditor.kt:1305–1314`
+in AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It logs
+first, resolves the host confirm button and enables that same button only when
+present, then clears the temporary note type and finishes the Activity. Callback
+failures propagate immediately and prevent later effects. Android view lookup and
+IDs, Timber, temporary-model mutation, and Activity lifecycle remain host-side.
+Focused cases in `test/card_template_fragment_on_model_saved_test.dart` cover
+source order, the null-button branch, and failure stopping. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor current template name
+
+`cardTemplateEditorCurrentTemplateName()` in
+`lib/src/card_template_editor_current_template_name.dart` follows
+`CardTemplateEditor.kt:1354–1361` at AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The helper passes the source
+ordinal to a host name-read callback and returns its exact result. It catches
+only `Exception` from either the lazy current-ordinal callback or the host
+name-read callback, passes that same exception once to the host warning
+callback, and then returns an empty string; `Error`s and warning callback
+failures propagate. The host callback resolves the pager ordinal and accesses
+`CardTemplateNotetype` and backend models; the host warning callback performs
+`Timber.w` logging. Focused tests in
+`test/card_template_editor_current_template_name_test.dart` are
+source-derived; no direct pinned test was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor deck-override dialog
+
+`cardTemplateFragmentDisplayDeckOverrideDialog()` in
+`lib/src/card_template_fragment_display_deck_override_dialog.dart` follows
+`CardTemplateFragment.displayDeckOverrideDialog()` at
+`CardTemplateEditor.kt:1339–1353` from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It validates the host Activity
+before reading the supplied model. Cloze models show the localized multimedia
+error in a short Snackbar and return without reading template name or dialog
+text. Other models resolve the current name once through the existing
+`cardTemplateEditorCurrentTemplateName()` helper, then resolve the localized
+title and formatted explanation in order before opening the host deck-selection
+dialog with `allowAll` and `allowFiltered` false. The pinned
+`CardTemplateEditorTest.testDeckOverride` covers valid selection and null deck
+mutation after selection, not this dialog method; focused callback-order, cloze,
+flag, and failure tests are source-derived. Activity, model access, tasks,
+localization, Snackbar, and Android dialog UI remain host-side. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor current template read
+
+`cardTemplateEditorCurrentTemplate()` follows `getCurrentTemplate()` in
+`CardTemplateEditor.kt:1370–1379` at AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the current index before
+the guarded read; the host callback performs the temporary-model null
+assertion and indexed template access. Only the host-classified
+source-equivalent `JSONException` is sent unchanged to the warning callback
+with the source message format and index, after which the helper returns null.
+Index-read failures, unrelated exceptions, errors, and warning callback
+failures propagate; a null host value is returned unchanged. Android
+arguments, generated models and list access, JSON exception classification,
+and Timber logging remain host-side. Focused tests in
+`test/card_template_editor_current_template_test.dart` are source-derived; no
+direct pinned test was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment browser appearance opener
+
+`openCardTemplateBrowserAppearance()` in
+`lib/src/card_template_fragment_open_browser_appearance.dart` follows
+`CardTemplateFragment.openBrowserAppearance()` and
+`launchCardBrowserAppearance(currentTemplate)` at `CardTemplateEditor.kt:1068–1072, 1363–1367`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the current template once;
+a null result skips context, Intent construction, and result launch, while a
+present template passes the exact host context and template through Intent
+construction and ActivityResult launch in source order. Successful paths return
+true, and callback failures propagate. Current-template lookup and its source
+exception boundary, Android models and Intent, context access, and ActivityResult
+launcher remain host-side. Focused tests in
+`test/card_template_fragment_open_browser_appearance_test.dart` are
+source-derived. The pinned `CardTemplateEditorTest` covers the successful
+browser-appearance result followed by the discard dialog, but does not directly
+test the opener's null-template path or all host callback boundaries. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor add template
+
+`cardTemplateFragmentAddNewTemplate()` in
+`lib/src/card_template_fragment_add_new_template.dart` follows
+`CardTemplateFragment.addNewTemplate()` at `CardTemplateEditor.kt:1580–1604`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the selected-template
+lookup, passes the same templates collection to the existing `newCardName()`
+projection, copies question then answer, flips only when the collection has one
+entry, and then assigns the wrapped signed-32-bit next ordinal, appends the same
+template to the collection and temporary note type, and updates the pager in
+source order. Callback failures propagate and stop later effects. Template and
+note-type models, JSON, localization, logging, adapter, pager, Android, and UI
+remain host-side. Focused cases in
+`test/card_template_fragment_add_new_template_test.dart` are source-derived;
+the pinned `CardTemplateEditorTest.testTemplateAdd` covers the integrated add
+flow. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor new names
+
+`newCardName()` in `lib/src/card_template_editor_new_card_name.dart` follows
+`CardTemplateEditor.kt:1629–1641` at AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It starts at the host-supplied
+template count plus one, localizes each candidate once, and returns the first
+name absent from the ordered existing names using exact, case-sensitive
+equality. It preserves Kotlin signed 32-bit overflow and stops scanning at the
+first match; callback and iteration failures propagate in source order. The host
+retains `CardTemplates`, its length and names, and localization. Focused tests in
+`test/card_template_editor_new_card_name_test.dart` are source-derived; no
+direct pinned test for `newCardName` was found.
+
+## Card Template Editor Intent construction
+
+`createCardTemplateEditorIntent()` in
+`lib/src/card_template_editor_intent_callbacks.dart` follows
+`CardTemplateEditor.getIntent()` at `CardTemplateEditor.kt:1709–1726` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It constructs the host Intent,
+adds the note-type ID, then the optional note ID and ordinal when present,
+logs those exact values, and returns the same Intent. Each callback failure
+propagates immediately and prevents later writes or logging. The host owns
+`Context`, the Activity target, Android `Intent`, generated ID types and values,
+extra keys, typed writes, and Timber logging; Dart only sequences the callbacks.
+Focused tests in `test/card_template_editor_intent_callbacks_test.dart` are
+source-derived; no direct pinned test for `getIntent()` was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment arguments
+
+`createCardTemplateFragment()` in
+`lib/src/card_template_fragment_arguments.dart` follows the nested
+`CardTemplateFragment.newInstance()` at `CardTemplateEditor.kt:1664–1675` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates the fragment before the
+Bundle, writes `CARD_INDEX` as an integer, `EDITOR_NOTE_ID` as a long, and
+`EDITOR_VIEW_ID_KEY` as an integer in source order, assigns that Bundle to the
+same fragment, then returns it. Callback failures propagate and stop later
+steps. The host constructs Android fragments and Bundles, supplies the key
+constants and IDs, and performs the typed Bundle writes and argument assignment.
+Focused tests in `test/card_template_fragment_arguments_test.dart` are
+source-derived; no direct pinned test for this factory was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment note lookup
+
+`cardTemplateFragmentGetNote()` in
+`lib/src/card_template_fragment_get_note.dart` follows the nested
+`CardTemplateFragment.getNote(col)` at `CardTemplateEditor.kt:1315–1319` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the host-provided
+`EDITOR_NOTE_ID` once before collection access. The exact `-1L` sentinel returns
+null without lookup; every other ID is passed unchanged to the host collection
+lookup once, and its nullable result is returned unchanged. Argument reading,
+Android argument keys, Collection and Note types, and lookup remain host-side;
+callback failures propagate immediately. Focused tests in
+`test/card_template_fragment_get_note_test.dart` are source-derived; no direct
+pinned test for this method was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment fragmented previewer reload
+
+`cardTemplateFragmentLoadPreviewerIfFragmented()` in
+`lib/src/card_template_fragment_load_previewer_if_fragmented.dart` follows
+`CardTemplateEditor.loadTemplatePreviewerFragmentIfFragmented()` at
+`CardTemplateEditor.kt:294–333` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves Kotlin default
+ordinal evaluation before the fragmented guard, then schedules the task only
+for fragmented mode. Inside the task it creates the notetype file, then awaits
+the host collection Future. Current-fragment lookup and null-only note fallback
+stay inside the synchronous collection block. After that Future resolves, the
+projection reads note properties, builds preview arguments in source order,
+creates the fragment, and commits synchronously. It then reads the fragment
+view and posts layout work only for a non-null view. The posted callback updates
+the Show Answer height to host-converted 80dp, requests layout, then reads and
+casts the web container's margin params before applying the reviewer side
+margin and assigning the same params back. Callback and runtime cast failures
+stop later effects and propagate through the host boundaries. Android,
+collection, models, fragment manager, resources, layout params, coroutine
+scheduling, and task/error handling remain host-side. Focused source-derived
+cases are in
+`test/card_template_fragment_load_previewer_if_fragmented_test.dart`; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment preview orchestration
+
+`cardTemplateFragmentPerformPreview()` in
+`lib/src/card_template_fragment_perform_preview.dart` follows
+`CardTemplateFragment.performPreview()` at `CardTemplateEditor.kt:1320–1337`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the source callback
+order from `launchCatchingTask` through note-type file creation, collection
+lookup, preview argument creation, Intent construction, and Activity start. A
+fallback note is created only when `getNote(col)` returns null; preview
+arguments receive the original note ID, current ordinal, fields, and tags, with
+`fillEmpty` set to true. Callback failures propagate immediately and stop later
+effects. Android context, `NotetypeFile`, note type/note/collection access,
+`TemplatePreviewerArguments`, Intent, Activity, and task/error handling remain
+host-side. The helper represents these as opaque callback values and does not
+provide an Android Activity implementation. Focused Dart tests are
+source-derived; pinned `CardTemplateEditorTest.kt:160–170, 251–289` covers
+preview launch and `:1118–1126` covers current-tab ordinal selection. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment field insertion
+
+`cardTemplateFragmentInsertField()` in
+`lib/src/card_template_fragment_insert_field.dart` follows the nested
+`CardTemplateFragment.insertField(fieldToInsert)` at
+`CardTemplateEditor.kt:967–971` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads selection start, then end,
+floors each to zero, normalizes the bounds, and calls the host replacement once
+with the original field and its full UTF-16 range. Android `EditText`/`Editable`,
+text access and mutation remain host-side; callback failures propagate unchanged.
+Focused Dart cases in `test/card_template_fragment_insert_field_test.dart` are
+source-derived. The pinned `CardTemplateEditorTest.testInsertFieldInCorrectFragmentAfterNavigation`
+covers successful insertion into the intended fragment. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment initial selected editor tab
+
+`cardTemplateFragmentInitialSelectedTab()` in
+`lib/src/card_template_fragment_initial_selected_tab.dart` follows the initial
+selected-item expression in `CardTemplateFragment.onViewCreated()` at
+`CardTemplateEditor.kt:733–735` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads `cardIndex` once, looks
+up that index in the host tab map, and reads required arguments plus the editor
+view ID only when the mapping is null. It assigns the exact resolved ID to the
+host bottom navigation once; any listener effects remain host-side. Android
+Bundle, generated key, tab map and UI remain host-side. Focused Dart tests in
+`test/card_template_fragment_initial_selected_tab_test.dart` are source-derived.
+The pinned `CardTemplateEditorTest.kt` has no direct test for this initial
+selection expression. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment window-insets callback
+
+`cardTemplateFragmentCreateWindowInsetsHandler()` in
+`lib/src/card_template_fragment_apply_window_insets.dart` follows the
+`CardTemplateFragment.onViewCreated()` `doOnApplyWindowInsets` callback at
+`CardTemplateEditor.kt:787–806` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The returned handler keeps all reads
+deferred, ignores the initial flag, compares IME bottom strictly with the live
+bottom-navigation minimum height, then sets navigation visibility and conditional
+bottom padding from the combined inset sample. It checks current-page status
+before updating discard handling, then checks fragmentation and reads bars and
+cutout padding only for non-fragmented mode. Android inset masks and samples,
+bindings, views and mutations remain host-side; failures propagate and stop
+later work. Focused tests in
+`test/card_template_fragment_apply_window_insets_test.dart` are source-derived.
+The pinned `CardTemplateEditorTest.kt` covers inset-driven keyboard/back paths
+but has no direct assertion for this callback's padding or navigation behavior.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment request-insets-on-attach callback
+
+`cardTemplateFragmentRequestInsetsOnAttach()` in
+`lib/src/card_template_fragment_request_insets_on_attach.dart` follows
+`binding.root.doOnAttach { ViewCompat.requestApplyInsets(it) }` at
+`CardTemplateEditor.kt:803–804` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves the host root once as
+the registration receiver and passes the inset-request callback to the host's
+attach adapter; the host controls when attach is reported, including
+already-attached behavior. The exact attached view is forwarded once, and
+callback failures propagate unchanged. Android views, attach registration,
+lifecycle, and `ViewCompat` remain host-side. Focused tests in
+`test/card_template_fragment_request_insets_on_attach_test.dart` are
+source-derived. The pinned `CardTemplateEditorTest.kt` exercises
+inset-driven keyboard/back behavior but does not directly assert this attach
+callback. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment bottom-navigation selection
+
+`cardTemplateFragmentBottomNavigationSelection()` in
+`lib/src/card_template_fragment_bottom_navigation_selection.dart` follows the
+bottom-navigation item-selection callback at `CardTemplateEditor.kt:708–732` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the item ID once, writes
+the current card index's tab mapping before reading/logging the item title, then
+branches on that captured ID. Styling uses the fragment-held `tempModel.css`;
+Back and other IDs use the current template's `afmt` and `qfmt` respectively,
+with a fresh card-index read in each branch. It invalidates the host options menu
+once after the selected-view call and returns true. Callback failures propagate
+and stop later work. Android `MenuItem` and title, resource IDs, tab map,
+fragment/model/template mutation, view state, and menu invalidation remain
+host-side. Focused Dart cases are source-derived. The pinned
+`CardTemplateEditorTest.testContentPreservedAfterChangingEditorView` and
+`testBottomNavigationViewLayoutTransition` call `setCurrentEditorView()`
+directly; neither exercises this listener callback. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment editor view
+
+`cardTemplateFragmentSetCurrentEditorView()` in
+`lib/src/card_template_fragment_set_current_editor_view.dart` follows
+`CardTemplateFragment.setCurrentEditorView(viewId, cardId, editorContent)` at
+`CardTemplateEditor.kt:974–998` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It saves the previous view's
+selection only when the first cursor map exists, updates the current view ID,
+sets the exact content, requests focus only for the current page, then performs
+a fresh cursor-map lookup and restores its offset or zero. The host retains
+Android `EditText`, view IDs, cursor-map storage and access, current-page
+lookup, focus, text, and selection; Dart sequences opaque host callbacks.
+Callback failures propagate immediately. Focused tests in
+`test/card_template_fragment_set_current_editor_view_test.dart` cover callback
+order, both nullable-map paths, focus gating, exact content, unchanged cursor
+offset, and failure propagation. The pinned
+`CardTemplateEditorTest.testContentPreservedAfterChangingEditorView` covers the
+Styling-to-Front content transition; the cursor save/restore cases are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment current template
+
+`cardTemplateFragmentCurrentTemplate()` in
+`lib/src/card_template_fragment_current_template.dart` follows the nested
+`CardTemplateFragment.currentTemplate` getter at `CardTemplateEditor.kt:1276–1290`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Its single host callback keeps the
+source sequence together: read and assert `tempNoteType`, resolve the current
+ordinal, fetch the template, read `qfmt`, `afmt`, then `css`, and construct the
+host-projected CardTemplate with front, back, and style in that order. Any
+`Exception` from those operations is passed unchanged to the host warning
+callback once with the source warning message, then null is returned. `Error`s
+and warning callback failures propagate. Android ordinal access, backend model
+access, `BackendCardTemplate`, CardTemplate construction, and Timber remain
+host-side; Dart does not normalize the field values. Focused tests in
+`test/card_template_fragment_current_template_test.dart` are source-derived; no
+direct pinned test for this getter was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment current card-template index
+
+`cardTemplateFragmentGetCurrentCardTemplateIndex()` in
+`lib/src/card_template_fragment_get_current_card_template_index.dart` follows
+`CardTemplateFragment.getCurrentCardTemplateIndex()` at
+`CardTemplateEditor.kt:1383–1386` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host
+`requireArguments()` callback once, passes the exact returned Bundle to the
+host `getInt(CARD_INDEX)` callback once, and returns the exact integer. Android
+Fragment/Bundle and the key constant remain host-side. Callback failures
+propagate unchanged. Focused tests in
+`test/card_template_fragment_get_current_card_template_index_test.dart` are
+source-derived; no direct pinned test for this helper was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment browser appearance result
+
+`applyBrowserAppearanceResult()` in
+`lib/src/card_template_browser_appearance_result_application.dart` follows
+`CardTemplateFragment.onCardBrowserAppearanceResult(data)` at
+`CardTemplateEditor.kt:1430–1441` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host parser once;
+when parsing returns null, it emits the outer warning and returns. For a result,
+it emits the info log, asks the host to read the current template once, and
+returns without mutation when none is available. Otherwise it applies BQ then BA
+formats from `BrowserAppearanceResult` and updates discard-change state.
+Callback failures propagate and stop later work. Android `Intent` reads, the
+parser's inner warning, current-index/backend lookup and its source exception
+boundary, Android logging, `BackendCardTemplate`, and its setters remain
+host-side; the current template itself never enters Dart. Focused cases in
+`test/card_template_browser_appearance_result_application_test.dart` are
+source-derived. The pinned `CardTemplateEditorTest` integrates appearance
+results and subsequent discard confirmation, but does not isolate every
+orchestration branch. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor deletion orphan check
+
+`cardTemplateEditorDeletionWouldOrphanNote()` in
+`lib/src/card_template_editor_deletion_orphan_check.dart` follows
+`CardTemplateEditor.kt:1388–1412` at AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It checks the pending-add
+predicate first and returns false without calculating ordinals or querying the
+collection when the position is pending. Otherwise it calculates delete
+ordinals once, awaits the host card-ID query with the supplied note-type ID and
+the same ordinal list, and returns true only for a null query result; empty and
+nonempty lists both return false. The temporary model, including the source
+null assertion, stays in host callbacks. The host also owns `CardTemplateNotetype`,
+the collection and `withCol`; callback failures propagate unchanged. Focused
+tests in `test/card_template_editor_deletion_orphan_check_test.dart` are
+source-derived; no direct pinned test for this method was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor EditTab
+
+`CardTemplateEditorEditTab` in `lib/src/card_template_editor_edit_tab.dart`
+maps `EditTab` at `CardTemplateEditor.kt:1680–1684` from AnkiDroid v2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves exactly three
+distinct values in source order: `FRONT`, `BACK`, `STYLING`; Dart's enum index
+therefore retains the source ordinal. Android view IDs, current-tab resolution,
+rendering/editing, and host integration remain host-side. Focused cases in
+`test/card_template_editor_edit_tab_test.dart` are source-derived; the pinned
+source has no direct enum-focused test. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor text change preview
+
+`cardTemplateFragmentAfterTextChanged()` in
+`lib/src/card_template_fragment_after_text_changed.dart` follows
+`CardTemplateFragment`'s `TextWatcher.afterTextChanged(arg0)` at
+`CardTemplateEditor.kt:747–764` in AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It ignores the editable argument,
+cancels only a non-null prior preview runnable, routes styling/back/front and
+null or unknown tabs to CSS/answer/question format. Styling writes to the
+fragment's stored `tempModel`; the later template update separately resolves
+the Activity's current `tempNoteType`, which can be a different instance. The
+update uses the same card index. It then creates and stores the refresh runnable
+before scheduling it at the host-supplied source delay. The discard-changes
+callback runs last. The runnable calls the host preview loader without an
+ordinal, so its default pager lookup remains at runnable execution time. Android
+`Editable`, template/model mutation, Handler/Runnable scheduling, and pager
+access remain host-side. Focused tests are source-derived; the pinned
+`CardTemplateEditorTest.kt` contains no direct `TextWatcher.afterTextChanged`
+test. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor Ctrl shortcuts
+
+`dispatchCardTemplateEditorCtrlShortcut()` in
+`lib/src/card_template_editor_ctrl_shortcut.dart` follows
+`CardTemplateEditor.onKeyUp()` at `CardTemplateEditor.kt:478–541` from
+AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves the current fragment
+once before reading Ctrl state, preserves the superclass fallback for a missing
+fragment, non-Ctrl event, or unknown Ctrl key, and for recognized Ctrl keys logs
+before one action on that same fragment. Android keycode values are supplied by
+the host. The host retains `KeyEvent`, Activity superclass dispatch, logging,
+tabs, dialogs, model access, and all effects; the deck-override host action uses
+the same fragment's temporary model. Focused tests cover every routing branch.
+Only Ctrl+2 has a directly pinned upstream test; the remaining test cases are
+source-derived. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor note type change check
+
+`cardTemplateNoteTypeHasChanged()` in
+`lib/src/card_template_editor_note_type_changed.dart` preserves
+`CardTemplateEditor.kt:406–414` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Without a temporary note type it
+returns false before invoking the stored-type lookup, preserving the early
+lifecycle guard against opening the collection. Otherwise it invokes the host
+lookup once: an absent stored type means changed, and a present type means the
+negation of the host-projected JSON content-equality result. Callback errors
+propagate unchanged. Collection access, generated note-type models, and
+`JSONObject.contentEquals` remain host-side; JSON is not serialized or
+normalized. Focused cases in
+`test/card_template_editor_note_type_changed_test.dart` derive from the pinned
+`CardTemplateEditorTest.kt` behavior and source logic. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor keyboard discard gate
+
+`cardTemplateEditorUpdateDiscardChangesCallback()` in
+`lib/src/card_template_editor_keyboard_discard_gate.dart` preserves
+`CardTemplateEditor.kt:418–430` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the current fragment once
+and follows the nullable view, binding, and bottom-navigation callbacks in
+source order. Keyboard-open is true only when navigation visibility is exactly
+false. An open keyboard disables the discard callback without checking the note
+type; otherwise the existing note-type-change projection runs once, and its
+result is written once. Callback failures propagate unchanged. Android Fragment,
+View, binding, bottom navigation, lifecycle, and the callback object remain
+host-side. Focused source-derived cases are in
+`test/card_template_editor_keyboard_discard_gate_test.dart`; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+
+## Card Template Editor discard confirmation
+
+`cardTemplateEditorShowDiscardChangesDialog()` in
+`lib/src/card_template_editor_discard_confirmation.dart` preserves
+`CardTemplateEditor.kt:433–441` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It passes the confirmation callback
+to the host dialog and returns the exact opaque dialog result unchanged. The
+callback defers all effects until confirmation, then logs the source literal,
+clears temporary note type files, clears the editor's temporary note type, and
+finishes in source order. Callback failures propagate unchanged and stop later
+effects. Android dialog behavior, Timber, temporary-model/cache access, and
+Activity lifecycle remain host-side. Focused source-derived cases are in
+`test/card_template_editor_discard_confirmation_test.dart`; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor action-bar Back
+
+`cardTemplateEditorActionBarBackPressed()` in
+`lib/src/card_template_editor_action_bar_back.dart` follows
+`CardTemplateEditor.onActionBarBackPressed()` at `CardTemplateEditor.kt:347–359`
+from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It checks whether the note type
+changed once, then shows the host discard dialog or finishes the Activity, and
+returns true only after that callback succeeds. Callback failures propagate
+unchanged. This action-bar callback does not read keyboard state; Android
+Activity, dialog, lifecycle, and view behavior remain host-side. Focused
+source-derived cases are in
+`test/card_template_editor_action_bar_back_test.dart`; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor Back dispatcher
+
+`cardTemplateEditorBackDispatcherPressed()` in
+`lib/src/card_template_editor_back_dispatcher.dart` follows the anonymous
+`OnBackPressedCallback.handleOnBackPressed()` at
+`CardTemplateEditor.kt:180–182` from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes the host discard-dialog
+callback once, without checking keyboard or dirty state, and propagates callback
+failures unchanged. Android dispatcher, callback lifecycle, and dialog remain
+host-side. Focused source-derived cases are in
+`test/card_template_editor_back_dispatcher_test.dart`; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+The source file is `GPL-3.0-or-later` and its file-level SPDX header credits
+Timothy Rae (2014) and Mike Hardy (2018); no method-specific authorship is
+asserted.
+
+## Card Template Editor Markdown
+
+`cardTemplateToMarkdown()` in `lib/src/card_template_editor_markdown.dart`
+tracks the nested `CardTemplate.toMarkdown(context)` at
+`CardTemplateEditor.kt:1644–1661` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the exact section
+order and LF fence layout, interpolating the supplied front, back, style, and
+three localized headings without escaping, trimming, or normalizing them. The
+CSS fence has no final LF. Android `Context`, generated localization, and
+Markdown rendering remain host-side; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Focused exact-output tests are
+source-derived because the pinned source has no direct test for this formatter.
+
+`copyCardTemplateMarkdownToClipboard()` in
+`lib/src/card_template_editor_markdown_clipboard.dart` tracks
+`CardTemplateFragment.copyMarkdownTemplateToClipboard()` at
+`CardTemplateEditor.kt:1293–1300` from AnkiDroid v2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the
+current template before context, returns immediately when either is absent, then
+renders Markdown, projects it through the host truncation type, and invokes the
+host clipboard callback in source order. Callback failures propagate and stop
+later work. Android `Context`, `TruncatedString`, clipboard services, and UI
+remain host-side. Focused source-derived callback tests cover the early returns,
+argument identity, order, and failure boundaries; see
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Fragment common menu routing
+
+`handleCardTemplateCommonMenuItemSelected()` in
+`lib/src/card_template_fragment_common_menu.dart` follows
+`CardTemplateFragment.handleCommonMenuItemSelected(menuItem)` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1179–1268` in
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves source menu branch
+order, info logs before actions, the reposition branch without a log, callback
+Boolean returns, lazy temporary-model and stock-kind reads, and unmatched-ID
+handling. Restore-to-default logs before reading the original kind. Known kinds
+show confirmation with a null kind; unknown kinds schedule stock-kind/name
+lookup before showing the picker. The selected host kind is carried to the
+confirmation, and positive confirmation schedules restore while cancellation
+does nothing. Callback and scheduled-task failures propagate.
+
+The host supplies Android menu IDs and unknown-kind sentinel, maps logs to
+Timber, reads host models and stock kinds, resolves stock names under
+`withCol`, schedules work through `launchCatchingTask`, and builds Android
+Dialogs with translated resources. `StockNotetype`, collection/model access,
+confirmation/picker UI, and restore operations remain host-side. Focused cases
+in `test/card_template_fragment_common_menu_test.dart` are source-derived. The
+pinned source marks this method `@NeedsTest("Restore to default option")`; no
+focused direct pinned restore test was found. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+`cardTemplateFragmentRestoreNotetypeToStock()` in
+`lib/src/card_template_fragment_restore_notetype_to_stock.dart` follows
+`CardTemplateFragment.restoreNotetypeToStock(kind)` at
+`CardTemplateEditor.kt:1162–1172` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It obtains the temporary model's
+note-type ID, passes that value through the host `notetypeId` builder, and
+awaits the host undoable operation with the same nullable `kind`. Only after
+that operation completes does it call `onModelSaved()`, resolve `requireContext`
+and `TR.cardTemplatesRestoredToDefault()`, and show the themed toast with
+`shortLength: false`. Callback failures propagate unchanged and stop later
+effects. Model and collection access, generated IDs, undoable operations,
+Android context/resources, and toast display remain host-side. Focused Dart
+tests cover awaited ordering, nullable-kind forwarding, and failure stopping.
+The source marks the method
+`@NeedsTest("Notetype is restored to stock kind")`; inspection of the pinned
+`CardTemplateEditorTest.kt` found no direct test for this method. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+`setupCardTemplateCommonMenu()` in
+`lib/src/card_template_fragment_common_menu.dart` follows
+`CardTemplateFragment.setupCommonMenu(menu)` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1127–1160` in
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It keeps
+the title, dynamic-note, deck-override, template-count, fragmented-preview,
+and styling-view branches in source order, including lazy current-template and
+JSON `did` reads. Host callbacks retain menu lookup/mutation, localization,
+logging, Android view IDs, and model access; callback failures propagate.
+Focused cases in
+`test/card_template_fragment_setup_common_menu_test.dart` are source-derived.
+Pinned `CardTemplateEditorTest` covers visible add, delete, and preview actions
+but does not isolate this configuration method's branches. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor deck selection
+
+`cardTemplateEditorDeckSelected()` in
+`lib/src/card_template_editor_deck_selection.dart` follows
+`CardTemplateEditor.onDeckSelected()` at `CardTemplateEditor.kt:443–476` in
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It validates
+the nullable deck before model reads, rejects cloze note types and filtered
+decks before mutation, and preserves the removal/selection logging, JSON
+override, localized message, short snackbar, menu invalidation, and discard
+update order. Callback failures propagate unchanged and stop later work. The
+host retains `SelectableDeck`, note-type/template/JSON models, filtered-deck
+lookup, Timber, localization, snackbar duration, options-menu invalidation, and
+discard UI; Dart only sequences host callbacks. Focused tests in
+`test/card_template_editor_deck_selection_test.dart` are source-derived. The
+pinned `CardTemplateEditorTest.testDeckOverride` covers valid deck then null
+mutation and its `noteTypeHasChanged` integration; it does not directly cover
+these method branches. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Card Template Editor pager stable IDs
+
+`templatePagerGetItemId()`, `templatePagerContainsItem()`, and
+`templatePagerOrdinalShift()` in `lib/src/card_template_pager_stable_ids.dart`
+map the portable stable-ID behavior from `CardTemplateEditor.kt:569–585` in
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. They
+preserve Kotlin signed Int32/Int64 wrap and the source callback order; `BigInt`
+keeps the full JVM `Long` range exact on Dart VM and web. The host retains
+`FragmentStateAdapter`, template count/model access, adapter state, and mutable
+`baseId` storage, initialized to `initialTemplatePagerBaseId` (`BigInt.zero`).
+Focused tests are source-derived because no pinned test covers
+these adapter methods. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+
+## Card Template Editor fragment lookup
+
+`cardTemplateEditorTemplateFragment()` ports the source-ordered lookup from
+`CardTemplateEditor.templateFragment(position)` in AnkiDroid 2.25.3. It reads the
+pager adapter once, uses the unchanged position to obtain one stable item ID,
+uses `BigInt` to preserve the entire JVM `Long` range on Dart VM and web,
+looks up the exact `f`-prefixed decimal tag, and returns only a host-typed
+`CardTemplateFragment`. A missing adapter or fragment returns null. Android
+pager, adapter, FragmentManager, and Fragment remain host-side. The focused
+source-derived tests are in
+[`test/card_template_editor_template_fragment_test.dart`](test/card_template_editor_template_fragment_test.dart).
+The adapted source is GPL-3.0-or-later; file-level copyright attribution and
+source pin are recorded in [NOTICE.md](NOTICE.md) and
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.
+
+## Card template fragment menu registration
+
+`cardTemplateFragmentSetupMenu()` in
+`lib/src/card_template_fragment_setup_menu.dart` follows
+`CardTemplateFragment.setupMenu()` at `CardTemplateEditor.kt:1008–1024` in
+AnkiDroid 2.25.3, commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+performs one Activity lookup and the host MenuHost cast before creating a
+single deferred MenuProvider, then registers it with the view lifecycle owner
+at `Lifecycle.State.RESUMED`. Menu inflation precedes common-menu setup, and
+item selection returns the common handler's result unchanged. Android menu,
+resource, and lifecycle types stay host-side; callback failures propagate in
+source order. Focused cases are in
+[`test/card_template_fragment_setup_menu_test.dart`](test/card_template_fragment_setup_menu_test.dart).
+The adaptation follows the pinned GPL-3.0-or-later source file; file-level
+copyright attribution appears in [NOTICE.md](NOTICE.md), with the source pin in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.
+
+## TemplatePagerAdapter fragment creation
+
+`cardTemplateEditorCreateFragment()` in
+`lib/src/card_template_editor_create_fragment.dart` maps
+`TemplatePagerAdapter.createFragment(position)` at
+`CardTemplateEditor.kt:566–569` in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It performs one host map lookup at
+the original position, uses the host-supplied FRONT editor view ID only when
+the mapped value is null, and calls the host fragment factory once with the
+original position, note ID, and selected view ID. The exact factory result is
+returned, and callback failures propagate in source order. Android map/view
+IDs, note ID, Fragment and Bundle construction remain host-side. Focused
+source-derived tests are in
+[`test/card_template_editor_create_fragment_test.dart`](test/card_template_editor_create_fragment_test.dart).
+The adapted source is GPL-3.0-or-later; file-level copyright attribution and
+source pin are recorded in [NOTICE.md](NOTICE.md) and
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.
+
+## CardTemplateEditor edge-to-edge insets
+
+`setupCardTemplateEditorEdgeToEdge()` in
+`lib/src/card_template_editor_edge_to_edge.dart` ports the callback orchestration
+from `CardTemplateEditor.setupEdgeToEdge()` at `CardTemplateEditor.kt:270–291`
+in AnkiDroid 2.25.3. It enables edge-to-edge first, registers the top inset
+listener before the root listener, and keeps inset-mask creation, inset reads,
+view lookups, and the fragmented-state read inside their source callbacks. The
+top listener updates only left, top, and right padding; the fragmented root
+listener updates the editor's left padding and fragment container's right
+padding. Both listeners return the exact input object, and failures propagate
+in source order. The Android host supplies `SystemBarStyle.dark(Color.TRANSPARENT)`,
+`systemBars() or displayCutout()`, and
+`systemBars() or displayCutout() or ime()` through the callbacks; Android
+WindowInsets, resource IDs, view binding, and `updatePadding` remain host-side.
+Focused source-derived tests are in
+[`test/card_template_editor_edge_to_edge_test.dart`](test/card_template_editor_edge_to_edge_test.dart).
+No direct pinned test for `setupEdgeToEdge()` was found in
+`CardTemplateEditorTest.kt`. File-level SPDX credits are recorded in
+[NOTICE.md](NOTICE.md), and the source pin is in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md). Root `COPYING` remains unchanged.
+
+## `CharSequence.ifNullOrEmpty()`
+
+`ifNullOrEmpty()` in `lib/src/char_sequence_if_null_or_empty.dart` adapts
+`CharSequence.kt` from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart adapter accepts an opaque
+generic value plus a host-provided emptiness callback, so it preserves identity
+for any host `CharSequence` subtype without implementing Android/Kotlin types
+in Dart. It skips the emptiness callback for null, checks a nonnull value once,
+and lazily calls the fallback once only for null or empty inputs. Callback
+exceptions propagate unchanged. Focused source-derived tests are in
+`test/char_sequence_if_null_or_empty_test.dart`. The upstream file declares
+`GPL-3.0-or-later` with no separate copyright line; the Dart adaptation and test
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
+
+## Decks.update
+
+`decksUpdate()` in `lib/src/decks_update.dart` adapts `Decks.update(did,
+block)` from AnkiDroid 2.25.3. It resolves the requested deck once, applies the
+mutation callback to that exact object, then saves the same object. A null
+lookup triggers Dart's `TypeError` through `!`, corresponding to Kotlin's `!!`;
+lookup and mutation failures skip later callbacks, and save failures propagate.
+The host retains `Decks`, `Deck`, `DeckId`, database access, and storage. Focused
+cases cover order, identity, and failure behavior. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the pinned source and license record. Root `COPYING` remains byte-identical.
+
+## Decks.defaultConfig
+
+`deckDefaultConfig()` adapts AnkiDroid's `Decks.defaultConfig` getter. It asks
+the host-supplied lookup for config ID 1 exactly once and returns the same
+object. A null result triggers Dart's `TypeError` from `!`, matching Kotlin's
+`!!` null failure. Deck and collection/database access stay on the host. Focused
+tests cover the requested ID and call count, object identity, and null failure.
+See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for the pinned source and license record.
+
+## Config.ignoreAccentsInSearch
+
+`IgnoreAccentsInSearchConfig<TConfigKey>` in
+`lib/src/ignore_accents_in_search_config.dart` adapts the Boolean getter/setter
+from AnkiDroid 2.25.3 `Config.kt`. Pass the exact host token for
+`ConfigKey.Bool.IGNORE_ACCENTS_IN_SEARCH`; the adapter forwards each read or
+write once and returns/passes the Boolean unchanged. The host retains generated
+Config keys, storage, and search behavior. Focused source-derived tests are in
+[`test/config_ignore_accents_in_search_test.dart`](test/config_ignore_accents_in_search_test.dart).
+Pinned `ConfigTest.kt` exercises accent-insensitive search after enabling the
+setting, while the Dart tests isolate key forwarding, invocation count, values,
+and callback failures. The pinned Kotlin file declares `GPL-3.0-or-later` and
+has no separate copyright line. The Dart adaptation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for the source and license record.
+
+## Scheduler.answerCard
+
+`schedulerAnswerCard()` in `lib/src/scheduler_answer_card.dart` adapts the
+`Scheduler.answerCard(card, states, rating)` extension from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Scheduler.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+It calls the host answer builder once, then reads and increments the recorded
+answer count, and returns the builder's identical answer object. The counter
+uses signed 32-bit Kotlin `Int` wrap semantics; callback failures propagate in
+source order. Card and scheduling-state types, `Scheduler`, answer construction,
+and backend behavior remain host-side. Focused cases are in
+[`test/scheduler_answer_card_test.dart`](test/scheduler_answer_card_test.dart).
+The pinned Kotlin source declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and license record.
+
+## Collection.cardStateCustomizer
+
+`CollectionCardStateCustomizer` adapts the `Custom scheduling` global setting
+in deck options from AnkiDroid's `Collection.cardStateCustomizer`. The host
+provides the opaque `ConfigKey.String.CARD_STATE_CUSTOMIZER` token and its
+Config callbacks; the adapter forwards the exact String once and leaves Config
+storage and script execution to the host. Callback exceptions propagate
+unchanged. Focused source-derived adapter checks are in
+[`test/collection_card_state_customizer_test.dart`](test/collection_card_state_customizer_test.dart).
+The pinned `StudyScreenRepositoryCollectionTest.kt` also covers setting reads
+and writes through the integration path. The GPL-3.0-or-later source and license
+record is in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+
+## Collection.getCardOrNull
+
+`collectionGetCardOrNull()` adapts `Collection.getCardOrNull(id)` from
+AnkiDroid 2.25.3 `Collection.kt`. It forwards the exact host-supplied ID once,
+returns the identical card object on success, and returns null for any thrown
+Dart object, matching Kotlin `runCatching`. Collection, card, and ID types stay
+on the host. Source-derived cases are in
+[`test/collection_get_card_or_null_test.dart`](test/collection_get_card_or_null_test.dart);
+no direct pinned upstream test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the pinned source and license record.
+
+## Collection.buildSearchString
+
+`collectionBuildSearchString()` adapts AnkiDroid 2.25.3
+`Collection.buildSearchString(node)` by wrapping the identical opaque host node
+in a read-only singleton list and passing it once to the host collection string
+builder. It returns the exact host String and lets failures propagate. Search
+node construction and backend query-string generation stay host-side. Focused
+source-derived cases are in
+[`test/collection_build_search_string_test.dart`](test/collection_build_search_string_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the
+pinned source and license record.
+
+## JsonReader object decoding
+
+`readJsonObject()` and `readSingleJsonObject()` in `lib/src/json_reader.dart`
+adapt `JsonReader.readObject()` and the single-document check in
+`File.readJson()` from AnkiDroid 2.25.3. The host maps Android `JsonReader`
+tokens and operations to `JsonReaderTokenReader`, and supplies object/array
+construction, insertion, JSON-null, and malformed-JSON exception behavior via
+`JsonReaderContainerAdapter`. The projection preserves recursive source order,
+the `JSONObject.NULL` sentinel boundary, signed 32-bit versus signed 64-bit
+integer width (`JsonIntegerValue`), finite doubles, exact source error messages,
+and parser/container failure propagation. `readJsonObject()` leaves its
+reader open; the host file helper owns and closes its UTF-8 reader and uses
+`readSingleJsonObject()` to require `END_DOCUMENT`. Android tokenization and
+`MalformedJsonException` identity, `JSONObject`/`JSONArray`, file IO and UTF-8
+reader construction remain host-side. The direct pinned
+`JsonReaderTest.kt` covers streamed nested values, large integer precision,
+exponent values, malformed/trailing input, and reader failure propagation;
+focused Dart cases are in
+[`test/json_reader_test.dart`](test/json_reader_test.dart). The Kotlin source
+and direct test declare `GPL-3.0-or-later` and have no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the pinned source and license record.
+
+## JsonWriter streaming serialization
+
+`writeJsonObject()` in `lib/src/json_writer.dart` adapts `JsonWriter.writeObject()`
+from AnkiDroid 2.25.3. It streams begin/name/value/end calls in source order,
+recursively traverses host objects and arrays, snapshots array length after `beginArray`, and uses the host `opt(index)`
+result (including null holes), maps both Dart null and the host `JSONObject.NULL`
+sentinel to `nullValue()`, and forwards Boolean and Number values to their matching
+writer callbacks. Other values use their source `toString()` as a JSON string.
+Android `JsonWriter` escaping, encoding and bounded output, `JSONObject` key
+iteration and access, `JSONArray`, and the `File.writeJson()` UTF-8 buffered
+writer creation and close ownership remain host-side. The pinned direct
+`JsonWriterTest.kt` covers streaming round trips, bounded chunks and write
+failures; focused source-derived Dart tests are in
+[`test/json_writer_test.dart`](test/json_writer_test.dart). The Kotlin source and
+direct test declare `GPL-3.0-or-later` and have no separate copyright line. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same license;
+root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the pinned source and license record.
+
+## View touch bounds
+
+`isTouchWithinBounds()` in `lib/src/view_is_touch_within_bounds.dart` projects
+AnkiDroid 2.25.3 `View.isTouchWithinBounds()` over host-supplied View origin,
+drawing rectangle, and MotionEvent local coordinates. It preserves Float32
+addition, Kotlin `Float.toInt()` truncation/saturation, and Android's half-open
+rectangle edges, including the source coordinate behavior. The host retains
+`View`, `MotionEvent`, `Rect`, and `getDrawingRect()` access. No direct pinned unit test
+was found; focused source-derived cases are in
+[test/view_is_touch_within_bounds_test.dart](test/view_is_touch_within_bounds_test.dart).
+The Dart adaptation and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and attribution details.
+
+## View background tint
+
+`setBackgroundTint()` preserves AnkiDroid's Kotlin Float32 multiplication and
+`Float.toInt()` truncation, NaN, and Int32 saturation behavior without clamping
+alpha. It calls the host MaterialColors composite, ColorStateList factory, and
+View tint assignment in source order, preserving callback failures and the
+exact tint token. Android color and View objects remain host-side. Focused
+source-derived cases are in
+[test/view_set_background_tint_test.dart](test/view_set_background_tint_test.dart);
+no direct pinned test was found. The source mapping and attribution are recorded
+in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+The Kotlin source header attributes Copyright © 2025 Danilo Mendes and the
+upstream code is GPL-3.0-or-later; the Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## BitmapDrawable PNG Base64 conversion
+
+`bitmapDrawableToBase64Png()` preserves the pinned AnkiDroid wrapper's stream
+ownership and operation order while delegating Android PNG compression and
+`Base64.DEFAULT` encoding to the host. The source mapping, scope boundary, and
+GPL attribution are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md).
+
+## Context styled-attribute callback
+
+`usingStyledAttributes()` preserves the pinned helper's acquisition, single
+block invocation, and success-only recycle order. Android `Context`,
+`AttributeSet`, `IntArray`, and `TypedArray` access stay host-side; the Dart
+adapter receives opaque host arguments and passes one acquired array token to
+the block and recycle callbacks. A block failure propagates unchanged without
+recycling, as in the Kotlin source. Focused source-derived cases are in
+`test/context_using_styled_attributes_test.dart`; no direct pinned test was
+found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the exact source and license mapping. The pinned
+Kotlin source declares `GPL-3.0-or-later` and has no file-level copyright line;
+the Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
+## LinearLayoutManager visible positions
+
+`visibleItemPositions()` and `positionIsVisible()` preserve the pinned
+AnkiDroid helper's first-then-last host query order, `NO_POSITION` empty result,
+and inclusive range membership, including reversed empty ranges. Android
+layout-manager APIs and layout state stay host-side. Source mapping, GPL
+attribution, and focused source-derived tests are recorded in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md), [NOTICE.md](NOTICE.md), and
+[test/linear_layout_manager_visible_positions_test.dart](test/linear_layout_manager_visible_positions_test.dart).
+The pinned Kotlin file declares `GPL-3.0-or-later` and has no separate
+copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui
+under that license. Root `COPYING` remains byte-identical.
+
+## MenuItem resource icon helper
+
+`menuItemSetIconRes()` preserves the pinned helper's drawable lookup, null
+short-circuit, mutation, layout-direction update, and final menu-icon setting
+order. Android `Context`, `MenuItem`, resource, and drawable behavior stay
+host-side behind callbacks; the exact mutated drawable token is forwarded to
+both direction and icon callbacks. Callback failures propagate unchanged.
+Focused source-derived cases are in
+[test/menu_item_set_icon_res_test.dart](test/menu_item_set_icon_res_test.dart);
+no direct pinned test was found. The mapping and GPL attribution are recorded in
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md).
+
+## Fragment removal from a container
+
+`removeFragmentFromContainer()` in `lib/src/fragment_manager_remove_fragment.dart`
+ports the source ordering from AnkiDroid 2.25.3: look up once, fail with the
+source message if missing, then begin a transaction, remove the same fragment,
+and commit once. The Dart helper preserves callback failures and ignores the
+host commit result, matching Kotlin's `Unit` return. Android fragment types,
+lifecycle, and commit effects remain host-side. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source pin and license record.
+
+## RecyclerView layout-safe action
+
+`runWhenNotComputingLayout()` in
+`lib/src/recycler_view_run_when_not_computing_layout.dart` preserves the pinned
+AnkiDroid helper's one layout-state read and exclusive immediate-run or posted
+action branches. The same action token is used in either branch, and host
+callback failures propagate unchanged. Android RecyclerView scheduling and
+frame execution remain host-side. Focused source-derived tests are in
+[`test/recycler_view_run_when_not_computing_layout_test.dart`](test/recycler_view_run_when_not_computing_layout_test.dart).
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the exact source pin and GPL attribution. Root `COPYING` remains byte-identical.
+
+## View global-layout lifecycle registration
+
+`onGlobalLayout()` registers the exact callback with the current host view-tree
+observer and adds a lifecycle observer only while the owner is not destroyed.
+On destruction, it reads the current view-tree observer and removes that same
+listener only if the observer is alive. Callback failures stop later operations.
+Android views and lifecycle APIs stay host-side; focused source-derived cases
+are in [`test/view_on_global_layout_test.dart`](test/view_on_global_layout_test.dart).
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the pinned source and GPL attribution.
+
+## TabLayout selected-tab listener
+
+`doOnTabSelected()` in `lib/src/tab_layout_do_on_tab_selected.dart` preserves
+the pinned AnkiDroid helper's selected-only action, no-op unselected and
+reselected callbacks, and register-before-return behavior. It returns the same
+listener object passed to the host registration callback; registration and
+selection failures propagate unchanged. Android Material tab APIs remain
+host-side behind generic opaque tab tokens. Focused source-derived cases are in
+[`test/tab_layout_do_on_tab_selected_test.dart`](test/tab_layout_do_on_tab_selected_test.dart).
+The pinned Kotlin source declares `GPL-3.0-or-later` and credits Rakshita
+Chauhan (2025); the Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the exact source mapping and attribution.
+
+## Dismiss dialog fragments
+
+`dismissAllDialogFragments()` in
+`lib/src/fragment_activity_dismiss_all_dialog_fragments.dart` adapts
+`FragmentActivity.dismissAllDialogFragments()` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt`, pinned
+to 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It checks the host
+fragment-manager state once and skips popping when state is saved; otherwise it
+pops the `dialog` back-stack tag once with the inclusive flag value `1`.
+Callback failures propagate unchanged. Android `FragmentActivity` and
+`FragmentManager` remain host-side behind callbacks. Source-derived tests are in
+[`test/fragment_activity_dismiss_all_dialog_fragments_test.dart`](test/fragment_activity_dismiss_all_dialog_fragments_test.dart); no direct
+pinned test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the
+source and license record.
+
+## Show a dialog fragment through the host
+
+`showDialogFragment()` in
+`lib/src/fragment_activity_show_dialog_fragment.dart` adapts
+`FragmentActivity.showDialogFragment(newFragment)` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt:28–32`,
+pinned to 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls
+the host UI-thread scheduler once and returns without waiting. The scheduled
+action reads the current support FragmentManager once, then forwards that exact
+manager and fragment token to the host display adapter. Callback failures
+propagate unchanged. Android FragmentActivity, FragmentManager, DialogFragment,
+and display implementation remain host-side. Source-derived tests are in
+[`test/fragment_activity_show_dialog_fragment_test.dart`](test/fragment_activity_show_dialog_fragment_test.dart); no direct pinned test was found. The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the source and license record.
+
+## Run a block when fragment views are ready
+
+`onAllFragmentsLoaded()` in
+`lib/src/fragment_activity_on_all_fragments_loaded.dart` adapts
+`FragmentActivity.onAllFragmentsLoaded(block)` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt:48–73`,
+pinned to 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It reads
+the initial manager before creating one recursive lifecycle callback. Each
+view-created event calls the host super callback first, then checks the current
+manager's fragment views. A false check leaves registration in place; a true
+check runs the block and unregisters that same callback in `finally`, using a
+fresh manager lookup. Pre-try failures skip the block and cleanup, and repeated
+qualifying events are not guarded. Android lifecycle and fragment classes stay
+host-side. Focused source-derived cases are in
+[`test/fragment_activity_on_all_fragments_loaded_test.dart`](test/fragment_activity_on_all_fragments_loaded_test.dart); no direct pinned test was found. The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for source and license details.
+
+## Prepare an existing Android menu
+
+`menuHostAddPrepareMenuProvider()` in
+`lib/src/menu_host_add_prepare_menu_provider.dart` adapts
+`MenuHost.addPrepareMenuProvider(onPrepare)` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MenuHost.kt`, pinned to
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host retains the
+Android menu/provider types; opaque tokens pass through the generic callbacks.
+The adapter registers one provider, leaves menu creation empty, forwards menu
+preparation, and declines item selection exactly as the source does. Failure
+objects propagate unchanged. Source-derived tests are in
+[`test/menu_host_add_prepare_menu_provider_test.dart`](test/menu_host_add_prepare_menu_provider_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## ViewPropertyAnimator duration
+
+`setViewPropertyAnimatorDuration()` in
+[`lib/src/view_property_animator_duration.dart`](lib/src/view_property_animator_duration.dart)
+adapts `ViewPropertyAnimator.setDuration(duration)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/ViewPropertyAnimator.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies an opaque Kotlin
+`Duration` token and a converter implementing
+`Duration.toLong(DurationUnit.MILLISECONDS)`; the adapter calls that conversion
+once before forwarding its exact millisecond result to the host setter once,
+then returns the identical animator token. Conversion and setter failures
+propagate unchanged and stop subsequent work. Dart `Duration` is not treated as
+Kotlin `Duration`; the host remains responsible for precise Kotlin duration
+conversion, finite/infinite representation, and Android `ViewPropertyAnimator`.
+Focused cases are in
+[`test/view_property_animator_duration_test.dart`](test/view_property_animator_duration_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
+## Fragment window focus listener
+
+`onWindowFocusChanged()` in
+`lib/src/fragment_on_window_focus_changed.dart` adapts
+`Fragment.onWindowFocusChanged(action)` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:56–69`, pinned to
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one
+listener with the same action, registers it on the required view's current tree
+observer, then registers one lifecycle observer. On destruction it reads the
+fragment's current view and current nullable tree observer, and removes the
+same listener only if the observer is alive. Null values short-circuit; callback
+failures propagate and stop later work. Android views, observers, lifecycle,
+and listener classes remain host-side behind generic tokens and callbacks.
+Source-derived focused tests are in
+[`test/fragment_on_window_focus_changed_test.dart`](test/fragment_on_window_focus_changed_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Fragment compact width
+
+`fragmentIsCompactWidth()` in `lib/src/fragment_is_compact_width.dart` adapts
+`Fragment.isCompactWidth` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:26–47`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the
+host Fragment's current `screenWidthDp` once and returns true only when the
+value is strictly less than 600. The callback models
+`requireContext().resources.configuration.screenWidthDp`; callback failures
+propagate unchanged. Android Fragment, Context, Resources, and Configuration
+remain host-side. Source-derived tests are in
+[`test/fragment_is_compact_width_test.dart`](test/fragment_is_compact_width_test.dart); no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and license record.
+
+## Show a dialog fragment from a Fragment
+
+`fragmentShowDialogFragment()` in
+`lib/src/fragment_show_dialog_fragment.dart` adapts
+`Fragment.showDialogFragment(newFragment)` from AnkiDroid's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:27`, pinned to
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves the
+host Activity once before scheduling and captures that Activity for both the
+existing `showDialogFragment()` adapter's UI scheduler and deferred manager
+lookup. The exact dialog token is forwarded to the host display adapter. The
+Activity adapter owns scheduling and manager lookup; Android Fragment,
+FragmentActivity, FragmentManager, DialogFragment, and display implementation
+remain host-side. Callback failures propagate unchanged. Source-derived tests
+are in
+[`test/fragment_show_dialog_fragment_test.dart`](test/fragment_show_dialog_fragment_test.dart); no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
+
+## Fragment window
+
+`fragmentWindow()` in `lib/src/fragment_window.dart` adapts the
+`Fragment.window` property from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:29–31`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves
+the host Activity once, reads that same Activity's window once, and returns the
+identical opaque Window token. Lookup and read failures propagate unchanged;
+an Activity lookup failure prevents the window read. Android Fragment,
+FragmentActivity, and Window remain host-side. Source-derived cases are in
+[`test/fragment_window_test.dart`](test/fragment_window_test.dart); no direct
+pinned test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source mapping and license record.
+
+## Fragment shared preferences
+
+`fragmentSharedPrefs()` in `lib/src/fragment_shared_prefs.dart` adapts
+`Fragment.sharedPrefs()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:17`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves
+the host Fragment's Context once, passes that exact Context to the existing
+host `sharedPrefs()` implementation once, and returns the identical opaque
+SharedPreferences token. Context lookup and preference delegation failures
+propagate unchanged in source order. Android Fragment, Context,
+SharedPreferences, and preference construction remain host-side. Source-derived
+cases are in
+[`test/fragment_shared_prefs_test.dart`](test/fragment_shared_prefs_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
+
+## Fragment package manager
+
+`fragmentPackageManager()` in
+[`lib/src/fragment_package_manager.dart`](lib/src/fragment_package_manager.dart)
+adapts `Fragment.packageManager` from AnkiDroid 2.25.3's
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:19–20`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves the host
+Fragment's Context once, reads `packageManager` from that same Context once,
+and returns the identical opaque token. Failures propagate unchanged in source
+order. Android Fragment, Context, PackageManager, and concrete implementations
+remain host-side. Source-derived cases are in
+[`test/fragment_package_manager_test.dart`](test/fragment_package_manager_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## Note Editor fragment creation with arguments
+
+`noteEditorFragmentNewInstance()` in
+[`lib/src/note_editor_fragment_new_instance.dart`](lib/src/note_editor_fragment_new_instance.dart)
+adapts `NoteEditorFragment.Companion.newInstance(args)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2748–2751`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+creates one host fragment, assigns the exact supplied opaque Bundle value to
+that fragment's arguments once, and returns the same fragment. Construction and
+assignment failures propagate unchanged and stop later work. Android Fragment
+and Bundle behavior remain host-side. Focused source-derived tests in
+[`test/note_editor_fragment_new_instance_test.dart`](test/note_editor_fragment_new_instance_test.dart)
+cover identity, operation order, single invocation, and both failure
+short-circuits. The Kotlin source declares `GPL-3.0-or-later` and carries
+file-level Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae; those
+names identify the source file, not authorship of the Dart adaptation. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the mapping and license record.
+
+## Note Editor fragment creation from a destination
+
+`noteEditorFragmentNewInstanceFromDestination()` in
+[`lib/src/note_editor_fragment_new_instance.dart`](lib/src/note_editor_fragment_new_instance.dart)
+adapts `NoteEditorFragment.Companion.newInstance(destination)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2753–2754`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+host-supplied destination-to-Bundle callback runs first with the identical
+destination. Its Bundle is passed unchanged to
+`noteEditorFragmentNewInstance()`, which creates one fragment, assigns that
+Bundle once, and returns the same fragment. Conversion, creation, and
+assignment failures propagate unchanged and stop subsequent work. Destination,
+DeferredNavigation, Android Bundle, and Fragment behavior remain host-side.
+Focused tests cover operation order, identity, and each failure path in
+[`test/note_editor_fragment_new_instance_test.dart`](test/note_editor_fragment_new_instance_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and carries file-level Copyright
+(c) 2012 Norbert Nagold and (c) 2014 Timothy Rae; those names identify the
+source file, not authorship of the Dart adaptation. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and license record.
+
+## Note Editor image-intent detection
+
+`intentLaunchedWithImage()` in
+[`lib/src/note_editor_intent_launched_with_image.dart`](lib/src/note_editor_intent_launched_with_image.dart)
+adapts `NoteEditorFragment.Companion.intentLaunchedWithImage(intent)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2764–2770`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+preserves the SEND/VIEW action check and its conditional second action read,
+then the invalid-VIEW gate, then one nullable MIME resolution and the
+case-sensitive `image/` prefix check. The host supplies Intent action reads,
+invalid-view policy, and MIME resolution; callback failures propagate. Android
+Intent behavior remains host-side. Focused source-derived cases are in
+[`test/note_editor_intent_launched_with_image_test.dart`](test/note_editor_intent_launched_with_image_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; those names refer to the Kotlin source, not the Dart
+adaptation. The Dart adaptation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the mapping and license record.
+
+## `NoteEditorFragment.Companion.shouldHideToolbar()`
+
+`noteEditorShouldHideToolbar()` in
+[`lib/src/note_editor_should_hide_toolbar.dart`](lib/src/note_editor_should_hide_toolbar.dart)
+adapts
+`NoteEditorFragment.Companion.shouldHideToolbar()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2772–2776`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+looks up host shared preferences once, reads Boolean key
+`noteEditorShowToolbar` once with default `true`, then returns the logical
+negation of that value. Both callback failures propagate unchanged and stop
+later operations; app context, SharedPreferences, and preference storage remain
+host-side. Focused source-derived tests in
+[`test/note_editor_should_hide_toolbar_test.dart`](test/note_editor_should_hide_toolbar_test.dart)
+cover the exact key/default,
+both stored values, operation order, negation, and failure propagation; no
+direct pinned test for this helper was found. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; these identify the source file and do not claim authorship
+of the Dart adaptation. The Dart implementation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Launcher destination Intent
+
+[`LauncherDestination.instance.toIntent()`](lib/src/launcher_destination_to_intent.dart)
+adapts `LauncherDestination.toIntent(context)`: it creates one host Intent with
+the exact context and target token, sets the supplied action, adds the supplied
+category, and returns that same Intent. The host supplies the equivalent of
+`IntentHandler::class.java`, `Intent.ACTION_MAIN`, and
+`Intent.CATEGORY_LAUNCHER`. The adapter does not add flags or resolve or change
+the component; Android Intent behavior and launcher handling remain host-side.
+Focused source-derived tests in
+[`test/launcher_destination_to_intent_test.dart`](test/launcher_destination_to_intent_test.dart)
+cover callback order, exact token forwarding, identity, single invocation, and
+callback failures. No direct pinned test for this method was found. Source provenance and license details are in
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md);
+root `COPYING` remains byte-identical.
+
+## Changelog destination Intent
+
+[`ChangelogDestination.instance.toIntent()`](lib/src/changelog_destination_to_intent.dart)
+adapts the `ChangelogDestination` singleton and
+`ChangelogDestination.toIntent(context)` from AnkiDroid 2.25.3. It delegates
+once to the host Intent builder with the exact context and `Info::class.java`
+token and returns the callback's exact result. Callback failures propagate
+unchanged. Android Context, the Info activity class, and Intent construction and
+behavior remain host-side. Focused tests in
+[`test/changelog_destination_to_intent_test.dart`](test/changelog_destination_to_intent_test.dart)
+cover singleton identity, exact token/result forwarding, single invocation, and
+failure propagation. The pinned Kotlin sources declare `GPL-3.0-or-later` with
+no separate copyright line; the Dart implementation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) for pinned source paths.
+
+## Study options and statistics destination Intents
+
+[`StudyOptionsDestination.instance.toIntent()`](lib/src/study_options_destination_to_intent.dart)
+and [`StatisticsDestination.instance.toIntent()`](lib/src/statistics_destination_to_intent.dart)
+adapt the corresponding AnkiDroid 2.25.3 destination singletons. Study Options
+delegates once with the exact context and `StudyOptionsActivity::class.java`
+token to the host Intent constructor callback. Statistics delegates once with
+the exact context and `Statistics::class` token to the distinct host
+`SingleFragmentActivity.getIntent` callback. Each returns the callback's exact
+result, and callback failures propagate unchanged. Android Context, target
+classes, Activity, and Intent construction and behavior remain host-side.
+`ReviewerStatisticsDestination` remains a separate reviewer action projection.
+Focused cases in [`test/screen_destinations_test.dart`](test/screen_destinations_test.dart)
+cover both singleton identities, token and result identity, invocation counts,
+and failure propagation. The upstream Kotlin files declare `GPL-3.0-or-later`
+and have no separate copyright line; this records source provenance, not Dart
+authorship. The Dart adaptations and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
+## JSONArray extension adapters
+
+[`JsonArrayHostAdapter`](lib/src/json_array_adapters.dart) adapts the pinned
+AnkiDroid 2.25.3 `JSONArray` helpers: deep cloning, ordered object and string
+iteration, and eager string-list extraction. The host supplies its
+`JSONArray`/`JSONObject` representation, typed reads, and JSONObject deep
+clone callback. The adapter preserves the source's initial type probe and
+repeated scalar read, live iterator length checks, index advancement only after
+a successful typed read, and eager `toStringList(key)` failure timing. Focused
+source-derived cases are in
+[`test/json_array_adapters_test.dart`](test/json_array_adapters_test.dart); no
+direct pinned AnkiDroid tests for this helper family were found. Source mapping
+and license details are in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md). The source file is GPL-3.0-or-later, Copyright © 2020
+Arthur Milchior, and includes a JSON.org notice for other code. No JSON.org
+implementation code is copied. Root `COPYING` remains byte-identical.
+
+## JSONContainer
+
+[`JSONObjectHolder` and `JSONContainer`](lib/src/json_container.dart) adapt
+`JSONObjectHolder` and `JSONContainer<T>` from AnkiDroid 2.25.3's
+`common/src/main/java/com/ichi2/anki/common/json/JSONContainer.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter leaves JSON.org
+objects and arrays, typed object reads, indexed writes, and their failure
+behavior with the host. It maps the host iterator lazily, preserves direct
+index forwarding for get and set, and keeps `indices` eager by constructing
+every holder before returning the index sequence. Dart's `Iterable.length`
+getter represents the Kotlin `length()` operation, and `size` delegates to it.
+Focused source-derived tests are in
+[`test/json_container_test.dart`](test/json_container_test.dart); no direct
+pinned AnkiDroid JSONContainer test was found. The source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
+## JSON property delegates
+
+[`lib/src/json_property_delegates.dart`](lib/src/json_property_delegates.dart)
+adapts the six typed property delegates and `JSONObjectHolder` factories from
+AnkiDroid 2.25.3 `JSONContainer.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Since Dart has no Kotlin `by`
+property syntax, callers use `getValue` and `setValue`; the receiver and
+property metadata are ignored. The host supplies typed JSON reads, optional
+reads, and writes, preserving its conversions and errors. Scalar delegates use
+the `opt*` read only when a non-null fallback was supplied; every setter calls
+`put` once with the retained object, key, and assigned value. The array delegate
+uses `getJSONArray` and `put`. Focused source-derived tests are in
+[`test/json_property_delegates_test.dart`](test/json_property_delegates_test.dart);
+no direct pinned delegate tests were found. The Kotlin source declares
+`GPL-3.0-or-later` with no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. No JSON.org
+implementation code is copied, and root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
+## Common time utilities
+
+[`lib/src/time_utils.dart`](lib/src/time_utils.dart) adapts the portable
+constants and helpers from AnkiDroid 2.25.3 `TimeUtils.kt` and
+`Time.kt`. It preserves `currentDate()`'s single clock read before date
+creation and `calendar()`'s calendar-first order, exact date assignment, and
+failure propagation. It also preserves formatter/calendar callback order,
+signed Kotlin duration arithmetic, and the source's hour wrapping. `intTime()`
+reads host milliseconds once and truncates signed division toward zero,
+including negative subsecond values. `utcOffset()` creates one host calendar,
+reads its zone and DST millisecond offsets in order, and preserves Kotlin/JVM
+signed Int32 wrapping and truncating division. `genToday()` preserves the formatter,
+GMT assignment, single clock read, Kotlin `Double.toLong()` saturation, signed
+64-bit offset arithmetic, default-zone Gregorian calendar assignment, date
+formatting, and SQL date parsing sequence. The host owns the concrete JVM
+formatter, time-zone, calendar, Date, and `java.sql.Date.valueOf` behavior.
+The host supplies `SimpleDateFormat` with `Locale.US` and its default time zone
+for `getTimestamp()`; `genToday()` explicitly assigns GMT. Concrete Date and
+Calendar types and time-zone behavior, Kotlin duration conversion and formatting,
+and calendar DST rules remain host-side. Focused
+cases are in
+[`test/time_utils_test.dart`](test/time_utils_test.dart) and
+[`test/int_time_test.dart`](test/int_time_test.dart),
+[`test/time_current_date_calendar_test.dart`](test/time_current_date_calendar_test.dart),
+[`test/time_utc_offset_test.dart`](test/time_utc_offset_test.dart), and
+[`test/gen_today_test.dart`](test/gen_today_test.dart).
+The Kotlin source is
+GPL-3.0-or-later with no separate copyright line; the Dart implementation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for provenance and license details.
+
+## Named JSON comparator
+
+`NamedObject` and `NamedJSONComparator.INSTANCE` in
+[`lib/src/named_json_comparator.dart`](lib/src/named_json_comparator.dart) port
+`NamedJSONComparator` from AnkiDroid's
+`common/src/main/java/com/ichi2/anki/common/json/NamedJSONComparator.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter reads the left and right
+names once each, in that order, then returns the host-supplied
+Kotlin/JVM-compatible case-insensitive comparison result unchanged. JVM string
+comparison remains host-side. Focused cases are in
+[`test/named_json_comparator_test.dart`](test/named_json_comparator_test.dart),
+covering the pinned equal-name and ordering assertions plus getter and callback
+order/error behavior. The source is GPL-3.0-or-later, Copyright © 2020 Arthur
+Milchior; the pinned direct test is Copyright © 2021 Shridhar Goel. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source mapping and license details.
+
+## Hash collection initial capacity
+
+`hashSetInit()` and `hashMapInit()` in [`lib/src/hash_util.dart`](lib/src/hash_util.dart)
+adapt `HashUtil.hashSetInit(size)` and `hashMapInit(size)` from
+`common/src/main/java/com/ichi2/anki/common/utils/HashUtil.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Both
+preserve the source's Float32 conversion and division, truncating Float-to-Int
+conversion, signed Int32 addition overflow, and minimum capacity of 16. The
+host supplies the set or map constructor callback; its capacity argument,
+returned value, and failures pass through unchanged. Java collection behavior
+remains host-side. Source-derived tests are in
+[`test/hash_util_test.dart`](test/hash_util_test.dart); no direct pinned test
+was found. The Kotlin source is GPL-3.0-or-later, Copyright © 2021 Arthur
+Milchior. The Dart adaptation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source mapping and license record.
+
+## Time manager override state
+
+`TimeManager<T>` in [`lib/src/time_manager.dart`](lib/src/time_manager.dart)
+ports the override state in `TimeManager.kt` from AnkiDroid 2.25.3, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies the stable
+default time object; `time` returns the exact active override or that same
+default object, `reset()` clears overrides, and `resetWith()` clears then stores
+the exact supplied instance. Clock construction, Android/JVM behavior,
+synchronization, and application lifecycle remain host-side. Source-derived
+tests are in [`test/time_manager_test.dart`](test/time_manager_test.dart); no
+direct pinned TimeManager test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.

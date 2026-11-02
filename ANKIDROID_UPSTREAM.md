@@ -1,0 +1,2472 @@
+# AnkiDroid source baseline
+
+- Project: [ankidroid/Anki-Android](https://github.com/ankidroid/Anki-Android)
+- Release: `2.25.3`
+- Tag: [`v2.25.3`](https://github.com/ankidroid/Anki-Android/tree/v2.25.3)
+- Commit: [`d9bf072f814a0c37d30a694192593b31ff2df875`](https://github.com/ankidroid/Anki-Android/commit/d9bf072f814a0c37d30a694192593b31ff2df875)
+- Retrieved and compared: `2026-10-18` (latest stable release at that time; prereleases excluded)
+- Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
+  files declare `GPL-3.0-or-later`.
+
+## CSV importer destination
+
+`CsvImporterDestination` in `lib/src/csv_importer_destination.dart` adapts
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/CsvImporterDestination.kt:1–8`
+and its `toIntent(context)` extension in
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/CsvImporter.kt:105–110`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+destination retains its exact `filePath`; `toIntent` delegates once to the
+host-supplied equivalent of `CsvImporter.getIntent(context, filePath)` and
+returns that exact result. Context, Android Intent construction, Bundle/key and
+activity behavior remain host-side. `Import.kt:55–63` remains host-side as
+well, including cached-file copying and TaskStackBuilder navigation. Focused
+source-derived tests cover empty and unusual paths, exact context/path
+forwarding, one callback, returned-object identity, and unchanged exception
+propagation. No direct pinned test for this `toIntent` extension was found. The
+Kotlin sources declare `GPL-3.0-or-later` and have no separate copyright line;
+the Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
+## `NoteEditorFragment.Companion.NoteEditorCaller`
+
+`NoteEditorCaller` in `lib/src/note_editor_caller.dart` ports the enum from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2716–2735`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves every enum name,
+integer value, and source declaration order, including the deliberate ordering
+of `REVIEWER_ADD(11)` before `CARDBROWSER_ADD(7)`. `fromValue()` returns the
+first exact match and throws `StateError` for an unknown value, matching the
+source's `first` lookup. Focused source-derived cases are in
+`test/note_editor_caller_test.dart`; no direct pinned test for `fromValue()` was
+found. `addNoteArgs()` in `lib/src/note_editor_add_note_args.dart` projects the
+source `NoteEditorFragment.Companion.addNoteArgs()` at
+`NoteEditorFragment.kt:2757` to a fresh map containing only `CALLER` with the
+`DECKPICKER` caller code (`3`). Android `Bundle` construction and navigation
+remain host-side. Its focused source-derived tests are in
+`test/note_editor_add_note_args_test.dart`; no direct pinned test for this
+helper was found. The Kotlin source declares `GPL-3.0-or-later` and carries
+file-level Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae. These
+names identify the provenance of the Kotlin source only; the Dart adaptation
+and focused test are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
+`COPYING` remains byte-identical.
+
+## `NoteEditorDestination.ImageOcclusion.toIntent(context)`
+
+`noteEditorImageOcclusionToIntent()` in
+`lib/src/note_editor_image_occlusion_to_intent.dart` adapts the
+`ImageOcclusion` branch of `NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:23–27`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `NoteEditorCaller.IMG_OCCLUSION` (`12`), then always writes the
+nullable `imageUri` unchanged as the `image_uri` Parcelable extra, and returns
+the same Intent. Callback failures propagate unchanged and stop later
+operations. Context, `NoteEditorActivity`, Android Intent, and Uri/Parcelable
+behavior remain host-side. Focused source-derived tests in
+`test/note_editor_image_occlusion_to_intent_test.dart` cover call order, null
+and non-null URI forwarding, Intent identity, and failure short circuits. No
+direct pinned test for this branch was found. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; these identify
+the Kotlin source only and do not attribute the Dart adaptation to him. The
+Dart implementation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
+## `NoteEditorDestination.EditNoteFromPreviewer.toIntent(context)`
+
+`noteEditorEditFromPreviewerToIntent()` in
+`lib/src/note_editor_edit_from_previewer_to_intent.dart` adapts the
+`EditNoteFromPreviewer` branch from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:33–38`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `NoteEditorCaller.PREVIEWER_EDIT` (`9`), then writes the exact
+`cardId` as the `editCid` Long extra, and returns that same Intent. Callback
+failures propagate unchanged and stop later operations. Context,
+`NoteEditorActivity`, Android Intent, and typed extra behavior remain host-side.
+Focused source-derived tests in
+`test/note_editor_edit_from_previewer_to_intent_test.dart` cover keys and values,
+source order, zero/negative/large IDs, identity, and failure short circuits. No
+direct pinned test for this branch was found. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this
+identifies the source only and does not attribute the Dart adaptation to him.
+The Dart implementation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
+## `NoteEditorDestination.AddNoteFromReviewer.toIntent(context)`
+
+`noteEditorAddNoteFromReviewerToIntent()` in
+`lib/src/note_editor_add_note_from_reviewer_to_intent.dart` adapts the
+`AddNoteFromReviewer` branch from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:38–43`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `NoteEditorCaller.REVIEWER_ADD` (`11`), then writes the exact
+non-null animation as the `finishAnimation` Parcelable extra; a null animation
+omits that extra. It returns the same Intent. Callback failures propagate
+unchanged and stop later operations. Context, `NoteEditorActivity`, Android
+Intent, and Parcelable handling remain host-side. Focused source-derived tests
+in `test/note_editor_add_note_from_reviewer_to_intent_test.dart` cover caller
+mapping, null omission, animation identity, source order, Intent identity, and
+failure short circuits. No direct pinned test for this `toIntent` branch was
+found. The Kotlin source declares `GPL-3.0-or-later` and has SPDX Copyright
+(c) 2024 Sanjay Sargam; this identifies the Kotlin source only and does not
+attribute the Dart adaptation to him. The Dart implementation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
+## `Time.utcOffset()`
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/time/Time.kt:54–65`
+- Direct tests: none found
+- Dart adaptation: `utcOffset()` in `lib/src/time_utils.dart`
+- Focused Dart cases: `test/time_utc_offset_test.dart`
+
+`utcOffset()` creates one default host Calendar, reads `ZONE_OFFSET` and then
+`DST_OFFSET` once each from that same Calendar, adds their millisecond values
+with signed Int32 wrapping, divides by 1000 with truncation toward zero,
+subtracts from 14,400 with signed Int32 wrapping, and returns the result as a
+Double. Calendar creation, field access, default time zone, and DST rules remain
+host-side. The focused cases cover positive and negative non-divisible values,
+Int32 overflow, one Calendar and ordered reads, and error short-circuiting.
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart implementation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical.
+
+## `Time.genToday(utcOffset)`
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/time/Time.kt:35–47`
+- Direct tests: none found
+- Dart adaptation: `genToday()` in `lib/src/time_utils.dart`
+- Focused Dart cases: `test/gen_today_test.dart`
+
+`genToday()` creates `SimpleDateFormat("yyyy-MM-dd", Locale.US)`, resolves GMT
+and assigns it to that formatter, then reads `intTimeMS()` once. It applies
+Kotlin/JVM `Double.toLong()` truncation, saturation, and NaN-to-zero behavior;
+the subsequent multiply and subtraction wrap as signed 64-bit Long operations.
+It creates a default-zone Gregorian calendar, assigns the computed milliseconds
+once, gets the calendar's Date, formats that Date with the same formatter, and
+passes the exact resulting string to the host `java.sql.Date.valueOf` equivalent.
+Failures propagate unchanged and stop later callbacks. The JVM formatter,
+TimeZone, GregorianCalendar, Date, and SQL Date parsing/normalization remain
+host responsibilities. The source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart implementation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+
+## `Time.currentDate` and `Time.calendar()`
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/time/Time.kt`
+- Direct tests: none found
+- Dart adaptation: `currentDate()` and `calendar()` in `lib/src/time_utils.dart`
+- Focused Dart cases: `test/time_current_date_calendar_test.dart`
+
+`currentDate()` creates the host date from exactly one `intTimeMS()` value,
+reading the clock before date construction. `calendar()` creates the host
+calendar first, then evaluates `currentDate()`, assigns that identical date,
+and returns the same calendar. Failures from calendar creation, clock read,
+date construction, or `setTime` propagate unchanged and prevent subsequent
+operations. Host callbacks retain the JVM `Date`, `Calendar`, default time
+zone, DST, and Gregorian semantics. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart implementation
+and tests are Copyright © 2026 John Tsui under the same license. See
+`NOTICE.md`; root `COPYING` remains byte-identical.
+
+
+## `NoteEditorDestination.PassArguments.toIntent(context)`
+
+`noteEditorPassArgumentsToIntent()` in
+`lib/src/note_editor_pass_arguments_to_intent.dart` adapts the `PassArguments`
+branch of `NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:67–72`,
+with the `arguments` Bundle and nullable `action` declared at
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/NoteEditorDestination.kt:102–107`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent,
+forwards the identical Bundle once with `putExtras`, assigns the exact nullable
+action with `setAction` even when null, and returns that same Intent. Callback
+failures propagate unchanged and stop later operations. Context, Activity,
+Android Intent, Bundle, and their API behavior remain host-side. Focused
+source-derived tests in
+`test/note_editor_pass_arguments_to_intent_test.dart` cover call order, Bundle
+and Intent identity, null and non-null actions, and callback failure short
+circuits. No direct pinned test for this Intent branch was found. The Kotlin
+source declares `GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay
+Sargam; this identifies the Kotlin source only and does not attribute the Dart
+adaptation to him. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
+## `NoteEditorDestination.EditSelection.toIntent(context)`
+
+`noteEditorEditSelectionToIntent()` in
+`lib/src/note_editor_edit_selection_to_intent.dart` adapts the
+`EditSelection` branch from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:50–59`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `EDIT` (`1`), then writes the first card ID as `CARD_ID`, a fresh
+ordered copy of all card IDs (including duplicates) as `CARD_IDS`, the required
+animation as `finishAnimation`, and the exact `inCardBrowserActivity` Boolean.
+The first-ID access follows the caller write, so an empty list fails at that
+point and skips later extras. Callback failures propagate unchanged and stop
+subsequent operations; the same Intent is returned on success. Context,
+`NoteEditorActivity`, Android Intent, Parcelable and LongArray construction
+remain host-side. Focused source-derived cases in
+`test/note_editor_edit_selection_to_intent_test.dart` cover exact values and
+order, first-ID selection, copied array order/duplicates, empty-list failure,
+Intent identity, and callback failure short circuits. No direct pinned test for
+this `toIntent` branch was found; a `NoteEditorTest` assertion uses `toBundle()`,
+not this Intent branch. The Kotlin source declares `GPL-3.0-or-later` and has
+SPDX Copyright (c) 2024 Sanjay Sargam; this identifies the source only and does
+not attribute the Dart adaptation to him. The Dart implementation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
+## `NoteEditorDestination.AddNoteFromCardBrowser.toIntent(context)`
+
+`noteEditorAddNoteFromCardBrowserToIntent()` in
+`lib/src/note_editor_add_note_from_card_browser_to_intent.dart` adapts the
+`AddNoteFromCardBrowser` branch from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:43–50`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, writes
+`CALLER` with `NoteEditorCaller.CARDBROWSER_ADD` (`7`), writes the exact
+`searchTerms` String under `SEARCH` (including an empty string), then writes
+`inCardBrowserActivity` as Boolean `false`. It writes `DECK_ID` as a Long only
+when `deckId != null && deckId > 0`, and returns the same Intent. Callback
+failures propagate unchanged and stop later operations. Context,
+`NoteEditorActivity`, Android Intent, and typed extra behavior remain host-side.
+Focused source-derived tests in
+`test/note_editor_add_note_from_card_browser_to_intent_test.dart` cover the
+extra keys, types, values and order; empty search; null, zero, negative and
+positive deck IDs; Intent identity; and failure short circuits. The pinned
+`CardBrowserViewModelTest.kt:288` covers creation of the typed destination
+fields, not this `toIntent` branch. The Kotlin source declares
+`GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay Sargam; this
+identifies the Kotlin source only and does not attribute the Dart adaptation to
+him. The Dart implementation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical.
+
+## `NoteEditorFragment.Companion.newInstance(args)`
+
+`noteEditorFragmentNewInstance()` in
+`lib/src/note_editor_fragment_new_instance.dart` adapts
+`NoteEditorFragment.Companion.newInstance(args: Bundle)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2748–2751`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host fragment,
+assigns the exact supplied opaque Bundle value to that fragment's arguments
+once, then returns the same fragment. Construction and assignment failures
+propagate unchanged and stop subsequent work. Android Fragment and Bundle
+behavior remain host-side. Focused source-derived tests in
+`test/note_editor_fragment_new_instance_test.dart` cover identity, operation
+order, single invocation, and both failure short-circuits. The Kotlin source
+declares `GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert
+Nagold and (c) 2014 Timothy Rae; those identify the source file and do not
+claim authorship of the Dart adaptation. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
+## `NoteEditorFragment.Companion.newInstance(destination)`
+
+`noteEditorFragmentNewInstanceFromDestination()` in
+`lib/src/note_editor_fragment_new_instance.dart` adapts
+`NoteEditorFragment.Companion.newInstance(destination: NoteEditorDestination)`
+from `AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2753–2754`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes the host-supplied
+destination-to-Bundle callback first with the identical destination, then
+passes the resulting Bundle to the existing `newInstance(args)` adapter. That
+adapter creates one host fragment, assigns the exact Bundle once, and returns
+the same fragment. Conversion, creation, and assignment failures propagate
+unchanged and stop later work. The destination type, DeferredNavigation,
+Android Bundle, and Fragment behavior remain host-side. Focused tests in
+`test/note_editor_fragment_new_instance_test.dart` cover call order, object
+identity, and each failure path. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; these identify the source file and do not claim authorship
+of the Dart adaptation. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `NoteEditorFragment.Companion.shouldReplaceNewlines()`
+
+`noteEditorShouldReplaceNewlines()` in
+`lib/src/note_editor_should_replace_newlines.dart` adapts
+`NoteEditorFragment.Companion.shouldReplaceNewlines()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2759–2762`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+calls the host shared-preferences lookup once, then reads Boolean key
+`noteEditorNewlineReplace` once with default `true`, returning the exact result.
+Both callback failures propagate unchanged and stop later reads; app context,
+SharedPreferences, and preference storage remain host-side. Source-derived
+focused tests in `test/note_editor_should_replace_newlines_test.dart` cover both
+stored values and callback ordering/failure propagation; no direct pinned test
+for this helper was found. The Kotlin source declares `GPL-3.0-or-later` and
+carries file-level Copyright (c) 2012 Norbert Nagold and (c) 2014 Timothy Rae;
+those names describe the Kotlin source provenance, not authorship of the Dart
+adaptation. The Dart implementation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
+## `NoteEditorFragment.Companion.shouldHideToolbar()`
+
+`noteEditorShouldHideToolbar()` in
+`lib/src/note_editor_should_hide_toolbar.dart` adapts
+`NoteEditorFragment.Companion.shouldHideToolbar()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2772–2776`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+looks up host shared preferences once, reads Boolean key
+`noteEditorShowToolbar` once with default `true`, then returns the logical
+negation of that value. Both callback failures propagate unchanged and stop
+later operations; app context, SharedPreferences, and preference storage remain
+host-side. Focused source-derived tests in
+`test/note_editor_should_hide_toolbar_test.dart` cover the exact key/default,
+both stored values, operation order, negation, and failure propagation; no
+direct pinned test for this helper was found. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; these identify the source file and do not claim authorship
+of the Dart adaptation. The Dart implementation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `runWithOOMCheck(action, onError)`
+
+`runWithOomCheck()` in `lib/src/run_with_oom_check.dart` adapts the generic
+`runWithOOMCheck(action, onError)` helper from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:46–58`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes
+the action once and returns its exact result on success. On an action failure,
+the required host classifier decides whether it is an OOM; Dart does not
+portably classify JVM `OutOfMemoryError`. A classified error is passed
+unchanged to the nullable handler, then the adapter returns null. Non-OOM
+action failures are rethrown with their original stack trace; classifier and
+handler failures propagate unchanged. The host retains concrete Android/JVM
+error type resolution. Focused source-derived cases in
+`test/run_with_oom_check_test.dart` cover success identity and call counts,
+classified OOM handling and order, non-OOM propagation, and classifier or
+handler failure propagation. No direct pinned test for this helper was found.
+`Exceptions.kt` declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
+## `Context.getUserFriendlyErrorText(e)`
+
+`contextGetUserFriendlyErrorText()` in
+`lib/src/context_get_user_friendly_error_text.dart` adapts
+`Context.getUserFriendlyErrorText(e)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/Exceptions.kt:18–37`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It checks
+once whether the host classifies the exception as translatable and, if so,
+returns that host-provided translated message immediately, even if blank.
+Otherwise it reads `localizedMessage`, `message`, and exception class simple
+name in that order, returning the first non-null value for which the
+host-provided `isBlank` callback returns false. If none qualifies, it returns
+the host-localized `R.string.error__etc__unknown_error` text. Each property is
+read at most once; callback failures propagate and stop later operations. The
+host retains `TranslatableException`, JVM exception property semantics, Kotlin
+blank classification, Android `Context`, and resource localization. Focused
+cases are in `test/context_get_user_friendly_error_text_test.dart`; no direct
+pinned test for this method was found. `Exceptions.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## `CoroutineWorker.trySetForeground(foregroundInfo)`
+
+`coroutineWorkerTrySetForeground()` in
+`lib/src/coroutine_worker_try_set_foreground.dart` adapts
+`CoroutineWorker.trySetForeground(foregroundInfo)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/CoroutineWorker.kt:13–19`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It awaits the supplied host
+foreground callback once with the same `foregroundInfo`. A failure from that
+callback is passed unchanged to the host warning callback once and swallowed
+when warning succeeds; warning failures propagate unchanged. The host remains
+responsible for Android WorkManager's `CoroutineWorker.setForeground` and
+Timber logging. The Kotlin file declares `GPL-3.0-or-later` and has no separate
+copyright line. Focused source-derived cases in
+`test/coroutine_worker_try_set_foreground_test.dart` cover callback completion,
+argument identity and ordering, broad failure logging and swallowing, and
+warning failure propagation; no direct pinned AnkiDroid test was found. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## `ImageView.setImageDrawableSafe(drawable, onError)`
+
+`imageViewSetImageDrawableSafe()` in
+`lib/src/image_view_set_image_drawable_safe.dart` adapts
+`ImageView.setImageDrawableSafe(drawable, onError)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/ImageView.kt:14–25`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the supplied
+`runWithOomCheck` with an action that calls `setImageDrawable` once with the
+identical nullable drawable and then returns `true`; a null guard result maps
+to `false`. The source's `runWithOOMCheck` catches only `OutOfMemoryError`,
+invokes the optional handler with that same error, and returns null. Other
+failures, including a failure from the handler, propagate. Android ImageView
+and platform-specific OOM classification remain host-side. The source-derived
+cases are in `test/image_view_set_image_drawable_safe_test.dart`; no direct
+pinned test for this extension was found. `ImageView.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui and marked with the same license. Root
+`COPYING` remains byte-identical.
+
+## Chip checked background state
+
+`readChipHasCheckedBackground()` and `setChipHasCheckedBackground()` in
+`lib/src/chip_checked_background.dart` adapt the `Chip.hasCheckedBackground`
+extension from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Chip.kt:16–24`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The getter reads `isChecked` once.
+The setter calls `setCheckable(true)`, `setChecked(value)`, then
+`setCheckable(false)`; host callback failures propagate and stop the remaining
+calls, matching the Kotlin property setter without cleanup. The host owns the
+Android Material Chip, its visual checked-background behavior, and color
+resources. Focused source-derived cases are in
+`test/chip_checked_background_test.dart`. The pinned Kotlin source declares
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
+Tsui and marked with the same license. Root `COPYING` remains unchanged.
+
+## Bitmap dimensions from collection media
+
+`BitmapSize` and `Context.getSizeOfBitmapFromCollection(filename)` in
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Context.kt:43–64` are pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart adapter
+`lib/src/context_bitmap_size.dart` preserves the one directory lookup, one
+`File(directory, filename)`, one existence check with an immediate null return
+when absent, one bounds-only `BitmapFactory.Options`, absolute-path lookup,
+one `decodeFile` call whose return is ignored, and ordered `outWidth` then
+`outHeight` reads. Context, CollectionHelper, File, BitmapFactory, Options, and
+decoding remain host-side. The source `BitmapSize` is a Kotlin data class with
+`Int` width and height; `-1` may indicate decode errors. The focused Dart cases
+in `test/context_bitmap_size_test.dart` cover found/missing files, callback
+order and failure short-circuits, bounds mode, ignored decode return, dimension
+read order, and value semantics. No direct pinned test for this method or data
+class was found. `Context.kt` declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
+## Field filters and chain
+
+`FilterContext`, the `FieldFilter` default contract, all built-ins including
+`TextToSpeechFilter`, `TextToSpeechOptions`, `FieldFilters.ALL`, and
+`FieldFilterChain` in `lib/src/field_filter.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/model/FieldFilters.kt` from AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart model
+preserves immutable context fields and defaults, copy transitions, Kotlin
+data-class equality/hash/string behavior, exact filter names, applicability
+gates, and context updates. `NoSuggestFilter.apply(fieldText, fieldName,
+filterName)` requires all three arguments and preserves the exact `nosuggest`
+name check, `[[type:` presence check, existing `[[type:nosuggest:` guard, and
+replacement of every eligible `[[type:` marker. `FieldFilterChain` preserves
+source short-circuit and callback order, invalid-chain propagation under
+`allowInvalid`, duplicate rejection by filter name, immutable append results,
+and reverse display order. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/model/FieldFilterChainTest.kt` covers
+empty/single/multiple rendering, the `ja_JP` / voice-list / `0.8f` TTS
+rendering, filter name, validity and invalid-chain behavior, terminal TTS, and
+the HTML/cloze/type/no-suggest/pronunciation constraints. The focused Dart tests
+are `test/field_filter_test.dart`, `test/field_filter_chain_test.dart`, and
+`test/field_filter_tts_test.dart`. They cover the source TTS fixture, empty
+present options, source token order and suffix rules, binary32 speed values,
+Float notation thresholds and special values, structural nullable data-class
+equality/hash/string output including mutable voice lists, and the exact `FieldFilters.ALL`
+order. Template parsing/rendering, `TemplateManager.fieldFilters` runtime
+registration, Android UI, and Fragment lifecycle remain host-side. The pinned Kotlin
+implementation and test declare `SPDX-License-Identifier: GPL-3.0-or-later`
+and have no separate copyright line. The Dart adaptation and focused tests are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical.
+
+## Sync identifiers
+
+`NotificationId` in `lib/src/notification_id.dart` preserves the ordered public
+constants `SYNC = 101` and `SYNC_MEDIA = 123` from
+`AnkiDroid/src/main/java/com/ichi2/anki/notifications/NotificationId.kt`.
+`UniqueWorkNames` in `lib/src/unique_work_names.dart` preserves `SYNC = "sync"`
+and `SYNC_MEDIA = "syncMedia"` from
+`AnkiDroid/src/main/java/com/ichi2/anki/worker/UniqueWorkNames.kt`. Both sources
+are pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`; each declares
+`SPDX-License-Identifier: GPL-3.0-or-later` with no separate copyright line.
+
+The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/ConstantUniquenessTest.kt` uses Kotlin
+reflection to assert uniqueness of public constants in `NotificationId` and
+`UniqueWorkNames`, along with two unrelated objects not ported here. That test
+declares `GPL-3.0-or-later` and Copyright © 2024 WPum
+<27683756+WPum@users.noreply.github.com>. The focused Dart test
+`test/sync_constants_test.dart` asserts source-exact values and order and checks
+that each selected group's values are unique. Notification APIs, WorkManager,
+sync execution, and scheduling remain host-side. The Dart adaptation and test
+are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING` remains
+byte-identical.
+
+## Filename sanitization
+
+`Filename` and `Filename.sanitize()` in `lib/src/filename.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/export/Filename.kt` from AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The implementation preserves
+the exact invalid-character regex `[\\/?<>:*|"^]`, replacing every occurrence
+with `_`; the private constructor prevents exposing an unsanitized value. Its
+value equality, hash, and `toString()` projection follow the Kotlin value class.
+`test/filename_test.dart` ports the four direct cases from
+`AnkiDroid/src/test/java/com/ichi2/anki/export/FilenameTest.kt` (valid name,
+all invalid characters, colon, and repeated subdeck separator) and separately
+checks value semantics. The host remains responsible for file creation, paths,
+extensions, and platform filesystem rules. Both pinned Kotlin files declare
+`SPDX-License-Identifier: GPL-3.0-or-later` and contain no separate copyright
+line; no method-specific authorship is asserted. The Dart adaptation/tests are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains
+byte-identical.
+
+## CSV/TSV MIME types
+
+`MimeTypeUtils.csvTsvMimeTypes` in `lib/src/mime_type_utils.dart` adapts
+`MimeTypeUtils.CSV_TSV_MIME_TYPES` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/MimeTypeUtils.kt` at pinned
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It retains the source order:
+`text/comma-separated-values`, `text/csv`, `text/tab-separated-values`,
+`text/tsv`, `text/plain`. The Kotlin `object` property holds one mutable array;
+the Dart static final property likewise holds one shared mutable list. The
+direct integration assertion is
+`AnkiDroid/src/test/java/com/ichi2/anki/dialogs/ImportFileSelectionFragmentTest.kt:43–50`,
+which passes the array to the picker Intent and compares the Intent's MIME
+values to it in order. Android Intent and import-picker construction and
+behavior remain host-side. The Kotlin source has a full GPL version 3-or-later
+notice and Copyright © 2025 argon2r <vincentcs008@gmail.com>, but no SPDX
+identifier marker; the direct test has `SPDX-License-Identifier:
+GPL-3.0-or-later` and Copyright © 2026 Ashish Yadav
+<mailtoashish693@gmail.com>. The Dart adaptation and focused contract test are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical.
+
+## SearchString value contract
+
+`SearchString` in `lib/src/search_string.dart` adapts the private-constructor
+Kotlin inline value wrapper from
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchString.kt` at
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves wrapped-string value
+equality, Kotlin/JVM `String.hashCode()` semantics, exact `toString()` projection,
+UTF-16 code-unit `length`, and `EMPTY`. The public
+`fromValidatedBackendSearchString()` factory only wraps a search string already
+built and validated by the backend; it does not parse, validate, or normalize a
+query. Backend `SearchString` construction/conversion from queries or
+`SearchNode`s via `Collection.buildSearchString`, query parsing/validation,
+backend error translation, generated search types, collection search methods,
+and backend/Rust search behavior remain host-side. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchStringTest.kt`
+exercises upstream query-building paths but does not directly test the wrapper's
+value semantics; focused source-derived contract cases are in
+`test/search_string_test.dart`. The Kotlin source and test declare
+`GPL-3.0-or-later` and have no separate copyright line. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`.
+Root `COPYING` remains byte-identical.
+
+## LinearLayoutManager visible positions
+
+`VisibleItemPositionRange`, `visibleItemPositions()`, and
+`positionIsVisible()` in `lib/src/linear_layout_manager_visible_positions.dart`
+adapt the `LinearLayoutManager.visibleItemPositions` property and
+`positionIsVisible(position)` extension from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/LinearLayoutManager.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The callbacks map directly to the
+host's first-visible and last-visible adapter-position queries and run once
+each in that order. If either result is `RecyclerView.NO_POSITION` (`-1`), the
+adapter returns Kotlin's `IntRange.EMPTY`; otherwise it preserves the inclusive
+`first..last` endpoints, including the empty membership of reversed bounds.
+`positionIsVisible()` checks membership in that same range. Android
+`LinearLayoutManager`, `RecyclerView`, and layout state/querying remain
+host-side; the adapter does not inspect child views or recompute layout. The
+pinned file declares `GPL-3.0-or-later` and has no separate copyright line. A
+search of the pinned source tree found no direct test for this extension; the
+focused Dart tests are source-derived. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
+## JsonReader object decoding
+
+`readJsonObject()` and `readSingleJsonObject()` in `lib/src/json_reader.dart`
+adapt `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/JsonReader.kt` at the
+pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The first checks for
+`BEGIN_OBJECT` before consuming it, recursively builds objects and arrays in
+input order, inserts the host's JSON-null sentinel, reads integer tokens as a
+signed 64-bit value before preserving the narrower signed 32-bit width, and
+parses remaining number tokens as finite doubles. It preserves the source
+messages for non-object input, trailing document data, non-finite numbers, and
+unexpected value tokens; token-reader, container-construction and insertion
+failures pass through unchanged. `JsonIntegerValue` records whether the source
+value was a JVM `Int` or `Long` so an Android adapter can insert the matching
+boxed type. `readJsonObject()` does not close its caller-owned reader;
+`readSingleJsonObject()` checks `END_DOCUMENT`, while the host file helper
+retains UTF-8 reader creation and ownership/closing even on failure. Android
+`JsonReader` tokenization, `MalformedJsonException` identity, `JSONObject`,
+`JSONArray`, and file IO remain host-side.
+
+The direct pinned test is
+`AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/JsonReaderTest.kt`; it checks
+large escaped Unicode strings, nested objects and arrays, integer precision,
+exponent notation, malformed and trailing input, and reader failures. The
+focused Dart source-derived cases are in `test/json_reader_test.dart`. Both
+pinned Kotlin files declare `SPDX-License-Identifier: GPL-3.0-or-later` and
+have no separate copyright line. The Dart adaptation and tests are Copyright
+© 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains
+byte-identical.
+
+## CardStateFilter search fragments
+
+`CardStateFilter` in `lib/src/card_state_filter.dart` adapts the enum and
+`toSearch` property from
+`AnkiDroid/src/main/java/com/ichi2/anki/model/CardStateFilter.kt` at pinned
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the enum names and
+order `ALL_CARDS`, `NEW`, `DUE`, with exact search fragments `''`, `'is:new '`,
+and `'is:due '` respectively, including the latter two trailing spaces. The
+host retains Card Browser UI selection, query composition, and search execution.
+Focused source-derived contract cases are in
+`test/card_state_filter_test.dart`. The pinned
+`CardBrowserViewModelTest.kt` passes `ALL_CARDS` through tag filtering but does
+not directly assert `toSearch`; no dedicated `CardStateFilter` test source was
+found. The Kotlin file declares `SPDX-License-Identifier:
+GPL-3.0-or-later` and has no separate copyright line; no method-specific
+authorship is asserted. Root `COPYING` remains byte-identical.
+
+## AnalyticsSamplePercentage value contract
+
+`AnalyticsSamplePercentage` in `lib/src/analytics_sample_percentage.dart`
+adapts `AnkiDroid/src/main/java/com/ichi2/anki/analytics/AnalyticsSamplePercentage.kt:1–38`
+from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It accepts only `-1` or percentages
+from `0` through `100`, preserves the exact validation message, and implements
+the initialization predicate, `Uninitialized`/`Full` constants, integer-based
+equality and hash, and Kotlin value-class string form. Analytics collection,
+resource/configuration lookup, Firebase, event-sampling effects, and transport
+remain host-side. No direct focused test for this value was found at the pinned
+source; `test/analytics_sample_percentage_test.dart` contains source-derived
+contract cases and is not an Android test-harness port. The Kotlin source declares
+`SPDX-License-Identifier: GPL-3.0-or-later` and Copyright © 2026 Ashish Yadav
+<mailtoashish693@gmail.com>; no method-level authorship is asserted. Root
+`COPYING` remains byte-identical.
+
+## AnkiBackendLanguage tag normalization
+
+`AnkiBackendLanguage` in `lib/src/anki_backend_language.dart` adapts the app-side
+value and `fromLanguageTag()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/backend/AnkiBackendLanguage.kt` at
+pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Focused cases are in
+`test/anki_backend_language_test.dart`, derived from
+`AnkiDroid/src/test/java/com/ichi2/anki/backend/AnkiBackendLanguageTest.kt`.
+The direct identifier syntax, aliases, blank-input handling, and value semantics
+are implemented in Dart. Java `Locale.Builder().setLanguageTag(...).clearExtensions()
+.build().toLanguageTag()` normalization remains an explicit host callback; the
+callback receives underscores converted to hyphens, returns null for Java
+`IllformedLocaleException`, and lets unexpected failures propagate. This keeps
+Java locale canonicalization, including removal of `x-lvariant` private-use
+extensions, on the host. The pinned tests also iterate `LanguageUtil.APP_LANGUAGES`
+and `BACKEND_LANGS`; those lists and their broader localization behavior are not
+part of this bounded port. The source and test declare `GPL-3.0-or-later` with no
+separate copyright line; no method-specific authorship is asserted. Root
+`COPYING` remains byte-identical.
+
+## Card Browser selected-row refresh effects
+
+`runBrowserAppendSelectedRowsEffects()` and
+`runBrowserRemoveSelectedRowsEffects()` in
+`lib/src/browser_selected_row_refresh_effects.dart` adapt
+`CardBrowserViewModel.onAppendSelectedRows()` and
+`onRemoveSelectedRows()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:908–927`
+from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies whether rows
+remain after its selection mutation. Append emits the supplied multi-select
+reason only when rows remain; remove emits its single-select reason only when
+no rows remain and `disableMultiSelectIfEmpty` is true (default true). Both
+always refresh selected rows and then log, in source order. Callback failures
+propagate unchanged and stop later effects. Selection mutation, Android
+`viewModelScope.launch`, `_selectedRows`, StateFlow/SharedFlow, and Timber remain
+host-side. Focused cases are source-derived in
+`test/browser_selected_row_refresh_effects_test.dart`. The pinned
+`CardBrowserViewModelTest.selected rows are refreshed` checks resulting flow
+values across selection operations, but does not assert these mode-reason gates
+or effect order. The source file declares `SPDX-License-Identifier:
+GPL-3.0-or-later` and has no file-level copyright line; no method-specific
+authorship is asserted. Root `COPYING` remains byte-identical.
+
+## CardTemplateEditor Back dispatcher
+
+`cardTemplateEditorBackDispatcherPressed()` in
+`lib/src/card_template_editor_back_dispatcher.dart` adapts the anonymous
+`OnBackPressedCallback.handleOnBackPressed()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:180–182` from
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes the host discard-dialog
+callback exactly once and propagates callback failures unchanged. The separate
+dispatcher enabled state and keyboard-dependent update remain in their existing
+projections; Android dispatcher, callback lifecycle, and dialog remain host-side.
+Focused source-derived cases are in
+`test/card_template_editor_back_dispatcher_test.dart`; no direct pinned test
+for this callback was found. The source file is marked `GPL-3.0-or-later` and
+its file-level SPDX header credits Timothy Rae (2014) and Mike Hardy (2018); no
+method-specific authorship is asserted. Root `COPYING` remains byte-identical.
+
+## Card Template Editor discard confirmation
+
+`cardTemplateEditorShowDiscardChangesDialog()` in
+`lib/src/card_template_editor_discard_confirmation.dart` adapts
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:433–441`
+(`showDiscardChangesDialog`) from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It passes the source
+confirmation callback to the host dialog and returns its exact opaque result.
+No effect runs before confirmation. The callback logs the exact source literal,
+clears temporary note type files, sets the editor's temporary note type to null,
+then finishes; callback failures propagate unchanged and stop later effects.
+Android dialog behavior, Timber, temporary-model/cache access, and Activity
+lifecycle remain host-side. The source file SPDX header attributes Copyright
+© 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is
+asserted. Focused cases in
+`test/card_template_editor_discard_confirmation_test.dart` are
+source-derived because no direct pinned test covers this callback.
+
+## CardTemplateEditor.onActionBarBackPressed
+
+`CardTemplateEditor.onActionBarBackPressed()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:347–359` (pinned
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted
+by `cardTemplateEditorActionBarBackPressed()` in
+`lib/src/card_template_editor_action_bar_back.dart`. The projection calls the
+host's note-type-change check once, then invokes the host discard dialog when
+changed or Activity finish when unchanged, and returns true only after the
+selected callback succeeds. Callback failures propagate unchanged. This
+action-bar path is distinct from the Back dispatcher and does not inspect
+keyboard state. Android Activity, dialog, lifecycle, and view remain host-side.
+Focused tests in `test/card_template_editor_action_bar_back_test.dart` are
+source-derived; no direct pinned test for this action-bar callback was found.
+
+The source file declares `GPL-3.0-or-later` and identifies Copyright © 2014
+Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted.
+
+## CardTemplateFragment.saveNoteType
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1091–1119`
+(`saveNoteType`, pinned commit `d9bf072f814a0c37d30a694192593b31ff2df875`)
+is adapted by `cardTemplateFragmentSaveNoteType()` in
+`lib/src/card_template_fragment_save_note_type.dart`. The port preserves the
+unchanged-note finish path, disabled-button early return, disable-before-task
+sequence, pre-task error-message lookup, in-task Activity and progress-message
+order, non-null temporary-model save, success callback, and `Exception`-only
+log/post/rethrow boundary. Activity, views, resources, task/progress execution,
+the temporary-model `!!` read, database save, logging, and lifecycle remain
+host-side. Focused tests are in
+`test/card_template_fragment_save_note_type_test.dart` and cover unchanged and
+disabled paths, successful callback order, caught exception identity and
+button re-enable, null-button behavior, and `Error` propagation. The pinned
+`CardTemplateEditorTest` includes successful confirm/save flows at lines
+160–185, 237–243, 293–300, 488–493, 588–595, and 694–700, but does not cover
+these branch/error details; the focused Dart cases are source-derived.
+
+## CardTemplateFragment.onModelSaved
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1305–1314`
+(`onModelSaved`, pinned commit `d9bf072f814a0c37d30a694192593b31ff2df875`)
+is adapted by `cardTemplateFragmentOnModelSaved()` in
+`lib/src/card_template_fragment_on_model_saved.dart`. It preserves the exact
+log, confirm-button lookup, non-null same-button enable, temporary note type
+clear, and Activity finish order. The button branch remains lazy; callback
+failures propagate and stop later effects. Android view/resource lookup, Timber,
+temporary-model mutation, and Activity lifecycle remain host-side. Focused cases
+in `test/card_template_fragment_on_model_saved_test.dart` cover source order,
+null-button behavior, and callback failure stopping; no direct pinned upstream
+test for this callback was found, so the Dart cases are source-derived.
+
+
+## CardTemplateFragment.restoreNotetypeToStock
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1162–1172`
+(`restoreNotetypeToStock`, pinned commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted by
+`cardTemplateFragmentRestoreNotetypeToStock()` in
+`lib/src/card_template_fragment_restore_notetype_to_stock.dart`. It reads the
+temporary model's note-type ID, invokes the host `notetypeId` builder, awaits
+the host undoable operation with `notetypes.restoreNotetypeToStock(nid, kind)`,
+then calls `onModelSaved()`, resolves `requireContext()` and
+`TR.cardTemplatesRestoredToDefault()`, and shows a themed toast with
+`shortLength = false`. The nullable kind is forwarded unchanged. Failures
+propagate unchanged and stop later effects. Model/collection access, generated
+ID creation, undoable operation, Android context/resources, and toast remain
+host-side. The source annotation is
+`@NeedsTest("Notetype is restored to stock kind")`. The pinned
+`CardTemplateEditorTest.kt` was checked; no direct test for this method was
+found, so the focused Dart cases are source-derived.
+
+
+This repository is a partial Dart port of that exact source snapshot. The
+current implementation covers deck-picker filtering and visible-row
+construction, the headless review-session action lifecycle, reviewer count and
+answer-button next-time presentation models, the reviewer answer-timer state
+machine, the reviewer Auto Advance model, the headless reviewer gesture
+parser, parsed-gesture command routing, a headless codec and map for serialized
+reviewer bindings and command default definitions, projected key-event
+candidate construction and dispatch, the projected axis-button debounce and
+dispatch, the collection timebox counter and
+rounded-minute model, and
+the previewer's headless card-navigation and flag decision/effect projections, and
+the Reviewer's flag-toggle, browse-to-card and statistics destinations,
+deck-options target,
+previous-card-info, edit-note destination, and edited-tags projections,
+the Card Browser's
+active-column collection, sort preference, column-selection click-toggle plan,
+and recent-search ordering,
+serialization, display-state, saved-search value, saved-history request
+restoration, structured search-node planning and the tag-filter query
+wrapper, launch-option precedence,
+Cards/Notes row-ID selection and expansion, selected-row export-data
+projection, source-ordered row-activation
+directives, and the bulk bury/unbury decision and result projection,
+search-text transitions, ordered
+text-edit/submission/sync/reset effects, saved-search submission and
+history-selection effects, the save-search prompt query decision,
+CardTemplate marker-based string composition and QA-content wrapping,
+card-template type-answer modifier parsing, cloze-index derivation,
+source-compatible cloze-content extraction, host-input field/result decisions,
+question-side type-answer placeholder removal, and answer-side
+placeholder substitution using host-computed comparison HTML;
+it does not claim to reproduce the whole Android app.
+
+The portable Import ViewModel slice routes add and replace requests with their
+original path strings; SharedFlow, coroutine scheduling, importer/backend work,
+and Android UI remain host-side.
+
+The Set Due Date slice preserves the portable validation and parameter decisions
+from `SetDueDateViewModel.kt`; collection reads, undoable scheduling, dialog
+behavior, and scheduler mutation remain host-side. The Study Options slice maps
+`DeckStudyData`, buried-count derivation, and Loading/Empty/Congrats/StudyOptions
+state projections from `StudyOptionsViewModel.kt`; collection access, flow
+publication, Android lifecycle, description rendering, media resolution, and UI
+remain host-side. The Custom Study slice maps the selected card-state index to
+its scheduler kind; SavedStateHandle, Android spinner, labels/localization, and
+scheduler execution remain host-side. The Manage Tags slice maps tag-name
+normalization and ancestor paths plus the recursive tree's flattened display,
+collapsed visibility, and search projections; collection tag loading/mutation,
+undo, StateFlow, RecyclerView/lifecycle, and user messages remain host-side.
+
+## Source-to-Dart mapping
+
+| AnkiDroid 2.25.3 source | Dart port | Covered behavior |
+| --- | --- | --- |
+| `common/src/main/java/com/ichi2/anki/common/time/TimeUtils.kt:10–46` and direct tests `common/src/test/java/com/ichi2/anki/common/time/TimeUtilsTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `SECONDS_PER_DAY`, `TIME_MINUTE`, `TIME_HOUR`, `TIME_DAY`, `getTimestamp()`, `formatAsString()`, and `getDayStart()` in `lib/src/time_utils.dart`; focused cases in `test/time_utils_test.dart` | Preserves the constants, Double arithmetic, formatter creation/date-read/format order, signed Kotlin Long truncation and remainder behavior, selected format patterns, and `h % 60` wrap. `getDayStart()` preserves its single calendar, 4 AM comparison, ordered roll-back and field writes, and final time read. Source-derived cases cover callback order, failure short-circuiting, negative durations and >59-hour wrapping. `SimpleDateFormat` with `Locale.US` and the default time zone, Kotlin Duration conversion/String formatting, and Calendar time zone/DST/Gregorian behavior remain host-side. The source declares `GPL-3.0-or-later` and has no separate copyright line; the direct Kotlin test file credits Dhanush Sugganahalli. Dart attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/time/Time.kt:54–65` (`utcOffset`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `utcOffset()` in `lib/src/time_utils.dart`; focused cases in `test/time_utc_offset_test.dart` | Creates one default host Calendar, reads `ZONE_OFFSET` then `DST_OFFSET` once each, preserves signed Int32 addition/subtraction wrapping and truncation toward zero, and returns the exact Double result. Calendar creation, field access, time-zone, and DST behavior remain host-side. Callback failures propagate unchanged and stop later reads. No direct pinned test was found; cases are source-derived. The source declares `GPL-3.0-or-later` and has no separate copyright line; Dart attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/time/Time.kt:intTime()` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `intTime()` in `lib/src/time_utils.dart`; focused cases in `test/int_time_test.dart` | Reads the host millisecond clock once, divides signed milliseconds by 1000 with truncation toward zero, and propagates host read failures unchanged. No direct pinned `intTime()` test was found; negative subsecond and non-multiple cases are source-derived. Host clock access remains host-side. The source declares `GPL-3.0-or-later` and has no separate copyright line. Dart attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/time/Time.kt:35–47` (`genToday`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `genToday()` in `lib/src/time_utils.dart`; focused cases in `test/gen_today_test.dart` | Preserves formatter creation, GMT lookup/assignment, one clock read, Kotlin/JVM `Double.toLong()` truncation/saturation/NaN conversion, wrapping signed 64-bit multiplication and subtraction, default-zone Gregorian calendar assignment, same-formatter Date formatting, and unchanged SQL Date input. Callback failures propagate and short-circuit. Concrete JVM formatter, time-zone, GregorianCalendar, Date, and `java.sql.Date.valueOf` behavior remain host-side. No direct pinned test was found; focused Dart cases are source-derived. The source declares `GPL-3.0-or-later` and has no separate copyright line; Dart attribution and license details are in `NOTICE.md`, and root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/time/Time.kt:currentDate` and `calendar()` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `currentDate()` and `calendar()` in `lib/src/time_utils.dart`; focused cases in `test/time_current_date_calendar_test.dart` | `currentDate()` reads host milliseconds once before creating the host date. `calendar()` creates one calendar first, evaluates the current date once, assigns that exact date, and returns the same calendar. Creation, clock, date, and assignment failures propagate unchanged and prevent later callbacks. Concrete JVM Date/Calendar, default time zone, DST, and Gregorian behavior remain host-side. No direct pinned tests were found; focused cases are source-derived. The source declares `GPL-3.0-or-later` and has no separate copyright line. Dart attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/BundleUtils.kt` (`getLongOrNull`, `getIntOrNull`, `requireLong`, `requireString`, `requireBoolean`) and `AnkiDroid/src/test/java/com/ichi2/utils/BundleUtilsTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `BundleUtilsAccess` and `BundleUtilsScalarAccessors` in `lib/src/bundle_utils.dart`; focused cases in `test/bundle_utils_test.dart` | Preserves single presence checks, getter suppression for absent nullable keys, required-key failure before typed reads, source messages, and callback order. Kotlin `IllegalStateException` maps to Dart `StateError`; null required String maps Kotlin `requireNotNull` / `IllegalArgumentException` to Dart `ArgumentError`. The pinned tests directly cover nullable Long and required Long/Boolean presence/read paths; nullable Int, null String, exact messages and callback propagation are added source-derived coverage. The host supplies the narrow typed adapter; Android Bundle coercion and Parcelable/class-loader behavior remain host-side. Source attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/SavedStateHandle.kt` (`require`, `getLongOrNull`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `savedStateHandleRequire<T>()` and `savedStateHandleGetLongOrNull()` in `lib/src/saved_state_handle.dart`; source-derived cases in `test/saved_state_handle_test.dart` | The required-value helper calls the host getter once, returns the identical non-null value, and throws `StateError` with the exact source message on null. The nullable Long helper checks presence once, reads only when present, and casts the result to `int?`, preserving null and cast failure. Host callback failures propagate unchanged; generic type checks, Android SavedStateHandle, and lifecycle remain host-side. No direct pinned tests cover these helpers. Source attribution and license details are in `NOTICE.md`; root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/notifications/NotificationId.kt` and `AnkiDroid/src/main/java/com/ichi2/anki/worker/UniqueWorkNames.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); direct uniqueness evidence in `AnkiDroid/src/test/java/com/ichi2/anki/ConstantUniquenessTest.kt` | `NotificationId` in `lib/src/notification_id.dart` and `UniqueWorkNames` in `lib/src/unique_work_names.dart`; cases in `test/sync_constants_test.dart` | Preserves source declaration order and exact `SYNC` / `SYNC_MEDIA` values for notification IDs (`101`, `123`) and unique-work names (`"sync"`, `"syncMedia"`), with a direct Dart uniqueness assertion for each group. The pinned test's reflection helper checks these two objects and two additional unported objects; those remain outside scope. Notification APIs, WorkManager, sync execution, and scheduling remain host-side. Source/test authorship and GPL details are recorded above and in `NOTICE.md`; root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:374–387` (`loadDeckList`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `loadDeckList()` in `lib/src/deck_picker_load_deck_list.dart`; focused cases in `test/deck_picker_load_deck_list_test.dart` | Checks collection-open state first and returns without later reads/effects when closed. For an open collection it reads the fingerprint once, skips backup only for the exact `robolectric` value, otherwise requests asynchronous backup launch without awaiting it, logs `updateDeckList`, then waits for exactly one host reload. Callback failures propagate unchanged and stop later effects. The host retains `launchCatchingIO`, Android collection/fingerprint access, backup execution, Timber, reload implementation/Job semantics, IO dispatch, and lifecycle. A bounded search of pinned tests found no direct `loadDeckList` test; `DeckPickerViewModelTest.kt` covers related `reloadDeckCounts` and `updateDeckList` behavior. The source declares `SPDX-License-Identifier: GPL-3.0-or-later` and has no file-level copyright text; no method-specific authorship is asserted. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:180–182` (`OnBackPressedCallback.handleOnBackPressed`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateEditorBackDispatcherPressed()` in `lib/src/card_template_editor_back_dispatcher.dart`; focused cases in `test/card_template_editor_back_dispatcher_test.dart` | Invokes the host discard-dialog callback exactly once and propagates its failure unchanged. The separate dispatcher enabled state and keyboard gate remain in their existing projections; Android dispatcher, callback lifecycle, and dialog remain host-side. The pinned source file is `GPL-3.0-or-later` and its file-level SPDX credits Timothy Rae (2014) and Mike Hardy (2018); no method-specific author is asserted. Root `COPYING` is unchanged. No direct pinned test for this callback was found; the focused Dart case is source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:361–404` (`CardTemplateEditor.onCollectionLoaded`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateEditorOnCollectionLoadedCallbacks` and `cardTemplateEditorOnCollectionLoaded()` in `lib/src/card_template_editor_on_collection_loaded.dart`; focused cases in `test/card_template_editor_on_collection_loaded_test.dart` | Preserves superclass callback and notetype-cache clear order; only when the temporary note type is absent, looks up by the original ID, delegates the source assertion and deep clone to the host, then assigns the clone. It then assigns current field names, creates/assigns the adapter, sets offscreen limit 7, creates the mediator with a deferred callback that reads the current temporary note type/template/name, and attaches it. Optional ActionBar title then current-note-type subtitle precede the exact success and starting-tab log calls. Only ordinals other than `-1` read the pager/animation setting and set its current page; discard-change callback update is last. Host failures propagate and stop later operations. Collection/models, cloning/mutation, Android pager/adapter/mediator/ActionBar/resources, logging, and Activity lifecycle remain host-side. The source marks the method `@NeedsTest`; no direct pinned test covers it, so Dart cases are source-derived. Source-file SPDX credits Copyright © 2014 Timothy Rae and © 2018 Mike Hardy; no method-level authorship is asserted. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/NoteFieldsCheckResult.kt` (`checkNoteFieldsResponse` decision branches; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `NoteFieldsCheckStatus`, `NoteFieldsCheckMessages`, and `projectNoteFieldsCheckResult()` in `lib/src/note_fields_check_result.dart`; source-derived cases in `test/note_fields_check_result_test.dart` | Maps NORMAL and DUPLICATE to success; EMPTY to the host-supplied Image Occlusion or ordinary first-field message; each cloze validation status to its exact host-localized message; and UNRECOGNIZED to failure with a null message. The host performs note/collection/backend validation, maps generated response states to semantic statuses, supplies Image Occlusion status and localization, and displays the result. Note, collection, generated protocol types, localization, validation, and Android remain host-side. The source declares `GPL-3.0-or-later` and Copyright (c) 2024 Ashish Yadav; no direct pinned focused test was found, so Dart cases are source-derived. No generated protocol code is copied. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReminderLogTree.kt`, `common/src/main/java/com/ichi2/anki/common/utils/ext/ByteArray.kt`, and `common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reminderLogPrefix`, line/header/level projection, and byte newline/trim projection in `lib/src/reminder_log_projection.dart`; focused cases in `test/reminder_log_projection_test.dart` | Preserves the exact anchored `[Reminders]` / numeric-ID header with optional single space, INFO-and-above predicate, source level chars, missing-ID marker, header stripping, LF escaping, max line length handoff, and byte-array trim behavior including equal trigger, negative index clamp, and no-newline discard. Pinned references are `ReminderLogTreeTest.kt` and `ByteArrayTest.kt`; the Dart tests include focused source-derived edge cases. The host supplies formatted timestamps and grapheme-aware ellipsizing and retains Timber routing, Android logging, coroutine scheduling, file IO, atomic rename, and error handling. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/FullScreenMode.kt` (`getPreferenceValue`, `isFullScreenReview`, `fromPreference`, legacy upgrade, and `setPreference`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ReviewerFullScreenMode`, `isFullScreenReview()`, and host-facing preference plans in `lib/src/reviewer_full_screen_mode.dart`; focused cases in `test/reviewer_full_screen_mode_test.dart` | Preserves serialized values `0` / `1` / `2`, default and null/unknown fallback, the source fullscreen predicate, legacy `true` → BUTTONS_ONLY and `false` → BUTTONS_AND_MENU mapping, and ordered new-string write then legacy-key removal only when the legacy key exists. The source declares `GPL-3.0-or-later` and names no separate copyright holder; no pinned FullScreenMode unit test was found, so Dart cases are source-derived. The host reads SharedPreferences, checks legacy-key presence and value, and applies the plan in its Android edit transaction. Android window/insets/UI effects and SharedPreferences itself are not ported. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/account/LoginViewModel.kt` (`LoginError`, `onUserNameFocusChange`, `onPasswordFocusChange`, `onTextChanged`, and `LoginState`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `LoginInputState`, `LoginError`, and `LoginState` variants in `lib/src/login_input_state.dart`; focused cases in `test/login_input_state_test.dart` | Preserves `EMPTY_USERNAME` / `EMPTY_PASSWORD` only when the corresponding value is empty and focus is lost, clears each field error otherwise, and enables login iff both inputs are nonempty without trimming. Idle and Success are singleton states; Error carries the original opaque exception object. No direct pinned tests for these paths were found; focused Dart cases are source-derived. Authentication, sync, preferences, PII-sensitive logging, Android string resources, StateFlow/coroutines, lifecycle, and UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/account/LoggedInViewModel.kt` (`onLogout()`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `LoggedInLogoutCallbacks`, `LoggedInLogoutPlan`, and `planLoggedInLogout()` in `lib/src/logged_in_logout_plan.dart`; cases in `test/logged_in_logout_plan_test.dart` | Calls the host callbacks in order: clear saved hkey, clear username, clear current sync URI, then force media resync. Callback failures propagate immediately, prevent later callbacks, and do not roll back earlier effects. The host owns preference storage, collection/media access, coroutine scheduling and errors, lifecycle, and UI; no credential values are supplied to this plan. Focused order/failure cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/preferences/profiles/SwitchProfilesViewModel.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/preferences/profiles/SwitchProfilesViewModelTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `SwitchProfilesDialogState` in `lib/src/switch_profiles_dialog_state.dart`; focused cases in `test/switch_profiles_dialog_state_test.dart` | Starts with an empty profile list and hidden add dialog, sets visibility on show and off on dismiss, and hides the dialog after a valid-name confirmation without adding a profile, preserving the pinned TODO. Source tests directly cover the visibility actions and confirmation; the empty-list assertion is source-derived. ProfileManager/profile IO, logging, StateFlow, lifecycle, and Android UI remain host-side; ProfileName validation is mapped below. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/preferences/profiles/ProfileItem.kt`, `common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt:firstGraphemeOrNull`, and tests `AnkiDroid/src/test/java/com/ichi2/anki/preferences/profiles/ProfileItemTest.kt` / `common/src/test/java/com/ichi2/anki/common/utils/StringUtilsTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ProfileItem` in `lib/src/profile_item.dart`; focused cases in `test/profile_item_test.dart` | Preserves ProfileId/name value equality and `initial`: one host-supplied first-grapheme result is uppercased, or `?` is returned when no grapheme exists. Direct pinned tests cover lowercase, empty name, supplementary emoji, flag emoji, and combining accents. The host supplies the same `BreakIterator`-based grapheme function as `StringUtils.firstGraphemeOrNull`; no Apache-licensed implementation code is copied. Callback failures propagate unchanged. Profile list IO, ProfileManager, StateFlow, lifecycle, and UI remain host-side. Kotlin ProfileItem is Copyright © 2026 Ashish Yadav under GPL-3.0-or-later; this identifies upstream authorship, not the Dart adaptation's author. Root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt:82–84` and `common/src/test/java/com/ichi2/anki/common/utils/StringUtilsTest.kt:emptyStringMutableList_* / emptyStringArray_*` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `emptyStringMutableList()` and `emptyStringArray()` in `lib/src/string_list_factories.dart`; focused cases in `test/string_list_factories_test.dart` | Creates the requested number of empty strings; the mutable-list factory is growable, while the String array is fixed-length and allows element replacement. Both preserve the zero-sized case. The source file declares GPL-3.0-or-later and also notes a distinct Apache-2.0 AOSP snippet for `htmlEncode`; that snippet is not part of this mapping or copied. Root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt:95–125` and `common/src/test/java/com/ichi2/anki/common/utils/StringUtilsTest.kt:htmlEncode_*` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); implementation identified as `android.text.TextUtils.htmlEncode` | `htmlEncode()` in `lib/src/html_encode.dart`; focused cases in `test/html_encode_test.dart` | Performs the source's one-pass UTF-16 traversal and escapes only `<`, `>`, `&`, apostrophe as `&#39;`, and double quote as `&quot;`; leaves all other text unchanged and does not re-escape generated entities. The source excerpt carries Android Open Source Project 2006 copyright under Apache-2.0; the license text and attribution are retained in `LICENSES/Apache-2.0.txt` and `NOTICE.md`. The Kotlin source is GPL-3.0-or-later; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt:34–49` and `common/src/test/java/com/ichi2/anki/common/utils/StringUtilsTest.kt:toTitleCase_*` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `toTitleCase()` in `lib/src/to_title_case.dart`; focused cases in `test/to_title_case_test.dart` | Returns null before any callback; otherwise checks the host's Kotlin-compatible blank predicate once and returns blank input unchanged. Nonblank input passes UTF-16 substring `[0,1)` to the host's default-locale uppercase callback, then substring `[1,end)` to lowercase, concatenating in source order. Locale case mapping and JVM blank semantics remain host-supplied. Direct pinned cases cover null, empty/blank, single/mixed/all-capital, and multi-word values; callback tests cover order, short-circuiting, UTF-16 boundary, and exception propagation. GPL-3.0-or-later; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt:52–80` and `common/src/test/java/com/ichi2/anki/common/utils/StringUtilsTest.kt:indexOfOrNull_* / lastIndexOfOrNull_*` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `stringIndexOfOrNull`, `stringLastIndexOfCharOrNull`, and `stringLastIndexOfOrNull` in `lib/src/string_index_helpers.dart`; focused cases in `test/string_index_helpers_test.dart` | Preserves UTF-16 indices and source first/last match and start-index behavior, including overlapping substring matches and empty-string needle positions. Case-sensitive paths need no callback. For `ignoreCase`, the host supplies Kotlin/JVM `Char.equals(ignoreCase=true)` over code units instead of Dart full-string casing. GPL-3.0-or-later; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/utils/StringUtils.kt:127–175` and `common/src/test/java/com/ichi2/anki/common/utils/StringUtilsTest.kt:ellipsize_*` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ellipsize()` in `lib/src/string_ellipsize.dart`; focused cases in `test/string_ellipsize_test.dart` | Rejects nonpositive thresholds first; returns exact input without BreakIterator access when UTF-16 length is at or below threshold. Longer input delegates once to the host's `BreakIterator.getCharacterInstance(Locale.ROOT)` boundary calculation and appends one ellipsis to the source prefix. Direct pinned tests cover threshold edges, invalid values and flags at grapheme boundaries. Host locale/ICU and Android TextView behavior remain host-side. GPL-3.0-or-later; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/utils/ext/Long.kt:9` + `LongTest.kt`, and `Float.kt:9–24` + `FloatTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `longIfZero()` and `clampFloat()` in `lib/src/numeric_helpers.dart`; focused cases in `test/numeric_helpers_test.dart` | `longIfZero` evaluates the default callback exactly once only for zero and propagates its failure. `clampFloat` narrows value and bounds to binary32 and keeps the source's ordered `< min`, `> max`, return-value sequence without validating reversed bounds; NaN and signed zero follow those comparisons. Float.kt also contains a separately identified Apache-2.0 Kotlin `_Ranges.kt` excerpt, which is not copied here. Both sources are GPL-3.0-or-later; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/utils/ext/JSONObject.kt:86–112` and `AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/JSONObjectTest.kt:contentEquals_*` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `jsonContentEquals()` in `lib/src/json_content_equals.dart`; focused cases in `test/json_content_equals_test.dart` | Recursively compares JSON objects with key-order independence and arrays with order significance; distinguishes JSON types; treats null and host `JSONObject.NULL` marker as the same; compares numbers through host `JSONObject.numberToString` to retain JSON precision; uses identity fast path and stops at first mismatch. JSON parsing, object/array access and numeric serialization remain host-side. Source-mapped GPL attribution and explicit non-copying of JSON.org code are in `NOTICE.md`; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/utils/ext/Throwable.kt:13–20` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`; no direct pinned test found) | `getRootCause()` in `lib/src/root_cause.dart`; source-derived cases in `test/root_cause_test.dart` | Returns the receiver with no cause or the deepest non-null cause. Preserves the source's separate cause reads for null check, identity check, and assignment; stops for a direct self-cycle only. Does not add broader cycle detection. GPL-3.0-or-later, Copyright © 2026 Ashish Yadav; root `COPYING` remains byte-identical. |
+| `common/src/main/java/com/ichi2/anki/common/utils/ext/JSONObject.kt:138–161` and `AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/JSONObjectTest.kt:getStringOrNull / jsonObjectIterable` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `jsonObjectGetStringOrNull()` and `jsonObjectIterable()` in `lib/src/json_object_adapters.dart`; cases in `test/json_object_adapters_test.dart` | The string getter checks `has`, then `isNull`, then performs one host `getString`; only `Exception` from that getter is caught as null. Android conversion behavior remains in the host callback. Object iteration is lazy and re-iterable, reacquires keys each pass, performs typed reads in order, and propagates errors at the element. GPL attribution for Arthur Milchior (2020) and Ashish Yadav (2024); JSON.org implementation code is not copied; root `COPYING` unchanged. |
+| `common/src/main/java/com/ichi2/anki/common/utils/ext/JSONObject.kt:57–79,125–128` and `AnkiDroid/src/test/java/com/ichi2/utils/JSONObjectTest.kt:copyJsonTest / deepCloneTest / deepCloneReferenceTest / fromMapTest` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `JsonObjectHostAdapter.deepClone()`, `deepClonedInto(clone)`, and `fromMap(map)` in `lib/src/json_object_adapters.dart`; focused source-derived callback cases in `test/json_object_adapters_test.dart` | `deepClone()` creates one host object before delegating; `deepClonedInto()` iterates source keys in order, probes with one `get`, uses typed second reads and host array cloning for nested values, repeats `get` for scalars, writes once per key, returns the supplied clone identity, and propagates failures immediately. `fromMap()` creates one host object and performs one put per map entry in iteration order. JSON representations, conversions, and array cloning remain host-side. GPL attribution for Arthur Milchior (2020) and Ashish Yadav (2024); the source file's JSON.org notice is not copied as implementation code or applied to the host; root `COPYING` unchanged. |
+| `common/src/main/java/com/ichi2/anki/common/utils/ext/JSONArray.kt:41–97` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`; no direct pinned test for this helper family found) | `JsonArrayHostAdapter` in `lib/src/json_array_adapters.dart`; focused source-derived cases in `test/json_array_adapters_test.dart` | Preserves `deepClone()` create/length timing, initial `get` type probe, typed second read for nested JSON values, second scalar `get`, and one `put` per item; object/string iterators re-check length and advance only after a successful typed read; `toStringList(key)` eagerly reads in array order. JSONArray/JSONObject representations, typed conversion and JSONObject deep cloning remain host callbacks. GPL attribution for Arthur Milchior (2020); JSON.org implementation code is not copied; root `COPYING` unchanged. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/multiprofile/ProfileName.kt`, `ProfileId.kt`, and their direct tests `ProfileNameTest.kt` / `ProfileIdTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ProfileName` and its validation results in `lib/src/profile_name.dart`; `ProfileId` in `lib/src/profile_id.dart`; focused cases in `test/profile_name_test.dart` and `test/profile_id_test.dart` | Preserves `ProfileName.MAX_LENGTH`, Kotlin/JVM `String.trim()` whitespace and UTF-16 length behavior, Empty / TooLong / Valid outcomes, unrestricted interior characters, and the unvalidated trusted-source path. `ProfileId` preserves the exact `default` value, default predicate, raw string conversion, and `p_` plus the first eight lowercase hexadecimal digits from the random portion of a UUIDv4. ProfileManager, persistence, uniqueness checks, profile switching, lifecycle, and UI remain host-side. Dart exposes the trusted-source constructor as an explicitly named boundary because library-private construction cannot be selectively granted to the host application. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/multiprofile/ProfileSwitchGuard.kt` and its direct test `AnkiDroid/src/test/java/com/ichi2/anki/multiprofile/ProfileSwitchGuardTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `invokeProfileSwitchGuard()` and its result/reason types in `lib/src/profile_switch_guard.dart`; focused cases in `test/profile_switch_guard_test.dart` | Preserves sequential checks in source order even after a blocker, null and explicitly skipped reason handling, unique active reasons in first-seen order, blocked no-switch behavior, and one host switch callback with the exact `ProfileId` when no active reason remains. Check and switch failures propagate unchanged and stop later work. The pinned tests cover pass, block, skip, one-of-many skipped, and multi-reason aggregation; Dart cases for ordered awaiting, duplicate collapse, empty checks, and exceptions are source-derived. ProfileManager's `ProfileSwitchContext`, persistence, lifecycle, and actual switch implementation remain host-side. The source and pinned test are Copyright (c) 2026 Ashish Yadav and carry full GPLv3-or-later notices without an SPDX identifier; no method-specific authorship is asserted. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/viewmodel/ExportReadyViewModel.kt` (`exportReadyDestination`, register/clear, `ExportReadyParams`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ExportReadyRequestState` and immutable `ExportReadyParams` in `lib/src/export_ready_request_state.dart`; focused cases in `test/export_ready_request_state_test.dart` | Starts with no request, stores the supplied params unchanged, clears to null, and preserves the exact path string plus the `asText = false` default and explicit true. The host retains SavedStateHandle/StateFlow/Parcelable, lifecycle, Timber logging, dialog/navigation, filesystem, and export execution. No direct pinned tests cover these methods; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/multimedia/MultimediaViewModel.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `MultimediaViewModelState` in `lib/src/multimedia_view_model_state.dart`; focused cases in `test/multimedia_view_model_state_test.dart` | Preserves nullable current and saved URI/path values by identity, the zero selected-size default, direct save/restore assignment behavior, and signed media lengths. Generic host values keep Android `Uri` and `File` opaque; no string normalization or path conversion is performed. The host retains `MutableSharedFlow` action emission/coroutines, String-to-File conversion, Android media/file/URI operations, lifecycle, and UI. No direct pinned ViewModel tests cover these methods; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModel.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModelTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ImageOcclusionArgs`, `ImageOcclusionViewModelState` in `lib/src/image_occlusion_view_model_state.dart`; focused cases in `test/image_occlusion_view_model_state_test.dart` | Preserves Add/Edit argument values and exact Image Occlusion mode keys, Add-mode initial and updated deck IDs, and the request to restore the original deck only after a changed selection; Edit selection/save remain no-ops. IDs and paths are passed through unchanged. The host retains deck-name lookup, collection current-deck writes, coroutine/StateFlow behavior, Parcelable/SavedStateHandle, and Image Occlusion rendering/navigation. Upstream Add/Edit args, mode, selection, reset, and edit no-op assertions are covered; deck-name-flow and collection-current-deck assertions stay host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ImportViewModel.kt` (`triggerImportAdd` / `triggerImportReplace`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ImportAction`, `ImportActionRequest`, `projectImportAdd()`, and `projectImportReplace()` in `lib/src/import_action_routing.dart`; focused cases in `test/import_action_routing_test.dart` | Selects the matching add or replace flow and preserves the original path string unchanged. The host retains SharedFlow buffering/emission, coroutine/Job scheduling, subscriber timing, import backend/importer behavior, and Android UI. No direct pinned tests cover these methods; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/shareddeck/SharedDecksDownloadViewModel.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/shareddeck/SharedDecksDownloadViewModelTest.kt` (`d9bf072f814a0c37d30a694192593b31ff2df875`) | `SharedDecksDownloadUiState`, `DownloadPhase`, and transitions in `lib/src/shared_decks_download_state.dart`; focused cases in `test/shared_decks_download_state_test.dart` | Preserves null filename, 0% Downloading defaults, exact filename and full-state retry reset, the source Float32 `abs(downloadedBytes * 100f / totalBytes)` result when total is positive, 0% otherwise, null unavailable progress, network-wait-only updates, and completion/failure fields while retaining the remaining state. `formatDownloadPercent` preserves the source integer branch; the host supplies locale-dependent one-decimal formatting. DownloadManager/network/files, locale resolution, Android lifecycle, StateFlow, localization, and UI remain host-side. Cases are source-derived from the pinned tests. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/InsertFieldDialogViewModel.kt`, `model/FieldName.kt`, `model/SpecialField.kt`, and `cardviewer/SingleCardSide.kt` (`d9bf072f814a0c37d30a694192593b31ff2df875`) | `FieldName`, `SpecialField`, `SpecialFields`, `SingleCardSide`, `InsertFieldDialogTab`, selected-field variants, and `InsertFieldDialogSelection` in `lib/src/insert_field_dialog_selection.dart`; focused cases in `test/insert_field_dialog_selection_test.dart` | Preserves value equality for field wrappers and identity for regular selected-field classes, exact `{{name}}` rendering, FRONT/BACK special-field order and availability, tab positions, exact field membership, and unchanged selection after invalid choices. SavedStateHandle, StateFlow, metadata querying, database reads, descriptions/localization, and dialog UI remain host-side. Pinned tests directly cover valid selection, output tags, and side ordering; invalid-selection retention and identity semantics are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/scheduling/SetDueDateViewModel.kt` | `SetDueDateViewModel`, `SetDueDateRange`, and `projectSetDueDateCurrentInterval()` in `lib/src/set_due_date_view_model.dart`; focused cases in `test/set_due_date_view_model_test.dart` | Preserves nonnegative single-day values, date-range ordering and equal-endpoint collapse, scheduler-setting tri-state submission guard, FSRS forced interval matching and false-set exception, card count, and review-only one-card interval visibility. The host retains collection reads, Android dialog, reactive state delivery, `SetDueDateDays`, undoable operation, and `sched.setDueDate`. Pinned tests directly cover the scheduler guard, day/range validation, parameter suffix, FSRS setter, default, and multi-card interval suppression; one-card review-type visibility is source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/scheduling/Fsrs.kt` (`FsrsVersion`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `FsrsVersion` in `lib/src/fsrs_version.dart`; focused cases in `test/fsrs_version_test.dart` | Preserves the exact allowlist mapping `0.6.4` → FSRS 4.5, `1.4.3` / `2.0.3` → FSRS 5, and `4.1.1` / `5.1.0` / `5.2.0` / `6.3.0` / `6.6.2` → FSRS 6; all other strings map to null, and the original library-version string remains unchanged. The pinned FsrsTest only checks that the configured build version has a display label; focused Dart cases cover every mapping and unknown near-matches. Backend `BuildConfig`, scheduler calculations, and scheduler execution remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/mediacheck/MediaCheckViewModel.kt` (`checkMedia`, `deleteUnusedMedia`, `tagMissing`, `deleteTrash`, `restoreTrash`, and `MediaCheckProgress.CHECKING_MEDIA` / `DELETING_MEDIA` / `ADDING_TAGS`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `MediaCheckProgress` in `lib/src/media_check_unused_deletion.dart`; `MediaCheckResultPublicationPlan<T>` and `planMediaCheckResultPublication<T>()` in `lib/src/media_check_result_publication.dart`; `MediaCheckUnusedDeletionPlan` and `planMediaCheckUnusedDeletion()` in `lib/src/media_check_unused_deletion.dart`; `MediaCheckMissingTaggingPlan` and `planMediaCheckMissingTagging()` in `lib/src/media_check_missing_tagging.dart`; `MediaCheckTrashActionPlan` and `planMediaCheckTrashAction()` in `lib/src/media_check_trash_actions.dart`; focused cases in the four matching `test/media_check_*` files | Preserves opaque result passthrough after a successful check, with no publication if the check throws; null-result fallbacks to empty unused-file and missing-note lists; exact supplied list/tag host inputs; the three source progress messages; deletion/tagged-count publication only after successful host operations (tagged count comes from the host operation result); and delete-trash / restore-trash operation selection inside unlabeled progress and the collection host, with failures propagated. Media scanning, backend calls, progress execution, coroutine/Job/StateFlow, lifecycle, and UI remain host-side. Cases are source-derived from `MediaCheckViewModelTest.kt`. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateBrowserAppearanceEditor.kt` (`onCreate`, `onOptionsItemSelected`, `showDiscardChangesDialog`, `showRestoreDefaultDialog`, `onSaveInstanceState`, `initializeUiFromBundle`, `restoreDefaultAndClose`, `saveAndExit`, `hasChanges`, and `Result.fromIntent` / `Result.applyTo`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`, onCreate at lines 53–88, dialog confirmations at lines 121–137, state save / initialization at lines 139–157, menu routing at lines 95–118, and default / result methods at lines 169–181) | `createBrowserAppearanceEditor()` in `lib/src/card_template_browser_appearance_on_create.dart`; `BrowserAppearanceMenuAction` and `routeBrowserAppearanceMenuAction()` in `lib/src/card_template_browser_appearance_menu_routing.dart`; `completeBrowserAppearanceDiscardDialog()` and `completeBrowserAppearanceRestoreDefaultDialog()` in `lib/src/card_template_browser_appearance_dialog_actions.dart`; `browserAppearanceHasChanges()` in `lib/src/card_template_browser_appearance_has_changes.dart`; `saveBrowserAppearanceInstanceState()` and `initializeBrowserAppearanceUiFromBundle()` in `lib/src/card_template_browser_appearance_state_transfer.dart`; and `BrowserAppearanceResult`, `browserAppearanceResultFromIntent()`, `BrowserAppearanceResult.applyTo()`, `restoreBrowserAppearanceDefaultAndClose()`, and `saveBrowserAppearanceAndExit()` in `lib/src/card_template_browser_appearance_result.dart`; focused cases in the matching `test/card_template_browser_appearance_*_test.dart` files | onCreate short-circuits after the failed-screen callback, then runs superclass creation, edge-to-edge, toolbar and content inset setup, and lazy saved-state-or-intent-extra bundle selection. Missing bundle shows the host-themed error toast then finishes without initialization, result changes, callback registration, or text listeners. With a bundle, it initializes, sets RESULT_CANCELED, registers back handling, then installs question and answer listeners; each listener ignores its input and lazily recomputes `hasChanges()` when invoked. Remaining menu routing maps Confirm to save-and-exit then `true`, Restore Default to its dialog then `true`, Home to one lazy `hasChanges()` call followed by discard-dialog or finish and then `true`, and other items to the superclass callback's unchanged boolean. Dialog confirmations, instance-state save, bundle initialization, default/result methods, `hasChanges`, and Result conversion preserve their source order, null/default rules, exception boundaries, and short-circuits. The host owns Android lifecycle, insets, Bundle/Intent/EditText, themed localized message and toast, logging, result constants, Activity behavior, superclass saving, CardTemplate mutation, toolbar, localization, and dialog/UI behavior. No direct pinned test covers onCreate; the focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditorState.kt`, `CardTemplateEditorViewModel.kt`, and `AnkiDroid/src/main/java/com/ichi2/anki/exception/ReportableException.kt` (`d9bf072f814a0c37d30a694192593b31ff2df875`) | `EditorViewType`, `CardTemplateEditorUserMessage`, `ReportableExceptionData`, the state variants, and `CardTemplateEditorStateMachine` in `lib/src/card_template_editor_state.dart`; focused cases in `test/card_template_editor_state_test.dart` | Preserves Initializing / Loaded / Finished, exact Loaded defaults, fresh Loaded state after every successful load, initialization-error and finish transitions, all four field updates only while Loaded, and unchanged state identity outside Loaded. Exception data remains opaque with its reportable flag. StateFlow, logging, Android lifecycle, template loading/saving, rendering, and UI remain host-side. Cases are source-derived; the pinned source has no tests for these methods. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1606–1621` (`flipQA`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `flipCardTemplateQA()` in `lib/src/card_template_editor_flip_qa.dart`; focused source-derived cases in `test/card_template_editor_flip_qa_test.dart` | Preserves the DOTALL greedy `(.+)<hr id=answer>(.+)` search, capture-two trim over code units `<= U+0020`, literal removal of every `{{FrontSide}}` marker on no match, exact LF separator text, and question-before-answer setter order with failures stopping later work. The host supplies original strings and applies assignments; BackendCardTemplate, persistence, Android UI, and mutation remain host-side. No pinned source test for `flipQA` was found. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1644–1661` (nested `CardTemplate.toMarkdown(context)`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateToMarkdown()` in `lib/src/card_template_editor_markdown.dart`; focused cases in `test/card_template_editor_markdown_test.dart` | Preserves the exact localized front/back/styling heading order, bold heading wrappers, `html` front/back fences, `css` style fence, and source LF spacing: two LFs after each heading and the front/back closing fences, one LF before each closing fence, and no LF after the final fence. The supplied strings and headings pass through unchanged, including empty/multiline values, markup, backticks, and CRLF. Source-derived exact-string tests cover these cases; no direct pinned formatter test was found. The host supplies `TR.sentenceCase.frontTemplate`, `TR.sentenceCase.backTemplate`, `TR.cardTemplatesTemplateStyling()`, and the three template strings; Android `Context`, generated localization, and Markdown display/rendering remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1179–1268` (`CardTemplateFragment.handleCommonMenuItemSelected`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateCommonMenuItemIds`, `CardTemplateCommonMenuCallbacks`, and `handleCardTemplateCommonMenuItemSelected()` in `lib/src/card_template_fragment_common_menu.dart`; focused cases in `test/card_template_fragment_common_menu_test.dart` | Routes source action IDs in branch order, preserving log-before-action ordering, no reposition log, callback Boolean returns, lazy host reads, and unmatched-ID false. Restore logs before reading `originalStockKind`; a known kind confirms with null, while the unknown sentinel schedules an async task that logs, reads stock kinds, resolves names under the host collection scope, and presents the picker. The selected host kind flows to confirmation; its positive callback schedules restore with that exact nullable kind and cancel does nothing. Callback/task failures propagate. Android menu IDs, Timber, `StockNotetype`, model/collection access, `withCol`, `launchCatchingTask`, translated resources, Android Dialogs, and restore operations remain host-side. The source marks the method `@NeedsTest("Restore to default option")`; no focused direct pinned restore test was found, so Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1127–1160` (`CardTemplateFragment.setupCommonMenu`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateCommonMenuSetupCallbacks`, `CardTemplateCommonMenuSetupItem`, and `setupCardTemplateCommonMenu()` in `lib/src/card_template_fragment_common_menu.dart`; focused cases in `test/card_template_fragment_setup_common_menu_test.dart` | Preserves title lookup/localization/mutation order, evaluates the dynamic-note predicate once, logs and hides add/rename/deck override for dynamic note types without reading the current template, and checks JSON `did` lazily for other types. Then it hides delete only below two templates, preview only when fragmented, and insert-field only for non-styling views. Host callbacks keep Android menu/resource/model reads and mutations on the host; failures propagate immediately. `CardTemplateEditorTest` exercises visible add/delete/preview actions but does not isolate this setup method's configuration branches; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1453–1480` (`CardTemplateFragment.confirmDeleteCards`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`), with integration coverage in `CardTemplateEditorTest.kt:213–220` | `CardTemplateFragmentConfirmDeleteCardsCallbacks` and `cardTemplateFragmentConfirmDeleteCards()` in `lib/src/card_template_fragment_confirm_delete_cards.dart`; focused cases in `test/card_template_fragment_confirm_delete_cards_test.dart` | Creates the host dialog, resolves its quantity string with the unchanged `numAffectedCards`, projects the template name and formats the message with count then name, resolves title then positive label, sets args, registers a lazy sync-checked delete confirmation, and shows the same dialog in source order. Callback failures propagate and prevent later effects; no deletion or sync check runs before confirmation. Android dialog/resources/localization, generated JSON/name access, sync/schema behavior, actual deletion, lifecycle, and UI remain host-side. The pinned test checks the dialog message and continuation; the focused Dart tests are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1522–1543` (`CardTemplateFragment.executeWithSyncCheck`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentExecuteWithSyncCheckCallbacks` and `cardTemplateFragmentExecuteWithSyncCheck()` in `lib/src/card_template_fragment_execute_with_sync_check.dart`; focused cases in `test/card_template_fragment_execute_with_sync_check_test.dart` | Preserves the shared initial catch boundary around checked schema mutation, action, discard-state update, and fragmented-only previewer reload. Only an Exception classified by the host as `ConfirmModSchemaException` is logged and converted to a localized full-sync dialog; Dart `Error` values propagate. Confirm is registered before cancel and both before showing. Confirm performs unchecked schema mutation, the same action, discard-state update, then dialog dismissal without preview reload; cancel only dismisses. Callback failures stop immediately and propagate. Collection/schema access, exception classification/logging, Android `ConfirmationDialog`/resources, lifecycle, previewer and UI stay host-side. Pinned `CardTemplateEditorTest.testDeleteTemplate` and `testTemplateAdd` exercise the full-sync confirmation integration; focused Dart branch/order/error cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1293–1300` (`CardTemplateFragment.copyMarkdownTemplateToClipboard`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateMarkdownClipboardCallbacks` and `copyCardTemplateMarkdownToClipboard()` in `lib/src/card_template_editor_markdown_clipboard.dart`; source-derived cases in `test/card_template_editor_markdown_clipboard_test.dart` | Reads current template first and returns without reading context when absent; reads nullable context only for a present template and returns without rendering if absent. With both present, invokes mapped `CardTemplate.toMarkdown(context)`, then host `TruncatedString.from`, then host `Context.copyToClipboard` with the same context and truncated object. Callback failures propagate unchanged and stop later callbacks. Android `Context`, `TruncatedString`, clipboard service, UI, and mapped template-to-Markdown behavior remain host-side. The focused Dart cases are source-derived; no direct pinned test of this method was found. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1339–1353` (`CardTemplateFragment.displayDeckOverrideDialog`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentDisplayDeckOverrideDialogCallbacks` and `cardTemplateFragmentDisplayDeckOverrideDialog()` in `lib/src/card_template_fragment_display_deck_override_dialog.dart`; focused cases in `test/card_template_fragment_display_deck_override_dialog_test.dart` | Enters host `launchCatchingTask`, requires the Activity before reading `tempModel.notetype.isCloze`, and for cloze shows the multimedia-editor error with the host short Snackbar duration then returns before template-name or dialog-text reads. Otherwise it invokes the existing `cardTemplateEditorCurrentTemplateName()` once with the exact temporary-model object, then resolves localized title and formatted explanation in order and opens deck selection with `allowAll=false` and `allowFiltered=false`. Callback failures propagate and stop later work, except the existing helper `Exception` warning/empty-name fallback. The host retains Android Activity, temporary note-type/template models, `launchCatchingTask`, localization, Snackbar, and dialog UI; Dart sequences callbacks and does not implement Android UI. Pinned `CardTemplateEditorTest.testDeckOverride` covers valid deck and null override mutation after selection, not this dialog flow; focused branch/order/failure cases are source-derived. The Anki Desktop dynamic-deck TODO and reported filtered-deck issue comment are carried without changing behavior. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1354–1361` (`getCurrentTemplateName`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateEditorCurrentTemplateName()` in `lib/src/card_template_editor_current_template_name.dart`; focused source-derived cases in `test/card_template_editor_current_template_name_test.dart` | Runs the lazy host current-ordinal callback inside the source `try`, then passes that ordinal unchanged to the host name-read callback and returns its exact string. It catches only `Exception` from either read, sends that same exception once to the host warning callback, then returns the empty string; non-Exception `Error`s and warning callback failures propagate. The host ordinal callback reads `templateEditor.ord` / pager `currentItem`; host callbacks retain `CardTemplateNotetype` / backend model access and `Timber.w` logging. No direct pinned test was found; the focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1370–1379` (`getCurrentTemplate`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateEditorCurrentTemplate()` in `lib/src/card_template_editor_current_template.dart`; focused source-derived cases in `test/card_template_editor_current_template_test.dart` | Reads the current template index before the `try`. Inside the guarded host read, the temporary-model null assertion precedes indexed template access. Only the host-classified source-equivalent `JSONException` is passed unchanged to the host warning callback with `CardTemplateEditor::getCurrentTemplate - unexpectedly unable to fetch template? %d` and the same index, then null is returned. Index-read failures, unrelated exceptions, errors, and warning callback failures propagate; a null indexed value is returned unchanged. Android arguments, generated model/list access, JSONException classification, and Timber logging remain host-side. No direct pinned test was found; the focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1068–1072` (`CardTemplateFragment.openBrowserAppearance`) and `1363–1367` (`launchCardBrowserAppearance`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `openCardTemplateBrowserAppearance()` in `lib/src/card_template_fragment_open_browser_appearance.dart`; focused cases in `test/card_template_fragment_open_browser_appearance_test.dart` | Calls the host `getCurrentTemplate()` callback exactly once. A null result skips context, Intent, and ActivityResult-launch callbacks; a non-null result reads host `appContext`, constructs the host Intent with that same context and exact template object, then launches it in order. Every successful path returns true, and callback failures propagate before the return. Current-index/backend lookup and its JSONException-only warning/null boundary, Android context/Intent construction, ActivityResult launcher, and result parsing/application remain host-side. Pinned `CardTemplateEditorTest.kt:898–914` verifies the discard dialog after a successful browser-appearance result but does not directly assert a null current template or every opener callback boundary; focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1550–1574` (`CardTemplateFragment.deleteTemplate`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) and `AnkiDroid/src/test/java/com/ichi2/anki/CardTemplateEditorTest.kt:194–230, 327–424` | `CardTemplateFragmentDeleteTemplateCallbacks` and `cardTemplateFragmentDeleteTemplate()` in `lib/src/card_template_fragment_delete_template.dart`; focused cases in `test/card_template_fragment_delete_template_test.dart` | Reads `notetype.templates` once, constructs an empty destination, and iterates in source order. Unmatched templates are appended by identity; each matching ordinal is logged before reading/asserting the temporary note type and removing that ordinal. The new collection is assigned before ordinal update. The first adapter is resolved/cast for `ordinalShift`, the adapter is resolved/asserted again for notification, then the pager, destination length, and animation setting are resolved in source order for `setCurrentItem`. Duplicate matches, missing matches, empty destinations, and callback failure short-circuiting preserve source behavior. Android `NotetypeJson`, `CardTemplates`/JSONArray, null assertion, Timber, ordinal updater, adapter, pager, animation and UI remain host-side. The pinned integration tests cover ordinary and selectively generated-card deletion; focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:747–764` (`CardTemplateFragment`'s `TextWatcher.afterTextChanged`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentAfterTextChangedCallbacks` and `cardTemplateFragmentAfterTextChanged()` in `lib/src/card_template_fragment_after_text_changed.dart`; focused cases in `test/card_template_fragment_after_text_changed_test.dart` | Ignores the `Editable`; cancels the prior delayed refresh only when non-null; writes styling CSS, answer format for BACK, or question format for FRONT/null/unknown. Styling targets the fragment's already-stored `tempModel`; the later update separately resolves Activity `tempNoteType!!`, so those references may differ. It updates at the captured card index; creates and stores the Runnable before scheduling at the host-supplied exact delay; and updates the discard-changes callback last. The Runnable's host callback invokes the preview loader without an ordinal so its default pager lookup occurs when the runnable executes. Android `Editable`, template/model mutation, Handler/Runnable, delay units, and pager remain host-side. The pinned `CardTemplateEditorTest.kt` has no direct `TextWatcher.afterTextChanged` test; Dart cases are source-derived. Source-file SPDX credits Copyright © 2014 Timothy Rae and © 2018 Mike Hardy under `GPL-3.0-or-later`; no method-specific authorship is asserted. Root `COPYING` is preserved byte-identically. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1026–1048` (`CardTemplateFragment.deleteCardTemplate`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) and `CardTemplateEditorTest.kt:213–230, 351–400, 425+` | `CardTemplateFragmentDeleteCardTemplateCallbacks` and `cardTemplateFragmentDeleteCardTemplate()` in `lib/src/card_template_fragment_delete_card_template.dart`; focused cases in `test/card_template_fragment_delete_card_template_test.dart` | Reads temporary model, ordinal, then exact template once; template counts below two show the cannot-delete message and return before orphan checks. Otherwise awaits the existing orphan predicate and returns after its dialog when true. Safe pending-add ordinals confirm with zero; ordinary ordinals log, read the model notetype for the host count query, then read it again for confirmation with the captured template and exact count. Callback failures and short-circuit order are preserved. Lifecycle launch, resources, model/notetype, collection/`withCol`, Timber, dialogs, and UI callbacks remain host-side. Pinned tests cover deletion confirmation, the single-template guard, and orphan prevention; callback-order cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1057–1066` (`CardTemplateFragment.showOrphanNoteDialog`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentShowOrphanNoteDialogCallbacks` and `cardTemplateFragmentShowOrphanNoteDialog()` in `lib/src/card_template_fragment_show_orphan_note_dialog.dart`; focused cases in `test/card_template_fragment_show_orphan_note_dialog_test.dart` | Obtains the required host context, creates the host AlertDialog builder, sets the exact orphan title and message resource handles, sets Android OK with a null listener, then shows that same builder. The source method returns Unit, so Dart does not expose the dialog returned by the host API. Callback failures propagate unchanged and stop later effects. Context, builder, resource constants, Android UI, and lifecycle remain host-side; Dart sequences opaque handles only. Focused cases are source-derived; no direct pinned test for this method was found. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1485–1508` (`CardTemplateFragment.confirmAddCards`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) and `AnkiDroid/src/test/java/com/ichi2/anki/CardTemplateEditorTest.kt:testTemplateAdd` | `CardTemplateFragmentConfirmAddCardsCallbacks` and `cardTemplateFragmentConfirmAddCards()` in `lib/src/card_template_fragment_confirm_add_cards.dart`; focused cases in `test/card_template_fragment_confirm_add_cards_test.dart` | Creates the host dialog, resolves the quantity string with the unchanged `numAffectedCards`, formats it with only that count, resolves add-card-type title then menu-add positive label, and sets dialog args in source order. It creates a lazy host add action and lazy confirm action that passes that exact action through host `executeWithSyncCheck`, registers it, then shows the exact dialog. No add/schema action runs before confirmation; callback failures stop later effects. Android dialog/resources/localization, quantity formatting, note-type/models, sync and actual add behavior, lifecycle, and UI remain host-side. The pinned integration test covers the add flow; focused callback/order/error cases are source-derived. The source is Copyright © 2014 Timothy Rae and © 2018 Mike Hardy under `GPL-3.0-or-later`. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1580–1604` (`CardTemplateFragment.addNewTemplate`; pinned commit `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentAddNewTemplateCallbacks` and `cardTemplateFragmentAddNewTemplate()` in `lib/src/card_template_fragment_add_new_template.dart`; focused cases in `test/card_template_fragment_add_new_template_test.dart` | Reads the selected index, templates collection, and indexed old template in order; passes the same collection to the existing new-name projection before host template creation; copies question then answer; flips only when current length is one; reads/logs the last ordinal once, applies signed JVM Int32 wrap, appends the exact new template to the same collection and lazily resolved temporary note type, then notifies the adapter and selects the last page after evaluating animation state. Failures propagate and stop later effects. Android arguments, JSON/models, localization, template creation, temporary-note-type mutation, Timber, adapter, pager, and UI remain host-side. Upstream declares `GPL-3.0-or-later` and credits Timothy Rae (2014) and Mike Hardy (2018). Pinned `CardTemplateEditorTest.testTemplateAdd` covers the integrated add flow; focused callback/order/error cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1074–1089` (`CardTemplateFragment.addCardTemplate`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) and `AnkiDroid/src/test/java/com/ichi2/anki/CardTemplateEditorTest.kt:testTemplateAdd` | `CardTemplateFragmentAddCardTemplateCallbacks` and `cardTemplateFragmentAddCardTemplate()` in `lib/src/card_template_fragment_add_card_template.dart`; focused cases in `test/card_template_fragment_add_card_template_test.dart` | Cloze types log the exact warning and return before pending-add, ordinal, collection, notetype, and confirmation reads. Other types preserve repeated temporary-model and ordinal reads. Pending-add ordinals confirm with zero and skip collection/template-use lookup; other ordinals pass the exact `tmplUseCount` result through. Callback failures propagate and stop later work. `!!`, model and collection access, `CardTemplateNotetype.isOrdinalPendingAdd`, `tmplUseCount`, Timber, and confirmation UI remain host-side. Pinned `testTemplateAdd` verifies the resulting temporary template count and preview, and its helper asserts confirmation quantity; callback-level cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1430–1441` (`CardTemplateFragment.onCardBrowserAppearanceResult`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `applyBrowserAppearanceResult()` in `lib/src/card_template_browser_appearance_result_application.dart`, composed with `BrowserAppearanceResult` in `lib/src/card_template_browser_appearance_result.dart`; focused cases in `test/card_template_browser_appearance_result_application_test.dart` | Parses once through the host callback. A null result emits the outer warning and returns; a non-null result emits the info log, reads current template once, returns if absent, then applies BQ and BA formats in order and updates discard-change state. Callback failures propagate and stop later work. The host retains Intent reads and the parser's inner `Exception` warning, the `getCurrentTemplate()` exception boundary and backend/model lookup, Android logging, and the `BackendCardTemplate` setters. `CardTemplateEditorTest` integrates appearance result handling and subsequent discard confirmation but does not isolate all orchestration branches; focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1629–1641` (`newCardName`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `newCardName()` in `lib/src/card_template_editor_new_card_name.dart`; focused cases in `test/card_template_editor_new_card_name_test.dart` | Initializes from `templates.length() + 1` with Kotlin signed 32-bit wrap, localizes once per candidate, checks names in source order using exact case-sensitive equality, returns the first unused candidate, and wraps the increment before retrying. Localization and iterable failures propagate without reordering; a match short-circuits the scan. The host supplies the template count, ordered names, and localized-candidate callback; `CardTemplates`, model access and localization remain host-side. Focused Dart cases are source-derived; no direct pinned test for `newCardName` was found. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1664–1675` (nested `CardTemplateFragment.newInstance`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentArgumentCallbacks` and `createCardTemplateFragment()` in `lib/src/card_template_fragment_arguments.dart`; focused cases in `test/card_template_fragment_arguments_test.dart` | Creates the fragment before the Bundle, writes `CARD_INDEX` with the integer callback, `EDITOR_NOTE_ID` with the long callback, and `EDITOR_VIEW_ID_KEY` with the integer callback, then assigns the same Bundle to and returns the same fragment. Each callback failure propagates and prevents later actions. The host constructs Android fragment/Bundle objects, supplies key constants and IDs, and performs the typed writes and assignment; no Android types or constants enter Dart. No direct pinned test for this factory was found; its Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1276–1290` (nested `CardTemplateFragment.currentTemplate`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateFragmentCurrentTemplate()` in `lib/src/card_template_fragment_current_template.dart`; focused cases in `test/card_template_fragment_current_template_test.dart` | Keeps the full host projection inside one `Exception` boundary: read and assert `tempNoteType`, resolve `templateEditor.ord`, fetch the `BackendCardTemplate`, read `qfmt`, `afmt`, then `css`, and construct the host-projected `CardTemplate(front, back, style)` without normalizing fields. Any `Exception` from that sequence is passed unchanged once to the host warning callback with `Exception loading template in CardTemplateFragment. Probably stale fragment.` and returns null; `Error` and warning callback failures propagate. Android ordinal access, backend model access, `BackendCardTemplate`, CardTemplate construction, and Timber remain host-side. No direct pinned test for this getter was found; focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1315–1319` (nested `CardTemplateFragment.getNote`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateFragmentGetNote()` in `lib/src/card_template_fragment_get_note.dart`; focused cases in `test/card_template_fragment_get_note_test.dart` | Reads `EDITOR_NOTE_ID` once before collection access. Exactly `-1L` returns null without lookup; every other ID is passed unchanged to `col.getNote()` once, and its nullable result is returned unchanged. Argument-read and lookup failures propagate immediately. Android arguments, `EDITOR_NOTE_ID`, Collection/Note types, and `getNote` remain host-side; the host read callback applies the source `-1L` default when arguments are absent. No direct pinned test for this method was found; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1383–1386` (nested `CardTemplateFragment.getCurrentCardTemplateIndex`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateFragmentGetCurrentCardTemplateIndex()` in `lib/src/card_template_fragment_get_current_card_template_index.dart`; focused cases in `test/card_template_fragment_get_current_card_template_index_test.dart` | Calls host `requireArguments()` once, passes the exact returned host Bundle to the host `getInt(CARD_INDEX)` callback once, and returns the exact Int32 result unchanged. Each callback failure propagates unchanged and prevents later work. Android Fragment/Bundle and `CARD_INDEX` remain host-side. No direct pinned test for this helper was found; focused Dart cases are source-derived. Source-file SPDX credits Copyright © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING` remains unchanged. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:294–333` (`loadTemplatePreviewerFragmentIfFragmented`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentLoadPreviewerIfFragmentedCallbacks` and `cardTemplateFragmentLoadPreviewerIfFragmented()` in `lib/src/card_template_fragment_load_previewer_if_fragmented.dart`; focused source-derived cases in `test/card_template_fragment_load_previewer_if_fragmented_test.dart` | Preserves default pager ordinal evaluation before the `fragmented` guard (explicit ordinal skips the pager read), then enters the host task only when fragmented. Inside the task it asserts the temporary notetype, creates `NotetypeFile` from the same Activity context and notetype, reads current fragment inside `withCol`, and falls back to `Note.fromNotetypeId` only when the fragment note is null. It awaits the suspending host `withCol` from `anki-common/src/main/kotlin/com/ichi2/anki/CollectionManager.kt:141`; the collection block itself stays synchronous, including current-fragment lookup and null-only fallback. Only after that Future resolves does it build `TemplatePreviewerArguments` in source order, create and synchronously commit the fragment into the exact container, then read the view. A null view skips posting. The deferred callback resolves Show Answer, reads params, converts 80dp using the button context, sets height and requests layout; then it resolves the webview container, reads and runtime-casts margin params, gets `reviewer_side_margin`, updates top margin, and assigns the same params back. Failures stop later operations and propagate through the host task/collection/post boundaries. Android, collection, note/notetype, resources, fragment manager, layout, coroutine, and error handling remain host-side. The pinned source is AnkiDroid 2.25.3; focused cases are source-derived. File-level SPDX credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING` remains unchanged. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1320–1337` (`CardTemplateFragment.performPreview`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`), with integration coverage in `AnkiDroid/src/test/java/com/ichi2/anki/CardTemplateEditorTest.kt:160–170, 251–289, 1118–1126` | `CardTemplateFragmentPerformPreviewCallbacks` and `cardTemplateFragmentPerformPreview()` in `lib/src/card_template_fragment_perform_preview.dart`; focused source-derived cases in `test/card_template_fragment_perform_preview_test.dart` | Enters the host `launchCatchingTask` callback, reads the temporary notetype, creates its host `NotetypeFile`, then runs `getNote(col) ?: Note.fromNotetypeId(col, notetype.id)` inside `withCol`, preserving fallback only for null. It builds host preview arguments in source order with the original file, note ID, current ordinal, fields, tags, and `fillEmpty = true`, then constructs the host Intent and starts the Activity. Callback failures propagate immediately. Android context, models, collection access, preview argument type, Intent/Activity, and task/error handling remain host-side; Dart sequences opaque values only and does not provide an Android Activity. Pinned tests cover preview launch and current-tab ordinal selection; focused callback, fallback, payload, and failure cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:974–998` (nested `CardTemplateFragment.setCurrentEditorView`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateFragmentSetCurrentEditorView()` in `lib/src/card_template_fragment_set_current_editor_view.dart`; focused cases in `test/card_template_fragment_set_current_editor_view_test.dart` | Reads the cursor map and saves selection start under the old view only when present, assigns the new view ID, sets exact editor content, checks current-page status after text assignment and requests focus only when true, then performs a fresh cursor-map lookup and sets the stored offset unchanged or zero. Each callback failure propagates unchanged and prevents later callbacks. Android `EditText`, view IDs, map storage/access, current-page lookup, focus, text and selection remain host-side; Dart receives only opaque host map handles and sequences callbacks. Pinned `CardTemplateEditorTest.testContentPreservedAfterChangingEditorView` covers the Styling-to-Front content transition; cursor save/restore branches are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:967–971` (nested `CardTemplateFragment.insertField`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateFragmentInsertField()` in `lib/src/card_template_fragment_insert_field.dart`; focused cases in `test/card_template_fragment_insert_field_test.dart` | Reads `selectionStart`, floors it at zero, then reads and floors `selectionEnd`; normalizes the two indices and invokes the host replacement once with the original field range `0..fieldToInsert.length` (UTF-16 code units). Android `EditText`/`Editable`, `text!!`, and mutation remain host-side; callback failures propagate. Focused Dart cases are source-derived; pinned `CardTemplateEditorTest.testInsertFieldInCorrectFragmentAfterNavigation` covers successful insertion into the intended fragment. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:787–806` (`CardTemplateFragment.onViewCreated()` inset callback; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentApplyWindowInsetsCallbacks` and `cardTemplateFragmentCreateWindowInsetsHandler()` in `lib/src/card_template_fragment_apply_window_insets.dart`; focused cases in `test/card_template_fragment_apply_window_insets_test.dart` | Preserves deferred callback reads and source order: IME bottom then minimum-height comparison (`>`), bottom-navigation visibility, combined bottom inset and conditional view padding, current-page discard callback, then fragmented-state check and conditional bars/cutout left-right padding. Host inset masks/samples, views, binding access and mutations remain host-side; failures propagate. Pinned tests include inset-driven keyboard/back scenarios but no direct assertion for this callback; focused Dart cases are source-derived. Source-file SPDX credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:803–804` (`CardTemplateFragment.onViewCreated()` attach callback; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateFragmentRequestInsetsOnAttach()` in `lib/src/card_template_fragment_request_insets_on_attach.dart`; focused cases in `test/card_template_fragment_request_insets_on_attach_test.dart` | Resolves the root once as the `doOnAttach` receiver, delegates attach timing (including already-attached behavior) to the host, and forwards the exact attached view once to the host's inset request. Callback failures propagate unchanged; Android views, attach registration, lifecycle, and `ViewCompat` remain host-side. Pinned tests exercise inset-driven keyboard/back behavior but do not directly assert this attach callback; focused Dart cases are source-derived. Source-file SPDX credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:809–821` (`CardTemplateFragment.onViewCreated()` initial focus block; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateFragmentScheduleInitialFocus()` in `lib/src/card_template_fragment_initial_focus.dart`; focused cases in `test/card_template_fragment_initial_focus_test.dart` | Checks current-page status once and skips all edit-field work when false. When true, resolves the current field once as the `post` receiver, then resolves it again inside the deferred action before requesting focus once. Host pager state, Android `EditText.post`/`requestFocus`, and keyboard behavior stay host-side; automatic keyboard display remains intentionally avoided. Focused Dart cases are source-derived; the pinned `CardTemplateEditorTest.kt` has no direct assertion for this block. Source-file SPDX credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:708–732` (bottom-navigation `setOnItemSelectedListener`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentBottomNavigationSelectionCallbacks` and `cardTemplateFragmentBottomNavigationSelection()` in `lib/src/card_template_fragment_bottom_navigation_selection.dart`; focused cases in `test/card_template_fragment_bottom_navigation_selection_test.dart` | Reads the host item ID once, writes the current card's tab mapping before title logging, and branches on the captured ID. Styling reads a fresh index then fragment-held `tempModel.css`; Back reads a fresh index then `template.afmt`; other IDs read a fresh index then `template.qfmt`. It calls the selected-view host callback, invalidates the options menu once only after success, then returns true; callback failures stop later work. Android MenuItem/title, resource IDs, tab map, fragment/model/template mutation, view state, and menu invalidation stay host-side. Focused Dart cases are source-derived. The pinned `CardTemplateEditorTest.testContentPreservedAfterChangingEditorView` and `testBottomNavigationViewLayoutTransition` call `setCurrentEditorView` directly and do not test this listener. Source-file SPDX credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1709–1726` (`getIntent`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateEditorIntentCallbacks` and `createCardTemplateEditorIntent()` in `lib/src/card_template_editor_intent_callbacks.dart`; focused cases in `test/card_template_editor_intent_callbacks_test.dart` | Constructs the host Intent first, writes the note-type ID, then writes non-null note ID and ordinal in source order, logs the exact supplied values after successful writes, and returns the same Intent. Null optionals skip their write; callback failures propagate and stop later writes and logging. `Context`, Activity target, Android Intent, generated ID types and values, extra keys, typed writes, and Timber logging remain host-side; Dart only sequences callbacks. No direct pinned test for `getIntent()` was found; focused cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1388–1412` (`deletionWouldOrphanNote`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateEditorDeletionWouldOrphanNote()` in `lib/src/card_template_editor_deletion_orphan_check.dart`; focused cases in `test/card_template_editor_deletion_orphan_check_test.dart` | Calls the host pending-add predicate first with the original nullable model and position; true returns false immediately. Otherwise it computes delete ordinals once and awaits the host query with the supplied note-type ID and the same ordinal list. Only a null query result returns true; empty and nonempty results return false. Callback order, asynchronous query boundary, and exceptions are preserved. The host callback retains the model and source null assertion; `CardTemplateNotetype`, note-type access, collection, generated backend calls, and `withCol` remain host-side. The host query returns null when `withCol` has no open collection. Focused Dart cases are source-derived; no direct pinned test for this method was found. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:478–541` (`onKeyUp`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) and `AnkiDroid/src/test/java/com/ichi2/anki/CardTemplateEditorTest.kt:832` | `CardTemplateEditorCtrlAction`, `CardTemplateEditorCtrlKeyCodes`, and `dispatchCardTemplateEditorCtrlShortcut()` in `lib/src/card_template_editor_ctrl_shortcut.dart`; focused cases in `test/card_template_editor_ctrl_shortcut_test.dart` | Resolves the current fragment once before reading Ctrl state; null fragment, non-Ctrl, and unknown Ctrl key return the host superclass result with the original key/event. Maps P, 1/2/3, S, I, N, R, B, D, O, M to the source actions. Recognized shortcuts log before one action with the same fragment, then return true; host failures propagate and stop later work. Android key constants, KeyEvent modifier access, Fragment/bindings/resources, Activity superclass, Timber, dialogs, temporary-model access for deck override, and all effects remain host-side. The pinned test directly covers Ctrl+2 selecting the back template; the other focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1680–1684` (`EditTab`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateEditorEditTab` in `lib/src/card_template_editor_edit_tab.dart`; focused cases in `test/card_template_editor_edit_tab_test.dart` | Preserves exactly the distinct values `FRONT`, `BACK`, and `STYLING` in declaration order, retaining the source ordinal through Dart enum indexes. Android view IDs, current-tab resolution, rendering/editing, and host integration remain host-side. The source has no direct enum-focused test; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:261–263` (`CardTemplateEditor.onPageSelected`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateEditorPageSelected()` in `lib/src/card_template_editor_page_selected_focus.dart`; focused cases in `test/card_template_editor_page_selected_focus_test.dart` | Passes the exact selected position to one fragment lookup. A null fragment skips binding, edit-field, and focus callbacks; otherwise resolves those host values in order and requests focus once. Callback failures propagate unchanged. Android ViewPager2, Fragment, view binding, EditText, and focus remain host-side. File-level SPDX credits Copyright © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING` remains unchanged. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1003–1006` (`noteTypeCreatesDynamicNumberOfNotes`, marked `@NeedsTest`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `cardTemplateEditorNoteTypeCreatesDynamicNumberOfNotes()` in `lib/src/card_template_editor_dynamic_note_type.dart`; source-derived cases in `test/card_template_editor_dynamic_note_type_test.dart` | Returns the exact `isCloze || isImageOcclusion` result in source order: image occlusion is read only after false cloze, and callback exceptions propagate unchanged. The host retains `tempNoteType`, its generated notetype model and callbacks closing over that same source note type; Dart exposes and sequences lazy boolean reads only. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:406–414` (`noteTypeHasChanged`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) and `CardTemplateEditorTest.kt` | `cardTemplateNoteTypeHasChanged()` in `lib/src/card_template_editor_note_type_changed.dart`; focused cases in `test/card_template_editor_note_type_changed_test.dart` | Returns false without calling the lookup when the temporary type is absent, retaining the early lifecycle guard against opening the collection. Otherwise calls the host lookup once; a missing stored type returns true, and a present type returns the negation of host-projected JSON content equality. Callback failures propagate. Collection access, generated models, and `JSONObject.contentEquals` remain host-side; JSON is neither serialized nor normalized. Dart cases cover equal/different projections, a nested edit and reversion as in the pinned test, lookup laziness/count, and exception propagation. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:418–430` (`isKeyboardOpen`, `updateDiscardChangesCallback`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateEditorKeyboardDiscardCallbacks` and `cardTemplateEditorUpdateDiscardChangesCallback()` in `lib/src/card_template_editor_keyboard_discard_gate.dart`; focused cases in `test/card_template_editor_keyboard_discard_gate_test.dart` | Reads `currentFragment` once and preserves the safe-call chain through view, binding, and bottom navigation; only visibility exactly false means keyboard-open. That branch skips `noteTypeHasChanged()` and writes false once; otherwise the existing projection is called once and its result is written once. Nullable boundaries, order, laziness, and callback failures are covered by source-derived cases. Android Fragment/View/binding/BottomNavigation, lifecycle, and callback object remain host-side. The source file SPDX header attributes Copyright © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship is asserted. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:443–476` (`onDeckSelected`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) and `CardTemplateEditorTest.kt:testDeckOverride` | `CardTemplateDeckSelectionCallbacks` and `cardTemplateEditorDeckSelected()` in `lib/src/card_template_editor_deck_selection.dart`; focused cases in `test/card_template_editor_deck_selection_test.dart` | Validates the nullable host deck type before model reads; rejects cloze note types and filtered decks with warning, localized error message, and short snackbar before mutation; otherwise logs and writes null or the exact deck ID, resolves the matching localized message, shows it, then invalidates the options menu and updates discard-change state. Callback failures propagate and stop later work. `SelectableDeck`, note-type/template/JSON objects, filtered-deck query, Timber, localization, snackbar, menu invalidation, and discard UI remain host-side. The focused Dart cases are source-derived. The pinned `testDeckOverride` covers valid deck then null mutation and `noteTypeHasChanged` integration; it does not directly cover these method branches. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` (`DeckStudyData`, `StudyOptionsState`, `dataOrNull`, `deckNameOrNull`, and state projection; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckStudyData`, `DeckDueTreeCounts`, `StudyOptionsState` variants, and `projectStudyOptionsState()` in `lib/src/study_options_view_model.dart`; focused cases in `test/study_options_view_model_test.dart` | Preserves scheduler counts and due-tree-minus-scheduler buried counts (zero without a tree, with negative differences retained), `hasBuriedCards`, Empty-before-Congrats branch precedence, StudyOptions fallback, value equality for the state variants, and null data/name during Loading. The host retains collection reads, flow publication, Android lifecycle, markdown rendering/sanitization, media resolution, filtered-deck rebuilding, undoable operations, and UI. Tests are source-derived from `StudyOptionsViewModelTest.kt`; collection-backed behavior is not ported. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt` (`rebuildCram()` and `emptyCram()`, lines 50–59; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `StudyOptionsFilteredDeckActions<TDecks>` in `lib/src/study_options_filtered_deck_actions.dart`; focused cases in `test/study_options_filtered_deck_actions_test.dart` | Preserves the distinct Timber diagnostics, one undoable scheduler operation using the exact host-selected-decks value, and the subsequent `withCol` state refresh. Refresh begins only after successful scheduler completion; scheduler and refresh failures propagate unchanged, and the methods return no value. Timber, deck selection, scheduler, undoable operation, collection, and all derived state updates remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt:62–64` (`unbury()`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `StudyOptionsUnburyCallbacks<TDeckId>` in `lib/src/study_options_unbury_callbacks.dart`; focused cases in `test/study_options_unbury_callbacks_test.dart` | Invokes one undoable operation, resolves the current deck ID from inside its operation callback, then calls the host unbury callback once with that ID. Callback failures propagate unchanged and stop later work. It returns no scheduler result and performs no derived-state refresh. The pinned `StudyOptionsViewModelTest.kt` verifies that the action is undoable and joins the returned Job; current-ID forwarding/order and callback failure behavior are source-derived Dart cases. Android lifecycle, coroutine Job/launch/cancellation, deck access, scheduler `sched.unburyDeck`, `undoableOp<OpChanges>`, protobuf result, and errors remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsViewModel.kt:46–48` (`refreshData()`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `StudyOptionsRefreshDataCallbacks` in `lib/src/study_options_refresh_data_callbacks.dart`; focused cases in `test/study_options_refresh_data_callbacks_test.dart` | Invokes the collection-derived state update inside `withOpenColOrNull`, so it runs only when the host has an open collection. Callback failures propagate unchanged and no result or post-refresh action is added. Collection lookup and the derived-state work remain host-side. The pinned `StudyOptionsViewModelTest.kt` covers derived-state updates with a collection; open/closed callback gating, order, and error identity are source-derived Dart cases. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/customstudy/CustomStudyViewModel.kt:22–25,40–43` and `CustomStudyDialog.kt:659–666` (`CustomStudyCardState`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); direct cases in `AnkiDroid/src/test/java/com/ichi2/anki/dialogs/CustomStudyDialogTest.kt:311–326` | `CustomStudyCardState`, `CustomStudyCramKind`, and `projectCustomStudySelectedKind()` in `lib/src/custom_study_card_state.dart`; focused cases in `test/custom_study_card_state_test.dart` | Exactly index `-1` maps to `CRAM_KIND_NEW`; otherwise the index directly selects NewCardsOnly → `CRAM_KIND_NEW`, DueCardsOnly → `CRAM_KIND_DUE`, ReviewCardsRandom → `CRAM_KIND_REVIEW`, or AllCardsRandom → `CRAM_KIND_ALL`, preserving out-of-range failure. Tests cover every mapping, the `-1` fallback, and invalid indices. SavedStateHandle persistence, Android spinner, labels/localization, and custom-study scheduler execution remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsState.kt`, `FilteredDeckOptionsViewModel.kt`, and `AnkiDroid/src/main/java/com/ichi2/anki/exception/InvalidSearchException.kt` (`onDeckNameChange`, `onSearchChange`, `onSearchInBrowser`, `onLimitChange`, `onCardsOptionsChange`, `onSecondFilterStatusChange`, `onRescheduleChange`, `onRescheduleDelayChange`, `onAllowEmptyChange`, `clearSearchInBrowser`, `clearError`, `wasStateModified`, `isBuildingAllowed`, `FilteredDeckForUpdate.asInitialState`, `FilteredDeckOptions.asBackendData`, `onShowExcludedCards`, and `filteredSearchNode`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `FilteredDeckOptions`, `SearchTermState`, validation enums, `FilteredDeckOptionsTransition`, state projections, dirty comparison, `FilteredDeckBackendData`, update-request DTO projections, and browser-search request/result projections in `lib/src/filtered_deck_options.dart`; focused cases in `test/filtered_deck_options_validation_test.dart`, `test/filtered_deck_backend_conversion_test.dart`, and `test/filtered_deck_browser_search_result_test.dart`, and `test/filtered_deck_excluded_search_plan_test.dart` | Preserves Kotlin blank/name/limit checks, same-input early returns, case-sensitive deck-name collision and editing-title exception, signed 32-bit integer parsing, exact errors, build gating, and second-filter retention/fresh-default behavior. The backend input projection preserves zero-ID-to-null, copied title/name and flags, nullable search overrides (including empty-string overrides), option lists, integer-to-string values, first-term failure on malformed empty data, and second-term count/ID rules. The outbound request projection preserves ID/name/flags, Kotlin integer defaults, exact query strings, the always-present first filter, and optional second-filter gating. Browser search carries the selected filter search unchanged (no request for an absent second filter); success stores the exact host-built query while preserving any throwable, and failure wraps the host cause and localized message in a typed exception while preserving any browser query. `InvalidSearchException.kt` is GPL-3.0-or-later and Copyright (c) 2026 lukstbit. Order indices remain explicit host adapter inputs for generated enum `forNumber`; no generated enum behavior or protobuf serialization is claimed by Dart. Transition wrappers for name, limit, second-filter toggle, search, and card-order actions report whether the source recomputes dirty status, while preserving existing state-only projections. The comparison observes name and filter 1 search/limit/index, the second-filter enabled flag, and filter 2 search/limit/index only while enabled in both snapshots. Reschedule, allow-empty, delay, query, and throwable fields are intentionally ignored, and their setters/clearers leave dirty status untouched. Tests derive from `FilteredDeckOptionsViewModelTest.kt` cases for changing input, unobserved properties, restoration, and additional source branches. Collection access, generated backend model conversion/serialization, backend query parsing/execution and localized-message production, SavedStateHandle persistence, StateFlow/flow delivery, lifecycle, asynchronous work, Android UI, and filtered-deck build mutations remain host-side. The same ViewModel’s `build()` begin/completion boundary is represented by `FilteredDeckBuildStart`, `FilteredDeckBuildOutcome`, and singleton `DeckBuilt` in `lib/src/filtered_deck_options.dart`; source-derived cases in `test/filtered_deck_build_outcome_test.dart` cover request capture after the begin flag, success publication, and failure against the latest state. The host performs `undoableOp`, maps the DTO to generated `FilteredDeckForUpdate`, executes the scheduler call, publishes state/effects, and supplies the generated success or default `OpChangesWithId`; Dart does not model backend execution, scheduling, coroutine ordering, or Android lifecycle. The excluded-card plan preserves the exact first search and the enabled, non-null second search in source order, OR grouping with singleton collapse, implicit SUSPENDED/BURIED/filtered order, a new-deck `deck:filtered` term, or an edit AND group excluding the exact current name, then ANDs manual and implicit filters. Success stores the exact browser query and preserves the existing throwable; caught `Exception` failure stores the raw exception and preserves the browser query. `filteredSearchNode()` is annotated `@NeedsTest("Ensure this method produces the expected filter")` and has no direct pinned unit test, so its cases are source-derived. The host retains generated SearchNode construction, collection `groupSearches`, SearchString serialization/validation, collection access, async execution, and state delivery. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckFilters.kt` | `lib/src/deck_filters.dart`, `lib/src/locale_lowercase.dart` | Search tokenization with locale-invariant query casing, Kotlin whitespace trimming, path matching, partial-colon matching, and locale/root deck-name casing using the current platform locale on each match |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:430–433` (`updateDeckFilter`) | `projectDeckPickerFilterUpdate()` in `lib/src/deck_filters.dart`; cases in `test/deck_picker_filter_update_test.dart` | Creates a fresh `DeckFilters` value from the exact input text, matching the source plain-class construction on every call. The host assigns it to the current-filter StateFlow; Android flow delivery and deck-list refresh remain host-side. The pinned ViewModel has no direct assertion for this setter, so identity/input cases are source-derived. |
+| Unicode 15.0.0 UCD `UnicodeData.txt`, `PropList.txt`, `DerivedCoreProperties.txt`, and `SpecialCasing.txt` | `lib/src/unicode_15_case_data.dart`, `lib/src/unicode_15_simple_case_mappings.dart`, `lib/src/locale_lowercase.dart`, and the Manage Note Types filter in `lib/src/manage_note_types_state.dart` | Canonical-combining-class, `Soft_Dotted`, `Cased`, and `Case_Ignorable` data; BMP decimal-digit block starts for Kotlin-compatible gesture query parsing; full lowercase mappings for final sigma and unconditional expansions; and simple BMP case mappings for Kotlin-compatible UTF-16 case-insensitive matching; see the separate Unicode license notice |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DisplayDeckNode.kt` | `lib/src/display_deck_node.dart` | Display-row projection and filtered/collapsed tree flattening; value equality over constructor fields, excluding its mutable `DeckNode` |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:94–118` (`FlattenedDeckList`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `FlattenedDeckList` and `projectFlattenedDeckList()` in `lib/src/flattened_deck_list.dart`; source-derived cases in `test/flattened_deck_list_test.dart` | A null due tree returns empty data and `hasSubDecks = false`; otherwise uses existing `filterAndFlattenDisplay()` and sets `hasSubDecks` when any top-level child has children. The host resolves the current deck ID from the collection and owns due-tree flow combination, StateFlow, logging, and UI. The pinned source tests do not directly assert this projection, so Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:465–479` (`findDeckPosition`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `findDeckPosition()` in `lib/src/deck_position.dart`; cases in `test/deck_position_test.dart` | Returns the first matching visible index, otherwise recursively asks the host-resolved due-tree parent, and defaults to zero when no parent is available. The host supplies flattened IDs and the immediate parent resolver; due-tree construction, StateFlow/list access, adapter scrolling and layout offset remain host-side. The bounded pinned test search found no direct test of `findDeckPosition`, so these cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:659–692` (`getPreviousVersion`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `getPreviousDeckPickerVersion()` in `lib/src/deck_picker_previous_version.dart`; cases in `test/deck_picker_previous_version_test.dart` | Reads `lastUpgradeVersion` as Long with `current` default first; on the typed mismatch marker, retries Int with default `20900203`; on that mismatch, reads String with default `""` and maps only exact `"2.0.2"` to `40`, otherwise `0`. Successful fallback reads remove the key; successful Long reads and failed String reads do not. The host performs SharedPreferences IO, translates only getter `ClassCastException` to the marker, and later persists current version. The bounded source test search found no direct test of this helper, so Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:593–615,737–742` (`fetchSyncIconState`, `SyncIconState`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `planDeckPickerSyncIconFetch()` and `projectDeckPickerSyncIconResponse()` in `lib/src/deck_picker_sync_icon_projection.dart`; cases in `test/deck_picker_sync_icon_projection_test.dart` | Plans the display-status and auth gates so disabled status returns Normal without auth/backend work, null auth returns NotLoggedIn without a backend request, and only available auth requests status. The lazy response iterable yields persistence for a nonempty new endpoint before it maps the required status; the host applies each effect as it iterates, so persistence also precedes the source TODO Error on an unrecognized required state. Recognized statuses map NO_CHANGES to Normal, NORMAL_SYNC to PendingChanges, and FULL_SYNC to OneWay. Caught Exceptions map to Normal; null/UNRECOGNIZED required status preserves `TODO("unexpected required response")` as an uncaught Error. Auth/backend access, endpoint preference writes, source exception adaptation/logging, coroutine execution, and UI remain host-side. The pinned tests include a logged-out icon assertion but no direct backend status mapping, endpoint update order, caught-error fallback, or unrecognized-required behavior assertions, so those Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:352–372,483–565` (`updateDeckList`, `onScreenResumed`, `StartupResponse`, `handleStartup`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerStartupResponse`, `planDeckPickerStartup`, `completeDeckPickerStartup`, `planDeckPickerUpdateDeckList`, and `planDeckPickerScreenResumed` in `lib/src/deck_picker_startup_projection.dart`; cases in `test/deck_picker_startup_projection_test.dart` | Permission denial publishes a permission request without changing the first-refresh flag or assigning a startup job. With permissions, the source sets that flag and assigns the job before checking startup failure on IO. Failure publishes FatalError and stops; success configures rendering, launches deck-list loading on IO without awaiting it, then publishes Success. `updateDeckList` first skips while the startup job is active, otherwise consumes the first-refresh flag once, and otherwise requests a load; screen resume clears the flag. The host supplies permission and failure results, runs the IO/coroutine/job/lifecycle work, configures rendering, loads the deck list, and publishes MutableStateFlow values. The pinned tests directly cover the startup refresh guard and resume transition but do not establish response/effect sequencing; those Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:342–345` (`unburyDeck`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerUnburyDeckOperation` and `projectDeckPickerUnburyDeck()` in `lib/src/deck_picker_unbury_deck_operation.dart`; source-derived case in `test/deck_picker_unbury_deck_operation_test.dart` | Carries the supplied deck ID unchanged for the host to pass to `sched.unburyDeck(deckId)` inside the source undoable operation. It does not select a deck or add an explicit deck-list refresh/count-change notification. The host retains `launchCatchingIO`, `undoableOp<OpChanges>`, scheduler/backend access, coroutine/error handling, and Android/UI behavior. No direct pinned test for this action was found, so the Dart case is source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:347–350` (`scheduleReviewReminders`) and `ScheduleRemindersDestination.kt:21–33` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerScheduleReviewRemindersRequest` and `projectDeckPickerScheduleReviewReminders()` in `lib/src/deck_picker_schedule_review_reminders_request.dart`; source-derived case in `test/deck_picker_schedule_review_reminders_request_test.dart` | Carries the exact caller-supplied deck ID as the request payload for host routing to a deck-specific review-reminder destination. The host retains coroutine/flow scheduling and cancellation, destination/Intent construction, `ReviewReminderScope`, and reminder behavior. No direct pinned test assertion for this action was found; the Dart case is source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ScheduleRemindersDestination.kt:19–25` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ScheduleRemindersDestination` in `lib/src/schedule_reminders_destination.dart`; focused cases in `test/schedule_reminders_destination_test.dart` | Retains the supplied deck ID unchanged and creates a fresh existing `DeckSpecificReminderScope` on every `toIntent` call, forwarding it with the exact context to the host builder once and returning that callback result. Callback failures propagate unchanged. The host retains `ScheduleRemindersFragment.getIntent`, Context, Android Intent/Parcelable extras, activity, fragment, and reminder behavior. The Kotlin source declares `GPL-3.0-or-later` and Copyright (c) 2025 Eric Li; that provenance identifies the source only, not the Dart adaptation. The Dart implementation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical. No direct pinned test for this class was found; focused cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesState.kt` and `ManageNoteTypesViewModel.kt` (`filter`, `onItemClick`, `onItemLongClick`, `onItemChecked`, `clearSelection`, `onCardEditorRequested`, `clearDestination`, `clearMessage`, and `clearError`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); cases in `AnkiDroid/src/test/java/com/ichi2/anki/notetype/ManageNoteTypesViewModelTest.kt` | `NoteTypeItemState`, `ManageNoteTypesState`, and host-facing destination values in `lib/src/manage_note_types_state.dart`; focused cases in `test/manage_note_types_state_test.dart` | Preserves case-insensitive name containment while retaining rows and selection, source list-wide ID updates, click/long-click/checked selection transitions and mode derivation, source-order selected rows, Fields/Card Editor destination payloads and clearing, and independent message/error clearing from the latest state while retaining every other field. The host supplies row values and retains collection loading/refresh, use-count queries, rename/delete/undo, exception aggregation, StateFlow/coroutines, Android UI/lifecycle, and note-type mutations. The pinned tests directly cover long-click selection, click selection, clearing, checked-state transitions, filter selection retention, and case-insensitive filtering; destination, transient clears, list-wide duplicate-ID updates, and exact source-order projection are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesViewModel.kt:232–276` (`deleteSelectedNoteTypes`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); direct context in `ManageNoteTypesState.kt`; source cases in `AnkiDroid/src/test/java/com/ichi2/anki/notetype/ManageNoteTypesViewModelTest.kt` | `ManageNoteTypeDeletionPlan`, removal outcomes, and host error input in `lib/src/manage_note_types_delete_plan.dart`; focused cases in `test/manage_note_types_delete_plan_test.dart` | Captures selected rows in source list order, publishes loading plus deselection immediately, runs one host undoable removal per captured row sequentially, retains failures by row and continues, filters the latest host rows by successful captured IDs, and forwards exact name/throwable labels in failure-map order for host CombinedException/ReportableException construction. Final publication clears loading and replaces or clears the prior error while preserving other latest state. The host retains `safeRemoveNoteType`, `undoableOp`, default `OpChanges`, exception construction, mutable state/StateFlow, coroutine scheduling, Timber, and Android UI/lifecycle. Focused Dart tests are source-derived from the pinned behavior and callback boundaries. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesViewModel.kt:117–148` (`delete`); direct context in `ManageNoteTypesState.kt` and `safeRemoveNoteType`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875` | `ManageNoteTypeDeletePlan` and its single-removal outcomes in `lib/src/manage_note_type_delete_plan.dart`; focused cases in `test/manage_note_type_delete_plan_test.dart` | Publishes loading before capturing the note-type count, always enters the host undoable callback, returns the host default result with the last-model message when the captured count is at most one, otherwise invokes one exact-ID safe removal. Success filters every matching row from the latest state, recomputes multi-select mode, and returns the same host result; safe-removal failure keeps rows and mode, clears loading, and publishes the host-wrapped error before returning the default result. Exceptions from host callbacks propagate at their source boundary. The host retains collection mutation, safeRemoveNoteType, undoableOp, OpChanges, ReportableException, mutable StateFlow, coroutine scheduling, Timber and Android/UI lifecycle. No direct pinned ViewModel test for this method was found; focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesViewModel.kt:83–115` (`rename`); direct context in `ManageNoteTypesState.kt` and `safeRenameNoteType`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875` | `ManageNoteTypeRenamePlan` and its safe-rename outcomes in `lib/src/manage_note_type_rename_plan.dart`; focused cases in `test/manage_note_type_rename_plan_test.dart` | Publishes loading synchronously before host scheduling, forwards the exact ID/name into the host undoable callback, then updates every matching row in the latest state by changing only its name; the existing `shouldBeDisplayed`, selection and use count remain unchanged. Success clears loading and returns the identical host changes object. Safe-rename failure preserves rows and unrelated state, clears loading, asks the host to build an error reportable iff the throwable is not a host-classified BackendException, then returns the host default result. Exceptions from host callbacks propagate at their source boundary. The host retains safeRenameNoteType mutation and exception capture, undoableOp, generated OpChanges, ReportableException, BackendException classification, StateFlow/coroutine scheduling, Timber, and Android/UI lifecycle. No direct pinned ViewModel test for rename was found; focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNoteTypesViewModel.kt:55–70` (`refreshNoteTypes`) and `:342–347` (`safeGetNotetypeNameIdUseCount`); `ManageNoteTypesState.kt`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875` | `ManageNoteTypeRefreshPlan` and safe-query outcomes in `lib/src/manage_note_type_refresh_plan.dart`; focused cases in `test/manage_note_type_refresh_plan_test.dart` | Publishes loading synchronously before host query scheduling. Success clears loading and installs the exact ordered row list while preserving every other latest state field, including a prior error. Safe-query failure clears loading, preserves current rows and other fields, and replaces only the error with the host-wrapped reportable failure. The host retains collection access/use-count lookup, `safeGetNotetypeNameIdUseCount` and its `Exception` capture, `ReportableException`, `MutableStateFlow`, coroutine scheduling, Timber, and Android lifecycle/UI. Exceptions from the query callback, report wrapper, and later state publication propagate; Dart does not broaden the source helper's `Exception` catch. No direct pinned ViewModel test for refresh was found; focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/EditDeckDescriptionDialogViewModel.kt` (`description`, `formatAsMarkdown`, initialization, `hasChanges`, back/close/save; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); cases in `AnkiDroid/src/test/java/com/ichi2/anki/dialogs/EditDeckDescriptionDialogViewModelTest.kt` | `EditDeckDescriptionDialogState`, source dismissal variants, and ordered host actions in `lib/src/edit_deck_description_state.dart`; source-derived cases in `test/edit_deck_description_state_test.dart` | Preserves saved-versus-persisted initialization, the dirty flag even for same-value assignments, post-initialization comparison to both persisted values, back/explicit-close decisions, and save-before-Saved-dismissal order. The host supplies persistence values, applies ordered actions, and retains SavedStateHandle, collection access/update, coroutine/Flow delivery, lifecycle, and dialog UI. The source tests cover restoration, editing, back, close, and Saved dismissal; init completion, same-value dirty semantics, reversion, pre-init comparison, and explicit action ordering are source-derived. Both source files are marked `GPL-3.0-or-later`; no separate source copyright holder is stated in their headers. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:127,455–458` (`flowOfExportDeck`, `exportDeck`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerExportDeckRequest` and `projectDeckPickerExportDeck()` in `lib/src/deck_picker_export_deck_request.dart`; source-derived case in `test/deck_picker_export_deck_request_test.dart` | Carries the exact supplied deck ID as a host-facing request for publication to the export flow. The host retains `launchCatchingIO`, flow emission, coroutine/IO/error handling, and export execution. No direct pinned test assertion for this action was found; the Dart case is source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:325` (`openManageNoteTypes`) and `AnkiDroid/src/main/java/com/ichi2/anki/notetype/ManageNotetypes.kt:348–350` (`ManageNoteTypesDestination`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerManageNoteTypesRequest` and `projectDeckPickerOpenManageNoteTypes()` in `lib/src/deck_picker_manage_note_types_request.dart`; case in `test/deck_picker_manage_note_types_request_test.dart` | Creates a new request for every call, preserving the identity of the source's plain Kotlin destination class. The host retains `launchCatchingIO`, Flow emission, destination-to-Intent conversion, and Android navigation. No direct pinned test assertion for this action was found; the focused Dart identity case is source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:273–323` (`selectDeck`, `requestContextMenu`, `requestRightClickContextMenu`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerSelectionEffect`, `DeckPickerMenuPublication`, `DeckPickerSelectionEffectPlan`, and the three `planDeckPicker*` functions in `lib/src/deck_picker_selection_effects.dart`; cases in `test/deck_picker_selection_effects_test.dart` | Selection orders `decks.select(deckId)`, `focusedDeck = deckId`, then `flowOfRefreshDeckList(Unit)`. The host runs these sequentially inside the selection job; a collection-selection failure stops that job before focus assignment and refresh. Each menu request then joins the selection job and publishes after it completes. Kotlin `Job.join()` does not rethrow the joined job's failure, so menu publication still occurs after failed selection. Both requests preserve the deck ID, and right-click keeps exact x/y values without conversion. The source TODO about resetting the Card Browser default deck remains unimplemented. The host retains collection mutation, StateFlow/SharedFlow, jobs, and UI. The focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:435–452` (`toggleDeckExpand`) and `libanki/src/main/java/com/ichi2/anki/libanki/sched/DeckNode.kt` (`find`) | `DeckPickerExpandTogglePlan` and `planDeckPickerExpandToggle()` in `lib/src/deck_picker_expand_toggle_effects.dart`; cases in `test/deck_picker_expand_toggle_effects_test.dart` | Resolves the first depth-first match, then orders in-memory `collapsed` mutation, `decks.setCollapsed(did, collapsed, Scope.REVIEWER)`, and deck-list refresh. A missing tree or target skips mutation and persistence but still refreshes. The host applies effects sequentially, so mutation or persistence failure stops refresh; coroutine scheduling, collection persistence, flow emission, and UI stay host-side. The projection leaves the node unchanged. The focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:281–295` (`browseCards`, `addNote`) and `:333–340` (`openDeckOptions`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerNavigationPlan` and `planDeckPickerBrowseCards`, `planDeckPickerAddNote`, and `planDeckPickerOpenDeckOptions` in `lib/src/deck_picker_navigation_plan.dart`; source-derived cases in `test/deck_picker_navigation_plan_test.dart` | `browseCards` selects the supplied deck before navigating to that same deck; `addNote` selects only for a non-null ID with `setAsCurrent = true`, then carries the original nullable ID to navigation; `openDeckOptions` honors either explicit filtered value (including false) or requests host resolution through `decks.isFiltered(deckId)` only when null. Collection access and exception behavior, concrete Android destinations, navigation Flow delivery, and lifecycle remain host-side. The pinned DeckPicker tests do not directly assert these command/effect decisions, so the Dart cases are source-derived. Existing Reviewer destination helpers are separate mappings. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:248–270` (`emptyFilteredDeck`, `rebuildFilteredDeck`) | `DeckPickerFilteredDeckOperationPlan` and `planDeckPickerEmptyFilteredDeck` / `planDeckPickerRebuildFilteredDeck` in `lib/src/deck_picker_filtered_deck_operation_plan.dart`; source-derived cases in `test/deck_picker_filtered_deck_operation_plan_test.dart` | Empty selects the supplied ID in one `withCol`, then runs `sched.emptyFilteredDeck(decks.selected())` in a distinct `undoableOp`; rebuild selects and calls `sched.rebuildFilteredDeck(decks.selected())` in the same `withCol`. Both publish deck-count changes only after successful completion. Plans distinguish the collection and undoable boundaries and refer to the host-resolved selected ID for scheduler calls; collection, undo, scheduler, flow, coroutine, and exception behavior remain host-side. No pinned test directly covers these command/effect decisions, so the Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:196–226` (`deleteDeck`, `deleteSelectedDeck`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerDeleteDeckPlan` and `planDeckPickerDeleteDeck()` in `lib/src/deck_picker_delete_deck_plan.dart`; source-derived case in `test/deck_picker_delete_deck_plan_test.dart` | The host resolves `decks.getLegacy(did)!!.name` before removal, so a missing deck fails before any deletion. On success it removes exactly `listOf(did)` inside `undoableOp`, resets focus to `Consts.DEFAULT_DECK_ID` (`1`) only after removal, then emits `DeckDeletionResult(deckName, cardsDeleted = changes.count)` last; failure stops later effects. `deleteSelectedDeck` reads `decks.selected()`, delegates to `deleteDeck(targetDeckId)`, and calls `Job.join()`, which waits without rethrowing the joined job's failure. The Dart projection accepts the already-resolved required name and the successful removal count, and orders removal, default-focus reset, and notification; it does not duplicate the selected-deck helper. Collection/null assertion, undo, coroutine, and Flow behavior remain host-side. The bounded pinned test search found no direct assertion of these delete-deck behaviors, so the Dart case is source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:150–171` (`flowOfDeckListInInitialState`, `flowOfCardsDue`, `flowOfResizingDividerVisible`); `DeckNode.onlyHasDefaultDeck()` and `DeckNode.totalCardsDue()` | `projectDeckPickerInitialState`, `projectDeckPickerCardsDue`, and `projectDeckPickerResizingDividerVisible` in `lib/src/deck_picker_initial_state_projection.dart`; cases in `test/deck_picker_initial_state_projection_test.dart` | Initial state is null for a null due tree; otherwise it requires the default deck as the sole child and no cards. Due count is null for a null tree or any initial-state value except exactly false, then uses the existing top-level `totalCardsDue()` sum. Divider visibility is `!(isInInitialState == true || hasNoCards)`, preserving true for a null initial-state value with cards. The host supplies the due tree and collection state, combines the flows, and publishes StateFlow values. No direct pinned tests for these flows were found, so the Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:389–428` (`reloadDeckCounts`) | `DeckPickerReloadDeckCountsPlan`, `DeckPickerReloadDeckCountsEffect`, and `planDeckPickerReloadDeckCounts()` in `lib/src/deck_picker_reload_deck_counts_plan.dart`, composed with the scheduler and undo-menu projections; cases in `test/deck_picker_reload_deck_counts_plan_test.dart` | The plan stages host operations to preserve failure boundaries and source order: read due tree and `isEmpty` together, publish due tree, publish the no-cards flag, read then publish studied-today with each literal LF replaced by one space (preserving CR and other whitespace), read `schedVer` as Long with fallback 1, store the next shown scheduler version before optionally emitting the legacy prompt, read then publish the current deck as focused, read and refresh undo-menu state, then emit deck reload last. The plan composes `projectDeckPickerSchedulerUpgradePrompt()` and `planDeckPickerUndoMenuRefresh()`. The host owns cancellation, each collection/config read at the staged boundary, IO/job execution, and StateFlow/SharedFlow updates. The order and LF replacement cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:627–656,745–751` (`refreshMenuState`, `refreshUndoMenuState`, `OptionsMenuState`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerOptionsMenuState`, `planDeckPickerOptionsMenuRefresh`, `completeDeckPickerOptionsMenuRefresh`, and `planDeckPickerUndoMenuRefresh` in `lib/src/deck_picker_options_menu_projection.dart`; cases in `test/deck_picker_options_menu_projection_test.dart` | Maps `searchIcon = decks.count() >= 10`, `isColEmpty = isEmpty && decks.count() == 1`, source undo values, and the intermediate Normal sync icon. The intermediate `OptionsMenuState` is returned by `withOpenColOrNull`, then `fetchSyncIconState()` runs, and only the completed state is assigned to StateFlow; a fetch failure propagates before that assignment. An inaccessible collection assigns null. The undo refresh reads its two values only while open, updates only those fields on a nonnull current state, preserves null, and performs no update when inaccessible. The host supplies collection/deck/undo values and current state, invokes the existing sync fetch, assigns StateFlow values, and owns coroutine/UI behavior. No direct pinned tests for these refresh paths were found, so the Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:228–245` (`deleteEmptyCards`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `DeckPickerEmptyCardDeletionReport`, `DeckPickerEmptyCardDeletionNote`, and `deckPickerEmptyCardDeletionIds()` in `lib/src/deck_picker_empty_card_deletion.dart`; cases in `test/deck_picker_empty_card_deletion_test.dart` | Traverses notes in report order; when `preserveNotes && willDeleteNote`, drops only the first card ID for that note, otherwise retaining all card IDs. The flattened list preserves duplicates and is returned even when empty. The host supplies the report and passes this list unchanged to `removeCardsAndOrphanedNotes` inside its undoable operation; report creation, orphan-note handling, deletion, count result, and notification remain host-side. The bounded pinned test search found no direct deletion-projection assertion, so Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:724` (`DeckNode.onlyHasDefaultDeck`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt:147` (`DEFAULT_DECK_ID = 1L`) | `onlyHasDefaultDeck()` in `lib/src/deck_node.dart`; cases in `test/deck_node_only_has_default_deck_test.dart` | Returns true only when the ordered child deck IDs contain exactly one value and it is the default deck ID 1. Empty and multiple-child inputs return false, including lists that contain ID 1. The host supplies child IDs; due-tree construction and collection access remain host-side. No direct pinned test for this predicate was found, so these cases are source-derived. |
+| `libanki/src/main/java/com/ichi2/anki/libanki/sched/DeckNode.kt:100–134` (`find`, `forEach`, `iterator`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `find()`, direct iteration, `preorder`, and `forEach()` in `lib/src/deck_node.dart`; cases in `test/deck_node_traversal_test.dart` | `find()` checks self first then searches children depth first in order, including synthetic nodes and returning the first duplicate. Direct iteration, `preorder`, and `forEach()` visit the node before its descendants in child order, omitting synthetic nodes while continuing through their children. These cases are source-derived; backend tree construction and weak-parent behavior remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:501–506` (`disableDeckAndChildrenShortcuts`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`), using `DeckNode.find` and `iterator` | `disableDeckAndChildrenShortcuts()` in `lib/src/deck_picker_disable_deck_shortcuts.dart`; focused cases in `test/deck_picker_disable_deck_shortcuts_test.dart` | The host supplies the nullable `dueTree?.find(deckId)` callback, which receives the exact input ID once and returns that node's source-order iteration. Dart eagerly stringifies each `did`, preserves duplicates/order, and emits the resulting list once; null lookup emits an empty list without conversion, and lookup/conversion failures propagate before emission. The host retains `launchCatchingIO`, due-tree/backend access, lifecycle, Flow delivery, and Android shortcut handling. The pinned `DeckPickerViewModelTest` directly checks that the selected deck and descendants are emitted; nullable, ordering, and failure branches are source-derived. The source file declares `SPDX-License-Identifier: GPL-3.0-or-later` and has no file-level copyright text; no method-specific authorship is asserted. Root `COPYING` remains byte-identical. |
+| `libanki/src/main/java/com/ichi2/anki/libanki/sched/DeckNode.kt:95–101,110` (`toString`, `hasCardsReadyToStudy`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `toString()` and `hasCardsReadyToStudy()` in `lib/src/deck_node.dart`; cases in `test/deck_node_readiness_test.dart` | Readiness is true when review, new, or learning count is strictly positive, preserving the source OR order and behavior for zero/negative values. The diagnostic string uses the full deck name followed by ID, review, learning, and new counts, separated by comma-space with ungrouped decimal rendering. Bounded pinned test search found no direct assertion of either method, so these cases are source-derived. |
+| `libanki/src/main/java/com/ichi2/anki/libanki/Decks.kt:722–737` (`path`, `basename`, `immediateParentPath`, `immediateParent`); `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:482–500,728–735` (`createIcon`, `ShortcutData`) | `deckNamePath`, `deckNameBasename`, `immediateParentDeckNamePath`, and `immediateParentDeckName` in `lib/src/deck_name_path.dart`; `ShortcutData` in `lib/src/shortcut_data.dart`; cases in `test/deck_name_path_test.dart` and `test/shortcut_data_test.dart` | Splits only on `::`, preserves empty components, returns the last path component, drops the last component for the parent path, and returns null only when that parent path is empty. The host resolves the deck ID to its exact full name; `ShortcutData` retains the ID and full name, derives the basename short label, and uses structural equality like the Kotlin data class. The host still emits the flow and handles Android shortcut delivery. The focused Dart cases are source-derived; no direct pinned test was found for these behaviors. |
+| `libanki/src/main/java/com/ichi2/anki/libanki/sched/DeckNode.kt` and `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt` | `lib/src/deck_node.dart` | Dart input projection for display rows; omitted `isSyntheticDeck` derives from the projected depth (`depth < 0`), matching Kotlin's `node.level <= 0` when `depth = node.level - 1`; explicit overrides remain supported. `totalCardsDue()` sums immediate-child new/review/learning counts with Kotlin signed 32-bit `Int` wrapping to avoid the capped root aggregate and shared subdeck limits. Full backend tree construction is not ported |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:299–340` (`emitDeckOptionsDestination` and `getDeckOptionsTargets`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `projectReviewerDeckOptionsTargets()` in `lib/src/reviewer_deck_options_targets.dart`; source-derived cases in `test/reviewer_deck_options_targets_test.dart` | Builds candidates from the current, nonzero noncurrent original, and noncurrent card deck IDs without deduplication; consumes host-resolved nullable names and filtered flags, omits missing names, then sorts unfiltered first with stable ties. Current deck/card and collection reads, destination creation, and navigation remain host-side. The pinned caller is marked `@NeedsTest`; Dart tests cover conditional IDs, duplicate retention, null-name omission, filtered ordering, and stable ties. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:342–348` (`emitBrowseDestination`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerBrowseToCardDirective()` in `lib/src/reviewer_browse_destination.dart`; cases in `test/reviewer_browse_destination_test.dart` | Returns the source-equivalent `BrowserDestination.ScrollToCard(deckId, cardId)` directive with both host-resolved IDs unchanged. The pinned Reviewer tests have no direct BROWSE assertion; Dart cases are source-derived. Collection/current-card reads, Android destination construction, navigation Flow, and lifecycle remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:773` (`ViewerAction.STATISTICS`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerStatisticsDestination()` in `lib/src/reviewer_statistics_destination.dart`; source-derived no-payload case in `test/reviewer_statistics_destination_test.dart` | Selects the payload-free `StatisticsDestination`. No direct pinned Reviewer test asserts this branch or destination. `navigateFlow` emission/delivery, `ReviewerFragment` lifecycle collection (`ReviewerFragment.kt:211–222`), `AnkiDroidNavigator` intent resolution (`AnkiDroidNavigator.kt:45`), Activity launch, and statistics UI/collection access remain host-side. `STATISTICS` is a `ViewerAction`, not a `ViewerCommand`; no binding is added. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:280–285` (`emitCardInfoDestination`), dispatched for `ViewerAction.CARD_INFO` at `:718` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerCurrentCardInfoDestination()` in `lib/src/reviewer_current_card_info_destination.dart`; cases in `test/reviewer_current_card_info_destination_test.dart` | Pairs the host-resolved current card ID unchanged with `EntryPoint.CURRENT_CARD_STUDY`; the pinned Reviewer tests have no direct CARD_INFO assertion, so ID pass-through and entry-point cases are source-derived. Current-card lookup, concrete `CardInfoDestination` construction, navigation Flow, and Android/lifecycle handling remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:269–274` (`emitEditNoteDestination`), dispatched for `ViewerAction.EDIT` at `:715` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerEditNoteFromPreviewerDirective()` in `lib/src/reviewer_edit_note_destination.dart`; cases in `test/reviewer_edit_note_destination_test.dart` | Passes the host-resolved current card ID unchanged in a typed directive corresponding to `NoteEditorDestination.EditNoteFromPreviewer(cardId)`. The pinned Reviewer tests have no direct EDIT destination assertion; Dart pass-through cases, including zero and a negative ID, are source-derived. Current-card lookup, logging, concrete Android destination construction, navigation Flow, and lifecycle handling remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:275–278` (`emitAddNoteDestination`), dispatched for `ViewerAction.ADD_NOTE` at `:717` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerAddNoteFromReviewerDirective()` in `lib/src/reviewer_add_note_destination.dart`; case in `test/reviewer_add_note_destination_test.dart` | Returns a typed directive corresponding to `NoteEditorDestination.AddNoteFromReviewer()` with no card ID or additional payload. The pinned Reviewer tests have no direct ADD_NOTE destination assertion; the no-payload mapping is source-derived. Logging, concrete Android destination construction, navigation Flow, and lifecycle handling remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:287–296` (`emitPreviousCardInfoDestination`), dispatched for `ViewerAction.PREVIOUS_CARD_INFO` at `:719`; previous ID stored at `:541` and read from `KEY_PREVIOUS_CARD_ID` at `:842` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerPreviousCardInfoDirective()` in `lib/src/reviewer_previous_card_info_directive.dart`; cases in `test/reviewer_previous_card_info_directive_test.dart` | A null host-supplied previous-card ID selects the host-localized `cardStatsNoCardClean` feedback; any non-null ID selects previous-card-info navigation and passes the ID through unchanged, including zero. The pinned Reviewer tests have no direct assertion for this action; Dart cases are source-derived. SavedStateHandle access, previous-ID state, `CardInfoDestination` construction, navigation Flow, localization/resource lookup, and feedback Flow delivery remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:682–685` (`launchSetDueDate`), dispatched for `ViewerAction.RESCHEDULE_NOTE` at `:727` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerSetDueDateDirective()` in `lib/src/reviewer_set_due_date_directive.dart`; source-derived ID pass-through cases in `test/reviewer_reschedule_note_directive_test.dart` | Carries the host-resolved current card ID unchanged to a due-date request directive. No direct pinned `ReviewerViewModelTest` assertion for `RESCHEDULE_NOTE` was found; Dart ID cases are source-derived. Current-card lookup, `setDueDateFlow` delivery, due-date dialog/UI construction, and applying the selected due date remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:687` (`launchResetProgress`), dispatched for `ViewerAction.RESET_PROGRESS` at `:728` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerResetProgressDirective()` in `lib/src/reviewer_reset_progress_directive.dart`; source-derived no-payload case in `test/reviewer_reset_progress_directive_test.dart` | Returns a payload-free typed directive corresponding to one `resetProgressFlow.emit(Unit)` request. No direct pinned `ReviewerViewModelTest` assertion for `RESET_PROGRESS` was found; the Dart mapping case is source-derived. Confirmation UI, SharedFlow emission/delivery, reset implementation, and lifecycle handling remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:414–417` (`stopAutoAdvance`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerStopAutoAdvanceDirective()` in `lib/src/reviewer_stop_auto_advance_directive.dart`; source-derived no-payload case in `test/reviewer_stop_auto_advance_directive_test.dart` | Returns one payload-free request for the host to call its existing `AutoAdvance.cancelQuestionAndAnswerActionJobs()`. `ReviewerFragment.onStop()` calls it unless the activity is changing configurations (`ReviewerFragment.kt:142–147`); the timebox flow calls it before showing its dialog (`:594–602`). No direct reference to `stopAutoAdvance` or `cancelQuestionAndAnswerActionJobs` was found in the 44 pinned Reviewer-related test files. The host retains logging, caller/lifecycle handling, actual job cancellation and timer behavior; Dart does not alter the existing AutoAdvance implementation or F102 toggle behavior. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:102,660–663,722` (`editNoteTags`, `ViewerAction.TAG`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`), declared at `preferences/reviewer/ViewerAction.kt:60`; called by `ReviewerFragment.kt:626–628` | `reviewerEditTagsDirective()` in `lib/src/reviewer_edit_tags_directive.dart`; cases in `test/reviewer_edit_tags_directive_test.dart` | Passes the host-resolved note ID unchanged and represents the request as the singleton `noteIds` list supplied by `tagsDialogFactory.show`. No direct pinned `ReviewerViewModelTest` assertion for `editNoteTags`/`editNoteTagsFlow` was found; the focused Dart cases are source-derived. Current-card and collection reads, TAG dispatch, SharedFlow delivery, Android dialog factory/UI and lifecycle remain host-side. This request opens the editor; it does not implement F131 `onEditedTags` or tag mutation. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:665–679` (`onEditedTags`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`), called by `ReviewerFragment.kt:670` | `reviewerEditedTagsDirective()` in `lib/src/reviewer_edited_tags_directive.dart`; cases in `test/reviewer_edited_tags_directive_test.dart` | Suppresses an update only for structurally equal ordered tag lists; otherwise carries the exact `selectedTags.joinToString(" ")` value, preserving order, duplicates, empty elements, and whitespace. No direct `onEditedTags` assertion was found in pinned `ReviewerViewModelTest.kt`; Dart cases are source-derived. The host keeps current-card/note/collection lookup, `note.setTagsFromStr`, undoable `updateNote`, logging, and coroutine delivery. Card Browser/Previewer mark-tag paths are separate. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:210–237` (`showAnswerInternal`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `planReviewerShowAnswerEffects()`, `planReviewerShowAnswerTimerEffects()`, and `planReviewerShowAnswerTimerStopEffects()` in `lib/src/reviewer_show_answer_effects.dart`; focused cases in `test/reviewer_show_answer_effects_test.dart` | Preserves the mutation-signal wait; type-answer result publication or empty completion; 1,000 ms deferred-result wait and null/timeout-to-empty typed answer; next-time update, answer display, answer-side media, and Auto Advance callback only when not waiting for audio. The timer hidden-state read follows those effects; Hidden skips current-card/deck-config reads, while visible state requests them in order and stops only for host-supplied `stopTimerOnAnswer == true`. The host retains deferred/coroutine execution, mutable typed-answer state, scheduler/current-card/deck/config access, media player, timer, Flow/lifecycle, UI, and callback error boundaries. The pinned Reviewer tests do not directly assert this method's effect order; the Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:465–478` (`showQuestion`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `planReviewerShowQuestionEffects()` in `lib/src/reviewer_show_question_effects.dart`; focused cases in `test/reviewer_show_question_effects_test.dart` | Preserves replacement of a completed mutation signal before `super.showQuestion()`, while retaining an already pending signal; then requests `runStateMutationHook()`, mark-icon update, flag-icon update, and Auto Advance question notification in source order. The Auto Advance callback is omitted when waiting for audio, leaving the existing host media-group-completed path intact. `ReviewerViewModelTest.kt:45–112` covers restoration and custom-scheduler behavior but has no direct completed/pending signal or show-question callback-order assertion, so these focused Dart cases are source-derived. The host retains signal lifecycle, rendering, hook execution, collection reads and Flow publication, Auto Advance, coroutine/error boundaries, media callbacks, and UI. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:810–839` (`opExecuted`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `planReviewerOpExecutedEffects()` in `lib/src/reviewer_op_executed_effect_plan.dart`; source-derived cases in `test/reviewer_op_executed_effect_plan_test.dart` | Always requests undo/redo-label updates first, then returns when the Kotlin `handler == this` equality comparison is true; otherwise chooses mutually exclusive `studyQueues`, `noteText`, and `card` branches in that order. Study-queue changes update the current card. Note-text changes load the current card and AV tags, update the mark icon, then request answer or question rendering from the host-supplied state. Card changes load the current card then update the flag icon. No direct `opExecuted` assertion was found in pinned `ReviewerViewModelTest.kt`. The host reads `OpChanges`, evaluates the handler equality comparison, accesses the current card/collection and media player, runs callbacks under `launchCatchingIO`, and retains labels, rendering, Flows, and lifecycle; requested callback failures stop the sequence naturally. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt` and `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt` | `lib/src/review_session.dart` | Scheduler-selected card, question/answer side, rating dispatch, mutation readiness, serialized actions, and timebox event gate/continue. `displayedQueuePresentation` starts at source `StudyCounts()` defaults and updates only for normal queue states; it retains the previous counts and active queue while a timebox is reached, the queue is loading, or the queue finishes, matching the source's count-flow no-emission branches. Card side is retained during queue reloads and failures; a non-null queue state returned after the mutation hook becomes current before answer reveal, and grading also uses the post-hook state, matching the source's next-time refresh and `queueState.await()` |
+| `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` | `ReviewScheduler<TSchedulingSnapshot>` in `lib/src/review_session.dart` | Queue and answer adapter contract, including the optional timebox event; scheduling snapshot and rating are forwarded without Dart interval calculations |
+| `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` and `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` | `ReviewTimeboxReached` in `lib/src/review_session.dart`; `ReviewTimeboxTracker` in `lib/src/review_timebox.dart` | Accepts adapter-supplied integer time, configured seconds, and recorded-answer count; disables only for a zero limit; uses strict `elapsed > limit`; emits the configured limit and count delta, then restarts from fresh time/count reads. Collection storage and scheduler state remain behind adapters. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt` | `reviewTimeboxRoundedMinutes()` in `lib/src/review_timebox.dart` | Preserves Float32 division by 60 and Kotlin `roundToInt()` ties toward positive infinity. Localized strings, dialog and lifecycle remain unported. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt` and `CardBrowserColumn.kt` | `BrowserColumnCollection` and `BrowserColumn` in `lib/src/browser_column_collection.dart` | Models the column key identities and list transformations: parses supplied `|`-separated keys, falls back to supplied defaults on invalid values, removes duplicates on load, and filters null entries on successful updates; update results preserve new duplicates until the next load and return the ordered serialized value for the host to persist. The constructor retains the source list alias and cached count, while each `backendKeys` access materializes the mapped key list like Kotlin's `List.map`. Display types, labels, and row values are unported. `BrowserConfig.kt` default lookup and its AGPL-incorporated constants are not copied. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionAdapter.kt:160–188` and `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MutableList.kt:10–22` | `lib/src/browser_column_selection_move.dart` | Projects disabled movement for usage items and vertical movement for other rows. `planBrowserColumnSelectionMove()` returns false with no swaps only when the target position is zero; otherwise it accepts the move and returns the source-ordered adjacent swap pairs, ascending for forward movement and descending for backward movement. Same-position moves are accepted with no swaps, and positions are not normalized or range-checked. The host applies swaps to its mutable list and handles adapter notifications, RecyclerView lifecycle, and delayed clear-view refresh. The adjacent `BrowserColumnSelectionTouchHelperCallbackTest.kt:32–57` tests drop-refresh timing but not movement flags, the zero-target guard, or swap order; Dart decision assertions are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionAdapter.kt:78–101,123–135` and `BrowserColumnSelectionFragment.kt:171–186,250–258` | `BrowserColumnSelectionTogglePlan` and `planBrowserColumnSelectionToggle()` in `lib/src/browser_column_selection_toggle.dart` | The host supplies row kinds in order; the model finds the first AVAILABLE heading, uses its original index as the target, and applies the source `< heading` side test. `applyTo()` performs `removeAt(fromPosition)` followed by insertion at the unadjusted target, with no validation. No heading gives `-1`; for a valid source row the removal happens before insertion fails, preserving the source partial-mutation edge. Android button listeners, RecyclerView notifications, dialog behavior, and lifecycle remain host-side. No pinned test directly covers this click transition: `BrowserColumnSelectionTouchHelperCallbackTest.kt:32–57` tests drag/drop refresh only, and `BrowserColumnSelectionFragmentScreenshotTest.kt:23–76` covers screenshots. Dart click cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionFragment.kt:118–137,226–229` and `CardBrowserViewModel.kt:988–1018` | `BrowserColumnSelectionSavePlan` and `planBrowserColumnSelectionSave()` in `lib/src/browser_column_selection_save.dart` | Compares initial/current ordered column lists structurally, emits an initial dismiss only when unchanged, and always carries the current columns/mode to the host update. Completion maps update success to dismiss/true and failure to the no-columns message/false. The source intentionally falls through after the unchanged-selection dismiss; a false update result then still shows the message. A no-change update may likewise fail by value equality. `updateActiveColumns`, preference/backend changes, and Android dialog/snackbar delivery stay host-side. The pinned fragment has `@NeedsTest("saving")` and `@NeedsTest("dismissing via 'save_columns'")` but no direct save-handler test; the screenshot test covers layout only. Dart assertions are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserLaunchOptions.kt:32–35` and `CardBrowserViewModel.kt` (extra names); Android `frameworks/base/core/java/android/net/Uri.java:getQueryParameter` and `UriCodec.java` (AOSP `android14-release`/`android15-release`) | `browserDeepLinkSearchFromUriString()` and `browserLaunchOptionFromUriString()` in `lib/src/browser_launch_options.dart` | The raw URI-string helper matches the first literal encoded `search` key, returns empty for a present key with or without `=`, and decodes valid query values with plus-to-space UTF-8 semantics before the existing deep-link/JavaScript/card/process-text precedence. A raw string is required because Dart `Uri` canonicalizes escaped unreserved query-key characters. Dart strict decoding throws on malformed percent/UTF-8 input; Android's `UriCodec` substitutes U+FFFD, so malformed-value equivalence is explicitly outside the helper's domain. Opaque URIs throw as Android's `getQueryParameter` does. Android `Intent`, extras, process-text action, URI ownership, and navigation remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/model/SortType.kt`, `libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, and typed config decoding in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` | `lib/src/browser_sort_type.dart` | Resolves NoOrdering or CollectionOrdering from the shared no-sort flag, caller-supplied mode-specific config keys/values, and available backend keys. Missing or incorrectly typed config values default to `noteFld` and `false`; corrupt backend keys yield NoOrdering. Save plans preserve the two ordered config writes before clearing the shared flag; saving NoOrdering changes only that global flag, including its cross-mode quirk. Android preference/config IO and actual row sorting are unported. `BrowserConfig.kt` key lookup/constants are supplied by the host, not copied. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:940–976` (`setSortType` and `buildSortChangeNotification`) | `planBrowserSortTypeUpdate()` in `lib/src/browser_sort_type.dart`; cases in `test/browser_sort_type_update_test.dart` | Orders selected-sort persistence, reverse-direction update (`null` for NoOrdering or the exact collection `reverse` value), notification construction/emission, and search launch. The host must await each action before advancing, so a save failure stops all later actions. The notification effect carries only the sort type; the host resolves the current localized label and Cards/Notes column type at that point, with raw-key and UNSPECIFIED fallback described in the following mapping row. Pinned `CardBrowserViewModelTest.kt:1908–1985` directly covers search launch, integration ordering, and reverse-direction state in the CollectionOrdering and NoOrdering cases, but not notification values. Flow mutation/delivery, coroutine cancellation/search execution, and collection query remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:958–976,1821–1834`; `CardBrowserColumn.kt:19–24,58–90,150–166`; `CardBrowserFragment.kt:1239–1252` | `projectBrowserSortChangeNotification()` in `lib/src/browser_sort_notification.dart`; tests in `test/browser_sort_notification_test.dart` | Maps NoOrdering to its no-ordering variant. Collection ordering carries the supplied resolved label or falls back to the raw key, uses the supplied resolved Cards/Notes column type or `unspecified`, and preserves `reverse`. The host resolves label/type when applying the notification effect, emits/delivers flows, localizes the snackbar and owns Android UI. No pinned test asserts the ViewModel's `SortChangeNotification`; Dart mapping tests are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/SearchHistory.kt`, `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`, `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardState.kt`, and `libanki/src/main/java/com/ichi2/anki/libanki/PythonTypes.kt` | `BrowserSearchHistoryEntry` and `BrowserSearchHistoryModel` in `lib/src/browser_search_history.dart`; `BrowserSearchHistoryJsonCodec` in `lib/src/browser_search_history_json.dart` | Applies most-recent-first ordering, structurally equal duplicate promotion, Kotlin-blank default-search suppression, and the 30-entry cap; supports removing and clearing entries. The codec preserves compact `q`, `did`, `f`, `t`, `ntid`, `s` field order, omits empty optional arrays, treats deck/note-type IDs as signed 64-bit values, and decodes known flag/card-state codes. Missing optional arrays default empty; malformed entries, unknown keys, invalid types, or enum codes trigger the source's empty whole-list fallback. SharedPreferences remains unported; structured request restoration is mapped separately below. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt`, `SearchHistory.kt`, and `SearchString.kt` | `BrowserSearchHistoryItems` and `BrowserSearchHistoryDisplayModel` in `lib/src/browser_search_history_display.dart` | Preserves Loading entries and their null search-string pairs or Loaded entry/string pairs; starts collapsed, truncates the displayed value to the first five while collapsed, returns all entries while expanded, and shows the toggle only when the untruncated list has more than five. Loading and Loaded retain Kotlin data-class structural equality/hash over their constructor values. Search-string conversion, SavedStateHandle/StateFlow/coroutines, and Android list/button widgets remain with the host. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt`, `SearchFilters.kt`, `SearchRequest.kt`, `SearchHistory.kt`, and `libanki/src/main/java/com/ichi2/anki/libanki/Decks.kt` / `Notetypes.kt` | `BrowserSearchFilters` and `BrowserSearchRequest` in `lib/src/browser_search_request.dart` | Restores the stored query unchanged and resolves deck/note-type IDs through host-supplied name/ID lists, choosing the first match while retaining ID order and duplicates; unresolved IDs return null. Flags, tags, and card-state codes pass through. Request-to-history conversion applies Kotlin `String.trim()`, stores IDs instead of names, and preserves filter order. SearchFilters/SearchRequest and DeckNameId preserve source structural equality/hash; NoteTypeNameID remains identity-based like its Kotlin regular class. `BrowserNoteTypeNameId` intentionally has no const constructor, avoiding Dart const canonicalization absent from the source; callers must construct ordinary mapping instances. No pinned test directly checks NoteTypeNameID identity, so this behavior is source-derived. Collection lookups and backend SearchNode conversion/query-string generation remain unported. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`FilterUpdate`, `filterStateUpdateFlow`, `updateSearchFlow`), `SearchFilters.kt`, and `SearchRequest.kt` | `BrowserFilterUpdate` and `browserSearchRequestFromFilterUpdate()` in `lib/src/browser_filter_update.dart` | Starts as `System(SearchFilters.EMPTY)`; keeps User/System variants structurally equal only to their own variant and hashes their shared state like the source data classes. A closed-screen User snapshot produces a `BrowserSearchRequest` with Kotlin-trimmed text and the exact supplied filters; System updates and all snapshots while open produce no request. The host supplies the current filter/text/screen snapshot and applies field-specific setter transitions listed below; StateFlow/coroutine timing, collection access, and search execution remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`updateFilterState`, `setDecksFilter`, `setTagsFilter`, `setCardStateFilter`, `setFlagsFilter`) and `SearchFilters.kt` (`copy`) | `browserSetDecksFilter()`, `browserSetTagsFilter()`, `browserSetCardStateFilter()`, and `browserSetFlagsFilter()` in `lib/src/browser_filter_update.dart` | Each setter always returns a fresh User update, replacing only its selected list with the exact incoming list reference and reusing all other field lists. Equal-value inputs are not suppressed. Flag/card-state values remain host-supplied codes; logging, StateFlow publication/scheduling, and collection/UI behavior remain host-side. No pinned test directly exercises these ViewModel setters; adjacent `SearchFiltersTest.kt` only covers `activeFilters`, so setter cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`advancedSearchFlow`, `searchTextFlow`, `toggleAdvancedSearch`, `appendAdvancedSearch`, `onSearchTextChanged`, `applySavedSearch`) | `BrowserSearchTextState` in `lib/src/browser_search_text_state.dart` | Starts in Basic mode with empty Basic/Advanced buffers; toggles only mode; appends to Advanced with Kotlin `isNotBlank()` and exact trailing ASCII-space checks; replaces LF only when editing the selected buffer; applies saved queries by appending one ASCII space and using the edit path. The host supplies saved-query text and owns SavedStateHandle, flow scheduling, and text widgets. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`onSearchTextChanged`, `updateFilterState`) and `SearchFilters.kt` (`copy`) | `browserOnSearchTextChangedEffects()` in `lib/src/browser_search_state_effects.dart` | Replaces LF with ASCII space while retaining CR/other characters, emits `User(copy(currentFilters))`, then updates only the selected Basic or Advanced text buffer. The filter object is copied while its field lists are shared, matching the source shallow copy. No request or close event is emitted. Pinned tests cover text behavior but not the combined effect order; the Dart order cases are source-derived. Host flow execution remains outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`syncState`, `resetSearchState`, `STATE_*`, `FilterUpdate`) | `lib/src/browser_search_state_effects.dart` | Projects ordered host effects: sync emits `System(search.filters)` then the same request; reset disables Advanced mode, writes the exact query to Basic and Advanced text, emits System filters, closes the screen, then removes `advancedSearch`, `basicSearchText`, and `advancedSearchText` in order. It does not remove `historyExpanded` or normalize the query. Android execution and coroutine scheduling remain with the host. The source marks reset `@NeedsTest("reset")`; neither method has a direct pinned test. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`selectSearchHistoryEntry`, `onSearchTextChanged`, `SearchFilters.Companion.from`, `SearchRequest.Companion.from`) | `browserSelectSearchHistoryEntryEffects()` in `lib/src/browser_search_state_effects.dart` | Projects the exact order: a User update with a shallow copy of current filters, LF-only replacement of the active text buffer, a User update with restored filters (or empty filters when an ID is unresolved), and screen closure. The host supplies ID maps and applies the effects; this model does not create a search request. StateFlow execution, screen lifecycle, logging, and search submission remain with the host. No pinned test directly exercises the selection sequence or restoration through host maps; the similarly named test calls `submitSearch`. The Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`submitCurrentSearch(searchToSubmit)`, private `SearchRequest.toHistoryEntry`) and `SearchHistory.kt` (`addRecent`) | `browserSubmitCurrentSearchEffects()` in `lib/src/browser_search_state_effects.dart` | Converts the supplied request to an ID-based history entry with Kotlin `String.trim()`, applies the existing history recency/blank suppression, then projects `Loading(updatedEntries)`, close-search-view event, and the exact submitted request in order. Blank unfiltered searches keep history unchanged but still produce Loading. It does not set `isScreenOpen` or execute the request; persistence and event delivery remain host-side. The pinned view-model tests' `submitSearch` helper uses the no-argument overload, so direct ordered-effect coverage for this overload is absent. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`submitSavedSearch`, `onSearchTextChanged`, no-argument `submitCurrentSearch`, `updateSearchFlow`) | `browserSubmitSavedSearchEffects()` in `lib/src/browser_search_state_effects.dart` | Projects the direct effects in order: a User update containing a shallow filter copy, the LF-sanitized saved query in only the selected Basic/Advanced buffer, then screen closure. The source passes the query untrimmed to `onSearchTextChanged`; its closed-screen flow later constructs the trimmed request and triggers history/submission effects, which are not synthesized here. Pinned tests directly check updated text, eventual history, close event, and submitted search, but do not assert the internal effect order. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1248–1264` (`filterByTags()`), `1192–1200` (`setFilterQuery()`), and `CardBrowserViewModelTest.kt:1839–1877`, pinned v2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875` | `planBrowserTagFilterSearch()` and `BrowserTagFilterSearchPlan` in `lib/src/browser_tag_filter_search_plan.dart`; tests in `test/browser_tag_filter_search_plan_test.dart` | The host first constructs and serializes `SearchRequest`; given that exact backend search-string value and the current request, the plan applies `browserFilterTagsQuery()` then orders effects as emit filter query, copy the query into the request preserving structured filters, and request search with `forceRefresh=true`, `fromUserSearch=false`. The pinned tests verify the resulting parenthesized accented/tag-OR query but do not assert ordered effects or request preservation; Dart plan cases are source-derived. SearchRequest construction/serialization, filter-flow emission, current-request mutation, collection access, and search execution remain host-side. |
+| `SearchRequest.toSearchString()` and `CardBrowserViewModel.filterByTags()` in `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1248–1264`, pinned v2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875` | `browserFilterTagsQuery()` in `lib/src/browser_filter_tags_query.dart`; source-derived cases in `test/browser_filter_tags_query_test.dart` | Wraps the exact host-resolved search-string value in one literal pair of parentheses, preserving existing characters and syntax so tag OR terms retain precedence. The pinned `CardBrowserViewModelTest.kt:1839–1877` directly exercises `filterByTags()` for an accented single tag and an OR tag clause, including expected parenthesized output. The host constructs and serializes `SearchRequest`; backend parsing/serialization remains host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt`, `SearchFilters.kt`, `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt`, `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardState.kt`, and `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` (`groupSearches`) | `lib/src/browser_search_node_plan.dart` and shared Kotlin whitespace logic in `lib/src/kotlin_whitespace.dart` | Builds a typed plan before backend conversion: includes/trims query text under the source's blank-query rule (including the empty default-search node), orders deck/flag/tag/note-type/card-state terms, groups each category with OR, joins categories with AND, collapses singleton groups, and maps stored flag/card-state codes to explicit semantic values. Unsupported codes fail. This is not a protobuf SearchNode or backend-produced SearchString; backend parsing, validation, serialization, and execution remain unported. Only `groupSearches()` collapse behavior is modeled from Collection.kt; its AGPL-incorporated backend search implementation is not copied. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SavedSearches.kt` and generic typed config access in `libanki/src/main/java/com/ichi2/anki/libanki/Config.kt` | `BrowserSavedSearch` and `BrowserSavedSearchesModel` in `lib/src/browser_saved_searches.dart` | Models case-sensitive lookup and duplicate rejection, Kotlin `String.trim()` query normalization on add, exact-name removal, clear, case-sensitive name ordering, and map/list conversion with the last duplicate name winning. `SavedSearches.kt` defines the `Config.savedFilters` extension; `Config.kt` supplies the generic typed get/set operations it uses. The host supplies and persists the config map; collection IO, SavedSearch UI, query parsing/execution, and Config serialization remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`UserMessage`, `addSavedSearch`, `deleteSavedSearch`) | `lib/src/browser_saved_search_messages.dart` | Maps the existing mutation result's operation and success flag to `SEARCH_SAVED`, `SAVED_SEARCH_DUPLICATE_ADDED`, `SAVED_SEARCH_DELETED`, or `SAVED_SEARCH_NAME_DOES_NOT_EXIST`; it returns source message identifiers only. SavedSearches mutation/list handling is modeled separately. Localization, UI rendering, and message-flow delivery remain with the host. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` (`searchHistoryAvailableFlow`, `canManageSavedSearchesFlow`) | `browserSearchHistoryIsAvailable()` and `browserCanManageSavedSearches()` in `lib/src/browser_availability.dart` | Projects history availability from `BrowserSearchHistoryItems.isNotEmpty()` (the `entryToSearchString` list, including Loading null pairs) and saved-search manage availability from the supplied list's `isNotEmpty()`. The host owns flow scheduling, list updates/storage, and widgets. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt`, `CardViewerViewModel.kt`, and the slider callback in `PreviewerFragment.kt` | `PreviewerNavigationModel` in `lib/src/previewer_navigation.dart` | Models source button-enabled formulas, next/previous side and card transitions, back-side-only toggling, and one-based slider bounds/selection. Returns show/load intents; Android state, card lookup, rendering, and media remain with the host. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/FlagToDisplay.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/FlagToDisplayTest.kt` | `flagToDisplay()` in `lib/src/flag_to_display.dart`; cases in `test/flag_to_display_test.dart` | Preserves the source branch order: outside the app bar, or in fullscreen, return the exact actual flag; otherwise return the supplied NONE sentinel. The generic host flag type keeps the enum and NONE value at the host boundary; `PreviewerFlag` is a compatible existing enum for these cases, and no Android resource IDs or UI state are ported. The root `COPYING` supplies the GPL-3.0-or-later license. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt:216–225` (`loadAndPlaySounds`) | `previewerAudioSide()` in `lib/src/previewer_audio_side.dart`; cases in `test/previewer_audio_side_test.dart` | Selects `CardSide.BOTH` whenever back-side-only is enabled; otherwise selects ANSWER when `showingAnswer` is true and QUESTION when false. The host loads card AV tags before autoplay and retains card lookup, audio parsing/loading/playback, coroutine work, and lifecycle. The pinned Previewer tests do not directly assert this side selection; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/TemplatePreviewerViewModel.kt:165–203`, pinned v2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875` | `previewerToggleShowAnswerEffects()`, `previewerSelectedTemplateOrd()`, `previewerCurrentTemplateTabIndex()`, and `previewerSafeClozeOrd()` in `lib/src/previewer_template_tabs.dart` | Preserves show/hide-before-audio effect order; indexes cloze ordinals directly on tab selection (including out-of-range failure); returns `indexOf` including `-1`; maps non-cloze ordinals directly; and returns zero for absent/empty cloze ordinals or clamps to the available index range. StateFlow, card updates, rendering, media work, and tab widgets remain host-side. The focused Dart cases are source-derived from the pinned ViewModel and its tests. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardAppearance.kt` (`style`, `appendCssStyle`, `getCssClasses`, `getCardClass`, `fixBoldStyle`), `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/ReviewerCustomFonts.kt` (`updateCssStyle`), `DayTheme.kt`, `NightTheme.kt`, and `AndroidCardRenderContext.kt` | `composeCardAppearanceStyle()`, `appendCardAppearanceCss()`, `fixCardAppearanceBoldStyle()`, `cardAppearanceCssClasses()`, and `cardAppearanceClassName()` in `lib/src/card_appearance_css.dart`; binary32 formatting reuses internal `javaFloatToString()` in `lib/src/java_float_format.dart` | Composes the exact `BODY {font-family: 'OpenSans';font-weight: normal;font-style: normal;font-stretch: normal;}` prefix immediately with nondefault font-scale, card-zoom, and image-zoom rules in source order; the existing arbitrary-prefix `appendCardAppearanceCss()` behavior is retained. `fixCardAppearanceBoldStyle()` case-sensitively replaces every exact `font-weight:600;` with `font-weight:700;`. Theme predicates, centering state, numeric formatting, and class suffix/ordinal behavior remain as previously mapped. AndroidCardRenderContext applies bold rewriting after audio expansion and passes style separately; it appends MathJax class state separately. Font resource installation/selection, theme selection/preferences/CSS, vertical-centering styles, WebView textZoom, and full rendering remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardTemplate.kt` (`CardTemplate`, `RenderedCard`) | `CardTemplate` and `RenderedCard` in `lib/src/card_template.dart` | Scans first delimiter indexes once, caches the five source-ordered template regions, and composes replacements without global marker replacement. Later marker copies remain in their cached region. A missing style delimiter fails at the source negative-`take` boundary (Dart `ArgumentError`); invalid/missing later substring boundaries become `StateError` with the pinned source message. Host supplies the template string; Android asset loading, full card rendering/media expansion and WebView remain outside. Resolved media-tag markup is mapped separately below. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/AndroidCardRenderContext.kt` (`enrichWithQADiv`) | `wrapCardContentInQaDiv()` in `lib/src/card_template.dart` | Returns the exact `<div id="qa">` prefix, content verbatim, and `</div>` suffix. The Android caller applies it after side-specific type-answer filtering and before sound expansion and bold rewriting; full reference parsing/replacement and caller orchestration remain with the host, while resolved-tag markup is mapped separately below. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/multimedia/SoundUtils.kt` (`expandSounds`, resolved audio/TTS and video tag branches) | `cardAudioPlayButtonMarkup()` and `cardVideoTagMarkup()` in `lib/src/card_media_markup.dart` | Renders the source SVG play-button fragment for an already-resolved audio/TTS reference, returning empty when audio buttons are hidden; renders the source `<video>` fragment with host-supplied URI and HTML-escaped filename. Video output is independent of the audio-button setting. The host parses/replaces media references, classifies tags, resolves file paths/URIs and filename escaping, and owns playback/WebView integration. The AGPL-incorporating `libanki/Sound.kt` reference parser is not ported. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Card.kt` (`Card.flag`) and `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt:Flag.fromCode(code)`, pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875` | `previewerCardFlag()` in `lib/src/previewer_card_flag.dart`; cases in `test/previewer_card_flag_test.dart`; enum and ordered effects in `lib/src/previewer_flag_effects.dart` | Calls the host `userFlag` callback once, then resolves its code using `PreviewerFlag.fromCode()`. Callback failures propagate unchanged; unknown codes fail with Dart `StateError`, corresponding to Kotlin `first` throwing `NoSuchElementException`. `PreviewerFlag.fromCode(int)` returns the first enum entry with a matching code, equivalent to source `Flag.entries.first { it.code == code }`. Codes 0–7 are preserved. The separate set/toggle plan writes the target to the supplied single card ID, then publishes that flag only after write success. Android Card, collection/undo execution, current-card lookup, asynchronous failure handling and StateFlow remain host-side; this enum is separate from search backend flag values. Upstream `Card.kt` and `Flag.kt` declare `GPL-3.0-or-later` with no separate copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt` (`Collection.getCardOrNull(id)`, pinned AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) | `collectionGetCardOrNull()` in `lib/src/collection_get_card_or_null.dart`; cases in `test/collection_get_card_or_null_test.dart` | Calls host `getCard(id)` once with the exact ID, returns the identical card on success, and returns null for every thrown Dart `Object`, matching Kotlin `runCatching`. Collection, card, and ID types remain host-side. No direct pinned test was found. The Kotlin file declares `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt` (`Collection.cardStateCustomizer`, pinned AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CollectionCardStateCustomizer` in `lib/src/collection_card_state_customizer.dart`; cases in `test/collection_card_state_customizer_test.dart` | Forwards the host token for `ConfigKey.String.CARD_STATE_CUSTOMIZER` once to `getString` or `setString`, returns and writes the exact String, and propagates callback exceptions unchanged. The host retains generated Config keys, storage, and JavaScript execution. `StudyScreenRepositoryCollectionTest.kt` covers reading and writing the setting through the integration path; focused Dart cases cover the source-derived adapter contract. `Collection.kt` declares `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt` (`Collection.setUserFlagForCards(cids, flag)`, pinned AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) | `collectionSetUserFlagForCards()` in `lib/src/collection_set_user_flag_for_cards.dart`; cases in `test/collection_set_user_flag_for_cards_test.dart` | Passes the same card-ID iterable and `PreviewerFlag.code` once to the host collection overload, returns the exact opaque result, and lets callback failures propagate unchanged. It does not traverse or copy IDs. Collection mutation, undo and backend behavior remain host-side. No direct pinned test of this overload was found; focused Dart cases are source-derived. The Kotlin file declares `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt` (`Collection.buildSearchString(node)`, pinned AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) | `collectionBuildSearchString()` in `lib/src/collection_build_search_string.dart`; cases in `test/collection_build_search_string_test.dart` | Wraps the identical opaque host node in a read-only singleton list and calls the host collection string builder once, returning its exact String and propagating failures unchanged, matching `buildSearchString(listOf(node))`. SearchNode construction and collection query-string generation remain host-side. No direct pinned test of this extension was found; focused Dart cases are source-derived. The Kotlin file declares `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt:107–114` (`toggleMark`) and `AnkiDroid/src/main/java/com/ichi2/anki/servicelayer/NoteService.kt:174–194` (`toggleMark`, `isMarked`) | Ordered effects in `lib/src/previewer_mark_effects.dart` | Resolves the current note host-side, then toggles its mark, reads the post-toggle state only after toggle success, and publishes that value only after the read succeeds. `NoteService` owns `marked` tag changes and undoable persistence; card/note/collection lookup, error handling, and StateFlow delivery remain host-side. The pinned `PreviewerViewModelTest.kt:163–171` directly verifies the final state and persisted tag, but not operation ordering or failure short-circuit; Dart effect-order cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/servicelayer/NoteService.kt:174–194` (`toggleMark`, `isMarked`), with integration tests `PreviewerViewModelTest.kt:163–171` and `CardBrowserViewModelTest.kt:792–804` | `NoteServiceMarkTagAction` and ordered effects in `lib/src/note_mark_toggle.dart` | Given host-resolved `isMarked`, removes literal `marked` when true or adds it when false, then requests undoable note update. Tag action precedes persistence without extra normalization or deduplication. The upstream tests directly exercise successful Previewer toggling and Card Browser adding; neither isolates the NoteService branch/effect order, so both source-state/order cases are source-derived. The host reads mark state, mutates `Note` tags, performs `updateNote` inside `undoableOp`, and delivers state. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt` | `TypeAnswerModifiers` in `lib/src/type_answer_modifiers.dart` | Repeatedly consumes exact leading `nosuggest:`, `cloze:`, and `nc:` prefixes in any order, then returns the remaining field text verbatim. Defaults and structural equality/hash follow the Kotlin data class. Field/card lookup, cloze-content invocation, answer comparison, template rendering and Android input integration remain unported. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`updateInfo`, `PATTERN`) | `typeAnswerDeclarationForQuestion` and `typeAnswerClozeIndexForQuestion` in `lib/src/type_answer_cloze.dart` | Finds the first case-sensitive, nonempty lazy `[[type:...]]` match using Java line boundaries, parses its modifier capture, and returns null if no marker matches (the source returns early), 0 without `cloze:`, or the source signed-32-bit `card.ord + 1` with `cloze:`. Overflow wraps; ordinal -1 yields 0, which the source does not narrow as cloze content. The host supplies the rendered question and card ordinal; Android card/template lookup, question extraction, state delivery, field lookup, and invocation of content extraction remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`contentForCloze`) | `typeAnswerContentForCloze` in `lib/src/type_answer_cloze.dart` | Matches nonempty `{{c<index>::...}}` payloads lazily with Java's default line boundaries, removes a hint beginning at the first `::` in each capture, and does not trim or normalize HTML. If all captures are equal it returns the first once; otherwise it joins every capture in source order with `, `, retaining duplicates. No match returns an empty string. The host supplies raw field text and the already-derived index; card/note lookup and invoking this extraction remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`updateInfo`, field loop and result `when`) | `resolveTypeAnswerFieldResult()` and its values in `lib/src/type_answer_field_result.dart` | Scans host-supplied fields in order and selects the first exact name match; reads that field's host-supplied note value, optionally applies the existing cloze extractor for any nonzero index, and returns the matched font/size/language hint. No match sets the unknown-field or empty-cloze warning without changing prior metadata; null sets that warning, empty becomes null while preserving the previous warning, and nonempty clears it. This value projection is also composed by the ordered update plan below. Host field/note/resource lookup and warning localization remain unported. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`updateInfo`, lines 84–127) | `planTypeAnswerInfoUpdate()` and effects in `lib/src/type_answer_info_update.dart` | Projects assignments in source order: reset combining/noSuggest/correct; return on no marker; assign parsed modifiers; select the first exact field; assign the raw answer and optional cloze answer; update font, size and language hint; then set warning for null, preserve it for empty (while setting correct null), or clear it for nonempty. A missing selected note-value key reports the source lookup failure after the preceding reset/modifier effects. The host applies effects sequentially and supplies localized warnings/host-resolved values; Android state flow, collection/resource lookup, UI/rendering and exception delivery remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`validForEditText`, `autoFocusEditText`, lines 71–73) | `typeAnswerValidForEditText()` and `typeAnswerAutoFocusEditText()` in `lib/src/type_answer_eligibility.dart` | Preserves the exact boolean formulas: valid iff `!useInputTag && correct != null`; autofocus iff valid and `autoFocus`. Empty-but-non-null correct text is valid when input-tag mode is false. The host supplies state values and retains Android field visibility/focus/input lifecycle. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/TypeAnswer.kt` (`typeAnsRe`, `removeTags`) and `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt` (question branch of `typeAnsFilter`) | `removeTypeAnswerTags` in `lib/src/type_answer_tags.dart` | Applies the pinned case-sensitive `[[type:(.+?)]]` replacement to all nonoverlapping matches: payload must contain at least one character matched by Java regex `.`, matching stops at the first closing `]]`, and Java line terminators are excluded. Other text is retained. Only the pure question-side cleanup is modeled; Previewer dispatch, field lookup, answer comparison, and rendering remain with the host. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`filterQuestion`, `PATTERN`) and `AndroidCardRenderContext.kt` (question-side caller) | `filterTypeAnswerQuestion` in `lib/src/type_answer_question.dart` | With host-supplied `useInputTag`, `autoFocus`, font, size and warning, replaces every question placeholder with the exact input/span prompt, or only the first with a non-null warning. It preserves Java Matcher replacement-string `$` group and backslash behavior, the source regex's nonempty lazy single-line match, prompt whitespace, and style only when font is nonempty and size is positive. Card/note lookup, Android input lifecycle/JavaScript, rendering and the surrounding card pipeline remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:612–625` (`typeAnsFilter`) | `executeReviewerTypeAnswerFilter()` in `lib/src/reviewer_type_answer_filter_effects.dart` | Preserves the answer-side null Flow emission before the host answer filter (only with a resolved TypeAnswer), and the question-side Flow emission before either Reviewer HTML filtering (only with TypeAnswer) or unconditional source tag removal when HTML mode is disabled. The host supplies all resolved values and existing filters; card lookup/await, TypeAnswer construction/state, Flow, comparison, transformation helpers, rendering and lifecycle remain host-side. Focused branch and callback-failure cases are in `test/reviewer_type_answer_filter_effects_test.dart`. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:629–642` (`typeAnsQuestionFilter`) and `AnkiDroid/src/main/java/com/ichi2/anki/previewer/TypeAnswer.kt` (`typeAnsRe`) | `filterReviewerTypeAnswerQuestion` in `lib/src/type_answer_question.dart` | Replaces every nonempty, case-sensitive, lazy single-line Reviewer question marker with the exact `trimIndent()` Reviewer input HTML, interpolating the host-resolved font and size directly. It preserves Kotlin `Regex.replace` replacement-string `$` group and backslash behavior, including its errors. Reviewer dispatch/state, `TypeAnswer` lookup/comparison, rendering, and Android/WebView input lifecycle remain host-side. The pinned Reviewer tests have no direct assertion for this private helper; focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/TemplatePreviewerViewModel.kt` (`typeAnsFilter`, question branch) | `filterTemplatePreviewerTypeAnswerQuestion` in `lib/src/type_answer_question.dart` | Replaces the first matching question marker with the exact read-only example input HTML, then replaces every later marker with host-supplied warning HTML. Both replacement strings retain Java Matcher group and backslash semantics; the source regex keeps empty, malformed, case-mismatched, and line-broken markers unchanged. Previewer state, warning localization, and rendering remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`filterAnswer`, `PATTERN`) | `filterTypeAnswerAnswer` in `lib/src/type_answer_answer.dart` | Replaces every nonempty, case-sensitive, lazy single-line answer marker with the host-supplied comparison HTML, inserted literally like Java `Matcher.quoteReplacement`. Empty/malformed/nonmatching markers remain unchanged, and a marker can be replaced with an empty comparison string. Rust comparison, typed-answer state, nullable-correct-answer preprocessing, and Android caller/render pipeline remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/StudyCounts.kt` and `StudyCountsView.kt` | `ReviewQueueCounts` and `ReviewQueueKind` in `lib/src/review_session.dart`; `StudyCounts` in `lib/src/review_presentation.dart` | Copies scheduler counts and active queue, renders each integer with direct decimal `toString()`, and exposes the equality check used to style only the active count |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerButtonsNextTime.kt` and `libanki/src/main/java/com/ichi2/anki/libanki/sched/Scheduler.kt` | `ReviewNextStateDescriber<T>` and `AnswerButtonsNextTime` in `lib/src/review_presentation.dart` | Passes the current opaque scheduling snapshot to the backend adapter and assigns its first four strings to Again/Hard/Good/Easy in order; no interval calculation or fallback labels |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:138,148–149,224,651–658` (`updateNextTimes`) | `projectReviewerAnswerButtonsNextTimeUpdate()` in `lib/src/reviewer_answer_buttons_next_time_update.dart` | Returns no update when `shouldShowNextTimes` is false or the host supplies no computed `AnswerButtonsNextTime`; otherwise carries that exact value for publication. `answerButtonsNextTimeFlow` is nullable. The host retains both call sites, settings and queue-state reads, `AnswerButtonsNextTime.from`, coroutine work, Flow emission, and answer-button sizing. No direct pinned `ReviewerViewModelTest` assertion covers these gates or publication; `ReviewerTest.kt:383–390` checks an end-to-end button update only, so the focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimer.kt` and `AnswerTimerState.kt` | `lib/src/answer_timer.dart` | Hidden/running/paused/stopped states; card configuration; stop, lifecycle pause/resume, hide, elapsed-time upper clamp, and resume-at-limit transition, using an injected monotonic millisecond clock in place of `SystemClock.elapsedRealtime()`; exposes current state and a replaying, per-listener conflated stream of distinct states to match `StateFlow` |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvance.kt`, `AutoAdvanceSettings.kt`, `AutoAdvanceAction.kt`, `QuestionAction.kt`, `AnswerAction.kt`, plus setting fields in `libanki/src/main/java/com/ichi2/anki/libanki/DeckConfig.kt` | `lib/src/auto_advance.dart` | Loads explicit deck settings through `AutoAdvanceSettingsAdapter`; exposes wait-for-audio; schedules typed question/answer actions; preserves enable/disable, card-change and opposite-side cancellation, exact action codes/fallbacks, and the same-side job-overwrite behavior. Each listener receives an explicit cancellation signal and can cooperatively stop suspended work when its source job is cancelled. DeckConfig storage and defaults stay in the adapter. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:782–794` (`processAction`) | `shouldProcessReviewerAction()` in `lib/src/reviewer_action_guard.dart` | Returns false when a non-BOTH binding side differs from the host-supplied current answer side or when a key binding is processed while input is focused; otherwise returns true for host dispatch. `CardSide.fromAnswer()` is represented by `ReviewerCardSide.fromAnswer()`. Action execution, focus state/lifecycle, input events, and UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:419–438,729` (`toggleAutoAdvance`, `TOGGLE_AUTO_ADVANCE`) | Ordered effects in `lib/src/reviewer_auto_advance_toggle.dart` | Inverts the host-resolved enabled state; orders enabled-state update, state publication, localized feedback, then schedule request for the shown side. Omits only the schedule request when both `shouldWaitForAudio` and `isPlaying` are true; still requests scheduling after disabling otherwise. The host resolves settings, localization, playback/side state, StateFlow/feedback and timer operation. This helper leaves existing AutoAdvance behavior unchanged. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:796–805` (`onAutoAdvanceAction`) | `reviewerAutoAdvanceDirective()` in `lib/src/reviewer_auto_advance_action.dart` | Maps question SHOW_ANSWER and the four answer commands to their matching ViewerCommand; returns the host-supplied question or answer localized reminder string unchanged. The host retains resource lookup/localization, command execution, feedback delivery, AutoAdvance Flow emission, and lifecycle handling. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:539–561` (`answerCardInternal`, `onLeech`) | `reviewerLeechFeedbackMessage()` in `lib/src/reviewer_leech_feedback.dart` | Returns the host-localized base leech message unchanged unless suspended; suspended output appends exactly one literal ASCII space and the supplied suspended message. Leech detection, persisted answer, card reload/queue check, localization, logging and feedback delivery remain host-side. No direct pinned test for `onLeech` or its message resources was found; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:525–549` (`answerCardInternal`) | `planReviewerAnswerCardEffects()` and `reviewerAnswerCardLeechIsSuspended()` in `lib/src/reviewer_answer_card_effect_plan.dart` | With no resolved queue state, returns before current-card lookup. Otherwise orders current-card lookup and scheduler answer computation before undoable persistence, answer-rating feedback, saving the previous card ID, leech-state query, conditional card reload/queue-code suspension check (`queue.code < 0`)/localized feedback, and final current-card refresh. The host retains mutation/queue/card Flows, collection and scheduler work, persistence, localization/feedback delivery and lifecycle integration; the existing `reviewerLeechFeedbackMessage()` can compose the host-localized leech text. No direct pinned assertion covers the complete effect order; the focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/Undo.kt:29–58` (undo-result feedback selection), called by `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:398–405` | `reviewerUndoRedoFeedbackMessage()` in `lib/src/reviewer_undo_redo_feedback.dart` | An empty operation selects the host-localized “nothing to undo”/“nothing to redo” value; a nonempty operation invokes only the matching undo/redo message callback and passes the original operation unchanged (`String.isEmpty()` semantics, including whitespace-only input). Availability checks, undoable collection execution, protobuf extraction, localized message construction, Reviewer dispatch, and feedback Flow delivery remain host-side. No direct pinned Reviewer result-message assertion was found; focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:700–704,756` (`toggleWhiteboard`, `TOGGLE_WHITEBOARD`) | Ordered effects in `lib/src/reviewer_whiteboard_toggle.dart` | Negates the host-supplied current enabled value, then publishes the new StateFlow value before requesting the same value be assigned to `repository.isWhiteboardEnabled`. The host retains StateFlow mutation, repository access/write, action dispatch and UI. No direct ReviewerViewModel toggle test was found; new Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/whiteboard/WhiteboardViewModel.kt:29–34,51–61,136–148,272–330,487–491` (`DrawingAction`, undoable actions, `addPath`, `undo`, `redo`, `clearCanvas`, `reset`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `WhiteboardDrawingHistory` and ordered effects in `lib/src/whiteboard_drawing_history.dart`; cases in `test/whiteboard_drawing_history_test.dart` | Preserves completed-add, clear, undo, redo and reset stack/path assignment order; undo-add removes by object identity, undo-remove inserts by ascending original index with the source upper-bound clamp, clear undo restores recorded action order, and redo-remove filters by `DrawingAction` value equality, including Float32 width rounding, Kotlin `Float` NaN equality, and signed-zero distinction. Path payloads stay opaque; the host may supply its exact action/path equality. The source file declares `SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright line. No direct pinned `WhiteboardViewModel` history test was found; `WhiteboardFragmentTest.kt` and `WhiteboardRepositoryTest.kt` provide UI/repository context only. Android `Path` geometry, erase gestures, StateFlow publication, ViewModel lifecycle, repository, rendering and UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/whiteboard/WhiteboardViewModel.kt:342–482` (`setActiveBrush`, eraser mode/width, brush edits, toolbar preferences) and `WhiteboardRepository.kt:13–18,115–126` (`BrushInfo`, default widths/palette; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `WhiteboardToolState`, source-valued brushes, and ordered host effects in `lib/src/whiteboard_tool_state.dart`; cases in `test/whiteboard_tool_state_test.dart` | Preserves brush/eraser transitions, Float32 widths, `replaceAt` list-copy and invalid-index behavior, brush add/remove selection predicates, dark-mode preference keys as a host-supplied value, and no-op-on-equal toolbar setters. The source files declare `GPL-3.0-or-later` and no separate copyright holder; `WhiteboardViewModel.kt` has an SPDX header and `WhiteboardRepository.kt` declares SPDX at line 1. No direct pinned ViewModel test covers these decisions; the focused Dart cases are source-derived. The host supplies loaded state and the current eraser display width and applies persistence effects; Android SharedPreferences, repository IO, StateFlow, lifecycle, flows, gestures, rendering and UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/model/WhiteboardPenColor.kt` (`lightPenColor`, `darkPenColor`, `fromPreferences()`, `default`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `WhiteboardPenColor` in `lib/src/whiteboard_pen_color.dart`; cases in `test/whiteboard_pen_color_test.dart` | Preserves nullable light/dark integer fields, selects by the host-supplied `isNightTheme` Boolean, and returns a fresh `(null, null)` instance from `defaultColor` without value equality. `ReviewerNoParamTest.kt` covers persisted light/dark color behavior but has no dedicated tests for this ordinary class. Android `Themes` lookup, Reviewer integration, MetaDB persistence, drawing and UI remain host-side. The Kotlin file declares `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and focused tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/model/ResultType.kt` (`ResultType`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ResultType` in `lib/src/result_type.dart`; source-derived cases in `test/result_type_test.dart` | Preserves the String-backed value's equality, Kotlin/JVM UTF-16 String hash including signed 32-bit overflow, and verbatim `toString()`. The pinned source has no dedicated direct test; `AdvancedSearchFieldsTab.kt` uses values as option-map keys, `AdvancedSearchFragment.kt` routes the returned key, and `FieldSelectionDialog.kt` carries it with the result. `kotlinStringHashCode()` in `lib/src/kotlin_string_hash_code.dart` centralizes the same Kotlin String hash used by Filename, AddonModel, and MathJaxFormat. Android `Parcelable`, FragmentManager, Bundle transport, dialogs, UI, and lifecycle remain host-side. The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation/tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`; root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:706–710,757` (`toggleRecordVoice`, `RECORD_VOICE`) | Ordered effects in `lib/src/reviewer_record_voice_toggle.dart` | Negates the host-supplied current enabled value, then publishes the new StateFlow value before requesting the same value be assigned to `repository.isRecordVoiceEnabled`. The host retains StateFlow mutation, repository access/write, action dispatch, and recorder lifecycle/UI. No direct ReviewerViewModel toggle test was found; new Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:247–254` (`setFlag`) and `:734–741` (`executeAction`, explicit `UNSET_FLAG`/`FLAG_*` routing), plus `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt` | `ReviewerSetFlagPlan` in `lib/src/reviewer_set_flag_plan.dart`; tests in `test/reviewer_set_flag_plan_test.dart` | Carries the exact host-supplied flag to an undoable update for the singleton current card ID, then exposes publication of that same flag only after update success; an update failure yields no publication effect. The caller still chooses the explicit flag action. The host retains card lookup, undoable collection execution/error propagation, and StateFlow delivery. F114's separate `toggleFlag` target selection remains in `reviewer_flag_toggle_target.dart`. No direct pinned Reviewer `setFlag` order/failure assertion was found; the focused Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:90,239–245,724` (`isMarkedFlow`, `toggleMark`, `ViewerAction.MARK`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ReviewerMarkTogglePlan` in `lib/src/reviewer_mark_toggle_plan.dart`; cases in `test/reviewer_mark_toggle_plan_test.dart` | Orders the host-resolved note toggle, reads the post-toggle marked state only after toggle success, and exposes publication only after read success. No direct pinned `ReviewerViewModelTest` assertion covers mark-toggle order or failure gates; focused Dart cases are source-derived. Current-card/note/collection access, `NoteService.toggleMark`/`isMarked`, tag mutation/persistence, MARK dispatch, exception handling, and `isMarkedFlow` delivery remain host-side. Previewer mark effects and the lower-level NoteService projection are separate. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt:644–661` (collectors for `ReviewerViewModel.isMarkedFlow` and `flagFlow`, declared at `ReviewerViewModel.kt:90–91`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewerMarkIconVisibilityUpdate()` and `reviewerFlagIconPresentation()` in `lib/src/reviewer_icon_presentation.dart`; cases in `test/reviewer_icon_presentation_test.dart` | Toolbar-present preferences produce no update to the separate icon. Otherwise mark visibility follows the supplied marked Boolean; flag NONE hides, and other flag values pass through with a show update for host drawable resolution. `ReviewerViewModelTest.kt` and `ReviewerFragmentTest.kt` contain no direct assertions for these collector decisions; `StudyScreenRepositoryTest.kt` tests how toolbar preferences are derived, not how collectors update icons, so Dart cases are source-derived. StateFlow collection/lifecycle, preference access, drawable/resource lookup, and Android view mutations remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:256–263,744–750` (`toggleFlag`, `TOGGLE_FLAG_*`) and `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt` | `reviewerFlagToggleTarget()` in `lib/src/reviewer_flag_toggle_target.dart`, using `PreviewerFlag` | Returns NONE when the host-supplied current and requested flags are equal, otherwise returns the requested flag. Reuses the unchanged AnkiDroid Flag enum already represented by `PreviewerFlag`; the host retains `flagFlow` reads, `setFlag`, current-card lookup, undoable collection write, StateFlow publication, and action dispatch. No direct pinned Reviewer toggle test was found; `PreviewerViewModelTest.kt` covers the same underlying flag set/toggle semantics for RED, and the focused Reviewer cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:247–263,742–748` (`setFlag`, `toggleFlag`, `TOGGLE_FLAG_*`) and `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt` | `planReviewerToggleFlag()` in `lib/src/reviewer_set_flag_plan.dart`; cases in `test/reviewer_toggle_flag_plan_test.dart` | Composes the existing toggle target decision with the existing Reviewer set-flag effect plan: equal current/requested flags select NONE; otherwise the exact requested flag is written to a singleton list containing the host-supplied current card ID and published only after write success. A failed collection write stops before publication. The pinned `ReviewerViewModelTest.kt` has no direct `toggleFlag`/`setFlag` assertion; the new effect cases are source-derived. The host retains `ViewerAction.TOGGLE_FLAG_*` dispatch, `flagFlow.value`, current-card lookup, `undoableOp`, collection mutation, exception handling, StateFlow delivery and lifecycle. This function leaves both existing Reviewer flag APIs and Previewer behavior unchanged. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:734–748` (`UNSET_FLAG`, `TOGGLE_FLAG_*`), `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerCommand.kt:34–41`, and `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt:41–60` | `reviewerFlagCommandOperation()` in `lib/src/reviewer_flag_command_operation.dart`; source-derived cases in `test/reviewer_flag_command_operation_test.dart` | Maps the seven existing `ViewerCommand.TOGGLE_FLAG_*` values to typed Toggle operations carrying the matching `Flag`, and `UNSET_FLAG` to a typed Set operation carrying `Flag.NONE`. No direct pinned `ReviewerViewModelTest` assertion covers this command-to-flag/operation mapping; focused Dart tests cover every flag command, null, and an unrelated command. The host keeps `ViewerAction` dispatch/execution, flag-flow reads, current-card lookup, undoable collection writes, and StateFlow publication. Menu-only `FLAG_*` actions are not `ViewerCommand` values and are not added. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:380–387` (`suspendCard`, `SUSPEND_CARD`, `SUSPEND_MENU`) | Ordered effects in `lib/src/reviewer_suspend_card_plan.dart` | Requests suspension of the one host-supplied current card ID, then passes through the host-localized feedback text and requests current-card reload. The scheduler count is discarded. The host executes effects sequentially and stops on a failed suspend; current-card lookup, undoable scheduler/collection operation, localization, Flow delivery, and reload remain host-side. No direct pinned `ReviewerViewModelTest` covers `suspendCard()` or this effect order; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:360–368` (`buryCard`, reached by `BURY_CARD` and `BURY_MENU`) | Ordered effects in `lib/src/reviewer_bury_card_plan.dart` | Buries the singleton host-supplied card ID; after success, passes the scheduler result count to the host localization callback, delivers that feedback, then reloads the current card. A failed bury stops the sequence before localization, feedback, or reload. Card lookup, scheduler/collection write and result extraction, localization, Flow delivery, and reload remain host-side. No direct pinned `ReviewerViewModelTest` assertion covers `buryCard()` or this order; Dart cases are source-derived. Bury-note and Card Browser bulk-bury are separate operations. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:370–378` (`buryNote`, dispatched by `ViewerAction.BURY_NOTE` at `:730`) | Ordered effects in `lib/src/reviewer_bury_note_plan.dart` | Buries the singleton host-supplied note ID; after success, passes the scheduler result count to the host localization callback, delivers that localized feedback, then reloads the current card. A failed bury stops the sequence before localization, feedback, or reload. Current-note lookup, scheduler/collection operation and result extraction, localization, Flow delivery, and reload remain host-side; note-bury and Card Browser bulk-bury are separate operations. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:350–358` (`deleteNote`, dispatched by `ViewerAction.DELETE` at `:723`) | Ordered effects in `lib/src/reviewer_delete_note_plan.dart` | Sends the host-resolved current card ID as singleton `cardIds` to the undoable removal callback; after success, passes its returned count to host localization, delivers the supplied message, then reloads the current card. Failure stops before localization, feedback, or reload. Current-card lookup, collection deletion/undoable operation and count extraction, resource localization, feedback Flow, and reload remain host-side. Card Browser bulk deletion is separate. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:408–412,762–770` (`userAction`, `USER_ACTION_1`…`_9`); `Reviewer.kt:1827–1829` (`@UserAction`) | `reviewerUserActionScript()` in `lib/src/reviewer_user_action_script.dart` | Produces the exact `ankidroid.userAction(<number>);` expression with decimal integer text and source punctuation, without normalization or validation. The host selects the annotated action number, dispatches and evaluates the JavaScript in WebView. No direct pinned test for `userAction()` expression generation was found; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:754–755` (`SHOW_HINT`, `SHOW_ALL_HINTS`) | `reviewerHintExpression()` in `lib/src/reviewer_hint_expression.dart` | Maps the two hint commands to the exact `ankidroid.showHint()` and `ankidroid.showAllHints()` expressions without semicolons. Unrelated commands return null. Host retains action dispatch, eval/WebView execution, results and lifecycle. No direct pinned expression test was found; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/GestureParser.kt`, nested `GestureData`/`WebViewState`, and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/Gesture.kt` (`Gesture`, `TapGestureMode`) | `lib/src/gesture_parser.dart`, `lib/src/unicode_15_case_data.dart` | Decoded input, explicit timeout/mode/sensitivity config and viewport adapter; multi-finger mapping; Kotlin-compatible signed integer parsing, including BMP Unicode decimal digits and UTF-16 surrogate behavior; four/nine-point taps; Float32 scale/scroll and threshold math; dominant-axis swipes with scroll suppression; malformed-query callback behavior; deferred single and immediate double taps, preserving timeout boundaries, zero-sentinel timing, signed 64-bit subtraction, and same-side job overwrite. A canceled delay suppresses its pending callback. Android Uri/WebView/preferences integration remains outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/GestureProcessor.kt`, `Gesture.kt`, `ViewerCommand.kt`, and `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/ReviewerBinding.kt` / `Binding.kt` | `lib/src/gesture_command_router.dart` and `Gesture` in `lib/src/gesture_parser.dart` | Retains command enum identifiers and declaration order; resolves host-supplied gesture bindings in that order so later commands overwrite duplicates; gates the four corner taps and center tap on explicit corner-touch configuration; leaves two/three/four-finger taps unmapped; makes `isEnabled` gate only `isBound`; returns `false` for null/unmapped gestures, `null` for mapped gestures without an executor, and otherwise forwards the command and original gesture to the optional callback. Android preference decoding, touch input, and command handlers remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/MappableBinding.kt`, `ReviewerBinding.kt`, `Binding.kt`, `Axis.kt`, `CardSide.kt`, and axis fallback IDs in `compat/src/main/java/com/ichi2/anki/compat/BaseCompat.kt` | `lib/src/reviewer_binding_codec.dart` | Versioned `1/` list framing, `|` splitting with empty-item filtering, reviewer prefix and side suffix encoding, exact gesture enum names, permissive optional `r` removal, UTF-16 code-unit suffix handling, unknown suffix fallback to BOTH, and invalid-binding omission on write. Typed key-code and Unicode bindings preserve modifier parsing/output order, Kotlin Int32 limits, UTF-16 first-code-unit selection, validity and `isKey`; Unicode deserialization accepts `|` while the source factory rejects it. Reviewer-side BOTH wildcard equality, side-independent wrapper hash, key/Unicode modifier-sensitive equality with modifier-insensitive binding hashes, semi-structural modifier comparison, and unknown data-object equality are represented. Axis IDs are checked against `Axis`; Kotlin integer parsing accepts BMP Unicode decimal digits, Java float syntax (including hexadecimal floats) is parsed to binary32 and normalized in the source `Float.toString` style, and extra space-separated axis tokens are ignored like the source. Android KeyEvent/possibleKeyBindings, MotionEvent axis handling, and display strings remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/GestureProcessor.kt`, `ViewerCommand.kt`, and `ReviewerBinding.kt` | `GestureCommandRouter.fromPreferenceValues()` in `lib/src/gesture_command_router.dart` | Takes host-supplied serialized preference values, leaves missing values empty rather than applying keyboard defaults, and feeds only decoded gesture values into the existing source-ordered router. Side values are not used as routing filters. Android `SharedPreferences` lookup remains outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerCommand.kt`, `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/Binding.kt`, `ReviewerBinding.kt`, `MappableBinding.kt`, and `CardSide.kt` | `ReviewerDefaultBindings` in `lib/src/reviewer_command_defaults.dart` and `ReviewerBindingPreferenceResolver` in `lib/src/reviewer_binding_preference_resolver.dart` | Records every `ViewerCommand.defaultValue` list, including empty entries, source order, symbolic `KeyEvent.KEYCODE_*` names, Unicode code units, reviewer sides, and modifiers. A null preference chooses these defaults; every non-null string replaces them and is decoded by the existing codec, including empty, unsupported-version, and malformed values. Host key-name-to-number mappings are required only on the absent-preference path; the resolver does not read SharedPreferences. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/AnswerButtons.kt` and `AutomaticAnswer.kt` (`AutomaticAnswerAction`); tests `AnswerButtonsTest.kt` and `AutomaticAnswerActionTest.kt` | `AnswerButtons` and `AutomaticAnswerAction` in `lib/src/reviewer_answer_action.dart`; focused tests in `test/reviewer_answer_action_test.dart` | Maps Again/Hard/Good/Easy ratings to their exact `ViewerCommand`; preserves automatic-action config values 0–4, declaration order, and unknown-value fallback to BURY_CARD. Actions resolve to BURY_CARD/Again/Good/Hard commands, while SHOW_REMINDER returns no command. Deck-config IO, reviewer command execution, logging, and localized snackbar effects remain with the host. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/BindingMap.kt`, `MappableBinding.kt`, `ReviewerBinding.kt`, and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerCommand.kt` | `lib/src/reviewer_binding_map.dart` | Builds separate reviewer key and gesture maps from explicit typed bindings, preserving action-list then binding-list order and retaining duplicate registrations. Lookups use the underlying binding and retain but do not filter by card side. Unknown values are skipped; axis values are kept in a separate ordered registration list. Preference loading, platform event decoding, MotionEvent matching, and command execution are outside; projected key dispatch is mapped separately below. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/Binding.kt`, `BindingMap.kt`, and `MappableBinding.kt` | `ReviewerKeyEventProjection` and `dispatchReviewerKeyEvent()` in `lib/src/reviewer_key_dispatch.dart` | Accepts host-decoded key/repeat/modifier fields and the Unicode result computed with Android's `META_SHIFT_ON | META_NUM_LOCK_ON` mask. Ignores repeated key-downs; forms nonzero key-code then Unicode candidates with event modifier values and Kotlin low-16-bit `Int.toChar()` behavior; omits the invalid `|` Unicode preference separator. Lookup delegates to existing binding equality, including the app-defined Unicode binding's shift-tolerant comparison. Resolves each candidate then registrations in source order, retaining card-side metadata, and stops at the first processor result of true. Android KeyEvent access, keyboard-layout Unicode generation, preferences, MotionEvent handling, and command execution remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/SingleAxisDetector.kt`, `BindingMap.kt`, `Binding.kt`, and `Axis.kt` | `ReviewerAxisButtonDispatcher` in `lib/src/reviewer_axis_dispatch.dart` | Consumes the ordered axis registrations and host-supplied Float32 axis values. Keeps one debounce state per registration; positive and negative thresholds compare inclusively, zero/NaN thresholds do not trigger, and a nonqualifying sample rearms. Null events do not evaluate or reset detectors. Evaluates all detectors in source order and reports true if any emits, independent of processor results. Android MotionEvent extraction and device handling remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/ReviewerBinding.kt` (`fromPreference`/`fromPreferenceString`); adjacent tests `MappableBindingTest.kt` and `BindingMapTest.kt` | `test/reviewer_binding_preference_resolver_test.dart` | Derives null-only default selection and non-null override behavior from the source implementation because the pinned tests do not directly cover this preference branch; adjacent tests cover serialization and binding-map behavior. Focused cases verify defaults in source order, configured/empty/unsupported/malformed overrides, and no key-name lookup for configured values. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/deckpicker/DeckPickerViewModelTest.kt` (bounded search; no direct predicate test found) | `test/deck_node_only_has_default_deck_test.dart` | Source-derived cases assert the single default-deck child, empty and non-default singleton lists, and multi-child lists containing ID 1. |
+| Bounded search of pinned AnkiDroid 2.25.3 tests (no direct path-helper or `createIcon` assertion found) | `test/deck_name_path_test.dart` | Source-derived cases assert ordinary and single-component names plus leading, repeated, and trailing delimiters and the empty name across all four projections. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/deckpicker/DeckFiltersTest.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/libanki/DeckNodeTest.kt` | `test/` | Direct behavioral references for normal sums, root-cap bypass, and top-level-only aggregation. Dart tests additionally assert source-derived empty and signed overflow/underflow boundaries plus the depth-derived synthetic flag; the pinned Kotlin tests do not directly assert `depth` or `isSyntheticDeck`. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModelTest.kt` and the reviewer action dispatch in `ReviewerViewModel.kt` | `test/review_session_test.dart` | Review-side transitions, mutation readiness, rating forwarding, timebox pausing/continuation, queue advancement, and serialized action behavior |
+| `ReviewerViewModel.kt:97,595–610` and `StudyCounts.kt` (no pinned test for timebox count retention) | `test/review_session_test.dart` | Source-derived tests verify initial 0/0/0 and NEW values, preservation of a prior queue snapshot through a timebox and loading, update after a normal reload, and retention on queue completion. `StudyCountsViewTest.kt` directly tests count rendering only. |
+| Timebox logic in `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` and minute conversion in `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt` (the pinned source has no direct `timeboxReached()` unit test) | `test/review_timebox_test.dart` | Source-derived checks for strict expiry, zero disablement, configured-limit payload, answer-count delta, fresh restart reads, negative limits, clock rollback, Float32 division, and rounding boundaries |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserColumn.kt:19–155` and `AnkiDroid/src/main/java/com/ichi2/anki/model/CardsOrNotes.kt:10–30` | `BrowserColumnMode`, `BrowserColumnType`, and `BrowserColumn.typeFor()` in `lib/src/browser_column_collection.dart` | Maps all 19 source column keys to TEXT, NUMERIC, DATE, or UNSPECIFIED. `template` is TEXT in Cards mode and NUMERIC in Notes mode; all other columns retain their declared type, including `cardDue` as UNSPECIFIED. Exact key lookup preserves the existing invalid-key error. `SortColumnUiModelTest.kt:101–117` directly checks a subset of displayed types but not `CardBrowserColumn.type(mode)`; the all-column and mode cases in the Dart tests are source-derived. `CardBrowserColumnTest.kt` only checks backend registry membership, which remains out of scope. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/BrowserColumnCollectionTest.kt` | `test/browser_column_collection_test.dart` | Adapts caller-supplied defaults, serialized key order, load-time duplicate removal/fallback, nullable and rejected updates, replacement, update/load duplicate distinction, and retained constructor-list alias/count. A source-derived Dart case additionally checks that a captured `backendKeys` projection is a snapshot. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/BrowserColumnSelectionTouchHelperCallbackTest.kt:32–57` plus `BrowserColumnSelectionAdapter.kt:160–188` and `MutableList.kt:10–22` | `test/browser_column_selection_move_test.dart` | Source-derived cases cover usage-row movement eligibility, target-position-zero rejection, exact forward/backward adjacent swap order, accepted same-position moves, and unvalidated position pass-through. The pinned tests assert RecyclerView drop-refresh timing only; move guard and swap ordering are not directly asserted. Android drag behavior and notifications remain host-side. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/BrowserColumnSelectionTouchHelperCallbackTest.kt:32–57` and `BrowserColumnSelectionFragmentScreenshotTest.kt:23–76`, with click behavior in `BrowserColumnSelectionAdapter.kt:78–101,123–135` | `test/browser_column_selection_toggle_test.dart` | Source-derived tests cover active/available section choice, the first AVAILABLE target, remove-then-insert ordering, a missing heading's `-1` target and removal-before-failed-insertion edge, and invalid source-index pass-through. Pinned tests cover drag refresh and screenshots, not click toggling. Android listeners and RecyclerView notifications remain host-side. |
+| `BrowserColumnSelectionFragment.kt:118–137` and `CardBrowserViewModel.kt:988–1018` | `test/browser_column_selection_save_test.dart` | Source-derived tests cover the unchanged-selection dismiss-before-update fall-through, successful and failed update completion, Cards/Notes mode pass-through, and ordered structural comparison including order and duplicates. The source fragment marks save behavior `@NeedsTest` and the pinned test tree has no direct save-handler assertion. Android updates and dialog/snackbar delivery remain host-side. |
+| `BrowserColumnSelectionFragment.kt:75–84,168–210,226–229` and `DiscardChangesDialog.kt:18–32` | `BrowserColumnSelectionBackPlan` and `planBrowserColumnSelectionBack()` in `lib/src/browser_column_selection_discard.dart`; tests in `test/browser_column_selection_discard_test.dart` | Projects the callback's current enabled state to allow default Back handling or request discard confirmation. On positive confirmation it disables the guard before redispatching Back; cancellation has no callback effects. The callback state is maintained by adapter notifications using ordered initial/current selection comparison. The pinned screenshot test covers layout only; Back/discard assertions are source-derived. Android dispatcher, callback lifecycle, dialog UI and delivery remain host-side. |
+| `BrowserColumnSelectionAdapter.kt:20–49,82–83,216–229` and `BrowserColumnSelectionFragment.kt:92–95,118–140,174–186,226–229` | `BrowserColumnSelectionProjection` and `projectBrowserColumnSelectionRows()` in `lib/src/browser_column_selection_projection.dart`; tests in `test/browser_column_selection_projection_test.dart` | Projects ordered column rows around the first Available heading using strict `<`/`>` comparisons, drops usage-heading rows, and derives selected types from displayed rows. A missing heading keeps the source `-1` index (no displayed columns and all column rows available); duplicate headings use the first match. The fragment saves displayed/available rows and passes selected types to save/unsaved-change logic. Labels, samples, Android row construction, UI/notifications, persistence and update delivery remain host-side. Pinned screenshot tests cover layout and touch-helper tests cover drop refresh/recycling; neither directly tests these getters, so Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardOrNoteId.kt:13–47`, `BrowserRowCollection.kt:11–88`, and `AnkiDroid/src/main/java/com/ichi2/anki/model/CardsOrNotes.kt:10–30` | `BrowserRowId` and `BrowserRowCollection` in `lib/src/browser_row_collection.dart` | Models the Cards/Notes-associated row ID, mode-specific card/note selection, first-card-or-null conversion, aliased mutable row list, replace/reset behavior, and host-adapted note/card lookups. Note-to-card expansion is awaited sequentially and retains the source row order, card order, and duplicates; note IDs are snapshotted before asynchronous expansion, so later mutations of the aliased row list do not alter an in-flight lookup. Empty Notes-row lists return an empty card-ID list without requiring the host lookup callback, matching Kotlin `map`/`flatMap` on an empty list. One-card-per-row uses the first card and fails if a nonempty row resolves to no cards. The host supplies collection lookups. |
+| `CardBrowserViewModel.kt:1175–1177`, `common/src/main/java/com/ichi2/anki/common/utils/ext/List.kt:5–12`, and `CardBrowserFragment.kt:1054–1061,1872–1879` | `browserRowPositionOfId()` in `lib/src/browser_row_collection.dart`; tests in `test/browser_row_position_test.dart` | Returns the first index of a value-equal host-supplied `BrowserRowId`, or null when absent, matching `cards.indexOfOrNull(id)`. Existing `BrowserRowId` equality compares its numeric value, matching the pinned `CardOrNoteId` value class. The fragment uses this lookup for pane-row notifications, autoscroll's absent-row early return, and top-offset lookup. Android notification, scrolling, layout and offset work remain host-side. No pinned test directly invokes `getPositionOfId`; `common/src/test/java/com/ichi2/anki/common/utils/ext/ListTest.kt:11–14` directly tests the generic helper's first-match and missing-ID cases. Dart adapter cases are source-derived, including empty-list behavior. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1429` and `BrowserRowCollection.kt:79` | `browserCardIdAtPosition()` in `lib/src/browser_row_collection.dart`; cases in `test/browser_row_collection_test.dart` | Calls the host-supplied `queryCardIdsAt` once with the exact row index and returns its first card ID. An empty result retains the failure of Kotlin `first()`; the Dart adapter surfaces `StateError`. The pinned source has no direct test for `queryCardIdAtPosition`; the Dart pass-through/empty-result cases are source-derived. Collection lookup remains host-side. |
+| `CardBrowserFragment.kt:215–216,1054–1061`, `CardBrowserViewModel.kt:1175–1177`, and `CardOrNoteId.kt:20–25` | `browserPaneRowNotificationPositions()` in `lib/src/browser_row_collection.dart`; tests in `test/browser_pane_row_notification_test.dart` | Builds the source-ordered non-null previous/new ID list, removes duplicate IDs using value equality, maps each through the existing first-match position projection, and omits IDs without a current position. The output drives the source's `notifyItemChanged` targets; pane-state mutation and Android adapter calls remain host-side. `CardBrowserViewModelTest.kt:1395–1528` directly exercises pane-state transitions/fallbacks, but no test directly asserts `onPaneRowChanged` notification targets; Dart projection cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:873–881,895–906`; `CardOrNoteId.kt:20–25`; `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:489–518` | `browserRowRangeBetweenIds()` in `lib/src/browser_row_collection.dart`; tests in `test/browser_row_range_test.dart` | Resolves endpoint IDs with first-match `List.indexOf`, uses the min/max positions, and returns the inclusive row slice in source order. Missing IDs retain the source `-1` position and fail during indexing; no validation or clamp is added. The upstream test directly covers selecting rows 0..1 and no repeated selection-flow event, but not ID-to-range derivation, reversed endpoints, or invalid IDs; Dart projection cases are source-derived. Long-press/right-click handling, selected-set mutation/deduplication, asynchronous flow delivery, and Android input remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:895–906` (`selectRowsBetweenPositions`); pinned test `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:489–518` | `planBrowserSelectRowsBetween()` in `lib/src/browser_row_selection.dart`; cases in `test/browser_row_range_selection_test.dart` | Composes the existing inclusive ID-range lookup with source `LinkedHashSet.addAll`: prior selected IDs stay first, new range rows append in source order, and a repeated fully selected range emits no effects and preserves the prior mode. A changed set emits `MultiSelectCause.Other` then selected-row refresh. Pinned tests directly cover adding rows and the repeated no-op; ID ordering/effects are separately asserted in Dart. Missing endpoints retain the range helper failure. Set mutation and flow delivery remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:698–725` (`handleRowLongPress`, `handleRightClick`); `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1504–1512` | `planBrowserRowLongPress()` and `planBrowserRowRightClick()` in `lib/src/browser_row_interaction.dart`; cases in `test/browser_row_interaction_test.dart` | Both source handlers choose `selectRowsBetween(lastSelectedId!!, rowSelection.rowId)` only when multi-select is active and the last ID is nonnull; otherwise they toggle the original `RowSelection`. Dart directives project that branch without performing row mutation. Upstream tests cover long-press selection/pane behavior but do not isolate this branch decision or assert right-click; the three guard/fallback cases and matching right-click behavior are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1266–1283`; `CardOrNoteId.kt:20–25`; `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:990–1041` | `browserPreviewStartingIndex()` and `browserPreviewPayload()` in `lib/src/browser_row_collection.dart`; tests in `test/browser_preview_starting_index_test.dart` | More than one selected row chooses the host-supplied selected-card IDs and index 0; zero or one selected row chooses host-supplied one-card-per-row IDs and the existing first-match index, defaulting to 0 only when no row is selected and retaining `-1` for a stale ID. ID lists pass through unchanged in host query order. Pinned tests directly cover Notes preview at 0, Cards with no selection at 0, and single selected Cards at positions 0 and 1. Payload branch, ID-list selection/order, and stale-index composition cases are source-derived. Card/note queries, row-to-card mapping, `IdsFile`/cache creation, Android previewer destination and activity launch remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:606–618` (`generateExpensiveSavedState`); pinned tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1650–1728` | `browserSavedSelectionPayloadIds()` in `lib/src/browser_saved_selection_payload.dart`; tests in `test/browser_saved_selection_payload_test.dart` | A nonempty `pendingSelectionRestore` takes priority; otherwise the helper snapshots selected rows. It returns no IDs for an empty choice and otherwise projects exact row ID values in order, preserving duplicates and leaving inputs unchanged. Pinned tests cover empty selection, pending restore timing and later selection changes, but do not assert pending-over-current precedence or exact ordered saved IDs; the later selected-ID check uses `containsInAnyOrder`. The host retains `SavedStateProvider`, Bundle/Parcelable, `IdsFile` and cache-file writing, restoration and selection mutation. `pendingSelectionRestore` is nonnull in the source and corrupt/missing saved files are converted to an empty list before this helper's logic. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1402–1403` (`selectUnvalidatedRowIds` and pending-state clear); pinned restore tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1650–1728` | `planBrowserSelectionRestore()` in `lib/src/browser_row_selection.dart`; cases in `test/browser_selection_restore_test.dart` | Filters pending saved IDs against current row IDs while preserving pending order and duplicates, then adds them to the existing selected linked set. Only new additions emit `MultiSelectCause.Other` followed by selected-row refresh. The caller clears pending restore after invoking the helper, including empty/no-op cases. Pinned integration tests verify restored selection and missing saved-file handling, but do not isolate stale-ID filtering, set merge order, or effects; those cases are source-derived. The host performs search, state mutation, pending-state clear, flows, and saved-state IO. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1439–1460` (`previewColumnHeadings`); `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1151–1279` | `projectBrowserPreviewColumns()` and `BrowserPreviewColumnProjection<T>` in `lib/src/browser_preview_column_order.dart`; tests in `test/browser_preview_column_order_test.dart` | Filters host-supplied sample rows into displayed/available lists by membership in the host-supplied current columns. Displayed rows sort by the first matching current-column index and preserve sample order for equal indices; available rows preserve sample order. The pinned tests cover no-row sample absence, Cards/Notes sample values, and a current-column round trip, but do not directly assert this partition, ordering, first-match, or stable-tie projection. Dart cases are source-derived and cover identity and input immutability. Sample loading, labels, mode-specific current-column resolution, preferences, and backend access remain host-side. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1820–1836` (direct integration evidence) and `BrowserMultiColumnAdapterRowsTest.kt:32–58` | `test/browser_row_collection_test.dart` | Source-derived cases cover row ID equality/string form, Cards/Notes projections, `toCardId`, aliasing and mode changes, reset, callback order, duplicate/order preservation, snapshotting note IDs before asynchronous lookup, per-row first-card behavior, per-position expansion, and empty Notes-row callback omission. The ViewModel test directly verifies that one Notes row expands to all its cards; adapter tests exercise reset/replacement. There is no dedicated upstream `BrowserRowCollection` test, and the empty-row callback skip, snapshot, one-card-per-row, per-position, and duplicate-order cases are not directly asserted upstream. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:284–287,836–849,908–927,1605–1635` (`RowSelection`, row toggle, selection callbacks, and mode causes) | `BrowserRowSelection` and `toggleBrowserRowSelection()` in `lib/src/browser_row_selection.dart` | Projects a toggle over the selected IDs in `LinkedHashSet` insertion order. Adding emits `RowSelected`; removing emits `DeselectRow` only if the resulting set is empty; every toggle refreshes selected rows and updates last-selected ID. The previous mode is retained if no mode cause is emitted, including the source's active multi-select mode with zero selected rows. The Dart result uses immutable snapshots and does not mutate the supplied iterable. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1379–1392,1410–1428` | `test/browser_row_selection_test.dart` | The upstream ViewModel tests directly cover adding and removing a row through multi-select taps and exiting selection mode after the final row is deselected. The Dart tests are source-derived for the projection value, insertion order, mode cause, refresh request, last-selected ID, and `RowSelection` structural equality. UI widgets, coroutine/flow delivery, note-editor commands, and tablet-pane behavior remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:741–750`; `CardBrowserFragment.kt:889–890,1357–1359,1553–1559`; `AnkiDroid/src/test/java/com/ichi2/anki/CardBrowserTest.kt:1548–1563,1576–1590,1672–1705` | `browserRowToEdit()` in `lib/src/browser_row_selection.dart`; tests in `test/browser_row_to_edit_test.dart` | Returns null first when browser rows are empty. In multi-select it chooses the first selected ID without checking membership; otherwise it chooses the first browser row. Fragment tests directly verify successful editor entry and edit persistence, and a menu test verifies disabled action for no selection; no pinned test directly asserts this row-choice helper or empty/stale choices, so Dart projection cases are source-derived. The host handles editor state/routing and the `no_note_to_edit` snackbar. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:274–290,1531–1574` | `test/browser_has_selected_all_decks_test.dart` | Adapts direct initial/specific/all-decks predicate and result-message cases. The unrelated-filter-category assertion is source-derived; it verifies the pure predicate only checks whether the deck-filter list is empty. ViewModel flow, result messaging, localization and UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:272–309,808–834,908–927,1605–1635` (`flowOfToggleSelectionState`, select-all/none, cached-state toggle, callbacks, and mode causes) | `BrowserSelectAllOrNoneState`, `initialBrowserSelectAllOrNoneState`, `projectBrowserSelectAllOrNoneState()`, `BrowserBulkSelectionTransition`, and `planBrowserSelectAll()`, `planBrowserSelectNone()`, `planBrowserToggleSelectAllOrNone()` in `lib/src/browser_row_selection.dart`; tests in `test/browser_toggle_selection_state_test.dart` and `test/browser_row_selection_bulk_test.dart` | Projects ordered set addition/clear, no-op branches, the copied prior selection for select-none, and callback effects. Select-all sets multi-select mode before refreshing; select-none only refreshes and deliberately keeps the current mode because `disableMultiSelectIfEmpty` is false. The state projection hides selected IDs outside multi-select, then uses the source `visibleSelectedRows.size >= rowCount` comparison; its initial value is SELECT_NONE. Toggle dispatches from the host-supplied cached SELECT_ALL/SELECT_NONE value. `CardBrowserViewModelTest.kt:1316–1329,1361–1375` directly covers the initial and major partial/full flow outcomes; exact pure-projection edge cases (including hidden selection, duplicate iterable IDs, and zero/negative counts), immutable transition snapshots, no-op and effect-order cases are source-derived. The source mutates its synchronized LinkedHashSet; these pure Dart APIs return immutable ordered snapshots for the host to apply. Row fetching, StateFlow scheduling, async job delivery and UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:931` (`selectedNoteCount`) and `BrowserRowCollection.kt:37–41,69–77,87–88` (`queryNoteIds`) | `browserSelectedNoteCount()` in `lib/src/browser_row_selection.dart`; tests in `test/browser_selected_note_count_test.dart` | Applies the source `distinct().size` calculation to host-supplied note IDs, returning zero for an empty list and counting duplicate IDs once. `BrowserRowCollection.kt` performs the Cards/Notes-to-note-ID projection using the collection; that lookup remains host-side. No pinned test directly covers `selectedNoteCount()`; the Dart empty/duplicate/unique cases are source-derived. The localized delete-menu plural count and UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:754,929` (`hasSelectedAnyRows`, `selectedRowCount`) | `browserHasSelectedAnyRows()` and `browserSelectedRowCount()` in `lib/src/browser_row_selection.dart`; cases in `test/browser_selected_row_count_test.dart` | Projects nonempty membership and distinct Set size over host-supplied row IDs. `BrowserRowId` value equality matches the source ID set. Pinned ViewModel tests directly assert selected-row counts across selection states; the explicit Boolean and duplicate-iterable cases are source-derived. The host owns selection and UI visibility. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:933–935` (`hasSelectedAllDecks`), `:404–420` (`AllDecks` maps to an empty deck filter), and `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt:15–42` (empty defaults) | `browserHasSelectedAllDecks()` in `lib/src/browser_search_request.dart`; tests in `test/browser_has_selected_all_decks_test.dart` | Returns true exactly when the deck-filter list is empty, regardless of query text, other filter categories, or available rows. Direct ViewModel tests at `CardBrowserViewModelTest.kt:274–290` cover initial/specific-deck false and AllDecks true; `:1531–1574` also covers the search-result action branch. The Dart case for non-deck filters is source-derived. Current request/flow values, result-message delivery, localization and UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:272–275,1089–1095` (`selectedRows`, `querySelectionExportData`) and `CardOrNoteId.kt:14–24` | `BrowserSelectionExportPlan` and `planBrowserSelectionExport()` in `lib/src/browser_selection_export.dart`; tests in `test/browser_selection_export_test.dart` | Returns null for no selected rows; otherwise chooses the Cards/Notes export kind from the supplied mode and maps the selected-set IDs to a new list in source iteration order. Direct `CardBrowserViewModelTest.kt:761–790` covers empty selection and one row in each mode; ordering and copy behavior are source-derived. `CardBrowserFragment.kt:1683–1691` opens the export dialog with cache paths and IDs; that UI, file preparation, and actual export remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:425–429,1192–1200,1236–1245`, `CardBrowserFragment.kt:647`, and `AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt:25–64` | `browserSearchTermsWithFlag()` in `lib/src/browser_flag_filter_query.dart` and `planBrowserFlagFilterSearch()` in `lib/src/browser_flag_filter_search_plan.dart`; tests in `test/browser_flag_filter_query_test.dart` and `test/browser_flag_filter_search_plan_test.dart` | Preserves the pure query-text branch of `setFlagFilter`: with an existing lowercase `flag:` substring it replaces the first `flag:.` match; otherwise it prepends `flag:<code>` with one ASCII space only for a nonempty query. The regex is unanchored, consumes one non-line-terminator code point, and may leave an incomplete marker unchanged; no query trimming/parsing occurs. The plan applies that transformation to the exact host-supplied current `searchTerms`, then orders filter-query emission, a request copy that changes only the query, and a search request with `forceRefresh = true` and `fromUserSearch = false`. `CardBrowserViewModelTest.kt:293–307` directly verifies the RED filter's resulting rows but does not assert query text, request preservation, or this effect order; those Dart cases are source-derived. The host resolves the flag, emits the flow, updates request state, and performs the search. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:682–695,728–739` (`onTap` and `setNoteEditorRow`) | `planBrowserRowActivation()` in `lib/src/browser_row_activation.dart`, composed with `toggleBrowserRowSelection()` | Projects ordered directives: normal fragmented taps set the pane row then request a pane editor command; normal phone taps end multi-select with the `OpenNoteEditorActivity` cause then request an activity command; multi-select taps toggle selection, with a pane-row update and pane-editor request only when the tapped row was already selected and the browser is fragmented. Editor directives are conditional on host destination resolution. Upstream `CardBrowserViewModelTest.kt:1395–1472` directly covers normal phone routing, multi-select add/deselect, phone deselection, tablet deselection reload, and tablet add without pane movement. Android flows, row widgets, collection-backed destination resolution, and actual pane/activity command delivery remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1329–1333` and `CardBrowserFragment.kt:985–994` | `planBrowserEndMultiSelectMode()` in `lib/src/browser_row_selection.dart`; cases in `test/browser_row_selection_bulk_test.dart` | Snapshots distinct selected IDs in insertion order (including an empty set), clears the modeled selection, switches to single-select mode, and retains the exact supplied cause object for publication. The host attaches the snapshot to the cause before emitting it; fragment visibility lookup and scrolling remain Android-side. The pinned tests do not directly assert the snapshot value; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:352–368` (`getCardIdsForNoteEditor`), with row conversion in `CardOrNoteId.kt:20–25`; editor integration in `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1396–1472` and `AnkiDroid/src/test/java/com/ichi2/anki/CardBrowserTest.kt:1548–1590,1672–1705` | `browserEditorCardIds()` in `lib/src/browser_editor_card_ids.dart`; tests in `test/browser_editor_card_ids_test.dart` | Returns empty for a null host-resolved row card ID; otherwise returns the exact sibling-card list in Notes mode, the exact selected-card list in Cards-mode multi-select, or a singleton resolved row ID in Cards mode outside multi-select. The pinned ViewModel cases at `1396–1472` test activation/editor-command routing, not this helper's card-ID payload. Fragment tests open the editor and verify edited content is saved, while the nearby no-selection menu test verifies action availability; none asserts the helper's selected card IDs. The Dart branch, empty-resolution, ordering, and list-preservation cases are source-derived. Row conversion, collection/note sibling lookup, selected-card query, destination construction, logging, and Android UI/lifecycle remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:444–447` (`queryCardInfoDestination`); caller `CardBrowserFragment.kt:1548–1551` | `browserCardInfoDestination()` in `lib/src/browser_card_info_destination.dart`; cases in `test/browser_card_info_destination_test.dart` | Uses only the first selected row’s host-resolved card ID; no selection or a null first ID returns no destination, without trying later rows. A non-null ID passes through unchanged with `EntryPoint.CURRENT_CARD_BROWSE`. The pinned `CardBrowserViewModelTest.kt` has no direct assertion for this method; Dart cases are source-derived. The host retains selected-row ordering, Cards/Notes conversion and lookup, concrete `CardInfoDestination` construction, navigation, Flow delivery, UI, and lifecycle. The Reviewer current-card info helper is a separate operation using `CURRENT_CARD_STUDY`. |
+| AnkiDroid 2.25.3, `CardBrowserViewModel.kt:883–890` (`transformBrowserRow`; pinned commit `d9bf072f814a0c37d30a694192593b31ff2df875`); test `CardBrowserViewModelTest.kt:1043–1059` | `transformBrowserRow()` in `lib/src/browser_row_transform.dart`; cases in `test/browser_row_transform_test.dart` | Calls the host backend-row lookup with the exact opaque ID first, then checks selected-row membership with that same ID, and returns the exact row object with the resulting Boolean. Both callbacks are called once on success; either failure propagates unchanged, and a row-lookup failure prevents membership lookup. The pinned sound-tags regression test directly calls `transformBrowserRow` and asserts rendered row content but does not assert the returned Boolean or callback order; the Dart order/branch tests are source-derived. Generated row construction, backend access, selected-row membership, and Android rendering remain host-side. The pinned source file contains only `SPDX-License-Identifier: GPL-3.0-or-later` and no file-level copyright text; no method-specific authorship is asserted. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:370–381` (`editNoteDestination`), called from `onTap`/`setNoteEditorRow` at `:682–695,728–739` and pane refresh at `:1530`; pinned tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1396–1453` | `browserEditNoteDestination()` and `BrowserEditSelectionDestination` in `lib/src/browser_note_editor_destination.dart`; tests in `test/browser_note_editor_destination_test.dart` | Empty host-supplied card IDs return no destination; nonempty IDs are retained exactly in the source `NoteEditorDestination.EditSelection` payload with `TransitionDirection.DEFAULT` and `inCardBrowserActivity = isFragmented`. Source-derived tests cover empty IDs, ordered IDs including duplicates, and both fragmented values. Pinned ViewModel tests cover activity/pane command routing and row deselection, but do not assert the `EditSelection` payload fields. Card-ID resolution, mode-specific collection/selection queries, warning/logging, `paneRow`, Flow/action delivery, and Android intent/activity/pane UI and lifecycle remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1529–1531` (`NoteEditorCommand.Companion.fromCurrentSearchState`); pinned tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1595–1625` | `browserPostSearchPaneCommand()` and `BrowserPostSearchPaneCommand` in `lib/src/browser_post_search_pane_command.dart`; tests in `test/browser_post_search_pane_command_test.dart` | Maps a host-supplied non-null valid edit destination to `BrowserPostSearchPaneLoadInPane`, carrying the exact destination object, or null to `BrowserPostSearchPaneHidePane`. The pinned ViewModel tests directly cover tablet rows producing `LoadInPane` and an empty deck producing `HidePane`, but do not assert the destination payload identity or directly cover a missing pane row. Host pane-row state and lookup, collection-backed destination resolution/logging, SharedFlow delivery, and Android pane UI/lifecycle remain host-side; the Dart mapping and payload identity cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:205–215` (`ensurePaneRowValid`); pinned tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1474–1502` | `ensureBrowserPaneRowValid()` in `lib/src/browser_row_collection.dart`; cases in `test/browser_pane_row_validity_test.dart` | Preserves the source guard order: non-fragmented mode clears the pane row, an empty current row list clears it, a null or absent pane row falls back to the first current row, and a present pane value is retained. Membership uses the host row type's equality, while the returned value remains the original pane value or first row. Pinned tests at `1474–1502` directly cover stale-row fallback after search and phone behavior, but do not directly assert an empty-list result or retained pane value; Dart cases are source-derived. The host invokes the projection after search replacement and owns row production, pane state/StateFlow, UI, and lifecycle. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:761–781` (`toggleMark`) and `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:792–804` | `BrowserBulkMarkOperation` and `planBrowserBulkMarkToggle()` in `lib/src/browser_bulk_mark.dart`; tests in `test/browser_bulk_mark_test.dart` | Returns no operation for an empty selected-card list. Otherwise, all host-resolved note mark states true selects removal of the `marked` tag; any false state selects adding it to all notes. Retains Kotlin `all(empty) == true`, so an empty resolved-note list with selected cards selects removal. The upstream ViewModel test directly covers adding the tag to unmarked notes while retaining row selection; the remaining branch and empty cases are source-derived. Host-side note/tag lookup, undoable collection mutation, and card-state publication after successful mutation remain outside. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1049–1086` (`toggleBury`) and `:1596–1603` (`BuryResult`); `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:311–380` | `BrowserBulkBuryPlan` and `planBrowserBulkBuryToggle()` in `lib/src/browser_bulk_bury.dart`; tests in `test/browser_bulk_bury_test.dart` | No selected rows returns null before card-state lookup. Otherwise, all selected cards in `ManuallyBuried` or `SiblingBuried` queues select unbury; any other queue selects bury. Preserves the all-card check, action-valued `wasBuried`, card count, and Kotlin `all(empty) == true` behavior when rows are selected but resolve to no cards. The upstream tests directly cover no selection, single/mixed bury/unbury, selection retention, and the manual-buried queue transition; sibling-buried projection, empty resolved IDs, callback order/short-circuit, and structural value equality are source-derived. The host checks row selection before querying IDs, maps queue values to the model, runs the undoable scheduler operation, and only exposes its result after success. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1021–1047` (`toggleSuspendCards`); `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt:49–58` (`QueueType.Suspended`); `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:662–749` | `BrowserBulkSuspendOperation` and `planBrowserBulkSuspendToggle()` in `lib/src/browser_bulk_suspend.dart`; tests in `test/browser_bulk_suspend_test.dart` | No selected rows returns no operation before queue-state projection. Otherwise, all selected cards must have `QueueType.Suspended` to choose unsuspend; a mixed or unsuspended selection chooses suspend. Preserves source `all(empty) == true` when selected rows resolve to no card IDs and its O(n) all-card check. Direct ViewModel tests cover no-selection, all-suspended, mixed, and none-suspended cases in Cards mode plus no-selection, all-suspended, and mixed card/note cases in Notes mode; projection order, short-circuit, and empty resolved IDs are source-derived. The host checks selected rows before resolving IDs, performs queue lookup and the selected scheduler operation inside its undoable operation, and owns async/UI behavior. The later none-suspended Notes helper at lines 751–758 is not annotated as a test. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:788–800` (`deleteSelectedNotes`); adjacent pinned tests at `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:830–885` cover deletion/count, selection clearing, and a deleted scroll target, but not focused `paneRow` handling | `executeBrowserDeleteSelectedNotesPlan()` in `lib/src/browser_delete_selected_notes_plan.dart`; tests in `test/browser_delete_selected_notes_plan_test.dart` | Clears `paneRow` only when its ID is in the exact host-supplied card-ID list, then calls the undoable removal once with that same list. After successful removal it ends multi-select with `SingleSelectCause.Other`, refreshes search, and returns the count unchanged; failure stops before the later effects. Empty and duplicate IDs remain unchanged. `@NeedsTest("Deleting the focused row is properly handled;#18639")` remains unresolved. The host owns selected-row/card-ID resolution, pane-row access, collection/undo/count extraction, multi-select implementation, search refresh, coroutine/effect delivery, and UI. Dart cases are source-derived; no equivalent existed before this port. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1101–1121,1754–1779` (`prepareToRepositionCards`, `canRepositionCard`, and result types); `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1063–1147` | `BrowserRepositionPlan` and `planBrowserRepositionCards()` in `lib/src/browser_reposition_plan.dart`; tests in `test/browser_reposition_plan_test.dart` | Partitions host-ordered selected IDs by the source `type == New || queue == New` rule, preserving order in both partitions. No eligible IDs returns the source error; otherwise the skipped ID count is exact. Pinned tests directly cover mixed New/Review count, all-New, suspended-New eligibility, and all-ineligible error. Partition order and queue-only eligibility tests are source-derived. The host resolves IDs and card type/queue, performs the collection scan, computes queue bounds/defaults, runs repositioning, and reports the result. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1157–1173` (`repositionSelectedRows`); tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:196–205,1081–1147` and `AnkiDroid/src/test/java/com/ichi2/anki/CardBrowserTest.kt:571–585,643–653` | `BrowserRepositionSelectedRowsRequest` and `planBrowserRepositionSelectedRows()` in `lib/src/browser_reposition_selected_rows_request.dart`; tests in `test/browser_reposition_selected_rows_request_test.dart` | Passes the host-resolved card ID list in its supplied order and the exact `position`, `step`, `shuffle`, and `shift` values through to the host `sched.sortCards` call; returns its count unchanged. The pinned tests exercise Notes-mode repositioning across selected note rows, skipped non-New cards, and shift behavior, but do not isolate this argument/result projection; the Dart cases are source-derived. The host owns selection and Notes-to-Cards resolution, coroutine and undo/backend scheduler execution, and UI. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt:1624–1656`; `CardBrowserViewModel.kt:1767–1790`; `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1063–1147` | `BrowserRepositionPresentationDirective` and `projectBrowserRepositionPresentation()` in `lib/src/browser_reposition_presentation.dart`; tests in `test/browser_reposition_presentation_test.dart` | Maps no-eligible to the source vague-error/reposition-card-not-new dialog directive with reload false; either missing queue bound to the something-wrong snackbar resource; and two present bounds to dialog values preserving top, bottom, random, and shift. The fragment's task launch, immediate `true`, resource lookup, Android UI construction/delivery, and reposition operation remain host-side. Pinned tests exercise ViewModel results and bounds but do not directly assert fragment presentation branches; Dart branch cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1773–1791`; construction/catch paths at `:1133–1149`; `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1086–1134` | `BrowserRepositionQueueBounds` and `projectBrowserRepositionQueueBounds()` in `lib/src/browser_reposition_queue_bounds.dart`; tests in `test/browser_reposition_queue_bounds_test.dart` | When both host-supplied values exist, maps the lower to queueTop and higher to queueBottom; when either is null, both bounds are null. Preserves equal and negative values without clamping. Pinned ViewModel integration tests directly cover normal `(1,2)` bounds for regular and suspended-new cards, but no direct constructor test exists; reversed/equal/negative/null cases are source-derived. SQL min/max lookup and its `max(0,minDue)` behavior remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1125–1138,1773–1792`; `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1087–1108` | `projectBrowserRepositionDueExtrema()` in `lib/src/browser_reposition_due_extrema.dart`; tests in `test/browser_reposition_due_extrema_test.dart` | Maps host-supplied SQL extrema using the source `min = max(0,minDue)` and unchanged `max = maxDue`, then reuses the queue-bound ordering projection. The max value is not clamped, so negative max due can become queueTop. The pinned integration test covers ordinary `(1,2)` but not negative values; lower-clamp and negative-max cases are source-derived. SQL/cursor access, scheduler defaults, presentation and reposition operations remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:383–394,1577–1593,1805–1809`; `CardBrowserFragment.kt:1225–1230,1274`; `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1735–1793` | `BrowserChangeNoteTypePlan` and `planBrowserChangeNoteType()` in `lib/src/browser_change_note_type_plan.dart`; tests in `test/browser_change_note_type_plan_test.dart` | Empty selection returns NoSelection without type membership input; any selected note ID absent from the first note's supplied type-membership set returns MixedSelection; otherwise distinct note IDs retain first-occurrence order in the ChangeNoteType plan and factory. Direct upstream tests cover empty, mixed, one same-type, and two same-type notes. Duplicate/order and explicit membership-edge cases are source-derived. Note/type lookup, flow emission, localized snackbar/dialog delivery, and the note-type change remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt:1225–1230,1274`; response variants `CardBrowserViewModel.kt:1577–1593`; tests `CardBrowserViewModelTest.kt:1735–1793` | `BrowserChangeNoteTypePresentation` and `projectBrowserChangeNoteTypePresentation()` in `lib/src/browser_change_note_type_presentation.dart`; tests in `test/browser_change_note_type_presentation_test.dart` | NoSelection maps to no user-visible directive; MixedSelection maps to the `different_note_types_selected` snackbar resource; ChangeNoteType maps to a dialog directive carrying the same ordered note ID list. There is no pinned Fragment presenter test; ViewModel tests directly cover response values, while presenter mappings are source-derived. Logging, flow collection, resource lookup, UI construction/delivery, and note-type mutation remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:556–577`; callers `:160–169,179–187,270–280`; adjacent tests `AnkiDroid/src/test/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModelTest.kt:54–160` | `ChangeNoteTypeConversion` and `projectChangeNoteTypeConversion()` in `lib/src/change_note_type_conversion.dart`; tests in `test/change_note_type_conversion_test.dart` | Maps the host-supplied current/new `isCloze` flags to all four source directions: regular→regular, regular→cloze, cloze→regular, cloze→cloze. There is no direct upstream test of `ConversionType.fromNoteTypeChange`; adjacent ViewModel tests indirectly cover each direction through template behavior, so the Dart truth-table tests are source-derived. Image Occlusion remains within its current cloze classification; no separate case is added. NotetypeJson/collection lookups, flows, template UI, note conversion and sync effects remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:495–521`; initialization/update callers `:300–313,474–481`; direct behavior tests `AnkiDroid/src/test/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModelTest.kt:239–357` | `ChangeNoteTypeField` and `projectChangeNoteTypeDefaultFieldMap()` in `lib/src/change_note_type_default_field_map.dart`; tests in `test/change_note_type_default_field_map_test.dart` | Projects host-resolved ordered field names/ordinals using exact case-sensitive name matching and the first matching input field. Duplicate output ordinal keys keep the last matched pair, as with `toMap(HashMap())`. Missing numeric output keys in `0 until outputFields.size` use the source count-limit, identity-if-unused, otherwise first-unused input-ordinal rules; exhausted mappings become null. Existing ViewModel tests directly cover ordinary counts and name matches, but not this helper, duplicate names/ordinals, case behavior, or supplied-ordinal collisions; the focused Dart edge cases are source-derived. JSON/collection lookup, state flow, user mapping changes, UI, note conversion, template mapping and persistence remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:234–244`; `NotetypeJson.kt:61–67`; consumer `ChangeNoteTypeDialog.kt:391–408`; direct flow tests `ChangeNoteTypeViewModelTest.kt:190–197,372–389` | `projectChangeNoteTypeDiscardedFields()` in `lib/src/change_note_type_discarded_fields.dart`; tests in `test/change_note_type_discarded_fields_test.dart` | Converts current map values to a set, including null, then returns input names whose source list indices are absent. Preserves input order and duplicate names; duplicate mapped values collapse through set membership, while null or out-of-range values do not remove integer list indices. Pinned ViewModel tests directly cover Nothing and a reused input ordinal but not the pure helper; empty, duplicate, null and out-of-range cases are source-derived. StateFlow, field/type lookup, user updates, localization, dialog UI, conversion and persistence remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:581–602`; spinner callers `ChangeNoteTypeDialog.kt:468–475,661–666`; related ViewModel tests `ChangeNoteTypeViewModelTest.kt:14,73,203,364,394–396,564–568` | `SelectedIndex` and `SelectedIndexValue` in `lib/src/selected_index.dart`; tests in `test/selected_index_test.dart` | Models the source singleton NOTHING and value-equal Index(index); converts NOTHING to null and passes index values through unchanged, with no range check. Pinned tests use both variants in mapping flows and compare Index values structurally, but no direct type/hash/toNullableInt assertions exist; Dart cases are source-derived. Spinner position selection, StateFlow updates, map mutation, Android UI and lifecycle remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:489–493,539–544`; callers `ChangeNoteTypeDialog.kt:259,270`; related dialog test `ChangeNoteTypeDialogTest.kt:78–83` | `ChangeNoteTypeTab` and `projectChangeNoteTypeTabFromPosition()` in `lib/src/change_note_type_tab.dart`; tests in `test/change_note_type_tab_test.dart` | Resolves position 0 to Fields and 1 to Templates using the ordered source entries. An unknown position preserves the source `first {}` failure; Dart throws `StateError` from `firstWhere`. The dialog test uses the Templates position but does not directly assert the ViewModel tab mapping; all helper cases are source-derived. ViewPager input, StateFlow mutation, logging, lifecycle and UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:179–188,270–277,556–577`; ViewModel tests `ChangeNoteTypeViewModelTest.kt:402–415`; dialog consumer `ChangeNoteTypeDialog.kt:551–556,621–622` | `projectChangeNoteTypeTemplateChangeEligibility()` in `lib/src/change_note_type_template_change_eligibility.dart`; tests in `test/change_note_type_template_change_eligibility_test.dart` | Returns true only for the host-resolved regular-to-regular conversion, reusing the four-way `ChangeNoteTypeConversion`. Pinned ViewModel tests cover all four settled conversion cases through `canMapTemplates()`; direct helper cases are source-derived. `canChangeTemplates` is computed from current input/output note types; the separate flow initial value and mapped emission timing stay host-side. Note-type lookup, StateFlow, lifecycle, dialogs and visibility delivery remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:217–225`; adjacent template update `:442–465`; consumer `ChangeNoteTypeDialog.kt:560–566,602–616`; direct tests `ChangeNoteTypeViewModelTest.kt:199–206,359–370` | `projectChangeNoteTypeDiscardedTemplates()` in `lib/src/change_note_type_discarded_templates.dart`; tests in `test/change_note_type_discarded_templates_test.dart` | Builds a set from current map values and retains input names whose source list index is absent. Preserves source order and duplicate names; duplicate mapped values collapse, while null and out-of-range values match no integer index. Pinned tests directly cover Nothing and an initially empty warning changing to one discarded template; helper edge cases are source-derived. Flow/lifecycle/UI and localized warning delivery remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:190–207,495–537`; Save-button consumer `ChangeNoteTypeDialog.kt:170–175`; direct test search in `ChangeNoteTypeViewModelTest.kt` | `projectChangeNoteTypeHasChanges()` in `lib/src/change_note_type_has_changes.dart`; tests in `test/change_note_type_has_changes_test.dart` | Returns true in source order when output note-type ID differs, current field map differs structurally from the input note type default, or current template map differs structurally from the input default. Map equality ignores insertion order but checks key presence and nullable values, so absent and present-null entries differ. No direct upstream `hasChangesFlow` test was found; the Save-button consumer confirms only boolean enablement. All Dart decision cases are source-derived. StateFlow/combine, host-resolved IDs/default maps and Save-button delivery remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:524–537`; initialization `:300–316`, output-type selection `:474–482`; direct tests `ChangeNoteTypeViewModelTest.kt:209–235` | `projectChangeNoteTypeDefaultTemplateMap()` in `lib/src/change_note_type_default_template_map.dart`; tests in `test/change_note_type_default_template_map_test.dart` | For output ordinals in ascending order, maps each to the same input ordinal when it is below the input template count, otherwise null. Empty output count yields an empty map. Pinned tests directly cover equal counts, fewer outputs, and extra outputs; empty input/output and explicit key-order cases are source-derived. StateFlow, note-type lookup, user updates, template UI, persistence and conversion remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:442–465,584–602`; template flow/init `:179–187,300–313,530–537`; spinner caller `ChangeNoteTypeDialog.kt:655–667`; tests `ChangeNoteTypeViewModelTest.kt:209–234,392–429,588–597` | `projectChangeNoteTypeTemplateMappingUpdate()` in `lib/src/change_note_type_template_mapping_update.dart`; tests in `test/change_note_type_template_mapping_update_test.dart` | Disabled templates return the original map unchanged. Enabled updates copy the ordered map, clear the existing key for a non-null selected input ordinal after the source at-most-one assertion, then set the requested output ordinal. Null selections do not clear other null entries; absent output ordinals append without validation. Pinned ViewModel tests cover default initialization, clearing a prior mapping and ignoring updates when disabled; direct helper edge tests for null, assertion, same-key and missing-key cases are source-derived. Flow/state, conversion lookup, logging, UI, persistence and conversion remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/ChangeNoteTypeViewModel.kt:415–424,584–602`; dialog spinner caller `ChangeNoteTypeDialog.kt:460–475`; integration tests `ChangeNoteTypeViewModelTest.kt:72–83,87–110,113–132,134–154,188–200,374–390` | `projectChangeNoteTypeFieldMappingUpdate()` in `lib/src/change_note_type_field_mapping_update.dart`; tests in `test/change_note_type_field_mapping_update_test.dart` | Copies the host-supplied output-to-input ordinal map and assigns the selected nullable input ordinal at exactly the supplied output key. Null clears only that key; duplicate input values remain allowed; absent keys and arbitrary/negative ordinals are preserved without validation. Pinned integration tests exercise repeated input selection and Nothing, but no direct helper-level test exists; null, duplicate, missing-key and negative-ordinal cases are source-derived. StateFlow/coroutine delivery, logging, spinner/UI, and note conversion/persistence remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1794–1798`; `AnkiDroid/src/main/java/com/ichi2/anki/browser/RepositionCardFragment.kt:38–39`; `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1087–1108` | `projectBrowserRepositionSummary()` in `lib/src/browser_reposition_summary.dart`; tests in `test/browser_reposition_summary_test.dart` | Returns null if either host-supplied queue bound is null; otherwise concatenates the already localized/formatted top line, one literal newline, and already localized/formatted bottom line. The pinned test directly asserts normal `(1,2)` summary content; missing-bound cases are source-derived. Dart does no integer formatting or resource lookup; localization and dialog UI remain host-side. The source helper appears only at its definition and in this test, not in a production caller. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1192–1200,1219–1234` (`setFilterQuery`, `searchForMarkedNotes`, and `searchForSuspendedCards`); tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:931–989` | `BrowserPresetSearchPlan` and `planBrowserPresetSearch()` in `lib/src/browser_preset_search_plan.dart`; tests in `test/browser_preset_search_plan_test.dart` | A host-reported selected row returns no plan. Otherwise, marked notes use exact `tag:marked` and suspended cards use exact `is:suspended`; directives emit the filter query, replace only the current request query while preserving its structured filters, then request search with `forceRefresh = true` and `fromUserSearch = false`. The pinned tests directly verify marked/suspended results in Cards and Notes modes, but do not assert the selection guard, emitted query, request preservation, or effect order; those Dart cases are source-derived. Row-selection lookup, SharedFlow emission, SearchRequest state mutation, collection query/search work, and search execution remain host-side.
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1201–1214` (`setQuery`), `SearchRequest.toSearchString()`, and `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1531–1575` | `BrowserSetQueryPlan` and `planBrowserSetQuery()` in `lib/src/browser_set_query_plan.dart`; source-derived cases in `test/browser_set_query_plan_test.dart` | Uses the source defaults `forceRefresh = true` and `fromUserSearch = false`. Accepts the host's serialized SearchString equality result and skips both request assignment and search only when `forceRefresh` is false and that result is equal. Otherwise it copies only the exact query onto the current request, then orders request assignment before search requested with the exact `forceRefresh` and `fromUserSearch` values. The pinned tests exercise user-search result messages but do not directly test the duplicate-query gate; the Dart gate/effect cases are source-derived. Dart does not compare requests or query strings to infer backend equality. The host resolves SearchStrings, mutates StateFlow, accesses the collection and performs search; coroutine, cancellation, and lifecycle behavior remain host-side.
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1514–1528` (`SearchState.Completed.fromCurrentState`) and `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1535–1571` | `BrowserSearchResultMessage` and `browserSearchResultMessage()` in `lib/src/browser_search_result_message.dart`; source-derived branch cases in `test/browser_search_result_message_test.dart` | Non-user searches return no message; user searches select CardCount with the all-decks action disabled for AllDecks, NoCardsInSelectedDeck for an empty selected deck, or CardCount with the action enabled otherwise. The all-decks check intentionally precedes the zero-row check, preserving the source TODO/quirk for empty AllDecks. Pinned tests directly cover all-decks with rows, a populated selected deck, an empty selected deck, and no message on deck change; they do not directly cover all-decks with zero rows. Dart tests cover every branch, including that precedence gap. The host supplies search values, composes/publishes `SearchState.Completed`, delivers/localizes the result message and snackbar action, and owns UI, navigation, and row-count derivation.
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1311–1317` (`moveSelectedCardsToDeck`); caller `CardBrowserFragment.kt:331,1831–1835`; tests `CardBrowserViewModelTest.kt:165–179` and `AnkiDroid/src/test/java/com/ichi2/anki/CardBrowserTest.kt:327–350` | `BrowserSelectedCardsMoveDirective` and `planBrowserSelectedCardsMove()` in `lib/src/browser_selected_cards_move_directive.dart`; cases in `test/browser_selected_card_move_directive_test.dart` | Passes the host-resolved selected card ID list and exact target deck ID to one undoable `setDeck(selectedCardIds, deckId)` effect, then passes its result through unchanged. The pinned ViewModel test directly covers Notes mode: two selected note rows resolve to four card IDs, those cards move, and unselected rows remain unchanged; it does not isolate the directive. The Dart cases are source-derived. The host resolves selection, executes `setDeck` inside `undoableOp`, returns its `OpChangesWithCount`, and the Fragment uses `count` for the undo snackbar. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1319–1323` (`updateSelectedCardsFlag`) | `BrowserSelectedCardsFlagPlan` and `planBrowserSelectedCardsFlagUpdate()` in `lib/src/browser_selected_flag_plan.dart`; tests in `test/browser_selected_flag_plan_test.dart` | Preserves the supplied selected-ID list and flag unchanged; orders the host's flag write before card-state-changed publication, then exposes the same IDs as the eventual return value. Empty lists are not skipped. No pinned browser test directly covers this method; the ordered-plan and empty-list cases are source-derived. The host resolves selected card IDs, performs the undoable collection update, publishes the event only after success, and returns the IDs only after the source sequence completes. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SortColumnUiModelTest.kt:101–117` (indirect type evidence) and `CardBrowserColumn.kt:19–155` | `test/browser_column_type_test.dart` | Checks the full Cards/Notes type table, including the source's sole mode-dependent `template` type, unspecified `cardDue`, and exact invalid-key behavior. The upstream UI test covers only a subset through `ColumnUiModel`; complete method/table cases are source-derived. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserLaunchOptionsTest.kt:26–31` | `test/browser_launch_options_test.dart` | Adapts the pinned direct `search=dog` deep-link case and launch-option kinds. Source-derived URI cases cover raw-key matching, first duplicate, present-empty/no-equals, plus/percent/UTF-8 decoding, precedence, and explicit malformed-input errors. No pinned Android test was found for these URI edges. Intent/extras/action extraction, URI ownership, and browser navigation remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:449–477,584`; direct tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:408–470` | `planBrowserInitialDeck()` in `lib/src/browser_initial_deck.dart`; source-derived tests in `test/browser_initial_deck_test.dart` | Reports the first-launch consumed-flag transition even when no valid intent deck is resolved, then selects a valid host-resolved intent deck, the all-decks sentinel, a host-validated non-null persisted deck, or the host's current selected deck and name in that order. Caller line 584's `selectAllDecks` branch still has precedence outside this projection. Direct upstream tests assert intent deck ID selection and `lastDeckId` persistence, repository fallback without an intent ID, fallback from an unknown intent ID to a valid persisted deck, and user-selected deck persistence/recreation. They do not directly assert the consumed flag, resolved names, all-decks sentinel path, invalid persisted-deck fallback to `decks.selected()`, or launch-vs-sentinel/persisted precedence. The host owns `SavedStateHandle`, intent extraction and consumption write ordering, ID/name lookup and validation, `lastDeckId`/collection reads, and `setSelectedDeck`/persistence. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:404–425`; callers/tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:462–472,1535–1612` | `BrowserSelectedDeckUpdatePlan` and `planBrowserSelectedDeckUpdate()` in `lib/src/browser_selected_deck_update_plan.dart`; tests in `test/browser_selected_deck_update_plan_test.dart` | Selects `ALL_DECKS_ID` for AllDecks or the exact selected deck ID, then builds an empty or singleton host-resolved `DeckNameId` filter, copies only that filter into the supplied request, and orders last-deck persistence before search requested with `forceRefresh = false`. The pinned tests directly assert `lastDeckId` persistence in the user-selection/recreation case and indirectly exercise selected-deck search outcomes/result messages; they do not assert this full plan, preservation of query and non-deck fields, or the exact false refresh/order. Both Dart plan cases are source-derived. The host supplies the deck kind/ID and resolved `DeckNameId`, persists `lastDeckId`, and owns request-flow mutation, collection access, SearchString duplicate comparison, and search execution. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1406–1417`; callers are the `launchSearchForCards()` path at `:1369–1420` and launch-option initialization at `:551–565`; tests `CardBrowserViewModelTest.kt:889–926` | `planBrowserPostSearchScroll()` and `completeBrowserPostSearchScrollPlan()` in `lib/src/browser_post_search_scroll_plan.dart`; tests in `test/browser_post_search_scroll_plan_test.dart` | No pending target produces no effects. For a target, the first plan orders pending-target clear before host lookup; after lookup, completion adds no request when the card is missing, or passes the host-resolved Cards/Notes row ID unchanged with `topOffset = 0`. Pinned tests cover clear after initial scroll, valid target, invalid target/no event, and invalid target in Notes mode; their valid-row assertion aliases the expected value and does not test the mapped row ID or offset. Absent-target, clear-before-missing-result, exact host row-ID pass-through, zero offset, and plan order are source-derived. The host retains pending-target reading, search-job synchronization, state mutation, collection lookup/logging, `CardOrNoteId.fromCard`, flow emission, and RecyclerView application. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1285–1309` | `setBrowserSearchQueryExpanded()`, `updateBrowserSearchQueryText()`, and `removeBrowserUnsubmittedInput()` in `lib/src/browser_search_box_state.dart`; source-derived cases in `test/browser_search_box_state_test.dart` | Expansion assigns true without changing unsubmitted text; collapse clears text before assigning false; text update assigns the exact string, including empty, without changing expansion; removal clears only text. Null and false are explicit assignments, and absent changes leave the other field untouched. Pinned `CardBrowserViewModelTest.kt:1795–1818` tests text updates used by save-search behavior, but does not directly assert expansion/collapse or input-removal transitions. The host applies ordered changes to StateFlows and owns logging, focus, and Android UI. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:262–265` (`flowOfCanSearch`) | `browserQueryCanSearch()` in `lib/src/browser_can_search.dart`; cases in `test/browser_can_search_test.dart` | Matches `query?.isNotEmpty() == true`: null and empty are false; whitespace-only and all other nonempty strings are true, without trimming. A bounded search of pinned `CardBrowserViewModelTest.kt` found no direct assertion for `flowOfCanSearch`; the Dart cases are source-derived. The host retains the reactive Flow/StateFlow, lifecycle, and UI-control updates. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1484–1497` (`updateSelectedColumn`); caller `ColumnSelectionDialogFragment.kt:102` | `replaceBrowserSelectedColumn()` in `lib/src/browser_selected_column_replacement.dart`; cases in `test/browser_selected_column_replacement_test.dart` | Copies the host active-column list, replaces every item whose `ankiColumnKey` matches the selected heading key with the selected `columnType`, and preserves source order and unaffected entries. Even without a match it returns a new list for the caller to pass to `updateActiveColumns`. A bounded search of pinned `CardBrowserViewModelTest.kt` found no direct `updateSelectedColumn` assertion; Dart ordinary, repeated-key, order, and no-match cases are source-derived. The host supplies the heading key and replacement type, calls `updateActiveColumns`, and retains mode selection, no-op/equality guards, preference/backend updates, flow state, and UI. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:988–1018` (`updateActiveColumns`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); callers/tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1261` and `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SortColumnUiModelTest.kt:24–25,122–123,158–159,174–175` | `BrowserActiveColumnUpdatePlan` and `planBrowserActiveColumnUpdate()` in `lib/src/browser_active_column_update_plan.dart`; tests in `test/browser_active_columns_update_plan_test.dart` | Preserves the source guard order: empty requested columns reject before equality; otherwise equality compares the current active columns to the requested list structurally and rejects even when the target mode is non-active; a changed list is accepted, and only the current mode requests an active-flow update. The pinned ViewModel round trip passes changed columns but discards the Boolean; sort-column UI tests call an assertion-backed helper with changed columns as fixture setup. No pinned test explicitly asserts empty or equal-list rejection. Dart guard cases are source-derived. The host retains `BrowserColumnCollection.replace`, preference persistence, and the asynchronous `updateActiveColumns(columnCollection)` StateFlow update. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:654–663` (`refreshColumnsFromPrefs`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `BrowserRefreshColumnsFromPrefsPlan` and `planBrowserRefreshColumnsFromPrefs()` in `lib/src/browser_refresh_columns_from_prefs.dart`; cases in `test/browser_refresh_columns_from_prefs_test.dart` | Preserves the initialization guard before preference loading; after the host loads columns for the current Cards/Notes mode, compares them with active columns using Kotlin `List.equals` behavior (structural and order-sensitive), requesting `updateActiveColumns` only when they differ. Changed stored columns pass through unchanged. No pinned test directly covers this method; Dart cases are source-derived. Preference access/loading, logging, backend work, StateFlow updates, and coroutine execution remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:620–642` (`onReinit`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); pinned test `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1291–1303` | `BrowserReinitPlan` and `planBrowserReinit()` in `lib/src/browser_reinit_plan.dart`; tests in `test/browser_reinit_plan_test.dart` | Returns no effects before initialization completes. After initialization, preserves the ordered effects of restoring host-supplied active backend keys before requesting the asynchronous backend-column refresh. The pinned test closes and reopens with German locale and verifies the sort heading changes from “Sort Field” to “Sortierfeld”; the plan does not own label metadata. Backend calls, collection access, dynamic labels, coroutine scheduling, and StateFlow publication remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1465–1483` (`findAndReplace`); input `FindReplaceResult` in `FindAndReplaceDialogFragment.kt:204–226`; caller `AnkiDroid/src/main/java/com/ichi2/anki/CardBrowser.kt:259–268`; pinned integration tests `AnkiDroid/src/test/java/com/ichi2/anki/CardBrowserTest.kt:1248–1512` and dialog tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/FindAndReplaceDialogFragmentTest.kt` | `BrowserFindReplacePlan` and `planBrowserFindReplace()` in `lib/src/browser_find_replace_plan.dart`; cases in `test/browser_find_replace_plan_test.dart` | When selected-only is true, carries the exact host-resolved note ID list; otherwise passes an empty list for all notes. The Tags sentinel selects the Tags operation; all other fields select Collection, mapping the all-fields sentinel to null and preserving a custom field exactly. Search, replacement, regex, and match-case values pass through unchanged, as does the host result count. Pinned Card Browser integration tests cover replacement across selected notes, regex, all-notes, all-fields, tags, and match-case, and dialog tests cover UI/result construction; a bounded search of `CardBrowserViewModelTest.kt` found no direct operation-mapping assertion. The host retains selection/collection lookup, undoable operation, matching, Android dialog/UI, and count delivery. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:1497–1505`; pinned tests `AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt:1798–1818` | `browserSaveSearchPromptQuery()` in `lib/src/browser_save_search_prompt.dart`; cases in `test/browser_save_search_prompt_test.dart` | Mirrors the source `query.isNullOrEmpty()` guard: null and exactly empty queries return null; every other string, including whitespace-only input, passes through unchanged. Pinned tests assert that empty text produces no prompt and `AAA` reaches the name prompt unchanged; they do not cover null or whitespace-only input, so those Dart cases are source-derived. The host reads `tempSearchQuery`, emits the SharedFlow prompt, owns Android UI, and retains saved-search mutations and persistence. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragmentViewModel.kt` (`openDeckSelectionDialog`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `BrowserOpenDeckSelectionDialogRequest` in `lib/src/browser_open_deck_selection_dialog_request.dart` | Represents the source's `flowOfSearchForDecks.emit(Unit)` as an unambiguous no-payload host request to open the selector. The pinned method is annotated `@NeedsTest("default usage")`; no direct unit test for this request was found. The Dart value is source-derived. The host retains SharedFlow delivery, coroutine/Job scheduling, dialog construction, Fragment lifecycle, and UI; this is not an implementation of Android flow semantics. The source declares `GPL-3.0-or-later` and has no separate copyright holder in its header. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:551–565` (`init` option assignments), `:584` (initial deck selection), and `:1407–1409` (scroll target consumption); callers pass mapped options through `CardBrowserViewModel.factory()` at `:1558–1573` | `projectBrowserLaunchState()` and immutable `BrowserLaunchStatePatch` in `lib/src/browser_launch_state_patch.dart`; tests in `test/browser_launch_state_patch_test.dart` | SystemContextMenu and DeepLink assign exact search text; SearchQueryJs assigns search plus `allDecks`, including false; ScrollToCard assigns only the exact card ID; null leaves all fields unchanged. Pinned `CardBrowserViewModelTest.kt:382–404` directly covers default search, system text, and deep-link text. `CardBrowserLaunchOptionsTest.kt:33–47` directly tests SearchQueryJs/ScrollToCard option construction, and `CardBrowserViewModelTest.kt:889–926` tests later scroll behavior, but no pinned test asserts the SearchQueryJs/all-decks initial-state assignment or that scroll/null leave the other initial fields unchanged. Those patch cases are source-derived. Host applies the patch and retains SavedStateHandle/flow writes, initial deck lookup, collection reads, search execution, and later scroll validation/consumption. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/SortTypeTest.kt` plus `Config.kt` typed-decode fallback behavior | `test/browser_sort_type_test.dart` | Covers defaults including malformed typed config values, mode-specific sort resolution, global no-ordering behavior, corrupt keys, ordered config-write plans, and the source's shared Cards/Notes no-sorting quirk |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/SearchHistoryTest.kt`, `AnkiDroid/src/test/java/com/ichi2/anki/FlagSerializerTest.kt`, and `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/CardStateSerializerTest.kt` | `test/browser_search_history_test.dart` | Covers history ordering/removal, canonical v1/v2 JSON strings, typed round-trip and missing-array defaults, signed 64-bit IDs, malformed/incompatible whole-list fallback, and invalid flag/card-state codes; Android preferences and backend query generation are not included |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModelTest.kt` | `test/browser_search_history_display_test.dart` | Adapts initial collapsed state, expand/collapse transitions, the five-entry boundary, untruncated toggle threshold, order-preserving projection, and Loading/Loaded shapes with nullable pairs. A source-derived Dart case additionally verifies Loading's construction-time entry/null-pair snapshot; Android flows and widgets are excluded. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/SearchHistoryTest.kt` plus `CardBrowserSearchViewModel.kt` restoration implementation | `test/browser_search_restore_test.dart` | Source-derived cases cover structured filter restoration, unchanged stored queries, first-match host ID resolution, duplicate/order preservation, Kotlin query trimming on reverse conversion, and unresolved deck/note-type IDs. The pinned SearchHistoryTest exercises history search-string generation with invalid IDs, not direct restoration through host maps; collection lookup and backend query generation are excluded. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` implementation and adjacent `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchFiltersTest.kt` / `SearchRequestTest.kt` | `test/browser_filter_update_test.dart` | Derived cases cover initial/system suppression, open-screen suppression, closed-screen User projection, Kotlin trim and blank-query retention, all filters, and User/System equality/hash. AnkiDroid has no direct test for `FilterUpdate` or `updateSearchFlow`; flows and coroutine scheduling remain excluded. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt` setters and `SearchFilters.kt` | `test/browser_filter_setters_test.dart` | Source-derived cases cover all four category setters, User origin even for same-value lists, target-list alias retention, and preservation of every unrelated list reference. The pinned `SearchFiltersTest.kt` only tests `activeFilters`; no direct ViewModel setter tests exist. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModelTest.kt` | `test/browser_search_text_state_test.dart` | Covers initial mode/buffers, toggling with independent text, source Advanced append spacing (including Kotlin whitespace and exact ASCII-space boundary), LF replacement with CR preservation, typing replacement, and saved-query replacement/trailing space. SavedStateHandle, flows, and widgets remain excluded. |
+| `CardBrowserSearchViewModel.kt` implementation (`syncState` / `resetSearchState`, marked `@NeedsTest("reset")`, and `submitSavedSearch`) | `test/browser_search_state_effects_test.dart` | Source-derived cases cover full sync/reset effect order, exact request/filter/query identity and values, the three ordered SavedState key removals, omission of `historyExpanded`, and the internal saved-search filter/text/close order. No direct pinned test covers sync/reset; direct saved-search tests verify text, eventual history, close event, and submitted search but not that internal order. The Dart test does not apply Android StateFlow/SavedStateHandle effects or test coroutine scheduling. |
+| `CardBrowserSearchViewModel.kt` implementation (`selectSearchHistoryEntry` / `onSearchTextChanged`) | `test/browser_search_history_selection_test.dart` | Source-derived cases cover ordered effects, Basic/Advanced text selection, LF versus CR handling, resolved filter restoration, and empty-filter fallback for missing IDs. The upstream test named “selecting search history entry” calls `submitSearch`, not `selectSearchHistoryEntry`; no pinned test directly covers the selection sequence or host-map restoration. This projection does not apply Android flows or execute search. |
+| `CardBrowserSearchViewModel.kt` implementation (`submitCurrentSearch(SearchRequest)`), `SearchHistory.kt`, and adjacent history/request conversion tests | `test/browser_search_submit_effects_test.dart` | Source-derived cases cover trimmed ID-based history entries, Loading/close-view/submitted-request ordering, exact request identity, blank unfiltered history no-op with Loading, and blank filtered history inclusion. The pinned `submitSearch` test helper calls the no-argument overload, so the Request overload's ordered events have no direct upstream test. Preferences, event delivery, and search execution remain outside. |
+| `CardBrowserSearchViewModelTest.kt` direct text-edit cases plus `CardBrowserSearchViewModel.kt` implementation (`onSearchTextChanged` / `updateFilterState`) | `test/browser_search_text_effects_test.dart` | Source-derived cases verify Basic/Advanced branch selection, LF replacement with CR preservation, shallow filter-copy/list identity, User-update-before-text effect order, and absence of request/close effects. The pinned tests verify text changes but do not assert the combined effect sequence. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchRequestTest.kt`, `SearchStringTest.kt`, and `CardStateTest.kt` | `test/browser_search_node_plan_test.dart` | Covers default blank-query node, query trim/blank inclusion, ordered filters, OR/AND grouping and singleton collapse, explicit stored-code mappings, and unsupported-code failure. It does not test backend SearchNode conversion, parsing, validation, or serialized SearchString output. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SavedSearchesTest.kt` | `test/browser_saved_searches_test.dart` | Covers exact case-sensitive lookup/order, duplicate add without overwrite, Kotlin trim behavior, exact removal and missing-name no-op, clear, and list/map conversion including last duplicate wins; collection config IO and UI are excluded |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModelTest.kt` | `test/browser_saved_search_messages_test.dart` | Adapts the four direct source cases for successful/duplicate add and successful/missing delete to verify exact message identifiers; message localization, rendering, and flow delivery are excluded |
+| `AnkiDroid/src/test/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModelTest.kt` | `test/browser_availability_test.dart` | Adapts the initially empty history and saved-search false/true/false cases. Additional Loading/Loaded cases verify the `entryToSearchString` list semantics; Android StateFlow scheduling and UI are excluded. |
+| Navigation cases in `AnkiDroid/src/test/java/com/ichi2/anki/previewer/PreviewerViewModelTest.kt` | `test/previewer_navigation_test.dart` | Covers next/previous, answer and back-side-only transitions, one-based slider selection and bounds, button enabled formulas, and the source method's ungated next transition at the last answer |
+| `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/CardTemplateTest.kt` | `test/card_template_test.dart` | Adapts canonical one-per-marker composition and the 1,000-character no-throw replacement case using a compact host-supplied template. Source-derived cases verify first-marker-only segmentation and the missing-style versus later-boundary failure distinction; the pinned tests do not cover malformed templates. Asset loading, full card rendering/media expansion, and WebView remain outside; resolved media fragments are mapped separately. |
+| No direct test for `AndroidCardRenderContext.enrichWithQADiv`; source behavior at `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/AndroidCardRenderContext.kt` | `test/card_template_test.dart` | Source-derived exact-output cases cover empty, plain-text, and markup-looking content, confirming no escaping, normalization, whitespace, or newline insertion. The pinned `CardTemplateTest.kt` does not cover this private wrapper. Filtering, media-reference parsing/replacement, bold rewriting, rendering, and caller orchestration remain with the host; resolved-tag markup is mapped separately. |
+| No direct test for `SoundUtils.expandSounds` markup; adjacent `AnkiDroid/src/test/java/com/ichi2/anki/libanki/SoundOrVideoTagTest.kt` and `AnkiDroid/src/androidTest/java/com/ichi2/anki/libanki/SoundTest.kt` cover media-type classification only | `test/card_media_markup_test.dart` | Source-derived cases assert exact audio button markup and suppression, plus exact video markup with supplied URI and HTML-escaped filename. The host retains media-reference parsing/replacement, tag classification, path/URI resolution, HTML escaping, playback, and WebView integration. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/previewer/PreviewerViewModelTest.kt` (`toggle flag`) plus `PreviewerViewModel.kt` and `Flag.kt` implementation | `test/previewer_flag_effects_test.dart` | The pinned test covers setting/toggling RED and clearing the same flag. Source-derived Dart cases cover all eight flag codes, equal/different/NONE decisions, and ordered one-card write then publish-on-success effects. The pinned test does not cover every flag code or write failure; actual collection effects and StateFlow publication remain host-side. |
+| No direct pinned `ReviewerViewModel.toggleFlag()` test; source at `ReviewerViewModel.kt:256–263,744–748`; `AnkiDroid/src/test/java/com/ichi2/anki/previewer/PreviewerViewModelTest.kt` covers the same underlying flag set/toggle semantics for RED | `test/reviewer_flag_toggle_target_test.dart` | Source-derived cases cover an equal flag clearing to NONE, a different flag selecting the request, equal NONE values, and a requested NONE. The Reviewer helper returns only the target; flag-flow reads, collection mutation, StateFlow publication, and action dispatch remain host-side. The complete Reviewer operation is mapped separately to `planReviewerToggleFlag()`. |
+| No direct pinned Reviewer `toggleFlag()`/`setFlag()` test; source at `ReviewerViewModel.kt:247–263,742–748`; adjacent `PreviewerViewModelTest.kt` verifies RED flag setting/toggling | `test/reviewer_toggle_flag_plan_test.dart` | Source-derived cases cover equal-to-NONE and different-to-requested selection, exact singleton current-card write, successful write then publication of the same selected value, and failed-write publication suppression. Host action dispatch, `flagFlow.value`, card lookup, undoable operation, collection mutation, exceptions, StateFlow delivery and lifecycle remain host-side. |
+| No direct pinned `ReviewerViewModel.suspendCard()` test or feedback/reload order assertion; source at `ReviewerViewModel.kt:380–387`, dispatched by `SUSPEND_CARD` and `SUSPEND_MENU` | `test/reviewer_suspend_card_plan_test.dart` | Source-derived cases cover the supplied card ID, suspend-before-feedback-before-reload order, host-localized text passthrough, and omission of the discarded suspend count. The host must execute the plan sequentially and stop after a failed suspension; card lookup, scheduler/collection call, localization, Flow delivery, and reload remain host-side. Card Browser suspend tests cover a separate operation. |
+| No direct pinned `ReviewerViewModelTest` assertion for `buryCard()` or its feedback/reload order; source at `ReviewerViewModel.kt:360–368`, dispatched by `BURY_CARD` and `BURY_MENU` | `test/reviewer_bury_card_plan_test.dart` | Source-derived cases cover the singleton card target, scheduler-result-count-to-localization boundary, bury-before-feedback-before-reload order, and stopping before localization/feedback/reload on bury failure. The host retains card lookup, scheduler/collection mutation and result extraction, localization, Flow delivery, and reload. Pinned Card Browser bulk-bury tests cover a separate operation. |
+| No direct pinned `ReviewerViewModelTest.kt` assertion for `buryNote()` or its feedback/reload order; source at `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:370–378`, dispatched by `ViewerAction.BURY_NOTE` at `:730` | `test/reviewer_bury_note_plan_test.dart` | Source-derived cases cover the singleton current-note target, unchanged scheduler result count passed to host localization, unchanged localized feedback text, bury-before-feedback-before-reload order, and stopping before localization/feedback/reload on bury failure. Current-note lookup, undoable scheduler/collection operation and result extraction, string-resource localization, Flow delivery, and current-card reload remain host-side. Existing Card Browser bulk-bury tests cover a separate operation. |
+| No direct pinned `ReviewerViewModelTest.kt` assertion for `deleteNote()` or its feedback/reload order; source at `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:350–358`, dispatched by `ViewerAction.DELETE` at `:723` | `test/reviewer_delete_note_plan_test.dart` | Source-derived cases cover singleton card-ID forwarding, returned count and localized message pass-through, removal-before-feedback-before-reload order, and stopping before localization/feedback/reload on removal failure. Current-card lookup, undoable collection deletion and result extraction, resource localization, feedback Flow delivery, and current-card reload remain host-side. Card Browser bulk deletion covers a separate operation. |
+| No direct pinned `ReviewerViewModel.suspendNote()` test or feedback/reload order assertion; source at `ReviewerViewModel.kt:389–396`, dispatched by `ViewerAction.SUSPEND_NOTE` | `test/reviewer_suspend_note_plan_test.dart` | Source-derived cases cover the singleton supplied note ID, suspend-before-feedback-before-reload order, host-localized text passthrough, and omission of the discarded `suspendNotes()` count. The host executes these effects sequentially and must stop after a failed suspension; current note lookup, scheduler/collection operation, resource lookup, Flow delivery, and current-card reload remain host-side. Card Browser suspend tests cover a separate operation. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/TypeAnswerModifiersTest.kt` | `test/type_answer_modifiers_test.dart` | Adapts all nine direct cases for bare, single, chained and reordered prefixes; source-derived cases cover empty input, stopping at unknown text, verbatim remainder, case/whitespace behavior, and structural equality/hash. Card/note-dependent TypeAnswer behavior remains outside. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/previewer/TypeAnswerTest.kt` (related placeholder behavior only; no direct `removeTags` test) | `test/type_answer_tags_test.dart` | The Dart cases are source-derived from `TypeAnswer.removeTags` and its regex: single/multiple replacement, surrounding text, empty payload, case sensitivity, Java line terminators, and lazy first-close behavior. `TypeAnswerTest.kt` exercises answer-side placeholder replacement and is not claimed as direct coverage of `removeTags`. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/TypeAnswerTest.kt` (adjacent answer-side tests; no `filterQuestion` assertions) | `test/type_answer_question_test.dart` | Source-derived assertions cover the exact span/input prompt, optional style condition, first-only warning path, replacement-string edge cases, whitespace preservation, and empty/malformed/nonmatching markers. The pinned test file tests `filterAnswer` and `contentForCloze`, not `filterQuestion`. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/TypeAnswerTest.kt` (`testClozeWithRepeatedWords`; no direct `updateInfo`/cloze-index test), with `TypeAnswerModifiers.kt` as the adjacent parser source | `test/type_answer_cloze_test.dart` | Adapts the two direct assertions for `contentForCloze`: repeated identical answers collapse to one, while distinct answers produce the source-order comma list. Source-derived index cases cover first-marker selection, modifier parsing, absent/malformed/case-mismatched/line-terminated markers, signed-32-bit overflow, and the `ord == -1` zero edge; direct modifier-parser cases remain mapped separately to `test/type_answer_modifiers_test.dart`. Other source-derived extraction cases cover hint truncation, duplicates, index selection and malformed payloads. Card/template lookup, ordinal extraction and cloze-content invocation remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`updateInfo`, field/result decision; no direct test) | `test/type_answer_field_result_test.dart` | All field-result assertions are source-derived because the pinned test tree does not directly test `updateInfo`: first exact-name match and field order; missing field/warning choice; empty answer preserving a prior warning; cloze extraction and empty cloze result; metadata copy; and missing host note-value key failure. The host still performs card/note/field and localization lookup and applies the resulting state. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`updateInfo`, lines 84–127; no direct test) | `test/type_answer_info_update_test.dart` | Source-derived cases cover reset and no-marker early return, first-marker/modifier/field selection, exact ordered answer/cloze/metadata/warning assignments, empty-answer warning retention, unknown-field warning selection, and the missing-note-value failure boundary after preceding effects. The pinned test tree does not directly exercise `updateInfo`; Android state/resource/collection behavior remains host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswer.kt` (`validForEditText`, `autoFocusEditText`, lines 71–73; no direct test) | `test/type_answer_eligibility_test.dart` | Source-derived truth tables verify null/empty/nonempty answer behavior, the `useInputTag` gate, and the additional autofocus option. The pinned test tree has no direct assertions for either predicate; Android field visibility and focus remain host-side. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/TypeAnswerTest.kt` (`filterAnswer` integration cases) | `test/type_answer_answer_test.dart` | The pinned tests cover answer replacement through `CollectionManager.compareAnswer`, including empty and dollar-containing answers. Dart source-derived cases isolate the `Matcher.quoteReplacement` + `replaceAll` stage: multiple/lazy markers, literal `$` and backslashes, empty comparison, and malformed/nonmatching markers. Comparator behavior is not ported. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/CardTextScaleTest.kt`, plus source-only `ReviewerCustomFonts.updateCssStyle()` and `CardAppearance.fixBoldStyle()` behavior | `test/card_appearance_css_test.dart` | The upstream integration test covers rendered font scales 0.85/1.0/1.3 and card/image zoom 80/120. Dart tests are source-derived checks of the exact custom-font string and composition order, bold literal replacement, CSS rule text/order, default omission, independent rules, existing-prefix preservation, and numeric formatting. A bounded pinned-test search found no direct assertions for `updateCssStyle()` or `fixBoldStyle()`; Android render integration and WebView textZoom remain excluded. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/CardAppearance.kt` (`getCssClasses`, `getCardClass`), `AnkiDroid/src/main/java/com/ichi2/anki/settings/enums/DayTheme.kt`, `.../NightTheme.kt`, and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/AndroidCardRenderContext.kt` | `test/card_appearance_css_test.dart` | Source-derived cases cover each output-equivalent theme class projection with and without vertical centering, exact class spacing/order, direct ordinal interpolation, and the absence of MathJax state from these methods. A pinned search found no direct assertions for `getCssClasses()` or `getCardClass()`; MathJax is appended separately by the Android caller. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/StudyCountsViewTest.kt` and the direct four-label mapping in `AnswerButtonsNextTime.kt` | `test/review_presentation_test.dart` | Decimal count strings, active-queue selection, unchanged backend label order, and failure when a required positional label is absent |
+| `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/AnswerTimerTest.kt` | `test/answer_timer_test.dart` | Clock-controlled source cases for initial/configured state, elapsed values, pause/resume, clamping, hide/stop transitions, and the source's negative-delta and nonpositive-limit behavior |
+| `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvanceTest.kt` | `test/auto_advance_test.dart` | Deterministic cases for positive delays, typed action dispatch, disabled/nonpositive timers, cancellation on disable/side/card change, deck settings reload and wait-for-audio, action codes/fallbacks, and same-side job overwrite |
+| No direct `toggleAutoAdvance()` test in `ReviewerViewModelTest.kt`; source at `ReviewerViewModel.kt:419–438` and delegated scheduling at `AutoAdvance.kt:59–94` | `test/reviewer_auto_advance_toggle_test.dart` | Source-derived cases cover both state/message branches and ordering, wait+playing early return, wait without playback, and selected question/answer scheduling. Existing `AutoAdvanceTest.kt` directly covers delegated question/answer scheduling and disabled no-op, but not Reviewer toggle effects. |
+| No direct `onLeech()` or leech-resource test found in pinned Reviewer tests; source at `ReviewerViewModel.kt:539–561` | `test/reviewer_leech_feedback_test.dart` | Source-derived cases cover unchanged base text for non-suspended leeches, exact ASCII separator and preserved surrounding whitespace for suspended leeches, and empty localized strings. Card reload, queue inspection, resource lookup and action-feedback delivery remain excluded. |
+| No direct undo/redo result-message assertion found in pinned `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModelTest.kt`; source at `AnkiDroid/src/main/java/com/ichi2/anki/Undo.kt:29–58` and caller `ReviewerViewModel.kt:398–405` | `test/reviewer_undo_redo_feedback_test.dart` | Source-derived cases cover empty undo/redo operation messages, callback direction for nonempty operations, and unchanged whitespace-only passthrough. Availability, undoable collection operation, protobuf extraction, localized resource construction, action dispatch, and Flow delivery remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:695–698` (`replayMedia`), dispatched for `ViewerAction.PLAY_MEDIA` at `:775` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); no direct PLAY_MEDIA side assertion found in the pinned `ReviewerViewModelTest.kt` | `reviewerReplayMediaSide()` in `lib/src/reviewer_replay_media_side.dart`; cases in `test/reviewer_replay_media_side_test.dart` | Source-derived cases map `showingAnswer == true` to `SingleCardSide.BACK` and false to `SingleCardSide.FRONT`. Reviewer state access, action dispatch, `cardMediaPlayer.replayAll`, media loading/playback, and lifecycle remain host-side. |
+| No direct whiteboard toggle state/preference assertion in `ReviewerViewModelTest.kt`; source at `ReviewerViewModel.kt:700–704,756`; UI setup calls in `ReviewerNoParamTest.kt:336–359` and `ReviewerTest.kt:204–217,394–399` | `test/reviewer_whiteboard_toggle_test.dart` | Source-derived enabled and disabled cases assert the state publication precedes the repository-setting request and both carry the same inverted value. The UI tests only enable whiteboard for fragment behavior; Android StateFlow, repository and dispatch remain host-side. |
+| No direct `toggleRecordVoice()` assertion found in pinned Reviewer tests; source at `ReviewerViewModel.kt:706–710,757`; `AudioRecordViewTest.kt:31–34` only checks the record button content description | `test/reviewer_record_voice_toggle_test.dart` | Source-derived enabled and disabled cases assert the state publication precedes the repository-setting request and both carry the same inverted value. Recorder lifecycle, Android StateFlow, repository and dispatch remain host-side. |
+| No direct `userAction()` expression assertion in pinned Reviewer tests; source at `ReviewerViewModel.kt:408–412,762–770`, annotation at `Reviewer.kt:1827–1829` | `test/reviewer_user_action_script_test.dart` | Source-derived exact-string cases cover caller numbers 1 and 9 plus an out-of-range integer passthrough. Existing command/default tests cover identifiers/bindings but not generated script text; dispatch, annotation selection, and WebView evaluation remain host-side. |
+| No direct `SHOW_HINT`/`SHOW_ALL_HINTS` expression assertion in pinned Reviewer tests; source at `ReviewerViewModel.kt:754–755`; `ViewerCommandTest.kt:54–55` covers only names | `test/reviewer_hint_expression_test.dart` | Source-derived tests assert both exact expressions (including no semicolon) and null for an unrelated command. Action dispatch and evaluation remain host-side. |
+| No direct Reviewer replay-flow assertion in the pinned `ReviewerViewModelTest.kt`; `ReviewerViewModel.kt:108` declares `replayVoiceFlow`, `:758` emits `Unit` for `ViewerAction.REPLAY_VOICE`, and `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerCommand.kt:49` declares the command; `AnkiDroid/src/main/java/com/ichi2/anki/preferences/reviewer/ViewerAction.kt:105,133` declares and defaults the action. The pinned `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/ViewerCommandTest.kt:49` checks only the binding name. | `lib/src/reviewer_replay_voice_directive.dart`; `test/reviewer_replay_voice_directive_test.dart` | Source-derived tests map `REPLAY_VOICE` to the explicit `replayVoice` host directive and an unrelated command to null. This is a pure command projection: Dart does not emit a Flow or play audio. The pinned source has no ReviewerFragment collector for this ReviewerViewModel flow; `CheckPronunciationFragment.kt:140` consumes a separate `StudyScreenViewModel.replayVoiceFlow`. Flow emission, playback, lifecycle collection, and any consumer remain host-side. |
+| No direct page-flow assertion in pinned `ReviewerViewModelTest.kt`; `ReviewerViewModel.kt:108–111,759–760` emits to separate `pageUpFlow` and `pageDownFlow`; `ReviewerFragment.kt:634–642` collects them and calls `webViewLayout.pageUp()` / `pageDown()`; `ViewerCommandTest.kt:42–43` verifies names only | `test/reviewer_page_navigation_directive_test.dart` | Source-derived tests preserve distinct PAGE_UP/PAGE_DOWN directives and null for an unrelated command. Dart only projects the command; Flow emission, lifecycle collection, and WebView calls remain host-side. |
+| No direct `ViewerAction.EXIT` or `finishResultFlow` assertion in pinned `ReviewerViewModelTest.kt`; `ReviewerViewModel.kt:89,761` declares the `MutableSharedFlow<Int>` and emits `AbstractFlashcardViewer.RESULT_DEFAULT`; `AbstractFlashcardViewer.kt:2782` defines that value as 50; `ReviewerFragment.kt:180–184` collects it, calls `setResult(result)`, and finishes | `lib/src/reviewer_finish_result_directive.dart`; `test/reviewer_finish_result_directive_test.dart` | Source-derived tests map only EXIT to the host finish-result directive carrying 50 and unrelated commands to null. Dart only projects the command; Flow emission, Activity `setResult`, screen finishing, and lifecycle collection remain host-side. |
+| No direct `processAction()` guard test found in pinned `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModelTest.kt`; source at `ReviewerViewModel.kt:782–794`; adjacent `BindingTest.kt` / `BindingMapTest.kt` cover binding side and key metadata, not this gate | `test/reviewer_action_guard_test.dart` | Source-derived cases cover matching and mismatching question/answer sides, BOTH side independence, focused-key suppression, and gesture acceptance while focused. The helper returns only the acceptance decision; host action dispatch, focus lifecycle, and UI remain outside. |
+| No direct `showAnswerInternal()` effect-order assertion in pinned `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModelTest.kt`; source at `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:210–237` | `test/reviewer_show_answer_effects_test.dart` | Source-derived cases cover ordered result/display requests, the disabled-mode and null/timeout empty-string outcome, audio-gated Auto Advance, the 1,000 ms timeout constant, Hidden timer early return before deck/config reads, and visible timer configuration/stop decisions. Host concurrency and actual callbacks remain outside the pure plan. |
+| No direct `executeAction(SHOW_ANSWER)` assertion in pinned `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModelTest.kt`; `ReviewerViewModel.kt:749` requests `showAnswerInternal()` only when `showingAnswer.value` is false | `lib/src/reviewer_show_answer_guard.dart`; `test/reviewer_show_answer_guard_test.dart` | Source-derived tests cover both values of `showingAnswer`: false requests the host show-answer operation, while true returns no request. The Dart projection does not mutate state or render answer content; the host remains responsible for `showAnswerInternal()` and its effects. |
+| `ReviewerViewModel.kt:162–183` (`onPageFinished`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); pinned `ReviewerViewModelTest.kt:38–123` covers page refresh/restoration state but does not directly assert request ordering | `planReviewerPageFinishedEffects()` and sequential `executeReviewerPageFinishedEffects()` in `lib/src/reviewer_page_finished_effects.dart`; source-derived cases in `test/reviewer_page_finished_effects_test.dart` | Preserves refresh on non-recreation; on recreation requests answer display, then checks mutation-signal completion and requests the hook only if incomplete, or requests question display alone when not showing the answer. Sequential execution propagates a failed show-answer request before reading the signal or requesting the hook. The host retains callback/lifecycle, IO scheduling, actual refresh/rendering, mutation signal and JavaScript, coroutine cancellation/errors, Flow delivery, WebView, and Android UI. The TODO about “Don't keep activities” is not interpreted or extended. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:582–610` (`updateCurrentCard`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); no direct pinned test covers its complete request order | `executeReviewerCurrentCardUpdate()` and `reviewerNoMoreCardsResult` in `lib/src/reviewer_current_card_update_effects.dart`; source-derived cases in `test/reviewer_current_card_update_effects_test.dart` | Preserves null-state finish-result publication (`RESULT_NO_MORE_CARDS` = 52), timebox-event publication with the same event, and the normal order: set current card, setup answer timer, notify Auto Advance, emit card-updated, show question, load/play QUESTION media, publish bury and suspend availability, then publish counts. Every callback is awaited before the next; failures propagate and stop later effects. The host resolves scheduler state and supplies its original card, event, and counts source value; scheduler/collection access, deferred card state, timer, Auto Advance, Flows, rendering, AV tags/media/player, availability/count calculation, coroutine/lifecycle/UI remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/audiorecord/CheckPronunciationViewModel.kt` (`onPlayOrReplay`) and `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/audiorecord/CheckPronunciationViewModelTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`; both files declare `GPL-3.0-or-later` and name no separate copyright holder) | `planCheckPronunciationPlayback()` and ordered effects in `lib/src/check_pronunciation_playback_plan.dart`; focused cases in `test/check_pronunciation_playback_plan_test.dart` | Preserves the hidden-view no-op; playing-before-paused branch precedence; replay, progress-job request, and replay-event call order; paused-state publication, resume, and progress-job request order; and stopped-state publication before playback of the exact supplied absolute path. A null path still publishes playing state without requesting playback, matching the pinned source. The pinned tests directly assert playing, paused, and stopped behavior; hidden-view, null-path, and exact effect-order cases are source-derived. Flow delivery, coroutine scheduling and Job lifecycle, duration/prepared/completion callbacks, the progress loop, player/recorder implementation, file access, and UI remain host-side. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/autoadvance/AutoAdvanceTest.kt` verifies scheduled listener actions but not `ReviewerViewModel.onAutoAdvanceAction`; no direct mapping assertion found in `ReviewerViewModelTest.kt`; source at `ReviewerViewModel.kt:796–805` | `test/reviewer_auto_advance_action_test.dart` | Source-derived cases cover all seven callback variants, map each command action to its matching ViewerCommand, and pass both host-localized reminder strings through unchanged. The helper only projects an outcome; Flow emission, localization/resource lookup, command execution, feedback delivery, and lifecycle remain host-side. |
+| `AnkiDroid/src/test/java/com/ichi2/anki/ui/windows/reviewer/GestureParserTest.kt` | `test/gesture_parser_test.dart` | Source-derived cases for malformed input, multi-finger taps, grid/diagonal boundaries, viewport adjustment, strict scaled swipe thresholds, dominant-axis selection, scroll suppression, and asynchronous tap timing/cancellation |
+| `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/GestureProcessorTest.kt` | `test/gesture_command_router_test.dart` | The source center-tap integration behavior plus command-order overwrite, corner configuration, deliberately unmapped multitaps, enabled-state semantics, nullable execution results, and callback forwarding |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerCommand.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/MappableBindingTest.kt` | `test/reviewer_command_defaults_test.dart` | Confirms every command has a table entry and checks the exact empty-default set, answer rating order and side, representative Unicode/modifier defaults, duplicate resolved numeric codes, required host key-name mappings, and aggregate positive/negative membership cases |
+| `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/BindingTest.kt`, `MappableBindingTest.kt`, and applicable preference parsing cases from `BindingAndroidTest.kt` | `test/reviewer_binding_codec_test.dart`, `test/reviewer_binding_types_test.dart` | Source-derived preference framing, gesture/side behavior, typed key and Unicode parsing/serialization, modifier parsing, Int32 and UTF-16 boundaries, factory/deserialization distinction, source equality/hash quirks, malformed/unknown omission, Java float syntax and normalization, extra axis-token handling, and router filtering; Android KeyEvent behavior is excluded |
+| `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/BindingMapTest.kt` and map construction in `BindingMap.kt` | `test/reviewer_binding_map_test.dart` | Source-derived cases for duplicate registration order, side-independent key lookup with side retained in results, separate axis registrations, and skipping unknown bindings; Android event handling and processor execution are excluded |
+| `AnkiDroid/src/test/java/com/ichi2/anki/reviewer/BindingTest.kt` and `BindingMapTest.kt` | `test/reviewer_key_dispatch_test.dart` | Covers repeat suppression, zero/nonzero candidate handling, key-before-Unicode order, exact event modifier values and configured modifier matching, signed/overflow UTF-16 truncation including NUL, separator omission, registration order, false continuation, first-true short-circuit, and absent/all-false processors. Android KeyEvent access and keyboard-layout Unicode calculation are excluded. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewer/SingleAxisDetector.kt`, `BindingMap.kt`, and applicable axis parsing cases from `BindingAndroidTest.kt` | `test/reviewer_axis_dispatch_test.dart` | Source-derived checks for inclusive positive/negative thresholds, zero/NaN behavior, per-registration debounce and rearm, independent duplicate state, ordered multi-trigger dispatch, ignored processor results, null-event preservation, and empty maps. The pinned source has no direct `SingleAxisDetector` unit test; Android MotionEvent extraction is excluded. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsList.kt`, `AnkiDroid/src/main/java/com/ichi2/utils/TagsUtil.kt` (hierarchy helpers), and `UniqueArrayList.kt`; `TagsListTest.kt`, `TagsUtilTest.kt`, and `UniqueArrayListTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `TagsList` and tag hierarchy helpers in `lib/src/tags_list.dart`; focused cases in `test/tags_list_test.dart` | Preserves first-spelling unique insertion order, case-insensitive selection sets, blank hierarchy components, ancestor propagation, partial/indeterminate state, root-priority depth-first sorting, and the source state-transition quirks. Collection loading, dialog/adapter UI, localization, and saving remain unported. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsDialogViewModel.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/dialogs/tags/TagsDialogViewModelTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`; the test is Copyright © 2025 Divyansh Kushwaha) | `projectTagsDialogInitialization` in `lib/src/tags_dialog_initialization.dart`; source-derived cases in `test/tags_dialog_initialization_test.dart` | Composes host-ordered collection tags and host-fetched note tags into source-ordered checked/unchecked unions, absolute extra selections, custom-study unchecked union, and the Processing/FetchingNoteTags/Finished projection sequence. Exact-string source partitioning and case-insensitive `TagsList` selection behavior are preserved. Collection and note reads, async work, flow publication, lifecycle, UI, and saving remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/tags/TagName.kt` and `ManageTagsViewModel.kt` (`flattenTree`, `applyCollapsedVisibility`, `applySearchFilter`, `TagListItemState`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); `AnkiDroid/src/test/java/com/ichi2/anki/tags/FlattenTreeTest.kt` | `TagName`, `TagTreeNode`, `TagListItemState`, and tag-tree projections in `lib/src/tag_tree_projection.dart`; focused cases in `test/tag_tree_projection_test.dart` | Preserves Kotlin blank rejection, space-to-underscore conversion, literal `::` ancestors, preorder flattening, full paths and display leaves, source levels/flags, collapsed visibility, case-insensitive full-path matches and matching ancestors, selective parent expansion, and value/data-class equality. Blank invalid tags retain the source failure. The host supplies the recursive tree; collection loading/mutation, undo, StateFlow, Android RecyclerView/lifecycle, and other mutation events remain host-side. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/tags/ManageTagsViewModel.kt` (`removeTag`, `renameTag`, `clearUnusedTags`, and `launchTagOpAndRefresh`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`); direct operation/count cases in `AnkiDroid/src/test/java/com/ichi2/anki/tags/ManageTagsViewModelTest.kt` | `ManageTagsOperationAction`, count-bearing message values, `ManageTagsOperationCallbacks`, and `ManageTagsOperationPlan` in `lib/src/manage_tags_operation_plan.dart`; focused cases in `test/manage_tags_operation_plan_test.dart` | Captures the prior Content query (or empty fallback), sets Loading synchronously, runs the selected host operation, sends its matching count event, and reloads with the captured query only after event success. Cancellation is rethrown unchanged; other Exceptions are published unchanged and stop later steps. The host retains tag mutation, undo, query state retrieval, coroutine/job, collection/tree loading, StateFlow, event delivery, lifecycle, logging, and UI. Pinned tests cover mutation effects and event counts; order and failure cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/EmptyCardsViewModel.kt` (`searchForEmptyCards` and `EmptyCardsUiState`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `EmptyCardsUiState`, `SearchingForEmptyCards`, `EmptyCardsSearchResult<T>`, `EmptyCardsSearchFailure`, and `EmptyCardsSearchPlan<T>` in `lib/src/empty_cards_search_state.dart`; source-derived cases in `test/empty_cards_search_state_test.dart` | Preserves the singleton searching state, opaque report and failure payloads, and Kotlin `runCatching` behavior for any query-thrown object. Cancellation is recognized by a host-supplied predicate and rethrown unchanged; success/failure publication is outside the query catch, so publication errors propagate. Collection access, generated report type, query execution, coroutine/job, StateFlow, lifecycle, and UI remain host-side. No direct pinned test for this method was found. |
+
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/AddEditReminderDialogViewModel.kt`, `ReviewReminder.kt`, and dialog mode definitions in `AddEditReminderDialog.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ReviewReminderFormState`, form time/scope types, and `ReviewReminderProjection` in `lib/src/review_reminder_form_state.dart`; source-derived cases in `test/review_reminder_form_state_test.dart` | Preserves Add/Edit initial form values, source toggle behavior, nullable output fallbacks, exact all-decks sentinel matching, Add-enabled/Edit-preserved output, and threshold validation when projecting. The host supplies current-time values and deck constants and wraps the projection in its runtime reminder; IDs, timestamps, persistence, collection access, notifications, logging, lifecycle, and dialog UI remain host-side. No direct source tests for this ViewModel were found; Dart cases are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReviewReminder.kt` (`latestNotifDelivered`) and `AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewReminderTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `wasLatestReviewReminderNotificationDelivered()` in `lib/src/review_reminder_delivery.dart`; focused cases in `test/review_reminder_latest_notification_test.dart` | Clones the supplied local time, sets the reminder hour/minute and clears seconds while retaining milliseconds, chooses the previous calendar day only when today’s scheduled time is after now, and returns the inclusive latest-notification comparison. The host supplies the clock and timezone and retains alarm/notification scheduling, reminder persistence, TimeManager, profiles, and collection behavior. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReviewReminder.kt` (`ReviewReminderId`, `ReviewReminderCardTriggerThreshold`) and `AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewReminderTest.kt` (`getAndIncrementNextFreeReminderId should increment IDs correctly`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ReviewReminderId`, `ReviewReminderIdAllocation`, and `ReviewReminderCardTriggerThreshold` in `lib/src/review_reminder_id.dart`; focused cases in `test/review_reminder_id_threshold_test.dart` | Preserves signed 32-bit ID value semantics and source-compatible string form, permits directly constructed negative IDs, wraps allocation increment at the signed 32-bit maximum, plans allocation by returning the supplied preference value as the ID followed by its increment for the host to apply, and restricts thresholds to the nonnegative signed 32-bit range. The host retains preference access and persistence; focused Dart tests are behavior tests, not a port of the Android test harness. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReviewReminderSchema.kt`, `ReviewReminder.kt` (`createReviewReminder`, `migrate`), and `ReviewRemindersDatabase.kt` (`performSchemaMigration`), with migration cases in `AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewRemindersDatabaseTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ReviewReminderSchemaVersion`, `ReviewReminderSchemaV1`, `ReviewReminderSchemaV2`, `ReviewReminderCurrentProjection`, and `migrateReviewReminderSchemas` in `lib/src/review_reminder_schema_migration.dart`; `ReviewReminderSchemaV1MapCodec` and `ReviewReminderSchemaV2MapCodec` in `lib/src/review_reminder_group.dart`; focused cases in `test/review_reminder_schema_migration_test.dart` and `test/review_reminder_schema_codec_test.dart` | Preserves positive signed 32-bit schema version validation/value equality, V1-to-V2 field copying, the V2-to-current projection, and the in-memory step-by-step map migration through versions 1→2→3. Each step keys values by their migrated ID; V2-to-current receives host-supplied IDs and epoch-millisecond timestamps. Typed V1/V2 map codecs use decimal string keys and preserve each value's own ID, exact field/value types, scope discriminator and `did` payload. V1 accepts an absent `onlyNotifyIfNoReviews` as false and omits false on encoding; V2 requires and encodes it. Unknown fields and wrong types fail at the codec layer. The source final current-model type check is retained; schema registry/database migration, preference access, persistence, clock access, and other runtime integration remain host-side. The focused Dart cases are source-derived behavior tests, not a port of the Android test harness. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReviewReminder.kt` (`ReviewReminder`, `createReviewReminder`, `updateLatestNotifTime`, `migrate`) and `AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewReminderTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ReviewReminder` in `lib/src/review_reminder.dart`; focused cases in `test/review_reminder_model_test.dart` | Preserves the current model's immutable and mutable fields, source factory defaults, host-supplied ID and epoch-millisecond timestamp, eight-field structural value behavior and data-class string output, host-supplied latest-time update, and identity current-schema migration. The host retains ID allocation, clock, Parcelable, persistence, collection access, and notification scheduling; current-schema JSON serialization is represented by the `ReviewReminderGroup` codec above. Tests are source-derived behavior cases, not a port of the Android test harness. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReviewRemindersDatabase.kt` (`retrieveRefreshedReminder`) and `ReviewReminder.kt` (`latestNotifDelivered`, `updateLatestNotifTime`), with direct cases in `AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewRemindersDatabaseTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `refreshReviewReminderNotification()` in `lib/src/review_reminder_refresh_decision.dart`; focused cases in `test/review_reminder_refresh_decision_test.dart` | Preserves missing/delivered no-op decisions and successful in-place update/return of the same reminder. The host supplies local check time and a separately sampled epoch-millisecond update time, and still runs its group editor/persistence path for every result. Database lookup/scope, locking, serialization, logging, coroutine/scheduler, alarm and UI behavior remain host-side. The direct Dart cases are source-derived behavior tests. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReviewReminderGroup.kt`, `ReviewReminder.kt`, and `AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewRemindersDatabaseTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ReviewReminderGroup` and `List<ReviewReminderGroup>.mergeAll()` in `lib/src/review_reminder_group.dart`; focused cases in `test/review_reminder_group_test.dart` | Preserves empty/map/pair/group construction, map-copy and reminder-value identity, right-hand collision replacement, map operations, entry iteration, list projection, enabled toggling with missing-ID no-op, structural map equality/hash, and list merging. The current-schema JSON codec uses the reminder-ID string map keys, source field order/names and values, and Kotlin polymorphic `ReviewReminderScope` type tags and `did` payload; its golden JSON matches the database test fixture. Malformed/wrongly typed JSON throws at this codec layer. Value iteration order is incidental; SharedPreferences, schema/database orchestration, logging, mutexes/coroutines, scheduling, and Android UI remain host-side. The pinned source has no direct group codec test; the Dart codec cases are source-derived behavior tests. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReviewRemindersDatabase.kt` (`getRemindersForScope`, `editRemindersForScope`) and `AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewRemindersDatabaseTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `reviewReminderScopeStorageKey()` in `lib/src/review_reminder_scope_storage_key.dart`; focused cases in `test/review_reminder_scope_storage_key_test.dart` | Maps `Global` to `app_wide` and `DeckSpecific(did)` to `deck_` plus the unchanged decimal deck ID. SharedPreferences access and reminder persistence remain host-side. The pinned database tests exercise storage with these keys; the Dart cases directly verify the pure projection, including signed-Long decimal boundaries. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReviewRemindersDatabase.kt` (`StoredReviewReminderGroup`) and `AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewRemindersDatabaseTest.kt` (`raw ReviewReminder string can be deserialized without throwing`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `StoredReviewReminderGroup` in `lib/src/review_reminder_stored_group.dart`; focused cases in `test/stored_review_reminder_group_test.dart` | Preserves the source-ordered `version` integer and `remindersMapJson` string envelope, structural value behavior, and the pinned escaped current-schema fixture. Malformed or wrongly typed required fields fail at the pure codec layer; storage recovery and schema migration remain host-side. |
+
+| `AnkiDroid/src/main/java/com/ichi2/anki/reviewreminders/ReminderTroubleshootingViewModel.kt` (`refreshChecks()` / `refreshBatteryOptimization()`) and `AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReminderTroubleshootingViewModelTest.kt` (pinned source commit `d9bf072f814a0c37d30a694192593b31ff2df875`, AnkiDroid 2.25.3) | `CheckResult`, the six `TroubleshootingCheck` variants, `SummaryStatus`, `ReminderTroubleshootingState`, `mapBatteryOptimizationState()`, and `refreshReminderTroubleshootingChecks()` in `lib/src/reminder_troubleshooting_state.dart`; focused cases in `test/reminder_troubleshooting_state_test.dart` | Preserves result variants and Exception-only mapping, plus refresh callback order: notification permission, notification channel, DND-off, battery optimization, power-saving-off, exact-alarm permission. Each false value uses the source's Failed or Warning fallback; null is Unavailable; battery values map Unrestricted/Optimized/Restricted to Passed/Warning/Failed. The projection uses the caller's state snapshot, returns one complete value, and does not publish it; non-Exception errors escape and stop later reads. The host retains Android permission/channel APIs, repository checks and reads, ViewModel lifecycle/StateFlow/coroutines and publication, localization, and UI. Both pinned files declare `GPL-3.0-or-later`; the ViewModel has no separate copyright line or method-level authorship. The pinned test covers individual results and a notification-permission refresh update, but does not directly assert full callback order, all-or-nothing publication on an Error, or identity of a propagated non-Exception Error; these Dart cases are source-derived. |
+
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:481–495` (`runStateMutationHook`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ReviewerStateMutationHookDecision` and `reviewerStateMutationHookDecision()` in `lib/src/reviewer_state_mutation_hook.dart`; source-derived cases in `test/reviewer_state_mutation_hook_test.dart` | Empty JavaScript returns a host signal-completion request only when the supplied mutation signal is incomplete; otherwise it returns no action. Nonempty JavaScript returns the exact raw triple-quoted source script string, including leading/trailing whitespace with raw state-key and JavaScript interpolation, without local signal completion. The pinned `ReviewerViewModelTest.kt:81–112` covers restoration waiting for custom-scheduler completion and avoiding a rerun with the retained ViewModel; it does not directly assert the empty-JavaScript branch or exact script string, so those focused Dart cases are source-derived. The host retains awaiting `stateMutationJs`, generated key creation, `CompletableDeferred`, SharedFlow emission/delivery, `statesMutated` callback completion, scheduler execution, callback failure propagation, logging, WebView, and lifecycle. |
+
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/CardViewerViewModel.kt` (`showAnswer`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `runCardViewerShowAnswer()` in `lib/src/card_viewer_show_answer_effects.dart`; source-derived cases in `test/card_viewer_show_answer_effects_test.dart` | Preserves publication of `showingAnswer = true`, media-side-change notification, current-card await and answer rendering, then the `mungeQA` order of media escaping, a second current-card await, render output, AV play-button replacement, and type-answer filtering. The filtered answer is JSON-encoded before the source's third current-card await and body-class lookup, then emitted as `_showAnswer(<encoded>, '<bodyClass>');`. The host supplies card/collection access, media operations, concrete type-answer filtering, body-class lookup, JSON encoding, and eval delivery. Exceptions propagate without cleanup or later effects. No pinned test directly covers this method; Dart tests are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/CardViewerViewModel.kt` (`showQuestion`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `runCardViewerShowQuestion()` in `lib/src/card_viewer_show_question_effects.dart`; source-derived cases in `test/card_viewer_show_question_effects_test.dart` | Preserves `showingAnswer = false`, the first current-card read for question and answer, question `mungeQA` order (media filename escaping, second current-card render output, AV play-button replacement, and type-answer filtering), answer media escaping only, question then answer JSON encoding, the third current-card body-class lookup, and `_showQuestion(<question JSON>, <answer JSON>, '<bodyClass>');`. Host callbacks retain collection/card reads, media operations, concrete type-answer filtering, body-class lookup, JSON encoding, SharedFlow/eval delivery, coroutines, media/lifecycle, and Android UI. Exceptions propagate without cleanup or later effects. No pinned test directly covers this method; Dart tests are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/CardViewerViewModel.kt` (`handlePostRequest`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `routeCardViewerPostRequest()` in `lib/src/card_viewer_post_routing.dart`; source-derived cases in `test/card_viewer_post_routing_test.dart` | Routes null backend method names to the source's `Unhandled POST request` error, the exact `i18nResources` name to the host resource callback with the original bytes object and returns its response unchanged, and all other names to `Unhandled Anki request`. URI rendering, parsing, byte transport, resource lookup, Android/coroutine/API exceptions, and HTTP handling remain with the host. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt` (`handlePostRequest`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `routeReviewerPostRequest()` in `lib/src/reviewer_post_routing.dart`; source-derived cases in `test/reviewer_post_routing_test.dart` | Preserves the source order of exact AnkiDroid `focusin`, `focusout`, and `statesMutated` routes before exact backend `getSchedulingStatesWithContext` and `setSchedulingStates` routes, then delegates other requests to the host base/CardViewer handler. Host callbacks receive the input-focus value, original scheduling-state bytes object, or exact request/bytes as applicable; returned host bytes are unchanged, each effect callback is awaited before returning an empty response, and callback failures stop routing. The host retains URI parsing, byte transport, input-focus state, mutation signal, scheduling-state protobuf parsing/serialization/validation/persistence, coroutine execution/errors, CardViewer/base-handler logic, server/HTTP/WebView/lifecycle behavior. The pinned source declares `GPL-3.0-or-later`; this Dart port does too. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerRefresh.kt:1–27` (`ViewerRefresh.updateState`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `ViewerRefresh` and `ViewerRefresh.updateState()` in `lib/src/viewer_refresh.dart`; focused cases in `test/viewer_refresh_test.dart` | Preserves the three Boolean flags, exact same nullable object on no-change input, and OR accumulation of queue, note-text, and card changes; changed input creates a fresh value. Structural equality/hash and Kotlin data-class string form are retained. The host extracts generated `OpChanges` fields and keeps Activity/View lifecycle, deferred refresh storage/consumption, and collection-backed rendering. `ViewerRefresh.kt` declares `GPL-3.0-or-later` with no separate copyright line or method-specific authorship. `AbstractFlashcardViewerCommandTest.kt` constructs a full refresh value and checks lifecycle consumption, but does not directly assert `updateState`; the Dart cases are source-derived. Root `COPYING` remains byte-identical. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/previewer/CardViewerViewModel.kt` (`setSoundPlayerEnabled`, `playSoundFromUrl`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `setCardViewerSoundPlayerEnabled()` and `playCardViewerSoundFromUrl()` in `lib/src/card_viewer_sound_actions.dart`; source-derived cases in `test/card_viewer_sound_actions_test.dart` | Forwards the exact enabled Boolean to the host player callback. Sound-link handling awaits the host current card, passes that card and the unchanged URL to the host AV-tag resolver, and calls the host player with the same tag only when non-null. The host retains `viewModelScope`/IO scheduling, AV parsing and collection callbacks, player implementation, and asynchronous error handling. The pinned ViewModel tests do not directly cover these methods; Dart tests are source-derived. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/TtsParser.kt` and `AnkiDroid/src/test/java/com/ichi2/anki/libanki/TtsParserTest.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `TtsDomNode`, `TtsTextLocale`, and `selectTtsText()` in `lib/src/tts_text_selection.dart`; focused cases in `test/tts_text_selection_test.dart` | Selects case-insensitive `tts` / `android` nodes in child order, replaces every exact `[...]` marker, passes through voice, and skips children of a qualifying node; when none match it returns one body-text item with empty locale, while an explicit empty item suppresses fallback. The host supplies tag/attribute/text/child/body facts and constructs TTSTag; Jsoup parsing and text semantics, protobuf fields, and playback remain host-side. Pinned `TtsParserTest.kt` directly covers fallback and marker replacement; the remaining cases are source-derived. The source has a MissingCopyrightHeader suppression and no separate copyright holder; the root `COPYING` supplies the GPLv3 project license. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardUtils.kt` (`getDeckIdForCard`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) and `AnkiDroid/src/test/java/com/ichi2/anki/CardUtilsTest.kt` | `getDeckIdForCard()` in `lib/src/card_utils.dart`; focused cases in `test/card_utils_test.dart` | Returns the supplied original deck ID (`oDid`) when it is nonzero, otherwise the direct deck ID (`did`), preserving the source's exact zero comparison. The host retains Card and collection access. The pinned tests directly cover nonzero `oDid` and zero `oDid`; `CardUtils.kt` has no copyright or SPDX header and contains a missing-header inspection suppression, while `CardUtilsTest.kt` is Copyright (c) 2026 Ayush and GPL-3.0-or-later. The AnkiDroid root `COPYING` is GNU GPL version 3. |
+
+| `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1162–1172` (`CardTemplateFragment.restoreNotetypeToStock`; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `CardTemplateFragmentRestoreNotetypeToStockCallbacks` and `cardTemplateFragmentRestoreNotetypeToStock()` in `lib/src/card_template_fragment_restore_notetype_to_stock.dart`; focused cases in `test/card_template_fragment_restore_notetype_to_stock_test.dart` | Reads the temporary model ID, passes it through the host `notetypeId` builder, and awaits the host undoable operation calling `notetypes.restoreNotetypeToStock(nid, kind)` with the same nullable kind. Only on success calls `onModelSaved()`, resolves `requireContext()` and `TR.cardTemplatesRestoredToDefault()`, then shows the themed toast with `shortLength = false`. Callback failures propagate and stop later work. Models, generated IDs, collection access, undoable operation, Android context/resources/toast remain host-side. Source annotation: `@NeedsTest("Notetype is restored to stock kind")`. The pinned `CardTemplateEditorTest.kt` was checked and has no direct test for this method; focused Dart cases are source-derived. |
+
+## Review backend boundary
+
+AnkiDroid 2.25.3 pins
+`io.github.david-allison:anki-android-backend:0.1.68-anki26.05` in
+`gradle/libs.versions.toml`. `libanki` delegates queue selection and answering
+to that separate Rust backend (`rslib`). The Dart review session therefore
+requires an adapter for the pinned backend contract. The queue-state adapter
+supplies counts, active queue, scheduling snapshot, and optional timebox event;
+`ReviewNextStateDescriber` forwards that snapshot to the backend's
+`describeNextStates()` operation and returns its four ordered strings. The
+collection database, scheduler config/count adapters, generated backend API,
+and scheduling algorithm are not included or reimplemented. The
+`ReviewTimeboxTracker` models only the counter behavior that consumes the clock,
+configured time limit, and answer count from those adapters.
+
+`AutoAdvanceSettingsAdapter` loads the five resolved settings for the current
+card's deck. This boundary keeps `Card.currentDeckId()` and `DeckConfig` access
+outside the headless timer model and leaves the source's deck-option defaults to
+the adapter. `AutoAdvanceScheduler` supplies cancellable delays and can be
+replaced with a deterministic scheduler in tests. The listener receives an
+explicit `AutoAdvanceCancellation` signal; adapters must observe it while
+awaiting cancellation-sensitive work, matching the source coroutine's
+cooperative cancellation. Synchronous side effects already performed are not
+rolled back.
+
+| `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/viewmodel/TtsVoicesViewModel.kt`, `AnkiDroid/src/main/java/com/ichi2/anki/TtsVoices.kt`, and `libanki/src/main/java/com/ichi2/anki/libanki/Tts.kt` (pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`) | `TtsEngineStatus`, `LoadVoiceStatus<T>`, `VoiceLoadingState<T>`, `TtsVoiceFilters`, and `projectAvailableVoices<T>()` in `lib/src/tts_voice_filter_projection.dart`; `planTtsVoicePlayback<T>()` and `projectTtsPlaybackError<E>()` in `lib/src/tts_voice_playback_effects.dart`; focused cases in `test/tts_voice_filter_projection_test.dart` and `test/tts_voice_playback_effects_test.dart` | Preserves engine-error precedence and exact exception identity, then voice-list failure, and emits Success only when both statuses succeed. Successful voices retain host order and object identity; filtering first matches `showNotInstalled` to the source `unavailable()` fact, then immediately returns unavailable voices regardless of the internet setting, or filters installed network voices by that setting. Empty lists remain successful. Playback effects preserve the unavailable-voice notification before the engine-ready check, including when the engine is not ready; ready playback carries exact text and voice, while non-ready playback is a no-op. Non-null player errors retain identity for host main-thread delivery. The host retains Android voice enumeration and locale/name sorting, TTS engine/player, player execution and error delivery, refresh/cancellation, flows/coroutines, lifecycle, clipboard, and UI. No direct `TtsVoicesViewModel` tests were found; focused Dart cases are source-derived. `AndroidTtsVoice` and `TtsVoice` property facts are host inputs; those platform classes are not copied. |
+| `AnkiDroid/src/main/java/com/ichi2/anki/instantnoteeditor/InstantEditorViewModel.kt` (`setClozeFieldText`, `getClozeOrdinals`, `toggleClozeMode`, `buildClozeText`, `getCleanClozeWords`, `getWordClozeNumber`, `getWordsFromFieldText`, `combineWordsWithPunctuation`, `processClozeUndo`, `shouldResetClozeNumber`, increment/decrement; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`), plus `InstantEditorViewModelTest.kt` and `InstantEditorViewModelParameterizedTest.kt` | `InstantEditorClozeState` and `ClozeNumberMode` in `lib/src/instant_editor_cloze_state.dart`; focused cases in `test/instant_editor_cloze_state_test.dart` | Preserves nullable field text, source-order duplicate ordinals, first cloze-number match anywhere in a word with Kotlin `toIntOrNull` limits, mode-dependent counters, toggle adjustments, source-order full cloze matches, JVM ASCII `\\s` splitting and `trim()` whitespace, `clozeEncountered` punctuation merging, source regex group-boundary quirks, string interpolation behavior, clean-cloze replacement over all matches, undo/removal list updates, and Kotlin Int overflow/`toInt()` failures. Note/collection changes, undoable save, UI/selection, Android StateFlow/lifecycle, fields and localization remain host-side. |
+
+## Remaining coverage gaps
+
+Not yet ported: the Android app and platform lifecycle integration, Card Browser
+Intent/URI parsing and navigation for the mapped launch-option values,
+SharedPreferences IO and current-version persistence (the previous-version
+fallback projection is modeled), search-history SharedPreferences,
+saved-search config IO and UI, and host deck/note-type lookup. The
+`SearchString` value wrapper is modeled; backend construction/conversion from
+queries or `SearchNode`s via `Collection.buildSearchString`, query
+parsing/validation, and search execution remain host-side. Android execution of
+sync/reset effect plans, StateFlow/coroutine integration for filter/search-text
+and history/saved-search availability,
+SavedStateHandle persistence and removal, Basic/Advanced text widgets, and
+history-list/toggle widgets, persistent mode/config lookup and the source's
+AGPL-incorporated default-column constants, backend column registry/labels/tooltips/
+samples/rows, BrowserColumnSelection dialog and RecyclerView click/drag lifecycle and
+notifications (row movement capability, adjacent-swap plans and click-toggle
+planning are modeled), active
+backend column updates, sort UI, Card Browser row-selection widgets and
+StateFlow toggle-state/async refresh delivery, Android preference/config IO,
+and actual backend row sorting, previewer
+SavedStateHandle/card-ID plumbing and collection-backed card loading, WebView
+rendering and media, CardAppearance font resource installation and
+font-selection preference integration, theme selection/actual theme CSS and
+vertical-centering preference/style integration
+(the class-name projections are modeled), and WebView textZoom/lifecycle, previewer
+collection flag mutation and StateFlow
+publication (flag codes and ordered effects are modeled), Reviewer flag-flow reads,
+current-card lookup and undoable collection execution, StateFlow publication, and
+action dispatch (the Reviewer set-flag effect plan and separate toggle target
+decision are modeled), mark-state lookup,
+bulk tag and suspend writes/undo (bulk-mark and bulk-suspend target decisions are
+modeled), and note
+editing, Android card-template asset loading, full card content rendering,
+media-reference parsing/resolution and playback (resolved audio/video markup
+fragments are modeled),
+card/note-dependent TypeAnswer field lookup, rendered-question/Card.ord
+extraction and cloze-content invocation, answer comparison, Android type-answer input events and the
+JavaScript input bridge, collection storage, the Rust backend and
+scheduling algorithm, synchronization, answer-timer widget/tick rendering,
+localized timebox text, dialog and lifecycle presentation, Android study-count
+and answer-button widgets and layout, next-time visibility preference wiring, Auto Advance deck
+settings UI and actual collection-backed settings loader, reviewer action
+routing and audio lifecycle integration, leech handling, reviewer undo/redo,
+JavaScript card-state mutation and gesture bridges, WebView state collection,
+Android preference and timeout lookup, imports/exports, notifications,
+preferences, and the remaining AnkiDroid modules. Gesture parsing, serialized
+reviewer binding codec, parsed-gesture command routing, source command defaults,
+and the null-versus-configured preference choice are platform-independent
+models. The host still reads SharedPreferences and supplies key-code names when
+defaults need resolution. Android `KeyEvent` extraction
+and hardware/layout `getUnicodeChar()` calculation, display strings, Android
+MotionEvent extraction and device handling, Android `BindingProcessor` wiring,
+touch input, and reviewer command execution are not ported. Candidate
+construction and sequential dispatch for a host-supplied key event projection
+are modeled separately. The source key-code names in command defaults require a
+host-supplied numeric mapping. The resolver models using defaults only when no
+preference value is supplied; the host still reads preferences and passes the
+null or stored value to that resolver. Axis-button threshold, debounce and ordered
+dispatch behavior consume host-provided Float32 values. `ReviewerBindingMap`
+models only explicit key/gesture registration and lookup plus ordered axis
+registration.
+The Android WebView integration is not ported.
+The Dart answer-timer model exposes pause/resume calls and an observable state
+stream but does not register a platform lifecycle observer or render timer ticks.
+
+## Card template change tracking
+
+The pending card-template change history in `lib/src/card_template_change_tracking.dart`
+is adapted from `AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateNotetype.kt`
+at pinned AnkiDroid v2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+It preserves add/delete routing, cancellation and ordinal shifts for unsaved adds,
+database-relative delete ordinals, adjusted add ordinals, and the source helper
+return values. `TemplateChange.ordinal` remains mutable; `type` is immutable as in
+the Kotlin `val`. The adjusted projection clones add entries but aliases delete
+entries, and the pending-add predicate retains the source's `-1` comparison quirk.
+`test/card_template_change_tracking_test.dart` covers the pinned
+`CardTemplateNotetypeTest.kt` add/delete sequence plus source-derived projection,
+aliasing, and helper cases. Android Bundle/Parcelable serialization and restore,
+NotetypeJson mutation, temporary files, logging, CollectionManager and Rust backend
+operations, undoable database writes, and edit UI remain host-side.
+
+## Card Template Editor pager stable IDs
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt` at pinned
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`, methods
+`TemplatePagerAdapter.getItemCount`, `getItemId`, `containsItem`, and
+`ordinalShift` (around lines 569–585), maps to
+`templatePagerGetItemId()`, `templatePagerContainsItem()`, and
+`templatePagerOrdinalShift()` in `lib/src/card_template_pager_stable_ids.dart`.
+The Dart projection preserves signed JVM Int32/Int64 overflow, validity
+comparisons, callback reads/writes, and failure order. The host retains
+`FragmentStateAdapter`, template count/model access, adapter state, and
+`baseId` storage. No pinned AnkiDroid test directly covers these adapter
+methods; Dart host storage starts from `initialTemplatePagerBaseId`
+(`BigInt.zero`) and focused Dart coverage is source-derived.
+
+## CardTemplateFragment.ActionModeCallback
+
+`CardTemplateFragment.ActionModeCallback` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:831–869` (pinned
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is projected
+by `cardTemplateFragmentActionModeOnCreate()`,
+`cardTemplateFragmentActionModeOnPrepare()`,
+`cardTemplateFragmentActionModeOnActionItemClicked()`, and
+`cardTemplateFragmentActionModeOnDestroy()` in
+`lib/src/card_template_fragment_action_mode_callback.dart`. It preserves the
+existing-item early return, source-ordered menu-size/editor/title reads and
+insertion, size-based return value, one item-ID read, dialog-before-finish
+order, and empty destroy callback. Android action mode/menu objects, resources,
+and dialog behavior remain host-side. Focused source-derived tests are in
+`test/card_template_fragment_action_mode_callback_test.dart`. The pinned
+`CardTemplateEditorTest.kt` was searched for ActionMode callback and insert-field
+references: it tests dialog integration but has no direct callback test. The
+source file is marked `GPL-3.0-or-later` and its file-level SPDX header credits
+Timothy Rae (2014) and Mike Hardy (2018); no method-specific authorship is
+asserted. Root `COPYING` remains byte-identical.
+
+## CardTemplateFragment.showInsertFieldDialog
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:875–916`
+(`CardTemplateFragment.showInsertFieldDialog`; pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted by
+`cardTemplateFragmentShowInsertFieldDialog()` and its callback type in
+`lib/src/card_template_fragment_show_insert_field_dialog.dart`. The projection
+retains the outer host launch callback, returns before later reads when field
+names are null, maps FRONT/BACK/other tabs to FRONT/BACK/FRONT, preserves only
+positive note IDs, scans for pending template deletions before lazily reading
+the selected template ordinal, then queries metadata, constructs the dialog with
+the original field-name list and request key, and shows it. The host launch
+callback receives an asynchronous task; the metadata query is awaited before
+dialog construction. Callback failures propagate to the same host
+launch boundary and stop subsequent work. Android
+Fragment/dialog/models, template-change scan, metadata/backend query, coroutine
+execution, and UI remain host-side. Focused source-derived cases are in
+`test/card_template_fragment_show_insert_field_dialog_test.dart`. The pinned
+`CardTemplateEditorTest.testInsertFieldInCorrectFragmentAfterNavigation` directly
+covers successful field insertion into the intended fragment after pager
+navigation; it does not isolate this callback's metadata and early-return
+branches. The Dart callback-decision cases are source-derived. The source file's
+SPDX header credits © 2014 Timothy Rae and © 2018 Mike Hardy; no
+method-specific authorship is asserted. Root `COPYING` remains unchanged.
+
+## CardTemplateFragment.showRenameDialog
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:922–953`
+(`CardTemplateFragment.showRenameDialog`; pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted by
+`cardTemplateFragmentShowRenameDialog()` and its callback type in
+`lib/src/card_template_fragment_show_rename_dialog.dart`. It reuses the mapped
+dynamic-note predicate and returns after the exact warning for dynamic note
+types. Otherwise it reads the ordinal, selects the template from the asserted
+temporary model, re-reads that model for its templates, and eagerly converts
+their names in order while preserving duplicates. After requiring Context, it
+reads the selected template name separately for prefill and current-name
+conversion, then registers the dialog with the unchanged existing-name list.
+The confirmation callback is lazy and preserves name assignment, discard-state
+update, exact info/debug log calls, asserted pager-adapter notification, and
+fragmented preview reload order. Callback failures propagate and stop later
+work. The host retains temporary models/templates/JSON, `CardTypeName`, Context,
+dialog/UI, Timber, adapter/pager, previewer, and Activity behavior. Focused
+source-derived cases are in
+`test/card_template_fragment_show_rename_dialog_test.dart`. The source marks
+the method `@NeedsTest`; no direct pinned rename-dialog test was found. The
+source file SPDX-notices Copyright © 2014 Timothy Rae and © 2018 Mike Hardy;
+no method-specific authorship is asserted. Root `COPYING` remains unchanged.
+
+## CardTemplateFragment.showRepositionDialog
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:955–965`
+(`CardTemplateFragment.showRepositionDialog`; pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) is adapted by
+`cardTemplateFragmentShowRepositionDialog()` and its callback type in
+`lib/src/card_template_fragment_show_reposition_dialog.dart`. It requires the
+host Context, resolves/asserts the pager adapter, reads that adapter's `itemCount`,
+and registers the host reposition dialog with the same Context and count. The
+confirmation callback is deferred; it reads the current editor ordinal once,
+warns with `moving card template %d to %d` using the ordinal first and requested
+position second, then throws Dart `UnimplementedError` with the exact source TODO
+message `CardTemplateNotetype is a complex class and requires significant testing`.
+This intentionally preserves the source TODO and does not implement
+repositioning. Dialog construction's result is ignored and the method returns
+Unit; callback failures propagate and stop later effects. Android Context,
+dialog construction, pager adapter, lifecycle, and Timber remain host-side.
+Focused source-derived cases are in
+`test/card_template_fragment_show_reposition_dialog_test.dart`. The source file
+SPDX-notices Copyright © 2014 Timothy Rae and © 2018 Mike Hardy; no
+method-specific authorship is asserted. Root `COPYING` remains unchanged.
+
+
+## CardTemplateEditor.templateFragment lookup
+
+`CardTemplateEditor.templateFragment(position)` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:544–548`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateEditorTemplateFragment()` in
+`lib/src/card_template_editor_template_fragment.dart`. It reads the pager adapter
+once and returns null immediately when absent. Otherwise it calls the host
+adapter's `getItemId(position)` once with the original position, constructs the
+exact lowercase `f` plus decimal ID tag using `BigInt` to retain the full JVM
+`Long` range on Dart VM and web, and calls the host fragment manager's
+`findFragmentByTag` once. A missing fragment or a fragment that is not the host's
+`CardTemplateFragment` returns null; callback failures propagate unchanged in
+source order. Android pager, adapter, FragmentManager, and Fragment remain
+host-side. Focused source-derived cases are in
+`test/card_template_editor_template_fragment_test.dart`. The source-file SPDX
+credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship
+is asserted. Root `COPYING` remains byte-identical.
+
+## TemplatePagerAdapter.createFragment
+
+`TemplatePagerAdapter.createFragment(position)` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:566–569`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateEditorCreateFragment()` in
+`lib/src/card_template_editor_create_fragment.dart`. It performs one host
+`tabToViewId` lookup with the unchanged position, falls back to the host-supplied
+front editor view ID only when that lookup is null, and calls the host factory
+once with the unchanged position, source note ID, and selected view ID. It
+returns the exact fragment from the host factory; callback failures propagate
+unchanged in source order. Android map/view IDs, note ID, Fragment, and
+Bundle construction remain host-side. Focused source-derived tests are in
+`test/card_template_editor_create_fragment_test.dart`. The source-file SPDX
+credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific authorship
+is asserted. Root `COPYING` remains byte-identical.
+
+## CardTemplateEditor page-selected focus
+
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:261–263`
+(`CardTemplateEditor.onPageSelected`; pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateEditorPageSelected()` in
+`lib/src/card_template_editor_page_selected_focus.dart`. The callback passes the
+exact selected position to a single fragment lookup. A missing fragment skips
+binding, edit-field, and focus access; otherwise it resolves the host binding and
+edit field in order and requests focus once. Callback failures propagate
+unchanged. ViewPager2, Fragment, view binding, EditText, and Android focus remain
+host responsibilities. Focused source-derived cases are in
+`test/card_template_editor_page_selected_focus_test.dart`. The source file
+SPDX credits © 2014 Timothy Rae and © 2018 Mike Hardy; no method-specific
+authorship is asserted. Root `COPYING` remains unchanged.
+
+## CardTemplateFragment.setupMenu
+
+`CardTemplateFragment.setupMenu()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:1008–1024`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateFragmentSetupMenu()` in
+`lib/src/card_template_fragment_setup_menu.dart`. It reads the host Activity
+once, applies the host's MenuHost cast, constructs one provider with deferred
+callbacks, and registers that provider with the same `viewLifecycleOwner` and
+`Lifecycle.State.RESUMED`. The creation callback inflates
+`R.menu.card_template_editor` before configuring the common menu with the same
+Menu. The selection callback returns the common handler's result unchanged for
+the same MenuItem. Callback failures propagate and stop later source work;
+Android Activity, MenuHost, MenuProvider, Menu, MenuInflater, MenuItem,
+lifecycle, and resource types remain host-side. Focused cases are in
+`test/card_template_fragment_setup_menu_test.dart`. The source file is marked
+`GPL-3.0-or-later` and its file-level SPDX credits © 2014 Timothy Rae and
+© 2018 Mike Hardy; no method-specific authorship is asserted. Root `COPYING`
+remains byte-identical.
+
+## CardTemplateFragment initial selected editor tab
+
+The initial selected-item expression in
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:733–735`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateFragmentInitialSelectedTab()` in
+`lib/src/card_template_fragment_initial_selected_tab.dart`. The projection
+reads `cardIndex` once, looks up the source tab map, lazily reads required
+arguments and the editor-view ID only when the mapping is null, then assigns the
+exact result once to the host bottom navigation. Android Bundle, generated key,
+tab map, bottom navigation, and listener effects remain host-side. Focused Dart
+cases are in `test/card_template_fragment_initial_selected_tab_test.dart` and
+are source-derived; `AnkiDroid/src/test/java/com/ichi2/anki/CardTemplateEditorTest.kt`
+contains no direct test for this expression. The source file is marked
+`GPL-3.0-or-later` and its file-level SPDX header credits © 2014 Timothy Rae
+and © 2018 Mike Hardy; no method-specific authorship is asserted. Root
+`COPYING` remains byte-identical.
+
+## CardTemplateFragment deferred initial focus
+
+The `CardTemplateFragment.onViewCreated()` initial focus block at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:809–821`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateFragmentScheduleInitialFocus()` in
+`lib/src/card_template_fragment_initial_focus.dart`. It evaluates
+`isCurrentPage` once, skips all edit-field work for a non-current page, resolves
+the current field once as the host `post` receiver, and resolves the field again
+inside the deferred action before requesting focus once. The host retains pager
+state, `EditText.post`, `requestFocus`, and keyboard behavior; automatic keyboard
+display remains intentionally avoided as in the pinned source. Focused Dart
+cases are in `test/card_template_fragment_initial_focus_test.dart` and are
+source-derived. The pinned `CardTemplateEditorTest.kt` has no direct assertion
+for this initial-focus block. The source file is marked `GPL-3.0-or-later` and
+its file-level SPDX header credits © 2014 Timothy Rae and © 2018 Mike Hardy; no
+method-specific authorship is asserted. Root `COPYING` remains byte-identical.
+
+## CardTemplateFragment window-insets callback
+
+The `CardTemplateFragment.onViewCreated()` `doOnApplyWindowInsets` callback at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:787–806`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateFragmentCreateWindowInsetsHandler()` in
+`lib/src/card_template_fragment_apply_window_insets.dart`. The returned handler
+defers every host read until invocation, ignores the initial flag, compares the
+IME bottom strictly against the current bottom-navigation minimum height, sets
+navigation visibility, reads the combined bottom inset for conditional view
+padding, then checks current-page status before updating discard handling. It
+then checks current fragmentation state and, only when not fragmented, reads the
+bars/cutout sample and applies its left/right padding. Inset samples, type masks,
+bindings, views, padding and visibility mutations remain host-side; callback
+failures propagate and stop subsequent work. Focused Dart cases in
+`test/card_template_fragment_apply_window_insets_test.dart` are source-derived.
+The pinned `CardTemplateEditorTest.kt` has inset-driven keyboard/back scenarios,
+but no direct assertion for this callback's padding or navigation behavior. The
+source file is marked `GPL-3.0-or-later`; its file-level SPDX header credits
+© 2014 Timothy Rae and © 2018 Mike Hardy, with no method-specific authorship
+asserted. Root `COPYING` remains byte-identical.
+
+## CardTemplateFragment bottom-navigation selection
+
+The bottom-navigation `setOnItemSelectedListener` callback at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:708–732`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`cardTemplateFragmentBottomNavigationSelection()` in
+`lib/src/card_template_fragment_bottom_navigation_selection.dart`. It reads
+`item.itemId` once, writes `templateEditor.tabToViewId[cardIndex]` before
+reading/logging `item.title`, then branches on the captured ID. Styling reads a
+fresh `cardIndex` then the fragment-held `tempModel.css`; Back reads a fresh
+index then the current `template.afmt`; every other ID reads a fresh index then
+`template.qfmt`. After the host `setCurrentEditorView` succeeds it invalidates
+the options menu once and returns true. Callback failures propagate unchanged
+and stop later work. Android MenuItem/title, resource IDs, tab map,
+fragment/model/template mutation, view state, and invalidation remain host-side.
+Focused cases are in
+`test/card_template_fragment_bottom_navigation_selection_test.dart` and are
+source-derived. `CardTemplateEditorTest.testContentPreservedAfterChangingEditorView`
+and `testBottomNavigationViewLayoutTransition` call `setCurrentEditorView`
+directly, but no direct pinned test of this listener callback was found. The
+source file is marked `GPL-3.0-or-later`; its file-level SPDX header credits
+© 2014 Timothy Rae and © 2018 Mike Hardy, with no method-specific authorship
+asserted. Root `COPYING` remains byte-identical.
+
+## CardTemplateEditor.setupEdgeToEdge inset callbacks
+
+`CardTemplateEditor.setupEdgeToEdge()` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt:270–291`
+(pinned AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`) maps to
+`setupCardTemplateEditorEdgeToEdge()` in
+`lib/src/card_template_editor_edge_to_edge.dart`. It enables the host's dark
+transparent system bar style, registers the top listener before the root
+listener, and defers inset-mask construction, inset reads, view resolution, and
+the fragmented-state read until each listener runs. The top listener applies
+only left/top/right padding when the top view exists. The root listener checks
+fragmented after reading insets, then applies editor-left and fragment-container-
+right padding in order when true. Both callbacks return their identical input
+object; callback failures propagate and prevent subsequent work. Android window,
+inset types/masks, view binding, resource IDs, and padding APIs remain host-side.
+Focused tests in `test/card_template_editor_edge_to_edge_test.dart` are
+source-derived. No direct pinned test for this method was found in
+`AnkiDroid/src/test/java/com/ichi2/anki/CardTemplateEditorTest.kt`. The source
+file is marked `GPL-3.0-or-later` and its file-level SPDX header credits Timothy
+Rae (2014) and Mike Hardy (2018); no method-specific authorship is asserted.
+Root `COPYING` remains byte-identical.
+
+
+## MathJax note-editor formatting
+
+`MathJaxFormat` in `lib/src/math_jax_format.dart` ports the string and selection
+behavior of `MathJaxFormat.BLOCK`, `MathJaxFormat.CHEMISTRY`, and
+`MathJaxFormat.toTextWrapper()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/MathJaxFormat.kt`, together
+with `Toolbar.TextWrapper.format()` and `Toolbar.StringFormat` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/Toolbar.kt:418–462`. The
+source pin is AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the exact BLOCK
+(`\\[` / `\\]`) and CHEMISTRY (`\\( \\ce{` / `} \\)`) wrappers, empty-input
+prefix-end selection, nonempty full-text selection, and mutable result values.
+Dart `String.length` and Kotlin `String.length` both count UTF-16 code units.
+The public Dart field is named `StringFormat.result`, matching the Kotlin data
+class and its generated `StringFormat(result=..., selectionStart=...,
+selectionEnd=...)` string form.
+
+The pinned `AnkiDroid/src/test/java/com/ichi2/anki/noteeditor/MathJaxFormatTest.kt`
+contains two direct nonempty output-string cases (BLOCK and CHEMISTRY); it does
+not cover selection behavior or empty input. `test/math_jax_format_test.dart`
+keeps those two direct-output cases distinct from source-derived focused cases
+for empty selection, nonempty UTF-16 selection, and mutable Kotlin data-class
+value behavior (equality, hash consistency, and string form).
+`MathJaxFormat.kt`, `Toolbar.kt`, and the pinned test declare
+`SPDX-License-Identifier: GPL-3.0-or-later` and have no separate copyright
+line; no method-specific authorship is asserted. Localized `label()` lookup,
+toolbar UI/editor insertion, Android selection application, cursor handling, and
+Activity lifecycle remain host-side. Root `COPYING` remains byte-identical.
+
+## StoragePolicy folder projection
+
+`AnkiDroidFolder` and `StoragePolicy` in `lib/src/storage_policy.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/startup/StoragePolicy.kt` and
+`anki-common/src/main/kotlin/com/ichi2/anki/common/storage/AnkiDroidFolder.kt`
+from AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The folder values remain `PUBLIC`
+and `APP_PRIVATE`. `Fixed(folder)` always yields its folder, while
+`UserChoosesOnPermissionScreen` yields `PUBLIC` when required permissions are
+present and null otherwise. The Dart model preserves value equality and the
+Kotlin enum/data-class/data-object string forms.
+
+`test/storage_policy_test.dart` directly ports the first two behaviors from
+`AnkiDroid/src/test/java/com/ichi2/anki/startup/StoragePolicyTest.kt`: fixed
+folder persistence with granted and denied permissions, and deferred user
+choice. Its third test adds source-derived equality and string-form checks. The
+third upstream test's `StoragePermissionSet.storagePolicy` cases are excluded:
+Android permission-set mapping, permission querying, startup application and
+path persistence, collection opening, and filesystem behavior remain
+host-side. The KDoc reference to `StorageDecision` does not add that state
+model as a dependency. Both pinned Kotlin implementation files and the pinned
+test declare `SPDX-License-Identifier: GPL-3.0-or-later` and have no separate
+copyright line; no method-specific authorship is asserted. The Dart adaptation
+and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## npm package-name validation
+
+`validateNpmPackageName()` in `lib/src/npm_package_name.dart` adapts
+`NpmUtils.validateName()` in
+`AnkiDroid/src/main/java/com/ichi2/anki/jsaddons/NpmUtils.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It keeps
+the source's ordered blank/trim, 214 UTF-16-unit length, leading punctuation,
+default-locale lowercase, scoped-name structure and recursive validation,
+Java URL-encoding, and special-character checks. False results preserve the
+source's first-invalid Timber message, including recursive scope/member errors.
+Kotlin whitespace is handled with the existing
+`lib/src/kotlin_whitespace.dart` helper; Dart and Kotlin/JVM string lengths both
+count UTF-16 code units.
+
+`test/npm_package_name_test.dart` ports all valid and invalid examples in the
+single pinned `NpmUtilsTest.validateNameTest` method. Its remaining boundary,
+ordered-log, recursive, and adapter cases are source-derived; the upstream test
+does not directly cover those behaviors. Java `String.lowercase(Locale.getDefault())`,
+`URLEncoder.encode(name, "UTF-8")`, and Timber remain host runtime boundaries,
+provided as explicit callbacks so this Dart package does not substitute its own
+locale, URL-encoding, or logging policy. Callback failures propagate unchanged.
+
+`NpmUtils.kt` declares `SPDX-License-Identifier: GPL-3.0-or-later` and
+`SPDX-FileCopyrightText: Copyright (c) 2021 Mani <infinyte01@gmail.com>`.
+`NpmUtilsTest.kt` includes GPL-3.0-or-later license text and
+`Copyright (c) 2021 Mani infinyte01@gmail.com`. The Dart adaptation and focused
+tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
+`COPYING` remains byte-identical.
+
+## AnkiDroid JavaScript API constants
+
+`lib/src/ankidroid_js_api_constants.dart` preserves the ten integer error codes,
+the source-spelled `ANKI_JS_ERROR_CODE_BURT_NOTE`, current and minimum API
+versions (`0.0.3`), and insertion-ordered `flagCommands` table from
+`AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPIConstants.kt` at pinned
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The table
+uses only the eight referenced `ViewerCommand` enum values from
+`AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerCommand.kt`; command
+bindings and default actions are outside this value-only port. The focused
+source-derived cases in `test/ankidroid_js_api_constants_test.dart` check each
+error code, both version constants, table key order and mapping, and nullable
+lookup for an unknown key. The pinned constants file carries the GNU GPL
+license notice and Copyright (c) 2020 Mani <infinyte01@gmail.com>; the enum
+declares `SPDX-License-Identifier: GPL-3.0-or-later`. The Dart adaptation and
+tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Android
+WebView/JavaScript bridge execution, command dispatch, localization, version
+parsing, UI, and logging remain host-side. Root `COPYING` remains unchanged.
+
+## AnkiDroid JavaScript API compatibility contract
+
+`ApiContract`, `ApiResult`, and `requireJsApiVersion()` in
+`lib/src/ankidroid_js_api_contract.dart` adapt the field projection,
+`AnkiDroidJsAPI.ApiResult` at lines 616–679, and
+`AnkiDroidJsAPI.requireApiVersion()` control flow at lines 150–189 and 681–686
+of `AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPI.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The ordinary
+Dart class retains identity equality and the source field order
+`isValid`, `cardSuppliedDeveloperContact`, `cardSuppliedData`. The gate preserves
+empty-string checks, current-then-supplied parsing, equal/lower/greater branches,
+callback order, and the `Exception` warning boundary. The host supplies exact
+Java `Version.parse` and comparison operations plus UI/logging callbacks;
+JSON-byte decoding, Android thread scheduling and UI strings remain host-side.
+`parseJsApiContract()` also adapts `AnkiDroidJsAPI.kt:101–119`: the host parses
+the bytes to a `JSONObject`, then the adapter reads `optString("version", "")`,
+`optString("developer", "")`, and `optString("data", "")` in order before
+calling the version gate. The host `JSONObject` and its fallback, null, and
+coercion behavior remain unchanged. The Dart adapter catches only a host-
+classified `JSONException`, logs that same exception once, then invokes the
+host invalid-JSON UI callback with it so the host can schedule the source
+localized message and Snackbar. It returns null after those effects; failures
+from parsing/field reads that are not JSON exceptions, and failures in the
+catch-body host callbacks propagate. The pinned `AnkiDroidJsAPITest.kt` has a
+valid-contract helper but no direct malformed-input or field-order case; focused
+cases in `test/ankidroid_js_api_contract_test.dart` are source-derived.
+`VALUE_KEY` and `SUCCESS_KEY` in
+`lib/src/ankidroid_js_api_constants.dart` preserve the companion values
+`"value"` and `"success"`. Focused source-derived cases are in
+`test/ankidroid_js_api_contract_test.dart`. The upstream API source declares
+`GPL-3.0-or-later` and Copyright (c) 2020 Mani
+<infinyte01@gmail.com>; the pinned `AnkiDroidJsAPITest.kt` helper constructs a
+valid `0.0.3` contract and has Boolean, Int, Long, and String JSON helper
+overloads; it has no direct test of `ApiResult` variants or Float. The Dart
+variants retain Boolean, Integer, Float, Long, and String identity, status, and
+value, and their ordered host map projects `success` before `value`. Pure
+Boolean, Int, Long, and String overload projections select their matching
+variants. Android `JSONObject` encoding, Java `Number` formatting and
+exceptions, UTF-8 conversion, JVM boxed numeric widths, and bridge dispatch
+remain host-side; the Dart map does not claim identical JSON formatting. The
+Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## AnkiDroid JavaScript API card data container
+
+`CardDataForJsApi` in `lib/src/ankidroid_js_api_card_data.dart` adapts
+`AnkiDroidJsAPI.CardDataForJsApi` at
+`AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPI.kt:605–613`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves
+the source declaration order, public mutable fields, `Int`/`String` types, and
+initial values: the four count/time integers are `-1`, and `nextTime1` through
+`nextTime4` are empty strings. The ordinary Dart class keeps identity equality.
+Focused source-derived cases in
+`test/ankidroid_js_api_card_data_test.dart` check all defaults, assignment to
+every field, and distinct-instance identity semantics. The pinned
+`AnkiDroidJsAPITest.kt` integration uses the `nextTime1` API value but does not
+directly test the container defaults. Activity-side population, scheduling and
+time calculations, JSON response construction/encoding, and WebView/JavaScript
+dispatch remain host-side. The upstream Kotlin source declares
+`GPL-3.0-or-later` and Copyright (c) 2020 Mani <infinyte01@gmail.com>; the Dart
+adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## Config.ignoreAccentsInSearch
+
+`ignoreAccentsInSearch` in
+`lib/src/ignore_accents_in_search_config.dart` adapts the getter and setter from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Config.kt` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host passes the opaque
+token for `ConfigKey.Bool.IGNORE_ACCENTS_IN_SEARCH`; the Dart adapter forwards
+that exact token once to `getBool` or `setBool`, passes and returns the Boolean
+unchanged, and lets callback failures propagate. Generated Config keys, the
+collection-backed Config implementation, persistence, and search execution
+remain host-side. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/ConfigTest.kt` sets this
+preference and verifies accent-insensitive matching for Latin and Japanese
+searches; the focused Dart adapter contract is in
+`test/config_ignore_accents_in_search_test.dart`. `ConfigTest.kt` covers the
+integration behavior but does not isolate the extension's key-forwarding
+contract. `Config.kt` declares `SPDX-License-Identifier: GPL-3.0-or-later`
+with no separate copyright line. The Dart adaptation and focused tests are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical.
+
+## Collection.cardStateCustomizer
+
+`CollectionCardStateCustomizer` in `lib/src/collection_card_state_customizer.dart`
+adapts `Collection.cardStateCustomizer` from AnkiDroid 2.25.3
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt`. The host
+supplies its opaque token for `ConfigKey.String.CARD_STATE_CUSTOMIZER` and the
+Config callbacks; the adapter forwards the token once, returns or writes the
+exact String, and propagates callback exceptions unchanged. Generated Config
+keys, persistence, and JavaScript execution remain host-side. The pinned
+`StudyScreenRepositoryCollectionTest.kt` exercises reading and writing the
+setting through the integration path; focused Dart cases in
+[`test/collection_card_state_customizer_test.dart`](test/collection_card_state_customizer_test.dart)
+are source-derived adapter checks and do not replace that integration test.
+`Collection.kt` declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
+## Collection.getCardOrNull
+
+`collectionGetCardOrNull()` in `lib/src/collection_get_card_or_null.dart` adapts
+`Collection.getCardOrNull(id)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Collection.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls
+the host `getCard` callback once with the exact supplied ID, returns the same
+card object on success, and returns null for every thrown Dart `Object`, matching
+`runCatching { getCard(id) }.getOrNull()`. Collection, Card, and CardId types
+and backend behavior remain host-side. Focused source-derived tests are in
+`test/collection_get_card_or_null_test.dart`; no direct pinned test for the
+extension was found. `Collection.kt` declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## JsonWriter serialization
+
+`writeJsonObject()` in `lib/src/json_writer.dart` and its focused cases in
+`test/json_writer_test.dart` adapt `JsonWriter.writeObject()` and its private
+recursive `writeValue()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/JsonWriter.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection calls `beginObject`, then each host object key's `name` and value in
+the key iterator's order, and finally `endObject`. Nested objects and arrays
+stream recursively; arrays snapshot the host length once after `beginArray`, then use `opt(index)`.
+Null and the host JSON-null sentinel call `nullValue`; Boolean and Number values
+use their matching callbacks; other values are converted with `toString()` and
+written as strings. Sink and host callback failures propagate unchanged and stop
+subsequent operations. No full JSON document is built. The host retains Android
+`JsonWriter` escaping, encoding and chunking, `JSONObject`/`JSONArray` key, get,
+and opt behavior, and `File.writeJson()` UTF-8 buffered writer creation and close
+ownership. The pinned direct
+`AnkiDroid/src/test/java/com/ichi2/anki/utils/ext/JsonWriterTest.kt` covers
+streaming serialization, bounded chunks, and write failure propagation. The
+Kotlin source and direct test declare `GPL-3.0-or-later` and have no separate
+copyright line; the Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
+## View.isTouchWithinBounds
+
+`isTouchWithinBounds()` in `lib/src/view_is_touch_within_bounds.dart` and its
+source-derived cases in `test/view_is_touch_within_bounds_test.dart` adapt
+`View.isTouchWithinBounds(event)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/View.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies
+View left/top, all four values from `getDrawingRect()`, and MotionEvent local
+x/y. The projection first requires a nonempty half-open drawing rectangle,
+then converts View-origin-plus-event coordinates using Float32 rounding and
+Kotlin/JVM `Float.toInt()` behavior (truncate toward zero, NaN to zero, and Int32
+saturation), and checks containment against the host drawing rectangle. This
+intentionally retains the pinned source's use of View left/top for translation
+while using the drawing rectangle for containment. Android View, MotionEvent,
+`Rect`, and drawing-rect retrieval remain host-side. A search of pinned
+AnkiDroid tests found no direct test for this extension. The source header is
+Copyright (c) 2025 Danilo Mendes and has no file-level SPDX identifier; the
+upstream repository is distributed under `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under that same license. Root `COPYING`
+remains byte-identical.
+
+## View.onGlobalLayout
+
+`onGlobalLayout()` in `lib/src/view_on_global_layout.dart` and its focused
+source-derived cases in `test/view_on_global_layout_test.dart` adapt
+`View.onGlobalLayout(lifecycleOwner, action)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/View.kt:30–48`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The helper
+reads the host lifecycle state once and returns immediately for `DESTROYED`.
+Otherwise, it creates one callback-bearing listener, adds it to the current
+view-tree observer, then creates and registers a lifecycle observer. On destroy,
+the callback reads the view's current observer, checks `isAlive` once, and
+removes the exact registered listener only when alive. Callback failures
+propagate unchanged and stop subsequent calls. Android `View`,
+`ViewTreeObserver`, `OnGlobalLayoutListener`, `LifecycleOwner`, lifecycle state,
+and `DefaultLifecycleObserver` remain host-side. The Kotlin source header is
+Copyright (c) 2025 Danilo Mendes and has no file-level SPDX identifier; the
+upstream repository is distributed under `GPL-3.0-or-later`. No direct pinned
+test for this extension was found. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under that same license. Root `COPYING` remains byte-identical.
+
+## View.setBackgroundTint
+
+`setBackgroundTint()` in `lib/src/view_set_background_tint.dart` and its
+source-derived cases in `test/view_set_background_tint_test.dart` adapt
+`View.setBackgroundTint(color, alpha)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/View.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The projection
+rounds the Dart alpha input to the source Kotlin `Float`, multiplies by 255 with
+binary32 rounding, then converts with Kotlin `Float.toInt()` semantics:
+truncate toward zero, map NaN to zero, and saturate to signed Int32 bounds. It
+does not clamp or validate alpha despite the source KDoc range. It then calls
+the host `MaterialColors.compositeARGBWithAlpha`, `ColorStateList.valueOf`, and
+View tint assignment once each in source order; host failures propagate
+unchanged and short-circuit later operations. MaterialColors, Android
+ColorStateList/View, and actual tint state remain host-side. A search of pinned
+AnkiDroid tests found no direct test for this extension. The Kotlin source has
+Copyright (c) 2025 Danilo Mendes and no file-level SPDX identifier; the
+upstream repository is distributed under `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under that same license.
+Root `COPYING` remains byte-identical.
+
+## BitmapDrawable.toBase64Png
+
+`bitmapDrawableToBase64Png()` in `lib/src/bitmap_drawable_to_base64_png.dart`
+and its source-derived tests in `test/bitmap_drawable_to_base64_png_test.dart`
+adapt `BitmapDrawable.toBase64Png()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/BitmapDrawable.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection creates one host output stream, calls compression with the host PNG
+format and quality `100`, ignores the compression Boolean, snapshots the byte
+array once, passes that identical array to the host encoder with its
+`Base64.DEFAULT` flag, returns the exact encoded string, and closes the stream
+afterward or when an earlier operation throws. Android `BitmapDrawable`,
+`Bitmap`, `CompressFormat`, `ByteArrayOutputStream`, Base64 behavior, and WebView
+integration remain host-side. A search of pinned AnkiDroid tests found no direct
+test for this extension; the Dart cases cover callback order, ignored false
+compression, byte-array identity, failure short-circuiting/identity, and stream
+closing. The Kotlin source has a full GPL-3.0-or-later notice and Copyright
+© 2024 Ashish Yadav <mailtoashish693@gmail.com>; the Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
+## Context.usingStyledAttributes
+
+`usingStyledAttributes()` in `lib/src/context_using_styled_attributes.dart`
+and `test/context_using_styled_attributes_test.dart` adapt
+`Context.usingStyledAttributes()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Context.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection forwards the host `AttributeSet`, attribute-array token, and both
+style arguments to one acquisition callback, invokes the block once with the
+identical opaque `TypedArray` token, and recycles that token once only after a
+successful block return before returning the exact result. Acquisition failures
+prevent both later callbacks; block failures propagate unchanged without
+recycling; recycle failures propagate before a result is returned. This
+preserves the source's `typedArray.block().also { typedArray.recycle() }`
+sequence rather than adding `finally` cleanup. Android `Context`,
+`AttributeSet`, `IntArray`, and `TypedArray` access and acquisition remain
+host-side. The pinned source declares `GPL-3.0-or-later` and contains no
+file-level copyright line. A search of pinned AnkiDroid tests found no direct
+test for this helper; the focused Dart cases are source-derived. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## MenuItem.setIconRes
+
+`menuItemSetIconRes()` in `lib/src/menu_item_set_icon_res.dart` and its focused
+cases in `test/menu_item_set_icon_res_test.dart` adapt
+`MenuItem.setIconRes(context, resId)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MenuItem.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection calls the host drawable lookup once; a null result returns without
+mutation, configuration lookup, direction update, or icon setting. For a
+non-null result it uses the exact drawable returned by mutation, resolves the
+host configuration's layout direction, applies it to that mutated token, and
+sets that same token as the menu icon last. Callback failures propagate
+unchanged and prevent later calls. Android `Context`, `MenuItem`, resources,
+`ContextCompat`, `DrawableCompat`, and drawable objects remain host-side. A
+search of the pinned AnkiDroid tests found no direct test for this extension;
+the Dart cases are source-derived. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## ViewPropertyAnimator.setDuration(Duration)
+
+`setViewPropertyAnimatorDuration()` and its focused tests adapt the extension
+`ViewPropertyAnimator.setDuration(duration)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/ViewPropertyAnimator.kt:9`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source converts Kotlin
+`Duration` once with `toLong(DurationUnit.MILLISECONDS)` and calls the
+underlying `ViewPropertyAnimator.setDuration(long)` once, returning that
+animator. The Dart adapter receives the duration as an opaque host token and
+requires a host conversion callback with the exact Kotlin conversion semantics,
+including finite and infinite representations; Dart `Duration` is not claimed
+to be equivalent. It forwards the resulting millisecond `int` once to the
+host-side setter, returns its exact animator token, and lets conversion or
+setter failures propagate unchanged. Android `ViewPropertyAnimator` remains
+host-side. The focused Dart tests cover callback order, exact forwarding, call
+count, token identity, and both failure paths. No direct pinned AnkiDroid test
+for this extension was found. The Kotlin source declares
+`SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical.
+
+## BottomSheetDialogFragment.behavior
+
+`bottomSheetDialogFragmentBehavior()` in
+`lib/src/bottom_sheet_dialog_fragment_behavior.dart` adapts the
+`BottomSheetDialogFragment.behavior` getter from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/BottomSheetDialogFragment.kt:8–13`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter calls the host's
+`requireDialog()` once, looks up `com.google.android.material.R.id.design_bottom_sheet`
+once on that exact dialog, applies Dart's null assertion to preserve Kotlin's
+`!!` failure, passes the identical view to one host `BottomSheetBehavior.from`
+callback, and returns its exact result. Callback failures propagate unchanged
+and prevent later operations. Android dialog, view, resource ID, and Material
+behavior implementations remain host-side. Source-derived tests are in
+`test/bottom_sheet_dialog_fragment_behavior_test.dart`; no direct pinned test
+was found. The Kotlin source declares `SPDX-License-Identifier:
+GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## Fragment.window
+
+`fragmentWindow()` and `test/fragment_window_test.dart` adapt the
+`Fragment.window` property from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:29–31`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+calls the host `requireActivity` once, then reads the window of that exact
+Activity once and returns the identical opaque token. Lookup or read failures
+propagate unchanged, and a lookup failure prevents the later read. Android
+Fragment, FragmentActivity, and Window remain host-side. No direct pinned test
+was found; the focused Dart tests are source-derived. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## FragmentManager.removeFragmentFromContainer
+
+`removeFragmentFromContainer()` in
+`lib/src/fragment_manager_remove_fragment.dart` adapts the extension from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentManager.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host lookup once with
+the requested container ID. A missing fragment throws Dart `ArgumentError`
+with the source message `could not find fragment` before a transaction begins.
+For a found fragment it begins one transaction, removes that exact object, and
+commits once in source order; the host commit result is ignored, matching the
+source `Unit` return. Callback failures propagate unchanged and short-circuit
+later calls. Android `FragmentManager`, `Fragment`, `FragmentTransaction`,
+fragment lifecycle, and actual commit effects remain host-side. No direct test
+for this extension was found in the pinned source tree; its focused Dart cases
+are source-derived in `test/fragment_manager_remove_fragment_test.dart`. The
+Kotlin file declares `GPL-3.0-or-later` and has no separate copyright line. The
+Dart adaptation and test are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## RecyclerView.runWhenNotComputingLayout
+
+`runWhenNotComputingLayout()` in
+`lib/src/recycler_view_run_when_not_computing_layout.dart` adapts
+`RecyclerView.runWhenNotComputingLayout(action)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/RecyclerView.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads
+`isComputingLayout` once. When true, it passes the identical action token to the
+host `post` callback once; otherwise it calls `action.run()` once. The branches
+are exclusive, and callback failures propagate unchanged. Android
+RecyclerView scheduling and frame execution remain host-side. A search of the
+pinned AnkiDroid tests found no direct test for this extension; the focused Dart
+cases are source-derived in
+`test/recycler_view_run_when_not_computing_layout_test.dart`. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## TabLayout.doOnTabSelected
+
+`doOnTabSelected()` in `lib/src/tab_layout_do_on_tab_selected.dart` adapts
+`TabLayout.doOnTabSelected(action)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/TabLayout.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It creates
+one listener, registers that identical object before returning it, calls the
+action once with the same opaque tab token only from `onTabSelected`, and leaves
+`onTabUnselected` and `onTabReselected` as no-ops. Registration and action
+failures propagate unchanged. Android Material `TabLayout`, tab, and listener
+APIs remain host-side behind the generic listener and registration callback.
+No direct test for this extension was found in the pinned source tree; focused
+Dart cases are source-derived in
+`test/tab_layout_do_on_tab_selected_test.dart`. The Kotlin source header credits
+Copyright (c) 2025 Rakshita Chauhan and declares `GPL-3.0-or-later`; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## FragmentActivity.dismissAllDialogFragments
+
+`dismissAllDialogFragments()` in
+`lib/src/fragment_activity_dismiss_all_dialog_fragments.dart` adapts
+`FragmentActivity.dismissAllDialogFragments()` and `DIALOG_FRAGMENT_TAG` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter reads the host
+`isStateSaved` predicate once; when true it returns without popping. Otherwise
+it invokes the host pop callback once with tag `dialog` and the inclusive flag
+value `1`, preserving argument and operation order. Callback failures propagate
+unchanged. Android `FragmentActivity` and `FragmentManager` stay host-side. No
+direct pinned test for this method was found; focused Dart cases are
+source-derived in
+`test/fragment_activity_dismiss_all_dialog_fragments_test.dart`. The Kotlin
+source declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## FragmentActivity.showDialogFragment
+
+`showDialogFragment()` in `lib/src/fragment_activity_show_dialog_fragment.dart`
+adapts `FragmentActivity.showDialogFragment(newFragment)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt:28–32`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host UI-thread
+scheduler once with one action and returns without waiting. When the action
+runs, it reads the current host support FragmentManager once and passes that
+manager and the identical fragment token to the host display adapter in source
+order. Callback failures propagate unchanged and stop subsequent work. The
+scheduler, Android FragmentActivity, FragmentManager, DialogFragment, and
+fragment display implementation stay host-side. No direct pinned test was
+found; source-derived Dart cases are in
+`test/fragment_activity_show_dialog_fragment_test.dart`. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## MenuHost.addPrepareMenuProvider
+
+`menuHostAddPrepareMenuProvider()` in
+`lib/src/menu_host_add_prepare_menu_provider.dart` adapts
+`MenuHost.addPrepareMenuProvider(onPrepare)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MenuHost.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It creates
+one provider, whose menu-creation callback is empty, whose preparation callback
+forwards the identical opaque menu token to `onPrepare`, and whose item-selection
+callback returns false. It registers that provider once after construction and
+returns Unit. Android MenuHost, MenuProvider, Menu, MenuInflater, and MenuItem
+stay host-side behind generic tokens and callbacks. Source-derived Dart cases
+are in `test/menu_host_add_prepare_menu_provider_test.dart`; no direct pinned
+test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## FragmentActivity.onAllFragmentsLoaded
+
+`onAllFragmentsLoaded()` in
+`lib/src/fragment_activity_on_all_fragments_loaded.dart` adapts
+`FragmentActivity.onAllFragmentsLoaded(block)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentActivity.kt:48–73`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter reads the current
+support FragmentManager once before constructing one lifecycle callback and
+registers that exact callback recursively. Each `onFragmentViewCreated` event
+forwards its four tokens to the host super callback first, reads the current
+manager once, and invokes the host `fragments.all { it.view != null }`
+predicate. A false result leaves the callback registered. A true result calls
+`block()` and, in `finally`, reads the manager again and unregisters the same
+callback. Failures before the `try` skip the block and unregister operation; a
+cleanup failure follows normal `finally` propagation. Repeated qualifying
+events remain unguarded. The host predicate inspects fragment views, while
+Android FragmentActivity, FragmentManager, Fragment, View, Bundle, and callback
+classes remain host-side. No direct pinned test was found; source-derived Dart
+cases are in `test/fragment_activity_on_all_fragments_loaded_test.dart`. The
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
+## Fragment.onWindowFocusChanged
+
+`onWindowFocusChanged()` in
+`lib/src/fragment_on_window_focus_changed.dart` adapts
+`Fragment.onWindowFocusChanged(action)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:56–69`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates exactly one focus
+listener carrying the identical action, calls the host `requireView` once,
+reads that view's current observer once, and registers the listener before
+reading the view lifecycle owner and its lifecycle, creating one lifecycle
+observer, and registering it. No cleanup is attempted if a later setup step
+fails. On destruction, the observer ignores its owner argument and reads the
+fragment's current view; a missing view returns before observer lookup. A
+missing current observer returns before liveness is read. Otherwise liveness is
+checked once, and the identical listener is removed only when true. Callback
+failures propagate unchanged and stop subsequent calls. Android Fragment, View,
+ViewTreeObserver, LifecycleOwner, lifecycle, and actual listener/observer
+classes remain host-side. No direct test for this extension was found in the
+pinned AnkiDroid test tree; focused Dart cases are source-derived in
+`test/fragment_on_window_focus_changed_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## Fragment.showDialogFragment
+
+`fragmentShowDialogFragment()` in
+`lib/src/fragment_show_dialog_fragment.dart` adapts
+`Fragment.showDialogFragment(newFragment)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:27`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls
+`requireActivity()` once before scheduling and forwards the returned Activity
+through the existing `showDialogFragment()` adapter. That Activity instance is
+captured for both the UI-thread scheduler and the support FragmentManager read
+when the scheduled action runs. The exact dialog token reaches the existing
+host display callback unchanged. Scheduling, manager lookup and display remain
+implemented once in the Activity adapter. Android Fragment, FragmentActivity,
+FragmentManager, DialogFragment, lifecycle and display implementation stay
+host-side. Callback failures propagate unchanged. No direct pinned test was
+found; focused Dart cases are source-derived in
+`test/fragment_show_dialog_fragment_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+`lib/src/fragment_shared_prefs.dart` and
+`test/fragment_shared_prefs_test.dart` adapt `Fragment.sharedPrefs()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:17`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. They
+preserve one `requireContext()` call before one `Context.sharedPrefs()` call,
+forward the exact Context token, return the exact SharedPreferences token, and
+propagate either callback's failures unchanged. Android Fragment, Context,
+SharedPreferences, and the shared preference implementation remain host-side.
+No direct pinned test was found; the focused Dart cases are source-derived. The
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
+## Fragment.packageManager
+
+`fragmentPackageManager()` in `lib/src/fragment_package_manager.dart` adapts
+the `Fragment.packageManager` property from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:19–20`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls
+the host `requireContext()` once, reads `packageManager` on that exact Context
+once, and returns the identical opaque PackageManager token. Context lookup and
+property-read failures propagate unchanged in source order. Android Fragment,
+Context, PackageManager, and their concrete implementations remain host-side.
+Source-derived cases are in
+[`test/fragment_package_manager_test.dart`](test/fragment_package_manager_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## TextView.setCompoundDrawablesRelativeWithIntrinsicBoundsKt
+
+`textViewSetCompoundDrawablesRelativeWithIntrinsicBounds()` in
+`lib/src/text_view_set_compound_drawables_relative_with_intrinsic_bounds.dart`
+adapts
+`TextView.setCompoundDrawablesRelativeWithIntrinsicBoundsKt(start, top, end, bottom)`
+from `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/TextView.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+forwards the four `Int` drawable resource IDs in start, top, end, bottom order;
+each omitted ID defaults to `0`. Android TextView behavior and drawable
+resource resolution remain host-side, and callback failures propagate
+unchanged. Focused source-derived cases are in
+`test/text_view_set_compound_drawables_relative_with_intrinsic_bounds_test.dart`;
+no direct pinned AnkiDroid test for the extension was found. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## NoteEditorFragment.intentLaunchedWithImage
+
+`intentLaunchedWithImage<TIntent>()` in
+[`lib/src/note_editor_intent_launched_with_image.dart`](lib/src/note_editor_intent_launched_with_image.dart)
+adapts `NoteEditorFragment.Companion.intentLaunchedWithImage(intent)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2764–2770`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+checks the action against `android.intent.action.SEND` and
+`android.intent.action.VIEW` in the source expression's order, including its
+conditional second action callback read. It then calls the invalid-view
+predicate and, only when valid, resolves MIME once and returns whether the
+nullable value starts with the case-sensitive `image/` prefix. The same opaque
+Intent token is passed to every callback; callback failures propagate
+unchanged. Intent access, `ImportUtils.isInvalidViewIntent`, MIME resolution,
+and Android behavior remain host-side. Source-derived focused cases are in
+[`test/note_editor_intent_launched_with_image_test.dart`](test/note_editor_intent_launched_with_image_test.dart);
+no direct pinned AnkiDroid test was found. The Kotlin source declares
+`GPL-3.0-or-later` and carries file-level Copyright (c) 2012 Norbert Nagold and
+(c) 2014 Timothy Rae; these are source-file attributions and do not assign
+those authorship claims to the new Dart files. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
+## `NamedJSONComparator`
+
+Pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/json/NamedJSONComparator.kt`
+- Direct test: `common/src/test/java/com/ichi2/anki/common/json/NamedJSONComparatorTest.kt`
+- Dart adaptation: `lib/src/named_json_comparator.dart`
+- Focused Dart test: `test/named_json_comparator_test.dart`
+
+`NamedObject` exposes `name: String`. The singleton
+`NamedJSONComparator.INSTANCE.compare(lhs, rhs)` reads the left name once, then
+the right name once, and returns Kotlin/JVM
+`String.compareTo(ignoreCase = true)` unchanged. The Dart adapter delegates that
+comparison to a host callback to preserve JVM Unicode behavior; it also
+preserves getter evaluation order and propagates getter/callback failures. The
+pinned Kotlin source is GPL-3.0-or-later, Copyright © 2020 Arthur Milchior. Its
+direct test is Copyright © 2021 Shridhar Goel. The Dart adaptation and test are
+Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING` remains
+byte-identical.
+
+## `JSONObjectHolder` and `JSONContainer<T>`
+
+Pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/json/JSONContainer.kt`
+- Direct test: none found for `JSONContainer`
+- Dart adaptation: `lib/src/json_container.dart`
+- Focused Dart test: `test/json_container_test.dart`
+
+`JSONObjectHolder` exposes its opaque host JSON object. `JSONContainer<T>`
+retains its host array and object constructor, lazily maps the host object
+iterator, reads one typed object at the exact requested index, writes the
+holder's JSON object at the exact requested index, and delegates length to the
+host array. The `indices` property preserves the source's `this.toList().indices`
+eagerness and constructor failure timing. The host retains JSON.org values,
+storage, accessors, and exceptions; no JSON.org implementation code is copied.
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and test are Copyright © 2026 John Tsui under
+GPL-3.0-or-later. Root `COPYING` remains byte-identical.
+
+## JSON property delegates
+
+`lib/src/json_property_delegates.dart` and
+`test/json_property_delegates_test.dart` adapt the six property delegates and
+`JSONObjectHolder` factory extensions from `common/src/main/java/com/ichi2/anki/common/json/JSONContainer.kt`, pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+The Dart API exposes `getValue` and `setValue` because Dart has no Kotlin `by`
+property syntax; receiver and property metadata are ignored. Each scalar getter
+uses its typed `get*` operation when fallback is null and its `opt*` operation
+with the exact fallback otherwise. All scalar setters call host `put` once;
+the array delegate uses `getJSONArray` and `put`. Host JSON conversion and
+failure behavior remain host-owned. No direct pinned tests for these delegates
+were found, so the focused Dart tests are source-derived. The source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under GPL-3.0-or-later. No JSON.org
+implementation code is copied. Root `COPYING` remains byte-identical.
+
+## Hash collection initial capacity
+
+Pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/utils/HashUtil.kt`
+- Direct test: none found
+- Dart adaptation: `lib/src/hash_util.dart`
+- Focused Dart test: `test/hash_util_test.dart`
+
+`hashSetInit()` and `hashMapInit()` preserve the source's shared capacity
+expression, `((size / .75f).toInt() + 1).coerceAtLeast(16)`, including Float32
+conversion/division and signed Int32 conversion/overflow behavior. Host-supplied
+callbacks construct the Java collections; no Java collection implementation is
+copied, and callback results and errors are unchanged. The source is
+GPL-3.0-or-later, Copyright © 2021 Arthur Milchior. The Dart implementation
+and tests are Copyright © 2026 John Tsui under the same license. See
+`NOTICE.md`; root `COPYING` remains byte-identical.
+
+## `TimeManager` override state
+
+Pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/time/TimeManager.kt`
+- Direct test: none found
+- Dart adaptation: `lib/src/time_manager.dart`
+- Focused Dart test: `test/time_manager_test.dart`
+
+The host supplies the stable default time object. The adapter preserves the
+source's override selection (last override when present, otherwise the same
+default instance), clearing behavior, and `resetWith()` operation order: clear
+all prior overrides, then store the exact supplied object. The source declares
+`GPL-3.0-or-later` and has no separate copyright line. Clock construction,
+Android/JVM behavior, synchronization, and application lifecycle remain
+host-side. The Dart implementation and tests are Copyright © 2026 John Tsui
+under the same license. See `NOTICE.md`; root `COPYING` remains byte-identical.
+
+## `Time.intTime()` seconds conversion
+
+Pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/time/Time.kt`
+- Direct `intTime()` test: none found
+- Dart adaptation: `intTime()` in `lib/src/time_utils.dart`
+- Focused Dart test: `test/int_time_test.dart`
+
+The adapter invokes the host's millisecond clock once and divides the returned
+signed integer by 1000 using truncation toward zero, matching Kotlin `Long`
+division for negative subsecond values and negative non-multiples. Host read
+failures propagate unchanged. The source declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart implementation and tests are Copyright © 2026
+John Tsui under the same license. See `NOTICE.md`; root `COPYING` remains
+byte-identical.

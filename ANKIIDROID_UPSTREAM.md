@@ -1,0 +1,633 @@
+# AnkiDroid upstream source record
+
+## `DeckOptionsDestination` model, factories, and `toIntent(context)`
+
+`DeckOptionsDestination`, `DeckOptionsEntry`, and their factory/Intent
+adapters in `lib/src/deck_options_destination.dart` are source-derived from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/DeckOptionsDestination.kt:9–28`
+and
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/DeckOptionsDestination.kt:13–36`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart model preserves each deck
+ID, filtered flag, nullable entry name, options list order and reference, and
+the empty-options default. `fromDeckId` checks filtered state exactly once
+with the supplied ID. `fromCurrentDeck` resolves the current ID before checking
+that same ID once. Callback errors propagate unchanged and prevent later
+calls. `toIntent(context)` delegates exactly once to the filtered or ordinary
+host builder based on `isFiltered`, passing the same context and deck ID and
+returning its exact result. Android collection access, Context, Intent, and UI
+behavior remain host-side. Focused source-derived cases are in
+`test/deck_options_destination_test.dart`; the pinned Kotlin source has no
+matching tests for these adapter call sequences. The Kotlin sources declare
+`GPL-3.0-or-later`; that attribution identifies the upstream Kotlin source and
+does not claim authorship of the Dart adaptation. The Dart implementation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## `NoteEditorDestination.AddNote.toIntent(context)`
+
+`noteEditorAddNoteToIntent()` in `lib/src/note_editor_add_note_to_intent.dart`
+adapts the `AddNote` branch of `NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:18–22`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host callback creates one
+`NoteEditorActivity` Intent; the adapter writes `CALLER` with the
+`DECKPICKER` code (`3`), then writes the exact non-null deck ID once as a Long
+extra under `DECK_ID`, and returns the same Intent. Null skips only the deck ID
+write; zero and negative IDs are preserved. Callback failures propagate and
+stop subsequent operations. Context, Android Intent and Activity construction,
+and typed extras remain host-side. Focused source-derived cases are in
+`test/note_editor_add_note_to_intent_test.dart`. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt` covers launching
+AddNote with a supplied deck ID and verifying deck selection; it does not cover
+the adapter's callback mechanics. The Kotlin source declares
+`GPL-3.0-or-later` and carries SPDX Copyright (c) 2024 Sanjay Sargam; that
+attribution identifies the Kotlin source and does not claim authorship of the
+Dart adaptation. The Dart implementation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `NoteEditorDestination.AddInstantNote.toIntent(context)`
+
+`noteEditorAddInstantNoteToIntent()` in
+`lib/src/note_editor_add_instant_note_to_intent.dart` adapts the
+`AddInstantNote` branch of `NoteEditorDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:28–33`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host callback creates one
+`NoteEditorActivity` Intent; the adapter writes `CALLER` with the
+`INSTANT_NOTE_EDITOR` code (`14`), then always writes the exact `sharedText`
+string, including an empty string, under Android's `Intent.EXTRA_TEXT` key
+(`android.intent.extra.TEXT`), and returns that same Intent. Context, Android
+Intent and Activity construction, and typed extra writes remain host-side;
+callback failures propagate and stop subsequent operations. Focused
+source-derived cases are in
+`test/note_editor_add_instant_note_to_intent_test.dart`. The Kotlin source
+declares `GPL-3.0-or-later` and carries SPDX Copyright (c) 2024 Sanjay Sargam;
+that attribution identifies the Kotlin source and does not claim authorship of
+the Dart adaptation. The Dart implementation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `CardInfoDestination.toIntent(context)`
+
+`CardInfoDestination.toIntent()` in `lib/src/card_info_destination.dart`
+adapts `CardInfoDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/CardInfoDestination.kt:15–55`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Its typed model preserves the exact
+card ID and one of `CURRENT_CARD_STUDY`, `CURRENT_CARD_BROWSE`, or
+`PREVIOUS_CARD_STUDY`. Host callbacks resolve that entry point's backend title
+and matching sentence-case resource. The adapter strips every FSI and PDI
+marker only for the sentence-case comparison; when that callback returns the
+simplified title unchanged, the original title including its markers is
+retained. It then creates one host Bundle, writes `title` before the `cardId`
+Long, and delegates the exact Bundle and `CardInfoFragment` token to the host
+Intent builder. Callback failures propagate and stop later operations.
+Translations, Android Context, sentence-case resources, Bundle, fragment class,
+Intent creation, and lifecycle behavior remain host-side. Source-derived cases
+are in `test/card_info_destination_to_intent_test.dart`; the pinned source has no
+test covering this projection. The Kotlin sources declare `GPL-3.0-or-later`;
+that attribution identifies the upstream Kotlin source and does not claim
+authorship of the Dart adaptation. The Dart implementation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
+## `NoteEditorDestination.CopyNote.toIntent(context)`
+
+`noteEditorCopyNoteToIntent()` in
+`lib/src/note_editor_copy_note_to_intent.dart` adapts the `CopyNote` branch from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt:60–65`,
+with the variant fields defined in
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/NoteEditorDestination.kt:87–94`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent, then
+writes `CALLER` with `NoteEditorCaller.NOTEEDITOR` (`8`), `DECK_ID` as a Long,
+`CONTENTS` as the exact fields String, and `TAGS` as a fresh ordered copy of
+the tag list, preserving empty lists and duplicates. It returns the same
+Intent; callback failures propagate unchanged and stop later writes. Context,
+`NoteEditorActivity`, Android Intent, typed extra handling, and JVM array
+allocation remain host-side. Focused source-derived tests in
+`test/note_editor_copy_note_to_intent_test.dart` cover ordered extras, empty
+payloads, fresh tag-list projection, duplicates, Intent identity, and callback
+failure short circuits. The pinned integration test
+`AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt:330–350,903–908`
+covers copy-note launch and the selected deck ID, but not all raw extras. The
+Kotlin source declares `GPL-3.0-or-later` and has SPDX Copyright (c) 2024 Sanjay
+Sargam; this identifies the Kotlin source only and does not attribute the Dart
+adaptation to him. The Dart implementation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `NoteEditorDestination.PassArguments.from(intent, extras)`
+
+`noteEditorPassArgumentsFromIntent()` in
+`lib/src/note_editor_pass_arguments_from_intent.dart` adapts the
+`PassArguments.from(intent, extras)` projection from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/NoteEditorDestination.kt:106–121`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the supplied Intent's
+action once and retains the exact caller-supplied extras Bundle. The caller
+remains responsible for obtaining extras and performing the null check; Android
+Intent and Bundle behavior remain host-side, and getter failures propagate
+unchanged. Focused source-derived cases are in
+`test/note_editor_pass_arguments_from_intent_test.dart`. The pinned app tests
+cover PassArguments construction and `toIntent`, but no `from` factory tests.
+The Kotlin source declares `GPL-3.0-or-later` and carries no distinct copyright
+line. The Dart implementation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical.
+
+## `Decks.update(did, block)`
+
+`decksUpdate()` in `lib/src/decks_update.dart` adapts
+`Decks.update(did, block)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Deck.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host
+lookup once with the requested ID, applies the block to that exact non-null deck,
+then saves that same deck. Kotlin's `!!` maps to Dart's `TypeError` from the `!`
+null-check operator. Lookup failure or a null result skips the block and save;
+a block failure skips save without rollback; save failures propagate after the
+block. `Decks`, `Deck`, `DeckId`, collection/database access, and storage remain
+host-side. No direct pinned test for this helper was found. The Dart adaptation
+and focused tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; the
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+Root `COPYING` remains byte-identical.
+
+## `Decks.defaultConfig`
+
+`deckDefaultConfig()` in `lib/src/deck_default_config.dart` adapts the
+`Decks.defaultConfig` getter from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Decks.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host
+`getConfig` callback once with `confId: 1` and returns that exact result. The
+Kotlin `!!` null failure maps to Dart's `TypeError` from the null-check operator.
+Decks, deck configurations, collection/database access, and deck-picker UI
+remain host-side. The pinned `DeckPickerTest.kt` exercises
+`col.decks.defaultConfig` as integration coverage; no dedicated test for this
+getter was found. The Dart adaptation and focused tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`; the Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. Root `COPYING` remains
+byte-identical.
+
+## `Int.clamp()`
+
+`clampInt()` in `lib/src/int_clamp.dart` and its source-derived tests in
+`test/int_clamp_test.dart` adapt `Int.clamp(minimumValue, maximumValue)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Int.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The implementation
+checks `value < minimumValue` first, then `value > maximumValue`, and otherwise
+returns `value`. As the Kotlin documentation specifies, it does not validate
+that the minimum is less than the maximum. Reversed bounds therefore preserve
+the first matching branch rather than raising or normalizing the range. The
+focused tests cover an interior value, both bounds, equal bounds, and a
+reversed range where both comparisons match and the minimum is returned.
+
+The AnkiDroid file carries the GPL-3.0-or-later notice and incorporates the
+`_Ranges.kt` excerpt at line 1447 from Kotlin commit
+`6ea9f879abd61ba9578b322eb07ff6a8450de11f`, Copyright 2010–2024 JetBrains
+s.r.o. and Kotlin Programming Language contributors, under Apache-2.0. The
+Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`; both source/license notices are retained in the Dart file.
+Root `COPYING` remains byte-identical.
+
+## `Int.ifNotZero`
+
+`intIfNotZero()` in `lib/src/int_if_not_zero.dart` and its source-derived cases
+in `test/int_if_not_zero_test.dart` adapt `Int.ifNotZero` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/Int.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source
+returns without invoking the callback for zero; for nonzero values it invokes
+the callback once with the receiver. Callback failures propagate unchanged.
+The upstream file is marked `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
+## `List<T>.indexOfOrNull(predicate)`
+
+`indexOfOrNull(predicate)` in `lib/src/list_index_of_or_null.dart` adapts the
+predicate overload of `List<T>.indexOfOrNull(block)` from
+`common/src/main/java/com/ichi2/anki/common/utils/ext/List.kt:18–21`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It visits
+values in list order, calls the predicate once per visited value, returns the
+first matching index without evaluating later values, and returns null when no
+value matches (including an empty list). Predicate failures propagate
+unchanged. Focused source-derived tests are in
+`test/list_index_of_or_null_test.dart`. The source declares
+`GPL-3.0-or-later` and has no distinct copyright line; its direct predicate
+cases are in `common/src/test/java/com/ichi2/anki/common/utils/ext/ListTest.kt:17–23`.
+The Dart implementation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
+## `MutableList<T>.swapPositions()`
+
+`List.swapPositions(fromPosition, toPosition)` in `lib/src/mutable_list.dart`
+adapts `MutableList<T>.swapPositions()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MutableList.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It mutates
+the list by applying `Collections.swap` to adjacent positions in ascending order
+when moving forward and descending order otherwise. It does not validate or
+normalize positions. Equal positions ordinarily produce no swaps; the
+`Int.MAX_VALUE` endpoint preserves Kotlin's signed-32-bit range overflow and
+attempts a swap. Focused coverage is in `test/mutable_list_test.dart`. The
+Kotlin source declares `GPL-3.0-or-later` with no separate copyright line; the
+Dart adaptation and test are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## `MutableList<T>.replaceWith()`
+
+`List.replaceWith(items)` in `lib/src/mutable_list.dart` adapts
+`MutableList<T>.replaceWith(items)` from the same pinned `MutableList.kt` source.
+The source clears the destination before calling `addAll`; the Dart adaptation
+preserves that operation order by calling `clear()` before `addAll(items)`. As a
+result, passing the destination itself clears it before consumption, and an
+iteration failure leaves values already appended in place. Focused coverage is
+in `test/mutable_list_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` with no separate copyright line; the Dart adaptation and test
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
+## `Double.wholeAndFraction()`
+
+`wholeAndFraction()` in `lib/src/whole_and_fraction.dart` and its source-derived
+cases in `test/whole_and_fraction_test.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Double.kt` from AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source computes
+`whole = this.toLong()`, then `fraction = this - whole`, and returns
+`Pair(whole, fraction)`; the Dart named record preserves these fields and this
+operation order. The conversion truncates finite in-range values toward zero,
+maps NaN to zero, and saturates infinities and out-of-range values to signed
+64-bit Long bounds. The subtraction then uses binary64 arithmetic, including
+the conversion of the saturated Long back to double. The focused tests exercise
+signed fractional inputs, negative zero, NaN, infinities, both Long bounds, and
+remainder calculation beyond those bounds. No direct test for this upstream
+extension was found in the pinned checkout. The upstream source declares
+`GPL-3.0-or-later` and Copyright © 2026 Shaan Narendran
+<shaannaren06@gmail.com>; the Dart adaptation and test are Copyright © 2026
+John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+This repository is a partial, modified Dart port of AnkiDroid 2.25.3. The
+upstream source baseline is commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` from
+[AnkiDroid](https://github.com/ankidroid/Anki-Android). This file records
+source scopes for mapped units; additional unit summaries are in the repository
+README and NOTICE.
+
+## JavaScript add-on manifest projection
+
+The Dart unit in `lib/src/addon_model.dart` adapts these pinned source files:
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/jsaddons/AddonData.kt`: nullable
+  parsed manifest fields, `DistInfo`, and `getAddonModelFromAddonData()`.
+- `AnkiDroid/src/main/java/com/ichi2/anki/jsaddons/AddonModel.kt`:
+  validated `AddonModel` value.
+- `AnkiDroid/src/main/java/com/ichi2/anki/jsaddons/AddonsConst.kt`: only
+  `ANKIDROID_JS_ADDON_KEYWORDS`, `REVIEWER_ADDON`, and `NOTE_EDITOR_ADDON`.
+- `AnkiDroid/src/main/java/com/ichi2/anki/AnkiDroidJsAPIConstants.kt`: only
+  `CURRENT_JS_API_VERSION` (`0.0.3`).
+
+The Dart projection keeps the source's early nullable/blank required-field
+check, its subsequent npm-name, type, note-editor icon, keyword, and API-version
+validation order, exact error messages, callback boundaries, optional metadata
+defaults, reviewer icon, and nullable/passed-through `dist`. Kotlin whitespace
+checks use UTF-16 code-unit semantics through the existing Dart
+`trimKotlinWhitespace()` helper. It calls the already ported
+`validateNpmPackageName()` with host-provided lowercase, URL-encoding, and log
+callbacks.
+
+The pinned direct cases in
+`AnkiDroid/src/test/java/com/ichi2/anki/jsaddons/AddonModelTest.kt` include
+missing name, keywords, and version; invalid add-on type; missing `dist`; and
+missing optional metadata. Those pure `getAddonModelFromAddonData()` cases and
+the successful projection values are covered by `test/addon_model_test.dart`.
+The upstream JSON-file valid/invalid mapping tests,
+unreadable-file handling, and URL-list loading are not ported here. Parsing
+`package.json`, ignoring unknown JSON keys, file read/decode errors, add-on
+directory listing, URL parsing/fetching, HTTP, Timber listing logs, and
+filesystem behavior remain the host's responsibility. This unit does not port
+`getAddonModelFromJson()` or `getAddonModelListFromJson()`.
+
+`AddonData.kt`, `AddonModel.kt`, `AddonsConst.kt`, and the pinned test declare
+`GPL-3.0-or-later` and Copyright © 2021 Mani <infinyte01@gmail.com>.
+`AnkiDroidJsAPIConstants.kt` carries its GPL license notice and Copyright
+© 2020 Mani <infinyte01@gmail.com>. The Dart adaptation and focused test are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` is
+unchanged.
+
+## Card type name value
+
+`lib/src/card_type_name.dart` adapts `CardTypeName` from
+`AnkiDroid/src/main/java/com/ichi2/anki/notetype/CardTypeName.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It retains
+the private constructor and `fromString(value)` factory, trims with Kotlin
+`String.trim()` whitespace rules, compares retained strings with Kotlin/JVM
+`String.equals(ignoreCase = true)`, independently hashes the retained
+`String.lowercase()` result using Kotlin/JVM string hashing, and returns the
+trimmed spelling from `toString()`. Equality and hashing intentionally follow
+those separate source operations, including their Unicode edge behavior. The
+case-insensitive comparison uses the repository's Unicode 15 simple BMP case
+mapping tables to model the JVM's UTF-16 character comparison.
+
+The source has an SPDX `GPL-3.0-or-later` notice and no separate copyright
+line. The focused Dart cases are in `test/card_type_name_test.dart`; the pinned
+source tree has no dedicated `CardTypeName` test. Card template editing,
+duplicate-name discovery and resolution, rename UI and localization, and
+backend/persistence operations remain host-side. This wrapper does not validate
+names or impose uniqueness policy. The Dart adaptation and focused test are
+Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` is
+unchanged.
+
+## `CharSequence.ifNullOrEmpty()`
+
+`ifNullOrEmpty()` in `lib/src/char_sequence_if_null_or_empty.dart` and its
+source-derived tests in `test/char_sequence_if_null_or_empty_test.dart` adapt
+`<C : CharSequence> C?.ifNullOrEmpty(defaultValue: () -> C)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/CharSequence.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The helper
+accepts an opaque generic value and a host-provided emptiness callback, keeping
+the Kotlin `CharSequence` implementation host-side while preserving exact
+object identity for nonempty inputs and fallback results. Null skips the
+emptiness callback; a nonnull value is checked once. The fallback runs once only
+for null or empty inputs, in source order, and callback exceptions propagate
+unchanged. The pinned source declares
+`GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
+focused tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`.
+Root `COPYING` remains byte-identical.
+
+## String search normalization
+
+`normalizeForSearch()` in `lib/src/string_normalization.dart` adapts
+`String.normalizeForSearch()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/String.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It applies
+NFD, then removes only runs in the `InCombiningDiacriticalMarks` block
+(U+0300..U+036F). Focused cases in
+`test/string_normalization_test.dart` include the five direct examples from
+`StringNormalizationTest.kt`, block boundaries, decomposition that preserves marks outside the block, and
+UTF-16 surrogates. The host JVM supplies its runtime's normalization data; Dart pins
+`unorm_dart` 0.3.3 with Unicode 18.0.0 data. Marks outside the specified block
+remain. The upstream source and direct test copyrights and dependency license
+obligations are recorded in `NOTICE.md`; root `COPYING` remains unchanged.
+
+## NotetypeJson.getAllClozeTextFields
+
+`getAllClozeTextFields()` in `lib/src/notetype_cloze_text_fields.dart` adapts
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/NoteType.kt:getAllClozeTextFields()`
+at AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The pinned
+`AnkiDroid/src/test/java/com/ichi2/utils/NoteTypeTest.kt:testGetAllClozeTexts`
+provides the direct example for `type:cloze:` and `cloze:` markers. The Dart
+projection takes only the host `isCloze` flag and template question-format
+strings: it checks the cloze guard before reading the sole `qfmt`, then returns
+the regex's first capture from every non-overlapping match in source order.
+Its optional-prefix atom explicitly excludes CR, LF, NEL, LS, and PS so Dart
+matches Kotlin/JVM's default dot behavior. Rust `NotetypeJson`, JSON parsing,
+persistence, and backend access remain host-side.
+
+The non-cloze guard maps Kotlin `IllegalStateException` to Dart `StateError`.
+Dart `Iterable.single` also reports both zero and multiple formats as
+`StateError`; Kotlin `single()` uses `NoSuchElementException` for zero and
+`IllegalArgumentException` for multiple formats. This exception-class mapping
+is documented at the Dart API. `NoteType.kt` declares
+`SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright line.
+`NoteTypeTest.kt` is Copyright © 2024 Ashish Yadav and marked
+`GPL-3.0-or-later`. The Dart adaptation and focused tests are Copyright © 2026
+John Tsui under `GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
+## `Translations.cardStatsNoCardClean()`
+
+`cardStatsNoCardClean()` in `lib/src/card_stats_no_card_clean.dart` adapts
+`Translations.cardStatsNoCardClean()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Translations.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes
+the host callback that supplies `cardStatsNoCard()` exactly once, then applies
+the source character class `[().]` globally, removing only literal ASCII
+parentheses and periods. All other characters, whitespace, and line breaks are
+preserved, and callback exceptions propagate unchanged. Android translation
+resource loading remains host-side. No direct pinned test for this extension
+was found; source-derived cases are in
+`test/card_stats_no_card_clean_test.dart`. The Kotlin file declares
+`GPL-3.0-or-later` and Copyright © 2025 lukstbit
+<52494258+lukstbit@users.noreply.github.com>; the Dart adaptation and focused
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical.
+
+## InputStream text conversion
+
+`lib/src/input_stream_convert_to_string.dart` adapts
+`InputStream.convertToString()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/InputStream.kt` at AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the
+source order: create the reader inside the try block, read and append each line
+without separators, close after EOF, then publish the accumulated text. An
+exception before publication discards all partial text. Kotlin's Java
+`Exception` catch maps here to Dart `Exception`; warning callback failures and
+Dart `Error` values propagate. The host supplies the Android
+`InputStreamReader`/`BufferedReader`, default charset and 4096-character buffer,
+byte decoding, stream closing, and Timber warning behavior. No direct pinned
+test for this method was found. The Kotlin file declares
+`SPDX-License-Identifier: GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
+## `MutableStateFlow<T>.asVar()`
+
+`MutableValue<T>`, `StateFlowVarDelegate<T>`, and `asVar()` in
+`lib/src/state_flow_var_delegate.dart` adapt `MutableStateFlow<T>.asVar()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/MutableStateFlow.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Each
+`asVar()` call allocates a delegate retaining the exact mutable host object;
+reads return that object's current `value`, and writes assign the supplied
+value once. Kotlin's receiver and property metadata are accepted but ignored.
+Dart has no Kotlin `by` syntax, so callers use `getValue()` and `setValue()`
+explicitly. `MutableStateFlow` itself, emissions, conflation, dispatch, saved
+state, Android ViewModels, and lifecycle behavior remain host-side. Focused
+coverage is in `test/state_flow_var_delegate_test.dart`. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## `ReviewDeckDestination.toIntent(context)`
+
+`ReviewDeckDestination.currentDeck` and
+`ReviewDeckDestination.externalLaunch(deckId)` in
+`lib/src/review_deck_destination.dart` adapt the `CurrentDeck` singleton and
+`ExternalLaunch(deckId)` variant from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/ReviewDeckDestination.kt:10–26`,
+and `toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/ReviewDeckDestination.kt:11–19`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. `CurrentDeck` delegates once to the
+host `Reviewer.getIntent(context)` and returns its exact Intent. `ExternalLaunch`
+creates one `IntentHandler` Intent, sets `Intent.ACTION_VIEW`, writes the exact
+DeckId under `IntentHandler.EXTRA_DECK_ID`, then returns that same Intent; zero
+and negative IDs are preserved. Callback failures propagate unchanged and stop
+later operations. Reviewer screen selection, preferences, Activity selection,
+Android Context, and Intent behavior remain host-side. Focused source-derived
+tests in `test/review_deck_destination_test.dart` cover variant values, callback
+order and identity, edge IDs, and failure short circuits. No direct pinned test
+for these `toIntent` branches was found. Both Kotlin files declare
+`GPL-3.0-or-later` and have no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## `Scheduler.answerCard(card, states, rating)`
+
+`lib/src/scheduler_answer_card.dart` and its focused cases in
+`test/scheduler_answer_card_test.dart` adapt the extension
+`Scheduler.answerCard(card, states, rating)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Scheduler.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+projection invokes the host answer builder before reading the recorded-answer
+counter, increments once using signed 32-bit Kotlin `Int` wrap semantics, writes
+once, and returns the exact answer object. Builder, getter, and setter failures
+propagate in that source order. Scheduler, card/state/rating types, answer
+construction, and the backend remain host-side. `Scheduler.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line; the Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## `FragmentActivity.setFragmentResultListener(requestKey, listener)`
+
+`fragmentActivitySetFragmentResultListener()` in
+`lib/src/fragment_activity_set_fragment_result_listener.dart` adapts
+`FragmentActivity.setFragmentResultListener(requestKey, listener)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/FragmentResult.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves
+the current support FragmentManager once, then forwards the exact request key,
+activity receiver as lifecycle owner, and listener callback in source order.
+The adapter returns Dart `void`, corresponding to the Kotlin extension's
+`Unit`; callback failures propagate unchanged and stop later work. Android
+FragmentActivity, FragmentManager, Bundle, AndroidX lifecycle, and actual
+result delivery remain host-side. No direct pinned test was found; focused
+source-derived coverage is in
+`test/fragment_activity_set_fragment_result_listener_test.dart`. The Kotlin
+source declares `GPL-3.0-or-later` and Copyright © 2025 lukstbit
+<52494258+lukstbit@users.noreply.github.com>. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
+## `Fragment.isCompactWidth`
+
+`fragmentIsCompactWidth()` in `lib/src/fragment_is_compact_width.dart` adapts
+`Fragment.isCompactWidth` from
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Fragment.kt:26–47`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It obtains
+the host Fragment's `screenWidthDp` once and returns whether that value is
+strictly below 600. The required callback represents
+`requireContext().resources.configuration.screenWidthDp`; no fallback or
+clamping is added, and callback failures propagate unchanged. Android Fragment,
+Context, Resources, Configuration, and lifecycle remain host-side. No direct
+pinned test was found; focused source-derived tests are in
+`test/fragment_is_compact_width_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+## `LauncherDestination.toIntent(context)`
+
+`LauncherDestination.instance.toIntent()` in
+`lib/src/launcher_destination_to_intent.dart` adapts
+`LauncherDestination.toIntent(context)` from
+`AnkiDroid/src/main/java/com/ichi2/anki/LauncherDestination.kt:9–14`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It creates one host Intent with the
+exact supplied context and target token, then sets the supplied action token,
+adds the supplied category token, and returns the identical Intent. Callback
+failures propagate unchanged and stop subsequent operations. The host supplies
+the equivalent of `IntentHandler::class.java`, `Intent.ACTION_MAIN`, and
+`Intent.CATEGORY_LAUNCHER`; it does not add flags or resolve or change the
+component. Android Intent semantics and launcher handling remain host-side. No
+direct pinned test for this method was found; focused source-derived cases are in
+`test/launcher_destination_to_intent_test.dart`. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate source copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## `ChangelogDestination.toIntent(context)`
+
+`ChangelogDestination.instance.toIntent()` in
+`lib/src/changelog_destination_to_intent.dart` adapts the common singleton
+`ChangelogDestination` from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/ChangelogDestination.kt:6`
+and its `toIntent(context)` projection from
+`AnkiDroid/src/main/java/com/ichi2/anki/InfoDestination.kt:10`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It delegates once to the host
+Intent builder with the exact supplied context and `Info::class.java` token,
+then returns the exact callback result; callback failures propagate unchanged.
+Android Context, the Info activity class, Intent construction, and Intent
+behavior remain host-side. Focused source-derived tests in
+`test/changelog_destination_to_intent_test.dart` cover singleton identity,
+exact token and result identity, one callback invocation, and unchanged failure
+propagation. No direct pinned test for this projection was found. The Kotlin
+sources declare `GPL-3.0-or-later` and have no separate copyright line; this
+identifies upstream provenance and does not claim authorship of the Dart
+adaptation. The Dart implementation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
+## `BrowserDestination.toIntent(context)`
+
+`lib/src/browser_destination.dart` and its source-derived cases in
+`test/browser_destination_test.dart` adapt the four variants defined by
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/BrowserDestination.kt:8–35`
+and their `toIntent(context)` projection in
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserDestination.kt:10–27`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter creates a host
+`CardBrowser` Intent for each call. `Open` adds no extras; `ToDeck` writes the
+exact deck ID once; `ScrollToCard` writes deck ID then card ID; `Search` writes
+the exact query then its Boolean all-decks value. Values such as empty queries,
+zero and negative IDs pass through unchanged, callback order matches the source,
+and a callback failure stops subsequent operations. Android Context, Intent,
+`CardBrowser`, extra keys, typed writes, and Intent semantics remain host-side.
+Both Kotlin source files declare `GPL-3.0-or-later` and have no separate
+copyright line. This provenance identifies the Kotlin sources; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
+## `PreferencesDestination.toIntent(context)`
+
+`PreferencesDestination` and `toIntent()` in
+`lib/src/preferences_destination.dart` adapt the three variants from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/PreferencesDestination.kt:6–18`
+and their projection in
+`AnkiDroid/src/main/java/com/ichi2/anki/preferences/PreferencesDestination.kt:11–18`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Root delegates once to the host
+root preferences Intent builder without a screen token. Advanced and
+Accessibility delegate once to the host screen builder with the exact
+`AdvancedSettingsFragment` and `AccessibilitySettingsFragment` class tokens,
+respectively. Each branch returns the exact host result, and callback failures
+propagate unchanged. Android Context, PreferencesActivity, fragment classes,
+and Intent behavior remain host-side. Focused source-derived cases are in
+`test/preferences_destination_test.dart`; the pinned Kotlin files have no
+separate copyright line. This provenance identifies the upstream Kotlin
+sources and does not claim authorship of the Dart adaptation. The Dart
+implementation and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
+## Study options and statistics destination Intents
+
+`StudyOptionsDestination` and `StatisticsDestination` in
+`lib/src/study_options_destination_to_intent.dart` and
+`lib/src/statistics_destination_to_intent.dart` adapt the common singleton
+objects from
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/StudyOptionsDestination.kt:6`
+and
+`anki-common/src/main/kotlin/com/ichi2/anki/common/destinations/StatisticsDestination.kt:6`,
+respectively, pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Their host projections are
+`AnkiDroid/src/main/java/com/ichi2/anki/StudyOptionsDestination.kt:10` and
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/StatisticsDestination.kt:11`.
+Study Options calls the host equivalent of `Intent(context,
+StudyOptionsActivity::class.java)`; Statistics calls the distinct host
+equivalent of `SingleFragmentActivity.getIntent(context,
+fragmentClass = Statistics::class)`. Both adapters pass the exact Context and
+target token once, return the exact host result, and propagate callback failures
+unchanged. Android Context, target classes, Activity, and Intent construction
+remain host-side. Focused source-derived cases are in
+`test/screen_destinations_test.dart`. Upstream integration coverage includes
+`AnkiDroid/src/test/java/com/ichi2/anki/pages/StatisticsTest.kt:33–64` and
+`AnkiDroid/src/test/java/com/ichi2/anki/reviewreminders/ReviewRemindersScreenshotTest.kt:138,278,303`;
+no direct pinned test for either host `toIntent` projection was found. The Kotlin
+sources declare `GPL-3.0-or-later` and have no separate copyright line; this
+records upstream provenance and does not claim authorship of the Dart
+adaptations. The Dart implementations and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

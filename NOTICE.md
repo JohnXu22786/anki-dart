@@ -1291,16 +1291,22 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   The pinned
   `AnkiDroid/src/test/java/com/ichi2/anki/jsaddons/AddonModelTest.kt` is
   Copyright © 2021 Mani <infinyte01@gmail.com> and marked
-  `GPL-3.0-or-later`. The Dart cases in `test/addon_model_test.dart` port its
-  direct pure missing-name, missing-keywords, missing-version, invalid-type,
-  missing-`dist`, and absent-optional-metadata checks and cover successful
-  parsed-data projection. JSON-file valid/invalid mapping, unreadable-file
+  `GPL-3.0-or-later`; its `test-js-addon.json` list fixture supplies two valid
+  entries. The Dart cases in `test/addon_model_test.dart` port the direct pure
+  missing-name, missing-keywords, missing-version, invalid-type, missing-`dist`,
+  and absent-optional-metadata checks and cover successful projection.
+  `getAddonModelListFromAddonData()` in `lib/src/addon_model.dart` adapts the
+  list method's iteration over constructed `AddonData`: it preserves valid
+  model order, invokes one host callback with each invalid item's ordered error
+  list, and aggregates those errors in source order. The list cases in
+  `test/addon_model_list_test.dart` cover mixed fixture input, logging order,
+  empty input, and callback failure. JSON-file mapping, unreadable-file
   handling, URL-list loading, JSON decoding/unknown-key behavior, directory
-  listing, URL parsing/fetching, HTTP, Timber listing logs, and filesystem
-  handling remain host-side; `getAddonModelFromJson()` and
-  `getAddonModelListFromJson()` are not ported. The adaptation and focused test
-  are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING`
-  remains byte-identical.
+  listing, URL parsing/fetching, HTTP, Timber implementation, and filesystem
+  handling remain host-side. The IO/serialization wrappers
+  `getAddonModelFromJson()` and `getAddonModelListFromJson()` are not ported.
+  The adaptation and focused tests are Copyright © 2026 John Tsui and marked
+  `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
 - `AnkiDroid/src/main/java/com/ichi2/anki/analytics/AnalyticsSamplePercentage.kt:1–38`
   (pinned AnkiDroid 2.25.3 commit

@@ -1,5 +1,33 @@
 # AnkiDroid source baseline
 
+## Add-on list validation
+
+`getAddonModelListFromAddonData()` in `lib/src/addon_model.dart` adapts the
+iteration and validation part of `getAddonModelListFromJson()` in
+`AnkiDroid/src/main/java/com/ichi2/anki/jsaddons/AddonData.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It accepts
+already constructed `AddonData` values, calls the existing per-add-on
+projection once per input in order, collects valid models in that order, and
+calls the host logger once per invalid item with its ordered errors before
+appending those errors to the aggregate list. Existing validation and callback
+exceptions are preserved. JSON decoding, file reads, URL parsing/fetching,
+HTTP, and the Timber implementation remain host-side; the
+`getAddonModelFromJson()` and `getAddonModelListFromJson()` IO wrappers are not
+ported.
+
+The direct source test is
+`AnkiDroid/src/test/java/com/ichi2/anki/jsaddons/AddonModelTest.kt`, pinned to
+the same commit, with the two-entry `test-js-addon.json` fixture under
+`AnkiDroid/src/test/resources`. Its list test verifies the valid models' order
+and tarball URLs. `test/addon_model_list_test.dart` exercises those fixture
+values with invalid items interleaved, ordered aggregated errors and callbacks,
+empty input, and callback failure. The Kotlin source declares
+`GPL-3.0-or-later` and Copyright © 2021 Mani <infinyte01@gmail.com>; its test is
+Copyright © 2021 Mani <infinyte01@gmail.com> and marked `GPL-3.0-or-later`.
+The Dart adaptation and focused tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See `NOTICE.md` for the
+complete source and test attributions.
+
 ## `MapUtil.getKeyByValue`
 
 `lib/src/map_util.dart` and `test/map_util_get_key_by_value_test.dart` adapt

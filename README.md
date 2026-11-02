@@ -615,10 +615,14 @@ encoding, and logging.
 The focused Dart tests port the direct pure cases in
 `AddonModelTest.kt` for missing name, keywords and version, invalid add-on type,
 missing registry `dist`, and absent optional metadata, plus valid projection
-semantics. Manifest file reads and JSON decoding, unknown-key handling,
-directory listing, URL parsing/fetching, HTTP, listing logs, and filesystem
-errors remain host-side; JSON-file and URL-list integration tests are not
-ported. `lib/src/ankidroid_js_api_constants.dart` also preserves the source JS
+semantics. `getAddonModelListFromAddonData()` also preserves the source's
+ordered validation of already constructed data, collecting valid models and
+errors and invoking one host callback per invalid add-on. The direct list test's
+two valid fixture entries retain their order and tarball URLs. Manifest file
+reads and JSON decoding, unknown-key handling, directory listing, URL
+parsing/fetching, HTTP, Timber logging, and filesystem errors remain host-side;
+the JSON and URL wrapper `getAddonModelListFromJson()` is not ported.
+`lib/src/ankidroid_js_api_constants.dart` also preserves the source JS
 API error codes (including `BURT_NOTE`), current/minimum version `0.0.3`, and
 ordered flag-name to `ViewerCommand` table. It represents enum values only;
 Android WebView/JS bridge execution, dispatch, localization, version parsing,

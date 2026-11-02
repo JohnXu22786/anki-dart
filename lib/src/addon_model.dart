@@ -286,6 +286,42 @@ AddonValidationResult getAddonModelFromAddonData(
   );
 }
 
+/// Validates already decoded add-on data in input order.
+///
+/// The host supplies the same callbacks as [getAddonModelFromAddonData] and a
+/// callback that logs each invalid add-on's complete ordered error list. JSON
+/// decoding and file or network access remain host-side. Callback exceptions
+/// propagate.
+({List<AddonModel> addonModels, List<String> errors})
+getAddonModelListFromAddonData(
+  Iterable<AddonData> addons, {
+  required String Function(String value) lowercase,
+  required String Function(String value) urlEncode,
+  required void Function(String message) logInfo,
+  required void Function(List<String> errors) logInvalidAddon,
+}) {
+  final addonModels = <AddonModel>[];
+  final aggregateErrors = <String>[];
+
+  for (final addon in addons) {
+    final result = getAddonModelFromAddonData(
+      addon,
+      lowercase: lowercase,
+      urlEncode: urlEncode,
+      logInfo: logInfo,
+    );
+    switch (result) {
+      case AddonValidationResultValid(:final addonModel):
+        addonModels.add(addonModel);
+      case AddonValidationResultInvalid(errors: final addonErrors):
+        logInvalidAddon(List<String>.unmodifiable(addonErrors));
+        aggregateErrors.addAll(addonErrors);
+    }
+  }
+
+  return (addonModels: addonModels, errors: aggregateErrors);
+}
+
 bool _isNullOrBlank(String? value) =>
     value == null || trimKotlinWhitespace(value).isEmpty;
 

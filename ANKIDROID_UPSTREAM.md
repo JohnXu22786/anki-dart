@@ -1,5 +1,22 @@
 # AnkiDroid source baseline
 
+## `MapUtil.getKeyByValue`
+
+`lib/src/map_util.dart` and `test/map_util_get_key_by_value_test.dart` adapt
+`MapUtil.getKeyByValue()` from
+`AnkiDroid/src/main/java/com/ichi2/utils/MapUtil.kt` and its direct test
+`AnkiDroid/src/test/java/com/ichi2/utils/MapUtilTest.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The helper scans the
+host map's entries in iteration order, compares using `requestedValue ==
+entry.value`, and returns the first key or null. This preserves the source's
+comparison direction and first-match behavior; null values match null values,
+while a matched null key and no match both return null. Focused cases cover a
+match, a miss, duplicate values, nullable entries, and asymmetric equality.
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See `NOTICE.md` for
+attribution details.
+
 ## `OnlyOnce` execution guards
 
 `lib/src/only_once.dart` and `test/only_once_test.dart` adapt the ordered

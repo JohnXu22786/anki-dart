@@ -71,6 +71,7 @@ export 'src/int_clamp.dart';
 export 'src/int_if_not_zero.dart';
 export 'src/mutable_list.dart';
 export 'src/list_index_of_or_null.dart';
+export 'src/map_util.dart';
 export 'src/whole_and_fraction.dart';
 export 'src/card_stats_no_card_clean.dart';
 export 'src/database_check_projection.dart';

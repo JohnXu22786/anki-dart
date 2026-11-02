@@ -4,6 +4,22 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Find a map key by value
+
+`getKeyByValue()` in [`lib/src/map_util.dart`](lib/src/map_util.dart) adapts
+`MapUtil.getKeyByValue()` from
+`AnkiDroid/src/main/java/com/ichi2/utils/MapUtil.kt` in AnkiDroid 2.25.3. It
+scans map entries in host iteration order, compares the requested value to each
+entry value, and returns the first matching key or `null`. Nullable values are
+compared normally; a matched null key and no match both return `null`. Focused
+source-derived cases are in
+[`test/map_util_get_key_by_value_test.dart`](test/map_util_get_key_by_value_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and attribution details.
+
 ## OnlyOnce execution guards
 
 `OnlyOnce` and `RunOnlyOnce` in [`lib/src/only_once.dart`](lib/src/only_once.dart)

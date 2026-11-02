@@ -8,6 +8,26 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## Database check progress and result projection
+
+`projectDatabaseCheckProgress()` and `databaseCheckResultMessage()` in
+`lib/src/database_check_projection.dart` adapt the progress extraction and
+completion-message branches from
+`AnkiDroid/src/main/java/com/ichi2/anki/DatabaseCheck.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Absence of a database-check event
+returns no progress update; a present event copies the stage and creates an
+amount from the unmodified current/total values only when total is positive.
+Problem messages are joined in order with exactly one line feed when present;
+otherwise the host-localized rebuilt message is requested once and passed
+through unchanged. `Collection.fixIntegrity()`, generated progress objects,
+async task/cancellation/progress context, collection access, localization,
+message dialog, lifecycle, and UI remain host-side. No direct pinned
+`DatabaseCheck.kt` test was found; focused Dart cases in
+`test/database_check_projection_test.dart` are source-derived. The Kotlin file
+identifies Copyright (c) 2022 Ankitects Pty Ltd. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under GPL-3.0-or-later; root `COPYING` remains
+byte-identical. See `NOTICE.md` for attribution details.
+
 ## `AnimationPreferences`
 
 `AnimationPreferences` in `lib/src/animation_preferences.dart` adapts
@@ -1382,6 +1402,10 @@ rolled back.
 | `AnkiDroid/src/main/java/com/ichi2/anki/instantnoteeditor/InstantEditorViewModel.kt` (`setClozeFieldText`, `getClozeOrdinals`, `toggleClozeMode`, `buildClozeText`, `getCleanClozeWords`, `getWordClozeNumber`, `getWordsFromFieldText`, `combineWordsWithPunctuation`, `processClozeUndo`, `shouldResetClozeNumber`, increment/decrement; pinned source `d9bf072f814a0c37d30a694192593b31ff2df875`), plus `InstantEditorViewModelTest.kt` and `InstantEditorViewModelParameterizedTest.kt` | `InstantEditorClozeState` and `ClozeNumberMode` in `lib/src/instant_editor_cloze_state.dart`; focused cases in `test/instant_editor_cloze_state_test.dart` | Preserves nullable field text, source-order duplicate ordinals, first cloze-number match anywhere in a word with Kotlin `toIntOrNull` limits, mode-dependent counters, toggle adjustments, source-order full cloze matches, JVM ASCII `\\s` splitting and `trim()` whitespace, `clozeEncountered` punctuation merging, source regex group-boundary quirks, string interpolation behavior, clean-cloze replacement over all matches, undo/removal list updates, and Kotlin Int overflow/`toInt()` failures. Note/collection changes, undoable save, UI/selection, Android StateFlow/lifecycle, fields and localization remain host-side. |
 
 ## Remaining coverage gaps
+
+The host still owns database integrity repair and its generated progress event,
+async task/cancellation/progress UI, collection access, localization, completion
+dialog, lifecycle, and UI; only the progress/result projections are mapped here.
 
 Card Template Editor state values and transitions are mapped above, but the host integration remains outside this Dart port: actual MutableStateFlow publication, Timber diagnostics, ReportableException construction/conversion, Android lifecycle, template loading/saving, rendering, and UI. No direct pinned ViewModel tests were found; the Dart tests are source-derived.
 

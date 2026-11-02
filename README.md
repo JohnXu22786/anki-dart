@@ -4,6 +4,26 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Database check progress and result projection
+
+`projectDatabaseCheckProgress()` and `databaseCheckResultMessage()` in
+[`lib/src/database_check_projection.dart`](lib/src/database_check_projection.dart)
+adapt the progress and completion-message branches from
+`AnkiDroid/src/main/java/com/ichi2/anki/DatabaseCheck.kt` in AnkiDroid 2.25.3.
+An absent progress event returns no update; a present event keeps its stage and
+includes its raw current/total amount only for a positive total. Nonempty
+problems are joined in order with one line feed; an empty list requests the
+localized rebuilt message once. Integrity repair, generated progress objects,
+task/cancellation handling, collection access, localization, dialog, lifecycle,
+and UI remain host-side. Focused source-derived cases are in
+[`test/database_check_projection_test.dart`](test/database_check_projection_test.dart);
+no direct pinned `DatabaseCheck.kt` test was found. The source declares
+Copyright (c) 2022 Ankitects Pty Ltd and the repository's GPL-3.0-or-later
+license applies. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under GPL-3.0-or-later; root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and coverage details.
+
 ## Card Browser search-history Loading conversion
 
 `convertBrowserSearchHistoryLoading()` in

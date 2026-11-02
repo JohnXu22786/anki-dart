@@ -71,6 +71,7 @@ export 'src/mutable_list.dart';
 export 'src/list_index_of_or_null.dart';
 export 'src/whole_and_fraction.dart';
 export 'src/card_stats_no_card_clean.dart';
+export 'src/database_check_projection.dart';
 export 'src/card_info_destination.dart';
 export 'src/image_view_set_image_drawable_safe.dart';
 export 'src/input_stream_convert_to_string.dart';

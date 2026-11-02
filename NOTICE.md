@@ -1,3 +1,22 @@
+## Database check progress and result projection
+
+`lib/src/database_check_projection.dart` and
+`test/database_check_projection_test.dart` adapt the progress-stage and
+completion-message branches from
+`AnkiDroid/src/main/java/com/ichi2/anki/DatabaseCheck.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. An absent progress
+event produces no update; a present event preserves its stage and only emits
+the raw current/total amount when total is positive. Nonempty problem messages
+are joined in source order with one line feed; otherwise the localized rebuilt
+message callback is called once and its result or failure passes through
+unchanged. The host retains integrity repair, generated progress objects,
+async task/cancellation/progress context, collection access, localization,
+message dialog, lifecycle, and UI. No direct pinned `DatabaseCheck.kt` test was
+found; focused Dart cases are source-derived. The Kotlin file identifies
+Copyright (c) 2022 Ankitects Pty Ltd; the root project license is
+GPL-3.0-or-later. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains unchanged.
+
 ## Deck-picker version preference orchestration
 
 `lib/src/deck_picker_previous_version.dart` and

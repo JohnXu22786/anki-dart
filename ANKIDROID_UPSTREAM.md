@@ -2331,3 +2331,19 @@ storage, accessors, and exceptions; no JSON.org implementation code is copied.
 The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
 line. The Dart adaptation and test are Copyright © 2026 John Tsui under
 GPL-3.0-or-later. Root `COPYING` remains byte-identical.
+
+## JSON property delegates
+
+`lib/src/json_property_delegates.dart` and
+`test/json_property_delegates_test.dart` adapt the six property delegates and
+`JSONObjectHolder` factory extensions from `common/src/main/java/com/ichi2/anki/common/json/JSONContainer.kt`, pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+The Dart API exposes `getValue` and `setValue` because Dart has no Kotlin `by`
+property syntax; receiver and property metadata are ignored. Each scalar getter
+uses its typed `get*` operation when fallback is null and its `opt*` operation
+with the exact fallback otherwise. All scalar setters call host `put` once;
+the array delegate uses `getJSONArray` and `put`. Host JSON conversion and
+failure behavior remain host-owned. No direct pinned tests for these delegates
+were found, so the focused Dart tests are source-derived. The source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under GPL-3.0-or-later. No JSON.org
+implementation code is copied. Root `COPYING` remains byte-identical.

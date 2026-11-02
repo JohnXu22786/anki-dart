@@ -439,3 +439,4 @@ export 'src/json_array_adapters.dart';
 export 'src/json_container.dart';
 export 'src/time_utils.dart';
 export 'src/named_json_comparator.dart';
+export 'src/json_property_delegates.dart';

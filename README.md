@@ -3953,6 +3953,26 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+## JSON property delegates
+
+[`lib/src/json_property_delegates.dart`](lib/src/json_property_delegates.dart)
+adapts the six typed property delegates and `JSONObjectHolder` factories from
+AnkiDroid 2.25.3 `JSONContainer.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Since Dart has no Kotlin `by`
+property syntax, callers use `getValue` and `setValue`; the receiver and
+property metadata are ignored. The host supplies typed JSON reads, optional
+reads, and writes, preserving its conversions and errors. Scalar delegates use
+the `opt*` read only when a non-null fallback was supplied; every setter calls
+`put` once with the retained object, key, and assigned value. The array delegate
+uses `getJSONArray` and `put`. Focused source-derived tests are in
+[`test/json_property_delegates_test.dart`](test/json_property_delegates_test.dart);
+no direct pinned delegate tests were found. The Kotlin source declares
+`GPL-3.0-or-later` with no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. No JSON.org
+implementation code is copied, and root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
 ## Common time utilities
 
 [`lib/src/time_utils.dart`](lib/src/time_utils.dart) adapts the portable

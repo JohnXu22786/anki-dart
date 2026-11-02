@@ -4253,3 +4253,15 @@ line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
 same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
+
+## Combined exception message projection
+
+[`CombinedExceptionProjection`](lib/src/combined_exception_projection.dart)
+ports the message and ordered-value projection from AnkiDroid 2.25.3
+`CombinedException.kt`. A non-null override wins unchanged; otherwise the
+formatter runs once per exception in source order, or host-projected messages
+fall back to Java simple class names only when null. `from()` preserves value
+order and joins labels, including empty labels. The host retains exception
+objects and any actual platform `CombinedException`. Source-derived tests are in
+[`test/combined_exception_projection_test.dart`](test/combined_exception_projection_test.dart);
+no direct pinned test was found. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).

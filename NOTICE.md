@@ -3938,3 +3938,15 @@ this adaptation. No direct pinned test was found, so the focused Dart tests are
 source-derived. The Kotlin source declares `GPL-3.0-or-later` and has no
 separate copyright line. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Combined exception message projection
+
+`lib/src/combined_exception_projection.dart` and
+`test/combined_exception_projection_test.dart` adapt the message and ordered
+exception-value projection from
+`AnkiDroid/src/main/java/com/ichi2/anki/exception/CombinedException.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart projection and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

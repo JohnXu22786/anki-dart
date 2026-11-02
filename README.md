@@ -4,6 +4,23 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## OnlyOnce execution guards
+
+`OnlyOnce` and `RunOnlyOnce` in [`lib/src/only_once.dart`](lib/src/only_once.dart)
+project the ordered guards from `AnkiDroid/src/main/java/com/ichi2/anki/utils/OnlyOnce.kt`
+in AnkiDroid 2.25.3. The `OnlyOnceMethod` enum retains `ANSWER_CARD` and
+`UNIT_TEST` declaration order. The host supplies job creation, active status,
+completion registration, and logging; coroutine scheduling and Timber remain
+host-side. The projection preserves the source's blocked-set behavior, callback
+order, synchronous failure behavior, and assignment after a successful launch.
+Focused source-derived tests are in [`test/only_once_test.dart`](test/only_once_test.dart);
+the pinned `OnlyOnceTest.kt` covers successful, simultaneous, exceptional, and
+sequential execution. The Kotlin source and direct test declare
+`GPL-3.0-or-later` and have no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and attribution details.
+
 ## Non-leading-zero input filter decision
 
 `nonLeadingZeroInputFilter()` in

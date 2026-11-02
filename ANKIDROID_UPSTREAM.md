@@ -1,5 +1,19 @@
 # AnkiDroid source baseline
 
+## `OnlyOnce` execution guards
+
+`lib/src/only_once.dart` and `test/only_once_test.dart` adapt the ordered
+single-execution guards from `AnkiDroid/src/main/java/com/ichi2/anki/utils/OnlyOnce.kt`
+and its direct test `AnkiDroid/src/test/java/com/ichi2/anki/utils/OnlyOnceTest.kt`,
+pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+The Dart projection preserves method declaration order, blocked-set transitions,
+logging and callback order, synchronous failure behavior, and job assignment
+after successful launch. The host supplies job state and behavior, completion
+registration, and logging; Kotlin coroutines and Timber remain host-side. Both
+Kotlin files declare `GPL-3.0-or-later` and have no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
+
 - Project: [ankidroid/Anki-Android](https://github.com/ankidroid/Anki-Android)
 - Release: `2.25.3`
 - Tag: [`v2.25.3`](https://github.com/ankidroid/Anki-Android/tree/v2.25.3)

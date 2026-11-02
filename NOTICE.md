@@ -92,6 +92,16 @@ remains byte-identical.
 
 # Notices
 
+## OnlyOnce execution guards
+
+`lib/src/only_once.dart` and `test/only_once_test.dart` adapt
+`AnkiDroid/src/main/java/com/ichi2/anki/utils/OnlyOnce.kt` and
+`AnkiDroid/src/test/java/com/ichi2/anki/utils/OnlyOnceTest.kt` from AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Both upstream files
+declare `GPL-3.0-or-later` and contain no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+The host retains coroutine scheduling and Timber logging.
+
 ## View-model progress values
 
 `lib/src/view_model_progress.dart` and `test/view_model_progress_test.dart`

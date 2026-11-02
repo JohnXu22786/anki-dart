@@ -4014,6 +4014,20 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for provenance and license details.
 
+[`systemTimeIntTimeMS()`](lib/src/system_time.dart) adapts
+`SystemTime.intTimeMS()` from
+`common/src/main/java/com/ichi2/anki/common/time/SystemTime.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies the system
+millisecond-clock callback; the adapter calls it once and returns its exact
+value, propagating failures unchanged. Focused source-derived cases are in
+[`test/system_time_int_time_ms_test.dart`](test/system_time_int_time_ms_test.dart);
+no direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and license details.
+
 ## Named JSON comparator
 
 `NamedObject` and `NamedJSONComparator.INSTANCE` in

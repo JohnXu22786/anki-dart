@@ -3670,3 +3670,16 @@ non-multiples; host read failures propagate unchanged. No direct pinned
 Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
 The Dart implementation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
+
+## `SystemTime.intTimeMS()` system clock
+
+`lib/src/system_time.dart` and `test/system_time_int_time_ms_test.dart` adapt
+`SystemTime.intTimeMS()` from
+`common/src/main/java/com/ichi2/anki/common/time/SystemTime.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host
+supplies the system millisecond-clock callback; the adapter invokes it exactly
+once, returns its exact `int` value, and propagates failures unchanged. No
+direct pinned test was found, so focused Dart cases are source-derived. The
+Kotlin source declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart implementation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

@@ -4005,3 +4005,21 @@ Milchior; the pinned direct test is Copyright © 2021 Shridhar Goel. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source mapping and license details.
+
+## Hash collection initial capacity
+
+`hashSetInit()` and `hashMapInit()` in [`lib/src/hash_util.dart`](lib/src/hash_util.dart)
+adapt `HashUtil.hashSetInit(size)` and `hashMapInit(size)` from
+`common/src/main/java/com/ichi2/anki/common/utils/HashUtil.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Both
+preserve the source's Float32 conversion and division, truncating Float-to-Int
+conversion, signed Int32 addition overflow, and minimum capacity of 16. The
+host supplies the set or map constructor callback; its capacity argument,
+returned value, and failures pass through unchanged. Java collection behavior
+remains host-side. Source-derived tests are in
+[`test/hash_util_test.dart`](test/hash_util_test.dart); no direct pinned test
+was found. The Kotlin source is GPL-3.0-or-later, Copyright © 2021 Arthur
+Milchior. The Dart adaptation and tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source mapping and license record.

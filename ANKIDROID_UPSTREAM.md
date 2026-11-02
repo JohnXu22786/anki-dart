@@ -2347,3 +2347,21 @@ were found, so the focused Dart tests are source-derived. The source declares
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under GPL-3.0-or-later. No JSON.org
 implementation code is copied. Root `COPYING` remains byte-identical.
+
+## Hash collection initial capacity
+
+Pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/utils/HashUtil.kt`
+- Direct test: none found
+- Dart adaptation: `lib/src/hash_util.dart`
+- Focused Dart test: `test/hash_util_test.dart`
+
+`hashSetInit()` and `hashMapInit()` preserve the source's shared capacity
+expression, `((size / .75f).toInt() + 1).coerceAtLeast(16)`, including Float32
+conversion/division and signed Int32 conversion/overflow behavior. Host-supplied
+callbacks construct the Java collections; no Java collection implementation is
+copied, and callback results and errors are unchanged. The source is
+GPL-3.0-or-later, Copyright © 2021 Arthur Milchior. The Dart implementation
+and tests are Copyright © 2026 John Tsui under the same license. See
+`NOTICE.md`; root `COPYING` remains byte-identical.

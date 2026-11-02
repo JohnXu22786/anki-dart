@@ -3546,3 +3546,18 @@ in `test/named_json_comparator_test.dart`. The Kotlin source is
 `common/src/test/java/com/ichi2/anki/common/json/NamedJSONComparatorTest.kt`, is
 Copyright © 2021 Shridhar Goel. The Dart adaptation and tests are Copyright ©
 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Hash collection initial capacity
+
+`lib/src/hash_util.dart` and `test/hash_util_test.dart` adapt
+`HashUtil.hashSetInit(size)` and `hashMapInit(size)` from
+`common/src/main/java/com/ichi2/anki/common/utils/HashUtil.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+adapter preserves the source's Float32 conversion/division, Float-to-Int
+truncation and saturation, signed Int32 addition overflow, and minimum capacity
+of 16. Host callbacks construct the Java set or map and retain their native
+behavior; callback results and failures pass through unchanged. No direct
+pinned test was found; the Dart tests are source-derived. The Kotlin source is
+Copyright © 2021 Arthur Milchior under GPL-3.0-or-later. The Dart implementation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

@@ -8,6 +8,26 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## View-model progress values
+
+`ProgressAmount`, `ViewModelProgressIdle`, and `ViewModelProgressActive` in
+`lib/src/view_model_progress.dart` adapt `ProgressContext.Amount` at
+`AnkiDroid/src/main/java/com/ichi2/anki/CoroutineHelpers.kt:570–630` and
+`ViewModelProgress` from
+`AnkiDroid/src/main/java/com/ichi2/anki/progress/ViewModelProgress.kt`, pinned
+to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The state preserves the
+single idle value, nullable message and amount, defaults for cancellability,
+separator and amount formatting, and value equality for active fields with
+formatter reference identity. A shared Dart default formatter preserves
+equality between default instances. Focused source-derived cases are in
+`test/view_model_progress_test.dart`; no direct pinned `ViewModelProgress` test
+was found. ProgressManager, StateFlow, ProgressContext updates/dispatch,
+ProgressDialog, byte-size formatting, lifecycle and UI remain host-side. The
+`ViewModelProgress.kt` source is Copyright © 2026 Ashish Yadav; `CoroutineHelpers.kt`
+is Copyright © 2022 Ankitects Pty Ltd; both declare GPL-3.0-or-later. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains byte-identical. See `NOTICE.md` for attribution details.
+
 ## Database check progress and result projection
 
 `projectDatabaseCheckProgress()` and `databaseCheckResultMessage()` in

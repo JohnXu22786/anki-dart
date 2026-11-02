@@ -69,6 +69,21 @@ remains byte-identical.
 
 # Notices
 
+## View-model progress values
+
+`lib/src/view_model_progress.dart` and `test/view_model_progress_test.dart`
+adapt the portable state/value contracts from
+`AnkiDroid/src/main/java/com/ichi2/anki/progress/ViewModelProgress.kt` and
+`AnkiDroid/src/main/java/com/ichi2/anki/CoroutineHelpers.kt:570–630`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The first
+source declares Copyright © 2026 Ashish Yadav; the second declares Copyright
+© 2022 Ankitects Pty Ltd. Both are GPL-3.0-or-later. No direct pinned test for
+`ViewModelProgress` was found. The Dart values and source-derived tests are
+Copyright © 2026 John Tsui under GPL-3.0-or-later. The host retains
+ProgressManager, StateFlow, ProgressContext updates and dispatch, Android
+ProgressDialog, byte-size formatting, lifecycle, and UI. Root `COPYING` remains
+unchanged.
+
 ## Reviewer mark-toggle callback operation
 
 `lib/src/reviewer_mark_toggle_operation.dart` and

@@ -4331,3 +4331,21 @@ Source-derived boundary and callback tests are in
 pinned test for these LanguageUtils methods was found. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and license details. Root `COPYING` remains unchanged.
+
+## View-model progress values
+
+[`ViewModelProgress`](lib/src/view_model_progress.dart) provides the singleton
+idle state, active message/amount/cancellability and display options, and
+structural [`ProgressAmount`](lib/src/view_model_progress.dart) values from
+AnkiDroid 2.25.3 `ViewModelProgress.kt` and `CoroutineHelpers.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Active values compare their
+fields structurally and their formatter callback by identity; the shared default
+formatter keeps default instances equal. Source-derived cases in
+[`test/view_model_progress_test.dart`](test/view_model_progress_test.dart) cover
+defaults, custom values, callback identity and formatting, singleton identity,
+and amount equality/hash. `ProgressManager`, StateFlow, ProgressContext
+updates/dispatch, Android ProgressDialog, byte-size formatting, lifecycle and UI
+remain host-side. No direct pinned `ViewModelProgress` test was found. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under GPL-3.0-or-later;
+upstream source attribution is recorded in [NOTICE.md](NOTICE.md). Root
+`COPYING` remains unchanged.

@@ -76,27 +76,29 @@ void main() {
       }
     });
 
-    test('closed-screen User updates trim text and retain the supplied filters',
-        () {
-      final filters = BrowserSearchFilters(
-        decks: [BrowserDeckNameId(name: 'Language', id: 7)],
-        flags: [1, 4],
-        tags: ['one', 'two'],
-        noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
-        cardStateCodes: [0, 2, 4],
-      );
-      final update = BrowserFilterUpdateUser(filters);
+    test(
+      'closed-screen User updates trim text and retain the supplied filters',
+      () {
+        final filters = BrowserSearchFilters(
+          decks: [BrowserDeckNameId(name: 'Language', id: 7)],
+          flags: [1, 4],
+          tags: ['one', 'two'],
+          noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
+          cardStateCodes: [0, 2, 4],
+        );
+        final update = BrowserFilterUpdateUser(filters);
 
-      final request = browserSearchRequestFromFilterUpdate(
-        text: '\u00a0\t query\u00a0 ',
-        update: update,
-        isScreenOpen: false,
-      );
+        final request = browserSearchRequestFromFilterUpdate(
+          text: '\u00a0\t query\u00a0 ',
+          update: update,
+          isScreenOpen: false,
+        );
 
-      expect(request, isNotNull);
-      expect(request!.query, 'query');
-      expect(request.filters, same(filters));
-    });
+        expect(request, isNotNull);
+        expect(request!.query, 'query');
+        expect(request.filters, same(filters));
+      },
+    );
 
     test('closed-screen User updates trim only the outer query whitespace', () {
       final filters = BrowserSearchFilters(tags: ['exact']);

@@ -4,6 +4,22 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Key selection modifier filter
+
+`disallowModifierKeyCodes()` in
+[`lib/src/key_selection_dialog_utils.dart`](lib/src/key_selection_dialog_utils.dart)
+adapts `KeySelectionDialogUtils.disallowModifierKeyCodes()` from AnkiDroid
+2.25.3. The host supplies the Android key-code values for the left and right
+Shift, Ctrl, Alt, and Meta keys plus Function. Each call snapshots those codes
+and returns a predicate that rejects only members of that snapshot. Android
+`KeyEvent`, platform constants, and UI remain host-side. Focused tests are in
+[`test/key_selection_dialog_utils_test.dart`](test/key_selection_dialog_utils_test.dart).
+The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[`ANKIIDROID_UPSTREAM.md`](ANKIIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for source mapping and attribution details.
+
 ## Find a map key by value
 
 `getKeyByValue()` in [`lib/src/map_util.dart`](lib/src/map_util.dart) adapts

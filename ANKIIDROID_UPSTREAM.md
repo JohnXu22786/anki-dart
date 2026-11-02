@@ -1,5 +1,23 @@
 # AnkiDroid upstream source record
 
+## Key selection modifier filter
+
+`disallowModifierKeyCodes()` in `lib/src/key_selection_dialog_utils.dart`
+adapts `KeySelectionDialogUtils.disallowModifierKeyCodes()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/dialogs/KeySelectionDialogUtils.kt`,
+pinned to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+The host supplies the exact Android `KeyEvent` values for SHIFT_LEFT,
+SHIFT_RIGHT, CTRL_LEFT, CTRL_RIGHT, ALT_LEFT, ALT_RIGHT, META_LEFT,
+META_RIGHT, and FUNCTION. Each factory call captures a fresh set snapshot and
+returns whether a candidate integer is absent from it. Android key events,
+platform constants, and UI remain host-side. Focused cases are in
+`test/key_selection_dialog_utils_test.dart`; the pinned upstream
+`KeyPickerTest.kt` checks modifier rejection through the UI validator, while
+the Dart tests cover the standalone predicate contract. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## Non-leading-zero input filter decision
 
 `nonLeadingZeroInputFilter()` in `lib/src/non_leading_zero_input_filter.dart`

@@ -3495,9 +3495,11 @@ parsing/validation, serialization, and execution remain host-side; no Rust
 backend code is included. Focused source-derived cases are in
 [`test/collection_build_search_string_test.dart`](test/collection_build_search_string_test.dart).
 No direct pinned tests were found for these Collection wrapper methods. The
-pinned Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
-line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
-license. Root `COPYING` remains byte-identical. See
+source is `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:924–1008`
+at AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+declares `GPL-3.0-or-later` and has no separate copyright line. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for the
 pinned source and license record.
 

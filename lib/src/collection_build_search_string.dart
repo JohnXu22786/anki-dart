@@ -48,21 +48,22 @@ collectionBuildSearchStringFromTerms<TSearchNode, TJoiner, TBackendJoiner>({
   groupSearchNodes,
   required String Function(TSearchNode node) buildSearchString,
 }) {
-  for (final value in stringsOrSearchNodes) {
+  final terms = List<Object?>.unmodifiable(stringsOrSearchNodes);
+  for (final value in terms) {
     if (value is! String && !isSearchNode(value)) {
       throw ArgumentError(
         'buildSearchString expects a list containing Strings or SearchNodes: '
-        '$stringsOrSearchNodes',
+        '$terms',
       );
     }
   }
 
-  if (stringsOrSearchNodes.isEmpty) {
+  if (terms.isEmpty) {
     throw ArgumentError('At least one entry must be provided!');
   }
 
   final nodes = List<TSearchNode>.unmodifiable(
-    stringsOrSearchNodes.map((value) {
+    terms.map((value) {
       if (value is String) {
         return searchNodeFromString(value);
       }

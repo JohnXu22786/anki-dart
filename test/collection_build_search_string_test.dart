@@ -165,6 +165,60 @@ void main() {
     });
 
     test(
+      'uses the validated snapshot if the host predicate mutates the input',
+      () {
+        final events = <String>[];
+        final firstNode = Object();
+        final lastNode = Object();
+        final firstTextNode = Object();
+        final lastTextNode = Object();
+        final grouped = Object();
+        final terms = <Object?>['tag:first', firstNode, 'tag:last', lastNode];
+
+        collectionBuildSearchStringFromTerms<Object, String, String>(
+          stringsOrSearchNodes: terms,
+          joiner: 'AND',
+          isSearchNode: (value) {
+            events.add('validate');
+            if (identical(value, firstNode)) {
+              terms[0] = 42;
+            }
+            return identical(value, firstNode) || identical(value, lastNode);
+          },
+          searchNodeFromString: (term) {
+            events.add('text:$term');
+            return term == 'tag:first' ? firstTextNode : lastTextNode;
+          },
+          toBackendJoiner: (joiner) {
+            events.add('joiner');
+            return joiner;
+          },
+          groupSearchNodes: (nodes, joiner) {
+            events.add('group');
+            expect(nodes, [firstTextNode, firstNode, lastTextNode, lastNode]);
+            return grouped;
+          },
+          buildSearchString: (node) {
+            events.add('backend');
+            expect(identical(node, grouped), isTrue);
+            return 'query';
+          },
+        );
+
+        expect(events, [
+          'validate',
+          'validate',
+          'text:tag:first',
+          'text:tag:last',
+          'joiner',
+          'group',
+          'backend',
+        ]);
+        expect(terms.first, 42);
+      },
+    );
+
+    test(
       'converts mixed terms once in order and groups with the supplied joiner',
       () {
         final events = <String>[];

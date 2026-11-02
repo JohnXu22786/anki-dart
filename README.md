@@ -4591,3 +4591,15 @@ Molotnikov, Nicolas Raoul, Flavio Lerda (2013), and Mike Hardy (2020). The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root COPYING remains byte-identical; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source attribution.
+
+## Custom note-editor toolbar button values
+
+[`CustomToolbarButton`](lib/src/custom_toolbar_button.dart) ports AnkiDroid's
+portable toolbar-button parsing, ordering, serialization, and text wrapping.
+It preserves empty trailing fields in the U+001F-separated format, Kotlin
+signed Int32 parsing and model bounds, stable ordering for duplicate indices, separator removal
+before serialization, and the toolbar's cursor/selection rules. Android toolbar
+widgets and preference storage remain host-side. Focused cases are in
+[`test/custom_toolbar_button_test.dart`](test/custom_toolbar_button_test.dart).
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and attribution details. Root `COPYING` remains byte-identical.

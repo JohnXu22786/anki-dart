@@ -4166,6 +4166,24 @@ and Robolectric flags and installs Timber trees. The Dart adaptation and tests
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 unchanged.
 
+## Custom note-editor toolbar button values
+
+`lib/src/custom_toolbar_button.dart`, the shared `TextWrapper` in
+`lib/src/math_jax_format.dart`, and `test/custom_toolbar_button_test.dart`
+adapt the portable button model from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/CustomToolbarButton.kt`,
+the `FIELD_SEPARATOR` constant from
+`libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt`, and text wrapper and
+string-format behavior from
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/Toolbar.kt` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+`CustomToolbarButton.kt` and `Toolbar.kt` declare `GPL-3.0-or-later` and have no
+separate copyright line. `Consts.kt` is Copyright (c) 2014 Houssam Salem and
+also declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Android toolbar UI, preference storage,
+and applying editor selections remain host-side. Root `COPYING` remains
+byte-identical.
+
 ## AOSP JSON string conversion
 
 `lib/src/json_to_string.dart` adapts `JSON.toString(value)` from

@@ -36,13 +36,7 @@ enum MathJaxFormat {
 
   /// Wraps [input] and computes the source-compatible selection range.
   StringFormat toTextWrapper(String input) {
-    final text = '$prefix$input$suffix';
-    final selection = input.isEmpty ? prefix.length : 0;
-    return StringFormat(
-      text,
-      selection,
-      input.isEmpty ? selection : text.length,
-    );
+    return TextWrapper(prefix, suffix).format(input);
   }
 }
 
@@ -74,4 +68,21 @@ class StringFormat {
   String toString() =>
       'StringFormat(result=$result, selectionStart=$selectionStart, '
       'selectionEnd=$selectionEnd)';
+}
+
+/// Wraps input and places the selection according to Toolbar.TextWrapper.
+class TextWrapper {
+  const TextWrapper(this.prefix, this.suffix);
+
+  final String prefix;
+  final String suffix;
+
+  StringFormat format(String input) {
+    final result = '$prefix$input$suffix';
+    if (input.isEmpty) {
+      final cursor = prefix.length;
+      return StringFormat(result, cursor, cursor);
+    }
+    return StringFormat(result, 0, result.length);
+  }
 }

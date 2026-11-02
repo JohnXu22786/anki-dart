@@ -1924,6 +1924,31 @@ line; no method-specific authorship is asserted. Localized `label()` lookup,
 toolbar UI/editor insertion, Android selection application, cursor handling, and
 Activity lifecycle remain host-side. Root `COPYING` remains byte-identical.
 
+## Custom note-editor toolbar button values
+
+`CustomToolbarButton` in `lib/src/custom_toolbar_button.dart` adapts
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/CustomToolbarButton.kt` and
+`Consts.FIELD_SEPARATOR` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves four
+field parsing, null/empty and wrong-count rejection, parse warnings, signed
+Kotlin Int32 indices at parsing and model boundaries, stable sorting of equal indices in the supplied
+iteration order, sequential reindexing, separator removal from every
+serialized field, and set deduplication. The split helper mirrors Kotlin
+`Regex.split` after `KEEP_EMPTY_ENTRIES` (-1) is coerced to 0: a trailing
+separator produces a final empty field. The pinned Kotlin stdlib version is
+2.3.21; `kotlin-stdlib` source `jvmMain/kotlin/text/regex/Regex.kt` documents
+that trailing-match behavior and its JVM `Regex.split` implementation appends
+the remaining substring, including an empty one, when a match ends at the input boundary. The source's
+`Toolbar.TextWrapper` behavior is shared with `MathJaxFormat`: empty input
+places the cursor after the prefix; nonempty input selects the complete wrapped
+text. Android toolbar UI, preference storage, and editor selection application
+remain host-side. Source-derived focused cases are in
+`test/custom_toolbar_button_test.dart`. The Kotlin files declare
+`GPL-3.0-or-later` and have no separate copyright line, except `Consts.kt`,
+which credits Houssam Salem (2014). The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## StoragePolicy folder projection
 
 `AnkiDroidFolder` and `StoragePolicy` in `lib/src/storage_policy.dart` adapt

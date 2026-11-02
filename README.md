@@ -4,6 +4,21 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Common analytics events
+
+`AnalyticsEvent` and `LinkAction` in
+[`lib/src/analytics_event.dart`](lib/src/analytics_event.dart) adapt the common
+analytics event models from AnkiDroid 2.25.3. They preserve all six event
+categories, actions, labels, nullable values, and all 29 pinned link-action
+strings. Equality follows the Kotlin data classes. Analytics dispatch and
+backends remain outside this port. Focused source-derived contract tests are in
+[`test/analytics_event_test.dart`](test/analytics_event_test.dart). The Kotlin
+source declares `GPL-3.0-or-later` and credits Mike Hardy and Ashish Yadav; the
+pinned Kotlin test credits Mrudul Tora and Ashish Yadav. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and attribution.
+
 ## Directory host-file adapter
 
 `Directory<TFile>` in [`lib/src/directory.dart`](lib/src/directory.dart) ports

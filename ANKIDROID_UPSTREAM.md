@@ -2558,3 +2558,24 @@ cover callback counts, short circuits, identity, null-list freshness, and failur
 propagation. The Kotlin source declares `GPL-3.0-or-later` and has no separate
 copyright line. The Dart implementation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
+
+## Common analytics events
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `common/src/main/java/com/ichi2/anki/common/analytics/AnalyticsEvent.kt`
+- Direct test: `common/src/test/java/com/ichi2/anki/common/analytics/AnalyticsEventTest.kt`
+- Dart adaptation: `AnalyticsEvent`, its six event types, and `LinkAction` in `lib/src/analytics_event.dart`
+- Focused Dart tests: `test/analytics_event_test.dart`
+
+The port pins every source event projection and all 29 `LinkAction` values and
+strings. It preserves nullable setting keys/values and Kotlin data-class value
+equality. The constructor data remains in `label`/`value` and does not alter
+the fixed category/action strings, except that `LinkClicked` uses the selected
+link's pinned action as in the source. Analytics event dispatch and analytics
+backends are not part of this unit. The source declares `GPL-3.0-or-later` and
+credits Mike Hardy (2018) and Ashish Yadav (2026); the direct test credits
+Mrudul Tora (2021) and Ashish Yadav (2026). These names identify the upstream
+Kotlin files only. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.

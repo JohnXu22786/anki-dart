@@ -4,6 +4,22 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Animation preferences
+
+`AnimationPreferences` in
+[`lib/src/animation_preferences.dart`](lib/src/animation_preferences.dart)
+preserves the common interface from AnkiDroid 2.25.3. Its read-only
+`removeAppAnimations` getter reports whether the user opted to remove app
+animations through accessibility settings such as “Safe display mode” / “Remove
+animations”. The host supplies this value; preference storage and Android
+accessibility APIs remain host-side. A focused contract test checks fake
+implementations returning both values; no direct pinned test for the interface
+was found. The Kotlin source declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart interface and test are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and license details.
+
 ## Common analytics events
 
 `AnalyticsEvent` and `LinkAction` in

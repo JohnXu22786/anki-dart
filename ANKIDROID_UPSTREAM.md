@@ -8,6 +8,21 @@
 - Upstream license evidence: root `COPYING` is GNU GPL version 3; adapted Kotlin
   files declare `GPL-3.0-or-later`.
 
+## `AnimationPreferences`
+
+`AnimationPreferences` in `lib/src/animation_preferences.dart` adapts
+`common/src/main/java/com/ichi2/anki/common/preferences/AnimationPreferences.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The interface exposes the
+read-only `removeAppAnimations` Boolean that reports the user's remove-app-
+animations accessibility preference. Preference storage and Android
+accessibility APIs remain host-side. No direct pinned test for this interface
+was found; `test/animation_preferences_test.dart` checks that fake host
+implementations expose both Boolean values. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart interface and
+test are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## CSV importer destination
 
 `CsvImporterDestination` in `lib/src/csv_importer_destination.dart` adapts

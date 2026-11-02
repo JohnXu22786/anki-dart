@@ -1,5 +1,19 @@
 # Notices
 
+## AnimationPreferences interface
+
+`lib/src/animation_preferences.dart` and
+`test/animation_preferences_test.dart` adapt the `AnimationPreferences`
+interface from
+`common/src/main/java/com/ichi2/anki/common/preferences/AnimationPreferences.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies the read-only
+`removeAppAnimations` value; no preference storage or Android accessibility
+implementation is included. The Kotlin source declares `GPL-3.0-or-later` and
+has no separate copyright line. The Dart interface and contract test are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## JSONArray host adapters
 
 `lib/src/json_array_adapters.dart` and `test/json_array_adapters_test.dart`

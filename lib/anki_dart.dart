@@ -447,3 +447,4 @@ export 'src/hash_util.dart';
 export 'src/time_manager.dart';
 export 'src/system_time.dart';
 export 'src/directory.dart';
+export 'src/animation_preferences.dart';

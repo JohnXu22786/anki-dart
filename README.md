@@ -4369,3 +4369,16 @@ types and their order. Dart enum `name` and `index` correspond to Kotlin
 implementations, UI and storage remain host-side. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source mapping and attribution; root `COPYING` remains unchanged.
+
+
+## Android shortcut projection
+
+[`Shortcut`](lib/src/shortcut_projection.dart) preserves the pinned
+AnkiDroid `Shortcut` value and projects shortcut strings to a host-independent
+label, key code, and modifier flags. Parsing follows `Shortcut.kt`, including
+arithmetic modifier sums and its lexicographic numeric range check before integer
+parsing. The host supplies Android constants and key-name conversion, creates
+localized labels, and constructs `KeyboardShortcutInfo`. Focused source-derived
+cases are in [test/shortcut_projection_test.dart](test/shortcut_projection_test.dart);
+see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for the source mapping and attribution. Root `COPYING` remains unchanged.

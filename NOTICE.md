@@ -4051,3 +4051,19 @@ and Copyright (c) 2013 Flavio Lerda <flerda@gmail.com>. The Dart adaptation
 and test are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. The Dart enum preserves all source names and order; multimedia
 field implementations, UI and storage remain host-side.
+
+
+## Android shortcut projection
+
+`lib/src/shortcut_projection.dart` and `test/shortcut_projection_test.dart`
+adapt `Shortcut` and `toShortcutInfo()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/android/input/Shortcut.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+source declares `GPL-3.0-or-later` and Copyright (c) 2024 Sanjay Sargam
+<sargamsanjaykumar@gmail.com>. It preserves structural equality/hash, modifier
+addition, key parsing branches and the exact final key text passed to the host
+resolver. Android constants, key-name resolution, localized labels, and
+`KeyboardShortcutInfo` construction remain host-side. The focused Dart tests are
+source-derived; no direct pinned test for `Shortcut` was found. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

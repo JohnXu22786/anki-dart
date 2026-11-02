@@ -1934,6 +1934,15 @@ Android lifecycle, StateFlow, localization, and UI.
   completion callback remains responsible. The host retains signal lifecycle,
   rendering, hook execution, collection reads and Flow publication, coroutine
   and error boundaries, media callbacks, and UI; see `ANKIDROID_UPSTREAM.md`.
+- Reviewer indicator refresh: `executeReviewerUpdateMarkIcon()` awaits the
+  current-card callback, one collection callback that resolves the card's note
+  and reads `MARKED_TAG`, then Boolean publication. The separate
+  `executeReviewerUpdateFlagIcon()` awaits the current card, reads its flag
+  synchronously, then publishes that exact value. Both preserve callback
+  failure propagation and short-circuiting. The host keeps actual card/note,
+  Collection, tag/service, Flow, and coroutine integration, and retains the
+  distinct `showQuestion`, note-text-change, and card-change call sites; see
+  [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Reviewer media replay side: `reviewerReplayMediaSide` maps the host-supplied
   `showingAnswer` value to `back` when true and `front` when false, matching the
   pinned `replayMedia()` side choice. The pinned Reviewer tests have no direct

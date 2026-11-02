@@ -2930,6 +2930,22 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   rendering, hook execution, mark/flag collection reads and Flow publication,
   Auto Advance, coroutine/error boundaries, media callbacks, and UI.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt`
+  (`updateMarkIcon` and `updateFlagIcon`, lines 569–580; pinned AnkiDroid 2.25.3
+  commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `GPL-3.0-or-later` with no separate copyright holder. Their callback order is
+  modeled by `executeReviewerUpdateMarkIcon()` and
+  `executeReviewerUpdateFlagIcon()` in
+  `lib/src/reviewer_indicator_refresh.dart`, with source-derived cases in
+  `test/reviewer_indicator_refresh_test.dart`. Mark refresh passes the exact
+  current card once to a host collection callback that resolves its note and
+  reads `MARKED_TAG` once, then publishes the exact Boolean once. Flag refresh
+  reads the current card's flag once before publishing that exact value. The
+  distinct `showQuestion`, note-text-change, and card-change call sites remain
+  host-side. Card/note/Collection access, the tag constant and service behavior,
+  Flow delivery, and coroutine scheduling also remain with the host. Root
+  `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/CardUtils.kt` contains the pure
   `getDeckIdForCard()` rule adapted in `lib/src/card_utils.dart`, with focused
   cases in `test/card_utils_test.dart`. The Kotlin file has no copyright or

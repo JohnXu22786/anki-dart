@@ -17,6 +17,30 @@ Dart cases are source-derived. `PythonExtensions.kt` declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## libanki CardTemplate JSON model
+
+`lib/src/libanki_card_template.dart` and
+`test/libanki_card_template_test.dart` adapt the JSON-backed `CardTemplate`
+from `libanki/src/main/java/com/ichi2/anki/libanki/CardTemplate.kt`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart public name
+`LibAnkiCardTemplate` distinguishes this JSON holder from the existing
+rendered-HTML `CardTemplate` in `lib/src/card_template.dart`; that renderer
+is unchanged. The adapter preserves the mutable `name`, `qfmt`, `afmt`,
+`bqfmt`, and `bafmt` keys, read-only integer `ord`, nullable `setOrd`
+using the exact host JSON NULL sentinel, one host deep clone of the exact
+`jsonObject`, and the host string, equality, and hash behavior. It adapts the
+Kotlin data-class component, copy, equality, and hash operations using only the
+JSON object as value state. JSONObject implementations, property conversion,
+NULL representation, renderer, templates UI, generated JSON/protobuf, and
+Android host remain host-side. No direct pinned test for the libanki JSON model
+was found. Pinned `AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/CardTemplateTest.kt`
+tests the separate rendered-HTML model and is not direct model coverage; focused
+Dart cases are source-derived from `CardTemplate.kt`. The Kotlin source is
+Copyright © 2024 David Allison and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## libanki Field JSON model
 
 `lib/src/libanki_field.dart` and `test/libanki_field_test.dart` adapt the

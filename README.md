@@ -144,6 +144,27 @@ remains byte-identical. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for source mapping and attribution details.
 
+## libanki CardTemplate JSON model
+
+[`LibAnkiCardTemplate`](lib/src/libanki_card_template.dart) adapts the
+JSON-backed `CardTemplate` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/CardTemplate.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Its unambiguous public name keeps
+it distinct from the existing rendered-HTML [`CardTemplate`](lib/src/card_template.dart),
+which remains unchanged. It preserves the five string keys, read-only integer
+`ord`, exact host null sentinel for `setOrd(null)`, one host deep clone, and
+host JSON string/equality/hash callbacks. JSONObject behavior and Android host,
+renderer, templates UI, and generated JSON/protobuf remain outside this model.
+No direct pinned test covers the JSON holder: the pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/cardviewer/CardTemplateTest.kt`
+tests the separate rendered-HTML class. Focused source-derived tests are in
+[`test/libanki_card_template_test.dart`](test/libanki_card_template_test.dart).
+The Kotlin source is Copyright © 2024 David Allison under `GPL-3.0-or-later`;
+the Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and attribution details.
+
 ## libanki Field JSON model
 
 [`LibAnkiField`](lib/src/libanki_field.dart) adapts `Field` from AnkiDroid

@@ -425,6 +425,7 @@ export 'src/card_template_editor_deletion_orphan_check.dart';
 export 'src/card_template_editor_deck_selection.dart';
 export 'src/tts_voice_filter_projection.dart';
 export 'src/tts_text_selection.dart';
+export 'src/template_filters.dart';
 export 'src/instant_editor_cloze_state.dart';
 export 'src/reminder_troubleshooting_state.dart';
 export 'src/profile_id.dart';

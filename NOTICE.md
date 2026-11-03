@@ -4432,3 +4432,14 @@ Timothy Rae <perceptualchaos2@gmail.com> and licensed under
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui and distributed under the same license with SPDX metadata. Root `COPYING`
 remains byte-identical.
+
+## Template filter cloze replacement constant
+
+`lib/src/template_filters.dart` adapts
+`libanki/src/main/java/com/ichi2/anki/libanki/template/TemplateFilters.kt` from
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin source is Copyright
+(c) 2020 Arthur Milchior <arthur@milchior.fr> and licensed under
+`GPL-3.0-or-later`. The Dart constant and focused test are Copyright © 2026
+John Tsui, marked with SPDX `GPL-3.0-or-later`, and distributed under the same
+license. Root `COPYING` remains byte-identical.

@@ -4821,3 +4821,15 @@ Copyright © 2026 John Tsui under the same license and include SPDX metadata.
 Root `COPYING` remains byte-identical. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for source and attribution details.
+
+## Template filter constant
+
+[`clozeDeletionReplacement`](lib/src/template_filters.dart) ports
+`TemplateFilters.CLOZE_DELETION_REPLACEMENT` from AnkiDroid 2.25.3. It exposes
+the pinned replacement text `[...]`; existing template replacement behavior is
+unchanged. The Kotlin source is Copyright © 2020 Arthur Milchior and licensed
+under `GPL-3.0-or-later`. The Dart constant and focused test are Copyright
+© 2026 John Tsui under the same license. No direct upstream test was found; the
+Dart test checks the source-declared value. Root `COPYING` remains byte-identical.
+See [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and
+[`NOTICE.md`](NOTICE.md) for source and attribution details.

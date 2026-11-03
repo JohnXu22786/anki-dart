@@ -3208,3 +3208,18 @@ Rae <perceptualchaos2@gmail.com> and declares `GPL-3.0-or-later` in its full
 license header. The Dart adaptation and focused tests are Copyright © 2026 John
 Tsui under the same license and carry SPDX metadata. Root `COPYING` remains
 byte-identical.
+
+## Template filter cloze replacement constant
+
+`lib/src/template_filters.dart` and `test/template_filters_test.dart` adapt the
+`TemplateFilters.CLOZE_DELETION_REPLACEMENT` constant from
+`libanki/src/main/java/com/ichi2/anki/libanki/template/TemplateFilters.kt` in
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The exported Dart constant
+`clozeDeletionReplacement` has the exact value `[...]`; existing inline
+replacement behavior is unchanged. The Kotlin source is Copyright (c) 2020
+Arthur Milchior <arthur@milchior.fr> and licensed under
+`GPL-3.0-or-later`. No direct source usage or test for the constant was found in
+the bounded search; the focused Dart test checks the declared value. The Dart
+adaptation and test are Copyright © 2026 John Tsui under the same license and
+carry SPDX metadata. Root `COPYING` remains byte-identical.

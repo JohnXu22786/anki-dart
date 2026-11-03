@@ -3062,3 +3062,22 @@ Copyright (c) 2020 David Allison <davidallisongithub@gmail.com> and includes a
 full GPL-3.0-or-later header without SPDX metadata. The Dart adaptation and
 focused test are Copyright © 2026 John Tsui under `GPL-3.0-or-later` and carry
 SPDX metadata. Root `COPYING` remains unchanged.
+
+## JSONArray insertion helper
+
+`JsonArrayHostAdapter.insert` in `lib/src/json_array_adapters.dart` adapts
+`fun JSONArray.insert(idx: Int, jsonObject: JSONObject)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt` in
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads `length()` for the
+append check and, when the index is smaller, reads it again before walking the
+array from the last index down through the requested index. Each shift calls
+`getJSONObject` before indexed `put`; the new object is written only after all
+shifts complete. Indices at or beyond the initial length use the one-argument
+append callback. The host owns `JSONArray`/`JSONObject`, and callback failures
+propagate unchanged. This preserves host errors for negative indices and
+non-object entries as well as earlier mutations made before a later operation
+fails. No direct pinned test for this helper was found; focused Dart tests are
+source-derived. `PythonExtensions.kt` declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.

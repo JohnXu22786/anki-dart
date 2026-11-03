@@ -4,6 +4,18 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## JSONArray insertion
+
+[`JsonArrayHostAdapter.insert`](lib/src/json_array_adapters.dart) adapts
+`JSONArray.insert` from AnkiDroid's `PythonExtensions.kt`. It keeps the source
+length checks, reverse `getJSONObject`/indexed-`put` shifts, append branch, and
+host error and partial-mutation behavior. Tests are source-derived because no
+direct pinned test was found. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line; the Dart adapter and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source record.
+
 ## Backend JSON and ByteString boundary
 
 [`BackendUtilsHostAdapter`](lib/src/backend_utils.dart) adapts AnkiDroid's

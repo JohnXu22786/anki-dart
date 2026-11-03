@@ -18,8 +18,9 @@
  * SPDX-FileCopyrightText: 2020 Arthur Milchior <arthur@milchior.fr>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from JSONArray.kt in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md.
+ * Source-derived from JSONArray.kt and PythonExtensions.kt in AnkiDroid
+ * 2.25.3; PythonExtensions.kt declares GPL-3.0-or-later without a separate
+ * copyright line. See ANKIDROID_UPSTREAM.md.
  */
 
 /// Host operations needed to adapt AnkiDroid's JSONArray extension helpers.
@@ -38,6 +39,7 @@ final class JsonArrayHostAdapter<TArray, TObject> {
     required TArray Function(TArray array, int index) getJsonArray,
     required TObject Function(TObject object) deepCloneJsonObject,
     required void Function(TArray array, Object? value) put,
+    required void Function(TArray array, int index, TObject value) putAt,
     required String Function(TArray array, int index) getString,
     required String Function(TObject object, String key) getObjectString,
   }) : _length = length,
@@ -49,6 +51,7 @@ final class JsonArrayHostAdapter<TArray, TObject> {
        _getJsonArray = getJsonArray,
        _deepCloneJsonObject = deepCloneJsonObject,
        _put = put,
+       _putAt = putAt,
        _getString = getString,
        _getObjectString = getObjectString;
 
@@ -61,8 +64,25 @@ final class JsonArrayHostAdapter<TArray, TObject> {
   final TArray Function(TArray array, int index) _getJsonArray;
   final TObject Function(TObject object) _deepCloneJsonObject;
   final void Function(TArray array, Object? value) _put;
+  final void Function(TArray array, int index, TObject value) _putAt;
   final String Function(TArray array, int index) _getString;
   final String Function(TObject object, String key) _getObjectString;
+
+  /// Adapts `JSONArray.insert()` while preserving host calls and failures.
+  void insert(TArray array, int idx, TObject jsonObject) {
+    if (idx >= _length(array)) {
+      _put(array, jsonObject);
+      return;
+    }
+
+    var pointerIndex = _length(array) - 1;
+    while (pointerIndex >= idx) {
+      _putAt(array, pointerIndex + 1, _getJsonObject(array, pointerIndex));
+      pointerIndex--;
+    }
+
+    _putAt(array, idx, jsonObject);
+  }
 
   /// Adapts `JSONArray.deepClone()` while leaving host JSON values opaque.
   TArray deepClone(TArray array) {

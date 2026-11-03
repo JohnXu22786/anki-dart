@@ -4329,3 +4329,14 @@ and focused test are Copyright © 2026 John Tsui, marked with SPDX
 distinct catchable type with no message and the exact source class name as its
 string representation. Media/file I/O and `Media.addFile` behavior remain
 host-side. Root `COPYING` remains unchanged.
+
+## JSONArray insertion helper
+
+The `JSONArray.insert` adaptation in
+`lib/src/json_array_adapters.dart` is based on
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt` from
+AnkiDroid 2.25.3, commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin file declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui and distributed under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

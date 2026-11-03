@@ -246,6 +246,130 @@ void main() {
       ]);
     });
   });
+
+  group('JsonArrayHostAdapter.insert', () {
+    test('inserts before front, middle, and end elements', () {
+      final adapter = _adapter();
+      final first = _JsonObject({'id': 'first'});
+      final middle = _JsonObject({'id': 'middle'});
+      final last = _JsonObject({'id': 'last'});
+      final inserted = _JsonObject({'id': 'inserted'});
+
+      final front = _JsonArray([first, middle, last]);
+      adapter.insert(front, 0, inserted);
+      expect(front.values, [inserted, first, middle, last]);
+
+      final interior = _JsonArray([first, middle, last]);
+      adapter.insert(interior, 1, inserted);
+      expect(interior.values, [first, inserted, middle, last]);
+
+      final end = _JsonArray([first, middle, last]);
+      adapter.insert(end, 2, inserted);
+      expect(end.values, [first, middle, inserted, last]);
+    });
+
+    test('appends when index equals or exceeds the initial length', () {
+      final calls = <String>[];
+      final adapter = _adapter(calls: calls);
+      final original = _JsonObject({'id': 'original'});
+      final inserted = _JsonObject({'id': 'inserted'});
+      final atLength = _JsonArray([original]);
+      final beyondLength = _JsonArray([original]);
+
+      adapter.insert(atLength, 1, inserted);
+      expect(atLength.values, [original, inserted]);
+      expect(calls, ['length:1', 'put:1']);
+      calls.clear();
+
+      adapter.insert(beyondLength, 3, inserted);
+      expect(beyondLength.values, [original, inserted]);
+      expect(calls, ['length:1', 'put:1']);
+    });
+
+    test('calls host operations in the source reverse-shift order', () {
+      final calls = <String>[];
+      final source = _JsonArray([
+        _JsonObject({'id': 'a'}),
+        _JsonObject({'id': 'b'}),
+        _JsonObject({'id': 'c'}),
+      ]);
+      final inserted = _JsonObject({'id': 'inserted'});
+
+      _adapter(calls: calls).insert(source, 1, inserted);
+
+      expect(calls, [
+        'length:3',
+        'length:3',
+        'getObject:2',
+        'putAt:3',
+        'getObject:1',
+        'putAt:2',
+        'putAt:1',
+      ]);
+    });
+
+    test('typed read failure preserves identity and completed shifts', () {
+      final failure = FormatException('not a JSONObject');
+      final calls = <String>[];
+      final a = _JsonObject({'id': 'a'});
+      final bad = Object();
+      final c = _JsonObject({'id': 'c'});
+      final source = _JsonArray([a, bad, c]);
+      final adapter = _adapter(
+        calls: calls,
+        getJsonObject: (array, index) {
+          calls.add('getObject:$index');
+          final value = array.values[index];
+          if (value is! _JsonObject) throw failure;
+          return value;
+        },
+      );
+
+      expect(
+        () => adapter.insert(source, 0, _JsonObject({'id': 'inserted'})),
+        throwsA(same(failure)),
+      );
+      expect(source.values, [a, bad, c, c]);
+      expect(calls, [
+        'length:3',
+        'length:3',
+        'getObject:2',
+        'putAt:3',
+        'getObject:1',
+      ]);
+    });
+
+    test('passes negative index to host typed read after retaining shifts', () {
+      final failure = RangeError.index(-1, const [], 'index');
+      final calls = <String>[];
+      final first = _JsonObject({'id': 'first'});
+      final second = _JsonObject({'id': 'second'});
+      final source = _JsonArray([first, second]);
+      final adapter = _adapter(
+        calls: calls,
+        getJsonObject: (array, index) {
+          calls.add('getObject:$index');
+          if (index < 0) throw failure;
+          return array.values[index] as _JsonObject;
+        },
+      );
+
+      expect(
+        () => adapter.insert(source, -1, _JsonObject({'id': 'inserted'})),
+        throwsA(same(failure)),
+      );
+      expect(source.values, [first, first, second]);
+      expect(calls, [
+        'length:2',
+        'length:2',
+        'getObject:1',
+        'putAt:2',
+        'getObject:0',
+        'putAt:1',
+        'getObject:-1',
+      ]);
+    });
+  });
 }
 
 final class _JsonArray {
@@ -265,6 +389,7 @@ JsonArrayHostAdapter<_JsonArray, _JsonObject> _adapter({
   Object? Function(_JsonArray, int)? get,
   _JsonObject Function(_JsonArray, int)? getJsonObject,
   _JsonArray Function(_JsonArray, int)? getJsonArray,
+  void Function(_JsonArray, int, Object?)? putAt,
   String Function(_JsonArray, int)? getString,
   String Function(_JsonObject, String)? getObjectString,
 }) => JsonArrayHostAdapter(
@@ -302,6 +427,16 @@ JsonArrayHostAdapter<_JsonArray, _JsonObject> _adapter({
     calls?.add('put:${array.values.length}');
     array.values.add(value);
   },
+  putAt:
+      putAt ??
+      (array, index, value) {
+        calls?.add('putAt:$index');
+        if (index == array.values.length) {
+          array.values.add(value);
+        } else {
+          array.values[index] = value;
+        }
+      },
   getString:
       getString ??
       (array, index) {

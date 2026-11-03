@@ -22,6 +22,8 @@
  * ANKIDROID_UPSTREAM.md.
  */
 
+import 'json_container.dart';
+
 /// Host-owned operations needed to adapt AnkiDroid's `CardTemplate` JSON model.
 ///
 /// The host retains JSONObject typed getters, `put`, its null sentinel,
@@ -52,7 +54,7 @@ final class LibAnkiCardTemplateJsonCallbacks {
 ///
 /// This is distinct from [CardTemplate], which parses and renders template
 /// HTML. The host keeps JSON access, representation, and failure semantics.
-final class LibAnkiCardTemplate {
+final class LibAnkiCardTemplate implements JSONObjectHolder {
   const LibAnkiCardTemplate({
     required this.jsonObject,
     required this.callbacks,

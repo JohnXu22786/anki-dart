@@ -49,6 +49,22 @@ behavior remain supplied by the host callbacks. The Kotlin source is Copyright
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+## libanki Fields and CardTemplates collections
+
+`lib/src/libanki_field_collections.dart` and
+`test/libanki_field_collections_test.dart` adapt the `Fields` and
+`CardTemplates` value classes from AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The collection adapters retain the
+host array and delegate wrapping, iteration, indexed access, writes, and
+available collection operations to the existing `JSONContainer` adapter. The
+source `@NotInPyLib` annotation on `CardTemplates` is source-retained metadata
+with no Dart runtime effect. No direct pinned collection tests were found; the
+Dart tests are source-derived. `Fields.kt` is Copyright © 2024 David Allison
+and declares `GPL-3.0-or-later`. `CardTemplates.kt` declares
+`GPL-3.0-or-later` without a separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## Backend stats raw wrappers
 
 `lib/src/backend_stats_raw.dart` and `test/backend_stats_raw_test.dart` adapt

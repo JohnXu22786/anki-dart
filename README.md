@@ -182,6 +182,27 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source attribution.
 
+## libanki Fields and CardTemplates collections
+
+[`LibAnkiFields` and `LibAnkiCardTemplates`](lib/src/libanki_field_collections.dart)
+adapt the `Fields` and `CardTemplates` value classes from AnkiDroid 2.25.3,
+pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`. They retain the exact
+host array, lazily wrap iterator values through their typed `Field` and
+`CardTemplate` constructors, and forward indexed access, writes, length, and
+available collection operations to `JSONContainer`. The names distinguish
+these JSON collections and `LibAnkiCardTemplate` from the rendered-HTML
+[`CardTemplate`](lib/src/card_template.dart). Source `@NotInPyLib` on
+`CardTemplates` is source-retained metadata and has no Dart runtime effect.
+Host JSONArray behavior remains supplied by callbacks. No direct pinned tests
+for either collection were found; focused source-derived cases are in
+[`test/libanki_field_collections_test.dart`](test/libanki_field_collections_test.dart).
+`Fields.kt` is Copyright © 2024 David Allison under `GPL-3.0-or-later`;
+`CardTemplates.kt` declares `GPL-3.0-or-later` without a separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source record.
+
 ## Key selection modifier filter
 
 `disallowModifierKeyCodes()` in

@@ -62,6 +62,26 @@ Copyright © 2024 David Allison and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## libanki Fields and CardTemplates collections
+
+`lib/src/libanki_field_collections.dart` and
+`test/libanki_field_collections_test.dart` adapt `Fields` and `CardTemplates`
+from `libanki/src/main/java/com/ichi2/anki/libanki/Fields.kt` and
+`CardTemplates.kt`, pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Both retain the exact source array,
+use their typed item constructor for indexed reads and lazy iteration, forward
+indexed writes and the generic `JSONContainer` operations, and preserve its
+materializing `indices` behavior. The public Dart names distinguish these
+collections and `LibAnkiCardTemplate` from the rendered-HTML `CardTemplate`.
+Source `@NotInPyLib` on `CardTemplates` is retained only in Kotlin source and
+has no Dart runtime effect. Host JSONArray iteration and JSON operations remain
+callback-owned. No direct pinned tests for either collection were found; the
+focused Dart cases are source-derived. `Fields.kt` is Copyright © 2024 David
+Allison and declares `GPL-3.0-or-later`; `CardTemplates.kt` declares
+`GPL-3.0-or-later` without a separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## Backend JSON and ByteString boundary
 
 `lib/src/backend_utils.dart` and `test/backend_utils_test.dart` adapt

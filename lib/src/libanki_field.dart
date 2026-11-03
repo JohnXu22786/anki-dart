@@ -21,6 +21,8 @@
  * Source-derived from Field.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
+import 'json_container.dart';
+
 /// Host-owned operations needed to adapt AnkiDroid's `Field` JSON holder.
 ///
 /// The host retains its JSONObject representation, typed getters, `put`, null
@@ -53,7 +55,7 @@ final class LibAnkiFieldJsonCallbacks {
 ///
 /// Property keys, mutability, and wrapper value behavior match AnkiDroid's
 /// `Field`. The host keeps JSON access and representation semantics.
-final class LibAnkiField {
+final class LibAnkiField implements JSONObjectHolder {
   const LibAnkiField({required this.jsonObject, required this.callbacks});
 
   /// The exact host JSON object retained by this field.

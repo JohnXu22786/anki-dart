@@ -18,6 +18,18 @@ adapter and tests are Copyright © 2026 John Tsui under the same license. Host
 JSON and ByteString implementations remain host-side. Root `COPYING` remains
 byte-identical.
 
+## libanki Field JSON model
+
+`lib/src/libanki_field.dart` and `test/libanki_field_test.dart` adapt
+`Field.kt` from AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. No direct pinned test for its
+property wrapper was found; the Dart cases are source-derived. JSONObject
+typed getters, puts, NULL sentinel, string conversion, equality, and hash
+behavior remain supplied by the host callbacks. The Kotlin source is Copyright
+© 2024 David Allison under `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## Backend stats raw wrappers
 
 `lib/src/backend_stats_raw.dart` and `test/backend_stats_raw_test.dart` adapt

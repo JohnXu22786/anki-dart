@@ -17,6 +17,27 @@ Dart cases are source-derived. `PythonExtensions.kt` declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## libanki Field JSON model
+
+`lib/src/libanki_field.dart` and `test/libanki_field_test.dart` adapt the
+portable `Field` wrapper from
+`libanki/src/main/java/com/ichi2/anki/libanki/Field.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The wrapper preserves
+mutable `name`, `sticky`, `font`, and `fontSize` properties at keys `name`,
+`sticky`, `font`, and `size`; read-only `ord` at key `ord`; nullable
+`imageOcclusionTag` through host `getStringOrNull("tag")`; and `setOrd(null)`
+through the exact host JSON NULL sentinel. Getter and setter callback order and
+failures pass through unchanged. The Kotlin data-class constructor property,
+copy, component, equality, and hash contracts are adapted using the host's
+object equality/hash callbacks, while `toString()` returns the host JSONObject
+string unchanged. Typed JSONObject getters, `put`, NULL representation, string
+conversion, equality, and hash implementation remain host-side. No direct
+property tests for `Field.kt` were found in the pinned libanki tests; the
+focused Dart cases are source-derived from the Kotlin source. `Field.kt` is
+Copyright © 2024 David Allison and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## Backend JSON and ByteString boundary
 
 `lib/src/backend_utils.dart` and `test/backend_utils_test.dart` adapt

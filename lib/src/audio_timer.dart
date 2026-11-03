@@ -208,6 +208,12 @@ final class AudioTimer {
     final runGeneration = ++_runGeneration;
     _sessionStartTime = _scheduler.elapsed;
     try {
+      _onTimerTick(_calculateDuration());
+      if (!_isCurrentRun(runGeneration)) return;
+      _schedule(runGeneration, _onTimerTickTick, uiTickInterval);
+      _onAudioTick();
+      if (!_isCurrentRun(runGeneration)) return;
+      _schedule(runGeneration, _onAudioTick, waveformTickInterval);
       final notificationTick = _onNotificationTick;
       if (notificationTick != null) {
         _schedule(
@@ -216,12 +222,6 @@ final class AudioTimer {
           notificationTickInterval,
         );
       }
-      _onTimerTick(_calculateDuration());
-      if (!_isCurrentRun(runGeneration)) return;
-      _schedule(runGeneration, _onTimerTickTick, uiTickInterval);
-      _onAudioTick();
-      if (!_isCurrentRun(runGeneration)) return;
-      _schedule(runGeneration, _onAudioTick, waveformTickInterval);
     } on Object {
       if (_isCurrentRun(runGeneration)) _cancelRun();
       rethrow;

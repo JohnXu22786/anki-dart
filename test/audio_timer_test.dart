@@ -123,9 +123,9 @@ void main() {
       },
     );
 
-    test('first notification deadline starts with timer run', () {
+    test('first notification waits after immediate UI and waveform ticks', () {
       final scheduler = _FakeAudioTimerScheduler();
-      var notificationTicks = 0;
+      final notificationTicks = <Duration>[];
       var initialWaveTick = true;
       final timer = AudioTimer(
         scheduler: scheduler,
@@ -140,12 +140,14 @@ void main() {
             scheduler.consume(const Duration(milliseconds: 200));
           }
         },
-        onNotificationTick: (_) => notificationTicks++,
+        onNotificationTick: notificationTicks.add,
       );
 
       timer.start();
-      scheduler.advance(const Duration(milliseconds: 700));
-      expect(notificationTicks, 1);
+      scheduler.advance(const Duration(milliseconds: 999));
+      expect(notificationTicks, isEmpty);
+      scheduler.advance(const Duration(milliseconds: 1));
+      expect(notificationTicks, [const Duration(milliseconds: 1300)]);
     });
 
     test('notification callback waits one second before repeating', () {

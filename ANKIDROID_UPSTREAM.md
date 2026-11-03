@@ -3190,3 +3190,21 @@ found; focused Dart cases are source-derived. The source declares
 `GPL-3.0-or-later` with no separate copyright line. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## `ConfirmModSchemaException`
+
+[`lib/src/confirm_mod_schema_exception.dart`](lib/src/confirm_mod_schema_exception.dart)
+and [`test/confirm_mod_schema_exception_test.dart`](test/confirm_mod_schema_exception_test.dart)
+adapt `ConfirmModSchemaException` from
+`libanki/src/main/java/com/ichi2/anki/libanki/exception/ConfirmModSchemaException.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The exception remains a distinct
+zero-argument catchable type. Its `log` method passes this exact instance once
+to a host-provided logger callback, and callback failures propagate unchanged;
+Timber and platform logging stay host-side. Pinned callers use the exception to
+signal collection schema changes; no direct pinned test for the exception class
+or its `log` method was found. The Kotlin source is Copyright (c) 2015 Timothy
+Rae <perceptualchaos2@gmail.com> and declares `GPL-3.0-or-later` in its full
+license header. The Dart adaptation and focused tests are Copyright © 2026 John
+Tsui under the same license and carry SPDX metadata. Root `COPYING` remains
+byte-identical.

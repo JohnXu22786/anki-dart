@@ -4420,3 +4420,15 @@ removal callbacks fail with `StateError` before array reads; a missing source
 string callback fails with `StateError` on a missing-object path, without
 formatting or mutation. The Dart adaptation and tests are Copyright © 2026
 John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## Confirm mod schema exception
+
+`lib/src/confirm_mod_schema_exception.dart` and
+`test/confirm_mod_schema_exception_test.dart` derive from
+`libanki/src/main/java/com/ichi2/anki/libanki/exception/ConfirmModSchemaException.kt`
+in AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source is Copyright (c) 2015
+Timothy Rae <perceptualchaos2@gmail.com> and licensed under
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui and distributed under the same license with SPDX metadata. Root `COPYING`
+remains byte-identical.

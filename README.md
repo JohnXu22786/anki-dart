@@ -4808,3 +4808,16 @@ Dart adaptation and focused test are Copyright © 2026 John Tsui under the same
 license and carry SPDX metadata. Root `COPYING` remains unchanged. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for source and attribution details.
+
+## Confirm mod schema exception
+
+[`ConfirmModSchemaException`](lib/src/confirm_mod_schema_exception.dart) is a
+no-argument, distinctly catchable exception ported from AnkiDroid 2.25.3. Its
+`log` method passes the exact exception instance once to a host logger callback;
+callback failures propagate unchanged. Timber and platform logging remain
+host-side. The pinned Kotlin source is Copyright © 2015 Timothy Rae and
+licensed under `GPL-3.0-or-later`; the Dart adaptation and focused tests are
+Copyright © 2026 John Tsui under the same license and include SPDX metadata.
+Root `COPYING` remains byte-identical. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for source and attribution details.

@@ -4355,3 +4355,19 @@ AnkiDroid 2.25.3, commit
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
 focused tests are Copyright © 2026 John Tsui and distributed under
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## JSONArray append, index, and remove helpers
+
+The `JSONArray.append`, `JSONArray.index`, and `JSONArray.remove` adaptations in
+`lib/src/json_array_adapters.dart` derive from
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt` in
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. `PythonExtensions.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. No direct pinned test for
+these extensions was found; the focused Dart tests are source-derived. Append
+calls host `put` once; index returns the first lazy match or null; remove
+removes that first match or throws with the source message when absent. Host
+callbacks own JSONObject equality, array removal, and source-compatible
+JSONObject string conversion, while preserving the host JSON representation
+and callback exceptions. The Dart adaptation and tests are Copyright © 2026
+John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

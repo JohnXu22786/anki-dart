@@ -40,6 +40,9 @@ final class JsonArrayHostAdapter<TArray, TObject> {
     required TObject Function(TObject object) deepCloneJsonObject,
     required void Function(TArray array, Object? value) put,
     required void Function(TArray array, int index, TObject value) putAt,
+    required bool Function(TObject query, TObject candidate) equalsJsonObject,
+    required void Function(TArray array, int index) removeAt,
+    required String Function(TObject object) objectToSourceString,
     required String Function(TArray array, int index) getString,
     required String Function(TObject object, String key) getObjectString,
   }) : _length = length,
@@ -52,6 +55,9 @@ final class JsonArrayHostAdapter<TArray, TObject> {
        _deepCloneJsonObject = deepCloneJsonObject,
        _put = put,
        _putAt = putAt,
+       _equalsJsonObject = equalsJsonObject,
+       _removeAt = removeAt,
+       _objectToSourceString = objectToSourceString,
        _getString = getString,
        _getObjectString = getObjectString;
 
@@ -65,8 +71,40 @@ final class JsonArrayHostAdapter<TArray, TObject> {
   final TObject Function(TObject object) _deepCloneJsonObject;
   final void Function(TArray array, Object? value) _put;
   final void Function(TArray array, int index, TObject value) _putAt;
+  final bool Function(TObject query, TObject candidate) _equalsJsonObject;
+  final void Function(TArray array, int index) _removeAt;
+  final String Function(TObject object) _objectToSourceString;
   final String Function(TArray array, int index) _getString;
   final String Function(TObject object, String key) _getObjectString;
+
+  /// Adapts `JSONArray.append(JSONObject)` with one host append call.
+  void append(TArray array, TObject jsonObject) => _put(array, jsonObject);
+
+  /// Returns the first matching object index, or `null` when none is present.
+  ///
+  /// Reads each JSONObject lazily and compares [jsonObject] on the left, as
+  /// the Kotlin extension does.
+  int? index(TArray array, TObject jsonObject) {
+    final iterator = jsonObjectIterator(array);
+    var index = 0;
+    while (iterator.hasNext()) {
+      final candidate = iterator.next();
+      if (_equalsJsonObject(jsonObject, candidate)) return index;
+      index++;
+    }
+    return null;
+  }
+
+  /// Removes the first matching object, throwing when it is absent.
+  void remove(TArray array, TObject jsonObject) {
+    final index = this.index(array, jsonObject);
+    if (index == null) {
+      throw ArgumentError(
+        'Could not find ${_objectToSourceString(jsonObject)}',
+      );
+    }
+    _removeAt(array, index);
+  }
 
   /// Adapts `JSONArray.insert()` while preserving host calls and failures.
   void insert(TArray array, int idx, TObject jsonObject) {

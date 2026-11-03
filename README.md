@@ -16,6 +16,24 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source record.
 
+## JSONArray append, index, and remove
+
+[`JsonArrayHostAdapter.append`, `.index`, and `.remove`](lib/src/json_array_adapters.dart)
+adapt the matching `JSONArray` extensions in AnkiDroid 2.25.3
+`PythonExtensions.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Append makes one host `put`
+call. Index reads JSONObject values lazily, compares the query on the left,
+returns the first matching index or `null`, and stops at the first match.
+Remove uses that index, removes the first match, and throws a Dart
+`ArgumentError` with the source message when there is no match. The host keeps
+JSON equality, array removal, and JSONObject string conversion semantics;
+callback failures propagate unchanged. No direct pinned test was found; the
+focused Dart cases are source-derived. `PythonExtensions.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adapter and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source record.
+
 ## Backend JSON and ByteString boundary
 
 [`BackendUtilsHostAdapter`](lib/src/backend_utils.dart) adapts AnkiDroid's

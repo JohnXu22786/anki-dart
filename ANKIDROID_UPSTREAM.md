@@ -33,6 +33,27 @@ Dart tests are source-derived. The source is Copyright © 2022 Ankitects Pty Ltd
 and declares `GPL-3.0-or-later`. The Dart adapter and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## JSONArray append, index, and remove helpers
+
+`JsonArrayHostAdapter.append`, `index`, and `remove` in
+`lib/src/json_array_adapters.dart` adapt `JSONArray.append(JSONObject)`,
+`JSONArray.index(JSONObject)`, and `JSONArray.remove(JSONObject)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Append delegates once to the
+one-argument host `put`. Index traverses the host JSONObject iterator lazily,
+compares the query object on the left, returns the first match or Dart `null`,
+and does not read later entries after a match. Remove calls index first, then
+removes exactly that first index; when absent it throws `ArgumentError` with
+the source message `Could not find ${jsonObject}`, formatting the host object
+only after iteration. Host callbacks supply JSONObject equality, removal, and
+source-compatible string conversion; host JSON representation and callback
+failures remain host-owned and propagate unchanged. No direct pinned test for
+these extensions was found; the focused Dart cases are source-derived.
+`PythonExtensions.kt` declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
 ## Add-on list validation
 
 `getAddonModelListFromAddonData()` in `lib/src/addon_model.dart` adapts the

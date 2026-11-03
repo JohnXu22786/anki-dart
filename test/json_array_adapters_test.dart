@@ -16,8 +16,9 @@
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from JSONArray.kt in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md.
+ * Source-derived from JSONArray.kt and PythonExtensions.kt in AnkiDroid
+ * 2.25.3; PythonExtensions.kt declares GPL-3.0-or-later without a separate
+ * copyright line. See ANKIDROID_UPSTREAM.md.
  */
 
 import 'package:anki_dart/anki_dart.dart';
@@ -370,6 +371,327 @@ void main() {
       ]);
     });
   });
+
+  group('JsonArrayHostAdapter.append/index/remove', () {
+    test('append calls the one-argument host put exactly once', () {
+      final calls = <String>[];
+      final source = _JsonArray([]);
+      final object = _JsonObject({'id': 'value'});
+      final adapter = _adapter(
+        calls: calls,
+        put: (array, value) {
+          calls.add('put:${identical(value, object)}');
+          array.values.add(value);
+        },
+      );
+
+      adapter.append(source, object);
+
+      expect(source.values, [same(object)]);
+      expect(calls, ['put:true']);
+    });
+
+    test(
+      'index returns null for empty arrays and first, middle, and last matches',
+      () {
+        final query = _JsonObject({'id': 'target'});
+        final first = _JsonObject({'id': 'target'});
+        final middle = _JsonObject({'id': 'target'});
+        final last = _JsonObject({'id': 'target'});
+        final adapter = _adapter(
+          equalsJsonObject: (left, right) =>
+              left.values['id'] == right.values['id'],
+        );
+
+        expect(adapter.index(_JsonArray([]), query), isNull);
+        expect(
+          adapter.index(
+            _JsonArray([
+              first,
+              _JsonObject({'id': 'x'}),
+            ]),
+            query,
+          ),
+          0,
+        );
+        expect(
+          adapter.index(
+            _JsonArray([
+              _JsonObject({'id': 'x'}),
+              middle,
+              _JsonObject({'id': 'x'}),
+            ]),
+            query,
+          ),
+          1,
+        );
+        expect(
+          adapter.index(
+            _JsonArray([
+              _JsonObject({'id': 'x'}),
+              last,
+            ]),
+            query,
+          ),
+          1,
+        );
+        expect(
+          adapter.index(
+            _JsonArray([
+              _JsonObject({'id': 'x'}),
+            ]),
+            query,
+          ),
+          isNull,
+        );
+      },
+    );
+
+    test('index reads lazily and stops at the first match', () {
+      final calls = <String>[];
+      final query = _JsonObject({'id': 'query'});
+      final first = _JsonObject({'id': 'first'});
+      final later = _JsonObject({'id': 'later'});
+      final source = _JsonArray([first, later]);
+      final adapter = _adapter(
+        calls: calls,
+        getJsonObject: (array, index) {
+          calls.add('read:$index');
+          return array.values[index] as _JsonObject;
+        },
+        equalsJsonObject: (left, right) {
+          expect(identical(left, query), isTrue);
+          calls.add('equals:${right.values['id']}');
+          return right.values['id'] == 'first';
+        },
+      );
+
+      expect(calls, isEmpty);
+      expect(adapter.index(source, query), 0);
+      expect(calls, ['length:2', 'read:0', 'equals:first']);
+    });
+
+    test('index observes array growth during comparison', () {
+      final source = _JsonArray([
+        _JsonObject({'id': 'first'}),
+      ]);
+      var comparisons = 0;
+      final target = _JsonObject({'id': 'target'});
+      final query = target;
+      final adapter = _adapter(
+        equalsJsonObject: (left, right) {
+          if (comparisons++ == 0) source.values.add(target);
+          return identical(left, right);
+        },
+      );
+
+      expect(adapter.index(source, query), 1);
+      expect(comparisons, 2);
+    });
+
+    test(
+      'index read and equality failures keep identity and stop iteration',
+      () {
+        final readFailure = FormatException('read failed');
+        final readCalls = <String>[];
+        final source = _JsonArray([
+          _JsonObject({'id': 'first'}),
+          _JsonObject({'id': 'later'}),
+        ]);
+        final readAdapter = _adapter(
+          calls: readCalls,
+          getJsonObject: (_, index) {
+            readCalls.add('read:$index');
+            throw readFailure;
+          },
+          equalsJsonObject: (_, _) {
+            readCalls.add('equals');
+            return false;
+          },
+        );
+
+        expect(
+          () => readAdapter.index(source, _JsonObject({})),
+          throwsA(same(readFailure)),
+        );
+        expect(readCalls, ['length:2', 'read:0']);
+
+        final equalityFailure = StateError('equality failed');
+        final equalityCalls = <String>[];
+        final equalityAdapter = _adapter(
+          calls: equalityCalls,
+          equalsJsonObject: (_, _) {
+            equalityCalls.add('equals');
+            throw equalityFailure;
+          },
+        );
+        expect(
+          () => equalityAdapter.index(source, _JsonObject({})),
+          throwsA(same(equalityFailure)),
+        );
+        expect(equalityCalls, ['length:2', 'getObject:0', 'equals']);
+      },
+    );
+
+    test(
+      'remove removes the first match once after indexing and does not format',
+      () {
+        final calls = <String>[];
+        final query = _JsonObject({'id': 'target'});
+        final first = _JsonObject({'id': 'target'});
+        final later = _JsonObject({'id': 'target'});
+        final source = _JsonArray([first, later]);
+        final adapter = _adapter(
+          calls: calls,
+          equalsJsonObject: (left, right) {
+            calls.add('equals:${right.values['id']}');
+            return left.values['id'] == right.values['id'];
+          },
+          removeAt: (array, index) {
+            calls.add('remove:$index');
+            array.values.removeAt(index);
+          },
+          objectToSourceString: (_) {
+            calls.add('format');
+            return 'query';
+          },
+        );
+
+        adapter.remove(source, query);
+
+        expect(source.values, [same(later)]);
+        expect(calls, ['length:2', 'getObject:0', 'equals:target', 'remove:0']);
+      },
+    );
+
+    test(
+      'missing remove formats only after all reads and throws source message',
+      () {
+        final calls = <String>[];
+        final query = _JsonObject({'id': 'missing'});
+        final source = _JsonArray([
+          _JsonObject({'id': 'first'}),
+          _JsonObject({'id': 'second'}),
+        ]);
+        final adapter = _adapter(
+          calls: calls,
+          equalsJsonObject: (left, right) {
+            calls.add('equals:${right.values['id']}');
+            return false;
+          },
+          removeAt: (_, _) => calls.add('remove'),
+          objectToSourceString: (object) {
+            calls.add('format');
+            return '{"id":"${object.values['id']}"}';
+          },
+        );
+
+        expect(
+          () => adapter.remove(source, query),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.message,
+              'message',
+              'Could not find {"id":"missing"}',
+            ),
+          ),
+        );
+
+        expect(calls, [
+          'length:2',
+          'getObject:0',
+          'equals:first',
+          'length:2',
+          'getObject:1',
+          'equals:second',
+          'length:2',
+          'format',
+        ]);
+      },
+    );
+
+    test(
+      'remove read, equality, formatting, and removal failures stop later effects',
+      () {
+        final query = _JsonObject({'id': 'query'});
+        final readFailure = FormatException('read failed');
+        final readCalls = <String>[];
+        final readAdapter = _adapter(
+          calls: readCalls,
+          getJsonObject: (_, index) {
+            readCalls.add('read:$index');
+            throw readFailure;
+          },
+          removeAt: (_, _) => readCalls.add('remove'),
+          objectToSourceString: (_) {
+            readCalls.add('format');
+            return 'query';
+          },
+        );
+        expect(
+          () => readAdapter.remove(_JsonArray([_JsonObject({})]), query),
+          throwsA(same(readFailure)),
+        );
+        expect(readCalls, ['length:1', 'read:0']);
+
+        final equalityFailure = StateError('equality failed');
+        final equalityCalls = <String>[];
+        final equalityAdapter = _adapter(
+          calls: equalityCalls,
+          equalsJsonObject: (_, _) {
+            equalityCalls.add('equals');
+            throw equalityFailure;
+          },
+          removeAt: (_, _) => equalityCalls.add('remove'),
+          objectToSourceString: (_) {
+            equalityCalls.add('format');
+            return 'query';
+          },
+        );
+        expect(
+          () => equalityAdapter.remove(_JsonArray([_JsonObject({})]), query),
+          throwsA(same(equalityFailure)),
+        );
+        expect(equalityCalls, ['length:1', 'getObject:0', 'equals']);
+
+        final formatFailure = StateError('format failed');
+        final formatCalls = <String>[];
+        final formatAdapter = _adapter(
+          calls: formatCalls,
+          objectToSourceString: (_) {
+            formatCalls.add('format');
+            throw formatFailure;
+          },
+          removeAt: (_, _) => formatCalls.add('remove'),
+        );
+        expect(
+          () => formatAdapter.remove(_JsonArray([]), query),
+          throwsA(same(formatFailure)),
+        );
+        expect(formatCalls, ['length:0', 'format']);
+
+        final removeFailure = StateError('remove failed');
+        final removeCalls = <String>[];
+        final removeAdapter = _adapter(
+          calls: removeCalls,
+          equalsJsonObject: (_, _) => true,
+          removeAt: (_, index) {
+            removeCalls.add('remove:$index');
+            throw removeFailure;
+          },
+          objectToSourceString: (_) {
+            removeCalls.add('format');
+            return 'query';
+          },
+        );
+        expect(
+          () => removeAdapter.remove(_JsonArray([_JsonObject({})]), query),
+          throwsA(same(removeFailure)),
+        );
+        expect(removeCalls, ['length:1', 'getObject:0', 'remove:0']);
+      },
+    );
+  });
 }
 
 final class _JsonArray {
@@ -390,6 +712,10 @@ JsonArrayHostAdapter<_JsonArray, _JsonObject> _adapter({
   _JsonObject Function(_JsonArray, int)? getJsonObject,
   _JsonArray Function(_JsonArray, int)? getJsonArray,
   void Function(_JsonArray, int, Object?)? putAt,
+  void Function(_JsonArray, Object?)? put,
+  bool Function(_JsonObject, _JsonObject)? equalsJsonObject,
+  void Function(_JsonArray, int)? removeAt,
+  String Function(_JsonObject)? objectToSourceString,
   String Function(_JsonArray, int)? getString,
   String Function(_JsonObject, String)? getObjectString,
 }) => JsonArrayHostAdapter(
@@ -423,10 +749,12 @@ JsonArrayHostAdapter<_JsonArray, _JsonObject> _adapter({
         return array.values[index] as _JsonArray;
       },
   deepCloneJsonObject: (object) => _cloneObject(object),
-  put: (array, value) {
-    calls?.add('put:${array.values.length}');
-    array.values.add(value);
-  },
+  put:
+      put ??
+      (array, value) {
+        calls?.add('put:${array.values.length}');
+        array.values.add(value);
+      },
   putAt:
       putAt ??
       (array, index, value) {
@@ -449,6 +777,15 @@ JsonArrayHostAdapter<_JsonArray, _JsonObject> _adapter({
         calls?.add('getObjectString:$key');
         return object.values[key] as String;
       },
+  equalsJsonObject: equalsJsonObject ?? (left, right) => identical(left, right),
+  removeAt:
+      removeAt ??
+      (array, index) {
+        calls?.add('remove:$index');
+        array.values.removeAt(index);
+      },
+  objectToSourceString:
+      objectToSourceString ?? (object) => object.values.toString(),
 );
 
 Object? _cloneValue(Object? value) => switch (value) {

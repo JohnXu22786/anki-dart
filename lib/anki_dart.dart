@@ -23,6 +23,7 @@ export 'src/backend_stats_raw.dart';
 export 'src/backend_utils.dart';
 export 'src/language_utils.dart';
 export 'src/lang_string_helpers.dart';
+export 'src/tags.dart';
 export 'src/bundle_utils.dart';
 export 'src/notetype_cloze_text_fields.dart';
 export 'src/note_editor_caller.dart';

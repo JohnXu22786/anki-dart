@@ -4465,3 +4465,19 @@ is Copyright (c) 2025 David Allison and licensed under `GPL-3.0-or-later`.
 The `@LibAnkiAlias` annotations are source metadata. The Dart adaptation and
 focused tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
+
+## LibAnki tag string and list helpers
+
+`lib/src/tags.dart` and `test/tags_string_helpers_test.dart` adapt only the
+portable `split`, `join`, `canonify`, and `inList` methods from
+`libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The pinned direct
+test is `libanki/src/test/java/com/ichi2/anki/libanki/TagsTest.kt`, which covers
+split and membership. Collection/backend mutation methods and app `TagsList`
+behavior remain host-side. `Tags.kt` is Copyright (c) 2011 Norbert Nagold
+<norbert.nagold@gmail.com>, Copyright (c) 2012 Kostas Spyropoulos
+<inigo.aldana@gmail.com>, and Copyright (c) 2014 Houssam Salem
+<houssam.salem.au@gmail.com>; it is licensed under `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui, marked with SPDX
+`GPL-3.0-or-later`, and distributed under the same license. Root `COPYING`
+remains byte-identical.

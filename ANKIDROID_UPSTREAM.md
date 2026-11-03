@@ -3259,3 +3259,23 @@ annotations are source metadata and are not part of the Dart API. `Lang.kt` is
 Copyright (c) 2025 David Allison and declares `GPL-3.0-or-later`. The Dart
 adaptation and focused tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
+
+## LibAnki tag string and list helpers
+
+`lib/src/tags.dart` adapts only `Tags.split`, `Tags.join`, `Tags.canonify`, and
+`Tags.inList` from `libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt` in
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. `split` replaces U+3000 before
+splitting on the JVM default ASCII `\\s` characters and filtering empty parts;
+NBSP and other non-ASCII separators are preserved. `join` returns empty for an
+empty input and otherwise surrounds a single-space join with one space on each
+side, retaining empty elements. `canonify` returns a new `HashSet` copy without
+tag normalization. `inList` eagerly lowercases all tags before checking the
+lowercased query. Collection/backend operations and the app's `TagsList` remain
+host-side. The pinned direct test
+`libanki/src/test/java/com/ichi2/anki/libanki/TagsTest.kt` covers split and
+membership; focused Dart tests also cover JVM whitespace boundaries, eager
+iteration/errors, joins, and copied-set behavior. `Tags.kt` credits Norbert
+Nagold (2011), Kostas Spyropoulos (2012), and Houssam Salem (2014), and declares
+GPL-3.0-or-later. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

@@ -4865,3 +4865,22 @@ String overload; ordinary whitespace is preserved. These helpers adapt
 and focused tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source mapping and coverage.
+
+## LibAnki tag string and list helpers
+
+[`Tags`](lib/src/tags.dart) ports only `split`, `join`, `canonify`, and
+`inList` from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt`,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Splitting replaces
+U+3000, then uses the source JVM ASCII `\\s` boundary; NBSP and other non-ASCII
+separators remain part of tags. Joining preserves iteration order, empty entries,
+and the source's surrounding spaces. Canonification returns a new unordered hash
+set without normalizing values. Membership eagerly lowercases every tag before
+checking the lowercased query. Collection/backend mutation and the app's separate
+`TagsList` feature remain host-side. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/TagsTest.kt` directly tests split
+and membership; focused Dart tests cover these and source edge cases. `Tags.kt`
+credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and Houssam Salem
+(2014), and is licensed under `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and attribution details.

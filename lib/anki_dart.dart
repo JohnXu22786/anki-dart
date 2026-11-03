@@ -68,6 +68,7 @@ export 'src/filename.dart';
 export 'src/field_filter.dart';
 export 'src/libanki_field.dart';
 export 'src/libanki_deck.dart';
+export 'src/libanki_deck_config.dart';
 export 'src/libanki_deck_order_display.dart';
 export 'src/libanki_field_collections.dart';
 export 'src/libanki_consts.dart';

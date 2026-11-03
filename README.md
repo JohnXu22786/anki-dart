@@ -22,6 +22,27 @@ license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source attribution.
 
+## libanki DeckConfig JSON model
+
+[`LibAnkiDeckConfig`](lib/src/libanki_deck_config.dart) and its `New`, `Lapse`,
+and `Rev` wrappers port `DeckConfig.kt` from AnkiDroid 2.25.3, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart `newConfig`
+property maps Kotlin's `new` keyword property. The model preserves the source
+keys, getter types/defaults, setters, per-read nested wrappers, timer integer to
+boolean fallback and `Exception`-only logging behavior, and data-class hooks
+based only on each wrapper's `jsonObject`. JSON construction/parsing, typed
+access, logging, array/object representations, equality, hashing, and string
+conversion stay callback-owned by the host. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/DeckConfigTest.kt` covers core
+property behavior, timer values, and nested wrappers; focused Dart tests also
+cover callback identity/order, failure boundaries, and data-class operations.
+Answer/question-action UI interpretation is outside this model. The Kotlin
+source credits David Allison and Arthur Milchior (2020), under
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source and attribution details.
+
 ## PythonExtensions collection and conversion helpers
 
 `lib/src/python_extensions_collection_helpers.dart` adapts the collection

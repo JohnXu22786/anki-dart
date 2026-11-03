@@ -32,6 +32,33 @@ Dart cases are source-derived. `PythonExtensions.kt` declares
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## libanki DeckConfig JSON model
+
+`lib/src/libanki_deck_config.dart` and `test/libanki_deck_config_test.dart`
+adapt `DeckConfig` and its nested `New`, `Lapse`, and `Rev` data classes from
+`libanki/src/main/java/com/ichi2/anki/libanki/DeckConfig.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+adapter preserves the `cong`, `id`, `name`, `waitForAudio`, `stopTimerOnAnswer`,
+`secondsToShowQuestion`, `secondsToShowAnswer`, `maxTaken`, `autoplay`,
+`replayq`, and `timer` source behavior, the answer-action removal and constants,
+and the nested fields and per-read object wrappers. Timer lookup tries integer
+first, then catches only `Exception`, logs each caught failure once through the
+host, and defaults to true after both accessors fail. The Kotlin `new` property
+maps to the Dart name `newConfig`; `@VisibleForTesting` annotations remain
+source metadata with no runtime restriction. Kotlin data-class component,
+copy, equality, and hash behavior is represented for the config and nested
+wrappers using only `jsonObject` as value state. The host retains JSONObject
+construction, parsing, access/conversion, arrays, logging, equality/hash, and
+string representation callbacks. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/DeckConfigTest.kt` directly
+covers property access/mutation, basic timer representations, and nested wrapper
+behavior; focused Dart cases additionally cover callback order and identity,
+Exception/Error boundaries, fallback logging, and data-class hooks. UI action
+interpretation is not included. `DeckConfig.kt` credits David Allison and
+Arthur Milchior (2020) and declares `GPL-3.0-or-later`; the Dart model and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## libanki CardTemplate JSON model
 
 `lib/src/libanki_card_template.dart` and

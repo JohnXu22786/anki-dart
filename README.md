@@ -4,6 +4,20 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Backend JSON and ByteString boundary
+
+[`BackendUtilsHostAdapter`](lib/src/backend_utils.dart) adapts AnkiDroid's
+`fromJsonBytes`, `jsonToArray`, `toByteString`, and `toJsonBytes` helper
+operations. It preserves UTF-8 conversion, host constructor, object
+serialization, and byte-copy callback order and returns each exact host result;
+JSON and ByteString behavior and failures remain host-side. Focused tests are in
+[`test/backend_utils_test.dart`](test/backend_utils_test.dart); no direct pinned
+source test was found. The Kotlin source is Copyright © 2021 David Allison and
+uses `GPL-3.0-or-later`. The Dart adapter and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## Backend stats raw wrappers
 
 `BackendStatsRaw` in [`lib/src/backend_stats_raw.dart`](lib/src/backend_stats_raw.dart)

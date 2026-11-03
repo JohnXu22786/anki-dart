@@ -7,6 +7,17 @@ pinned to AnkiDroid 2.25.3 commit
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## Backend JSON and ByteString boundary
+
+`lib/src/backend_utils.dart` and `test/backend_utils_test.dart` adapt the
+JSON/ByteString conversion helpers from
+`libanki/src/main/java/com/ichi2/anki/libanki/backend/BackendUtils.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+source is Copyright © 2021 David Allison under `GPL-3.0-or-later`. The Dart
+adapter and tests are Copyright © 2026 John Tsui under the same license. Host
+JSON and ByteString implementations remain host-side. Root `COPYING` remains
+byte-identical.
+
 ## Backend stats raw wrappers
 
 `lib/src/backend_stats_raw.dart` and `test/backend_stats_raw_test.dart` adapt

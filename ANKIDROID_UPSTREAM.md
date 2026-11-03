@@ -1,5 +1,21 @@
 # AnkiDroid source baseline
 
+## Backend JSON and ByteString boundary
+
+`lib/src/backend_utils.dart` and `test/backend_utils_test.dart` adapt
+`fromJsonBytes()`, `jsonToArray()`, `toByteString()`, and both
+`toJsonBytes()` overloads from
+`libanki/src/main/java/com/ichi2/anki/libanki/backend/BackendUtils.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+adapter converts a host ByteString to UTF-8 once before host JSON construction;
+serialization reads a JSONObject string once and passes it unchanged to host
+ByteString copying. The holder overload reads `jsonObject` once. Host JSON and
+ByteString types, parsing, serialization, encoding, and failures remain on host
+callbacks. No direct pinned test was found; focused Dart cases are source-derived.
+The Kotlin source is Copyright © 2021 David Allison and declares
+`GPL-3.0-or-later`. The Dart adapter and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.
+
 ## Backend stats raw wrappers
 
 `lib/src/backend_stats_raw.dart` and `test/backend_stats_raw_test.dart` adapt

@@ -4,6 +4,24 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## DeckConfig deep clone
+
+[`deepCloneDeckConfig`](lib/src/deck_config_deep_clone.dart) adapts
+`DeckConfig.deepClone()` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt`,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the
+config's `jsonObject` once, passes that exact object to the host deep-clone
+callback, and passes the clone to the host copy callback in source order. It
+returns the copy callback result unchanged, and getter or clone failures stop
+later callbacks. Config and JSON types and their implementations remain
+host-side. No direct test for this extension was found in the pinned
+`PythonExtensionsTest.kt`; the focused Dart cases are source-derived. The
+Kotlin file declares `GPL-3.0-or-later` and has no separate copyright line.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source attribution.
+
 ## PythonExtensions collection and conversion helpers
 
 `lib/src/python_extensions_collection_helpers.dart` adapts the collection

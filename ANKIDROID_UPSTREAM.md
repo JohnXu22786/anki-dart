@@ -1,5 +1,22 @@
 # AnkiDroid source baseline
 
+## DeckConfig deep clone
+
+`deepCloneDeckConfig()` in `lib/src/deck_config_deep_clone.dart` adapts
+`DeckConfig.deepClone()` at `libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt:138–138`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It reads the host config's
+`jsonObject` once, passes that exact object once to the host deep-clone
+callback, and copies the config with the cloned object. The copy callback's
+result and callback failures pass through unchanged; a getter or clone failure
+prevents later callbacks. DeckConfig and JSON types and behavior remain
+host-side. No direct test for this extension was found in the pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/PythonExtensionsTest.kt`; focused
+Dart cases are source-derived. `PythonExtensions.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## Backend JSON and ByteString boundary
 
 `lib/src/backend_utils.dart` and `test/backend_utils_test.dart` adapt

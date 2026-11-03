@@ -4278,3 +4278,16 @@ Ashish Yadav; both are licensed under GPL-3.0-or-later. The Dart adaptation and
 focused tests are Copyright © 2026 John Tsui under the same license. The host
 owns the actual lifecycle scope and audio, UI, waveform, and notification
 consumers. Root `COPYING` remains unchanged.
+
+## LaTeX extraction and rendering policy
+
+`lib/src/latex.dart` and `test/latex_test.dart` adapt
+`libanki/src/main/java/com/ichi2/anki/libanki/LaTeX.kt` from AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin source
+is Copyright (c) 2009 Edu Zamora <edu.zasu@gmail.com>, Copyright (c) 2012
+Kostas Spyropoulos <inigo.aldana@gmail.com>, and Copyright (c) 2015 Houssam
+Salem <houssam.salem.au@gmail.com>. It declares `GPL-3.0-or-later`; no direct
+pinned test for this source was found. The Dart adaptation and source-derived
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical. Generated protobufs, backend extraction, config/media
+storage, localized text, and card render context remain host-side.

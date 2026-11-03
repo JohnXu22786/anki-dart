@@ -2992,3 +2992,24 @@ consumers remain host-side. The Kotlin source is Copyright © 2023 Ashish Yadav
 and its direct test is Copyright © 2025 Ashish Yadav; both are GPL-3.0-or-later.
 The Dart adaptation and focused tests are Copyright © 2026 John Tsui under the
 same license. Root `COPYING` remains unchanged.
+
+## LaTeX extraction and rendering policy
+
+`lib/src/latex.dart` and `test/latex_test.dart` adapt the host-independent
+mapping and rendering orchestration in
+`libanki/src/main/java/com/ichi2/anki/libanki/LaTeX.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host adapts the
+generated extraction response into the proto-like mapping input and owns
+backend extraction, config storage, media access, localized text, and the card
+render context. The port preserves exact extraction arguments and callback
+order, updates the mutable question projection before processing the answer,
+maps filename/body pairs in order, skips existing media, returns one localized
+disabled error at the first missing image when rendering is off, and keeps
+image saving as a null result when rendering is on. Rendered errors are joined
+with line feeds and appended directly to extracted HTML. No direct test for
+this Kotlin source was found; the focused Dart cases are source-derived.
+The source is Copyright (c) 2009 Edu Zamora, Copyright (c) 2012 Kostas
+Spyropoulos, and Copyright (c) 2015 Houssam Salem; it declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+`NOTICE.md` for the source notices.

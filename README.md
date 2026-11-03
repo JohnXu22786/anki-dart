@@ -4637,3 +4637,21 @@ both are GPL-3.0-or-later. The Dart adaptation and focused tests are Copyright
 © 2026 John Tsui under the same license. Root `COPYING` remains unchanged. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for the source pin and attribution details.
+
+## LaTeX extraction and rendering policy
+
+[`lib/src/latex.dart`](lib/src/latex.dart) adapts the extraction mapping and
+rendering policy from `libanki/src/main/java/com/ichi2/anki/libanki/LaTeX.kt`
+in AnkiDroid 2.25.3. The host converts generated backend extraction responses
+to `ExtractedLatexOutput` and supplies config, media, localization, and
+note-type callbacks. The port preserves extraction and question/answer callback
+order, returns the source's disabled message for the first missing image when
+rendering is disabled, and leaves LaTeX image generation unsupported, as in the
+source. It appends returned errors directly to extracted HTML. Focused
+source-derived cases are in [`test/latex_test.dart`](test/latex_test.dart); no
+direct pinned upstream test was found. The source credits Edu Zamora (2009),
+Kostas Spyropoulos (2012), and Houssam Salem (2015), and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for source and attribution details.

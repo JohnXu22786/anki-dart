@@ -16,8 +16,11 @@
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from JSONObjectTest.kt in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md.
+ * Source-derived from JSONObjectTest.kt and PythonExtensions.kt in AnkiDroid
+ * 2.25.3; see ANKIDROID_UPSTREAM.md. PythonExtensions.kt declares
+ * GPL-3.0-or-later without a separate copyright line. No direct pinned test
+ * for the JSONObject.set overloads was found; these callback cases are derived
+ * from the three source bodies.
  */
 
 import 'package:anki_dart/anki_dart.dart';
@@ -334,6 +337,119 @@ void main() {
 
       expect(result.values, isEmpty);
       expect(trace, ['createObject']);
+    });
+  });
+
+  group('JsonObjectHostAdapter JSONObject.set overloads', () {
+    test('setString makes one ordered put with the original key and value', () {
+      final trace = <String>[];
+      final calls = <(Object?, String, Object?)>[];
+      final target = _TestJsonObject({}, label: 'target');
+      final value = 'original string';
+      final adapter = _testJsonObjectAdapter(
+        trace,
+        put: (object, key, item) {
+          trace.add('put:${object.label}:$key');
+          calls.add((object, key, item));
+        },
+      );
+
+      adapter.setString(target, 'string-key', value);
+
+      expect(trace, ['put:target:string-key']);
+      expect(calls, hasLength(1));
+      expect(calls.single.$1, same(target));
+      expect(calls.single.$2, 'string-key');
+      expect(calls.single.$3, same(value));
+
+      final failure = StateError('String put failed');
+      final failingTrace = <String>[];
+      final failingAdapter = _testJsonObjectAdapter(
+        failingTrace,
+        put: (object, key, _) {
+          failingTrace.add('put:${object.label}:$key');
+          throw failure;
+        },
+      );
+      expect(
+        () => failingAdapter.setString(target, 'string-key', value),
+        throwsA(same(failure)),
+      );
+      expect(failingTrace, ['put:target:string-key']);
+    });
+
+    test('setInt makes one ordered put with the original key and value', () {
+      final trace = <String>[];
+      final calls = <(Object?, String, Object?)>[];
+      final target = _TestJsonObject({}, label: 'target');
+      const value = -2147483648;
+      final adapter = _testJsonObjectAdapter(
+        trace,
+        put: (object, key, item) {
+          trace.add('put:${object.label}:$key');
+          calls.add((object, key, item));
+        },
+      );
+
+      adapter.setInt(target, 'int-key', value);
+
+      expect(trace, ['put:target:int-key']);
+      expect(calls, hasLength(1));
+      expect(calls.single.$1, same(target));
+      expect(calls.single.$2, 'int-key');
+      expect(calls.single.$3, value);
+
+      final failure = StateError('Int put failed');
+      final failingTrace = <String>[];
+      final failingAdapter = _testJsonObjectAdapter(
+        failingTrace,
+        put: (object, key, _) {
+          failingTrace.add('put:${object.label}:$key');
+          throw failure;
+        },
+      );
+      expect(
+        () => failingAdapter.setInt(target, 'int-key', value),
+        throwsA(same(failure)),
+      );
+      expect(failingTrace, ['put:target:int-key']);
+    });
+
+    test('setDouble makes one ordered put with the original key and value', () {
+      final trace = <String>[];
+      final calls = <(Object?, String, Object?)>[];
+      final target = _TestJsonObject({}, label: 'target');
+      const value = -1234.5;
+      final adapter = _testJsonObjectAdapter(
+        trace,
+        put: (object, key, item) {
+          trace.add('put:${object.label}:$key');
+          calls.add((object, key, item));
+        },
+      );
+
+      adapter.setDouble(target, 'double-key', value);
+
+      expect(trace, ['put:target:double-key']);
+      expect(calls, hasLength(1));
+      expect(calls.single.$1, same(target));
+      expect(calls.single.$2, 'double-key');
+      expect(calls.single.$3, value);
+
+      final failure = StateError('Double put failed');
+      final failingTrace = <String>[];
+      final failingAdapter = _testJsonObjectAdapter(
+        failingTrace,
+        put: (object, key, _) {
+          failingTrace.add('put:${object.label}:$key');
+          throw failure;
+        },
+      );
+      expect(
+        () => failingAdapter.setDouble(target, 'double-key', value),
+        throwsA(same(failure)),
+      );
+      expect(failingTrace, ['put:target:double-key']);
     });
   });
 }

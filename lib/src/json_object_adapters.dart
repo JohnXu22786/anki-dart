@@ -20,8 +20,9 @@
  * SPDX-FileCopyrightText: 2024 Ashish Yadav <mailtoashish693@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from JSONObject.kt in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md.
+ * Source-derived from JSONObject.kt and PythonExtensions.kt in AnkiDroid
+ * 2.25.3; see ANKIDROID_UPSTREAM.md. PythonExtensions.kt declares
+ * GPL-3.0-or-later without a separate copyright line.
  */
 
 /// Adapts `JSONObject.getStringOrNull(key)` while retaining host JSON behavior.
@@ -75,6 +76,18 @@ final class JsonObjectHostAdapter<TObject, TArray> {
   final TArray Function(TArray array) _deepCloneJsonArray;
   final TObject Function() _createObject;
   final void Function(TObject object, String key, Object? value) _put;
+
+  /// Adapts the pinned `JSONObject.set(String, String)` overload.
+  void setString(TObject object, String key, String value) =>
+      _put(object, key, value);
+
+  /// Adapts the pinned `JSONObject.set(String, Int)` overload.
+  void setInt(TObject object, String key, int value) =>
+      _put(object, key, value);
+
+  /// Adapts the pinned `JSONObject.set(String, Double)` overload.
+  void setDouble(TObject object, String key, double value) =>
+      _put(object, key, value);
 
   /// Adapts `JSONObject.deepClone()` by creating one host object first.
   TObject deepClone(TObject object) => deepClonedInto(object, _createObject());

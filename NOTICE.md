@@ -285,6 +285,22 @@ JSON.org code is copied or attributed to the host or this adapter. The Dart
 implementation and tests are Copyright © 2026 John Tsui under GPL-3.0-or-later.
 Root `COPYING` remains byte-identical.
 
+## JSONObject set overloads
+
+`JsonObjectHostAdapter.setString`, `.setInt`, and `.setDouble` in
+`lib/src/json_object_adapters.dart` and their focused cases in
+`test/json_object_adapters_test.dart` adapt the matching `JSONObject.set`
+overloads from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt`,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Kotlin source
+declares `GPL-3.0-or-later` and has no separate copyright line. No direct
+pinned test for these overloads was found; the Dart cases are source-derived.
+The host owns JSONObject storage, JSON representation and conversion, and
+`put` behavior; the adapter forwards each original key and value once and
+propagates callback failures unchanged. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## JSON property delegates
 
 `lib/src/json_property_delegates.dart` and

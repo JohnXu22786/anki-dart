@@ -7,6 +7,17 @@ pinned to AnkiDroid 2.25.3 commit
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## Backend stats raw wrappers
+
+`lib/src/backend_stats_raw.dart` and `test/backend_stats_raw_test.dart` adapt
+four methods from
+`libanki/src/main/java/com/ichi2/anki/libanki/stats/BackendStats.kt` in
+AnkiDroid 2.25.3 at commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+Kotlin source is Copyright © 2022 Ankitects Pty Ltd and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. No direct
+test for the pinned source was found; the Dart tests are source-derived.
+
 ## Add note-type UI model
 
 `lib/src/add_notetype_ui_model.dart` and

@@ -4,6 +4,22 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Backend stats raw wrappers
+
+`BackendStatsRaw` in [`lib/src/backend_stats_raw.dart`](lib/src/backend_stats_raw.dart)
+ports the four raw wrapper methods from AnkiDroid 2.25.3
+`BackendStats.kt`. The three raw operations pass bytes through their host
+callbacks unchanged. Graph preferences are obtained once, copied with the host
+builder, changed to set `browserLinksSupported` to false, built once, and
+serialized once. Generated protobuf values and backend transport remain
+host-side, and callback exceptions propagate unchanged. Focused source-derived
+tests are in [`test/backend_stats_raw_test.dart`](test/backend_stats_raw_test.dart);
+no direct pinned source test was found. The source is Copyright © 2022
+Ankitects Pty Ltd and declares `GPL-3.0-or-later`. The Dart adapter and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source mapping and attribution details.
+
 ## Backend note field projection
 
 `BackendNoteProjection.fromNote()` in

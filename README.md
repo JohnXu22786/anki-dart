@@ -193,15 +193,21 @@ callback order. Construction from a host JSONObject deep-clones once; JSON
 string construction delegates parsing once to the host. Typed JSONObject
 access, parsing, cloning, representation, and failures remain host-owned. The
 internal config helper catches source `Exception` failures and returns null for
-nonpositive values. `Order.toDisplayString(Translations)` and generated
-backend, deck-tree, and Android APIs are outside this model. The pinned
-`DecksTest.kt:isDynStd` covers normal/filtered classification; the remaining
-focused cases in [`test/libanki_deck_test.dart`](test/libanki_deck_test.dart) are
-source-derived. `Deck.kt` is Copyright © 2020 Arthur Milchior and declares
-`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
-Tsui under the same license. Root `COPYING` remains byte-identical. See
-[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
-the source and attribution record.
+nonpositive values. [`libAnkiDeckOrderToDisplayString`](lib/src/libanki_deck_order_display.dart)
+ports `Order.toDisplayString(Translations)` from `Deck.kt:113–127`, preserving
+all eleven translation mappings and the unrecognized-value error. The generated
+protobuf enum and `Translations` implementation remain host-owned; the adapter
+uses a Dart order enum and host callback bundle without generated numeric codes.
+A bounded pinned-source test search found no direct test for this method, so
+[`test/libanki_deck_order_display_test.dart`](test/libanki_deck_order_display_test.dart)
+covers its branches and callback behavior source-first. `DecksTest.kt:isDynStd`
+covers normal/filtered classification; the focused cases in
+[`test/libanki_deck_test.dart`](test/libanki_deck_test.dart) are source-derived.
+Generated backend, deck-tree, and Android APIs remain host-side. `Deck.kt` is
+Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the source and attribution record.
 
 ## libanki Field JSON model
 

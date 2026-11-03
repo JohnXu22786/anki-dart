@@ -44,14 +44,19 @@ portable JSON model and internal `confOrNull()` helper from
 `libanki/src/main/java/com/ichi2/anki/libanki/Deck.kt` in AnkiDroid 2.25.3,
 pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host retains
 JSONObject parsing, cloning, representation, typed getters, and `put`
-behavior. The source `Order.toDisplayString(Translations)` extension and
-backend, deck-tree, and Android APIs are excluded. Pinned
-`DecksTest.kt:isDynStd` covers deck classification; the focused Dart tests for
-the other properties and `confOrNull()` are source-derived. `Deck.kt` is
-Copyright © 2020 Arthur Milchior and licensed under `GPL-3.0-or-later`. The
-Dart adaptation and tests are Copyright © 2026 John Tsui, marked with SPDX
-`GPL-3.0-or-later`, and distributed under the same license. Root `COPYING`
-remains byte-identical.
+behavior. `lib/src/libanki_deck_order_display.dart` and
+`test/libanki_deck_order_display_test.dart` port
+`Order.toDisplayString(Translations)` from `Deck.kt:113–127` at AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`, preserving each source mapping
+and the unknown-value error. The Dart order enum is an adapter; the generated
+protobuf enum and `Translations` implementation remain host-owned and no
+protobuf numeric codes are duplicated. A bounded pinned-source test search
+found no direct method test; the focused Dart cases are source-derived. The host
+retains JSONObject parsing, cloning, representation, typed getters, `put`,
+backend, deck-tree, and Android behavior. `Deck.kt` is Copyright © 2020 Arthur
+Milchior and licensed under `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui, marked with SPDX `GPL-3.0-or-later`, and distributed
+under the same license. Root `COPYING` remains byte-identical.
 
 ## libanki Field JSON model
 

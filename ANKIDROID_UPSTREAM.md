@@ -73,12 +73,19 @@ Dart `Exception` only, preserving the source catch boundary without catching
 `Error`. The pinned `libanki/src/test/java/com/ichi2/anki/libanki/DecksTest.kt`
 contains `isDynStd` coverage for normal/filtered classification; no direct
 pinned tests cover the other JSON accessors or `confOrNull()`, so the focused
-Dart cases are source-derived. `Order.toDisplayString(Translations)` in the
-same Kotlin file is explicitly excluded. Generated backend, deck-tree, and
-Android APIs remain outside scope. `Deck.kt` is Copyright © 2020 Arthur
-Milchior and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
-Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
-byte-identical.
+Dart cases are source-derived. `lib/src/libanki_deck_order_display.dart` and
+`test/libanki_deck_order_display_test.dart` port `Order.toDisplayString(Translations)`
+from `Deck.kt:113–127` at AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter preserves every enum-to-
+translation callback mapping, exactly-once callback behavior, callback failure
+identity, and the unknown-value error. Its Dart order enum is an adapter only:
+the generated protobuf enum and `Translations` implementation remain host-owned,
+with no generated numeric codes copied. A bounded search of the pinned libanki
+source tests found no direct coverage of this method; the Dart cases are
+source-derived. Generated backend, deck-tree, and Android APIs remain host-side.
+`Deck.kt` is Copyright © 2020 Arthur Milchior and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
 
 ## libanki Field JSON model
 

@@ -56,6 +56,30 @@ Copyright © 2024 David Allison and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## libanki Deck JSON model
+
+`lib/src/libanki_deck.dart` and `test/libanki_deck_test.dart` adapt the
+portable JSON wrapper and internal `confOrNull()` helper from
+`libanki/src/main/java/com/ichi2/anki/libanki/Deck.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+preserves `isFiltered`/`isNormal`, mutable `name`, `collapsed`,
+`browserCollapsed`, `id`, `conf`, `description`, and `descriptionAsMarkdown`,
+including their JSON keys, typed getters, defaults, and one-call order. The
+JSONObject constructor delegates one deep clone to the host; the string
+constructor delegates one parse to the host. Host JSON parsing, clone,
+representation, typed access, and malformed-input behavior remain host-side.
+`confOrNull()` uses `getLong("conf")`, returns positive values, and catches
+Dart `Exception` only, preserving the source catch boundary without catching
+`Error`. The pinned `libanki/src/test/java/com/ichi2/anki/libanki/DecksTest.kt`
+contains `isDynStd` coverage for normal/filtered classification; no direct
+pinned tests cover the other JSON accessors or `confOrNull()`, so the focused
+Dart cases are source-derived. `Order.toDisplayString(Translations)` in the
+same Kotlin file is explicitly excluded. Generated backend, deck-tree, and
+Android APIs remain outside scope. `Deck.kt` is Copyright © 2020 Arthur
+Milchior and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## libanki Field JSON model
 
 `lib/src/libanki_field.dart` and `test/libanki_field_test.dart` adapt the

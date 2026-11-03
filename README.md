@@ -181,6 +181,28 @@ license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and attribution details.
 
+## libanki Deck JSON model
+
+[`LibAnkiDeck`](lib/src/libanki_deck.dart) adapts the portable JSON wrapper and
+internal `confOrNull()` helper from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Deck.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the source `dyn`
+classification and the `name`, `collapsed`, `browserCollapsed`, `id`, `conf`,
+`desc`, and `md` property keys, getter types, defaults, setter behavior, and
+callback order. Construction from a host JSONObject deep-clones once; JSON
+string construction delegates parsing once to the host. Typed JSONObject
+access, parsing, cloning, representation, and failures remain host-owned. The
+internal config helper catches source `Exception` failures and returns null for
+nonpositive values. `Order.toDisplayString(Translations)` and generated
+backend, deck-tree, and Android APIs are outside this model. The pinned
+`DecksTest.kt:isDynStd` covers normal/filtered classification; the remaining
+focused cases in [`test/libanki_deck_test.dart`](test/libanki_deck_test.dart) are
+source-derived. `Deck.kt` is Copyright © 2020 Arthur Milchior and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and attribution record.
+
 ## libanki Field JSON model
 
 [`LibAnkiField`](lib/src/libanki_field.dart) adapts `Field` from AnkiDroid

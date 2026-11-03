@@ -170,6 +170,23 @@ The Kotlin source is Copyright © 2021 David Allison and declares
 `GPL-3.0-or-later`. The Dart adapter and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
 
+## LibAnki media filename IRI helper
+
+`lib/src/media.dart` adapts only `Media.escapeMediaFilenames()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Its optional
+`unescape` argument defaults to false. False delegates once to the host's
+`encodeIriPaths`; true delegates once to `decodeIriPaths`. The exact input and
+callback result pass through unchanged, and callback errors propagate unchanged.
+IRI encoding and decoding implementations and backend access remain host-side.
+No direct pinned test for this method was found; the focused Dart tests are
+source-derived and cover default/explicit branch selection, callback counts,
+input and result identity, and error identity. `Media.kt` is Copyright (c) 2011
+Kostas Spyropoulos <inigo.aldana@gmail.com> and Copyright (c) 2014 Houssam
+Salem <houssam.salem.au@gmail.com>, licensed under `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## Backend stats raw wrappers
 
 `lib/src/backend_stats_raw.dart` and `test/backend_stats_raw_test.dart` adapt

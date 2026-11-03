@@ -4585,6 +4585,21 @@ adaptation and tests are Copyright © 2026 John Tsui, marked with SPDX
 `GPL-3.0-or-later`, and distributed under the same license. Root `COPYING`
 remains byte-identical.
 
+## LibAnki media filename IRI helper
+
+`lib/src/media.dart` adapts `Media.escapeMediaFilenames()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The method chooses
+the host `encodeIriPaths` callback by default and `decodeIriPaths` when
+`unescape` is true, forwarding the input, callback result, and callback failure
+unchanged. Host IRI conversion and backend access remain host-side. There is no
+direct pinned test for this method; focused source-derived tests cover callback
+selection/count, input/result identity, and error identity. `Media.kt` is
+Copyright (c) 2011 Kostas Spyropoulos <inigo.aldana@gmail.com> and Copyright
+(c) 2014 Houssam Salem <houssam.salem.au@gmail.com>, and is licensed under
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Raw deck-options and import/export backend calls
 
 `BackendDeckOptions.kt` and `BackendImportExport.kt` in

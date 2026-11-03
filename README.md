@@ -4852,3 +4852,16 @@ This function only detects delimiters; MathJax rendering, WebView setup, and
 render lifecycle remain host-side. Root `COPYING` remains byte-identical. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for source and attribution details.
+
+## LibAnki language string helpers
+
+[`withoutUnicodeIsolation`](lib/src/lang_string_helpers.dart) removes U+2068
+and then U+2069 from a string. [`withCollapsedWhitespace`](lib/src/lang_string_helpers.dart)
+replaces each literal `\\s+` sequence with one space, matching the Kotlin
+String overload; ordinary whitespace is preserved. These helpers adapt
+`Lang.kt` from AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The pinned source is Copyright
+© 2025 David Allison and licensed under `GPL-3.0-or-later`. The Dart adaptation
+and focused tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source mapping and coverage.

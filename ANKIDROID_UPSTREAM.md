@@ -3242,3 +3242,20 @@ render lifecycle remain host-side. The Kotlin source is Copyright (c) 2020
 Arthur Milchior <arthur@milchior.fr> and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license and
 carry SPDX metadata. Root `COPYING` remains byte-identical.
+
+## LibAnki language string helpers
+
+`lib/src/lang_string_helpers.dart` and `test/lang_string_helpers_test.dart`
+adapt `withoutUnicodeIsolation()` and `withCollapsedWhitespace()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Lang.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The first helper
+removes all U+2068 markers and then all U+2069 markers. The second intentionally
+replaces the literal string `\\s+` with one space, because Kotlin resolves the
+String overload; spaces, tabs, newlines, and other regex-like text are left as
+is. The pinned tests have no direct cases for these helpers; callers include
+`SchedulerTest.kt` and `AnkiDroidJsAPITest.kt` for isolation removal, and
+`TagsDialog.kt` / `TagLimitFragment.kt` for the whitespace helper. The `@LibAnkiAlias`
+annotations are source metadata and are not part of the Dart API. `Lang.kt` is
+Copyright (c) 2025 David Allison and declares `GPL-3.0-or-later`. The Dart
+adaptation and focused tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

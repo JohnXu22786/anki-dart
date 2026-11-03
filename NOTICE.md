@@ -4455,3 +4455,13 @@ license. Root `COPYING` remains byte-identical.
   with SPDX `GPL-3.0-or-later`, and distributed under the same license. The
   function only detects supported delimiters; rendering and WebView behavior
   remain host-side. Root `COPYING` remains byte-identical.
+
+## LibAnki language string helpers
+
+`lib/src/lang_string_helpers.dart` adapts the two string functions in
+`libanki/src/main/java/com/ichi2/anki/libanki/Lang.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The upstream source
+is Copyright (c) 2025 David Allison and licensed under `GPL-3.0-or-later`.
+The `@LibAnkiAlias` annotations are source metadata. The Dart adaptation and
+focused tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains byte-identical.

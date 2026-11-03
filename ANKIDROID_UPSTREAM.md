@@ -2982,9 +2982,10 @@ and license details are in `NOTICE.md`; root `COPYING` remains byte-identical.
 test `AnkiDroid/src/test/java/com/ichi2/anki/recorder/AudioTimerTest.kt`, pinned
 to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
 port keeps a monotonic session start and accumulated duration, starts the UI and
-waveform callbacks immediately on separate 16 ms and 50 ms loops, and delays
-the optional notification loop's first callback until one second. It preserves
-idempotent start, custom-duration replacement, pause/resume, and stop reset
+waveform callbacks immediately on separate 16 ms and 50 ms loops, with a full
+interval delay after each callback completes. The optional notification loop
+first waits one second and then also delays one second after each callback.
+It preserves idempotent start, custom-duration replacement, pause/resume, and stop reset
 behavior. `AudioTimerScheduler` is the host-owned monotonic clock and lifecycle
 scheduling boundary; Android, coroutines, and recording/UI/notification
 consumers remain host-side. The Kotlin source is Copyright © 2023 Ashish Yadav

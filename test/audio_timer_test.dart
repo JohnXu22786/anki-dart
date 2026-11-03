@@ -52,6 +52,102 @@ void main() {
       },
     );
 
+    test('UI waits a full interval after callback work completes', () {
+      final scheduler = _FakeAudioTimerScheduler();
+      final timerTicks = <Duration>[];
+      var consumedCallbackTime = false;
+      final timer = AudioTimer(
+        scheduler: scheduler,
+        onTimerTick: (tick) {
+          timerTicks.add(tick);
+          if (!consumedCallbackTime &&
+              tick == const Duration(milliseconds: 16)) {
+            consumedCallbackTime = true;
+            scheduler.consume(const Duration(milliseconds: 20));
+          }
+        },
+        onAudioTick: () {},
+      );
+
+      timer.start();
+      scheduler.advance(const Duration(milliseconds: 51));
+      expect(timerTicks, hasLength(2));
+      scheduler.advance(const Duration(milliseconds: 1));
+      expect(timerTicks, hasLength(3));
+      expect(timerTicks.last, const Duration(milliseconds: 52));
+    });
+
+    test('waveform waits a full interval after callback work completes', () {
+      final scheduler = _FakeAudioTimerScheduler();
+      var audioTicks = 0;
+      final timer = AudioTimer(
+        scheduler: scheduler,
+        onTimerTick: (_) {},
+        onAudioTick: () {
+          audioTicks++;
+          if (audioTicks == 2) {
+            scheduler.consume(const Duration(milliseconds: 75));
+          }
+        },
+      );
+
+      timer.start();
+      scheduler.advance(const Duration(milliseconds: 174));
+      expect(audioTicks, 2);
+      scheduler.advance(const Duration(milliseconds: 1));
+      expect(audioTicks, 3);
+    });
+
+    test(
+      'notification waits a full interval after callback work completes',
+      () {
+        final scheduler = _FakeAudioTimerScheduler();
+        var notificationTicks = 0;
+        final timer = AudioTimer(
+          scheduler: scheduler,
+          onTimerTick: (_) {},
+          onAudioTick: () {},
+          onNotificationTick: (_) {
+            notificationTicks++;
+            if (notificationTicks == 1) {
+              scheduler.consume(const Duration(milliseconds: 1500));
+            }
+          },
+        );
+
+        timer.start();
+        scheduler.advance(const Duration(milliseconds: 3499));
+        expect(notificationTicks, 1);
+        scheduler.advance(const Duration(milliseconds: 1));
+        expect(notificationTicks, 2);
+      },
+    );
+
+    test('first notification deadline starts with timer run', () {
+      final scheduler = _FakeAudioTimerScheduler();
+      var notificationTicks = 0;
+      var initialWaveTick = true;
+      final timer = AudioTimer(
+        scheduler: scheduler,
+        onTimerTick: (tick) {
+          if (tick == Duration.zero) {
+            scheduler.consume(const Duration(milliseconds: 100));
+          }
+        },
+        onAudioTick: () {
+          if (initialWaveTick) {
+            initialWaveTick = false;
+            scheduler.consume(const Duration(milliseconds: 200));
+          }
+        },
+        onNotificationTick: (_) => notificationTicks++,
+      );
+
+      timer.start();
+      scheduler.advance(const Duration(milliseconds: 700));
+      expect(notificationTicks, 1);
+    });
+
     test('notification callback waits one second before repeating', () {
       final scheduler = _FakeAudioTimerScheduler();
       final notificationTicks = <Duration>[];
@@ -223,23 +319,26 @@ class _FakeAudioTimerScheduler implements AudioTimerScheduler {
   @override
   Duration get elapsed => _now;
 
-  List<Duration> get intervals =>
-      _scheduled.map((tick) => tick.interval).toList();
+  List<Duration> get intervals => _scheduled
+      .where((tick) => tick.isActive)
+      .map((tick) => tick.interval)
+      .toList();
 
   @override
-  AudioTimerCancellation schedulePeriodic({
-    required Duration initialDelay,
-    required Duration interval,
+  AudioTimerCancellation schedule({
+    required Duration delay,
     required void Function() callback,
   }) {
     final tick = _ScheduledTick(
-      dueAt: _now + initialDelay,
-      interval: interval,
+      dueAt: _now + delay,
+      interval: delay,
       callback: callback,
     );
     _scheduled.add(tick);
     return tick;
   }
+
+  void consume(Duration amount) => _now += amount;
 
   void advance(Duration amount) {
     final target = _now + amount;
@@ -253,11 +352,11 @@ class _FakeAudioTimerScheduler implements AudioTimerScheduler {
                 : earliest,
           );
       if (next == null) break;
-      _now = next.dueAt;
+      if (next.dueAt > _now) _now = next.dueAt;
       next.callback();
-      if (next.isActive) next.dueAt += next.interval;
+      if (next.isActive) next.cancel();
     }
-    _now = target;
+    if (target > _now) _now = target;
   }
 }
 

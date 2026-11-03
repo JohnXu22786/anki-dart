@@ -4626,8 +4626,9 @@ the source and attribution record.
 `AudioTimer` in [`lib/src/audio_timer.dart`](lib/src/audio_timer.dart) adapts
 `AudioTimer.kt` and its direct test from AnkiDroid 2.25.3. It reports elapsed
 time from a monotonic clock and preserves the independent immediate UI (16 ms)
-and waveform (50 ms) loops plus an optional notification loop (1 second before
-its first callback, then every second). Pause saves elapsed time; custom-duration
+and waveform (50 ms) loops, each delayed from its preceding callback completion,
+plus an optional notification loop (1 second before its first callback, then
+one second after each completion). Pause saves elapsed time; custom-duration
 start replaces the previous run; stop resets and emits one zero tick. The host
 supplies an `AudioTimerScheduler` tied to its actual lifecycle and owns the
 recording, UI, waveform, and notification consumers. The Kotlin source is

@@ -38,10 +38,9 @@ abstract interface class AudioTimerScheduler {
   /// Monotonic time from an arbitrary origin, never wall-clock time.
   Duration get elapsed;
 
-  /// Schedules [callback] after [initialDelay] and then every [interval].
-  AudioTimerCancellation schedulePeriodic({
-    required Duration initialDelay,
-    required Duration interval,
+  /// Schedules [callback] once after [delay].
+  AudioTimerCancellation schedule({
+    required Duration delay,
     required void Function() callback,
   });
 }
@@ -61,9 +60,8 @@ final class SystemAudioTimerScheduler implements AudioTimerScheduler {
   Duration get elapsed => _clock.elapsed;
 
   @override
-  AudioTimerCancellation schedulePeriodic({
-    required Duration initialDelay,
-    required Duration interval,
+  AudioTimerCancellation schedule({
+    required Duration delay,
     required void Function() callback,
   }) {
     if (_disposed) {
@@ -71,10 +69,9 @@ final class SystemAudioTimerScheduler implements AudioTimerScheduler {
     }
     late final _TimerCancellation cancellation;
     cancellation = _TimerCancellation(
-      initialDelay: initialDelay,
-      interval: interval,
+      delay: delay,
       callback: callback,
-      onCancel: () => _scheduled.remove(cancellation),
+      onFinish: () => _scheduled.remove(cancellation),
     );
     _scheduled.add(cancellation);
     return cancellation;
@@ -93,26 +90,22 @@ final class SystemAudioTimerScheduler implements AudioTimerScheduler {
 
 final class _TimerCancellation implements AudioTimerCancellation {
   _TimerCancellation({
-    required Duration initialDelay,
-    required Duration interval,
+    required Duration delay,
     required void Function() callback,
-    required void Function() onCancel,
-  }) : _interval = interval,
-       _callback = callback,
-       _onCancel = onCancel {
-    _timer = Timer(initialDelay, () {
+    required void Function() onFinish,
+  }) : _onFinish = onFinish {
+    _timer = Timer(delay, () {
       if (_cancelled) return;
-      _callback();
-      if (!_cancelled) {
-        _timer = Timer.periodic(_interval, (_) => _callback());
+      try {
+        callback();
+      } finally {
+        _onFinish();
       }
     });
   }
 
-  final Duration _interval;
-  final void Function() _callback;
-  final void Function() _onCancel;
-  late Timer _timer;
+  final void Function() _onFinish;
+  late final Timer _timer;
   bool _cancelled = false;
 
   @override
@@ -123,15 +116,56 @@ final class _TimerCancellation implements AudioTimerCancellation {
     if (_cancelled) return;
     _cancelled = true;
     _timer.cancel();
-    _onCancel();
+    _onFinish();
+  }
+}
+
+final class _RepeatingTask implements AudioTimerCancellation {
+  _RepeatingTask({
+    required AudioTimerScheduler scheduler,
+    required Duration initialDelay,
+    required this.interval,
+    required void Function() callback,
+  }) : _scheduler = scheduler,
+       _callback = callback {
+    _schedule(initialDelay);
+  }
+
+  final AudioTimerScheduler _scheduler;
+  final Duration interval;
+  final void Function() _callback;
+  AudioTimerCancellation? _scheduled;
+  bool _cancelled = false;
+
+  @override
+  bool get isActive => !_cancelled && (_scheduled?.isActive ?? false);
+
+  @override
+  void cancel() {
+    if (_cancelled) return;
+    _cancelled = true;
+    _scheduled?.cancel();
+  }
+
+  void _schedule(Duration delay) {
+    if (_cancelled) return;
+    _scheduled = _scheduler.schedule(
+      delay: delay,
+      callback: () {
+        if (_cancelled) return;
+        _callback();
+        if (!_cancelled) _schedule(interval);
+      },
+    );
   }
 }
 
 /// Tracks elapsed recording time and drives its independent host update loops.
 ///
-/// UI ticks are immediate and repeat every 16 ms; waveform ticks are immediate
-/// and repeat every 50 ms. Notification ticks, when requested, first run after
-/// one second and then repeat every second. The host owns [scheduler], including
+/// UI ticks are immediate and wait 16 ms after each callback; waveform ticks
+/// are immediate and wait 50 ms after each callback. Notification ticks, when
+/// requested, first run after one second and wait one second after each callback.
+/// The host owns [scheduler], including
 /// its real lifecycle boundary and the consumers of these callbacks.
 final class AudioTimer {
   AudioTimer({
@@ -174,12 +208,6 @@ final class AudioTimer {
     final runGeneration = ++_runGeneration;
     _sessionStartTime = _scheduler.elapsed;
     try {
-      _onTimerTick(_calculateDuration());
-      if (!_isCurrentRun(runGeneration)) return;
-      _onAudioTick();
-      if (!_isCurrentRun(runGeneration)) return;
-      _schedule(runGeneration, _onTimerTickTick, uiTickInterval);
-      _schedule(runGeneration, _onAudioTick, waveformTickInterval);
       final notificationTick = _onNotificationTick;
       if (notificationTick != null) {
         _schedule(
@@ -188,6 +216,12 @@ final class AudioTimer {
           notificationTickInterval,
         );
       }
+      _onTimerTick(_calculateDuration());
+      if (!_isCurrentRun(runGeneration)) return;
+      _schedule(runGeneration, _onTimerTickTick, uiTickInterval);
+      _onAudioTick();
+      if (!_isCurrentRun(runGeneration)) return;
+      _schedule(runGeneration, _onAudioTick, waveformTickInterval);
     } on Object {
       if (_isCurrentRun(runGeneration)) _cancelRun();
       rethrow;
@@ -229,7 +263,8 @@ final class AudioTimer {
   ) {
     if (!_isCurrentRun(runGeneration)) return;
     _tasks.add(
-      _scheduler.schedulePeriodic(
+      _RepeatingTask(
+        scheduler: _scheduler,
         initialDelay: interval,
         interval: interval,
         callback: () {

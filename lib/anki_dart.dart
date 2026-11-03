@@ -448,6 +448,7 @@ export 'src/tts_voice_playback_effects.dart';
 export 'src/card_template_fragment_common_menu.dart';
 export 'src/card_template_fragment_setup_menu.dart';
 export 'src/math_jax_format.dart';
+export 'src/mathjax.dart';
 export 'src/custom_toolbar_button.dart';
 export 'src/char_sequence_if_null_or_empty.dart';
 export 'src/view_is_touch_within_bounds.dart';

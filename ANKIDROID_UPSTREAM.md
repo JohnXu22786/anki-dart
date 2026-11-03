@@ -3223,3 +3223,22 @@ Arthur Milchior <arthur@milchior.fr> and licensed under
 the bounded search; the focused Dart test checks the declared value. The Dart
 adaptation and test are Copyright © 2026 John Tsui under the same license and
 carry SPDX metadata. Root `COPYING` remains byte-identical.
+
+## MathJax text detection
+
+`MathJax.textContainsMathjax` in `lib/src/mathjax.dart` adapts
+`libanki/src/main/java/com/ichi2/anki/libanki/template/MathJax.kt` from
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. For each
+of the source-ordered pairs `\(`/`\)` and `\[`/`\]`, it finds the first
+opening occurrence and last matching closing occurrence, returning true when
+both exist and the opening index is smaller. This preserves the source behavior
+for repeated and crossed delimiters; it does not parse expression syntax or
+nesting. The pinned `libanki/src/test/java/com/ichi2/anki/libanki/MathJaxClozeTest.kt`
+directly tests this method for ordinary text, inline and display pairs, and
+mismatched delimiter types. Focused Dart cases also cover missing delimiters,
+reversed order, cross-type closers, crossed but independently matching pairs,
+and the first-opening/last-closing quirk. MathJax rendering, WebView setup, and
+render lifecycle remain host-side. The Kotlin source is Copyright (c) 2020
+Arthur Milchior <arthur@milchior.fr> and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license and
+carry SPDX metadata. Root `COPYING` remains byte-identical.

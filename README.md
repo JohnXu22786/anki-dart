@@ -4833,3 +4833,22 @@ under `GPL-3.0-or-later`. The Dart constant and focused test are Copyright
 Dart test checks the source-declared value. Root `COPYING` remains byte-identical.
 See [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and
 [`NOTICE.md`](NOTICE.md) for source and attribution details.
+
+## MathJax text detection
+
+[`MathJax.textContainsMathjax`](lib/src/mathjax.dart) ports the delimiter
+presence check from `libanki/src/main/java/com/ichi2/anki/libanki/template/MathJax.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It checks `\(` / `\)` and
+`\[` / `\]` independently, using the first opening and last matching closing
+indices exactly as the source does. It does not parse math expressions or nested
+delimiters. Focused cases are in
+[`test/mathjax_text_detection_test.dart`](test/mathjax_text_detection_test.dart).
+The pinned `MathJaxClozeTest.kt` directly covers ordinary text, inline and
+display math, and mismatched delimiter types. The Kotlin source is Copyright
+© 2020 Arthur Milchior and licensed under `GPL-3.0-or-later`; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+This function only detects delimiters; MathJax rendering, WebView setup, and
+render lifecycle remain host-side. Root `COPYING` remains byte-identical. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for source and attribution details.

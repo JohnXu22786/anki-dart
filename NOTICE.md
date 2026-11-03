@@ -4443,3 +4443,15 @@ AnkiDroid 2.25.3, pinned to commit
 `GPL-3.0-or-later`. The Dart constant and focused test are Copyright © 2026
 John Tsui, marked with SPDX `GPL-3.0-or-later`, and distributed under the same
 license. Root `COPYING` remains byte-identical.
+
+- `libanki/src/main/java/com/ichi2/anki/libanki/template/MathJax.kt`
+  (`MathJax.textContainsMathjax`), pinned to AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`, is Copyright (c) 2020 Arthur
+  Milchior <arthur@milchior.fr> and licensed under `GPL-3.0-or-later`. The
+  pinned direct test is
+  `libanki/src/test/java/com/ichi2/anki/libanki/MathJaxClozeTest.kt`. The Dart
+  adaptation in `lib/src/mathjax.dart` and focused tests in
+  `test/mathjax_text_detection_test.dart` are Copyright © 2026 John Tsui, marked
+  with SPDX `GPL-3.0-or-later`, and distributed under the same license. The
+  function only detects supported delimiters; rendering and WebView behavior
+  remain host-side. Root `COPYING` remains byte-identical.

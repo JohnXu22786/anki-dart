@@ -16,8 +16,9 @@
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from JSONContainer.kt in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md.
+ * Source-derived from JSONContainer.kt and PythonExtensions.kt in AnkiDroid
+ * 2.25.3; PythonExtensions.kt declares GPL-3.0-or-later without a separate
+ * copyright line. See ANKIDROID_UPSTREAM.md.
  */
 
 import 'package:anki_dart/anki_dart.dart';
@@ -25,6 +26,124 @@ import 'package:test/test.dart';
 
 void main() {
   group('JSONContainer', () {
+    test('extension wrappers forward one opaque object in source order', () {
+      final calls = <String>[];
+      final source = _JsonArray([]);
+      final value = Object();
+      final holder = _Holder(value, onRead: () => calls.add('jsonObject'));
+      final container = _container(
+        source,
+        calls: calls,
+        append: (array, object) {
+          expect(array, same(source));
+          expect(object, same(value));
+          calls.add('append');
+        },
+        remove: (array, object) {
+          expect(array, same(source));
+          expect(object, same(value));
+          calls.add('remove');
+        },
+        index: (array, object) {
+          expect(array, same(source));
+          expect(object, same(value));
+          calls.add('index');
+          return 7;
+        },
+        insert: (array, index, object) {
+          expect(array, same(source));
+          expect(index, 13);
+          expect(object, same(value));
+          calls.add('insert');
+        },
+      );
+
+      container.append(holder);
+      container.remove(holder);
+      expect(container.index(holder), 7);
+      container.insert(13, holder);
+
+      expect(calls, [
+        'jsonObject',
+        'append',
+        'jsonObject',
+        'remove',
+        'jsonObject',
+        'index',
+        'jsonObject',
+        'insert',
+      ]);
+    });
+
+    test('index maps absent and present Optional results to nullable ints', () {
+      final source = _JsonArray([]);
+      var result = _container(source, index: (_, _) => null);
+      expect(result.index(_Holder(Object())), isNull);
+
+      result = _container(source, index: (_, _) => 0);
+      expect(result.index(_Holder(Object())), 0);
+    });
+
+    test('holder getter failure prevents the host operation', () {
+      final failure = FormatException('holder unavailable');
+      var operations = 0;
+      final container = _container(
+        _JsonArray([]),
+        append: (_, _) => operations++,
+        remove: (_, _) => operations++,
+        index: (_, _) {
+          operations++;
+          return null;
+        },
+        insert: (_, _, _) => operations++,
+      );
+      final holder = _Holder(Object(), onRead: () => throw failure);
+
+      expect(() => container.append(holder), throwsA(same(failure)));
+      expect(() => container.remove(holder), throwsA(same(failure)));
+      expect(() => container.index(holder), throwsA(same(failure)));
+      expect(() => container.insert(0, holder), throwsA(same(failure)));
+      expect(operations, 0);
+    });
+
+    test('each host operation failure preserves identity', () {
+      final failure = StateError('host operation failed');
+      final calls = <String>[];
+      final container = _container(
+        _JsonArray([]),
+        calls: calls,
+        append: (_, _) {
+          calls.add('append');
+          throw failure;
+        },
+        remove: (_, _) {
+          calls.add('remove');
+          throw failure;
+        },
+        index: (_, _) {
+          calls.add('index');
+          throw failure;
+        },
+        insert: (_, _, _) {
+          calls.add('insert');
+          throw failure;
+        },
+      );
+      final holder = _Holder(Object(), onRead: () => calls.add('jsonObject'));
+
+      expect(() => container.append(holder), throwsA(same(failure)));
+      expect(calls, ['jsonObject', 'append']);
+      calls.clear();
+      expect(() => container.remove(holder), throwsA(same(failure)));
+      expect(calls, ['jsonObject', 'remove']);
+      calls.clear();
+      expect(() => container.index(holder), throwsA(same(failure)));
+      expect(calls, ['jsonObject', 'index']);
+      calls.clear();
+      expect(() => container.insert(4, holder), throwsA(same(failure)));
+      expect(calls, ['jsonObject', 'insert']);
+    });
+
     test('maps host iterator lazily as each value is demanded', () {
       final calls = <String>[];
       final source = _JsonArray([Object(), Object()]);
@@ -48,6 +167,33 @@ void main() {
       expect(iterator.moveNext(), isFalse);
       expect(calls, ['iterator', 'construct:0', 'construct:1']);
     });
+
+    test(
+      'keeps the original constructor usable without extension callbacks',
+      () {
+        final source = _JsonArray([Object()]);
+        final container = JSONContainer<_JsonArray, _Holder>(
+          jsonArray: source,
+          constructor: _Holder.new,
+          jsonObjectIterator: (array) => array.values.iterator,
+          getJsonObject: (array, index) => array.values[index],
+          put: (_, _, _) {},
+          length: (array) => array.values.length,
+        );
+
+        expect(container.length, 1);
+        var getterCalls = 0;
+        final holder = _Holder(
+          Object(),
+          onRead: () {
+            getterCalls++;
+            throw FormatException('holder unavailable');
+          },
+        );
+        expect(() => container.append(holder), throwsA(isA<StateError>()));
+        expect(getterCalls, 0);
+      },
+    );
 
     test('get and set forward the exact index and opaque object once', () {
       final calls = <String>[];
@@ -152,6 +298,10 @@ JSONContainer<_JsonArray, _Holder> _container(
   _Holder Function(Object jsonObject)? constructor,
   Object Function(_JsonArray array, int index)? getJsonObject,
   void Function(_JsonArray array, int index, Object value)? put,
+  void Function(_JsonArray array, Object value)? append,
+  void Function(_JsonArray array, Object value)? remove,
+  int? Function(_JsonArray array, Object value)? index,
+  void Function(_JsonArray array, int index, Object value)? insert,
 }) => JSONContainer<_JsonArray, _Holder>(
   jsonArray: source,
   constructor:
@@ -176,6 +326,27 @@ JSONContainer<_JsonArray, _Holder> _container(
         calls?.add('put:$index');
         array.lastPutIndex = index;
         array.lastPutValue = value;
+      },
+  append:
+      append ??
+      (array, value) {
+        calls?.add('append');
+      },
+  remove:
+      remove ??
+      (array, value) {
+        calls?.add('remove');
+      },
+  index:
+      index ??
+      (array, value) {
+        calls?.add('index');
+        return null;
+      },
+  insert:
+      insert ??
+      (array, index, value) {
+        calls?.add('insert:$index');
       },
   length: (array) {
     calls?.add('length');

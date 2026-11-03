@@ -4311,6 +4311,24 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and license details.
 
+### JSONContainer array extensions
+
+`JSONContainer.append`, `remove`, `index`, and `insert` in
+[`lib/src/json_container.dart`](lib/src/json_container.dart) adapt the matching
+extensions from AnkiDroid 2.25.3 `PythonExtensions.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host owns the array and each
+delegated operation; the wrapper reads `template.jsonObject` once and forwards
+it, along with the unchanged insert index. Kotlin `Optional<Int>` maps to Dart
+`int?`: a present value is returned unchanged and absence is `null`. Focused
+tests are in [`test/json_container_test.dart`](test/json_container_test.dart);
+no direct pinned test for these extensions was found. The source declares
+`GPL-3.0-or-later` without a separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. The callbacks are optional for source compatibility
+with existing containers; a wrapper reports a `StateError` if its callback was
+not supplied. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source details.
+
 ## JSON property delegates
 
 [`lib/src/json_property_delegates.dart`](lib/src/json_property_delegates.dart)

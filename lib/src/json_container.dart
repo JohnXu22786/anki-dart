@@ -16,8 +16,9 @@
  * SPDX-FileCopyrightText: 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Source-derived from JSONContainer.kt in AnkiDroid 2.25.3; see
- * ANKIDROID_UPSTREAM.md.
+ * Source-derived from JSONContainer.kt and PythonExtensions.kt in AnkiDroid
+ * 2.25.3; PythonExtensions.kt declares GPL-3.0-or-later without a separate
+ * copyright line. See ANKIDROID_UPSTREAM.md.
  */
 
 /// Holds an opaque host JSON object used by [JSONContainer].
@@ -40,12 +41,20 @@ final class JSONContainer<TArray, T extends JSONObjectHolder>
     required Object Function(TArray array, int index) getJsonObject,
     required void Function(TArray array, int index, Object value) put,
     required int Function(TArray array) length,
+    void Function(TArray array, Object value)? append,
+    void Function(TArray array, Object value)? remove,
+    int? Function(TArray array, Object value)? index,
+    void Function(TArray array, int index, Object value)? insert,
   }) : _jsonArray = jsonArray,
        _constructor = constructor,
        _jsonObjectIterator = jsonObjectIterator,
        _getJsonObject = getJsonObject,
        _put = put,
-       _length = length;
+       _length = length,
+       _append = append,
+       _remove = remove,
+       _index = index,
+       _insert = insert;
 
   final TArray _jsonArray;
   final T Function(Object jsonObject) _constructor;
@@ -53,6 +62,10 @@ final class JSONContainer<TArray, T extends JSONObjectHolder>
   final Object Function(TArray array, int index) _getJsonObject;
   final void Function(TArray array, int index, Object value) _put;
   final int Function(TArray array) _length;
+  final void Function(TArray array, Object value)? _append;
+  final void Function(TArray array, Object value)? _remove;
+  final int? Function(TArray array, Object value)? _index;
+  final void Function(TArray array, int index, Object value)? _insert;
 
   /// Returns the host object's iterator, mapping values only when advanced.
   @override
@@ -78,6 +91,47 @@ final class JSONContainer<TArray, T extends JSONObjectHolder>
 
   /// Materializes all elements before returning their list indices.
   Iterable<int> get indices => toList().asMap().keys;
+
+  /// Appends [template]'s host JSON object through the host array callback.
+  ///
+  /// Throws a [StateError] if this container has no append callback.
+  void append(T template) {
+    final operation = _append;
+    if (operation == null) throw StateError('No append callback configured');
+    final jsonObject = template.jsonObject;
+    operation(_jsonArray, jsonObject);
+  }
+
+  /// Removes [template]'s host JSON object through the host array callback.
+  ///
+  /// Throws a [StateError] if this container has no remove callback.
+  void remove(T template) {
+    final operation = _remove;
+    if (operation == null) throw StateError('No remove callback configured');
+    final jsonObject = template.jsonObject;
+    operation(_jsonArray, jsonObject);
+  }
+
+  /// Returns the host index, or `null` when its Kotlin `Optional<Int>` is empty.
+  ///
+  /// A present Kotlin value maps to the same Dart [int]; absence maps to null.
+  /// Throws a [StateError] if this container has no index callback.
+  int? index(T template) {
+    final operation = _index;
+    if (operation == null) throw StateError('No index callback configured');
+    final jsonObject = template.jsonObject;
+    return operation(_jsonArray, jsonObject);
+  }
+
+  /// Inserts [template]'s host JSON object at [idx] through the host callback.
+  ///
+  /// Throws a [StateError] if this container has no insert callback.
+  void insert(int idx, T template) {
+    final operation = _insert;
+    if (operation == null) throw StateError('No insert callback configured');
+    final jsonObject = template.jsonObject;
+    operation(_jsonArray, idx, jsonObject);
+  }
 }
 
 final class _JSONContainerIterator<T extends JSONObjectHolder>

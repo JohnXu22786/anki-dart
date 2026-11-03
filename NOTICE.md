@@ -299,6 +299,21 @@ JSON.org implementation code is copied. The Dart implementation and tests are
 Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING` remains
 byte-identical.
 
+## `JSONContainer<T>` array extension wrappers
+
+`lib/src/json_container.dart` and `test/json_container_test.dart` adapt
+`JSONContainer<T>.append`, `remove`, `index`, and `insert` from
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. No direct pinned tests for these
+extensions were found. The source declares `GPL-3.0-or-later` and has no
+separate copyright line. Host callbacks own the array operations; Dart maps
+Kotlin `Optional<Int>` to `int?` (`null` for absence and the same integer when
+present). The Dart implementation and tests are Copyright © 2026 John Tsui
+under the same license. The callbacks are optional to preserve existing
+constructor calls; using a wrapper without its callback raises `StateError`.
+Root `COPYING` remains byte-identical.
+
 ## Throwable root cause
 
 `lib/src/root_cause.dart` and `test/root_cause_test.dart` adapt

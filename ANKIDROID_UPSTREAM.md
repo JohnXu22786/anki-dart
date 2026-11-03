@@ -2671,6 +2671,30 @@ The Kotlin source declares `GPL-3.0-or-later` and has no separate copyright
 line. The Dart adaptation and test are Copyright © 2026 John Tsui under
 GPL-3.0-or-later. Root `COPYING` remains byte-identical.
 
+## `JSONContainer<T>` array extension wrappers
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt`
+- Direct test: none found for these extensions
+- Dart adaptation: `lib/src/json_container.dart`
+- Focused Dart tests: `test/json_container_test.dart`
+
+The four `JSONContainer<T>` extensions append, remove, find the index of, and
+insert a holder's `jsonObject` by delegating to the host-owned array callbacks.
+Each wrapper reads `template.jsonObject` once before its operation, forwards
+the insertion index unchanged, returns the index callback result unchanged,
+and lets callback failures propagate. Kotlin `Optional<Int>` is represented as
+Dart `int?`, with an empty Optional mapped to `null` and a present integer
+returned unchanged. Array mutation, lookup behavior, and their exceptions
+remain host-owned. The source declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. The four callbacks are optional so existing
+`JSONContainer` constructor calls remain source-compatible; invoking a wrapper
+without its callback raises a Dart `StateError`. Root `COPYING` remains
+byte-identical.
+
 ## JSON property delegates
 
 `lib/src/json_property_delegates.dart` and

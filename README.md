@@ -4875,7 +4875,8 @@ U+3000, then uses the source JVM ASCII `\\s` boundary; NBSP and other non-ASCII
 separators remain part of tags. Joining preserves iteration order, empty entries,
 and the source's surrounding spaces. Canonification returns a new unordered hash
 set without normalizing values. Membership eagerly lowercases every tag before
-checking the lowercased query. Collection/backend mutation and the app's separate
+checking the lowercased query, including Kotlin/JVM final-sigma context and U+0130
+expansion. Collection/backend mutation and the app's separate
 `TagsList` feature remain host-side. The pinned
 `libanki/src/test/java/com/ichi2/anki/libanki/TagsTest.kt` directly tests split
 and membership; focused Dart tests cover these and source edge cases. `Tags.kt`

@@ -92,6 +92,12 @@ void main() {
       expect(anki.Tags.inList('Done', ['Todo']), isFalse);
       expect(anki.Tags.inList('', <String>[]), isFalse);
       expect(anki.Tags.inList('\u0130', ['i\u0307']), isTrue);
+      expect(anki.Tags.inList('ος', ['ΟΣ']), isTrue);
+      expect(anki.Tags.inList('οσα', ['ΟΣΑ']), isTrue);
+      expect(anki.Tags.inList('σο', ['ΣΟ']), isTrue);
+      expect(anki.Tags.inList("ο'ς", ["Ο'Σ"]), isTrue);
+      expect(anki.Tags.inList("οσ'a", ["ΟΣ'A"]), isTrue);
+      expect(anki.Tags.inList("ος'", ["ΟΣ'"]), isTrue);
     });
 
     test(

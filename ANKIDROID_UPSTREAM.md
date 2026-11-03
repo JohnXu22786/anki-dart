@@ -3271,7 +3271,9 @@ NBSP and other non-ASCII separators are preserved. `join` returns empty for an
 empty input and otherwise surrounds a single-space join with one space on each
 side, retaining empty elements. `canonify` returns a new `HashSet` copy without
 tag normalization. `inList` eagerly lowercases all tags before checking the
-lowercased query. Collection/backend operations and the app's `TagsList` remain
+lowercased query, preserving U+0130 expansion and context-sensitive final sigma
+when preceded by a cased character and not followed by another cased character,
+with case-ignorable runes skipped as in Kotlin/JVM. Collection/backend operations and the app's `TagsList` remain
 host-side. The pinned direct test
 `libanki/src/test/java/com/ichi2/anki/libanki/TagsTest.kt` covers split and
 membership; focused Dart tests also cover JVM whitespace boundaries, eager

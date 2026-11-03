@@ -32,6 +32,11 @@ import 'dart:collection';
 /// Collection, database, and backend operations remain host-side.
 abstract final class Tags {
   static final RegExp _sourceWhitespace = RegExp(r'[\x09-\x0D\x20]');
+  static final RegExp _cased = RegExp(r'\p{Cased}', unicode: true);
+  static final RegExp _caseIgnorable = RegExp(
+    r'\p{Case_Ignorable}',
+    unicode: true,
+  );
 
   /// Splits [tags] on Kotlin/JVM's default ASCII `\\s` characters.
   ///
@@ -65,8 +70,38 @@ abstract final class Tags {
     return lowercasedTags.contains(_sourceLowercase(tag));
   }
 
-  // Kotlin/JVM lowercase expands U+0130 to `i` plus combining dot, while
-  // Dart's direct mapping drops the dot. Preserve the source expansion.
-  static String _sourceLowercase(String value) =>
-      value.replaceAll('\u0130', 'i\u0307').toLowerCase();
+  // Kotlin/JVM lowercase expands U+0130 and uses context-sensitive final
+  // sigma casing. Dart's direct mapping differs for both cases.
+  static String _sourceLowercase(String value) {
+    final runes = value.replaceAll('\u0130', 'i\u0307').runes.toList();
+    final result = StringBuffer();
+    for (var index = 0; index < runes.length; index++) {
+      final rune = runes[index];
+      if (rune == 0x03a3 && _isFinalSigma(runes, index)) {
+        result.writeCharCode(0x03c2);
+      } else {
+        result.write(String.fromCharCode(rune).toLowerCase());
+      }
+    }
+    return result.toString();
+  }
+
+  static bool _isFinalSigma(List<int> runes, int index) {
+    var previous = index - 1;
+    while (previous >= 0 && _matches(_caseIgnorable, runes[previous])) {
+      previous--;
+    }
+    if (previous < 0 || !_matches(_cased, runes[previous])) {
+      return false;
+    }
+
+    var next = index + 1;
+    while (next < runes.length && _matches(_caseIgnorable, runes[next])) {
+      next++;
+    }
+    return next == runes.length || !_matches(_cased, runes[next]);
+  }
+
+  static bool _matches(RegExp property, int rune) =>
+      property.hasMatch(String.fromCharCode(rune));
 }

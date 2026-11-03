@@ -114,6 +114,20 @@ remains byte-identical.
 
 # Notices
 
+## PythonExtensions collection and conversion helpers
+
+`lib/src/python_extensions_collection_helpers.dart` and
+`test/python_extensions_collection_helpers_test.dart` adapt the portable
+collection and conversion helpers from
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt` in
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. No direct pinned tests cover these
+helpers; the focused Dart tests are source-derived. The Kotlin source declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
+
 ## Key selection modifier filter
 
 `lib/src/key_selection_dialog_utils.dart` and

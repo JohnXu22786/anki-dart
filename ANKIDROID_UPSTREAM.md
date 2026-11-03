@@ -33,6 +33,30 @@ Dart tests are source-derived. The source is Copyright © 2022 Ankitects Pty Ltd
 and declares `GPL-3.0-or-later`. The Dart adapter and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## PythonExtensions collection and conversion helpers
+
+`lib/src/python_extensions_collection_helpers.dart` and
+`test/python_extensions_collection_helpers_test.dart` adapt the portable
+collection and conversion helpers in
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. This covers mutable-list append
+and extend; Sequence, List, JSONArray, and JSONContainer lengths; pop; HashMap
+items; nullable-list emptiness; both list overloads; set conversion; string
+join; and list-to-JSONArray conversion. The Kotlin vararg overload is inferred
+as `MutableList<Array<out T>>`: it returns a mutable list whose sole element is
+the vararg array. The collection overload returns a copied `ArrayList<T>`.
+Sequence `count()` accumulates in unchecked signed 32-bit `Int`; wrapping is
+preserved before widening to Dart int. Hash-map entry iteration order follows
+the supplied host entry callback, and the set adapter uses an unordered
+HashSet without promising iteration order. Pop uses an injectable host removal
+callback. JSONArray construction and each put remain host callbacks,
+preserving their order and partial side effects on failure. Pinned
+`PythonExtensionsTest.kt` has no direct tests for these helpers; focused Dart
+cases are source-derived. The Kotlin file declares `GPL-3.0-or-later` and has
+no separate copyright line. The Dart adapter and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## JSONArray append, index, and remove helpers
 
 `JsonArrayHostAdapter.append`, `index`, and `remove` in

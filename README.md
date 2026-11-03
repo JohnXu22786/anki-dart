@@ -4,6 +4,29 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## PythonExtensions collection and conversion helpers
+
+`lib/src/python_extensions_collection_helpers.dart` adapts the collection
+helpers from
+`libanki/src/main/java/com/ichi2/anki/libanki/utils/PythonExtensions.kt`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It covers append/extend, sequence,
+list and JSON lengths, pop, map items, nullable-list emptiness, both list
+factories, set conversion, string joining, and list-to-JSON-array conversion.
+The vararg factory intentionally returns a one-element list containing the
+vararg array, as the Kotlin expression infers `MutableList<Array<out T>>`; the
+collection factory returns a mutable copy. Sequence counts wrap as Kotlin
+signed 32-bit `Int` before widening. Host map iteration, JSON array length,
+array creation, array puts, and pop removal remain injectable. The adapter
+preserves iteration order and partial puts when a host callback fails. Focused
+tests are in `test/python_extensions_collection_helpers_test.dart`. The pinned
+`PythonExtensionsTest.kt` contains no direct coverage for these collection
+helpers; these tests are source-derived. `PythonExtensions.kt` declares
+`GPL-3.0-or-later` with no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and attribution details.
+
 ## JSONArray insertion
 
 [`JsonArrayHostAdapter.insert`](lib/src/json_array_adapters.dart) adapts

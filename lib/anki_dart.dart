@@ -485,3 +485,4 @@ export 'src/json_to_string.dart';
 export 'src/view_model_delayed_initializer.dart';
 export 'src/http_fetcher_request_policy.dart';
 export 'src/latex.dart';
+export 'src/python_extensions_collection_helpers.dart';

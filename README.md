@@ -144,6 +144,22 @@ remains byte-identical. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for source mapping and attribution details.
 
+## LibAnki types and constants
+
+[`LibAnkiCardType`, `LibAnkiQueueType`, `LibAnkiNoteTypeKind`, and
+`LibAnkiConsts`](lib/src/libanki_consts.dart) port the pure sealed types and
+public constants from AnkiDroid 2.25.3 `Consts.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Known variants are canonical
+singletons, unknown codes retain their exact value and identity equality, and
+queue buried/suspended classification follows the source. Kotlin's
+`@IntDef`/`@Retention(SOURCE)` metadata has no Dart runtime behavior. Focused
+source-derived tests are in `test/libanki_consts_test.dart`; no direct pinned
+tests were found. `Consts.kt` is Copyright © 2014 Houssam Salem under
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source and attribution record.
+
 ## libanki CardTemplate JSON model
 
 [`LibAnkiCardTemplate`](lib/src/libanki_card_template.dart) adapts the

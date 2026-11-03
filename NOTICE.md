@@ -160,6 +160,22 @@ remains byte-identical.
 
 # Notices
 
+## LibAnki types and constants
+
+`lib/src/libanki_consts.dart` and `test/libanki_consts_test.dart` port the
+`CardType`, `QueueType`, `NoteTypeKind`, and `Consts` definitions from
+`libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Known variants
+are canonical singletons; unknown classes preserve identity equality and
+their exact integer codes. Queue burial classification follows the pinned
+source. The Kotlin `@IntDef` and `@Retention(SOURCE)` annotation are
+compile-time metadata with no Dart runtime behavior. No direct pinned tests
+were found; the focused Dart tests are source-derived. `Consts.kt` is Copyright
+© 2014 Houssam Salem and licensed under `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui, marked with SPDX
+`GPL-3.0-or-later`, and distributed under the same license. Root `COPYING`
+remains byte-identical.
+
 ## DeckConfig deep clone
 
 `lib/src/deck_config_deep_clone.dart` and

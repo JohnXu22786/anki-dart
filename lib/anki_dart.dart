@@ -68,6 +68,7 @@ export 'src/filename.dart';
 export 'src/field_filter.dart';
 export 'src/libanki_field.dart';
 export 'src/libanki_field_collections.dart';
+export 'src/libanki_consts.dart';
 export 'src/libanki_card_template.dart';
 export 'src/result_type.dart';
 export 'src/advanced_search_fields.dart';

@@ -40,9 +40,9 @@ final class JsonArrayHostAdapter<TArray, TObject> {
     required TObject Function(TObject object) deepCloneJsonObject,
     required void Function(TArray array, Object? value) put,
     required void Function(TArray array, int index, TObject value) putAt,
-    required bool Function(TObject query, TObject candidate) equalsJsonObject,
-    required void Function(TArray array, int index) removeAt,
-    required String Function(TObject object) objectToSourceString,
+    bool Function(TObject query, TObject candidate)? equalsJsonObject,
+    void Function(TArray array, int index)? removeAt,
+    String Function(TObject object)? objectToSourceString,
     required String Function(TArray array, int index) getString,
     required String Function(TObject object, String key) getObjectString,
   }) : _length = length,
@@ -71,9 +71,9 @@ final class JsonArrayHostAdapter<TArray, TObject> {
   final TObject Function(TObject object) _deepCloneJsonObject;
   final void Function(TArray array, Object? value) _put;
   final void Function(TArray array, int index, TObject value) _putAt;
-  final bool Function(TObject query, TObject candidate) _equalsJsonObject;
-  final void Function(TArray array, int index) _removeAt;
-  final String Function(TObject object) _objectToSourceString;
+  final bool Function(TObject query, TObject candidate)? _equalsJsonObject;
+  final void Function(TArray array, int index)? _removeAt;
+  final String Function(TObject object)? _objectToSourceString;
   final String Function(TArray array, int index) _getString;
   final String Function(TObject object, String key) _getObjectString;
 
@@ -85,11 +85,15 @@ final class JsonArrayHostAdapter<TArray, TObject> {
   /// Reads each JSONObject lazily and compares [jsonObject] on the left, as
   /// the Kotlin extension does.
   int? index(TArray array, TObject jsonObject) {
+    final equalsJsonObject = _equalsJsonObject;
+    if (equalsJsonObject == null) {
+      throw StateError('JsonArrayHostAdapter.index requires equalsJsonObject.');
+    }
     final iterator = jsonObjectIterator(array);
     var index = 0;
     while (iterator.hasNext()) {
       final candidate = iterator.next();
-      if (_equalsJsonObject(jsonObject, candidate)) return index;
+      if (equalsJsonObject(jsonObject, candidate)) return index;
       index++;
     }
     return null;
@@ -97,13 +101,26 @@ final class JsonArrayHostAdapter<TArray, TObject> {
 
   /// Removes the first matching object, throwing when it is absent.
   void remove(TArray array, TObject jsonObject) {
-    final index = this.index(array, jsonObject);
-    if (index == null) {
-      throw ArgumentError(
-        'Could not find ${_objectToSourceString(jsonObject)}',
+    if (_equalsJsonObject == null) {
+      throw StateError(
+        'JsonArrayHostAdapter.remove requires equalsJsonObject.',
       );
     }
-    _removeAt(array, index);
+    final removeAt = _removeAt;
+    if (removeAt == null) {
+      throw StateError('JsonArrayHostAdapter.remove requires removeAt.');
+    }
+    final index = this.index(array, jsonObject);
+    if (index == null) {
+      final objectToSourceString = _objectToSourceString;
+      if (objectToSourceString == null) {
+        throw StateError(
+          'JsonArrayHostAdapter.remove requires objectToSourceString when no match is found.',
+        );
+      }
+      throw ArgumentError('Could not find ${objectToSourceString(jsonObject)}');
+    }
+    removeAt(array, index);
   }
 
   /// Adapts `JSONArray.insert()` while preserving host calls and failures.

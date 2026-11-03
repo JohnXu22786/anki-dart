@@ -27,8 +27,13 @@ returns the first matching index or `null`, and stops at the first match.
 Remove uses that index, removes the first match, and throws a Dart
 `ArgumentError` with the source message when there is no match. The host keeps
 JSON equality, array removal, and JSONObject string conversion semantics;
-callback failures propagate unchanged. No direct pinned test was found; the
-focused Dart cases are source-derived. `PythonExtensions.kt` declares
+callback failures propagate unchanged. The three new host callbacks are
+optional constructor arguments, preserving the previously published
+constructor shape. Calling `index` without equality or `remove` without
+equality/removal callbacks throws `StateError` before array reads; a missing
+object string callback throws `StateError` only if removal finds no match.
+No direct pinned test was found; the focused Dart cases are source-derived.
+`PythonExtensions.kt` declares
 `GPL-3.0-or-later` and has no separate copyright line. The Dart adapter and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and

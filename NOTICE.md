@@ -4369,5 +4369,9 @@ calls host `put` once; index returns the first lazy match or null; remove
 removes that first match or throws with the source message when absent. Host
 callbacks own JSONObject equality, array removal, and source-compatible
 JSONObject string conversion, while preserving the host JSON representation
-and callback exceptions. The Dart adaptation and tests are Copyright © 2026
+and callback exceptions. These new callbacks are optional constructor
+arguments so existing constructor calls remain valid. Missing equality or
+removal callbacks fail with `StateError` before array reads; a missing source
+string callback fails with `StateError` on a missing-object path, without
+formatting or mutation. The Dart adaptation and tests are Copyright © 2026
 John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

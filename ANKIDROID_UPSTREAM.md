@@ -50,6 +50,12 @@ only after iteration. Host callbacks supply JSONObject equality, removal, and
 source-compatible string conversion; host JSON representation and callback
 failures remain host-owned and propagate unchanged. No direct pinned test for
 these extensions was found; the focused Dart cases are source-derived.
+The new equality, removal, and source-string callbacks are optional constructor
+arguments, retaining the prior public constructor shape. Missing equality
+callbacks make `index`/`remove` throw `StateError` before array reads; a missing
+remove callback fails before indexing, and a missing source-string callback
+fails with `StateError` on the absent path after iteration, without formatting
+or mutation.
 `PythonExtensions.kt` declares `GPL-3.0-or-later` and has no separate
 copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.

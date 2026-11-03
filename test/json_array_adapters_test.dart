@@ -25,6 +25,140 @@ import 'package:anki_dart/anki_dart.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('JsonArrayHostAdapter callback compatibility', () {
+    test(
+      'the old constructor shape still supports helpers without new seams',
+      () {
+        final calls = <String>[];
+        final adapter = _legacyAdapter(calls: calls);
+        final first = _JsonObject({'id': 'first'});
+        final source = _JsonArray([first]);
+        final added = _JsonObject({'id': 'added'});
+        final inserted = _JsonObject({'id': 'inserted'});
+
+        adapter.append(source, added);
+        adapter.insert(source, 1, inserted);
+
+        expect(source.values, [same(first), same(inserted), same(added)]);
+        expect(calls, ['put', 'length:2', 'length:2', 'putAt:2', 'putAt:1']);
+        expect(
+          () => adapter.index(source, added),
+          throwsA(
+            isA<StateError>().having(
+              (error) => error.message,
+              'message',
+              'JsonArrayHostAdapter.index requires equalsJsonObject.',
+            ),
+          ),
+        );
+        expect(calls, ['put', 'length:2', 'length:2', 'putAt:2', 'putAt:1']);
+      },
+    );
+
+    test('each missing callback fails before its applicable side effects', () {
+      final query = _JsonObject({'id': 'query'});
+
+      final indexCalls = <String>[];
+      final withoutEquality = _legacyAdapter(calls: indexCalls);
+      expect(
+        () => withoutEquality.index(_JsonArray([query]), query),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'JsonArrayHostAdapter.index requires equalsJsonObject.',
+          ),
+        ),
+      );
+      expect(indexCalls, isEmpty);
+
+      final removeEqualityCalls = <String>[];
+      final removeWithoutEquality = _adapter(
+        calls: removeEqualityCalls,
+        omitEquality: true,
+      );
+      expect(
+        () => removeWithoutEquality.remove(_JsonArray([query]), query),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'JsonArrayHostAdapter.remove requires equalsJsonObject.',
+          ),
+        ),
+      );
+      expect(removeEqualityCalls, isEmpty);
+
+      final removeAtCalls = <String>[];
+      final removeWithoutRemoveAt = _adapter(
+        calls: removeAtCalls,
+        omitRemoveAt: true,
+        equalsJsonObject: (_, _) {
+          removeAtCalls.add('equals');
+          return true;
+        },
+        objectToSourceString: (_) {
+          removeAtCalls.add('format');
+          return 'query';
+        },
+      );
+      expect(
+        () => removeWithoutRemoveAt.remove(_JsonArray([query]), query),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'JsonArrayHostAdapter.remove requires removeAt.',
+          ),
+        ),
+      );
+      expect(removeAtCalls, isEmpty);
+
+      final sourceStringCalls = <String>[];
+      final removeWithoutSourceString = _adapter(
+        calls: sourceStringCalls,
+        omitSourceString: true,
+        equalsJsonObject: (left, right) {
+          sourceStringCalls.add('equals');
+          return identical(left, right);
+        },
+        removeAt: (array, index) {
+          sourceStringCalls.add('remove:$index');
+          array.values.removeAt(index);
+        },
+      );
+      removeWithoutSourceString.remove(_JsonArray([query]), query);
+      expect(sourceStringCalls, [
+        'length:1',
+        'getObject:0',
+        'equals',
+        'remove:0',
+      ]);
+      sourceStringCalls.clear();
+      expect(
+        () => removeWithoutSourceString.remove(
+          _JsonArray([
+            _JsonObject({'id': 'other'}),
+          ]),
+          query,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'JsonArrayHostAdapter.remove requires objectToSourceString when no match is found.',
+          ),
+        ),
+      );
+      expect(sourceStringCalls, [
+        'length:1',
+        'getObject:0',
+        'equals',
+        'length:1',
+      ]);
+    });
+  });
+
   group('JsonArrayHostAdapter.deepClone', () {
     test(
       'clones nested arrays and objects but retains opaque scalar identity',
@@ -716,6 +850,9 @@ JsonArrayHostAdapter<_JsonArray, _JsonObject> _adapter({
   bool Function(_JsonObject, _JsonObject)? equalsJsonObject,
   void Function(_JsonArray, int)? removeAt,
   String Function(_JsonObject)? objectToSourceString,
+  bool omitEquality = false,
+  bool omitRemoveAt = false,
+  bool omitSourceString = false,
   String Function(_JsonArray, int)? getString,
   String Function(_JsonObject, String)? getObjectString,
 }) => JsonArrayHostAdapter(
@@ -777,15 +914,49 @@ JsonArrayHostAdapter<_JsonArray, _JsonObject> _adapter({
         calls?.add('getObjectString:$key');
         return object.values[key] as String;
       },
-  equalsJsonObject: equalsJsonObject ?? (left, right) => identical(left, right),
-  removeAt:
-      removeAt ??
-      (array, index) {
-        calls?.add('remove:$index');
-        array.values.removeAt(index);
-      },
-  objectToSourceString:
-      objectToSourceString ?? (object) => object.values.toString(),
+  equalsJsonObject: omitEquality
+      ? null
+      : equalsJsonObject ?? (left, right) => identical(left, right),
+  removeAt: omitRemoveAt
+      ? null
+      : removeAt ??
+            (array, index) {
+              calls?.add('remove:$index');
+              array.values.removeAt(index);
+            },
+  objectToSourceString: omitSourceString
+      ? null
+      : objectToSourceString ?? (object) => object.values.toString(),
+);
+
+JsonArrayHostAdapter<_JsonArray, _JsonObject> _legacyAdapter({
+  List<String>? calls,
+}) => JsonArrayHostAdapter(
+  length: (array) {
+    calls?.add('length:${array.values.length}');
+    return array.values.length;
+  },
+  createArray: () => _JsonArray([]),
+  get: (array, index) => array.values[index],
+  isJsonObject: (value) => value is _JsonObject,
+  isJsonArray: (value) => value is _JsonArray,
+  getJsonObject: (array, index) => array.values[index] as _JsonObject,
+  getJsonArray: (array, index) => array.values[index] as _JsonArray,
+  deepCloneJsonObject: _cloneObject,
+  put: (array, value) {
+    calls?.add('put');
+    array.values.add(value);
+  },
+  putAt: (array, index, value) {
+    calls?.add('putAt:$index');
+    if (index == array.values.length) {
+      array.values.add(value);
+    } else {
+      array.values[index] = value;
+    }
+  },
+  getString: (array, index) => array.values[index] as String,
+  getObjectString: (object, key) => object.values[key] as String,
 );
 
 Object? _cloneValue(Object? value) => switch (value) {

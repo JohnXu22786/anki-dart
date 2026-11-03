@@ -3418,3 +3418,23 @@ iteration/errors, joins, and copied-set behavior. `Tags.kt` credits Norbert
 Nagold (2011), Kostas Spyropoulos (2012), and Houssam Salem (2014), and declares
 GPL-3.0-or-later. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
+
+## Raw deck-options and import/export backend calls
+
+`lib/src/backend_deck_options_raw.dart` adapts
+`BackendDeckOptions.kt`'s `getDeckConfigsForUpdateRaw` and
+`updateDeckConfigsRaw` extensions. `lib/src/backend_import_export_raw.dart`
+adapts `BackendImportExport.kt`'s `getImportAnkiPackagePresetsRaw`,
+`getCsvMetadataRaw`, and `importCsvRaw` extensions. Both Kotlin sources are in
+`libanki/src/main/java/com/ichi2/anki/libanki/`, pinned to AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`, Copyright (c) 2022
+Ankitects Pty Ltd, and licensed under `GPL-3.0-or-later`. The wrappers pass the
+same input byte-array reference to exactly the matching host backend callback
+once and return its result unchanged; callback failures propagate unchanged.
+The host retains generated protobufs, parsing, validation, and backend
+transport. The pinned source has no direct tests for these thin extensions;
+focused Dart tests in `test/backend_deck_options_raw_test.dart` and
+`test/backend_import_export_raw_test.dart` assert input and result identity,
+callback selection/count, and exception identity for each adapter. The Dart
+adapters and tests are Copyright © 2026 John Tsui under the same license and
+carry SPDX metadata. Root `COPYING` remains byte-identical.

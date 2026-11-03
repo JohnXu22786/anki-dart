@@ -5009,3 +5009,18 @@ credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and Houssam Salem
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and attribution details.
+
+## Raw deck-options and import/export backend calls
+
+[`BackendDeckOptionsRaw`](lib/src/backend_deck_options_raw.dart) and
+[`BackendImportExportRaw`](lib/src/backend_import_export_raw.dart) expose five
+raw-byte host callback wrappers from AnkiDroid 2.25.3. Each passes the exact
+input `Uint8List` reference once to its matching callback, returns the exact
+result reference, and propagates callback failures unchanged. Parsing,
+validation, protobuf values, and backend transport remain host-side. Focused
+Dart tests cover reference and exception identity for all five methods. The
+upstream source is Copyright © 2022 Ankitects Pty Ltd and licensed under
+`GPL-3.0-or-later`; the Dart adapters and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for source mapping and attribution details.

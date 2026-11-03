@@ -4584,3 +4584,21 @@ behavior remain host-side. `Tags.kt` is Copyright (c) 2011 Norbert Nagold
 adaptation and tests are Copyright © 2026 John Tsui, marked with SPDX
 `GPL-3.0-or-later`, and distributed under the same license. Root `COPYING`
 remains byte-identical.
+
+## Raw deck-options and import/export backend calls
+
+`BackendDeckOptions.kt` and `BackendImportExport.kt` in
+`libanki/src/main/java/com/ichi2/anki/libanki/`, pinned to AnkiDroid 2.25.3
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`, are Copyright (c) 2022
+Ankitects Pty Ltd and licensed under `GPL-3.0-or-later`. The Dart adapters in
+`lib/src/backend_deck_options_raw.dart` and
+`lib/src/backend_import_export_raw.dart` preserve the five source wrappers as
+single-call raw-byte pass-throughs: each sends the identical input reference to
+the matching host callback, returns its identical result, and propagates its
+exception unchanged. Protobuf handling, parsing, validation, and backend
+transport remain host-side. Focused tests are in
+`test/backend_deck_options_raw_test.dart` and
+`test/backend_import_export_raw_test.dart`; no direct pinned tests for these
+thin Kotlin extensions were found. The Dart adaptations and tests are Copyright
+© 2026 John Tsui, marked with SPDX `GPL-3.0-or-later`, and distributed under the
+same license. Root `COPYING` remains byte-identical.

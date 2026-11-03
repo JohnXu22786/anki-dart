@@ -38,6 +38,25 @@ void main() {
       expect(LibAnkiCardTemplates, isNot(CardTemplate));
     });
 
+    test('uses backing array identity for value equality and hash codes', () {
+      final contents = [Object()];
+      final fieldArray = _JsonArray(contents);
+      final sameFields = _fields(fieldArray);
+      final equalFields = _fields(fieldArray);
+      final differentFields = _fields(_JsonArray(contents));
+      final templates = _cardTemplates(fieldArray);
+      final sameTemplates = _cardTemplates(fieldArray);
+      final differentTemplates = _cardTemplates(_JsonArray(contents));
+
+      expect(sameFields, equalFields);
+      expect(sameFields.hashCode, equalFields.hashCode);
+      expect(sameFields, isNot(differentFields));
+      expect(sameTemplates, templates);
+      expect(sameTemplates.hashCode, templates.hashCode);
+      expect(sameTemplates, isNot(differentTemplates));
+      expect(sameFields, isNot(templates));
+    });
+
     test('wraps objects lazily in source iteration order', () {
       final values = [Object(), Object()];
       final source = _JsonArray(values);

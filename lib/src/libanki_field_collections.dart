@@ -107,6 +107,14 @@ final class LibAnkiFields<TArray>
     super.index,
     super.insert,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LibAnkiFields && identical(jsonArray, other.jsonArray));
+
+  @override
+  int get hashCode => identityHashCode(jsonArray);
 }
 
 /// A `CardTemplates(JSONArray)` adapter that lazily wraps items as
@@ -129,4 +137,12 @@ final class LibAnkiCardTemplates<TArray>
     super.index,
     super.insert,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LibAnkiCardTemplates && identical(jsonArray, other.jsonArray));
+
+  @override
+  int get hashCode => identityHashCode(jsonArray);
 }

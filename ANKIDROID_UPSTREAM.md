@@ -79,8 +79,7 @@ callback-owned. No direct pinned tests for either collection were found; the
 focused Dart cases are source-derived. `Fields.kt` is Copyright © 2024 David
 Allison and declares `GPL-3.0-or-later`; `CardTemplates.kt` declares
 `GPL-3.0-or-later` without a separate copyright line. The Dart adaptation and
-tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
-remains byte-identical.
+tests are Copyright © 2026 John Tsui under the same license. Collection equality and hashes use backing-array identity, matching the Kotlin inline value classes. Root `COPYING` remains byte-identical.
 
 ## Backend JSON and ByteString boundary
 

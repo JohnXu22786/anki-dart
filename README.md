@@ -198,8 +198,8 @@ for either collection were found; focused source-derived cases are in
 [`test/libanki_field_collections_test.dart`](test/libanki_field_collections_test.dart).
 `Fields.kt` is Copyright © 2024 David Allison under `GPL-3.0-or-later`;
 `CardTemplates.kt` declares `GPL-3.0-or-later` without a separate copyright
-line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
-same license. Root `COPYING` remains byte-identical. See
+line. Value equality and hash codes follow the identity of the exact backing JSONArray, matching Kotlin inline value-class equality and hashing. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source record.
 

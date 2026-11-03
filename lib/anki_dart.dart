@@ -51,6 +51,7 @@ export 'src/analytics_sample_percentage.dart';
 export 'src/analytics_event.dart';
 export 'src/analytics_routing.dart';
 export 'src/manually_reported_exception.dart';
+export 'src/empty_media_exception.dart';
 export 'src/combined_exception_projection.dart';
 export 'src/card_state_filter.dart';
 export 'src/card_type_name.dart';

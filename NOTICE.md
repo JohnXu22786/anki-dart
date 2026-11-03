@@ -4313,3 +4313,19 @@ pinned test for this source was found. The Dart adaptation and source-derived
 tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING`
 remains byte-identical. Generated protobufs, backend extraction, config/media
 storage, localized text, and card render context remain host-side.
+
+## Empty media exception
+
+`lib/src/empty_media_exception.dart` and
+`test/empty_media_exception_test.dart` adapt the no-argument
+`EmptyMediaException` type from
+`libanki/src/main/java/com/ichi2/anki/libanki/exception/EmptyMediaException.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The upstream source is Copyright
+(c) 2020 David Allison <davidallisongithub@gmail.com> and carries a full
+GPL-3.0-or-later license header without an SPDX identifier. The Dart adaptation
+and focused test are Copyright © 2026 John Tsui, marked with SPDX
+`GPL-3.0-or-later`, and distributed under the same license. The exception is a
+distinct catchable type with no message and the exact source class name as its
+string representation. Media/file I/O and `Media.addFile` behavior remain
+host-side. Root `COPYING` remains unchanged.

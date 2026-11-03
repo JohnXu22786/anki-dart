@@ -4685,3 +4685,17 @@ Kostas Spyropoulos (2012), and Houssam Salem (2015), and declares
 Tsui under the same license. Root `COPYING` remains byte-identical. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for source and attribution details.
+
+## Empty media exception
+
+[`EmptyMediaException`](lib/src/empty_media_exception.dart) is a distinct,
+no-message Dart exception ported from the `EmptyMediaException` type in
+AnkiDroid 2.25.3. Its string representation is the exact Kotlin source class
+name, `com.ichi2.anki.libanki.exception.EmptyMediaException`. This unit exposes
+the exception for host-side catching; media and filesystem behavior remain
+host-side. The upstream source is Copyright © 2020 David Allison and licensed
+under `GPL-3.0-or-later`; its full GPL header contains no SPDX identifier. The
+Dart adaptation and focused test are Copyright © 2026 John Tsui under the same
+license and carry SPDX metadata. Root `COPYING` remains unchanged. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for source and attribution details.

@@ -744,7 +744,7 @@ under the same license. Root `COPYING` remains byte-identical.
 `lib/src/note_card_queries.dart` and `test/note_card_queries_test.dart` adapt
 these four methods from `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`
 in AnkiDroid 2.25.3, pinned to commit
-`d9bf072f814a0c37d30e694192593b31ff2df875` (lines 105–109 and 152). The host
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 105–109 and 152). The host
 retains Note, Collection, DB, and Card types and implementations. The adapter
 forwards the current note ID once to `cardIdsOfNote` and returns that exact
 list; `numberOfCards` delegates through the same card-ID adapter and reads its
@@ -861,7 +861,7 @@ Root `COPYING` remains byte-identical.
 
 `lib/src/note_object_methods.dart` adapts these methods from
 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt` in AnkiDroid 2.25.3,
-pinned to commit `d9bf072f814a0c37d30e694192593b31ff2df875` (lines 273–287).
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 273–287).
 The host owns Note, runtime-class identity, ID access, shallow cloning, cast,
 and `RuntimeException` construction. The adapters preserve the source's
 reference-identity, null, and exact-class short-circuits; compare IDs only after
@@ -901,7 +901,7 @@ Root `COPYING` remains byte-identical.
 `lib/src/note_fields_check_wrapper.dart` adapts
 `Note.fieldsCheck(col)` from `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`
 in AnkiDroid 2.25.3, pinned to commit
-`d9bf072f814a0c37d30e694192593b31ff2df875` (line 271). The host retains the
+`d9bf072f814a0c37d30a694192593b31ff2df875` (line 271). The host retains the
 Note and Collection/backend objects, `toBackendNote()` conversion, response and
 state types. The adapter calls the conversion once, forwards that exact backend
 Note once, and returns the state read from the exact response; failures at each
@@ -945,7 +945,7 @@ under the same license. Root `COPYING` remains byte-identical.
 `lib/src/note_ephemeral_card.dart` and `test/note_ephemeral_card_test.dart`
 adapt only the orchestration in `Note.ephemeralCard()` from AnkiDroid 2.25.3
 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
-`d9bf072f814a0c37d30e694192593b31ff2df875` (lines 111–147). The adapter
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 111–147). The adapter
 creates one host Card with a null ID, assigns its ordinal and deck ID, resolves
 the supplied or current notetype, clones the supplied template or selects from
 the host template list, sets the selected template ordinal, invokes the host

@@ -5207,7 +5207,7 @@ John Tsui under the same license. Root `COPYING` remains byte-identical.
 
 ## LibAnki Note clone, equality, and hash code
 
-`lib/src/note_object_methods.dart` and `test/note_object_methods_test.dart` adapt `Note.clone()`, `Note.equals(other)`, and `Note.hashCode()` from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit `d9bf072f814a0c37d30e694192593b31ff2df875` (lines 273–287). The host retains Note, runtime-class identity, ID access, shallow cloning, casting, and exception construction. The adapters preserve source short-circuits, ID comparison order, clone exception behavior, and signed JVM 32-bit Long hash folding. `NoteTest.kt` only directly tests `ClozeUtils.getNextClozeIndex`, with no direct clone, equals, or hashCode assertions; the focused Dart tests are source-derived. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+`lib/src/note_object_methods.dart` and `test/note_object_methods_test.dart` adapt `Note.clone()`, `Note.equals(other)`, and `Note.hashCode()` from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 273–287). The host retains Note, runtime-class identity, ID access, shallow cloning, casting, and exception construction. The adapters preserve source short-circuits, ID comparison order, clone exception behavior, and signed JVM 32-bit Long hash folding. `NoteTest.kt` only directly tests `ClozeUtils.getNextClozeIndex`, with no direct clone, equals, or hashCode assertions; the focused Dart tests are source-derived. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
 ## LibAnki Note tag wrappers
 
@@ -5231,7 +5231,7 @@ and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
 `items()`, `fieldIndex(key)`, `getItem(key)`, `setItem(key, value)`, and
 `contains(key)` from AnkiDroid 2.25.3
 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
-`d9bf072f814a0c37d30e694192593b31ff2df875` (lines 163–209). The host retains
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 163–209). The host retains
 Note, Field, and backing collections; the Dart code consumes the host's ordered
 name-to-ordinal map projection. It preserves map key iteration, values list
 identity, ordinal row placement and the existing TODO about Anki ordering,
@@ -5248,7 +5248,7 @@ Tsui under the same license. Root `COPYING` remains byte-identical.
 `test/note_fields_check_wrapper_test.dart` adapt
 `Note.fieldsCheck(col)` from AnkiDroid 2.25.3
 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
-`d9bf072f814a0c37d30e694192593b31ff2df875` (line 271). The Note and
+`d9bf072f814a0c37d30a694192593b31ff2df875` (line 271). The Note and
 Collection/backend remain host-side. The adapter calls `toBackendNote()` once,
 passes that exact result to the backend operation, then returns the state from
 its exact response; callback failures propagate unchanged. The pinned
@@ -5265,7 +5265,7 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license. Roo
 `lib/src/note_card_queries.dart` and `test/note_card_queries_test.dart` adapt
 `Note.numberOfCards(col)`, `cardIds(col)`, `cards(col)`, and `firstCard(col)`
 from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`,
-pinned to commit `d9bf072f814a0c37d30e694192593b31ff2df875` (lines 105–109 and
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 105–109 and
 152). Note, Collection, DB, and Card remain host-side. The wrappers preserve
 note-ID forwarding, the exact card-ID list, count delegation, eager ordered
 lookups and short-circuiting, and the exact first-card SQL and scalar forwarding;
@@ -5308,7 +5308,7 @@ byte-identical.
 `lib/src/note_ephemeral_card.dart` and `test/note_ephemeral_card_test.dart`
 adapt only the orchestration in `Note.ephemeralCard()` from AnkiDroid 2.25.3
 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
-`d9bf072f814a0c37d30e694192593b31ff2df875` (lines 111–147). Note, Collection,
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 111–147). Note, Collection,
 Card, notetype, template cloning, render context, and rendering remain
 host-side. The pinned `NoteTest.kt` has no direct `ephemeralCard` assertion;
 focused Dart tests cover callback order, conditional lookup, template choice

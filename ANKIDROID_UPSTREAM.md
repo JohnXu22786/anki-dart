@@ -4094,7 +4094,7 @@ and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
 ## LibAnki Note dictionary interface
 
 Pinned to AnkiDroid 2.25.3 commit
-`d9bf072f814a0c37d30e694192593b31ff2df875`:
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
 
 - Source: `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt:163–209`
 - Direct tests: `NoteTest.kt` tests Cloze utilities only; `NoteWithColTest.kt`

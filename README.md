@@ -5716,3 +5716,24 @@ credits Norbert Nagold (2011) and Houssam Salem (2014) under
 Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
+
+## LibAnki Note tag wrappers
+
+[`hasNoteTag()`](lib/src/note_tag_wrappers.dart),
+[`addNoteTag()`](lib/src/note_tag_wrappers.dart),
+[`stringNoteTags()`](lib/src/note_tag_wrappers.dart), and
+[`setNoteTagsFromStr()`](lib/src/note_tag_wrappers.dart) adapt `Note.hasTag()`,
+`addTag()`, `stringTags()`, and `setTagsFromStr()` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 224–263). The host retains
+Note and Collection; callbacks preserve source delegation order, exact results
+and errors, and `setTagsFromStr` assigns the exact mutable list returned by
+`split`. Existing Dart `Tags` helpers remain unchanged. The pinned
+`NoteTest.kt`, `TagsTest.kt`, and `NoteWithColTest.kt` contain no direct
+assertions of these four Note wrappers. `TagsTest.kt` separately covers
+`Tags.inList` and `Tags.split`, not Note delegation or list replacement, so the
+focused Dart wrapper tests are source-derived. `Note.kt` credits Norbert Nagold
+(2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the source mapping and attribution.

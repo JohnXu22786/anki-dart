@@ -5204,3 +5204,18 @@ have no direct assertion for this method, and
 source-derived. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014)
 under `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## LibAnki Note tag wrappers
+
+`lib/src/note_tag_wrappers.dart` and `test/note_tag_wrappers_test.dart` adapt
+`Note.hasTag()`, `addTag()`, `stringTags()`, and `setTagsFromStr()` from
+AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned
+to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 224–263). The host
+retains Note and Collection, and the callback wrappers preserve source call
+order, result/list identity, and callback errors. The pinned `NoteTest.kt`,
+`TagsTest.kt`, and `NoteWithColTest.kt` contain no direct assertions for these
+four Note wrappers; `TagsTest.kt` separately covers helper-level `inList` and
+`split`, not Note delegation or list replacement. The focused Dart cases are
+source-derived. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014)
+and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.

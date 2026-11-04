@@ -5399,6 +5399,22 @@ are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and attribution details.
 
+[`tagsAll`, `tagsTree`, `tagsClearUnusedTags`, `tagsBulkAdd`,
+`tagsBulkRemove`, `tagsRename`, `tagsRemove`, and `tagsReparent`](lib/src/tags_backend_operations.dart)
+adapt the remaining public backend wrappers in the pinned AnkiDroid 2.25.3
+`Tags.kt`. Each invokes its host callback once and returns the exact result;
+bulk operations preserve note ID list identity and their exact tag strings,
+while rename, remove, and reparent use the backend's exact named argument
+mapping. Reparenting retains the supplied iterable. Callback failures propagate
+unchanged. TagTree, search, collection mutation, and backend behavior remain
+host-side. The pinned source integration tests cover related tag operations
+but not these callback mappings, so focused Dart cases are source-derived. The
+upstream `Tags.kt` credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and
+Houssam Salem (2014), under `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and attribution details.
+
 [`tagsFindAndReplace`](lib/src/tags_find_and_replace.dart) adapts only the
 `Tags.findAndReplace()` backend forwarding method from the same pinned
 `Tags.kt`. It passes the note ID list, search, replacement, regex, and case flag

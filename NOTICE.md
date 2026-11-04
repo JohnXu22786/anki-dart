@@ -196,6 +196,27 @@ Houssam Salem under `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+## LibAnki Tags backend forwarding operations
+
+`lib/src/tags_backend_operations.dart` and
+`test/tags_backend_operations_test.dart` adapt `Tags.all()`, `tree()`,
+`clearUnusedTags()`, `bulkAdd(noteIds, tags)`, `bulkRemove(noteIds, tags)`,
+`rename(old, new)`, `remove(spaceSeparatedTags)`, and
+`reparent(tags, newParent)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host retains TagTree, search,
+collection mutation, and backend behavior. The adapters preserve argument
+values and applicable list/iterable references, map the exact backend named
+arguments, invoke one callback, return its exact result, and propagate failures
+unchanged. The pinned
+`CollectionTest.kt:164–170`, `FinderTest.kt:149–153`, and
+`ManageTagsViewModelTest.kt` cover related integration behavior but do not
+assert wrapper-to-backend argument mapping; focused Dart cases are
+source-derived. `Tags.kt` credits Norbert Nagold (2011), Kostas Spyropoulos
+(2012), and Houssam Salem (2014), and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## LibAnki tag find and replace backend forwarding
 
 `lib/src/tags_find_and_replace.dart` and

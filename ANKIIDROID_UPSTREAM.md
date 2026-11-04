@@ -37,6 +37,30 @@ Spyropoulos (2012), and Houssam Salem (2014), and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## Remaining `Tags` backend forwarding operations
+
+`lib/src/tags_backend_operations.dart` adapts `Tags.all()`, `tree()`,
+`clearUnusedTags()`, `bulkAdd(noteIds, tags)`, `bulkRemove(noteIds, tags)`,
+`rename(old, new)`, `remove(spaceSeparatedTags)`, and
+`reparent(tags, newParent)` from `libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes each host callback once,
+preserves note ID list references, tag strings, and the reparent iterable,
+maps `bulkAdd`/`bulkRemove` to
+`addNoteTags(noteIds: ..., tags: ...)`/`removeNoteTags(noteIds: ..., tags: ...)`,
+maps `rename` to `renameTags(currentPrefix: old, newPrefix: new)`, maps
+`remove` to `removeTags(val: spaceSeparatedTags)`, and maps `reparent` to
+`reparentTags(tags: ..., newParent: ...)`. Each wrapper returns the callback's
+exact result and propagates its exact failure. Tag trees, search, mutation, and
+backend behavior remain host-side. The pinned `CollectionTest.kt:164–170`
+exercises bulk-add integration, `FinderTest.kt:149–153` exercises Finder flows,
+and `ManageTagsViewModelTest.kt` covers clear/rename/remove integration; those
+tests do not assert these wrapper-to-backend named argument mappings. Focused
+Dart cases are source-derived. `Tags.kt` credits Norbert Nagold (2011), Kostas
+Spyropoulos (2012), and Houssam Salem (2014), and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Key selection modifier filter
 
 `disallowModifierKeyCodes()` in `lib/src/key_selection_dialog_utils.dart`

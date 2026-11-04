@@ -4,6 +4,23 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## LibAnki Collection card-stats forwarding
+
+[`collectionCardStatsData()`](lib/src/collection_card_stats_data.dart) adapts
+`Collection.cardStatsData(cardId)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1148`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It forwards the exact card
+ID once to the host callback and returns the host's exact generic response;
+callback failures propagate unchanged. The host retains the card-stats query,
+backend, protobufs, and `CardStatsResponse`. `Collection.kt` credits Norbert
+Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022), and
+declares `GPL-3.0-or-later`. It separately notes incorporated
+`AGPL-3.0-or-later` `browser.py` code; this adapter copies no browser code. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## LibAnki Card description
 
 [`libankiCardDescription()`](lib/src/card_description.dart) adapts `Card.toString()` (LibAnki alias `description`) from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 325–351). The host supplies declared field names in JVM order, field reads, value `toString()` rendering, and identification of `IllegalAccessException` and `IllegalArgumentException`; Card and JVM reflection remain host-owned. It preserves the source skip set, `'<name>': <value>` formatting, `N/A` fallback for those two exceptions, propagation of other errors, and `,  ` delimiter. The pinned `CardTest.kt::test_toString` asserts absence of `Companion`, `SKIP_PRINT`, `note`, `renderOutput`, `col`, and `timerStarted`; it does not assert `$assertionsDisabled`, exact order/format/delimiter, or reflection failures. Focused Dart tests cover those additional source-derived behaviors. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for source mapping and attribution.

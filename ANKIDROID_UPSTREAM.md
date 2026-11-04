@@ -1,5 +1,21 @@
 # AnkiDroid source baseline
 
+## `Collection.cardStatsData(cardId)`
+
+`lib/src/collection_card_stats_data.dart` adapts only the forwarding boundary
+of `Collection.cardStatsData(cardId)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1148`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It passes the exact card ID
+once to the host callback, returns its exact generic response, and propagates
+callback failures unchanged. The card-stats query, backend, protobufs, and
+`CardStatsResponse` remain host-owned. No direct pinned test was found for this
+wrapper; the focused Dart contract tests are source-derived. `Collection.kt`
+credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd
+(2022) and declares `GPL-3.0-or-later`. Although the file separately notes
+incorporated `AGPL-3.0-or-later` `browser.py` code, this adaptation contains no
+browser implementation. The Dart adaptation and tests are Copyright © 2026
+John Tsui under `GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
 ## `Card.note(col, reload)` and `Card.noteType(col)`
 
 `lib/src/card_note_cache.dart` and `test/card_note_cache_test.dart` adapt the

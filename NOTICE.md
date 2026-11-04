@@ -1,3 +1,20 @@
+## LibAnki Collection `cardStatsData(cardId)`
+
+`lib/src/collection_card_stats_data.dart` and
+`test/collection_card_stats_data_test.dart` adapt only the forwarding boundary
+of `Collection.cardStatsData(cardId)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1148`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The exact card ID is passed
+once to the host callback, whose generic response is returned unchanged;
+callback failures propagate unchanged. The host retains the card-stats query,
+backend, protobufs, and `CardStatsResponse`. No direct pinned test for this
+wrapper was found; focused Dart cases are source-derived contract tests.
+`Collection.kt` credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and
+Ankitects Pty Ltd (2022), and declares `GPL-3.0-or-later`. It separately notes
+incorporated `AGPL-3.0-or-later` `browser.py` code; this adapter copies no
+browser implementation. The Dart adaptation and tests are Copyright © 2026
+John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 ## LibAnki card note cache
 
 `lib/src/card_note_cache.dart` and `test/card_note_cache_test.dart` adapt

@@ -1172,3 +1172,21 @@ separately notes incorporated `AGPL-3.0-or-later` `browser.py` code. This
 adaptation contains only the GPL forwarding wrapper and no browser
 implementation. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
+
+## `Collection.optimize()` SQL orchestration
+
+`collectionOptimize()` in `lib/src/collection_optimize.dart` adapts only the
+two SQL calls in `Collection.optimize()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1260–1263`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+invokes the host database callback as `vacuum`, then `analyze`, exactly once
+each. A failure from the first callback propagates unchanged and prevents the
+second call. Database and SQLite behavior remain host-owned. No exact Dart
+wrapper, direct pinned test, or caller was found in the source audit; focused
+Dart tests are source-derived adapter contract tests. `Collection.kt` credits
+Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022),
+and declares `GPL-3.0-or-later`. It separately notes incorporated
+`AGPL-3.0-or-later` `browser.py` code; this adapter copies only the two SQL
+orchestration calls and no browser implementation. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

@@ -117,6 +117,25 @@ Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## LibAnki Collection.optimize SQL orchestration
+
+`lib/src/collection_optimize.dart` and
+`test/collection_optimize_test.dart` adapt only the SQL orchestration in
+`Collection.optimize()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1260–1263`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+host callback receives `vacuum` and then `analyze`, once each; failures
+propagate unchanged and a `vacuum` failure short-circuits the second call.
+Database and SQLite behavior remain host-side. No direct pinned wrapper test
+was found; focused tests are source-derived. `Collection.kt` credits Norbert
+Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022), and
+declares `GPL-3.0-or-later`. It separately notes incorporated
+`AGPL-3.0-or-later` `browser.py` code; this adapter copies only the two SQL
+orchestration calls and no browser implementation. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING`
+remains unchanged. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) for the
+pinned source mapping.
+
 ## `NotetypeJson.deepClone()` and `toString()`
 
 `lib/src/notetype_json_object_operations.dart` and

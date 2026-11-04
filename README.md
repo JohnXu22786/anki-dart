@@ -4462,6 +4462,25 @@ ownership and operation order while delegating Android PNG compression and
 GPL attribution are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md).
 
+## Collection.optimize()
+
+[`collectionOptimize()`](lib/src/collection_optimize.dart) adapts the SQL
+orchestration in `Collection.optimize()` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1260–1263`, pinned
+to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the host
+database callback once with `vacuum`, then once with `analyze`; a first-call
+failure propagates unchanged and prevents the second call. The host owns
+database and SQLite behavior. No direct Dart wrapper, pinned test, or caller
+was found in the source audit; focused tests cover exact SQL, ordering, call
+counts, and failure short-circuiting. `Collection.kt` credits Norbert Nagold
+(2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022), and declares
+`GPL-3.0-or-later`. It separately notes incorporated `AGPL-3.0-or-later`
+`browser.py` code; this adapter copies only the two SQL orchestration calls and
+no browser implementation. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the pinned source mapping and attribution.
+
 ## Context styled-attribute callback
 
 `usingStyledAttributes()` preserves the pinned helper's acquisition, single

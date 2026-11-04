@@ -3891,6 +3891,21 @@ source declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+`lib/src/collection_replace_search_node.dart` and
+`test/collection_replace_search_node_test.dart` adapt only the forwarding
+wrapper `Collection.replaceInSearchNode(existingNode, replacementNode)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1038–1047`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host callback receives the exact
+existing and replacement SearchNode objects once in their named roles; the
+adapter returns its exact String and propagates failures unchanged. Generated
+SearchNode behavior, replacement semantics, and the backend remain host-owned;
+no AGPL search/query implementation or source text is included. No direct
+pinned wrapper test was found, so the focused Dart tests are source-derived
+adapter contract tests. `Collection.kt` declares `GPL-3.0-or-later` and has no
+separate copyright line. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 `lib/src/saved_state_handle.dart` and `test/saved_state_handle_test.dart` adapt
 `require(key)` and `getLongOrNull(key)` from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/SavedStateHandle.kt`, pinned

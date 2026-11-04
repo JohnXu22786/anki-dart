@@ -4305,6 +4305,24 @@ tests are Copyright © 2026 John Tsui under that license. Root `COPYING` remains
 byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source and license record.
 
+## Collection.replaceInSearchNode
+
+`collectionReplaceInSearchNode()` adapts the forwarding wrapper
+`Collection.replaceInSearchNode(existingNode, replacementNode)` from AnkiDroid
+2.25.3. It calls the host backend callback once with the exact node objects in
+their named roles, returns the exact backend string, and propagates callback
+failures unchanged. SearchNode construction, replacement semantics, and the
+backend remain host-side; no AGPL search/query implementation is included.
+Focused source-derived adapter tests are in
+[`test/collection_replace_search_node_test.dart`](test/collection_replace_search_node_test.dart).
+No direct pinned upstream test for this wrapper was found. `Collection.kt` is at
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1038–1047` in AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`; it declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the pinned source and license record.
+
 ## JsonReader object decoding
 
 `readJsonObject()` and `readSingleJsonObject()` in `lib/src/json_reader.dart`

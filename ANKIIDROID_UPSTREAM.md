@@ -1002,3 +1002,19 @@ source-derived cases are in `test/card_user_flag_test.dart`. `Card.kt` credits
 Daniel Svärd (2009), Norbert Nagold (2011), and Houssam Salem (2014), and
 declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `Collection.replaceInSearchNode(existingNode, replacementNode)`
+
+`collectionReplaceInSearchNode()` in `lib/src/collection_replace_search_node.dart`
+adapts only the backend forwarding wrapper from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1038–1047`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It passes the exact existing and
+replacement SearchNode objects once to the host callback in their named roles,
+returns the exact String, and propagates callback failures unchanged. SearchNode
+construction, replacement semantics, and the backend remain host-owned; no AGPL
+search/query implementation or source text is included. No direct pinned test
+for this wrapper was found; focused Dart cases are source-derived adapter
+contract tests. `Collection.kt` declares `GPL-3.0-or-later` and has no separate
+copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

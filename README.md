@@ -5376,6 +5376,19 @@ are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and attribution details.
 
+[`tagsFindAndReplace`](lib/src/tags_find_and_replace.dart) adapts only the
+`Tags.findAndReplace()` backend forwarding method from the same pinned
+`Tags.kt`. It passes the note ID list, search, replacement, regex, and case flag
+to the host backend callback unchanged and returns its exact result; collection
+and backend mutation remain host-side. `FinderTest.kt` checks integration
+replacement counts and matching behavior but does not directly test this
+callback boundary; focused Dart tests cover argument identity and values, call
+count, result identity, and exception propagation. The upstream method carries
+the `Tags.kt` credits and `GPL-3.0-or-later` license above. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source and attribution details.
+
 ## LibAnki media filename IRI helper
 
 [`Media.escapeMediaFilenames`](lib/src/media.dart) adapts the matching helper

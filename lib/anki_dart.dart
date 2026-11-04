@@ -29,6 +29,7 @@ export 'src/lang_string_helpers.dart';
 export 'src/media.dart';
 export 'src/note_cloze_utils.dart';
 export 'src/tags.dart';
+export 'src/tags_find_and_replace.dart';
 export 'src/bundle_utils.dart';
 export 'src/notetype_cloze_text_fields.dart';
 export 'src/note_editor_caller.dart';

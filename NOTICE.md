@@ -180,6 +180,24 @@ Copyright © 2024 David Allison under `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
 
+## LibAnki tag find and replace backend forwarding
+
+`lib/src/tags_find_and_replace.dart` and
+`test/tags_find_and_replace_test.dart` adapt only
+`Tags.findAndReplace(noteIds, search, replacement, regex, matchCase)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter passes
+the same note ID list and unchanged arguments once to the host backend callback,
+returns its exact result, and propagates failures unchanged. Collection,
+backend, generated request/result types, and mutation remain host-side. The
+pinned `libanki/src/test/java/com/ichi2/anki/libanki/FinderTest.kt` covers
+collection replacement counts and matching behavior, but not the adapter's
+callback arguments or order; focused Dart tests are source-derived. `Tags.kt`
+credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and Houssam Salem
+(2014) and is licensed under `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## libanki Deck JSON model
 
 `lib/src/libanki_deck.dart` and `test/libanki_deck_test.dart` adapt the

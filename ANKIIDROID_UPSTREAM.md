@@ -1,5 +1,24 @@
 # AnkiDroid upstream source record
 
+## `Tags.findAndReplace()` backend forwarding
+
+`tagsFindAndReplace()` in `lib/src/tags_find_and_replace.dart` adapts only
+`Tags.findAndReplace(noteIds, search, replacement, regex, matchCase)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes the host
+backend callback once with the same note ID list and all four remaining values
+unchanged and in source order, returns the exact callback result, and lets
+failures propagate unchanged. Collection, backend, generated request/result
+types, and mutation remain host-side. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/FinderTest.kt` verifies collection
+find-and-replace counts and matching behavior, but has no direct callback
+argument/order assertion for `Tags.findAndReplace()`; focused source-derived
+Dart tests cover argument identity and values, call count, result identity, and
+exception identity. `Tags.kt` credits Norbert Nagold (2011), Kostas
+Spyropoulos (2012), and Houssam Salem (2014), and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Key selection modifier filter
 
 `disallowModifierKeyCodes()` in `lib/src/key_selection_dialog_utils.dart`

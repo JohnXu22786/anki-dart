@@ -4342,6 +4342,26 @@ are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source and license record.
 
+## Collection.setWantsAbortRaw
+
+[`collectionSetWantsAbortRaw()`](lib/src/collection_set_wants_abort_raw.dart)
+adapts `Collection.setWantsAbortRaw(input)` from AnkiDroid 2.25.3. It forwards
+the exact `Uint8List` once to the host callback, returns its exact result, and
+propagates callback failures unchanged. The host retains abort behavior,
+serialization, and backend protocol. The source is
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1287`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`; the caller is
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt:105`. No
+direct pinned upstream test was found; focused source-derived tests are in
+[`test/collection_set_wants_abort_raw_test.dart`](test/collection_set_wants_abort_raw_test.dart).
+`Collection.kt` credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and
+Ankitects Pty Ltd (2022), and declares `GPL-3.0-or-later`. Although that file
+also notes incorporated AGPL-licensed browser.py code, this adapter only ports
+the GPL forwarding wrapper and includes no browser.py implementation. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for the pinned source and license record.
+
 ## JsonReader object decoding
 
 `readJsonObject()` and `readSingleJsonObject()` in `lib/src/json_reader.dart`

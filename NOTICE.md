@@ -3945,6 +3945,24 @@ source declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+`lib/src/collection_set_wants_abort_raw.dart` and
+`test/collection_set_wants_abort_raw_test.dart` adapt only the raw-byte
+forwarding wrapper `Collection.setWantsAbortRaw(input)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1287`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter forwards the exact
+`Uint8List` once, returns the callback's exact result, and propagates callback
+failures unchanged. Abort behavior, serialization, Collection, and the backend
+protocol remain host-side. The source caller is
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt:105`. No
+direct pinned wrapper test was found, so the focused Dart tests are
+source-derived. `Collection.kt` declares `GPL-3.0-or-later` and carries source
+copyrights for Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects
+Pty Ltd (2022). It separately notes incorporated AGPL-licensed browser.py
+code; this port adapts only the GPL forwarding wrapper and includes no
+browser.py implementation. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 `lib/src/collection_replace_search_node.dart` and
 `test/collection_replace_search_node_test.dart` adapt only the forwarding
 wrapper `Collection.replaceInSearchNode(existingNode, replacementNode)` from

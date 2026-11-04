@@ -1061,6 +1061,25 @@ Daniel Svärd (2009), Norbert Nagold (2011), and Houssam Salem (2014), and
 declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## `Collection.setWantsAbortRaw(input)`
+
+`collectionSetWantsAbortRaw()` in `lib/src/collection_set_wants_abort_raw.dart`
+adapts only the byte-array forwarding wrapper in
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1287`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It forwards
+the exact `Uint8List` once to the host callback, returns the callback's exact
+result, and propagates failures unchanged. Abort behavior, serialization, and
+the backend protocol remain host-owned. The caller routes
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt:105` to
+this host method. No direct pinned test for the wrapper was found; focused Dart
+tests are source-derived adapter contract tests. `Collection.kt` declares
+`GPL-3.0-or-later` and carries source copyrights for Norbert Nagold (2011),
+Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022). The file separately
+notes incorporated AGPL-licensed browser.py code; this port contains only the
+GPL forwarding wrapper and no browser.py implementation. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## `Collection.replaceInSearchNode(existingNode, replacementNode)`
 
 `collectionReplaceInSearchNode()` in `lib/src/collection_replace_search_node.dart`

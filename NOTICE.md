@@ -5072,7 +5072,7 @@ The setter retains the source `@RustCleanup` marker and exact body semantics:
 read host flags once, call `setFlagInInt` once, then write once on success.
 Helper validation preserves higher bits and the original 0–7 error; host and
 helper failures propagate unchanged. The pinned
-`AnkiDroid/src/test/java/com/ichi2/anki/libanki/FlagTest.kt` (lines 63–69)
+`libanki/src/test/java/com/ichi2/anki/libanki/FlagTest.kt` (lines 63–69)
 directly calls `setUserFlag(2)`, then `3` and `0`, and checks `userFlag()`; it
 does not cover call order or failure cases, which are covered by the focused
 Dart adapter tests. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011,

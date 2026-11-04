@@ -5641,7 +5641,7 @@ reads host `flags` once, calls `setFlagInInt` once, then writes the result once;
 read, helper, and write failures propagate unchanged. The Kotlin method's
 existing `@RustCleanup` marker remains in its source context; this port does not
 change adjacent flag APIs or add a Dart Card model. The pinned
-`AnkiDroid/src/test/java/com/ichi2/anki/libanki/FlagTest.kt` directly invokes
+`libanki/src/test/java/com/ichi2/anki/libanki/FlagTest.kt` directly invokes
 `setUserFlag(2)`, then `3` and `0`, and checks `userFlag()` (`FlagTest.kt:63–69`);
 it does not cover callback ordering or failures. The focused Dart adapter tests
 cover those additional source-derived behaviors. `Card.kt` credits Daniel Svärd

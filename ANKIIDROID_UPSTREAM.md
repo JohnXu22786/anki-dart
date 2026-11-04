@@ -995,7 +995,7 @@ only after computation succeeds. Higher bits are preserved by that helper; its
 validation and error remain unchanged. Getter, helper, and setter failures
 propagate unchanged. No Card model, extra validation, or adjacent API changes
 are introduced. The pinned
-`AnkiDroid/src/test/java/com/ichi2/anki/libanki/FlagTest.kt` (lines 63–69)
+`libanki/src/test/java/com/ichi2/anki/libanki/FlagTest.kt` (lines 63–69)
 directly calls `setUserFlag(2)`, then `3` and `0`, and checks `userFlag()`; it
 does not cover wrapper ordering or callback/helper failures. Those additional
 source-derived cases are in `test/card_user_flag_test.dart`. `Card.kt` credits

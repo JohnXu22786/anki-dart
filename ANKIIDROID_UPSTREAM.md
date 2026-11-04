@@ -736,3 +736,22 @@ Open Source Project and licensed under Apache-2.0; the license text is included
 at `LICENSES/Apache-2.0.txt`. The Dart adaptation and tests are Copyright © 2026
 John Tsui and distributed under this repository's GPL-3.0-or-later policy,
 which is compatible with Apache-2.0. Root `COPYING` remains byte-identical.
+
+## `Card.loadFromBackendCard(card)`
+
+`loadCardFromBackend` in `lib/src/card_backend_load.dart` adapts the ordered
+field assignment body of `Card.loadFromBackendCard(card)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 144–169).
+The host supplies backend getters, type/queue decoders, render-output and note
+cache clearing, and target setters; backend/protobuf and Card model types,
+constructors, Collection access, and storage remain host-owned. It preserves
+source order, optional presence-before-value checks, null assignment for absent
+optionals, callback failure propagation, and already-applied earlier mutations.
+The pinned `libanki/src/test/java/com/ichi2/anki/libanki/CardTest.kt` uses cards
+loaded through backend integration, but has no direct assertions for this
+ordered assignment, optional presence handling, or partial failure; focused
+Dart tests are source-derived. `Card.kt` credits Daniel Svärd (2009), Norbert
+Nagold (2011), and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

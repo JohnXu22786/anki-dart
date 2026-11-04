@@ -5636,3 +5636,23 @@ Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source mapping and attribution.
+
+## LibAnki backend card loading
+
+[`loadCardFromBackend`](lib/src/card_backend_load.dart) adapts
+`Card.loadFromBackendCard(card)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 144–169). The host supplies
+backend field getters, card-type and queue decoders, cache-clear callbacks, and
+card-field setters. It preserves the exact getter/decoder/setter order, reads
+optional values only when their presence check succeeds, assigns null otherwise,
+and stops on the first callback failure while retaining prior mutations. The
+backend card/protobuf, Card model and constructors, Collection access, and
+storage remain host-owned. The pinned `CardTest.kt` uses cards loaded through
+backend integration but has no direct assertions for this assignment order,
+optional presence handling, or partial failure; focused Dart cases are
+source-derived. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011,
+and Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source mapping and attribution.

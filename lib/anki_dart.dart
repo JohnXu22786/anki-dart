@@ -531,3 +531,4 @@ export 'src/python_types.dart';
 export 'src/storage_open_db_args.dart';
 export 'src/libanki_counts.dart';
 export 'src/notetype_json_type_predicates.dart';
+export 'src/card_backend_load.dart';

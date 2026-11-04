@@ -5117,3 +5117,17 @@ propagation. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011, an
 Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## `Card.loadFromBackendCard(card)`
+
+`lib/src/card_backend_load.dart` and its focused test adapt the ordered loading
+assignments in AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`
+(lines 144–169), pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The backend card/protobuf, Card
+model, constructors, Collection access, and storage remain host-owned. The
+adapter and test are Copyright © 2026 John Tsui under `GPL-3.0-or-later`.
+`Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem
+© 2014 and declares `GPL-3.0-or-later`. The pinned `CardTest.kt` uses loaded
+cards through backend integration but has no direct test of ordered assignment,
+optional presence, or partial failure; focused Dart cases are source-derived.
+Root `COPYING` remains byte-identical.

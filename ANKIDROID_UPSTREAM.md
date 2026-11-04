@@ -4026,3 +4026,25 @@ resume timer tests. The focused Dart cases are source-derived. `Card.kt` credits
 Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and
 declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `Card.renderOutput()` and output accessors
+
+`lib/src/libanki_card_render_output_cache.dart` adapts the cache behavior of
+`Card.renderOutput(col, reload, browser)`, `Card.question`, `Card.answer`,
+`Card.questionAvTags`, and `Card.answerAvTags` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 199–232). The adapter stores
+and returns the exact host output; it renders once if empty or reloaded,
+forwards the browser flag, and updates the cache only after rendering succeeds.
+Question forwards reload/browser and reads `questionAndStyle`; answer and both
+AV-tag accessors use default rendering flags and read their corresponding host
+values. Host values and callback errors remain unchanged. Card, Collection,
+`TemplateRenderOutput`, `TemplateManager`, rendering, and the Anki backend remain
+host-owned. The pinned `libanki/src/test/java/com/ichi2/anki/libanki/CardTest.kt`
+`renderOutput regression test` checks the backend "missing template" failure
+through the host integration, but no direct cache/reload/question/answer/AV-tag
+tests were found. The focused Dart tests are source-derived; direct upstream
+behavior coverage is limited to that integration error regression. `Card.kt`
+credits Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014
+and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.

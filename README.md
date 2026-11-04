@@ -5580,3 +5580,24 @@ Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
 Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
+
+## LibAnki card render-output cache and accessors
+
+[`LibAnkiCardRenderOutputCache`](lib/src/libanki_card_render_output_cache.dart)
+and its focused test adapt `Card.renderOutput`, `question`, `answer`,
+`questionAvTags`, and `answerAvTags` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The wrapper caches the exact host
+render output, forwards question reload/browser flags, uses the source defaults
+for answer and AV tags, and preserves callback order, return identity, and
+errors (including keeping the prior cache when rendering fails). Card,
+Collection, `TemplateRenderOutput`, `TemplateManager`, and actual rendering
+remain host-owned. The pinned `CardTest.kt` has no direct assertions for cache,
+reload, question/answer, or AV-tag access; its `renderOutput regression test`
+checks the host backend's “missing template” error through integration. The
+focused Dart callback tests are source-derived and are not direct upstream test
+parity. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011, and
+Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and attribution.

@@ -5077,3 +5077,19 @@ logging remain in `LibAnkiDeckConfig.timer`. `Card.kt` credits Daniel Svärd
 © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Card render-output cache and accessors
+
+`lib/src/libanki_card_render_output_cache.dart` and
+`test/libanki_card_render_output_cache_test.dart` adapt the cache and wrapper
+behavior of `Card.renderOutput`, `question`, `answer`, `questionAvTags`, and
+`answerAvTags` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Card state, Collection,
+`TemplateRenderOutput`, template rendering, and backend behavior remain
+host-owned. The Dart adapter and its source-derived focused tests preserve
+cache and return identity, call order, flag forwarding/defaults, and failure
+propagation. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011, and
+Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

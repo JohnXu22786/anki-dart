@@ -5764,3 +5764,22 @@ these focused Dart tests are source-derived. `Note.kt` credits Norbert Nagold
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source mapping and attribution.
+
+## LibAnki `Note.fieldsCheck(col)`
+
+[`libankiNoteFieldsCheck()`](lib/src/note_fields_check_wrapper.dart) adapts
+`Note.fieldsCheck(col)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
+`d9bf072f814a0c37d30e694192593b31ff2df875` (line 271). It preserves the source
+expression's order: build the backend Note once, pass that exact object to the
+host backend operation, then return the state from its exact response. The Note,
+Collection/backend, response state, and their generated types remain host-side;
+the callback adapter propagates failures unchanged. The pinned
+`CollectionTest.kt::test_note_fields_check` (lines 125–140) integration test
+asserts normal and non-normal results, but `NoteTest.kt` has no direct
+`fieldsCheck` assertion. Focused Dart tests cover the adapter contract and are
+source-derived, not backend integration parity. `Note.kt` credits Norbert
+Nagold © 2011 and Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source mapping and attribution.

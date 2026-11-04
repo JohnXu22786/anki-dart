@@ -5241,3 +5241,21 @@ a Note without dictionary assertions; the focused Dart tests are source-derived.
 `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014) and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## LibAnki `Note.fieldsCheck(col)`
+
+`lib/src/note_fields_check_wrapper.dart` and
+`test/note_fields_check_wrapper_test.dart` adapt
+`Note.fieldsCheck(col)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
+`d9bf072f814a0c37d30e694192593b31ff2df875` (line 271). The Note and
+Collection/backend remain host-side. The adapter calls `toBackendNote()` once,
+passes that exact result to the backend operation, then returns the state from
+its exact response; callback failures propagate unchanged. The pinned
+`CollectionTest.kt::test_note_fields_check` (lines 125–140) is integration
+coverage for normal and non-normal results. `NoteTest.kt` contains no direct
+`fieldsCheck` assertion, so the focused Dart tests are source-derived adapter
+contract tests rather than backend integration parity. `Note.kt` credits Norbert
+Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains byte-identical.

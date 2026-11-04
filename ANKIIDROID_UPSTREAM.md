@@ -872,3 +872,21 @@ ordering, result forwarding, or property replacement. Focused cases in
 Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## `Note.fieldsCheck(col)`
+
+`lib/src/note_fields_check_wrapper.dart` adapts
+`Note.fieldsCheck(col)` from `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30e694192593b31ff2df875` (line 271). The host retains the
+Note and Collection/backend objects, `toBackendNote()` conversion, response and
+state types. The adapter calls the conversion once, forwards that exact backend
+Note once, and returns the state read from the exact response; failures at each
+callback propagate unchanged. `CollectionTest.kt::test_note_fields_check`
+(lines 125–140) integration coverage asserts normal and non-normal results.
+`NoteTest.kt` has no direct `fieldsCheck` assertion; focused Dart adapter tests
+cover ordering, identity forwarding and exception propagation, not backend
+integration parity. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem
+(2014) and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

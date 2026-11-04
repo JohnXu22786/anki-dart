@@ -113,4 +113,36 @@ abstract final class Media {
     required String Function(String) encodeIriPaths,
     required String Function(String) decodeIriPaths,
   }) => unescape ? decodeIriPaths(string) : encodeIriPaths(string);
+
+  /// Returns host Files for every unused media filename in source order.
+  ///
+  /// The media check and unused list are read once. [mediaDirectory] remains
+  /// lazy when the list is empty and its exact result is reused for every
+  /// host File construction. File construction and filesystem behavior remain
+  /// host-owned.
+  static List<TFile> findUnusedMediaFiles<TResponse, TDirectory, TFile>({
+    required TResponse Function() checkMedia,
+    required List<String> Function(TResponse response) unusedList,
+    required TDirectory Function() mediaDirectory,
+    required TFile Function(TDirectory directory, String filename) file,
+  }) {
+    final filenames = unusedList(checkMedia());
+    late final TDirectory directory = mediaDirectory();
+    return filenames.map((filename) => file(directory, filename)).toList();
+  }
+
+  /// Returns whether the host File for [fname] exists.
+  ///
+  /// Directory resolution, File construction, and filesystem existence checks
+  /// remain host-owned and their errors pass through unchanged.
+  static bool have<TDirectory, TFile>(
+    String fname, {
+    required TDirectory Function() mediaDirectory,
+    required TFile Function(TDirectory directory, String filename) file,
+    required bool Function(TFile file) exists,
+  }) {
+    final directory = mediaDirectory();
+    final hostFile = file(directory, fname);
+    return exists(hostFile);
+  }
 }

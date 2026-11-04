@@ -5447,3 +5447,23 @@ and is licensed under `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source mapping and attribution.
+
+## LibAnki media file-path operations
+
+[`Media.findUnusedMediaFiles`](lib/src/media.dart) and
+[`Media.have`](lib/src/media.dart) adapt the matching methods in AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 142 and 172). The unused
+file method calls the host media check once, eagerly constructs host Files in
+source order, and resolves the lazy media directory only when a filename is
+mapped, reusing that exact directory. `have` resolves the directory, constructs
+one host File, then returns its `exists` result. File construction, paths,
+normalization, and filesystem behavior remain host-owned; callback errors
+propagate unchanged. The pinned `MediaTest.kt` integration test inspects the
+unused list returned by `check`, but has no direct test for either method, so
+the focused Dart cases are source-derived. `Media.kt` credits Kostas
+Spyropoulos © 2011 and Houssam Salem © 2014 and is licensed under
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source mapping and license details.

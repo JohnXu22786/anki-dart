@@ -4970,3 +4970,19 @@ adapter preserves source order and failure identity. The Kotlin source credits
 Kostas Spyropoulos © 2011 and Houssam Salem © 2014 and declares
 `GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `Media.findUnusedMediaFiles()` and `Media.have(fname)`
+
+`lib/src/media.dart` and `test/media_file_path_operations_test.dart` adapt
+`findUnusedMediaFiles()` and `have(fname)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. `findUnusedMediaFiles()` checks
+once, materializes host Files in source order, and resolves its lazy directory
+only when needed; `have` constructs one host File and returns the result of its
+single existence callback. Host file/path behavior and failures remain
+host-owned. The pinned integration test covers the unused filename list from
+`check()` but not these two methods directly; the focused Dart tests are
+source-derived. `Media.kt` credits Kostas Spyropoulos © 2011 and Houssam Salem
+© 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

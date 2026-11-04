@@ -3886,3 +3886,24 @@ callback order/count, identity, and failure tests are source-derived. `Media.kt`
 credits Kostas Spyropoulos © 2011 and Houssam Salem © 2014 and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `Media.findUnusedMediaFiles()` and `Media.have(fname)`
+
+`lib/src/media.dart` and `test/media_file_path_operations_test.dart` adapt
+`findUnusedMediaFiles()` and `have(fname)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 142 and 172).
+`findUnusedMediaFiles()` invokes the host media check once, reads its
+`unusedList` once, then eagerly constructs a new result list of host Files in
+source order. The media directory is resolved lazily only for the first mapped
+filename and that exact directory is reused. `have(fname)` resolves the
+directory, constructs one host File, invokes its `exists()` once, and returns
+that boolean unchanged. File creation, path handling, and filesystem semantics
+remain host-owned; exceptions propagate unchanged. The pinned
+`AnkiDroid/src/androidTest/java/com/ichi2/anki/tests/libanki/MediaTest.kt`
+`testDeckIntegration` checks an unused filename from `check().unusedList`, but
+no direct test for either method was found. The focused Dart cases are
+source-derived. `Media.kt` credits Kostas Spyropoulos © 2011 and Houssam Salem
+© 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

@@ -127,6 +127,25 @@ The Kotlin source is Copyright © 2020 Arthur Milchior and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## `NotetypeJson.getField(pos)`
+
+`lib/src/notetype_json_get_field.dart` and
+`test/notetype_json_get_field_test.dart` adapt `NotetypeJson.getField(pos: Int)`
+from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875` (line 67). The source
+expression `fields[pos]` resolves the fields collection once and indexes it
+once, in that order. The Dart adapter returns the exact `LibAnkiField` made by
+the existing `LibAnkiFields` constructor callback and preserves host index and
+wrapper failures unchanged. `NotetypeJson`, its fields collection, and the
+backing JSON array remain host-owned. A bounded search of the pinned
+`AnkiDroid/src/test` tree found no direct `NotetypeJson.getField` test; focused
+Dart cases for collection access count/order, exact index, wrapper identity,
+and index failure identity are source-derived. The Kotlin source is Copyright
+© 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## `NotetypeJson.isImageOcclusion`
 
 `lib/src/notetype_json_image_occlusion_predicate.dart` and

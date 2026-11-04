@@ -4884,6 +4884,22 @@ the `NotetypeJson`, `JSONObject`, `JSONArray`, and `Field` models and JSON
 semantics. No JSON implementation code is copied. Root `COPYING` remains
 byte-identical.
 
+## `NotetypeJson.getField(pos)`
+
+`lib/src/notetype_json_get_field.dart` and
+`test/notetype_json_get_field_test.dart` adapt `NotetypeJson.getField(pos: Int)`
+from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875` (line 67). The host retains
+`NotetypeJson`, its fields collection, and backing JSON array; the existing
+`LibAnkiFields` callback owns indexing and `LibAnkiField` construction. The
+adapter preserves the source's one collection read followed by one index
+operation and lets host failures propagate unchanged. A bounded search of the
+pinned `AnkiDroid/src/test` tree found no direct getter test; focused Dart tests
+are source-derived. The Kotlin source is Copyright © 2020 Arthur Milchior and
+licensed under `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `NotetypeJson.isImageOcclusion`
 
 `lib/src/notetype_json_image_occlusion_predicate.dart` and

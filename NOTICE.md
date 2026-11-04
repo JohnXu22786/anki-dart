@@ -5278,3 +5278,23 @@ source-derived adapter contract tests. `Note.kt` credits Norbert Nagold (2011)
 and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## LibAnki Note backend loading
+
+`lib/src/note_backend_load.dart` and `test/note_backend_load_test.dart` adapt
+`Note.load(col)` and `loadFromBackendNote(col, note)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 82–102).
+The host retains Note, Collection/backend, protobuf, Notetype, and Field. The
+callbacks preserve one current-ID read and backend fetch, exact backend Note
+forwarding, ordered projection writes, required notetype lookup/unwrap,
+independent mutable copies of tags and fields, and field-map construction last;
+failures stop subsequent operations and retain earlier mutations. The pinned
+`NoteTest.kt` has no direct backend-load assertions. `CollectionTest.test_addDelTags`
+loads notes and checks resulting tags, but does not assert callback order,
+field projection, list-copy identity, or partial mutation on failure. Focused
+Dart tests are source-derived adapter contract tests rather than backend
+integration parity. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem
+(2014) and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

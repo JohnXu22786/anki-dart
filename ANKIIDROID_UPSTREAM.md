@@ -1115,3 +1115,23 @@ It separately notes incorporated AGPL-3.0-or-later `browser.py` code; this
 adapter copies only the GPL forwarding wrapper and no browser implementation.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
+
+
+## `Collection.studiedToday()` host forwarding
+
+`collectionStudiedToday()` in `lib/src/collection_studied_today.dart` and
+`test/collection_studied_today_test.dart` adapt only the no-argument forwarding
+wrapper `Collection.studiedToday()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1157`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes
+the host callback once, returns its exact `String`, and propagates callback
+failures unchanged. The studied-today query and formatting stay host-side; the
+source `RustCleanup("check sched.studiedToday")` marker does not change this
+pinned behavior. No direct pinned test or Dart caller for this wrapper was
+found; focused Dart tests cover its callback contract. `Collection.kt` credits
+Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022),
+and declares `GPL-3.0-or-later`. The file separately notes incorporated
+`AGPL-3.0-or-later` `browser.py` code; this adapter copies only the GPL
+forwarding wrapper and no browser implementation. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

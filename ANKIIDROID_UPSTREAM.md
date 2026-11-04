@@ -1015,6 +1015,7 @@ returns the exact String, and propagates callback failures unchanged. SearchNode
 construction, replacement semantics, and the backend remain host-owned; no AGPL
 search/query implementation or source text is included. No direct pinned test
 for this wrapper was found; focused Dart cases are source-derived adapter
-contract tests. `Collection.kt` declares `GPL-3.0-or-later` and has no separate
-copyright line. The Dart adaptation and tests are Copyright © 2026 John Tsui
+contract tests. `Collection.kt` declares `GPL-3.0-or-later` and carries source
+copyrights for Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects
+Pty Ltd (2022). The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.

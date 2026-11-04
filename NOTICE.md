@@ -3902,8 +3902,9 @@ adapter returns its exact String and propagates failures unchanged. Generated
 SearchNode behavior, replacement semantics, and the backend remain host-owned;
 no AGPL search/query implementation or source text is included. No direct
 pinned wrapper test was found, so the focused Dart tests are source-derived
-adapter contract tests. `Collection.kt` declares `GPL-3.0-or-later` and has no
-separate copyright line. The Dart adaptation and tests are Copyright © 2026
+adapter contract tests. `Collection.kt` declares `GPL-3.0-or-later` and carries
+source copyrights for Norbert Nagold (2011), Kostas Spyropoulos (2012), and
+Ankitects Pty Ltd (2022). The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
 `lib/src/saved_state_handle.dart` and `test/saved_state_handle_test.dart` adapt

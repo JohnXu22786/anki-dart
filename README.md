@@ -4318,8 +4318,9 @@ Focused source-derived adapter tests are in
 No direct pinned upstream test for this wrapper was found. `Collection.kt` is at
 `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1038–1047` in AnkiDroid
 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`; it declares
-`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
-tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+`GPL-3.0-or-later` and carries source copyrights for Norbert Nagold (2011),
+Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022). The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the pinned source and license record.
 

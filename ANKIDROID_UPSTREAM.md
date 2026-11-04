@@ -1,5 +1,22 @@
 # AnkiDroid source baseline
 
+## `Card.note(col, reload)` and `Card.noteType(col)`
+
+`lib/src/card_note_cache.dart` and `test/card_note_cache_test.dart` adapt the
+`note(col, reload)` and `noteType(col)` methods from
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 230–241).
+The host supplies the card note ID, `Collection.getNote`, and notetype access;
+the note and collection implementations remain host-owned. The adapter loads
+only when the cached note is absent or reload is requested, assigns the cache
+only after a successful callback, and returns the exact cached or fetched note.
+`noteType` obtains that note through the same cache and returns one host
+notetype read unchanged. Pinned `CardTest.kt` does not directly test `note` or
+`noteType`; the focused Dart tests are source-derived. `Card.kt` credits Daniel
+Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `NotetypeJson.nonEmptyFields`
 
 `lib/src/non_empty_fields.dart` and `test/non_empty_fields_test.dart` port the

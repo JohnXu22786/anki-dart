@@ -4,6 +4,23 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## LibAnki card note cache
+
+[`CardNoteCache`](lib/src/card_note_cache.dart) adapts `Card.note(col, reload)`
+and `Card.noteType(col)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 230–241). The host supplies
+the card note ID, `Collection.getNote`, and notetype access; note and collection
+implementations remain host-owned. The adapter preserves cache short-circuiting,
+reload behavior, callback order, identity, and failure propagation, including
+retaining an existing note when a reload callback throws. The pinned
+`CardTest.kt` has no direct test for `note` or `noteType`; focused Dart cases are
+source-derived. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011,
+and Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for source mapping and attribution.
+
 ## LibAnki Card review timer
 
 [`CardReviewTimer`](lib/src/card_review_timer.dart) adapts `Card.startTimer`,

@@ -1,3 +1,16 @@
+## LibAnki card note cache
+
+`lib/src/card_note_cache.dart` and `test/card_note_cache_test.dart` adapt
+`Card.note(col, reload)` and `Card.noteType(col)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 230–241). The host retains
+the card, note, and collection implementations and supplies note lookup and
+notetype access. The pinned `CardTest.kt` has no direct test for these methods;
+focused Dart cases are source-derived. `Card.kt` credits Daniel Svärd © 2009,
+Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Nonempty note fields helper
 
 `lib/src/non_empty_fields.dart` and `test/non_empty_fields_test.dart` port the

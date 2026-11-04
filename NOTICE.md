@@ -1134,6 +1134,20 @@ pinned test was found for this extension. The Kotlin file declares
 tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
 `COPYING` remains byte-identical.
 
+`lib/src/dummy_scheduler.dart` and `test/dummy_scheduler_test.dart` adapt
+`DummyScheduler` from
+`libanki/src/main/java/com/ichi2/anki/libanki/sched/DummyScheduler.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+adapter retains the exact opaque collection reference, always returns null for
+`card`, and always throws generic `Exception("v1/v2 scheduler not supported")`.
+The base `Scheduler`, generated card/rating/collection types, and backend remain
+host-side. No direct pinned `DummyScheduler` test was found; the focused Dart
+cases are source-derived. The source is Copyright (c) 2011 Norbert Nagold,
+Copyright (c) 2012 Kostas Spyropoulos, and Copyright (c) 2013 Houssam Salem,
+and is licensed under `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui, marked with SPDX `GPL-3.0-or-later`, and distributed
+under the same license. Root `COPYING` remains byte-identical.
+
 `lib/src/scheduler_answer_card.dart` and `test/scheduler_answer_card_test.dart`
 adapt the `Scheduler.answerCard(card, states, rating)` extension from
 `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Scheduler.kt`, pinned to

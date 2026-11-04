@@ -122,6 +122,7 @@ export 'src/ignore_accents_in_search_config.dart';
 export 'src/browser_saved_searches_config.dart';
 export 'src/state_flow_var_delegate.dart';
 export 'src/scheduler_answer_card.dart';
+export 'src/dummy_scheduler.dart';
 export 'src/deck_filters.dart';
 export 'src/card_utils.dart';
 export 'src/viewer_refresh.dart';

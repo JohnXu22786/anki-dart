@@ -3899,6 +3899,23 @@ under the same license. Root `COPYING` remains byte-identical. See
 [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source and license record.
 
+## DummyScheduler
+
+`DummyScheduler<CollectionT, CardT, RatingT>` in `lib/src/dummy_scheduler.dart`
+adapts the observable behavior of `DummyScheduler` from
+`libanki/src/main/java/com/ichi2/anki/libanki/sched/DummyScheduler.kt`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It
+retains the exact opaque collection reference in `col`, always exposes a null
+`card`, and always throws `Exception("v1/v2 scheduler not supported")` from
+`answerCard`. Focused source-derived cases are in
+[`test/dummy_scheduler_test.dart`](test/dummy_scheduler_test.dart); no direct
+pinned `DummyScheduler` test was found. The base `Scheduler`, generated types,
+and backend remain host-side. The source notices Copyright © 2011 Norbert
+Nagold, © 2012 Kostas Spyropoulos, and © 2013 Houssam Salem; the adapter and
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
+
 ## Collection.cardStateCustomizer
 
 `CollectionCardStateCustomizer` adapts the `Custom scheduling` global setting

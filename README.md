@@ -142,6 +142,10 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source mapping and attribution.
 
+## LibAnki Note card query wrappers
+
+[`libankiNoteCardIds()`, `libankiNoteNumberOfCards()`, `libankiNoteCards()`, and `libankiNoteFirstCard()`](lib/src/note_card_queries.dart) adapt the matching `Note` methods from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit `d9bf072f814a0c37d30e694192593b31ff2df875` (lines 105–109 and 152). Note, Collection, DB, and Card stay host-side. The wrappers preserve the note-ID forwarding, unchanged card-ID list result, count delegation, eager ordered card lookup and short-circuiting, and `firstCard`'s exact SQL, scalar forwarding, and failure behavior. Upstream marks `numberOfCards` and `firstCard` with `@NotInPyLib`; `cardIds` and `cards` have no such annotation. `NoteTest.kt` has no direct tests for these methods. `CollectionTest.kt` covers counts and card use in integration flows, including `firstCard`, but does not assert the exact query or callback failure ordering; the focused Dart tests are source-derived adapter contract tests. `Note.kt` credits Norbert Nagold © 2011 and Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for source mapping and attribution.
+
 ## LibAnki `Media` initialization and lazy directory
 
 [`Media.initialize`](lib/src/media.dart) adapts the constructor initialization

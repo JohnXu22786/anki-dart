@@ -5259,3 +5259,22 @@ contract tests rather than backend integration parity. `Note.kt` credits Norbert
 Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
+
+## LibAnki Note card query wrappers
+
+`lib/src/note_card_queries.dart` and `test/note_card_queries_test.dart` adapt
+`Note.numberOfCards(col)`, `cardIds(col)`, `cards(col)`, and `firstCard(col)`
+from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`,
+pinned to commit `d9bf072f814a0c37d30e694192593b31ff2df875` (lines 105–109 and
+152). Note, Collection, DB, and Card remain host-side. The wrappers preserve
+note-ID forwarding, the exact card-ID list, count delegation, eager ordered
+lookups and short-circuiting, and the exact first-card SQL and scalar forwarding;
+callback failures propagate unchanged. Upstream marks `numberOfCards` and
+`firstCard` with `@NotInPyLib`; `cardIds` and `cards` are unmarked. `NoteTest.kt`
+has no direct assertions for these methods. `CollectionTest.kt` exercises
+count/card use in integration flows and `firstCard` in a lookup flow, but does
+not assert the exact SQL or failure ordering; the focused Dart tests are
+source-derived adapter contract tests. `Note.kt` credits Norbert Nagold (2011)
+and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

@@ -739,6 +739,29 @@ found. The Kotlin source is Copyright © 2020 Mike Hardy and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
 
+## `Note.numberOfCards(col)`, `cardIds(col)`, `cards(col)`, and `firstCard(col)`
+
+`lib/src/note_card_queries.dart` and `test/note_card_queries_test.dart` adapt
+these four methods from `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30e694192593b31ff2df875` (lines 105–109 and 152). The host
+retains Note, Collection, DB, and Card types and implementations. The adapter
+forwards the current note ID once to `cardIdsOfNote` and returns that exact
+list; `numberOfCards` delegates through the same card-ID adapter and reads its
+size after success; `cards` eagerly resolves IDs in order and stops at the
+first failing lookup; `firstCard` runs the exact source SQL once, forwards the
+scalar ID once to `getCard`, and preserves query/card errors. Upstream marks
+`numberOfCards` and `firstCard` with `@NotInPyLib`; `cardIds` and `cards` are not
+marked. The pinned `NoteTest.kt` has no direct assertions for these methods.
+`CollectionTest.kt` exercises `numberOfCards` and `cards` around generated
+cards (lines 45–51, 127, and 199) and uses `firstCard` in a card lookup flow
+(line 214); those integration assertions do not verify the exact SQL or
+callback failure order. The focused Dart tests are source-derived adapter
+contract tests, not Collection integration parity. `Note.kt` credits Norbert
+Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## AOSP `JSON.toString(value)`
 
 `jsonToString()` in `lib/src/json_to_string.dart` adapts

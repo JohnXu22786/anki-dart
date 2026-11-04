@@ -416,6 +416,7 @@ export 'src/previewer_mark_effects.dart';
 export 'src/note_mark_toggle.dart';
 export 'src/note_dictionary_interface.dart';
 export 'src/note_fields_check_wrapper.dart';
+export 'src/note_card_queries.dart';
 export 'src/note_object_methods.dart';
 export 'src/type_answer_modifiers.dart';
 export 'src/type_answer_cloze.dart';

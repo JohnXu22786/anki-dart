@@ -107,6 +107,26 @@ is Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `NotetypeJson.isImageOcclusion`
+
+`lib/src/notetype_json_image_occlusion_predicate.dart` and
+`test/notetype_json_image_occlusion_test.dart` adapt the computed
+`NotetypeJson.isImageOcclusion` getter from
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt` in AnkiDroid
+2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 177–183). The host supplies
+the `originalStockKind` read, its exact
+`ORIGINAL_STOCK_KIND_IMAGE_OCCLUSION_VALUE`, and a callback that identifies
+the host's source-equivalent `JSONException` class. The getter performs one
+read and exact integer comparison; it returns false only when that callback
+identifies the thrown error and otherwise rethrows the same error. `JSONObject`,
+JSON parsing, the constant, and the exception type remain host-owned. The pinned
+AnkiDroid test tree contains no direct unit test for this getter; the matching
+`NoteEditorTest` use is integration coverage, so focused Dart cases are
+source-derived. `NotetypeJson.kt` is Copyright © 2020 Arthur Milchior and
+declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## libanki CardOrdinal alias
 
 `lib/src/card_ordinal.dart` adapts the public `CardOrdinal` typealias from

@@ -4864,3 +4864,19 @@ and tests are Copyright © 2026 John Tsui under the same terms. The host retains
 the `NotetypeJson`, `JSONObject`, `JSONArray`, and `Field` models and JSON
 semantics. No JSON implementation code is copied. Root `COPYING` remains
 byte-identical.
+
+## `NotetypeJson.isImageOcclusion`
+
+`lib/src/notetype_json_image_occlusion_predicate.dart` and
+`test/notetype_json_image_occlusion_test.dart` adapt
+`NotetypeJson.isImageOcclusion` from
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt` in AnkiDroid
+2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host owns `JSONObject`,
+`originalStockKind`, `ORIGINAL_STOCK_KIND_IMAGE_OCCLUSION_VALUE`, and the
+source-equivalent `JSONException` class. A host callback identifies that class;
+only its errors become false, while other failures propagate unchanged. No direct
+pinned unit test was found. The Kotlin source is Copyright © 2020 Arthur
+Milchior and licensed under `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

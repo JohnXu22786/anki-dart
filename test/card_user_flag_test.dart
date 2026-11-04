@@ -68,4 +68,91 @@ void main() {
       },
     );
   });
+
+  group('cardSetUserFlag', () {
+    test('reads once, updates once, and writes once in source order', () {
+      final events = <String>[];
+      var flags = 0x123457;
+      var reads = 0;
+      var writes = 0;
+
+      cardSetUserFlag(
+        readFlags: () {
+          reads++;
+          events.add('read');
+          return flags;
+        },
+        writeFlags: (value) {
+          writes++;
+          events.add('write');
+          flags = value;
+        },
+        flag: 2,
+      );
+
+      expect(events, ['read', 'write']);
+      expect(reads, 1);
+      expect(writes, 1);
+      expect(flags, 0x123452);
+    });
+
+    test('does not write when setFlagInInt rejects the flag', () {
+      var reads = 0;
+      var writes = 0;
+
+      expect(
+        () => cardSetUserFlag(
+          readFlags: () {
+            reads++;
+            return 0x123457;
+          },
+          writeFlags: (_) => writes++,
+          flag: 8,
+        ),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.message,
+            'message',
+            'flag outside of expected [0, 7] interval',
+          ),
+        ),
+      );
+
+      expect(reads, 1);
+      expect(writes, 0);
+    });
+
+    test('propagates a flags getter failure unchanged without writing', () {
+      final failure = StateError('flags getter failed');
+      var writes = 0;
+
+      expect(
+        () => cardSetUserFlag(
+          readFlags: () => throw failure,
+          writeFlags: (_) => writes++,
+          flag: 2,
+        ),
+        throwsA(same(failure)),
+      );
+      expect(writes, 0);
+    });
+
+    test('propagates a flags setter failure unchanged', () {
+      final failure = StateError('flags setter failed');
+      final writes = <int>[];
+
+      expect(
+        () => cardSetUserFlag(
+          readFlags: () => 0x123457,
+          writeFlags: (value) {
+            writes.add(value);
+            throw failure;
+          },
+          flag: 2,
+        ),
+        throwsA(same(failure)),
+      );
+      expect(writes, [0x123452]);
+    });
+  });
 }

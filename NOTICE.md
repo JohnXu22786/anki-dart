@@ -5062,18 +5062,23 @@ Houssam Salem under `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
-## Card user-flag bit helpers
+## Card user-flag methods
 
 `lib/src/card_user_flag.dart` and `test/card_user_flag_test.dart` adapt
-`Card.userFlag()` and `Card.setFlagInInt()` from AnkiDroid 2.25.3
-`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to
-`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter retains the low-three-
-bit extraction, 0–7 input check and error message, and preservation of higher
-bits. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011, and
-Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and
-tests are Copyright © 2026 John Tsui under the same license. The pinned
-`CardTest.kt` has no direct tests for these helpers; the Dart cases are
-source-derived. Root `COPYING` remains byte-identical.
+`Card.userFlag()`, `Card.setFlagInInt()`, and `Card.setUserFlag(flag)` from
+AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned
+to `d9bf072f814a0c37d30a694192593b31ff2df875` (the setter is at lines 361–370).
+The setter retains the source `@RustCleanup` marker and exact body semantics:
+read host flags once, call `setFlagInInt` once, then write once on success.
+Helper validation preserves higher bits and the original 0–7 error; host and
+helper failures propagate unchanged. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/FlagTest.kt` (lines 63–69)
+directly calls `setUserFlag(2)`, then `3` and `0`, and checks `userFlag()`; it
+does not cover call order or failure cases, which are covered by the focused
+Dart adapter tests. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011,
+and Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
 
 ## Card review timer methods
 

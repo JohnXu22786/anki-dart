@@ -981,3 +981,24 @@ contract tests, not host-list integration parity. `Note.kt` credits Norbert
 Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## `Card.setUserFlag(flag)`
+
+`cardSetUserFlag` in `lib/src/card_user_flag.dart`, exported through
+`lib/anki_dart.dart`, adapts `Card.setUserFlag(flag)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 361–370). The Kotlin body
+is `flags = setFlagInInt(flags, flag)` and retains its existing `@RustCleanup`
+marker. The host supplies the flags property callbacks; the Dart wrapper reads
+flags once, calls the existing `setFlagInInt` once, and writes its result once
+only after computation succeeds. Higher bits are preserved by that helper; its
+validation and error remain unchanged. Getter, helper, and setter failures
+propagate unchanged. No Card model, extra validation, or adjacent API changes
+are introduced. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/FlagTest.kt` (lines 63–69)
+directly calls `setUserFlag(2)`, then `3` and `0`, and checks `userFlag()`; it
+does not cover wrapper ordering or callback/helper failures. Those additional
+source-derived cases are in `test/card_user_flag_test.dart`. `Card.kt` credits
+Daniel Svärd (2009), Norbert Nagold (2011), and Houssam Salem (2014), and
+declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.

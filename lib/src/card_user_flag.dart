@@ -28,6 +28,19 @@
 /// Returns the card flag stored in the low three bits of [flags].
 int cardUserFlag(int flags) => flags & 7;
 
+/// Adapts `Card.setUserFlag(flag)` while leaving the Card flags property on the
+/// host. It reads [readFlags] once, applies [setFlagInInt], then passes the
+/// result to [writeFlags] once. Host and helper failures propagate unchanged.
+void cardSetUserFlag({
+  required int Function() readFlags,
+  required void Function(int flags) writeFlags,
+  required int flag,
+}) {
+  final flags = readFlags();
+  final updatedFlags = setFlagInInt(flags, flag);
+  writeFlags(updatedFlags);
+}
+
 /// Replaces the low three bits of [flags] with [flag], retaining higher bits.
 ///
 /// [flag] must be in the inclusive range 0 through 7. An invalid value throws

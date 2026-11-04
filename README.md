@@ -5628,21 +5628,27 @@ Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source mapping and license details.
 
-## Card user-flag bit helpers
+## Card user-flag methods
 
-[`cardUserFlag`](lib/src/card_user_flag.dart) and [`setFlagInInt`](lib/src/card_user_flag.dart)
-adapt the matching integer helpers from AnkiDroid 2.25.3
+[`cardUserFlag`](lib/src/card_user_flag.dart), [`setFlagInInt`](lib/src/card_user_flag.dart),
+and [`cardSetUserFlag`](lib/src/card_user_flag.dart) adapt `Card.userFlag()`,
+`Card.setFlagInInt()`, and `Card.setUserFlag(flag)` from AnkiDroid 2.25.3
 `libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
-`d9bf072f814a0c37d30a694192593b31ff2df875`. They read the low three flag bits
-and replace those bits while preserving all higher bits; replacement accepts
-only values 0 through 7 and retains the source error message. This is a pure
-integer helper port and does not add a Dart Card model or change existing flag
-flows. The pinned `CardTest.kt` has no direct tests for these helpers, so the
-focused Dart cases are source-derived. `Card.kt` credits Daniel Svärd © 2009,
-Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
+`d9bf072f814a0c37d30a694192593b31ff2df875` (`Card.kt:361–370` for
+`setUserFlag`). The wrappers preserve low-three-bit extraction and replacement,
+higher bits, and the helper's 0–7 validation and error message. `cardSetUserFlag`
+reads host `flags` once, calls `setFlagInInt` once, then writes the result once;
+read, helper, and write failures propagate unchanged. The Kotlin method's
+existing `@RustCleanup` marker remains in its source context; this port does not
+change adjacent flag APIs or add a Dart Card model. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/FlagTest.kt` directly invokes
+`setUserFlag(2)`, then `3` and `0`, and checks `userFlag()` (`FlagTest.kt:63–69`);
+it does not cover callback ordering or failures. The focused Dart adapter tests
+cover those additional source-derived behaviors. `Card.kt` credits Daniel Svärd
+© 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical. See
-[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
 
 ## LibAnki card render-output cache and accessors

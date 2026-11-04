@@ -3589,3 +3589,23 @@ focused Dart tests are source-derived. `Storage.kt` is Copyright © 2011 Norbert
 Nagold and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## libanki scheduler Counts model
+
+`lib/src/libanki_counts.dart` and `test/libanki_counts_test.dart` adapt
+`com.ichi2.anki.libanki.sched.Counts` from
+`libanki/src/main/java/com/ichi2/anki/libanki/sched/Counts.kt` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Mutable
+queue counts, constructor defaults, `addNew`/`addLrn`/`addRev`, `count()`,
+equality, `listOf(new, rev, lrn).hashCode()` order, and `[$new, $lrn, $rev]`
+string output are preserved, including JVM signed Int32 overflow. Dart reserves
+`new` and has no nested enum declarations, so the writable property is
+`newCount` and the source's `Counts.Queue` enum is exposed as top-level
+`CountsQueue` in `NEW`, `LRN`, `REV` order. No direct pinned Counts-specific
+unit test was found. The bounded source search found scheduler integration
+assertions in `libanki/src/test/java/com/ichi2/anki/libanki/AbstractSchedTest.kt`
+and `SchedulerTest.kt`; those exercise scheduler results, not the model's
+mutators, hash, or string form. Focused Dart cases are source-derived.
+`Counts.kt` is Copyright © 2020 Arthur Milchior and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.

@@ -4708,3 +4708,17 @@ Nagold (2011), and Kostas Spyropoulos (2012); `Consts.kt` credits Houssam Salem
 adaptation and focused tests are Copyright © 2026 John Tsui, marked with SPDX
 `GPL-3.0-or-later`, and distributed under the same license. Root `COPYING`
 remains byte-identical.
+
+## Note cloze index helper
+
+`lib/src/note_cloze_utils.dart` and `test/note_cloze_utils_test.dart` adapt
+`Note.ClozeUtils.getNextClozeIndex` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The pure helper preserves the
+source regex, greatest-ID selection, Kotlin signed Int parsing and increment
+overflow; Note storage, collection/backend calls, editor state, and Android UI
+remain host-side. Direct pinned cases and regex/Int boundaries are identified
+in `ANKIDROID_UPSTREAM.md`. `Note.kt` credits Norbert Nagold (2011) and Houssam
+Salem (2014), under `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

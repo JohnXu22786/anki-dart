@@ -5135,3 +5135,17 @@ sources use `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright ©
 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
 for source mapping and attribution details.
+
+## LibAnki next cloze index
+
+[`getNextClozeIndex`](lib/src/note_cloze_utils.dart) scans supplied field values
+for the greatest `{{cN::` marker and returns the next number, preserving the
+pinned AnkiDroid 2.25.3 `Note.ClozeUtils.getNextClozeIndex` behavior. Kotlin
+signed 32-bit parsing failures and increment overflow are preserved. This pure
+helper does not read or update notes, collections, editor state, or Android UI.
+The five direct source cases and regex/Int boundaries are covered in
+`test/note_cloze_utils_test.dart`. The Kotlin source credits Norbert Nagold
+(2011) and Houssam Salem (2014); the Dart adaptation and tests are Copyright
+© 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for the pinned source and license details.

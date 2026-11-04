@@ -3537,3 +3537,23 @@ remains byte-identical.
 | Pinned AnkiDroid source | Dart adaptation and coverage | Behavior and boundary |
 | --- | --- | --- |
 | `libanki/src/main/java/com/ichi2/anki/libanki/Utils.kt` (`ids2str` overloads, `joinFields`, `splitFields`), `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` (`FIELD_SEPARATOR`), and direct test `libanki/src/test/java/com/ichi2/anki/libanki/UtilsTest.kt` (`testSplit`), all at commit `d9bf072f814a0c37d30a694192593b31ff2df875` | `Utils.ids2str`, `Utils.joinFields`, and `Utils.splitFields` in `lib/src/libanki_utils_fields.dart`; focused tests in `test/libanki_utils_fields_test.dart` | Preserves parenthesized IDs with comma-space separators, null/empty formatting, iterable element stringification, U+001F field joining, and leading, adjacent, and trailing empty fields when splitting. `UtilsTest.testSplit` directly covers ordinary splitting and empty fields; `ids2str` and `joinFields` behavior in Dart is source-derived because no direct pinned tests cover them. Dart maps Kotlin `IntArray`/`LongArray` inputs to `Iterable<int>`. Checksum and `ENGLISH_LOCALE` remain host-side. `Utils.kt` credits Daniel Svärd (2009), Edu Zamora (2009), Norbert Nagold (2011), and Kostas Spyropoulos (2012); `Consts.kt` credits Houssam Salem (2014). Both are licensed under `GPL-3.0-or-later`; adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical. |
+
+## `Note.ClozeUtils.getNextClozeIndex`
+
+`lib/src/note_cloze_utils.dart` and `test/note_cloze_utils_test.dart` adapt
+`Note.ClozeUtils.getNextClozeIndex(Iterable<String>)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The implementation
+uses the source regex `\\{\\{c(\\d+)::`, scans every match in every field, uses
+the greatest parsed number, and returns its increment; empty input and no
+matches return 1. It preserves Kotlin signed 32-bit parse failure for captured
+values above `Int.MAX_VALUE` and signed 32-bit increment overflow. The five
+direct cases in `libanki/src/test/java/com/ichi2/anki/libanki/NoteTest.kt`
+(`noFieldDataReturnsFirstClozeIndex`, `negativeFieldIsIgnored`,
+`singleFieldReturnsNextValue`, `multiFieldIsHandled`, and `missingFieldIsSkipped`)
+are mirrored in Dart, with additional regex and Int boundary cases. The Note
+model, note storage, collection/backend calls, editor state, and Android UI are
+outside this helper. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem
+(2014) and is licensed under `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

@@ -414,6 +414,7 @@ export 'src/previewer_card_flag.dart';
 export 'src/flag_to_display.dart';
 export 'src/previewer_mark_effects.dart';
 export 'src/note_mark_toggle.dart';
+export 'src/note_object_methods.dart';
 export 'src/type_answer_modifiers.dart';
 export 'src/type_answer_cloze.dart';
 export 'src/type_answer_field_result.dart';

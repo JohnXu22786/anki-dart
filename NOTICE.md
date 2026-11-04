@@ -5205,6 +5205,10 @@ source-derived. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014)
 under `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## LibAnki Note clone, equality, and hash code
+
+`lib/src/note_object_methods.dart` and `test/note_object_methods_test.dart` adapt `Note.clone()`, `Note.equals(other)`, and `Note.hashCode()` from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit `d9bf072f814a0c37d30e694192593b31ff2df875` (lines 273–287). The host retains Note, runtime-class identity, ID access, shallow cloning, casting, and exception construction. The adapters preserve source short-circuits, ID comparison order, clone exception behavior, and signed JVM 32-bit Long hash folding. `NoteTest.kt` only directly tests `ClozeUtils.getNextClozeIndex`, with no direct clone, equals, or hashCode assertions; the focused Dart tests are source-derived. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## LibAnki Note tag wrappers
 
 `lib/src/note_tag_wrappers.dart` and `test/note_tag_wrappers_test.dart` adapt

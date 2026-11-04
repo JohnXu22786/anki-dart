@@ -834,6 +834,23 @@ Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `Note.clone()`, `equals(other)`, and `hashCode()`
+
+`lib/src/note_object_methods.dart` adapts these methods from
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30e694192593b31ff2df875` (lines 273–287).
+The host owns Note, runtime-class identity, ID access, shallow cloning, cast,
+and `RuntimeException` construction. The adapters preserve the source's
+reference-identity, null, and exact-class short-circuits; compare IDs only after
+a same-class result; wrap only `CloneNotSupportedException` from shallow clone
+with its exact cause; and fold the signed Long ID into the signed JVM Int hash.
+The pinned `NoteTest.kt` directly tests only `ClozeUtils.getNextClozeIndex`;
+it has no direct clone, equals, or hashCode assertions. Focused Dart tests in
+`test/note_object_methods_test.dart` are source-derived. `Note.kt` credits
+Norbert Nagold (2011) and Houssam Salem (2014) under `GPL-3.0-or-later`. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## `Note.hasTag`, `addTag`, `stringTags`, and `setTagsFromStr`
 
 `lib/src/note_tag_wrappers.dart` adapts the four adjacent tag wrappers in

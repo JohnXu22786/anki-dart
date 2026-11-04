@@ -75,6 +75,7 @@ export 'src/libanki_deck_config.dart';
 export 'src/libanki_deck_order_display.dart';
 export 'src/libanki_field_collections.dart';
 export 'src/libanki_state.dart';
+export 'src/collection_files.dart';
 export 'src/libanki_consts.dart';
 export 'src/libanki_sort_order.dart';
 export 'src/libanki_card_template.dart';

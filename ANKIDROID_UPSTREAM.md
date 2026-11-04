@@ -3508,3 +3508,26 @@ Copyright (c) 2025 David Allison and is licensed under `GPL-3.0-or-later`. The
 Dart adaptation and test are Copyright © 2026 John Tsui, marked with SPDX
 `GPL-3.0-or-later`, and distributed under the same license. Root `COPYING`
 remains byte-identical.
+
+## libanki CollectionFiles sealed model
+
+`lib/src/collection_files.dart` and `test/collection_files_test.dart` adapt
+`libanki/src/main/java/com/ichi2/anki/libanki/CollectionFiles.kt` from
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. `FolderBasedCollection` delegates
+parent/child Java File creation to a host callback, in source property
+initialization order, passing the original parent and the three unmodified
+child names. The `collection` default and custom collection name are preserved;
+path joining and normalization remain host-owned. `InMemory.instance` is a
+stable singleton with a null media folder; `InMemoryWithMedia` remains a regular
+identity-based class and retains the exact opaque host File reference. Accessors
+preserve the source return references and throw a Dart `Exception` named
+`UnsupportedOperationException` with message `collection is in-memory` for
+unsupported in-memory operations. Collection and filesystem behavior remain
+host-side. A bounded search found no direct pinned tests for the model or its
+accessors. `CollectionOnDiskTest.kt` uses `InMemoryWithMedia` and verifies a
+collection-created media folder exists; this is indirect integration coverage,
+not direct accessor coverage. The Kotlin source credits Arthur Milchior (2025)
+and David Allison (2025), and declares `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

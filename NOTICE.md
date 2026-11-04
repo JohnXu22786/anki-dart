@@ -4671,3 +4671,20 @@ adaptation and tests are Copyright © 2026 John Tsui, marked with SPDX
 `GPL-3.0-or-later`, and distributed under the same license. Concrete backend
 and collection implementations remain host-side. Root `COPYING` remains
 byte-identical.
+
+## libanki CollectionFiles sealed model
+
+`lib/src/collection_files.dart` and `test/collection_files_test.dart` adapt
+`CollectionFiles.kt` from AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter preserves the three
+variants, singleton versus regular-class identity, source constructor order,
+host callback parent/child references, names/default, accessor return identity,
+and unsupported-operation message. Java File construction, path semantics,
+filesystem behavior, and Collection integration remain host-owned. There are no
+direct pinned tests for `CollectionFiles` or its accessors;
+`CollectionOnDiskTest.kt` provides indirect integration coverage by verifying a
+collection-created media folder exists. The Kotlin source credits Arthur
+Milchior (2025) and David Allison (2025) and is licensed under
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui, marked with SPDX `GPL-3.0-or-later`, and distributed under the same
+license. Root `COPYING` remains byte-identical.

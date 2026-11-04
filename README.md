@@ -5107,3 +5107,14 @@ Copyright © 2025 David Allison; the Dart adaptation and test are Copyright ©
 2026 John Tsui, under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 See [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for source mapping and attribution details.
+
+## LibAnki collection file variants
+
+[`CollectionFiles`](lib/src/collection_files.dart) adapts the disk and in-memory
+collection file variants from AnkiDroid 2.25.3. Disk child paths are constructed
+by the host's Java File callback in source order; path semantics and Collection
+integration remain host-side. The in-memory singleton, media-capable variant,
+and accessor exception behavior are covered by focused source-derived Dart
+tests. The pinned source has no direct accessor tests; its media-folder
+integration test is described in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md). Root `COPYING` remains byte-identical.

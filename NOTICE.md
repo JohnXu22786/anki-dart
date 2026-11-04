@@ -4986,3 +4986,17 @@ source-derived. `Media.kt` credits Kostas Spyropoulos © 2011 and Houssam Salem
 © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## `Media.filesInStr(currentCard, includeRemote)`
+
+`lib/src/media.dart` and `test/media_files_in_str_test.dart` adapt
+`Media.filesInStr` and its four public media regexes from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host retains card, note,
+model, template rendering, LaTeX, and AV tag objects and supplies callbacks to
+identify sound/video tags and read filenames. No AV parser code is copied.
+`MediaTest.kt` does not directly cover `filesInStr`; the focused Dart tests are
+source-derived. `Media.kt` is Copyright © 2011 Kostas Spyropoulos and © 2014
+Houssam Salem under `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

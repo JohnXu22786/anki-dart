@@ -3907,3 +3907,23 @@ source-derived. `Media.kt` credits Kostas Spyropoulos © 2011 and Houssam Salem
 © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## `Media.filesInStr(currentCard, includeRemote)`
+
+`lib/src/media.dart` and `test/media_files_in_str_test.dart` adapt
+`Media.filesInStr(currentCard, includeRemote = false)` and its
+`htmlMediaRegexps` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart adapter retains the four
+case-insensitive patterns and source capture groups, scans patterns and
+matches in source order, filters remote URL substrings unless requested,
+appends recognized sound/video filenames from question then answer AV tags,
+and returns first-occurrence distinct filenames. Card, note, model, render
+output, text extraction, LaTeX rendering, AV tag identity, and AV filename
+access remain host-owned callbacks; no parser implementation is copied. The
+pinned `AnkiDroid/src/androidTest/java/com/ichi2/anki/tests/libanki/MediaTest.kt`
+has no direct `filesInStr` coverage, so all focused Dart cases are
+source-derived. `Media.kt` credits Kostas Spyropoulos © 2011 and Houssam Salem
+© 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

@@ -23,6 +23,24 @@ Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
 
+## LibAnki `Media.filesInStr`
+
+[`Media.filesInStr`](lib/src/media.dart) adapts the HTML media filename and
+rendered sound/video filename collection from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the source's
+case-insensitive regex forms, capture groups, pattern/match order, optional
+remote URL inclusion, question-then-answer AV tag order, and first-occurrence
+deduplication. Card, note, model, template rendering, LaTeX, and AV tag objects
+remain host-owned and enter through callbacks; the host identifies sound/video
+tags and supplies their filenames. No audio/video parser implementation is
+included. The pinned `MediaTest.kt` has no direct `filesInStr` test, so focused
+Dart cases are source-derived. `Media.kt` credits Kostas Spyropoulos © 2011 and
+Houssam Salem © 2014 and is licensed under `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source mapping and attribution.
+
 ## NotetypeJson did property
 
 [`NotetypeDid`](lib/src/notetype_did.dart) adapts the `NotetypeJson.did`

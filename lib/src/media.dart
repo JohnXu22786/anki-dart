@@ -27,6 +27,92 @@ import 'empty_media_exception.dart';
 
 /// Portable operations from AnkiDroid's `Media` class.
 abstract final class Media {
+  /// HTML media attributes recognized by [filesInStr], in source order.
+  ///
+  /// These patterns preserve AnkiDroid's quoted and unquoted `src`/`data`
+  /// forms and their capture-group layout.
+  static final List<RegExp> htmlMediaRegexps = List.unmodifiable([
+    RegExp(
+      r'''(<(?:img|audio|source)\b[^>]* src=(['"])([^>]+?)\2[^>]*>)''',
+      caseSensitive: false,
+    ),
+    RegExp(
+      r'''(<(?:img|audio|source)\b[^>]* src=(?!['"])([^ >]+)[^>]*?>)''',
+      caseSensitive: false,
+    ),
+    RegExp(
+      r'''(<object\b[^>]* data=(['"])([^>]+?)\2[^>]*>)''',
+      caseSensitive: false,
+    ),
+    RegExp(
+      r'''(<object\b[^>]* data=(?!['"])([^ >]+)[^>]*?>)''',
+      caseSensitive: false,
+    ),
+  ]);
+
+  static final RegExp _remoteMediaUrlPattern = RegExp(
+    r'https?|ftp://',
+    caseSensitive: false,
+  );
+
+  static const List<int> _filenameCaptureGroups = [3, 2, 3, 2];
+
+  static String? _extractFilename(int patternIndex, RegExpMatch match) =>
+      match.group(_filenameCaptureGroups[patternIndex]);
+
+  /// Returns distinct HTML and sound/video filenames from a rendered card.
+  ///
+  /// Card, note, model, render output, LaTeX, and AV tag behavior remain
+  /// host-owned. The host supplies opaque values and callbacks; callback errors
+  /// propagate unchanged. HTML matches follow pattern order, then match order,
+  /// before question and answer AV tag filenames are appended.
+  static List<String>
+  filesInStr<TCard, TCollection, TNote, TModel, TRenderOutput, TAvTag>(
+    TCard currentCard, {
+    required TCollection collection,
+    bool includeRemote = false,
+    required TNote Function(TCard card, TCollection collection) note,
+    required TModel Function(TNote note) notetype,
+    required TRenderOutput Function(TCard card, TCollection collection)
+    renderOutput,
+    required String Function(TRenderOutput output) questionText,
+    required String Function(TRenderOutput output) answerText,
+    required String Function(String text, TModel model, TCollection collection)
+    renderLatex,
+    required List<TAvTag> Function(TRenderOutput output) questionAvTags,
+    required List<TAvTag> Function(TRenderOutput output) answerAvTags,
+    required bool Function(TAvTag tag) isSoundOrVideoTag,
+    required String Function(TAvTag tag) soundOrVideoFilename,
+  }) {
+    final model = notetype(note(currentCard, collection));
+    final output = renderOutput(currentCard, collection);
+    final processedText = renderLatex(
+      questionText(output) + answerText(output),
+      model,
+      collection,
+    );
+
+    final files = <String>[];
+    for (
+      var patternIndex = 0;
+      patternIndex < htmlMediaRegexps.length;
+      patternIndex++
+    ) {
+      final pattern = htmlMediaRegexps[patternIndex];
+      for (final match in pattern.allMatches(processedText)) {
+        final filename = _extractFilename(patternIndex, match);
+        if (filename == null) continue;
+        final isLocal = !_remoteMediaUrlPattern.hasMatch(filename);
+        if (isLocal || includeRemote) files.add(filename);
+      }
+    }
+
+    final avTags = [...questionAvTags(output), ...answerAvTags(output)];
+    final soundOrVideoTags = avTags.where(isSoundOrVideoTag).toList();
+    files.addAll(soundOrVideoTags.map(soundOrVideoFilename));
+    return files.toSet().toList();
+  }
+
   /// Adds [file] to the host media backend and returns its stored filename.
   ///
   /// File access and ByteString conversion remain host-owned. An empty file

@@ -5264,3 +5264,19 @@ Ankitects Pty Ltd and declares `GPL-3.0-or-later`. The Dart adaptation and tests
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source mapping and attribution.
+
+## NotetypeJson name getters
+
+[`NotetypeJsonNameGetters`](lib/src/notetype_json_name_getters.dart) adapts
+only `fieldsNames` and `templatesNames` from AnkiDroid 2.25.3
+`NotetypeJson.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves ordered field-name
+reads and a new materialized field-name list; template names come directly
+from the host's `getJSONArray("tmpls")` and `toStringList("name")` callbacks,
+with that list returned unchanged. The host retains the `NotetypeJson`,
+`JSONObject`, `JSONArray`, and `Field` models and JSON conversion behavior.
+The source is Copyright © 2020 Arthur Milchior; the Dart adaptation and tests
+are Copyright © 2026 John Tsui. Both are licensed under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the source path and license details.

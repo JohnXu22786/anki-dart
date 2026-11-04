@@ -4801,3 +4801,16 @@ John Tsui under the same terms. Root `COPYING` remains byte-identical.
 Ankitects Pty Ltd and licensed under `GPL-3.0-or-later`. The Dart adaptation
 and focused tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
+
+## `NotetypeJson` name getters
+
+`lib/src/notetype_json_name_getters.dart` and
+`test/notetype_json_name_getters_test.dart` adapt only the `fieldsNames` and
+`templatesNames` getters from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source is Copyright © 2020
+Arthur Milchior and is licensed under `GPL-3.0-or-later`; the Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same terms. The host retains
+the `NotetypeJson`, `JSONObject`, `JSONArray`, and `Field` models and JSON
+semantics. No JSON implementation code is copied. Root `COPYING` remains
+byte-identical.

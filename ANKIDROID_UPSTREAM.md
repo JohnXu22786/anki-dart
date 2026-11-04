@@ -3667,3 +3667,22 @@ begins with Copyright © 2022 Ankitects Pty Ltd and declares the GNU General
 Public License version 3 or later (`GPL-3.0-or-later`). The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## `NotetypeJson` name getters
+
+`lib/src/notetype_json_name_getters.dart` adapts only
+`NotetypeJson.fieldsNames` and `NotetypeJson.templatesNames` from AnkiDroid
+2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned
+to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. `fieldsNames` resolves the
+host field collection once, reads each field name in iteration order, and
+returns a new materialized Dart list. `templatesNames` calls the host
+`getJSONArray("tmpls")` once and passes that exact opaque array to
+`toStringList("name")` once, returning the host list unchanged. The host retains
+the `NotetypeJson`, `JSONObject`, `JSONArray`, and `Field` models and all JSON
+access, conversion, and error behavior. A bounded search of the pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt` and
+`AnkiDroid/src/test/java/com/ichi2/utils/NoteTypeTest.kt` found no direct tests
+for either getter; focused Dart cases are source-derived. The source is
+Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

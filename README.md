@@ -21,6 +21,24 @@ and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source mapping and attribution.
 
+## LibAnki backend card projection
+
+[`BackendCardProjection`](lib/src/backend_card_projection.dart) maps the
+source fields in `Card.toBackendCard()` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 173–195). Required card
+values pass through unchanged; nullable original position, FSRS memory state,
+desired retention, decay, and last review time remain null when absent so the
+host can omit the matching protobuf fields. The projection is host-neutral;
+generated backend card construction, protobuf types, and conversion remain
+host-owned. The pinned `CardTest.kt` has no direct test for `toBackendCard()`;
+focused Dart cases are source-derived. `Card.kt` credits Daniel Svärd © 2009,
+Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## LibAnki Card review timer
 
 [`CardReviewTimer`](lib/src/card_review_timer.dart) adapts `Card.startTimer`,

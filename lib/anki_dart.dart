@@ -18,6 +18,7 @@
  */
 
 export 'src/anki_backend_language.dart';
+export 'src/backend_card_projection.dart';
 export 'src/backend_note_projection.dart';
 export 'src/backend_stats_raw.dart';
 export 'src/backend_deck_options_raw.dart';

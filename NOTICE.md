@@ -11,6 +11,17 @@ Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## LibAnki backend card projection
+
+The source-derived field mapping in `lib/src/backend_card_projection.dart` and
+its focused tests adapt `Card.toBackendCard()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 173–195).
+`Card.kt` credits Daniel Svärd (2009), Norbert Nagold (2011), and Houssam Salem
+(2014), and is licensed under `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## Nonempty note fields helper
 
 `lib/src/non_empty_fields.dart` and `test/non_empty_fields_test.dart` port the

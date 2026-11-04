@@ -3549,6 +3549,31 @@ the same license. Root `COPYING` remains byte-identical. See `NOTICE.md` for
 the source attribution.
 
 
+
+## LibAnki backend card projection
+
+`lib/src/backend_card_projection.dart` and
+`test/backend_card_projection_test.dart` adapt the field mapping in
+`Card.toBackendCard()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 173–195).
+The projection maps `id`, `nid` to `noteId`, `did` to `deckId`, `ord` to
+`templateIdx`, the card type and queue codes, `due`, `ivl` to `interval`,
+`factor` to `easeFactor`, `reps`, `lapses`, `left` to `remainingSteps`, `oDue`
+to `originalDue`, `oDid` to `originalDeckId`, `flags`, and `customData` in
+source order without changing their values. It retains the nullable
+`originalPosition`, opaque `memoryState`, `desiredRetention`, `decay`, and
+`lastReviewTimeSecs` values, leaving them null when absent so protobuf presence
+is omitted by the host conversion. The host retains the Card model, generated
+backend card types, protobuf builders, and backend API; this adapter does not
+construct or copy those objects. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/CardTest.kt` has no direct test
+for `toBackendCard()`, so focused Dart cases are source-derived. `Card.kt`
+credits Daniel Svärd (2009), Norbert Nagold (2011), and Houssam Salem (2014)
+and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+
 ## JavaScript evaluator wrapper
 
 `lib/src/javascript_evaluator.dart` and

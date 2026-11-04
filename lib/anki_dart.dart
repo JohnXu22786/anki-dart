@@ -61,6 +61,7 @@ export 'src/confirm_mod_schema_exception.dart';
 export 'src/empty_media_exception.dart';
 export 'src/combined_exception_projection.dart';
 export 'src/card_state_filter.dart';
+export 'src/card_ordinal.dart';
 export 'src/card_type_name.dart';
 export 'src/chip_checked_background.dart';
 export 'src/collection_get_card_or_null.dart';

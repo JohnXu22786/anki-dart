@@ -4735,3 +4735,12 @@ in `ANKIDROID_UPSTREAM.md`. `Note.kt` credits Norbert Nagold (2011) and Houssam
 Salem (2014), under `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## libanki CardOrdinal alias
+
+`lib/src/card_ordinal.dart` adapts the public alias from
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt` in AnkiDroid 2.25.3 at
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. `Card.kt` credits Daniel
+Svärd (2009), Norbert Nagold (2011), and Houssam Salem (2014), and is licensed
+under `GPL-3.0-or-later`. The Dart adaptation is Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

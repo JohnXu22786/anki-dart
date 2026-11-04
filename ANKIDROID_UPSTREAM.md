@@ -1,5 +1,17 @@
 # AnkiDroid source baseline
 
+## libanki CardOrdinal alias
+
+`lib/src/card_ordinal.dart` adapts the public `CardOrdinal` typealias from
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It remains the
+zero-based index of a card template or cloze deletion, where `{{c1::...}}` has
+ordinal 0. The Dart `typedef CardOrdinal = int` is erased type documentation,
+matching Kotlin's typealias without adding a runtime wrapper or validation.
+`Card.kt` credits Daniel Svärd (2009), Norbert Nagold (2011), and Houssam Salem
+(2014), and declares GPL version 3 or later. The Dart adaptation is Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## libanki types and constants
 
 `lib/src/libanki_consts.dart` and `test/libanki_consts_test.dart` port the

@@ -3965,3 +3965,21 @@ for either helper, so the focused Dart cases are source-derived. `Card.kt`
 credits Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014
 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
 © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Card review timer methods
+
+`lib/src/card_review_timer.dart` and `test/card_review_timer_test.dart` adapt
+`Card.startTimer`, `timeTaken`, `stopTimer`, and `resumeTimer` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 275–305).
+The host supplies clock reads and the time limit; TimeManager, Collection,
+deck configuration, and storage remain host-owned. The adapter reads time once
+per method, evaluates the time limit after narrowing the elapsed difference to
+Kotlin's signed 32-bit `Int`, returns its minimum without clamping negatives,
+and keeps stop/resume arithmetic full-width. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/CardTest.kt` indirectly tests
+`timeTaken` with the current deck's time limit, but has no direct start/stop/
+resume timer tests. The focused Dart cases are source-derived. `Card.kt` credits
+Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and
+declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical.

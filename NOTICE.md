@@ -5032,3 +5032,16 @@ Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. The pinned
 `CardTest.kt` has no direct tests for these helpers; the Dart cases are
 source-derived. Root `COPYING` remains byte-identical.
+
+## Card review timer methods
+
+`lib/src/card_review_timer.dart` and `test/card_review_timer_test.dart` adapt
+`Card.startTimer`, `timeTaken`, `stopTimer`, and `resumeTimer` from AnkiDroid
+2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter leaves the clock,
+time limit, Collection, deck configuration, and storage to the host. `Card.kt`
+credits Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014
+and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. `CardTest.kt` indirectly tests
+`timeTaken` with the current deck's limit but has no direct timer-method tests;
+the focused Dart cases are source-derived. Root `COPYING` remains byte-identical.

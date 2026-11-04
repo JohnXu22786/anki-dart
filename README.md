@@ -4,6 +4,24 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## LibAnki Card review timer
+
+[`CardReviewTimer`](lib/src/card_review_timer.dart) adapts `Card.startTimer`,
+`timeTaken`, `stopTimer`, and `resumeTimer` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies clock readings
+and the time limit; Collection, deck configuration, TimeManager, and storage
+remain host-owned. The adapter preserves the single clock read, source callback
+order, signed 32-bit narrowing in `timeTaken`, and full-width stop/resume
+arithmetic. The pinned `CardTest.kt` tests `timeTaken` indirectly through the
+current-deck time limit, but has no direct start, stop, or resume timer tests;
+the focused Dart cases are source-derived. `Card.kt` credits Daniel Svärd
+© 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## Nonempty note fields helper
 
 [`nonEmptyFields`](lib/src/non_empty_fields.dart) ports the pure behavior of

@@ -1155,3 +1155,20 @@ source-derived adapter contract tests. `Collection.kt` credits Norbert Nagold
 forwarding wrappers and no browser implementation. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## `Collection.fixIntegrity()` host callback
+
+`collectionFixIntegrity()` in `lib/src/collection_fix_integrity.dart` adapts
+only the no-argument `Collection.fixIntegrity()` wrapper from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1257`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The wrapper
+calls the host database-check callback once and returns its exact ordered
+problem strings; callback failures propagate unchanged. Database access and
+integrity checking remain host-owned. Focused Dart adapter tests are in
+`test/collection_fix_integrity_test.dart`; no direct pinned wrapper test was
+found. `Collection.kt` credits Norbert Nagold (2011), Kostas Spyropoulos
+(2012), and Ankitects Pty Ltd (2022), declares `GPL-3.0-or-later`, and
+separately notes incorporated `AGPL-3.0-or-later` `browser.py` code. This
+adaptation contains only the GPL forwarding wrapper and no browser
+implementation. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical.

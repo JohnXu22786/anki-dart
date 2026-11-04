@@ -5480,3 +5480,21 @@ forwarding wrappers and no browser implementation. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
 for the pinned source mapping.
+
+## LibAnki Collection integrity-check forwarding
+
+`lib/src/collection_fix_integrity.dart` and
+`test/collection_fix_integrity_test.dart` adapt only the no-argument
+`Collection.fixIntegrity()` forwarding wrapper from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1257`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+invokes the host database-check callback once and returns its exact ordered
+problem list; callback failures propagate unchanged. Database access and the
+integrity check remain host-owned. No direct pinned wrapper test was found;
+the focused Dart cases cover the callback contract. `Collection.kt` credits
+Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022)
+and declares `GPL-3.0-or-later`. The file separately notes incorporated
+`AGPL-3.0-or-later` `browser.py` code; this adapter contains only the GPL
+forwarding wrapper and no browser implementation. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

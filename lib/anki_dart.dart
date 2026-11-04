@@ -80,6 +80,7 @@ export 'src/collection_get_card_or_null.dart';
 export 'src/collection_complete_tag_raw.dart';
 export 'src/collection_get_review_logs.dart';
 export 'src/collection_studied_today.dart';
+export 'src/collection_fix_integrity.dart';
 export 'src/collection_custom_undo_entry_operations.dart';
 export 'src/collection_set_wants_abort_raw.dart';
 export 'src/full_upload_or_download.dart';

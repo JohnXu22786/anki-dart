@@ -689,6 +689,24 @@ under GPL-3.0-or-later; root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source and coverage details.
 
+`collectionFixIntegrity()` in
+[`lib/src/collection_fix_integrity.dart`](lib/src/collection_fix_integrity.dart)
+adapts the no-argument `Collection.fixIntegrity()` forwarding wrapper from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1257`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes
+the host database-check callback once and returns its exact ordered problem
+list; callback failures propagate unchanged. Database access and integrity
+checking remain host-owned. Focused source-derived cases are in
+[`test/collection_fix_integrity_test.dart`](test/collection_fix_integrity_test.dart);
+no direct pinned wrapper test was found. `Collection.kt` credits Norbert
+Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022), and
+declares `GPL-3.0-or-later`. It separately notes incorporated
+`AGPL-3.0-or-later` `browser.py` code; this adapter copies only the GPL
+forwarding wrapper and no browser implementation. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source mapping and attribution.
+
 ## Card Browser search-history Loading conversion
 
 `convertBrowserSearchHistoryLoading()` in

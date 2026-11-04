@@ -2648,6 +2648,23 @@ are source-derived adapter checks and do not replace that integration test.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
 
+## Collection.fieldNamesForNoteIds
+
+`collectionFieldNamesForNoteIds()` in
+[`lib/src/collection_field_names_for_note_ids.dart`](lib/src/collection_field_names_for_note_ids.dart)
+adapts `Collection.fieldNamesForNoteIds(nids)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines
+911–912; the source alias is `field_names_for_note_ids`). It forwards the same
+ordered `List<NoteId>` once to the host field lookup and returns the exact
+`List<String>` result; callback failures propagate
+unchanged. Field lookup and backend behavior remain host-side. The pinned
+`Collection.kt` has no direct test of this wrapper. `Collection.kt` credits
+Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022)
+and declares `GPL-3.0-or-later`. The Dart adaptation and focused tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## Collection.getCardOrNull
 
 `collectionGetCardOrNull()` in `lib/src/collection_get_card_or_null.dart` adapts

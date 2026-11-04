@@ -80,6 +80,7 @@ export 'src/collection_get_card_or_null.dart';
 export 'src/collection_complete_tag_raw.dart';
 export 'src/full_upload_or_download.dart';
 export 'src/collection_build_search_string.dart';
+export 'src/collection_field_names_for_note_ids.dart';
 export 'src/collection_join_searches.dart';
 export 'src/collection_replace_search_node.dart';
 export 'src/collection_card_state_customizer.dart';

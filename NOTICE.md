@@ -5223,3 +5223,21 @@ four Note wrappers; `TagsTest.kt` separately covers helper-level `inList` and
 source-derived. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014)
 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
 © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## LibAnki Note dictionary interface
+
+`lib/src/note_dictionary_interface.dart` and
+`test/note_dictionary_interface_test.dart` adapt `Note.keys()`, `values()`,
+`items()`, `fieldIndex(key)`, `getItem(key)`, `setItem(key, value)`, and
+`contains(key)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
+`d9bf072f814a0c37d30e694192593b31ff2df875` (lines 163–209). The host retains
+Note, Field, and backing collections; the Dart code consumes the host's ordered
+name-to-ordinal map projection. It preserves map key iteration, values list
+identity, ordinal row placement and the existing TODO about Anki ordering,
+lookup-before-field-access, and direct map membership. The pinned
+`NoteTest.kt` tests Cloze utilities only, while `NoteWithColTest.kt` constructs
+a Note without dictionary assertions; the focused Dart tests are source-derived.
+`Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014) and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.

@@ -4090,3 +4090,28 @@ behavior coverage is limited to that integration error regression. `Card.kt`
 credits Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014
 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
 © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## LibAnki Note dictionary interface
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30e694192593b31ff2df875`:
+
+- Source: `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt:163–209`
+- Direct tests: `NoteTest.kt` tests Cloze utilities only; `NoteWithColTest.kt`
+  constructs a Note but does not test dictionary methods
+- Dart adaptation: `lib/src/note_dictionary_interface.dart`
+- Focused Dart cases: `test/note_dictionary_interface_test.dart`
+
+The host retains Note, Field, its fields list, and its ordered field map; the
+Dart adapter accepts the host-provided name-to-ordinal projection. `keys()`
+returns map keys in iteration order, `values()` returns the exact fields list,
+and `items()` places each key and field value at the mapped ordinal while
+preserving the source TODO that the resulting order differs from Anki.
+`fieldIndex()` looks up the key before asking the host to construct
+`IllegalArgumentException("No field named '<key>' found")`; get/set resolve the
+index before touching fields. `contains()` delegates to map membership without
+reading a field value. The pinned tests contain no direct assertions for these
+methods, so the focused Dart cases are source-derived. `Note.kt` credits Norbert
+Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

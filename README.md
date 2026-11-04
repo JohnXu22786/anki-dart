@@ -5741,3 +5741,25 @@ focused Dart wrapper tests are source-derived. `Note.kt` credits Norbert Nagold
 adaptation and tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for the source mapping and attribution.
+
+## LibAnki Note dictionary interface
+
+[`libankiNoteKeys()`, `libankiNoteValues()`, `libankiNoteItems()`,
+`libankiNoteFieldIndex()`, `libankiNoteGetItem()`, `libankiNoteSetItem()`, and
+`libankiNoteContains()`](lib/src/note_dictionary_interface.dart) adapt the Note
+dictionary methods from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
+`d9bf072f814a0c37d30e694192593b31ff2df875` (lines 163–209). The host retains
+Note, Field, and the backing fields and ordered field map; the adapter accepts
+the host's name-to-ordinal map projection. It preserves map iteration order for
+keys, the exact mutable fields list for values, and the source `items()` row
+placement by ordinal, including its TODO that row order differs from Anki.
+Missing-name lookup constructs the host `IllegalArgumentException` with the
+source message, and get/set resolve the index before accessing fields; contains
+uses only map membership. The pinned `NoteTest.kt` only tests Cloze utilities,
+and `NoteWithColTest.kt` constructs a Note without dictionary assertions, so
+these focused Dart tests are source-derived. `Note.kt` credits Norbert Nagold
+(2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for source mapping and attribution.

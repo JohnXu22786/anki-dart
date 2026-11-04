@@ -107,6 +107,26 @@ is Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `NotetypeJson.fields` and `NotetypeJson.templates`
+
+`lib/src/notetype_json_collection_properties.dart` and
+`test/notetype_json_collection_properties_test.dart` adapt the `fields` and
+`templates` properties from
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (source
+lines 137–155). Each getter invokes host `getJSONArray` once with `flds` or
+`tmpls`, then passes the exact returned array to the existing
+`LibAnkiFields` or `LibAnkiCardTemplates` constructor callback. Each setter
+passes that collection model's exact `jsonArray` to host `put` once under the
+matching key. The host retains `NotetypeJson`, `JSONObject`, `JSONArray`,
+collection construction, storage, and failure behavior; host callback errors
+propagate unchanged. `AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt`
+contains integration tests for field and template operations but no direct
+unit test for these property wrappers; focused Dart cases are source-derived.
+The Kotlin source is Copyright © 2020 Arthur Milchior and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `NotetypeJson.isImageOcclusion`
 
 `lib/src/notetype_json_image_occlusion_predicate.dart` and

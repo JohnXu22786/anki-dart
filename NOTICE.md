@@ -77,6 +77,25 @@ Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `NotetypeJson.fields` and `NotetypeJson.templates`
+
+`lib/src/notetype_json_collection_properties.dart` and
+`test/notetype_json_collection_properties_test.dart` adapt the `fields` and
+`templates` properties from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 137–155). The host
+retains `NotetypeJson`, `JSONObject`, and `JSONArray`, and owns JSON access,
+collection construction, storage, and errors. The getters make one
+`getJSONArray("flds"/"tmpls")` call and hand its exact array to the existing
+collection model constructor; setters make one `put` call with the model's
+exact backing array. Host callback failures pass through unchanged. Pinned
+`NoteTypeTest.kt` covers field and template operations through integration
+tests but has no direct test for these property wrappers, so the focused Dart
+cases are source-derived. `NotetypeJson.kt` is Copyright © 2020 Arthur
+Milchior and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## Backend JSON and ByteString boundary
 
 `lib/src/backend_utils.dart` and `test/backend_utils_test.dart` adapt the

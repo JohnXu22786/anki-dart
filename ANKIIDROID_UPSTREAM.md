@@ -1096,3 +1096,22 @@ contract tests. `Collection.kt` declares `GPL-3.0-or-later` and carries source
 copyrights for Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects
 Pty Ltd (2022). The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
+
+## `Collection.getReviewLogs(cardId)` host forwarding
+
+`collectionGetReviewLogs()` in `lib/src/collection_get_review_logs.dart` and
+`test/collection_get_review_logs_test.dart` adapt the forwarding wrapper
+`Collection.getReviewLogs(cardId)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1152`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It passes the same card ID once to
+the host callback and returns its exact generic `List<T>` result; callback
+failures propagate unchanged. `CardId` is represented as Dart `int`, while
+`StatsRevlogEntry` and backend/log-query behavior remain host-owned. No direct
+pinned test or Dart caller for this wrapper was found; focused tests cover the
+callback contract. `Collection.kt` declares `GPL-3.0-or-later` and credits
+Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022).
+It separately notes incorporated AGPL-3.0-or-later `browser.py` code; this
+adapter copies only the GPL forwarding wrapper and no browser implementation.
+The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.

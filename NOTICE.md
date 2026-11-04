@@ -5426,3 +5426,19 @@ adapter call, backing-list mutation, and exact host exception propagation.
 `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014) and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## LibAnki Collection review-log forwarding
+
+`lib/src/collection_get_review_logs.dart` adapts only
+`Collection.getReviewLogs(cardId)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1152`, pinned to
+AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It passes the same card ID once
+to the host callback, returns its exact generic list result, and propagates
+callback failures unchanged. `StatsRevlogEntry` and backend/log-query behavior
+remain host-owned. `Collection.kt` is GPL-3.0-or-later and credits Norbert
+Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022). It also
+notes incorporated AGPL-3.0-or-later `browser.py` code; this adapter contains
+only the GPL forwarding wrapper and no browser implementation. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under GPL-3.0-or-later.
+Root `COPYING` remains byte-identical.

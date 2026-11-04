@@ -5929,3 +5929,10 @@ source-derived adapter contract tests, not host-list integration parity.
 Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
+
+## Collection review logs
+
+`collectionGetReviewLogs(cardId, getReviewLogs)` forwards the same card ID once
+to the host callback and returns its exact generic list result. Callback
+failures propagate unchanged. `StatsRevlogEntry` and backend/log-query behavior
+remain host-side. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md).

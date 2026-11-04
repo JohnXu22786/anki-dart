@@ -41,6 +41,26 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source mapping and attribution.
 
+## LibAnki `Media` initialization and lazy directory
+
+[`Media.initialize`](lib/src/media.dart) adapts the constructor initialization
+and `dir` lazy property from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It logs the first
+`col.mediaFolder` result using `dir %s`, reads the property a second time, and
+only checks/creates a non-null directory. It logs `Creating collection.media`
+before calling `mkdirs`, whose Boolean result is ignored. The returned
+`requireMediaFolder` getter resolves only on first access, memoizes successful
+results, and retries after a thrown initialization. Collection, File, and
+logging implementations remain host-owned. Pinned `MediaTest.kt` reaches
+`dir` through `testDeckIntegration`, but does not directly cover constructor
+callback order or lazy retry; focused Dart tests are source-derived. `Media.kt`
+credits Kostas Spyropoulos © 2011 and Houssam Salem © 2014 and is licensed
+under `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026
+John Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## NotetypeJson did property
 
 [`NotetypeDid`](lib/src/notetype_did.dart) adapts the `NotetypeJson.did`

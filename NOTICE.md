@@ -5000,3 +5000,22 @@ source-derived. `Media.kt` is Copyright © 2011 Kostas Spyropoulos and © 2014
 Houssam Salem under `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## `Media` constructor initialization and `dir`
+
+`lib/src/media.dart` and `test/media_initialization_test.dart` adapt the
+constructor init block and lazy `dir` property from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 45–58). The host keeps the
+Collection and File objects and owns filesystem, collection, and logging
+implementations. The adapter preserves the two `mediaFolder` reads, the exact
+verbose/info messages and callback order, the null/existing/missing branches,
+and ignored `mkdirs` result. Its returned directory getter is lazy, memoizes
+only successful values, and retries errors on later access.
+`AnkiDroid/src/androidTest/java/com/ichi2/anki/tests/libanki/MediaTest.kt`
+`testDeckIntegration` reads `testCol.media.dir`, but does not directly cover
+initialization ordering or lazy error retry; focused Dart tests are
+source-derived. `Media.kt` is Copyright © 2011 Kostas Spyropoulos and © 2014
+Houssam Salem under `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

@@ -27,6 +27,37 @@ import 'empty_media_exception.dart';
 
 /// Portable operations from AnkiDroid's `Media` class.
 abstract final class Media {
+  /// Runs the host-owned Media constructor initialization and returns its lazy
+  /// directory getter.
+  ///
+  /// The collection media folder is read twice during initialization: the
+  /// first value is passed to the verbose log as `dir %s`, and the second is
+  /// checked for existence. A missing directory is logged and passed to
+  /// [mkdirs], whose Boolean result is ignored. [requireMediaFolder] is deferred
+  /// until the returned getter is first called; its first successful result is
+  /// memoized, while a thrown error leaves it available to retry. Collection,
+  /// filesystem, and logging behavior stay host-owned.
+  static TDirectory Function() initialize<TDirectory>({
+    required Object? Function() mediaFolder,
+    required void Function(String message, Object? value) logVerbose,
+    required bool Function(Object directory) exists,
+    required void Function(String message) logInfo,
+    required bool Function(Object directory) mkdirs,
+    required TDirectory Function() requireMediaFolder,
+  }) {
+    final loggedDirectory = mediaFolder();
+    logVerbose('dir %s', loggedDirectory);
+
+    final directory = mediaFolder();
+    if (directory != null && !exists(directory)) {
+      logInfo('Creating collection.media');
+      mkdirs(directory);
+    }
+
+    late final TDirectory cachedDirectory = requireMediaFolder();
+    return () => cachedDirectory;
+  }
+
   /// HTML media attributes recognized by [filesInStr], in source order.
   ///
   /// These patterns preserve AnkiDroid's quoted and unquoted `src`/`data`

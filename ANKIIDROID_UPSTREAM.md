@@ -1116,7 +1116,6 @@ adapter copies only the GPL forwarding wrapper and no browser implementation.
 The Dart adaptation and tests are Copyright © 2026 John Tsui under the same
 license. Root `COPYING` remains byte-identical.
 
-
 ## `Collection.studiedToday()` host forwarding
 
 `collectionStudiedToday()` in `lib/src/collection_studied_today.dart` and

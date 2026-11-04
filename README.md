@@ -5936,3 +5936,17 @@ source mapping and attribution.
 to the host callback and returns its exact generic list result. Callback
 failures propagate unchanged. `StatsRevlogEntry` and backend/log-query behavior
 remain host-side. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md).
+
+
+## Collection studied today
+
+`collectionStudiedToday(studiedToday)` invokes the no-argument host callback
+once and returns its exact String; callback failures propagate unchanged. The
+host retains the studied-today query and formatting. The adapter maps
+`Collection.studiedToday()` from AnkiDroid 2.25.3 and is licensed
+`GPL-3.0-or-later`. The source credits Norbert Nagold (2011), Kostas
+Spyropoulos (2012), and Ankitects Pty Ltd (2022), and separately notes
+incorporated `AGPL-3.0-or-later` `browser.py` code. This adapter copies only the
+GPL forwarding wrapper, not the browser implementation. See
+[the pinned upstream mapping](ANKIIDROID_UPSTREAM.md#collectionstudiedtoday-host-forwarding)
+and [NOTICE.md](NOTICE.md).

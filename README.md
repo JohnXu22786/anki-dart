@@ -22,6 +22,25 @@ Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
 
+## LibAnki card template selection
+
+[`selectLibAnkiCardTemplate`](lib/src/card_template_selection.dart) adapts
+`Card.template(col)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (line 244). The host resolves the
+card note type and supplies its templates, standard-type predicate, and indexed
+collection access. The adapter evaluates those in source order and once each,
+selecting the card ordinal for standard types or index zero for cloze types;
+the host template object and collection/index failure behavior pass through
+unchanged. The pinned `CardTest.kt` indirectly covers standard ordinal-zero
+selection, but has no direct cloze, multi-template, or callback-order test;
+focused Dart cases are source-derived. `Card.kt` credits Daniel Svärd © 2009,
+Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## Card deck config methods
 
 [`cardTimeLimit`](lib/src/card_deck_config_methods.dart),

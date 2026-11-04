@@ -5046,6 +5046,22 @@ and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
 `timeTaken` with the current deck's limit but has no direct timer-method tests;
 the focused Dart cases are source-derived. Root `COPYING` remains byte-identical.
 
+## LibAnki card template selection
+
+`lib/src/card_template_selection.dart` and
+`test/card_template_selection_test.dart` adapt `Card.template(col)` from
+AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter
+leaves note-type lookup, templates, the standard-type predicate, and collection
+indexing to the host. It preserves callback order and count, standard ordinal
+selection, cloze index-zero selection, and host object/error forwarding. The
+pinned `CardTest.kt` indirectly exercises standard ordinal-zero selection but
+has no direct test for cloze or callback order; focused Dart cases are
+source-derived. `Card.kt` credits Daniel Svärd (2009), Norbert Nagold (2011),
+and Houssam Salem (2014), and declares `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains byte-identical.
+
 ## Card deck config methods
 
 `lib/src/card_deck_config_methods.dart` and

@@ -2963,6 +2963,23 @@ test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
 separate copyright line. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## LibAnki card template selection
+
+`lib/src/card_template_selection.dart` and
+`test/card_template_selection_test.dart` adapt `Card.template(col)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (line 244). The
+host resolves the note type and retains its templates, standard-type predicate,
+and collection indexing. The adapter reads templates once, evaluates
+`isStd` once, then indexes at the card ordinal for standard note types or zero
+for cloze note types. The exact host template and callback/index errors pass
+through unchanged. The pinned `CardTest.kt` indirectly asserts standard
+ordinal-zero selection; no direct cloze, multi-template, or callback-order test
+was found, so focused Dart cases are source-derived. `Card.kt` credits Daniel
+Svärd (2009), Norbert Nagold (2011), and Houssam Salem (2014), and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Card deck config methods
 
 `lib/src/card_deck_config_methods.dart` and

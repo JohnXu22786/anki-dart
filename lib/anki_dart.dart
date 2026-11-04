@@ -64,6 +64,7 @@ export 'src/card_state_filter.dart';
 export 'src/card_ordinal.dart';
 export 'src/card_review_timer.dart';
 export 'src/card_deck_config_methods.dart';
+export 'src/card_template_selection.dart';
 export 'src/card_user_flag.dart';
 export 'src/card_type_name.dart';
 export 'src/chip_checked_background.dart';

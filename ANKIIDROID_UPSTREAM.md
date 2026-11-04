@@ -1,5 +1,21 @@
 # AnkiDroid upstream source record
 
+## `Collection.completeTagRaw(input)` byte forwarding
+
+`lib/src/collection_complete_tag_raw.dart` and
+`test/collection_complete_tag_raw_test.dart` adapt the
+`Collection.completeTagRaw(input)` wrapper in `Tags.kt:177` from AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart
+adapter passes the exact `Uint8List` once to the host callback, returns its
+exact bytes, and propagates callback failures unchanged. Serialization, tag
+completion, Collection, and backend behavior remain host-side. The source
+caller is `AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt:95`.
+No direct pinned upstream test for this wrapper was found; focused Dart tests
+are source-derived. `Tags.kt` credits Norbert Nagold (2011), Kostas Spyropoulos
+(2012), and Houssam Salem (2014), and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## `Tags.setCollapsed()` backend forwarding
 
 `tagsSetCollapsed()` in `lib/src/tags_set_collapsed.dart` adapts

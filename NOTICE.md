@@ -180,6 +180,23 @@ Copyright © 2024 David Allison under `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
 
+## LibAnki Collection raw tag completion forwarding
+
+`lib/src/collection_complete_tag_raw.dart` and
+`test/collection_complete_tag_raw_test.dart` adapt
+`Collection.completeTagRaw(input)` from `libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt:177`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter forwards the exact
+`Uint8List` once, returns the callback's exact result, and propagates callback
+failures unchanged. Serialization, tag completion, Collection, and backend
+behavior remain host-side. The source caller is
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt:95`. No
+direct pinned test for the wrapper was found; focused Dart cases are
+source-derived. `Tags.kt` credits Norbert Nagold (2011), Kostas Spyropoulos
+(2012), and Houssam Salem (2014), and is licensed under
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## LibAnki tag collapsed-state backend forwarding
 
 `lib/src/tags_set_collapsed.dart` and `test/tags_set_collapsed_test.dart` adapt

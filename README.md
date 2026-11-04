@@ -4324,6 +4324,24 @@ and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the pinned source and license record.
 
+## Collection.completeTagRaw
+
+[`collectionCompleteTagRaw()`](lib/src/collection_complete_tag_raw.dart)
+adapts `Collection.completeTagRaw(input)` from AnkiDroid 2.25.3. It forwards
+the exact `Uint8List` once to the host callback, returns its exact result, and
+propagates callback failures unchanged. The host owns serialization, tag
+completion, and backend behavior. The source is
+`libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt:177`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`; the caller is
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt:95`. No
+direct pinned upstream test was found; focused source-derived tests are in
+[`test/collection_complete_tag_raw_test.dart`](test/collection_complete_tag_raw_test.dart).
+`Tags.kt` credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and Houssam
+Salem (2014), and declares `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and license record.
+
 ## JsonReader object decoding
 
 `readJsonObject()` and `readSingleJsonObject()` in `lib/src/json_reader.dart`

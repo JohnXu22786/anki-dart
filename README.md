@@ -5815,3 +5815,22 @@ Tsui under the same license. TemplateManager rendering remains host-side; no
 AGPL source was copied. Root `COPYING` remains byte-identical. See
 [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
+
+## `Note.setField(index, value)`
+
+[`libankiNoteSetField()`](lib/src/note_set_field.dart) adapts the single
+indexed assignment in `Note.setField(index, value)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to the verified
+`v2.25.3` commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 211–217).
+The adapter delegates once to the host fields list's indexed setter without
+validating or transforming the index/value, preserving its mutation and exact
+failure behavior. Upstream annotates `setField` with `@NotInPyLib`; it remains
+part of AnkiDroid's Note implementation. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/NoteTest.kt` tests Cloze utilities
+only and has no direct `setField` assertion; focused Dart tests are
+source-derived adapter contract tests, not host-list integration parity.
+`Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014) and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.

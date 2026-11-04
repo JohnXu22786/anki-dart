@@ -961,3 +961,23 @@ Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 TemplateManager rendering remains host-side; no AGPL source was copied. Root
 `COPYING` remains byte-identical.
+
+## `Note.setField(index, value)`
+
+`lib/src/note_set_field.dart` and `test/note_set_field_test.dart` adapt only
+`Note.setField(index, value)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt` in AnkiDroid 2.25.3,
+pinned to the verified `v2.25.3` commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 211–217). The source method
+is annotated `@NotInPyLib`; its body assigns `fields[index] = value`. The Dart
+adapter performs that one indexed assignment on the host fields list without
+validation, clamping, copying, or normalization, leaving list bounds/type
+semantics to the host and propagating its exact exceptions. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/NoteTest.kt` tests
+`ClozeUtils.getNextClozeIndex` only and has no direct `setField` assertion.
+Focused Dart tests verify the exact index/value and single setter call, backing
+list mutation, and host exception identity; these are source-derived adapter
+contract tests, not host-list integration parity. `Note.kt` credits Norbert
+Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

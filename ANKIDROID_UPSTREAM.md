@@ -18,6 +18,27 @@ Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `NotetypeJson.did`
+
+`lib/src/notetype_did.dart` and `test/notetype_did_test.dart` adapt the
+`NotetypeJson.did` getter/setter from
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (getter
+and setter at lines 72–76). The host retains the JSON object and the
+`JSONObject.isNull`, `optLong`, and `put` operations. The getter invokes
+`isNull("did")` once; on null it returns the default deck ID 1 without an
+`optLong` call, otherwise it invokes `optLong("did", Consts.DEFAULT_DECK_ID)`
+once with fallback 1 and returns the host result unchanged. The setter calls
+`put("did", value)` once. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt`
+`getDid_test` directly covers setting/reading 999 and returning 1 after an
+explicit JSON null. Missing-key, invalid non-null value fallback, callback
+order/count, and thrown-object identity cases are source-derived Dart tests;
+the pinned test does not directly cover them. The Kotlin source is Copyright
+© 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## libanki CardOrdinal alias
 
 `lib/src/card_ordinal.dart` adapts the public `CardOrdinal` typealias from

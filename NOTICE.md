@@ -12,6 +12,24 @@ Arthur Milchior and declares `GPL-3.0-or-later`. The Dart adaptation and tests
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+## `NotetypeJson.did`
+
+`lib/src/notetype_did.dart` and `test/notetype_did_test.dart` adapt the
+`NotetypeJson.did` getter/setter from
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines
+72–76). The host retains `JSONObject` and owns its `isNull`, `optLong`, and
+`put` behavior. The getter checks `isNull("did")` once, returns 1 when null,
+and otherwise calls `optLong("did", 1)` once and returns its result; the setter
+calls `put("did", value)` once. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt`
+`getDid_test` directly covers setting/reading a non-null ID and the default for
+explicit JSON null. Missing-key, invalid-value fallback, callback ordering and
+failure propagation tests are source-derived. `NotetypeJson.kt` is Copyright
+© 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart adaptation
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 `lib/src/non_leading_zero_input_filter.dart` and
 `test/non_leading_zero_input_filter_test.dart` adapt the replacement decision
 from `AnkiDroid/src/main/java/com/ichi2/anki/ui/NonLeadingZeroInputFilter.kt`,

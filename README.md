@@ -23,6 +23,26 @@ Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
 
+## NotetypeJson did property
+
+[`NotetypeDid`](lib/src/notetype_did.dart) adapts the `NotetypeJson.did`
+getter/setter from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies the opaque
+JSON object and owns `isNull`, `optLong`, and `put`: the getter checks
+`isNull("did")` once, returns the default deck ID 1 for null, or calls
+`optLong("did", 1)` once and returns that result unchanged; the setter calls
+`put("did", value)` once. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt`
+`getDid_test` covers setting and reading a non-null ID and the default for an
+explicit JSON null. Missing-key behavior, invalid-value fallback, callback
+order/count, and callback failure propagation are covered by source-derived
+Dart cases. `NotetypeJson.kt` is Copyright © 2020 Arthur Milchior under
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## libanki CardOrdinal alias
 
 [`CardOrdinal`](lib/src/card_ordinal.dart) adapts the public

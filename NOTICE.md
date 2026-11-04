@@ -5156,3 +5156,19 @@ test; the focused Dart tests are source-derived. `Card.kt` credits Daniel
 Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Field.setOrd JSON write
+
+`lib/src/field_set_ord.dart` adapts only `Field.setOrd(value)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Field.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (line 99). It
+forwards one `put("ord", value ?: JSONObject.NULL)` call: non-null integers
+pass through unchanged, null uses the identical host-provided sentinel, and
+put failures propagate unchanged. JSONObject and its null sentinel remain
+host-owned; the rest of the Field model is outside this adaptation. Focused
+tests are in `test/field_set_ord_test.dart`. The pinned test tree has no
+Field/Fields test file or direct `setOrd` assertion;
+`CardTest.kt::test_gen_or` invokes `setOrd(null)` indirectly but does not assert
+the exact write. `Field.kt` is Copyright © 2024 David Allison and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.

@@ -546,11 +546,15 @@ remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the `name`,
 `ord`, `sticky`, `font`, `size` and nullable `tag` JSON mappings, the nullable
 ordinal write using the exact host NULL sentinel, and the source data-class
-wrapper operations. Host JSONObject typed access, puts, null and string
-conversion, equality and hash behavior remain callback-owned. The focused
-source-derived cases are in
-[`test/libanki_field_test.dart`](test/libanki_field_test.dart); no direct
-property test was found in the pinned libanki tests. The Kotlin source is
+wrapper operations. `lib/src/field_set_ord.dart` isolates the source
+`Field.setOrd(value)` write, and the existing field method delegates to it.
+Host JSONObject typed access, puts, null and string conversion, equality and
+hash behavior remain callback-owned. The focused source-derived cases are in
+[`test/libanki_field_test.dart`](test/libanki_field_test.dart) and
+[`test/field_set_ord_test.dart`](test/field_set_ord_test.dart). The pinned test
+tree has no Field/Fields test file or direct assertion for `setOrd`;
+`CardTest.kt::test_gen_or` calls `setOrd(null)` indirectly without checking
+the exact JSON write. The Kotlin source is
 Copyright © 2024 David Allison and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)

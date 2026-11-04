@@ -21,6 +21,7 @@
  * Source-derived from Field.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
+import 'field_set_ord.dart';
 import 'json_container.dart';
 
 /// Host-owned operations needed to adapt AnkiDroid's `Field` JSON holder.
@@ -91,8 +92,11 @@ final class LibAnkiField implements JSONObjectHolder {
   String? get imageOcclusionTag => callbacks.getStringOrNull(jsonObject, 'tag');
 
   /// Writes the ordinal, passing the exact host null sentinel for null values.
-  void setOrd(int? value) =>
-      callbacks.put(jsonObject, 'ord', value ?? callbacks.nullSentinel);
+  void setOrd(int? value) => setLibAnkiFieldOrd(
+    value: value,
+    nullSentinel: callbacks.nullSentinel,
+    put: (key, value) => callbacks.put(jsonObject, key, value),
+  );
 
   /// Kotlin data-class component for its sole constructor property.
   Object component1() => jsonObject;

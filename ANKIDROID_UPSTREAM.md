@@ -3868,3 +3868,21 @@ source-derived. `Media.kt` credits Kostas Spyropoulos © 2011 and Houssam Salem
 © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## `Media.addFile(file)`
+
+`lib/src/media.dart` and `test/media_add_file_test.dart` adapt `Media.addFile`
+from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 71–80).
+The adapter reads file length once and throws the existing distinct
+`EmptyMediaException` for zero length before requesting the name, bytes,
+ByteString conversion, or backend write. For nonempty files it evaluates the
+name, reads bytes once, converts that exact result once using the host callback,
+then calls `writeData` once and returns its exact result. File I/O, ByteString,
+and backend implementations remain host-owned; errors propagate unchanged.
+The pinned `AnkiDroid/src/androidTest/java/com/ichi2/anki/tests/libanki/MediaTest.kt`
+directly covers adding nonempty files and rejecting an empty file. Focused Dart
+callback order/count, identity, and failure tests are source-derived. `Media.kt`
+credits Kostas Spyropoulos © 2011 and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.

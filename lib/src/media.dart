@@ -23,8 +23,34 @@
  * Behavioral reference: Media.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
+import 'empty_media_exception.dart';
+
 /// Portable operations from AnkiDroid's `Media` class.
 abstract final class Media {
+  /// Adds [file] to the host media backend and returns its stored filename.
+  ///
+  /// File access and ByteString conversion remain host-owned. An empty file
+  /// raises [EmptyMediaException] before its name or contents are read.
+  static TResult addFile<TFile, TBytes, TByteString, TResult>(
+    TFile file, {
+    required int Function(TFile file) fileLength,
+    required String Function(TFile file) fileName,
+    required TBytes Function(TFile file) readBytes,
+    required TByteString Function(TBytes bytes) toByteString,
+    required TResult Function({
+      required String desiredName,
+      required TByteString data,
+    })
+    addMediaFile,
+  }) {
+    if (fileLength(file) == 0) throw const EmptyMediaException();
+
+    final name = fileName(file);
+    final bytes = readBytes(file);
+    final data = toByteString(bytes);
+    return writeData(name, data, addMediaFile: addMediaFile);
+  }
+
   /// Writes [data] to the host media backend under [desiredFname].
   ///
   /// Media bytes and the returned filename remain opaque host values.

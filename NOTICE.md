@@ -4959,3 +4959,14 @@ host-owned. `Media.kt` is Copyright © 2011 Kostas Spyropoulos and © 2014
 Houssam Salem under `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## `Media.addFile(file)`
+
+`lib/src/media.dart` and `test/media_add_file_test.dart` adapt `Media.addFile`
+from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. File I/O,
+ByteString conversion, and media backend operations remain host-owned. The
+adapter preserves source order and failure identity. The Kotlin source credits
+Kostas Spyropoulos © 2011 and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.

@@ -77,6 +77,20 @@ Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `NotetypeJson.deepClone()` and `toString()`
+
+`lib/src/notetype_json_object_operations.dart` and
+`test/notetype_json_object_operations_test.dart` adapt the corresponding
+methods from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 59 and 257). The host owns
+`NotetypeJson`, `JSONObject`, JSON cloning and string conversion; callbacks
+preserve the source order, return values, and failures. The pinned test tree has
+no direct tests for these methods, so focused Dart tests are source-derived.
+The Kotlin source is Copyright © 2020 Arthur Milchior and licensed under
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `NotetypeJson.fields` and `NotetypeJson.templates`
 
 `lib/src/notetype_json_collection_properties.dart` and

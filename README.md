@@ -5025,6 +5025,23 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source mapping and attribution.
 
+## `NotetypeJson.deepClone()` and `toString()`
+
+[`NotetypeJsonObjectOperations`](lib/src/notetype_json_object_operations.dart)
+adapts `deepClone()` and `toString()` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 59 and 257). A clone
+reads the retained JSON object once, invokes the host deep-clone callback once,
+then wraps that exact clone once and returns that exact model. `toString()`
+reads the retained object once and returns its host conversion unchanged.
+`NotetypeJson`, `JSONObject`, cloning, formatting, and their failures remain
+host-owned and propagate unchanged. No direct pinned unit tests for these two
+methods were found; focused Dart tests are source-derived. `NotetypeJson.kt` is
+Copyright © 2020 Arthur Milchior; the Dart adaptation and tests are Copyright
+© 2026 John Tsui. Both are licensed under `GPL-3.0-or-later`. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and license details.
+
 ## HttpFetcher request configuration
 
 httpFetcherRequestConfiguration() in

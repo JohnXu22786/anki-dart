@@ -18,6 +18,23 @@ Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## `NotetypeJson.deepClone()` and `toString()`
+
+`lib/src/notetype_json_object_operations.dart` and
+`test/notetype_json_object_operations_test.dart` adapt `deepClone()` and
+`toString()` from `libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 59 and 257). `deepClone()`
+reads the retained model's JSON object, calls the host deep-clone operation,
+then constructs and returns the model wrapper around that exact clone.
+`toString()` returns the host JSON object's conversion verbatim. The host
+retains `NotetypeJson` and `JSONObject`, and owns clone/format operations and
+their failure behavior. A bounded search of pinned `AnkiDroid/src/test` found
+no direct tests for these methods; focused Dart cases are source-derived. The
+Kotlin source is Copyright © 2020 Arthur Milchior and licensed under
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `NotetypeJson.did`
 
 `lib/src/notetype_did.dart` and `test/notetype_did_test.dart` adapt the

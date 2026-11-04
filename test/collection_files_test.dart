@@ -142,13 +142,14 @@ void main() {
       );
     });
 
-    test('InMemoryWithMedia keeps regular identity and exact media folder', () {
-      final media = Object();
+    test('separate InMemoryWithMedia instances keep regular identity', () {
+      const media = Object();
       final first = InMemoryWithMedia(mediaFolder: media);
       final second = InMemoryWithMedia(mediaFolder: media);
 
       expect(identical(first, second), isFalse);
       expect(identical(first.mediaFolder, media), isTrue);
+      expect(identical(second.mediaFolder, media), isTrue);
       expect(identical(first.requireMediaFolder(), media), isTrue);
       expect(
         () => first.requireDiskBasedCollection(),

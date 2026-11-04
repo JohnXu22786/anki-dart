@@ -90,7 +90,7 @@ final class InMemory extends CollectionFiles {
 
 /// An in-memory collection whose host provides a media folder.
 final class InMemoryWithMedia extends CollectionFiles {
-  const InMemoryWithMedia({required this.mediaFolder});
+  InMemoryWithMedia({required this.mediaFolder});
 
   @override
   final Object mediaFolder;

@@ -5950,3 +5950,22 @@ incorporated `AGPL-3.0-or-later` `browser.py` code. This adapter copies only the
 GPL forwarding wrapper, not the browser implementation. See
 [the pinned upstream mapping](ANKIIDROID_UPSTREAM.md#collectionstudiedtoday-host-forwarding)
 and [NOTICE.md](NOTICE.md).
+
+## Collection custom undo entries
+
+[`collectionAddCustomUndoEntry()` and `collectionMergeUndoEntries()`](lib/src/collection_custom_undo_entry_operations.dart) forward the exact custom undo name and
+target step once to their host callbacks and return the host's integer or
+generic result unchanged. Callback errors propagate unchanged. Undo storage,
+merging, and generated operation changes remain host-side. The adapters map
+`Collection.addCustomUndoEntry(name)` and `Collection.mergeUndoEntries(target)`
+from AnkiDroid 2.25.3 `Collection.kt:1181,1192`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. No direct pinned test or Dart
+caller for these wrappers was found; focused tests cover their forwarding
+contracts. `Collection.kt` credits Norbert Nagold (2011), Kostas Spyropoulos
+(2012), and Ankitects Pty Ltd (2022), and declares `GPL-3.0-or-later`. It also
+notes incorporated `AGPL-3.0-or-later` `browser.py` code; this port includes
+only the GPL forwarding wrappers, not that browser implementation. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical. See
+[the pinned upstream mapping](ANKIIDROID_UPSTREAM.md#collection-custom-undo-entry-forwarding)
+and [NOTICE.md](NOTICE.md).

@@ -5459,3 +5459,24 @@ the GPL forwarding wrapper and no browser implementation. The Dart adapter and
 tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING`
 remains unchanged. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) for the
 pinned source mapping.
+
+## LibAnki Collection custom undo entry forwarding
+
+`lib/src/collection_custom_undo_entry_operations.dart` and
+`test/collection_custom_undo_entry_operations_test.dart` adapt only
+`Collection.addCustomUndoEntry(name)` and `Collection.mergeUndoEntries(target)`
+from `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1181,1192` in
+AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The wrappers forward the exact
+inputs once, return the host step counter or generic result unchanged, and
+propagate callback failures unchanged. Operation and undo storage, merging,
+and generated `OpChanges` remain host-owned. No direct pinned tests or Dart
+callers for these wrappers were found; the focused tests are source-derived
+adapter contract tests. `Collection.kt` credits Norbert Nagold (2011), Kostas
+Spyropoulos (2012), and Ankitects Pty Ltd (2022), and declares
+`GPL-3.0-or-later`. Although the file also notes incorporated
+`AGPL-3.0-or-later` `browser.py` code, this adaptation includes only the GPL
+forwarding wrappers and no browser implementation. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
+for the pinned source mapping.

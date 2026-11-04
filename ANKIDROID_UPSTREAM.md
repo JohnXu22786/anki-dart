@@ -204,6 +204,20 @@ Dart tests are source-derived. The source is Copyright © 2022 Ankitects Pty Ltd
 and declares `GPL-3.0-or-later`. The Dart adapter and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## PythonTypes aliases
+
+`lib/src/python_types.dart` ports the seven public aliases from
+`libanki/src/main/java/com/ichi2/anki/libanki/PythonTypes.kt` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+Kotlin `Long` aliases map directly to Dart `int`; `DeckId` aliases
+`EpochMilliseconds`, preserving the source alias chain. Typedefs add no runtime
+behavior or range validation. The pinned `libanki/src/test/java/com/ichi2/anki/libanki/PythonTypesTest.kt`
+checks `DeckId` string formatting only and does not provide runtime coverage of
+the aliases themselves. The focused Dart assignment case is source-derived and
+checks compile-time compatibility only. The Kotlin source is Copyright © 2021 David Allison. The Dart adaptation and
+test are Copyright © 2026 John Tsui; both are distributed under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 ## PythonExtensions collection and conversion helpers
 
 `lib/src/python_extensions_collection_helpers.dart` and

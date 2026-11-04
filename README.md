@@ -4,6 +4,21 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## PythonTypes aliases
+
+[`lib/src/python_types.dart`](lib/src/python_types.dart) ports the seven public
+type aliases from `libanki/src/main/java/com/ichi2/anki/libanki/PythonTypes.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Kotlin `Long` maps to Dart `int`,
+and `DeckId` remains an alias of `EpochMilliseconds`. These typedefs add no
+runtime behavior or range validation. The pinned `PythonTypesTest.kt` checks
+`DeckId` string formatting, but provides no runtime coverage of the aliases
+themselves. The focused Dart assignment test is source-derived and checks
+compile-time compatibility only; no runtime validation is added. The Kotlin source is Copyright © 2021 David Allison. The Dart adaptation and
+test are Copyright © 2026 John Tsui; both are distributed under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md) for attribution.
+
 ## DeckConfig deep clone
 
 [`deepCloneDeckConfig`](lib/src/deck_config_deep_clone.dart) adapts

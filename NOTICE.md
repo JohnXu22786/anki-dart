@@ -232,6 +232,19 @@ Allison and Arthur Milchior (2020) under `GPL-3.0-or-later`; the Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+## PythonTypes aliases
+
+`lib/src/python_types.dart` ports the seven aliases declared by
+`libanki/src/main/java/com/ichi2/anki/libanki/PythonTypes.kt` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+`Long` is represented by Dart `int`; `DeckId` aliases `EpochMilliseconds`.
+These typedefs add no runtime behavior or range validation. The pinned
+`PythonTypesTest.kt` exercises `DeckId` string formatting, not runtime behavior
+of the aliases themselves. The focused Dart assignment case is source-derived
+and checks compile-time compatibility only. The Kotlin source is Copyright © 2021 David Allison. The Dart adaptation and
+test are Copyright © 2026 John Tsui; both are distributed under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
 ## PythonExtensions collection and conversion helpers
 
 `lib/src/python_extensions_collection_helpers.dart` and

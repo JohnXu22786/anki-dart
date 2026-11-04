@@ -5412,6 +5412,22 @@ and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source and attribution details.
 
+## Tag collapsed-state backend forwarding
+
+[`tagsSetCollapsed`](lib/src/tags_set_collapsed.dart) adapts
+`Tags.setCollapsed(tag, collapsed)` from the same pinned AnkiDroid `Tags.kt`.
+It forwards the tag as the backend's named `name` argument and passes the
+collapsed state unchanged, returning the exact backend result. Browser/tree
+state and backend behavior remain host-side. The upstream caller updates its
+in-memory tree after the backend call; focused Dart tests cover argument
+forwarding, one call, result identity, and unchanged exception propagation. The
+Kotlin source is Copyright (c) 2011 Norbert Nagold, Copyright (c) 2012 Kostas
+Spyropoulos, and Copyright (c) 2014 Houssam Salem under
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution details.
+
 ## LibAnki media filename IRI helper
 
 [`Media.escapeMediaFilenames`](lib/src/media.dart) adapts the matching helper

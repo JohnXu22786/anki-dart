@@ -180,6 +180,22 @@ Copyright © 2024 David Allison under `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
 
+## LibAnki tag collapsed-state backend forwarding
+
+`lib/src/tags_set_collapsed.dart` and `test/tags_set_collapsed_test.dart` adapt
+`Tags.setCollapsed(tag, collapsed)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt:55–60`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter forwards `tag` as the
+backend's named `name` argument and preserves `collapsed`, calling once and
+returning the backend result unchanged. The host owns backend and browser/tree
+state. `ManageTagsViewModelTest.kt:140–170` covers expand/collapse behavior but
+not the wrapper argument mapping; focused Dart cases cover forwarding, call
+count, result identity, and exception identity. `Tags.kt` is Copyright (c) 2011
+Norbert Nagold, Copyright (c) 2012 Kostas Spyropoulos, and Copyright (c) 2014
+Houssam Salem under `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 ## LibAnki tag find and replace backend forwarding
 
 `lib/src/tags_find_and_replace.dart` and

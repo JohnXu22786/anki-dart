@@ -1,5 +1,23 @@
 # AnkiDroid upstream source record
 
+## `Tags.setCollapsed()` backend forwarding
+
+`tagsSetCollapsed()` in `lib/src/tags_set_collapsed.dart` adapts
+`Tags.setCollapsed(tag, collapsed)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Tags.kt:55–60`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls the
+host backend once as `setTagCollapsed(name: tag, collapsed: collapsed)`,
+returns the exact result, and lets errors propagate unchanged. Browser/tree
+state and backend behavior remain host-side. The source caller is
+`ManageTagsViewModel.kt:97–112`, which updates its in-memory tree only after the
+backend call. The pinned `ManageTagsViewModelTest.kt:140–170` covers expand and
+collapse behavior, but no direct wrapper argument assertion was found; focused
+Dart tests cover argument forwarding, call count, result identity, and exception
+identity. `Tags.kt` is Copyright (c) 2011 Norbert Nagold,
+Copyright (c) 2012 Kostas Spyropoulos, and Copyright (c) 2014 Houssam Salem,
+and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## `Tags.findAndReplace()` backend forwarding
 
 `tagsFindAndReplace()` in `lib/src/tags_find_and_replace.dart` adapts only

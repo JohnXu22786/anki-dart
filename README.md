@@ -5118,3 +5118,20 @@ and accessor exception behavior are covered by focused source-derived Dart
 tests. The pinned source has no direct accessor tests; its media-folder
 integration test is described in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md). Root `COPYING` remains byte-identical.
+
+## LibAnki formatting and field helpers
+
+[`Utils`](lib/src/libanki_utils_fields.dart) ports `ids2str`, `joinFields`, and
+`splitFields` from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Utils.kt`,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves
+parenthesized comma-space ID formatting, null/empty behavior, U+001F field
+joining, and empty fields when splitting. The separator is the pinned
+`Consts.FIELD_SEPARATOR`. The direct Kotlin `UtilsTest.testSplit` covers normal
+and empty-field splitting; the focused Dart tests for ID formatting and joining
+are source-derived. Checksum and locale helpers remain host-side. The Kotlin
+source credits Daniel Svärd (2009), Edu Zamora (2009), Norbert Nagold (2011),
+and Kostas Spyropoulos (2012); `Consts.kt` credits Houssam Salem (2014). Both
+sources use `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright ©
+2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for source mapping and attribution details.

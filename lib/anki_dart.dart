@@ -77,6 +77,7 @@ export 'src/libanki_field_collections.dart';
 export 'src/libanki_state.dart';
 export 'src/collection_files.dart';
 export 'src/libanki_consts.dart';
+export 'src/libanki_utils_fields.dart';
 export 'src/libanki_sort_order.dart';
 export 'src/libanki_card_template.dart';
 export 'src/result_type.dart';

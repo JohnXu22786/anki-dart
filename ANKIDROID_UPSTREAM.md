@@ -3531,3 +3531,9 @@ not direct accessor coverage. The Kotlin source credits Arthur Milchior (2025)
 and David Allison (2025), and declares `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## LibAnki formatting and field helpers
+
+| Pinned AnkiDroid source | Dart adaptation and coverage | Behavior and boundary |
+| --- | --- | --- |
+| `libanki/src/main/java/com/ichi2/anki/libanki/Utils.kt` (`ids2str` overloads, `joinFields`, `splitFields`), `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt` (`FIELD_SEPARATOR`), and direct test `libanki/src/test/java/com/ichi2/anki/libanki/UtilsTest.kt` (`testSplit`), all at commit `d9bf072f814a0c37d30a694192593b31ff2df875` | `Utils.ids2str`, `Utils.joinFields`, and `Utils.splitFields` in `lib/src/libanki_utils_fields.dart`; focused tests in `test/libanki_utils_fields_test.dart` | Preserves parenthesized IDs with comma-space separators, null/empty formatting, iterable element stringification, U+001F field joining, and leading, adjacent, and trailing empty fields when splitting. `UtilsTest.testSplit` directly covers ordinary splitting and empty fields; `ids2str` and `joinFields` behavior in Dart is source-derived because no direct pinned tests cover them. Dart maps Kotlin `IntArray`/`LongArray` inputs to `Iterable<int>`. Checksum and `ENGLISH_LOCALE` remain host-side. `Utils.kt` credits Daniel Svärd (2009), Edu Zamora (2009), Norbert Nagold (2011), and Kostas Spyropoulos (2012); `Consts.kt` credits Houssam Salem (2014). Both are licensed under `GPL-3.0-or-later`; adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical. |

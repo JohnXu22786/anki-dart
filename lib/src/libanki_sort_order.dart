@@ -83,8 +83,7 @@ final class LibAnkiAfterSqlOrderBy extends LibAnkiSortOrder {
 
   @override
   bool operator ==(Object other) =>
-      other is LibAnkiAfterSqlOrderBy &&
-      other.customOrdering == customOrdering;
+      other is LibAnkiAfterSqlOrderBy && other.customOrdering == customOrdering;
 
   @override
   int get hashCode => customOrdering.hashCode;

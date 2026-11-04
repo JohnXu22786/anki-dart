@@ -4659,3 +4659,15 @@ transport remain host-side. Focused tests are in
 thin Kotlin extensions were found. The Dart adaptations and tests are Copyright
 © 2026 John Tsui, marked with SPDX `GPL-3.0-or-later`, and distributed under the
 same license. Root `COPYING` remains byte-identical.
+
+## LibAnki global state holder
+
+`lib/src/libanki_state.dart` and `test/libanki_state_test.dart` adapt the two
+mutable nullable properties in
+`libanki/src/main/java/com/ichi2/anki/libanki/LibAnki.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source is
+Copyright (c) 2025 David Allison and licensed under `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui, marked with SPDX
+`GPL-3.0-or-later`, and distributed under the same license. Concrete backend
+and collection implementations remain host-side. Root `COPYING` remains
+byte-identical.

@@ -3491,3 +3491,20 @@ focused Dart tests in `test/backend_deck_options_raw_test.dart` and
 callback selection/count, and exception identity for each adapter. The Dart
 adapters and tests are Copyright © 2026 John Tsui under the same license and
 carry SPDX metadata. Root `COPYING` remains byte-identical.
+
+## LibAnki global state holder
+
+`lib/src/libanki_state.dart` ports only the mutable nullable `backend` and
+`collection` properties from
+`libanki/src/main/java/com/ichi2/anki/libanki/LibAnki.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Both fields retain
+opaque `Object?` host values by identity and preserve the deprecation warning
+message `Only use this inside CollectionManagers`. The class has static fields
+only; concrete backend and collection types, their lifetimes, and production
+access through CollectionManagers remain host-side. A bounded pinned-source
+test search found no direct assertions for these fields; focused source-derived
+assignments/access cases are in `test/libanki_state_test.dart`. `LibAnki.kt` is
+Copyright (c) 2025 David Allison and is licensed under `GPL-3.0-or-later`. The
+Dart adaptation and test are Copyright © 2026 John Tsui, marked with SPDX
+`GPL-3.0-or-later`, and distributed under the same license. Root `COPYING`
+remains byte-identical.

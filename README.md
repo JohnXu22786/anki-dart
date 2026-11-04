@@ -5092,3 +5092,18 @@ upstream source is Copyright © 2022 Ankitects Pty Ltd and licensed under
 under the same license. Root `COPYING` remains byte-identical. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for source mapping and attribution details.
+
+## LibAnki global state holder
+
+[`LibAnki`](lib/src/libanki_state.dart) ports the nullable mutable `backend`
+and `collection` properties from `LibAnki.kt` in AnkiDroid 2.25.3, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Both fields preserve the
+identity of opaque `Object?` values and carry the source deprecation message
+`Only use this inside CollectionManagers`. Production code should use
+CollectionManagers; concrete backend and collection implementations remain
+host-side. The pinned test tree has no direct assertions for these fields, so
+the focused Dart assignments/access test is source-derived. `LibAnki.kt` is
+Copyright © 2025 David Allison; the Dart adaptation and test are Copyright ©
+2026 John Tsui, under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+See [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for source mapping and attribution details.

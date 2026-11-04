@@ -6042,3 +6042,24 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See
 [the pinned upstream mapping](ANKIIDROID_UPSTREAM.md#collection-custom-undo-entry-forwarding)
 and [NOTICE.md](NOTICE.md).
+
+## LibAnki Collection image-occlusion raw forwarding
+
+[`collectionGetImageForOcclusionRaw()` and the four related raw wrappers](lib/src/collection_image_occlusion_raw.dart)
+adapt the five `Collection` image-occlusion byte-array forwarding methods from
+AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1479–1491`, pinned
+to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Each wrapper passes the
+same `Uint8List` once to its host callback, returns the exact callback result,
+and propagates callback failures unchanged. The host retains byte-array
+bridge conversion, request/response protobufs, serialization, and all
+image-occlusion behavior. `PostRequestHandler.kt` routes these calls for Anki
+Pages; these source methods are marked `@NotInPyLib`.
+
+`Collection.kt` credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and
+Ankitects Pty Ltd (2022), and declares `GPL-3.0-or-later`. The file also notes
+incorporated `AGPL-3.0-or-later` `browser.py` code; this port adapts only the GPL
+forwarding boundaries and copies no browser implementation. The Dart adapter
+and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [the pinned upstream mapping](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md).

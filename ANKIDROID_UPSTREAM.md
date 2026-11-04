@@ -4151,3 +4151,32 @@ methods, so the focused Dart cases are source-derived. `Note.kt` credits Norbert
 Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## LibAnki Collection image-occlusion raw forwarding
+
+Pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+
+- Source: `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1479–1491`
+- Host routing: `AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt:103–157`
+- Dart adaptation: `lib/src/collection_image_occlusion_raw.dart`
+- Focused Dart cases: `test/collection_image_occlusion_raw_test.dart`
+- Pinned source tests: no direct test for these forwarding wrappers was found
+
+The five `getImageForOcclusionRaw`, `getImageOcclusionNoteRaw`,
+`getImageOcclusionFieldsRaw`, `addImageOcclusionNoteRaw`, and
+`updateImageOcclusionNoteRaw` methods are each one-call byte-array pass-throughs
+to the matching backend method. Their Dart adapters preserve the same input
+and output objects and callback failures; the host converts `ByteArray` at its
+Dart boundary and retains generated protobufs, serialization, and backend
+algorithms. The Kotlin source marks these methods `@NotInPyLib` and describes
+the group as Anki Pages/Svelte-to-backend communication. `PostRequestHandler.kt`
+routes the matching page requests. No image-occlusion algorithms or generated
+protocol code are ported here.
+
+`Collection.kt` credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and
+Ankitects Pty Ltd (2022) and declares `GPL-3.0-or-later`. Its header separately
+notes incorporated `AGPL-3.0-or-later` `browser.py` code. This adaptation
+contains only the GPL forwarding boundaries and copies no AGPL browser
+implementation. The Dart adapter and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`; root `COPYING` remains byte-identical.

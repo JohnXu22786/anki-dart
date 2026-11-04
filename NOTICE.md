@@ -5558,3 +5558,26 @@ and declares `GPL-3.0-or-later`. The file separately notes incorporated
 forwarding wrapper and no browser implementation. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## LibAnki Collection image-occlusion raw forwarding
+
+`lib/src/collection_image_occlusion_raw.dart` and
+`test/collection_image_occlusion_raw_test.dart` adapt only the five raw
+image-occlusion forwarding methods from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1479–1491`, pinned
+to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Each adapter calls its matching
+host callback once with the exact `Uint8List`, returns the exact result, and
+propagates errors unchanged. The host retains `ByteArray`/`Uint8List` boundary
+conversion, generated protobufs, serialization, and image-occlusion behavior.
+The methods are `@NotInPyLib` and are routed for Anki Pages by
+`AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt`. No
+backend implementation or generated protocol code is copied. No direct pinned
+test for these forwarding wrappers was found; focused Dart tests cover the
+adapter contract.
+
+`Collection.kt` credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and
+Ankitects Pty Ltd (2022) and declares `GPL-3.0-or-later`. Its header also notes
+incorporated `AGPL-3.0-or-later` `browser.py` code; this adaptation contains no
+browser implementation. The Dart adapter and tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

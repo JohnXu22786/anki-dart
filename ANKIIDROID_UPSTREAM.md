@@ -939,3 +939,25 @@ under the same license. Root `COPYING` remains byte-identical.
 ## LibAnki Note constructors and `fromNotetypeId`
 
 `Note(col, id)`, `Note(col, backendNote)`, and `Note.fromNotetypeId(col, ntid)` in `lib/src/note_constructors.dart` and `test/note_constructors_test.dart` adapt AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 63–80). The first constructor assigns the supplied ID before calling the existing load operation once; the backend-note constructor calls existing projection once with the identical supplied object. The factory calls backend `newNote(ntid)` once, passes that exact result to Note construction once, and returns the exact constructed Note. Callback errors stop subsequent operations and propagate unchanged. Note, Collection/backend, protobuf, and generated objects remain host-owned. The pinned `libanki/src/test/java/com/ichi2/anki/libanki/NoteTest.kt` tests Cloze utilities only and has no direct assertions for these constructors or factory. `CollectionTest.kt` creates notes through Collection helpers, but does not assert these exact callback sequences or object identities; the focused Dart tests are source-derived adapter contract tests, not backend integration parity. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for source mapping and attribution.
+
+## `Note.ephemeralCard(col)` orchestration
+
+`lib/src/note_ephemeral_card.dart` and `test/note_ephemeral_card_test.dart`
+adapt only the orchestration in `Note.ephemeralCard()` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
+`d9bf072f814a0c37d30e694192593b31ff2df875` (lines 111–147). The adapter
+creates one host Card with a null ID, assigns its ordinal and deck ID, resolves
+the supplied or current notetype, clones the supplied template or selects from
+the host template list, sets the selected template ordinal, invokes the host
+render callback once, and assigns the returned output and Note to the same
+Card. Note, Collection, Card, notetype, template, clone behavior, render
+context, and rendering remain host-side. Failures propagate unchanged and
+stop later operations while preserving preceding mutations. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/NoteTest.kt` contains no direct
+`ephemeralCard` assertion; the focused tests cover adapter callback order,
+conditional lookup, template choice/cloning, identity, mutations, and
+short-circuiting, not host rendering internals. `Note.kt` credits Norbert
+Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+TemplateManager rendering remains host-side; no AGPL source was copied. Root
+`COPYING` remains byte-identical.

@@ -1,5 +1,22 @@
 # AnkiDroid upstream source record
 
+## `Collection.undoStatus()` backend projection
+
+`collectionUndoStatus()` in `lib/src/collection_undo_status.dart` adapts
+`Collection.undoStatus()` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1168` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It calls
+the host's `getUndoStatus` once, reads the generic host status object's `undo`,
+`redo`, and `lastStep` fields once each in source order, then uses the existing
+`undoStatusFromFields()` conversion. Empty action strings become null; other
+values pass through. Callback and field getter failures propagate unchanged.
+The host retains Collection, backend, generated protobuf types and ownership.
+`BackendUndo.kt` declares `GPL-3.0-or-later`; `Collection.kt` declares
+`GPL-3.0-or-later` and separately notes incorporated AGPL-licensed `browser.py`
+code. This adapter only bridges the host call and field reads; it contains no
+AGPL browser implementation. The Dart adaptation and tests are Copyright © 2026
+John Tsui under `GPL-3.0-or-later`; root `COPYING` remains unchanged.
+
 ## `Collection.completeTagRaw(input)` byte forwarding
 
 `lib/src/collection_complete_tag_raw.dart` and

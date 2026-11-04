@@ -4725,16 +4725,24 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license. Roo
 
 ## Undo status projection
 
-`lib/src/undo_status.dart` and `test/undo_status_test.dart` adapt the status
-conversion and collection helpers in
-`libanki/src/main/java/com/ichi2/anki/libanki/BackendUndo.kt` and
-`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` from AnkiDroid
-2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
-`BackendUndo.kt` is Copyright (c) 2022 Ankitects Pty Ltd and declares
-`GPL-3.0-or-later`; root `COPYING` provides the repository's GNU GPL version 3
-text. The Dart adaptation and focused tests are Copyright © 2026 John Tsui under
-GPL-3.0-or-later. Root `COPYING` remains byte-identical. Collection/backend/
-protobuf access, translation, and undo/redo effects remain host-side.
+`lib/src/undo_status.dart` and `test/undo_status_test.dart` adapt the
+`UndoStatus` value and field conversion from
+`libanki/src/main/java/com/ichi2/anki/libanki/BackendUndo.kt`; the collection
+boundary in `lib/src/collection_undo_status.dart` and
+`test/collection_undo_status_test.dart` adapts
+`Collection.undoStatus()` from `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1168`.
+Both sources are from AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The collection adapter calls the
+host `getUndoStatus` once, reads `undo`, `redo`, and `lastStep` once each in
+source order, and reuses `undoStatusFromFields()` to normalize only empty
+strings. The host retains Collection, backend, protobuf types, and status object
+ownership; callback/getter failures propagate unchanged. `BackendUndo.kt` is
+Copyright (c) 2022 Ankitects Pty Ltd and declares `GPL-3.0-or-later`.
+`Collection.kt` declares `GPL-3.0-or-later` and separately notes incorporated
+AGPL-licensed `browser.py` code; the adapter bridges only the call and field
+reads and copies no AGPL browser implementation. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under GPL-3.0-or-later. Root `COPYING` remains
+byte-identical.
 
 ## HttpFetcher request configuration
 

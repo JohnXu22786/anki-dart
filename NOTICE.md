@@ -55,6 +55,22 @@ The Kotlin source is Copyright © 2020 Arthur Milchior and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## `NotetypeJson(json: String)`
+
+`lib/src/notetype_json_string_constructor.dart` and
+`test/notetype_json_string_constructor_test.dart` adapt the secondary JSON
+string constructor from
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines
+52–56). The host retains `JSONObject` and `NotetypeJson`; the Dart adapter
+forwards the exact input to the host parser once, wraps its exact result once,
+and returns the exact host wrapper. Parsing, JSON behavior, and failures remain
+host-owned. No direct pinned test for this secondary constructor was found, so
+focused Dart tests are source-derived. The Kotlin source is Copyright © 2020
+Arthur Milchior and licensed under `GPL-3.0-or-later`. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## `NotetypeJson` scalar and raw-array properties
 
 `lib/src/notetype_json_scalar_properties.dart` and

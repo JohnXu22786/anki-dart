@@ -500,6 +500,7 @@ export 'src/json_property_delegates.dart';
 export 'src/notetype_json_name_getters.dart';
 export 'src/notetype_json_get_field.dart';
 export 'src/notetype_json_object_operations.dart';
+export 'src/notetype_json_string_constructor.dart';
 export 'src/notetype_json_update.dart';
 export 'src/notetype_json_scalar_properties.dart';
 export 'src/notetype_json_collection_properties.dart';

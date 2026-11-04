@@ -5042,6 +5042,22 @@ Copyright © 2020 Arthur Milchior; the Dart adaptation and tests are Copyright
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for the source mapping and license details.
 
+## `NotetypeJson(json: String)`
+
+[`NotetypeJsonStringConstructor`](lib/src/notetype_json_string_constructor.dart)
+adapts the secondary JSON-string constructor from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 52–56). It passes the exact
+input string once to the host JSON parser, then passes that exact parsed object
+once to the host `NotetypeJson` wrapper and returns the exact wrapper. JSON
+parsing, storage, and failures remain host-owned and propagate unchanged. No
+direct pinned test for this secondary constructor was found; focused Dart cases
+are source-derived. `NotetypeJson.kt` is Copyright © 2020 Arthur Milchior; the
+Dart adaptation and tests are Copyright © 2026 John Tsui. Both are licensed
+under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for the source mapping and license details.
+
 ## HttpFetcher request configuration
 
 httpFetcherRequestConfiguration() in

@@ -3847,3 +3847,24 @@ for either getter; focused Dart cases are source-derived. The source is
 Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
+
+## LibAnki media backend forwarding
+
+`lib/src/media.dart` and `test/media_backend_operations_test.dart` adapt
+`Media.writeData`, `check`, `emptyTrash`, `forceResync`, `trashFiles`, and
+`restoreTrash` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The wrappers preserve exact
+backend arguments and result identity, evaluate the collection absolute path
+once, and keep trash logging (including the lazy media-directory read) before
+the backend call; callback errors propagate. Host-owned collection state,
+directory, logging, protobuf values, media database, and file operations stay
+outside Dart. In the pinned
+`AnkiDroid/src/androidTest/java/com/ichi2/anki/tests/libanki/MediaTest.kt`,
+`testAdd` exercises `writeData` through `addFile` and `testDeckIntegration`
+calls `check`; no direct tests for `emptyTrash`, `forceResync`, `trashFiles`, or
+`restoreTrash` were found. The focused callback and failure cases are
+source-derived. `Media.kt` credits Kostas Spyropoulos © 2011 and Houssam Salem
+© 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

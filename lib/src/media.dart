@@ -23,8 +23,59 @@
  * Behavioral reference: Media.kt in AnkiDroid 2.25.3; see ANKIDROID_UPSTREAM.md.
  */
 
-/// Portable media filename helpers from AnkiDroid's `Media` class.
+/// Portable operations from AnkiDroid's `Media` class.
 abstract final class Media {
+  /// Writes [data] to the host media backend under [desiredFname].
+  ///
+  /// Media bytes and the returned filename remain opaque host values.
+  static TResult writeData<TData, TResult>(
+    String desiredFname,
+    TData data, {
+    required TResult Function({
+      required String desiredName,
+      required TData data,
+    })
+    addMediaFile,
+  }) => addMediaFile(desiredName: desiredFname, data: data);
+
+  /// Returns the host result of checking collection media.
+  static TResult check<TResult>({required TResult Function() checkMedia}) =>
+      checkMedia();
+
+  /// Returns the host result of emptying the media trash.
+  static TResult emptyTrash<TResult>({
+    required TResult Function() emptyTrash,
+  }) => emptyTrash();
+
+  /// Removes the host media database for the collection's absolute DB path.
+  static void forceResync({
+    required String Function() collectionDbAbsolutePath,
+    required void Function({required String colPath}) removeMediaDb,
+  }) {
+    final path = collectionDbAbsolutePath();
+    removeMediaDb(colPath: path);
+  }
+
+  /// Logs and moves [fnames] to the host media trash in source order.
+  ///
+  /// The directory is resolved only for the info log. The host owns the
+  /// directory value, logging, and trash operation.
+  static void trashFiles<TDirectory>(
+    List<String> fnames, {
+    required TDirectory Function() mediaDirectory,
+    required void Function(String message, int count, TDirectory directory)
+    logInfo,
+    required void Function({required List<String> fnames}) trashMediaFiles,
+  }) {
+    logInfo('Deleting %d file(s) from %s', fnames.length, mediaDirectory());
+    trashMediaFiles(fnames: fnames);
+  }
+
+  /// Returns the host result of restoring the media trash.
+  static TResult restoreTrash<TResult>({
+    required TResult Function() restoreTrash,
+  }) => restoreTrash();
+
   /// Encodes or decodes media IRI paths using the host backend callbacks.
   ///
   /// By default, [encodeIriPaths] is called. When [unescape] is true,

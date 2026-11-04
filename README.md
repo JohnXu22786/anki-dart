@@ -5410,3 +5410,21 @@ source is Copyright © 2020 Arthur Milchior; the Dart adaptation and tests are
 Copyright © 2026 John Tsui. Both are licensed under `GPL-3.0-or-later`. Root
 `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for the source path and license details.
+
+## LibAnki media backend forwarding
+
+[`Media`](lib/src/media.dart) also ports `writeData`, `check`, `emptyTrash`,
+`forceResync`, `trashFiles`, and `restoreTrash` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It forwards opaque host values and
+preserves the source call order, result and filename-list identity, and callback
+errors. Collection paths, media directories, protobuf values, logging, and
+backend operations stay host-owned; the adapter performs no file I/O or media
+parsing. The pinned `MediaTest.kt` exercises `writeData` indirectly through
+`addFile` and checks `check` through a collection integration; it has no direct
+test for the other wrappers. The focused callback tests are source-derived.
+`Media.kt` credits Kostas Spyropoulos (2011) and Houssam Salem (2014) and is
+licensed under `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+See [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for the source mapping and attribution.

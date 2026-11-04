@@ -4945,3 +4945,17 @@ pinned unit test was found. The Kotlin source is Copyright © 2020 Arthur
 Milchior and licensed under `GPL-3.0-or-later`. The Dart adaptation and tests
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## Media backend forwarding operations
+
+`lib/src/media.dart` and `test/media_backend_operations_test.dart` adapt
+`Media.writeData`, `check`, `emptyTrash`, `forceResync`, `trashFiles`, and
+`restoreTrash` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Media.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter forwards opaque values
+to host callbacks, retaining source order, list/result identity, and failures;
+protobufs, paths, directories, logging, and file/backend behavior remain
+host-owned. `Media.kt` is Copyright © 2011 Kostas Spyropoulos and © 2014
+Houssam Salem under `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

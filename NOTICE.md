@@ -4744,3 +4744,10 @@ commit `d9bf072f814a0c37d30a694192593b31ff2df875`. `Card.kt` credits Daniel
 Svärd (2009), Norbert Nagold (2011), and Houssam Salem (2014), and is licensed
 under `GPL-3.0-or-later`. The Dart adaptation is Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains byte-identical.
+
+`lib/src/storage_open_db_args.dart` adapts `Storage.OpenDbArgs` from AnkiDroid
+2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Storage.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The upstream source is
+Copyright © 2011 Norbert Nagold and is licensed under `GPL-3.0-or-later`. The
+Dart adaptation and focused tests are Copyright © 2026 John Tsui and are
+licensed under the same terms. Root `COPYING` remains byte-identical.

@@ -5176,3 +5176,22 @@ The five direct source cases and regex/Int boundaries are covered in
 © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
 for the pinned source and license details.
+
+## libanki Storage.OpenDbArgs model
+
+[`OpenDbArgs`](lib/src/storage_open_db_args.dart) adapts the nested
+`Storage.OpenDbArgs.Path(File)` and `InMemory` variants from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Storage.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. `OpenDbPath` keeps the host File
+opaque, compares and copies its path value, and uses host callbacks for the
+single `exists` read and exact `absolutePath` value. `OpenDbInMemory.instance`
+is canonical and returns `true` and `:memory:` without filesystem callbacks.
+The host retains File and filesystem behavior, and path strings are not
+normalized. No direct pinned test for `OpenDbArgs` was found; pinned
+`CollectionOnDiskTest.kt` and `StorageRustTest.kt` are storage integration
+evidence only and do not assert these accessors. Focused Dart tests are
+source-derived. `Storage.kt` is Copyright © 2011 Norbert Nagold; the Dart
+adaptation and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.

@@ -3569,3 +3569,23 @@ outside this helper. `Note.kt` credits Norbert Nagold (2011) and Houssam Salem
 (2014) and is licensed under `GPL-3.0-or-later`. The Dart adaptation and tests
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## libanki Storage.OpenDbArgs model
+
+`lib/src/storage_open_db_args.dart` and `test/storage_open_db_args_test.dart`
+adapt only the nested `Storage.OpenDbArgs.Path(File)` and `InMemory` variants,
+`isNewDatabase()`, and `collectionPath` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Storage.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The path is an
+opaque host value; host callbacks supply exactly the `File.exists()` and
+`File.absolutePath` reads. Path equality and `copyWith` use only the File value,
+while the copy retains its callbacks. `InMemory` has one canonical Dart
+instance. No Dart-side filesystem access or path normalization is performed.
+No direct pinned test for `OpenDbArgs` was found. The bounded search inspected
+`libanki/src/test/java/com/ichi2/anki/libanki/CollectionOnDiskTest.kt` and
+`StorageRustTest.kt`; they exercise collection/storage integration but do not
+assert these model accessors, so they are integration evidence only. The
+focused Dart tests are source-derived. `Storage.kt` is Copyright © 2011 Norbert
+Nagold and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.

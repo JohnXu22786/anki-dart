@@ -160,7 +160,10 @@ void main() {
     test('null notetype lookup fails at the required unwrap', () {
       final fixture = _Fixture()..notetypeLookupReturnsNull = true;
 
-      expect(() => fixture.project(), throwsA(isA<TypeError>()));
+      expect(
+        () => fixture.project(),
+        throwsA(same(fixture.hostNullPointerException)),
+      );
       expect(fixture.calls, [
         'readId',
         'setId:7',
@@ -262,6 +265,7 @@ final class _Fixture {
   final notetype = Object();
   final fieldMap = Object();
   final failure = StateError('injected callback failure');
+  final hostNullPointerException = _HostNullPointerException();
   String? failureAt;
   bool notetypeLookupReturnsNull = false;
 
@@ -307,7 +311,8 @@ final class _Fixture {
               ? notetype
               : null;
           _call('unwrapNotetype');
-          return result!;
+          if (result == null) throw hostNullPointerException;
+          return result;
         },
         setNotetype: (value) {
           _call('setNotetype');
@@ -364,3 +369,5 @@ final class _Fixture {
         },
       );
 }
+
+final class _HostNullPointerException implements Exception {}

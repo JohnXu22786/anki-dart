@@ -55,6 +55,28 @@ The Kotlin source is Copyright © 2020 Arthur Milchior and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
 
+## `NotetypeJson` scalar and raw-array properties
+
+`lib/src/notetype_json_scalar_properties.dart` and
+`test/notetype_json_scalar_properties_test.dart` adapt the remaining scalar and
+raw-array properties from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host retains the
+`NotetypeJson`, `JSONObject`, and `JSONArray` objects and owns typed JSON reads,
+mutation, coercion, storage, and failures. The adapter forwards the pinned
+`getString`, `getLong`, `getInt`, `optInt`, `optBoolean`, `getJSONArray`, and
+`put` operations with their exact keys and arguments. It forwards the host's
+`ORIGINAL_STOCK_KIND_UNKNOWN_VALUE` fallback; maps one `type` read with
+`LibAnkiNoteTypeKind.fromCode` and writes that kind's code; exposes `latexsvg`
+only as `optBoolean("latexsvg", false)`; and retains the exact host `req`
+array on reads and writes. `NoteTypeTest.test_modelCopy` and
+`NoteTypeTest.test_updateNotetype_clears_cache` directly assert name and id
+values; exact callback semantics and
+the other properties are source-derived Dart coverage. The Kotlin source is
+Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## Backend JSON and ByteString boundary
 
 `lib/src/backend_utils.dart` and `test/backend_utils_test.dart` adapt the

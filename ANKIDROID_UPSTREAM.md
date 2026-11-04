@@ -80,6 +80,33 @@ Milchior and declares `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
 
+## `NotetypeJson` scalar and raw-array properties
+
+`lib/src/notetype_json_scalar_properties.dart` and
+`test/notetype_json_scalar_properties_test.dart` adapt the remaining scalar and
+raw-array properties from `libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (`css`, `latexPre`, and
+`latexPost` at lines 94–109; `id` and `name` at lines 160–165;
+`originalStockKind` at line 175; `sortf`, `type`, `mod`, `usn`, and
+`latexsvg` at lines 187–219; deprecated `req` at lines 251–255). The host
+retains `NotetypeJson`, `JSONObject`, `JSONArray`, and all JSON behavior. It
+supplies typed `getString`, `getLong`, `getInt`, `optInt`, `optBoolean`,
+`getJSONArray`, and `put` callbacks. Each property forwards exactly its source
+key and operation; `originalStockKind` forwards the host's
+`ORIGINAL_STOCK_KIND_UNKNOWN_VALUE` fallback, `type` reads one integer and
+maps it through `LibAnkiNoteTypeKind.fromCode`, `latexsvg` calls
+`optBoolean("latexsvg", false)` and is read-only, and `req` preserves exact
+array identity. Callback exceptions propagate unchanged. In the pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt`, `test_modelCopy` and `test_updateNotetype_clears_cache` directly assert note
+type `name` and `id` values;
+these are model-level assertions rather than JSON callback tests. No direct
+coverage was found there for the other properties or exact callback semantics,
+so the focused Dart cases for those behaviors are source-derived. `NotetypeJson.kt`
+is Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## libanki CardOrdinal alias
 
 `lib/src/card_ordinal.dart` adapts the public `CardOrdinal` typealias from

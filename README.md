@@ -79,6 +79,28 @@ adaptation and tests are Copyright © 2026 John Tsui. Both are licensed under
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
 for source mapping and attribution.
 
+## NotetypeJson scalar properties
+
+[`NotetypeJsonScalarProperties`](lib/src/notetype_json_scalar_properties.dart)
+adapts the remaining scalar and raw-array properties from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies its exact
+JSON object and typed callbacks: `name`, `css`, `latexPre`, and `latexPost` use
+`getString`/`put`; `id` and `mod` use `getLong`/`put`; `sortf`, `usn`, and
+`type` use `getInt`/`put`; `originalStockKind` uses `optInt` with the
+host-supplied `ORIGINAL_STOCK_KIND_UNKNOWN_VALUE`; `latexsvg` is read-only and
+uses `optBoolean("latexsvg", false)`; and deprecated `req` uses
+`getJSONArray`/`put` while retaining the exact host array. The `type` getter
+maps one host integer through `LibAnkiNoteTypeKind.fromCode`, and its setter
+writes the kind's code. JSON parsing, coercion, storage, and callback failures
+remain host-owned. Pinned `NoteTypeTest` directly asserts note type `name` and
+`id` values in model-copy/cache scenarios; focused Dart callback behavior for
+all properties is source-derived. `NotetypeJson.kt` is Copyright © 2020 Arthur
+Milchior; the Dart adaptation and tests are Copyright © 2026 John Tsui. Both
+are licensed under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for source mapping and attribution.
+
 ## libanki CardOrdinal alias
 
 [`CardOrdinal`](lib/src/card_ordinal.dart) adapts the public

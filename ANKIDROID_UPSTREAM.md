@@ -3948,3 +3948,20 @@ are source-derived. `Media.kt` is Copyright © 2011 Kostas Spyropoulos and © 20
 Houssam Salem and declares `GPL-3.0-or-later`. The Dart adaptation and tests
 are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## Card user-flag bit helpers
+
+[`cardUserFlag`](lib/src/card_user_flag.dart) and [`setFlagInInt`](lib/src/card_user_flag.dart)
+adapt the matching helpers in AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (methods at lines 359 and 392–401).
+The adapter returns the low three bits, or validates a replacement code in
+0–7, clears only those bits, and ORs in the new code, retaining all higher
+bits. `setFlagInInt` throws Dart `ArgumentError` with the source message
+`flag outside of expected [0, 7] interval`; the `Card` model and its setter
+remain host-side. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/CardTest.kt` has no direct tests
+for either helper, so the focused Dart cases are source-derived. `Card.kt`
+credits Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014
+and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.

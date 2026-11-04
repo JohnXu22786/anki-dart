@@ -5019,3 +5019,16 @@ source-derived. `Media.kt` is Copyright © 2011 Kostas Spyropoulos and © 2014
 Houssam Salem under `GPL-3.0-or-later`. The Dart adaptation and tests are
 Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
 byte-identical.
+
+## Card user-flag bit helpers
+
+`lib/src/card_user_flag.dart` and `test/card_user_flag_test.dart` adapt
+`Card.userFlag()` and `Card.setFlagInInt()` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter retains the low-three-
+bit extraction, 0–7 input check and error message, and preservation of higher
+bits. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011, and
+Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. The pinned
+`CardTest.kt` has no direct tests for these helpers; the Dart cases are
+source-derived. Root `COPYING` remains byte-identical.

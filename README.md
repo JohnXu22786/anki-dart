@@ -5505,3 +5505,20 @@ Spyropoulos © 2011 and Houssam Salem © 2014 and is licensed under
 Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the source mapping and license details.
+
+## Card user-flag bit helpers
+
+[`cardUserFlag`](lib/src/card_user_flag.dart) and [`setFlagInInt`](lib/src/card_user_flag.dart)
+adapt the matching integer helpers from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. They read the low three flag bits
+and replace those bits while preserving all higher bits; replacement accepts
+only values 0 through 7 and retains the source error message. This is a pure
+integer helper port and does not add a Dart Card model or change existing flag
+flows. The pinned `CardTest.kt` has no direct tests for these helpers, so the
+focused Dart cases are source-derived. `Card.kt` credits Daniel Svärd © 2009,
+Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.

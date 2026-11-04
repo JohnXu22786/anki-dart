@@ -5751,7 +5751,8 @@ dictionary methods from AnkiDroid 2.25.3
 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`, pinned to commit
 `d9bf072f814a0c37d30e694192593b31ff2df875` (lines 163–209). The host retains
 Note, Field, and the backing fields and ordered field map; the adapter accepts
-the host's name-to-ordinal map projection. It preserves map iteration order for
+a host resolver for the name-to-ordinal map, preserving the source-equivalent
+force-unwrap exception when the map is absent. It preserves map iteration order for
 keys, the exact mutable fields list for values, and the source `items()` row
 placement by ordinal, including its TODO that row order differs from Anki.
 Missing-name lookup constructs the host `IllegalArgumentException` with the

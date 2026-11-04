@@ -25,8 +25,8 @@
 
 /// Returns the field names in the host map's iteration order, matching
 /// `Note.keys()`. The Note and its ordered field map remain host-owned.
-List<String> libankiNoteKeys({required Map<String, int>? fieldMap}) =>
-    fieldMap!.keys.toList();
+List<String> libankiNoteKeys({required Map<String, int> Function() fieldMap}) =>
+    fieldMap().keys.toList();
 
 /// Returns the exact mutable fields list retained by the host Note, matching
 /// `Note.values()`.
@@ -35,12 +35,12 @@ List<String> libankiNoteValues({required List<String> fields}) => fields;
 /// Adapts `Note.items()` using the host's ordered name-to-ordinal projection.
 /// Rows are placed by ordinal, so their final order can differ from map order.
 List<List<String>> libankiNoteItems({
-  required Map<String, int>? fieldMap,
+  required Map<String, int> Function() fieldMap,
   required List<String> fields,
 }) {
   // TODO: Revisit this method. The field order returned differs from Anki.
   // The items here are only used in the note editor, so it's a low priority.
-  final map = fieldMap!;
+  final map = fieldMap();
   final result = List.generate(map.length, (_) => <String>['', '']);
   for (final fieldName in map.keys) {
     final ordinal = map[fieldName]!;
@@ -54,10 +54,10 @@ List<List<String>> libankiNoteItems({
 /// `IllegalArgumentException` only after a missing map lookup.
 int libankiNoteFieldIndex(
   String key, {
-  required Map<String, int>? fieldMap,
+  required Map<String, int> Function() fieldMap,
   required Object Function(String message) illegalArgumentException,
 }) {
-  final ordinal = fieldMap![key];
+  final ordinal = fieldMap()[key];
   if (ordinal == null) {
     throw illegalArgumentException("No field named '$key' found");
   }
@@ -67,7 +67,7 @@ int libankiNoteFieldIndex(
 /// Reads a Note field after resolving its index through `fieldIndex()`.
 String libankiNoteGetItem(
   String key, {
-  required Map<String, int>? fieldMap,
+  required Map<String, int> Function() fieldMap,
   required List<String> fields,
   required Object Function(String message) illegalArgumentException,
 }) =>
@@ -81,7 +81,7 @@ String libankiNoteGetItem(
 void libankiNoteSetItem(
   String key,
   String value, {
-  required Map<String, int>? fieldMap,
+  required Map<String, int> Function() fieldMap,
   required List<String> fields,
   required Object Function(String message) illegalArgumentException,
 }) {
@@ -94,5 +94,7 @@ void libankiNoteSetItem(
 }
 
 /// Delegates `Note.contains(key)` directly to the host field map.
-bool libankiNoteContains(String key, {required Map<String, int>? fieldMap}) =>
-    fieldMap!.containsKey(key);
+bool libankiNoteContains(
+  String key, {
+  required Map<String, int> Function() fieldMap,
+}) => fieldMap().containsKey(key);

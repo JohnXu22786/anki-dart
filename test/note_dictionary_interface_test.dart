@@ -8,7 +8,73 @@ void main() {
     test('keys preserve field map iteration order', () {
       final fieldMap = {'Back': 1, 'Front': 0};
 
-      expect(libankiNoteKeys(fieldMap: fieldMap), ['Back', 'Front']);
+      expect(libankiNoteKeys(fieldMap: () => fieldMap), ['Back', 'Front']);
+    });
+
+    test('uninitialized field map propagates the host exception unchanged', () {
+      final failure = _HostNullPointerException();
+      final inaccessibleFields = _InaccessibleFields();
+      final resolves = <String>[];
+
+      Map<String, int> missingMap(String caller) {
+        resolves.add(caller);
+        throw failure;
+      }
+
+      expect(
+        () => libankiNoteKeys(fieldMap: () => missingMap('keys')),
+        throwsA(same(failure)),
+      );
+      expect(
+        () => libankiNoteItems(
+          fieldMap: () => missingMap('items'),
+          fields: inaccessibleFields,
+        ),
+        throwsA(same(failure)),
+      );
+      expect(
+        () => libankiNoteFieldIndex(
+          'Front',
+          fieldMap: () => missingMap('fieldIndex'),
+          illegalArgumentException: (_) => _HostIllegalArgumentException(),
+        ),
+        throwsA(same(failure)),
+      );
+      expect(
+        () => libankiNoteGetItem(
+          'Front',
+          fieldMap: () => missingMap('getItem'),
+          fields: inaccessibleFields,
+          illegalArgumentException: (_) => _HostIllegalArgumentException(),
+        ),
+        throwsA(same(failure)),
+      );
+      expect(
+        () => libankiNoteSetItem(
+          'Front',
+          'value',
+          fieldMap: () => missingMap('setItem'),
+          fields: inaccessibleFields,
+          illegalArgumentException: (_) => _HostIllegalArgumentException(),
+        ),
+        throwsA(same(failure)),
+      );
+      expect(
+        () => libankiNoteContains(
+          'Front',
+          fieldMap: () => missingMap('contains'),
+        ),
+        throwsA(same(failure)),
+      );
+      expect(resolves, [
+        'keys',
+        'items',
+        'fieldIndex',
+        'getItem',
+        'setItem',
+        'contains',
+      ]);
+      expect(inaccessibleFields.accesses, 0);
     });
 
     test('values returns the exact mutable fields list', () {
@@ -25,7 +91,7 @@ void main() {
       final fieldMap = {'Back': 1, 'Front': 0};
       final fields = ['question', 'answer'];
 
-      expect(libankiNoteItems(fieldMap: fieldMap, fields: fields), [
+      expect(libankiNoteItems(fieldMap: () => fieldMap, fields: fields), [
         ['Front', 'question'],
         ['Back', 'answer'],
       ]);
@@ -38,7 +104,7 @@ void main() {
       expect(
         () => libankiNoteFieldIndex(
           'Missing',
-          fieldMap: {'Front': 0},
+          fieldMap: () => {'Front': 0},
           illegalArgumentException: (message) {
             messages.add(message);
             return failure;
@@ -60,7 +126,7 @@ void main() {
             libankiNoteSetItem(
               'Missing',
               'value',
-              fieldMap: {'Front': 0},
+              fieldMap: () => {'Front': 0},
               fields: fields,
               illegalArgumentException: (_) {
                 exceptionCalls++;
@@ -70,7 +136,7 @@ void main() {
           } else {
             libankiNoteGetItem(
               'Missing',
-              fieldMap: {'Front': 0},
+              fieldMap: () => {'Front': 0},
               fields: fields,
               illegalArgumentException: (_) {
                 exceptionCalls++;
@@ -91,7 +157,7 @@ void main() {
       expect(
         libankiNoteGetItem(
           'Back',
-          fieldMap: fieldMap,
+          fieldMap: () => fieldMap,
           fields: fields,
           illegalArgumentException: _unexpectedException,
         ),
@@ -100,7 +166,7 @@ void main() {
       libankiNoteSetItem(
         'Front',
         'updated',
-        fieldMap: fieldMap,
+        fieldMap: () => fieldMap,
         fields: fields,
         illegalArgumentException: _unexpectedException,
       );
@@ -110,7 +176,7 @@ void main() {
     test('contains delegates to map membership without reading a value', () {
       final fieldMap = _MembershipOnlyMap({'Front': 0});
 
-      expect(libankiNoteContains('Front', fieldMap: fieldMap), isTrue);
+      expect(libankiNoteContains('Front', fieldMap: () => fieldMap), isTrue);
       expect(fieldMap.membershipChecks, ['Front']);
       expect(fieldMap.valueReads, 0);
     });
@@ -121,6 +187,8 @@ Object _unexpectedException(String message) =>
     StateError('Unexpected missing field: $message');
 
 final class _HostIllegalArgumentException implements Exception {}
+
+final class _HostNullPointerException implements Exception {}
 
 final class _InaccessibleFields extends ListBase<String> {
   int accesses = 0;

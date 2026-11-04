@@ -2661,9 +2661,12 @@ ordered `List<NoteId>` once to the host field lookup and returns the exact
 unchanged. Field lookup and backend behavior remain host-side. The pinned
 `Collection.kt` has no direct test of this wrapper. `Collection.kt` credits
 Norbert Nagold (2011), Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022)
-and declares `GPL-3.0-or-later`. The Dart adaptation and focused tests are
-Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
-byte-identical.
+and declares `GPL-3.0-or-later`; its header separately identifies incorporated
+`AGPL-3.0-or-later` code from Ankitects’ `pylib/anki/browser.py`. This Dart
+adaptation derives only from the simple `fieldNamesForNoteIds` to
+`backend.fieldNamesForNotes` forwarding wrapper and includes none of that AGPL
+browser implementation. The Dart adaptation and focused tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 
 ## Collection.getCardOrNull
 

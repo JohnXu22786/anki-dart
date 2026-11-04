@@ -1,5 +1,25 @@
 # AnkiDroid source baseline
 
+## LibAnki Collection raw backend forwarding
+
+[`collection_remaining_raw.dart`](lib/src/collection_remaining_raw.dart) and its
+focused tests adapt ten direct `ByteArray` pass-through methods from AnkiDroid
+2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1494–1526`,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Each wrapper passes
+the original `Uint8List` once to its matching host callback and returns the
+identical result; callback failures propagate unchanged. Serialization, generated
+protos, collection access, and backend behavior remain host-owned. The source
+marks these methods `@NotInPyLib` except `simulateFsrsWorkloadRaw`, which has no
+such annotation; the Dart records preserve that source state. Scheduling-state
+routing and `saveCustomColours` already have host routes and are not duplicated.
+`Collection.kt` credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and
+Ankitects Pty Ltd (2022), declares `GPL-3.0-or-later`, and separately notes
+incorporated `AGPL-3.0-or-later` `browser.py` code. This change copies no browser
+implementation. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under `GPL-3.0-or-later`; root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## `Collection.cardStatsData(cardId)`
 
 `lib/src/collection_card_stats_data.dart` adapts only the forwarding boundary

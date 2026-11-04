@@ -814,3 +814,22 @@ Field/Fields test file or direct `setOrd` assertion;
 the exact write. `Field.kt` is Copyright © 2024 David Allison and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## `Note.removeTag(tag)`
+
+`lib/src/note_remove_tag.dart` adapts only `Note.removeTag(tag)` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Note.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 238–252).
+The host retains the Note model and mutable tag list and supplies
+Kotlin/JVM-compatible `String.equals(ignoreCase = true)`. The helper calls that
+comparison for every tag in order, passing the candidate tag first and the
+requested tag second; it collects matches before removing each collected string
+with exact list equality. This removes matching case variants and duplicates,
+preserves unrelated tag order, and leaves the list unchanged if comparison
+throws during collection. `NoteTest.kt` and `TagsTest.kt` have no direct
+`removeTag` assertion; `CollectionTest.test_addDelTags` covers backend tag
+addition/canonification and does not call this method. Focused Dart cases in
+`test/note_remove_tag_test.dart` are source-derived. `Note.kt` credits Norbert
+Nagold (2011) and Houssam Salem (2014) and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.

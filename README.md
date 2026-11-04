@@ -5699,3 +5699,20 @@ Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
 Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
+
+## LibAnki `Note.removeTag(tag)`
+
+[`removeNoteTag()`](lib/src/note_remove_tag.dart) adapts `Note.removeTag(tag)`
+from AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Note.kt`,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host retains the
+Note model and mutable tag list and supplies JVM-compatible
+`String.equals(ignoreCase = true)`; the helper collects all matches before
+removing each collected string by exact list equality, preserving unrelated tag
+order and leaving the list unchanged if comparison throws. The pinned
+`NoteTest.kt`, `TagsTest.kt`, and `CollectionTest.test_addDelTags` have no direct
+assertion for this method. Focused Dart tests are source-derived. `Note.kt`
+credits Norbert Nagold (2011) and Houssam Salem (2014) under
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.

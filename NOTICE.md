@@ -4760,3 +4760,12 @@ licensed under the same terms. Root `COPYING` remains byte-identical.
 upstream source is Copyright © 2020 Arthur Milchior and is licensed under
 `GPL-3.0-or-later`. The Dart adaptation and focused tests are Copyright © 2026
 John Tsui under the same terms. Root `COPYING` remains byte-identical.
+
+## libanki full upload or download wrapper
+
+`lib/src/full_upload_or_download.dart` adapts the wrapper in AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Sync.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. `Sync.kt` is Copyright © 2022
+Ankitects Pty Ltd and licensed under `GPL-3.0-or-later`. The Dart adaptation
+and focused tests are Copyright © 2026 John Tsui under the same license. Root
+`COPYING` remains byte-identical.

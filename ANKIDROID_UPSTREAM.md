@@ -3609,3 +3609,22 @@ mutators, hash, or string form. Focused Dart cases are source-derived.
 `Counts.kt` is Copyright © 2020 Arthur Milchior and declares
 `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
 Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## libanki full upload or download wrapper
+
+`lib/src/full_upload_or_download.dart` and
+`test/full_upload_or_download_test.dart` adapt only the top-level
+`Collection.fullUploadOrDownload(auth, upload, serverUsn)` wrapper from
+`libanki/src/main/java/com/ichi2/anki/libanki/Sync.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source assigns
+auth, conditionally assigns non-null `serverUsn`, assigns upload, builds the
+request, and invokes `backend.fullUploadOrDownload()` once. The Dart adapter
+preserves that order, exact auth and result identity, and callback failures.
+Generated protobuf values and backend transport remain host-owned. The bounded
+search of pinned `libanki/src/test` found no direct test for this wrapper; the
+focused Dart tests are source-derived and cover assignment order, omitted null
+USN, one backend invocation, result identity, and failure propagation. `Sync.kt`
+begins with Copyright © 2022 Ankitects Pty Ltd and declares the GNU General
+Public License version 3 or later (`GPL-3.0-or-later`). The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.

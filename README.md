@@ -5210,3 +5210,18 @@ same `NEW`, `LRN`, `REV` order. The upstream file credits Arthur Milchior
 © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
 See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
 for source, test, and license details.
+
+## libanki full upload or download wrapper
+
+[`FullUploadOrDownload`](lib/src/full_upload_or_download.dart) adapts the
+request-building and backend-call wrapper from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Sync.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It assigns the exact host auth
+object, assigns `serverUsn` only when non-null, then assigns `upload`, builds
+the request and invokes the host backend exactly once. Protobuf values and
+backend transport remain host-owned. No direct pinned test for this wrapper was
+found; its focused Dart tests are source-derived. `Sync.kt` is Copyright © 2022
+Ankitects Pty Ltd and declares `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source mapping and attribution.

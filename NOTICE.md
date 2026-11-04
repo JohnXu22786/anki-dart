@@ -58,6 +58,21 @@ Milchior and licensed under `GPL-3.0-or-later`. The Dart adaptation and tests ar
 Copyright © 2026 John Tsui, marked with SPDX `GPL-3.0-or-later`, and distributed
 under the same license. Root `COPYING` remains byte-identical.
 
+## libanki SortOrder model
+
+`lib/src/libanki_sort_order.dart` and `test/libanki_sort_order_test.dart` port
+the `SortOrder` union from
+`libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt` in AnkiDroid 2.25.3,
+pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The Dart model
+preserves the singleton data objects, `AfterSqlOrderBy` data-class behavior,
+and identity behavior of the regular `BuiltinColumnSortKind` class. The opaque
+column stays host-owned; only its `key` formatting read is supplied as a host
+callback. `SortOrderTest.kt` directly checks each source `toString()` result;
+`FinderTest.kt` is integration evidence only. `SortOrder.kt` declares
+`GPL-3.0-or-later` with no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical.
+
 ## libanki Field JSON model
 
 `lib/src/libanki_field.dart` and `test/libanki_field_test.dart` adapt

@@ -15,6 +15,27 @@ were found; focused Dart cases are source-derived. `Consts.kt` is Copyright ©
 and tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
 
+## libanki SortOrder model
+
+`lib/src/libanki_sort_order.dart` and `test/libanki_sort_order_test.dart` port
+the pure `SortOrder` union from
+`libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, pinned to AnkiDroid
+2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter preserves
+the exact `NoOrdering` and `UseCollectionOrdering` singleton strings and
+equality, the raw `AfterSqlOrderBy.customOrdering` data-class component/copy/
+equality/hash/string behavior, and the identity equality and exact
+`BuiltinColumnSortKind` string of the regular class. Its browser column is an
+opaque host object; the host supplies the `key` read used once by `toString()`.
+The pinned direct test
+`libanki/src/test/java/com/ichi2/anki/libanki/SortOrderTest.kt` asserts the
+exact strings for all four variants. `libanki/src/test/java/com/ichi2/anki/libanki/FinderTest.kt`
+exercises `SortOrder.NoOrdering` in collection search integration; it is
+integration evidence only, and collection query/backend behavior is not copied.
+BrowserColumns and its `Column`/`Sorting` types remain host-side.
+`SortOrder.kt` declares `GPL-3.0-or-later` and contains no separate copyright
+line. The Dart adaptation and tests are Copyright © 2026 John Tsui under the
+same license. Root `COPYING` remains byte-identical.
+
 ## DeckConfig deep clone
 
 `deepCloneDeckConfig()` in `lib/src/deck_config_deep_clone.dart` adapts

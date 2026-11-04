@@ -245,6 +245,25 @@ adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for the source and attribution record.
 
+## libanki SortOrder model
+
+[`LibAnkiSortOrder`](lib/src/libanki_sort_order.dart) ports the pure sort-order
+union from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/SortOrder.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It preserves the singleton
+`NoOrdering` and `UseCollectionOrdering` variants, the structural
+`AfterSqlOrderBy` data class and raw SQL string, and identity equality for
+`BuiltinColumnSortKind`. Its host-owned column remains opaque; the host's key
+callback is read once when formatting `toString()`, and callback failures pass
+through. The pinned `libanki/src/test/java/com/ichi2/anki/libanki/SortOrderTest.kt`
+directly checks all four source strings; `FinderTest.kt` provides collection
+integration context only. Collection query execution, BrowserColumns types,
+and backend sorting remain host-side. `SortOrder.kt` declares
+`GPL-3.0-or-later` and has no separate copyright line. The Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
+remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
+[NOTICE.md](NOTICE.md) for the source and attribution record.
+
 ## libanki Field JSON model
 
 [`LibAnkiField`](lib/src/libanki_field.dart) adapts `Field` from AnkiDroid

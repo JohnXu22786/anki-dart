@@ -2883,6 +2883,9 @@ removes only U+0300..U+036F; marks in other blocks remain. The package's MIT
 license notice is retained in
 [`LICENSES/unorm_dart-MIT.txt`](LICENSES/unorm_dart-MIT.txt), and its Unicode data is covered by the Unicode License V3 notice above.
 
+`Utils.checksum()` uses `crypto` version 3.0.7 for SHA-1. Its BSD 3-Clause
+license is reproduced in [`LICENSES/crypto-BSD-3-Clause.txt`](LICENSES/crypto-BSD-3-Clause.txt).
+
 AnkiDroid's repository also identifies separately licensed components,
 including the AnkiDroid API under LGPL-3.0 and parts of the Anki backend under
 AGPL-3.0. Those components are not included in the current Dart port. If they
@@ -5128,7 +5131,15 @@ parenthesized comma-space ID formatting, null/empty behavior, U+001F field
 joining, and empty fields when splitting. The separator is the pinned
 `Consts.FIELD_SEPARATOR`. The direct Kotlin `UtilsTest.testSplit` covers normal
 and empty-field splitting; the focused Dart tests for ID formatting and joining
-are source-derived. Checksum and locale helpers remain host-side. The Kotlin
+are source-derived. `Utils.checksum` preserves null-to-empty behavior and
+returns the lowercase, 40-character SHA-1 of UTF-8 bytes; focused Dart vectors
+cover null, ASCII, multibyte text, and a leading-zero digest. No direct pinned
+unit test targets `Utils.checksum`; the ignored `CollectionTest` checksum
+assertions are indirect coverage. Java's `MessageDigest.getInstance("SHA1")`
+can throw `NoSuchAlgorithmException`, which the Kotlin source logs and wraps
+in `RuntimeException`. Dart's `crypto` SHA-1 implementation is statically
+available and has no provider lookup or equivalent exception path. UTF-8 is
+constant-supported on the JVM. `ENGLISH_LOCALE` remains host-side. The Kotlin
 source credits Daniel Svärd (2009), Edu Zamora (2009), Norbert Nagold (2011),
 and Kostas Spyropoulos (2012); `Consts.kt` credits Houssam Salem (2014). Both
 sources use `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright ©

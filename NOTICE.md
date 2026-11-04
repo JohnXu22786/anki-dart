@@ -3619,6 +3619,11 @@ dependency's MIT permission notice is retained verbatim in
 `LICENSES/unorm_dart-MIT.txt`; its Unicode normalization data is covered by the
 Unicode License V3 notice in `LICENSES/Unicode-License-V3.txt`.
 
+`lib/src/libanki_utils_fields.dart` uses `crypto` 3.0.7 for SHA-1 in
+`Utils.checksum`. The dependency is Copyright © 2015 the Dart project authors
+and distributed under the BSD 3-Clause license; its license notice is retained
+verbatim in `LICENSES/crypto-BSD-3-Clause.txt`.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/utils/ext/Config.kt`
   (`Config.ignoreAccentsInSearch`, pinned AnkiDroid 2.25.3 commit
   `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
@@ -4691,8 +4696,9 @@ license. Root `COPYING` remains byte-identical.
 
 ## LibAnki formatting and field helpers
 
-`lib/src/libanki_utils_fields.dart` adapts `ids2str`, `joinFields`, and
-`splitFields` from `libanki/src/main/java/com/ichi2/anki/libanki/Utils.kt` and
+`lib/src/libanki_utils_fields.dart` adapts `ids2str`, `joinFields`,
+`splitFields`, and `checksum` from
+`libanki/src/main/java/com/ichi2/anki/libanki/Utils.kt` and
 uses `FIELD_SEPARATOR` from `libanki/src/main/java/com/ichi2/anki/libanki/Consts.kt`,
 pinned to AnkiDroid 2.25.3 commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. The direct pinned
@@ -4701,9 +4707,16 @@ ordinary splitting plus leading, adjacent, and trailing empty fields; focused
 Dart tests for `ids2str` and `joinFields` are source-derived because the pinned
 test does not cover them. The adaptation preserves the source's parenthesized
 comma-space ID formatting, null/empty behavior, Kotlin-style element
-stringification, and U+001F field separation. Checksum and `ENGLISH_LOCALE` are
-not ported. `Utils.kt` credits Daniel Svärd (2009), Edu Zamora (2009), Norbert
-Nagold (2011), and Kostas Spyropoulos (2012); `Consts.kt` credits Houssam Salem
+stringification, and U+001F field separation. `Utils.checksum` maps null to
+empty and otherwise returns lowercase, zero-padded 40-character SHA-1 of UTF-8
+bytes. No pinned direct unit test targets checksum; the ignored
+`CollectionTest.test_fieldChecksum` assertions are indirect integration
+coverage. The JVM's `MessageDigest` lookup can throw `NoSuchAlgorithmException`,
+which the Kotlin method logs and wraps in `RuntimeException`; Dart's static
+`crypto` SHA-1 has no provider lookup or equivalent exception path. UTF-8 is
+constant-supported on the JVM. `ENGLISH_LOCALE` remains host-side. `Utils.kt`
+credits Daniel Svärd (2009), Edu Zamora (2009), Norbert Nagold (2011), and
+Kostas Spyropoulos (2012); `Consts.kt` credits Houssam Salem
 (2014). Both source files are distributed under `GPL-3.0-or-later`. The Dart
 adaptation and focused tests are Copyright © 2026 John Tsui, marked with SPDX
 `GPL-3.0-or-later`, and distributed under the same license. Root `COPYING`

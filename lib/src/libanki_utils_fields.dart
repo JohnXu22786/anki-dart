@@ -30,11 +30,15 @@
  * ANKIDROID_UPSTREAM.md.
  */
 
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+
 import 'libanki_consts.dart';
 
-/// Portable formatting and field-separator helpers from AnkiDroid's `Utils`.
+/// Portable formatting, field-separator, and checksum helpers from `Utils`.
 ///
-/// Checksum and locale helpers are outside this bounded port.
+/// Locale helpers are outside this bounded port.
 abstract final class Utils {
   /// Formats [ids] as a parenthesized, comma-space-separated string.
   ///
@@ -54,4 +58,44 @@ abstract final class Utils {
   /// empty fields, matching Kotlin's `String.split` behavior.
   static List<String> splitFields(String fields) =>
       fields.split(LibAnkiConsts.fieldSeparator);
+
+  /// Returns the lowercase, 40-character SHA-1 checksum of UTF-8 [data].
+  ///
+  /// A null input returns the empty string, matching AnkiDroid's
+  /// `Utils.checksum`. Dart's statically available SHA-1 implementation does
+  /// not perform the JVM's provider lookup or expose its
+  /// `NoSuchAlgorithmException` path. Unpaired UTF-16 surrogates are replaced
+  /// with `?`, matching the JVM UTF-8 encoder's default replacement byte.
+  static String checksum(String? data) {
+    if (data == null) {
+      return '';
+    }
+    return sha1.convert(_javaUtf8Bytes(data)).toString();
+  }
+
+  static List<int> _javaUtf8Bytes(String data) {
+    final codeUnits = data.codeUnits;
+    final normalized = StringBuffer();
+    for (var index = 0; index < codeUnits.length; index++) {
+      final codeUnit = codeUnits[index];
+      if (codeUnit >= 0xd800 && codeUnit <= 0xdbff) {
+        if (index + 1 < codeUnits.length &&
+            codeUnits[index + 1] >= 0xdc00 &&
+            codeUnits[index + 1] <= 0xdfff) {
+          final codePoint =
+              0x10000 +
+              ((codeUnit - 0xd800) << 10) +
+              (codeUnits[++index] - 0xdc00);
+          normalized.writeCharCode(codePoint);
+        } else {
+          normalized.write('?');
+        }
+      } else if (codeUnit >= 0xdc00 && codeUnit <= 0xdfff) {
+        normalized.write('?');
+      } else {
+        normalized.writeCharCode(codeUnit);
+      }
+    }
+    return utf8.encode(normalized.toString());
+  }
 }

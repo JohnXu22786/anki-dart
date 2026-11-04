@@ -61,4 +61,47 @@ void main() {
       expect(anki.Utils.splitFields('\u001f'), ['', '']);
     });
   });
+
+  group('Utils.checksum', () {
+    test('returns an empty string for null input', () {
+      expect(anki.Utils.checksum(null), '');
+    });
+
+    test('returns the SHA-1 checksum for ASCII UTF-8 input', () {
+      expect(
+        anki.Utils.checksum('abc'),
+        'a9993e364706816aba3e25717850c26c9cd0d89d',
+      );
+    });
+
+    test('hashes multibyte input as UTF-8', () {
+      expect(
+        anki.Utils.checksum('café'),
+        'f424452a9673918c6f09b0cdd35b20be8e6ae7d7',
+      );
+    });
+
+    test('replaces unpaired surrogates like JVM UTF-8 encoding', () {
+      expect(
+        anki.Utils.checksum('\ud800'),
+        '5bab61eb53176449e25c2c82f172b82cb13ffb9d',
+      );
+      expect(
+        anki.Utils.checksum('\udc00'),
+        '5bab61eb53176449e25c2c82f172b82cb13ffb9d',
+      );
+      expect(
+        anki.Utils.checksum('😀'),
+        '9c533688a979a858cbd6a43c9f91aba624651f18',
+      );
+    });
+
+    test('pads leading zeroes to a 40-character lowercase digest', () {
+      final checksum = anki.Utils.checksum('checksum-padding-4');
+
+      expect(checksum, '01f31198d5da7f431a38654abad7d8d6edb1d9fa');
+      expect(checksum, hasLength(40));
+      expect(checksum, matches(RegExp(r'^[0-9a-f]{40}$')));
+    });
+  });
 }

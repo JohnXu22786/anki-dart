@@ -4802,6 +4802,18 @@ Ankitects Pty Ltd and licensed under `GPL-3.0-or-later`. The Dart adaptation
 and focused tests are Copyright © 2026 John Tsui under the same license. Root
 `COPYING` remains byte-identical.
 
+## `NotetypeJson.isStd` and `isCloze`
+
+`lib/src/notetype_json_type_predicates.dart` and
+`test/notetype_json_type_predicates_test.dart` adapt only the `isStd` and
+`isCloze` properties from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The source is Copyright © 2020
+Arthur Milchior and licensed under `GPL-3.0-or-later`; the Dart adaptation and
+tests are Copyright © 2026 John Tsui under the same terms. The host retains
+`NotetypeJson`, `JSONObject`, and JSON semantics. Root `COPYING` remains
+byte-identical.
+
 ## `NotetypeJson` name getters
 
 `lib/src/notetype_json_name_getters.dart` and

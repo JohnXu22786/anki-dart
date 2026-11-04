@@ -39,6 +39,26 @@ the pinned test does not directly cover them. The Kotlin source is Copyright
 and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## `NotetypeJson.isStd` and `isCloze`
+
+`lib/src/notetype_json_type_predicates.dart` and
+`test/notetype_json_type_predicates_test.dart` adapt only the `isStd` and
+`isCloze` properties from `libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`
+in AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (properties at lines 85–89 and
+source `type` getter at lines 192–194). Each property performs one host
+`JSONObject.getInt("type")` read through the supplied callback, maps the
+integer with `LibAnkiNoteTypeKind.fromCode`, and compares to canonical `Std`
+(code 0) or `Cloze` (code 1). Unknown integer codes match neither property;
+callback exceptions pass through unchanged. The host retains `NotetypeJson`,
+`JSONObject`, and JSON access and error behavior. A bounded search of pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt` and
+`AnkiDroid/src/test/java/com/ichi2/utils/NoteTypeTest.kt` found no direct tests
+for these properties; focused Dart cases are source-derived. `NotetypeJson.kt`
+is Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## libanki CardOrdinal alias
 
 `lib/src/card_ordinal.dart` adapts the public `CardOrdinal` typealias from

@@ -43,6 +43,24 @@ Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
 
+## NotetypeJson type predicates
+
+[`NotetypeJsonTypePredicates`](lib/src/notetype_json_type_predicates.dart)
+adapts only `NotetypeJson.isStd` and `isCloze` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Each property reads the
+host JSON integer at `type` once, maps it through the existing
+`LibAnkiNoteTypeKind.fromCode`, and compares with the canonical standard code
+0 or cloze code 1. Unknown codes match neither predicate, and host read errors
+propagate unchanged. The host retains `NotetypeJson`, `JSONObject`, and JSON
+access behavior. The pinned `AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt`
+contains no direct test for either property; the focused Dart tests are
+source-derived. `NotetypeJson.kt` is Copyright © 2020 Arthur Milchior; the Dart
+adaptation and tests are Copyright © 2026 John Tsui. Both are licensed under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+the exact source mapping and attribution.
+
 ## libanki CardOrdinal alias
 
 [`CardOrdinal`](lib/src/card_ordinal.dart) adapts the public

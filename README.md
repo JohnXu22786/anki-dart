@@ -5664,3 +5664,21 @@ and Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation
 and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and
 [NOTICE.md](NOTICE.md) for source mapping and attribution.
+
+## LibAnki Card shallow clone
+
+[`libankiCardClone()`](lib/src/card_clone.dart) adapts `Card.clone()` from
+AnkiDroid 2.25.3 `libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned
+to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 318–322). The host
+owns the Card object, shallow-clone operation, Card cast, exception
+identification, and `RuntimeException(cause)` construction. The adapter invokes
+the host clone once, returns its cast result, wraps only
+`CloneNotSupportedException` with the exact caught object as cause, and
+propagates other failures, including cast failures, unchanged. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/CardTest.kt` has no direct clone
+test; the focused Dart tests are source-derived. `Card.kt` credits Daniel
+Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.

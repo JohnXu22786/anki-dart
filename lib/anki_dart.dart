@@ -64,6 +64,7 @@ export 'src/combined_exception_projection.dart';
 export 'src/card_state_filter.dart';
 export 'src/card_ordinal.dart';
 export 'src/card_note_cache.dart';
+export 'src/card_clone.dart';
 export 'src/card_equality_hash_code.dart';
 export 'src/card_description.dart';
 export 'src/card_review_timer.dart';

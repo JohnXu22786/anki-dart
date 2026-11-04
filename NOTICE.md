@@ -5139,3 +5139,20 @@ Root `COPYING` remains byte-identical.
 ## LibAnki Card equality and hash code
 
 `lib/src/card_equality_hash_code.dart` and `test/card_equality_hash_code_test.dart` adapt `Card.equals(other)` and `Card.hashCode()` from `libanki/src/main/java/com/ichi2/anki/libanki/Card.kt` in AnkiDroid 2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 345–354). The host retains Card and ID access; the adapter preserves Card ID equality, non-Card reference identity, and JVM signed 32-bit hash folding. The pinned `libanki/src/test/java/com/ichi2/anki/libanki/CardTest.kt` contains no direct equality/hashCode assertions, so the focused Dart tests are source-derived. `Card.kt` credits Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## LibAnki Card shallow clone
+
+`lib/src/card_clone.dart` and `test/card_clone_test.dart` adapt
+`Card.clone()` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 318–322). The host owns the
+Card object, shallow-clone operation, Card cast, exception identification, and
+construction of `RuntimeException(cause)`. The callback adapter invokes the
+host clone once, returns the cast result, wraps only
+`CloneNotSupportedException` with the exact caught object as cause, and
+propagates other failures, including cast failures, unchanged. The pinned
+`libanki/src/test/java/com/ichi2/anki/libanki/CardTest.kt` has no direct clone
+test; the focused Dart tests are source-derived. `Card.kt` credits Daniel
+Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014 and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.

@@ -2013,6 +2013,8 @@ dialog, lifecycle, and UI; only the progress/result projections are mapped here.
 
 Card Template Editor state values and transitions are mapped above, but the host integration remains outside this Dart port: actual MutableStateFlow publication, Timber diagnostics, ReportableException construction/conversion, Android lifecycle, template loading/saving, rendering, and UI. No direct pinned ViewModel tests were found; the Dart tests are source-derived.
 
+The `Card.timeLimit`, `shouldShowTimer`, `replayQuestionAudioOnAnswerSide`, and `autoplay` deck-config wrappers are mapped below. The host retains `Card`, Collection/deck lookup, and the backing deck-config JSON operations.
+
 Not yet ported: the Android app and platform lifecycle integration, Card Browser
 Intent/URI parsing and navigation for the mapped launch-option values, Android
 SharedPreferences IO and current-version persistence (the typed fallback and
@@ -2960,6 +2962,30 @@ are in `test/menu_host_add_prepare_menu_provider_test.dart`; no direct pinned
 test was found. The Kotlin source declares `GPL-3.0-or-later` and has no
 separate copyright line. The Dart adaptation and tests are Copyright © 2026
 John Tsui under the same license. Root `COPYING` remains byte-identical.
+
+## Card deck config methods
+
+`lib/src/card_deck_config_methods.dart` and
+`test/card_deck_config_methods_test.dart` adapt `Card.timeLimit`,
+`Card.shouldShowTimer`, `Card.replayQuestionAudioOnAnswerSide`, and
+`Card.autoplay` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 266–267 and 306–315).
+Each wrapper selects the deck using the existing `getDeckIdForCard(oDid, did)`,
+calls the supplied host config lookup once, and reads the matching existing
+`LibAnkiDeckConfig` property once. `timeLimit` multiplies `maxTaken` by 1000
+with Kotlin signed 32-bit overflow semantics. `shouldShowTimer` delegates to
+`LibAnkiDeckConfig.timer`, retaining its existing integer/boolean fallback,
+logging, and final `true` behavior. The host retains `Card`, Collection/deck
+lookup, JSON operations, and timer fallback implementation. Pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/CardTest.kt` directly covers
+normal and filtered time-limit selection, normal and filtered timer selection,
+autoplay, and replay-question-audio selection. Focused Dart tests additionally
+check provider/property call counts, overflow, timer fallback delegation, and
+property error propagation. `Card.kt` credits Daniel Svärd (2009), Norbert
+Nagold (2011), and Houssam Salem (2014), and declares `GPL-3.0-or-later`. The
+Dart adaptation and tests are Copyright © 2026 John Tsui under the same
+license. Root `COPYING` remains byte-identical.
 
 ## FragmentActivity.onAllFragmentsLoaded
 

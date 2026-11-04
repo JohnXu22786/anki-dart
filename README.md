@@ -22,6 +22,27 @@ Tsui under the same license. Root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
 
+## Card deck config methods
+
+[`cardTimeLimit`](lib/src/card_deck_config_methods.dart),
+`cardShouldShowTimer`, `cardReplayQuestionAudioOnAnswerSide`, and
+`cardAutoplay` adapt the matching `Card` methods from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Card.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` (lines 266–267 and 306–315).
+The host supplies `oDid`, `did`, and its deck-config lookup; the adapter uses
+the original deck for filtered cards and reads each existing
+`LibAnkiDeckConfig` property once. `cardTimeLimit` preserves Kotlin signed
+32-bit multiplication, while `cardShouldShowTimer` delegates timer fallback
+and logging to the existing config getter. The pinned `CardTest.kt` directly
+tests normal and filtered-deck time limits, normal and filtered timer lookup,
+autoplay, and replay-question-audio lookup; the focused Dart cases also check
+lookup/property call counts, overflow, and propagated config behavior. `Card.kt`
+credits Daniel Svärd © 2009, Norbert Nagold © 2011, and Houssam Salem © 2014
+and declares `GPL-3.0-or-later`. The Dart adaptation and tests are Copyright
+© 2026 John Tsui under the same license. Root `COPYING` remains byte-identical.
+See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md)
+for source mapping and attribution.
+
 ## Nonempty note fields helper
 
 [`nonEmptyFields`](lib/src/non_empty_fields.dart) ports the pure behavior of

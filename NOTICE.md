@@ -3964,6 +3964,22 @@ source declares `GPL-3.0-or-later` and has no separate copyright line; the Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license.
 Root `COPYING` remains byte-identical.
 
+`lib/src/collection_set_wants_abort.dart` and
+`test/collection_set_wants_abort_test.dart` adapt only the deprecated no-argument
+`Collection.setWantsAbort()` forwarding wrapper and `set_wants_abort` alias from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1280–1284`, pinned
+to AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The
+adapter invokes the host abort callback once, returns void, and propagates
+callback failures unchanged. Abort behavior remains host-side. No direct pinned
+wrapper test was found; focused Dart cases cover callback count, its void
+function signature, and exception identity. `Collection.kt` declares
+`GPL-3.0-or-later` and carries source copyrights for Norbert Nagold (2011),
+Kostas Spyropoulos (2012), and Ankitects Pty Ltd (2022). It separately notes
+incorporated AGPL-licensed browser.py code; this adaptation contains only the
+GPL wrapper and no browser implementation. The Dart adaptation and tests are
+Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 `lib/src/collection_set_wants_abort_raw.dart` and
 `test/collection_set_wants_abort_raw_test.dart` adapt only the raw-byte
 forwarding wrapper `Collection.setWantsAbortRaw(input)` from

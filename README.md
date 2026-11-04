@@ -707,6 +707,25 @@ tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md) for source mapping and attribution.
 
+`collectionSetWantsAbort()` in
+[`lib/src/collection_set_wants_abort.dart`](lib/src/collection_set_wants_abort.dart)
+adapts the deprecated no-argument `Collection.setWantsAbort()` wrapper and its
+`set_wants_abort` alias from
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1280–1284`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. It invokes
+the host abort callback exactly once, returns void, and propagates callback
+failures unchanged. Abort behavior remains host-owned. This is distinct from
+`Collection.setWantsAbortRaw(input)`, which forwards raw bytes. No direct pinned
+wrapper test was found; focused Dart tests cover callback count, void signature,
+and exception identity. `Collection.kt` credits Norbert Nagold (2011), Kostas
+Spyropoulos (2012), and Ankitects Pty Ltd (2022), and declares
+`GPL-3.0-or-later`. It separately notes incorporated `AGPL-3.0-or-later`
+`browser.py` code; this adaptation includes only the GPL wrapper and no browser
+implementation. The Dart adaptation and tests are Copyright © 2026 John Tsui
+under the same license. Root `COPYING` remains byte-identical. See
+[ANKIIDROID_UPSTREAM.md](ANKIIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## Card Browser search-history Loading conversion
 
 `convertBrowserSearchHistoryLoading()` in

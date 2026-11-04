@@ -61,6 +61,24 @@ adaptation and tests are Copyright © 2026 John Tsui. Both are licensed under
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 the exact source mapping and attribution.
 
+## NotetypeJson update
+
+[`NotetypeJsonUpdate`](lib/src/notetype_json_update.dart) adapts only
+`NotetypeJson.update(updateFrom)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The host supplies source
+`JSONObject.keys()` iteration, source `get(key)`, and destination `put(key,
+value)`. It requests the source key iterable once, traverses it in host order,
+and performs one source read followed immediately by one destination put for
+each key; host values and failures pass through unchanged. The host retains
+`NotetypeJson`, `JSONObject`, and JSON storage and behavior. The pinned
+AnkiDroid tests contain no direct coverage for `update`; focused Dart tests are
+source-derived. `NotetypeJson.kt` is Copyright © 2020 Arthur Milchior; the Dart
+adaptation and tests are Copyright © 2026 John Tsui. Both are licensed under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) and [`NOTICE.md`](NOTICE.md)
+for source mapping and attribution.
+
 ## libanki CardOrdinal alias
 
 [`CardOrdinal`](lib/src/card_ordinal.dart) adapts the public

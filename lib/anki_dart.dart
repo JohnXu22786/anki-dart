@@ -498,6 +498,7 @@ export 'src/time_utils.dart';
 export 'src/named_json_comparator.dart';
 export 'src/json_property_delegates.dart';
 export 'src/notetype_json_name_getters.dart';
+export 'src/notetype_json_update.dart';
 export 'src/hash_util.dart';
 export 'src/time_manager.dart';
 export 'src/system_time.dart';

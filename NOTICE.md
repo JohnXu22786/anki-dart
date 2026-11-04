@@ -39,6 +39,22 @@ pinned to AnkiDroid 2.25.3 commit
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
 
+## `NotetypeJson.update(updateFrom)`
+
+`lib/src/notetype_json_update.dart` and
+`test/notetype_json_update_test.dart` adapt only
+`NotetypeJson.update(updateFrom: NotetypeJson)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+commit `d9bf072f814a0c37d30a694192593b31ff2df875` (lines 128–131). The host
+retains both `NotetypeJson`/`JSONObject` objects and owns key iteration, value
+lookup, destination `put`, JSON storage, and failure behavior. The adapter
+preserves host key order, one source read followed by one destination put per
+key, original values by identity, and exact failure short-circuiting. No direct
+pinned test for this method was found; focused Dart cases are source-derived.
+The Kotlin source is Copyright © 2020 Arthur Milchior and declares
+`GPL-3.0-or-later`. The Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical.
+
 ## Backend JSON and ByteString boundary
 
 `lib/src/backend_utils.dart` and `test/backend_utils_test.dart` adapt the

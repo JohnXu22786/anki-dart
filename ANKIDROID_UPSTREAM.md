@@ -1,5 +1,23 @@
 # AnkiDroid source baseline
 
+## `NotetypeJson.nonEmptyFields`
+
+`lib/src/non_empty_fields.dart` and `test/non_empty_fields_test.dart` port the
+pure `NotetypeJson.nonEmptyFields(sfld)` behavior from
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+AnkiDroid 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. Ordered
+field names and values are supplied by the host: the helper pairs them by
+position through the shorter list, trims values with Kotlin/JVM `String.trim()`
+semantics, and collects names for literal nonempty values in a mutable set.
+It does not strip HTML; `NotetypeJson`, `JSONObject`, and `Fields` remain
+host-owned. `AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt`
+`nonEmptyFieldTest` directly asserts the empty, markup, whitespace, and ordinary
+value cases preserved in the Dart test; extra Dart cases cover unequal list
+lengths, duplicate names, and JVM whitespace boundaries. `NotetypeJson.kt` is
+Copyright © 2020 Arthur Milchior and declares `GPL-3.0-or-later`. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license.
+Root `COPYING` remains byte-identical.
+
 ## libanki CardOrdinal alias
 
 `lib/src/card_ordinal.dart` adapts the public `CardOrdinal` typealias from

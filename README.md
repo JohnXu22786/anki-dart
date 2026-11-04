@@ -4,6 +4,25 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+## Nonempty note fields helper
+
+[`nonEmptyFields`](lib/src/non_empty_fields.dart) ports the pure behavior of
+`NotetypeJson.nonEmptyFields(sfld)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It takes ordered field names and
+values from the host, pairs them positionally with Kotlin `zip` truncation,
+trims values with Kotlin/JVM `String.trim()` semantics, and returns a mutable
+set of names whose literal trimmed values are nonempty. HTML is not stripped.
+The `NotetypeJson`, `JSONObject`, and `Fields` models stay host-owned. The
+pinned `AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt`
+`nonEmptyFieldTest` directly covers the upstream cases; focused Dart tests
+preserve them and add source-derived list-length, duplicate-name, whitespace,
+and markup cases. `NotetypeJson.kt` is Copyright © 2020 Arthur Milchior under
+`GPL-3.0-or-later`; the Dart adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## libanki CardOrdinal alias
 
 [`CardOrdinal`](lib/src/card_ordinal.dart) adapts the public

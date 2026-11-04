@@ -1,3 +1,17 @@
+## Nonempty note fields helper
+
+`lib/src/non_empty_fields.dart` and `test/non_empty_fields_test.dart` port the
+pure `NotetypeJson.nonEmptyFields(sfld)` behavior from
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt` in AnkiDroid
+2.25.3, pinned to commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+`NotetypeJson`, `JSONObject`, and `Fields` remain host-owned. The pinned
+`AnkiDroid/src/test/java/com/ichi2/anki/libanki/NoteTypeTest.kt`
+`nonEmptyFieldTest` directly covers the upstream cases retained in Dart;
+additional Dart cases are source-derived. The Kotlin source is Copyright © 2020
+Arthur Milchior and declares `GPL-3.0-or-later`. The Dart adaptation and tests
+are Copyright © 2026 John Tsui under the same license. Root `COPYING` remains
+byte-identical.
+
 `lib/src/non_leading_zero_input_filter.dart` and
 `test/non_leading_zero_input_filter_test.dart` adapt the replacement decision
 from `AnkiDroid/src/main/java/com/ichi2/anki/ui/NonLeadingZeroInputFilter.kt`,

@@ -384,7 +384,13 @@ final class _Parser {
   }
 
   double _float(String num, String context) {
-    final n = double.tryParse(num);
+    final spelling = num.toLowerCase();
+    final n = switch (spelling) {
+      'inf' || '+inf' || 'infinity' || '+infinity' => double.infinity,
+      '-inf' || '-infinity' => double.negativeInfinity,
+      'nan' || '+nan' || '-nan' => double.nan,
+      _ => double.tryParse(num),
+    };
     if (n == null)
       fail(SearchErrorCode.invalidNumber,
           context: context, provided: num, remainingInput: context);

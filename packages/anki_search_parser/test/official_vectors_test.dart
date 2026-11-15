@@ -264,6 +264,17 @@ void main() {
     expectError('mid:0x10', SearchErrorCode.invalidWholeNumber);
     expectError('prop:due=0x10', SearchErrorCode.invalidWholeNumber);
     expectError('rated:1:0x2', SearchErrorCode.invalidAnswerButton);
+    for (final spelling in ['inf', '+inf', 'INF', 'infinity', '-infinity']) {
+      final parsed =
+          (value('prop:ease=$spelling') as Property).kind as EaseProperty;
+      expect(parsed.value.isInfinite, isTrue, reason: spelling);
+    }
+    for (final spelling in ['NaN', 'nan', '-NaN']) {
+      final parsed =
+          (value('prop:ease=$spelling') as Property).kind as EaseProperty;
+      expect(parsed.value.isNaN, isTrue, reason: spelling);
+    }
+    expectError('prop:ease=infinityx', SearchErrorCode.invalidNumber);
     expect((value('prop:ease=0.1') as Property).kind, isA<EaseProperty>());
   });
 

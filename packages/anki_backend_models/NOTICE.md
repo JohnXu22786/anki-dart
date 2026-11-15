@@ -7,7 +7,9 @@ conversions, and default configuration assets from `rslib/src/notetype/mod.rs`,
 `rslib/src/notetype/service.rs`, `rslib/src/notetype/fields.rs`,
 `rslib/src/notetype/templates.rs`, `rslib/src/notetype/styling.css`,
 `rslib/src/notetype/cloze_styling.css`, `rslib/src/notetype/header.tex`, and
-`rslib/src/notetype/service.rs`; Deck and DeckConfig values and conversions
+`rslib/src/notetype/service.rs`, `rslib/src/notetype/stock.rs`,
+`rslib/src/image_occlusion/notetype.rs`, and
+`rslib/src/image_occlusion/notetype.css`; Deck and DeckConfig values and conversions
 from `rslib/src/decks/mod.rs`, `rslib/src/decks/name.rs`,
 `rslib/src/decks/service.rs`, `rslib/src/deckconfig/mod.rs`, and
 `rslib/src/deckconfig/service.rs`; media metadata values from
@@ -27,7 +29,11 @@ source so results remain deterministic and platform neutral:
 `CardTemplate.newTemplate()` assign the upstream random config IDs.
 `Notetype.ankiDefault()`, `Notetype.defaultConfig()`, and
 `Notetype.clozeConfig()` include the pinned default CSS and LaTeX header/footer
-assets recorded in `SOURCE.sha256`. Deck and DeckConfig models include the
-pinned defaults. Media metadata and collection configuration values are also
-included. Stock notetype factories and localized catalogs remain unaudited.
-This package does not change the root `COPYING` file.
+assets recorded in `SOURCE.sha256`. `StockNotetypeFactory` implements Anki
+Core's Basic, Basic (type answer), Basic (and reversed), Basic (optional
+reversed), Cloze, and Image Occlusion note types, while accepting translated
+names from its caller. Image Occlusion collection operations and bundled
+stock-name translation catalogs remain outside this slice. Deck and DeckConfig
+models include stored values, conversions, and pinned defaults. Media metadata
+and collection configuration values are also included. This package does not
+change the root `COPYING` file.

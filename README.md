@@ -7,6 +7,15 @@ far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 The package targets Dart VM hosts, including Android. Web is not a supported
 target because locale-sensitive helpers use `dart:io` platform information.
 
+## Flutter application foundation
+
+[`apps/anki`](apps/anki/README.md) contains a neutral Flutter startup shell for
+Android, iOS, web, Windows, macOS, and Linux. It depends on this root pure Dart
+package without changing its public API. The Flutter shell is buildable on web,
+but this does not make the existing root package helpers web-compatible or
+implement Anki product behavior. See the app README for pinned SDK versions,
+local commands, platform prerequisites, and CI build coverage.
+
 ## LibAnki Collection raw backend forwarding
 
 [`collection_remaining_raw.dart`](lib/src/collection_remaining_raw.dart) and its

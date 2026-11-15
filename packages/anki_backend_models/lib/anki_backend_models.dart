@@ -10,3 +10,4 @@ export 'src/ids.dart';
 export 'src/deck.dart';
 export 'src/deck_config.dart';
 export 'src/media_metadata.dart';
+export 'src/collection_config.dart';

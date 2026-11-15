@@ -68,12 +68,13 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// This is an incremental compiler, not complete search execution. Its current
 /// subset contains boolean structure, card/note/notetype ID predicates,
 /// notetype names, card template ordinals and names, tag predicates, deck IDs
-/// without children, flags, state and day predicates, custom-data predicates,
-/// and whole-collection queries. Other AST variants throw
-/// [UnsupportedSearchSqlNodeException]. Due state predicates require explicit
-/// [SearchSqlTiming] values; day predicates additionally require
-/// [SearchSqlTiming.nextDayAt]. ID-list nodes must use comma-separated decimal
-/// digits accepted by the shared parser; their exact spelling is preserved.
+/// without children, flags, state and day predicates, basic scalar and rated
+/// properties, custom-data predicates, and whole-collection queries. Other
+/// AST variants throw [UnsupportedSearchSqlNodeException]. Due state
+/// predicates require explicit [SearchSqlTiming] values; day predicates and
+/// due properties additionally require [SearchSqlTiming.nextDayAt]. ID-list
+/// nodes must use comma-separated decimal digits accepted by the shared
+/// parser; their exact spelling is preserved.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
@@ -137,7 +138,14 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   Notetype() ||
   Tag() ||
   EditedInDays() => RequiredTable.notes,
-  Rated() || Property(kind: RatedProperty()) => RequiredTable.cards,
+  Rated() ||
+  Property(kind: DueProperty()) ||
+  Property(kind: PositionProperty()) ||
+  Property(kind: IntervalProperty()) ||
+  Property(kind: RepsProperty()) ||
+  Property(kind: LapsesProperty()) ||
+  Property(kind: EaseProperty()) ||
+  Property(kind: RatedProperty()) => RequiredTable.cards,
   CustomData() ||
   Property(kind: CustomDataNumberProperty()) ||
   Property(kind: CustomDataStringProperty()) => RequiredTable.cards,
@@ -212,9 +220,95 @@ String _writeSearch(
       rating,
       timing,
     ),
+  Property(:final operator, kind: DueProperty(:final value)) =>
+    _writeDueProperty(operator, value, timing),
+  Property(:final operator, kind: PositionProperty(:final value)) =>
+    _writePositionProperty(operator, value),
+  Property(:final operator, kind: IntervalProperty(:final value)) =>
+    _writeIntegerProperty(operator, 'ivl', value),
+  Property(:final operator, kind: RepsProperty(:final value)) =>
+    _writeIntegerProperty(operator, 'reps', value),
+  Property(:final operator, kind: LapsesProperty(:final value)) =>
+    _writeIntegerProperty(operator, 'lapses', value),
+  Property(:final operator, kind: EaseProperty(:final value)) =>
+    _writeEaseProperty(operator, value),
   WholeCollection() => 'true',
   _ => throw UnsupportedSearchSqlNodeException(node),
 };
+
+const _propertyOperators = {'<=', '>=', '!=', '=', '<', '>'};
+
+void _validatePropertyOperator(String operator) {
+  if (!_propertyOperators.contains(operator)) {
+    throw ArgumentError.value(
+      operator,
+      'operator',
+      'Invalid property operator.',
+    );
+  }
+}
+
+String _writeDueProperty(String operator, int days, SearchSqlTiming? timing) {
+  _validatePropertyOperator(operator);
+  if (days < -0x80000000 || days > 0x7fffffff) {
+    throw RangeError.range(days, -0x80000000, 0x7fffffff, 'days');
+  }
+  final resolvedTiming = _requirePropertyTiming(timing);
+  final daysElapsed = resolvedTiming.daysElapsed;
+  if (daysElapsed < 0 || daysElapsed > 0xffffffff) {
+    throw RangeError.range(daysElapsed, 0, 0xffffffff, 'daysElapsed');
+  }
+  final nextDayAt = resolvedTiming.nextDayAt!;
+  _validateI64(nextDayAt, 'nextDayAt');
+  final elapsedAsI32 = (daysElapsed & 0xffffffff).toSigned(32);
+  final reviewDay = (days + elapsedAsI32).toSigned(32);
+  const originalDue = '(case when c.odue != 0 then c.odue else c.due end)';
+  return '((c.queue in (2,3) and $originalDue $operator $reviewDay) or '
+      '(c.queue in (1,4) and (($originalDue - $nextDayAt) / 86400) '
+      '$operator $days))';
+}
+
+SearchSqlTiming _requirePropertyTiming(SearchSqlTiming? timing) {
+  if (timing == null) {
+    throw ArgumentError(
+      'Due properties require explicit SearchSqlTiming values.',
+    );
+  }
+  if (timing.nextDayAt == null) {
+    throw ArgumentError('Due properties require SearchSqlTiming.nextDayAt.');
+  }
+  return timing;
+}
+
+String _writePositionProperty(String operator, int position) {
+  _validatePropertyOperator(operator);
+  _validateU32Property(position, 'position');
+  return '(c.type = 0 and (case when c.odue != 0 then c.odue else c.due end) '
+      '$operator $position)';
+}
+
+String _writeIntegerProperty(String operator, String column, int value) {
+  _validatePropertyOperator(operator);
+  _validateU32Property(value, column);
+  return '$column $operator $value';
+}
+
+void _validateU32Property(int value, String name) {
+  if (value < 0 || value > 0xffffffff) {
+    throw RangeError.range(value, 0, 0xffffffff, name);
+  }
+}
+
+String _writeEaseProperty(String operator, double ease) {
+  _validatePropertyOperator(operator);
+  final factor = _roundToFloat32(_roundToFloat32(ease) * 1000.0);
+  final unsignedFactor = factor.isNaN || factor <= 0
+      ? 0
+      : factor >= 4294967296.0
+      ? 0xffffffff
+      : factor.toInt();
+  return 'factor $operator $unsignedFactor';
+}
 
 String _writeCustomData(String key, List<String> arguments) {
   arguments.add(key);

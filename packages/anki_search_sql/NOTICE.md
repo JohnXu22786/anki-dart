@@ -13,10 +13,13 @@ under AGPL-3.0-or-later. The compiler accepts the shared AST from
 tag predicates in normal, regex, and no-combining modes, state predicates
 using Core's `CardType` and `CardQueue` numeric values, day predicates using
 Core's previous-day cutoffs, rated searches and rated/reschedule properties
-using Core's revlog cutoffs and ease filters, and custom-data existence and
-numeric/string property predicates. Rated predicates use explicit next-day
-timing and checked signed 64-bit timestamp arithmetic. The custom-data
-predicates preserve Core's SQL clauses, float32 value spelling, and bound
-key/value argument order. It uses no
+using Core's revlog cutoffs and ease filters, basic due/position/interval/reps/
+lapses/ease property predicates, and custom-data existence and numeric/string
+property predicates. Rated predicates use explicit next-day timing and checked
+signed 64-bit timestamp arithmetic. Due properties use explicit collection
+day and next-day timing, Core's original-due fallback and integer division,
+and card queue values. Ease properties preserve Core's float32 multiplication
+and unsigned cast behavior. The custom-data predicates preserve Core's SQL
+clauses, float32 value spelling, and bound key/value argument order. It uses no
 platform-specific database package and does not implement field text matching
 or search execution. The repository root `COPYING` file remains unchanged.

@@ -975,4 +975,193 @@ void main() {
       throwsRangeError,
     );
   });
+
+  test('due properties use explicit day timing and Core queue branches', () {
+    final timing = SearchSqlTiming(
+      daysElapsed: 42,
+      now: BigInt.zero,
+      learnAheadSecs: 0,
+      nextDayAt: BigInt.from(1700000000),
+    );
+
+    for (final operator in const ['<=', '>=', '!=', '=', '<', '>']) {
+      final compiled = compileSearchSql(
+        GroupNode(parse('prop:due$operator-2')),
+        timing: timing,
+      );
+      expect(
+        compiled.sql,
+        'select c.id from cards c where '
+        '(((c.queue in (2,3) and (case when c.odue != 0 then c.odue else c.due end) '
+        '$operator 40) or (c.queue in (1,4) and '
+        '(((case when c.odue != 0 then c.odue else c.due end) - 1700000000) '
+        '/ 86400) $operator -2)))',
+        reason: operator,
+      );
+      expect(compiled.arguments, isEmpty);
+      expect(compiled.requiredTable, RequiredTable.cards);
+    }
+
+    expect(
+      () => compileSearchSql(GroupNode(parse('prop:due=0'))),
+      throwsArgumentError,
+      reason: 'due properties cannot read collection timing implicitly',
+    );
+    expect(
+      () => compileSearchSql(
+        GroupNode(parse('prop:due=0')),
+        timing: SearchSqlTiming(
+          daysElapsed: 42,
+          now: BigInt.zero,
+          learnAheadSecs: 0,
+        ),
+      ),
+      throwsArgumentError,
+      reason: 'learning due comparisons require the explicit rollover cutoff',
+    );
+
+    final notes = compileSearchSql(
+      GroupNode(parse('prop:due<=0')),
+      resultType: SearchResultType.notes,
+      timing: timing,
+    );
+    expect(
+      notes.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(((c.queue in (2,3) and (case when c.odue != 0 then c.odue else c.due end) '
+      '<= 42) or (c.queue in (1,4) and '
+      '(((case when c.odue != 0 then c.odue else c.due end) - 1700000000) '
+      '/ 86400) <= 0)))',
+    );
+    expect(notes.requiredTable, RequiredTable.cardsAndNotes);
+  });
+
+  test('position, interval, reps, and lapses match Core SQL and operators', () {
+    const operators = ['<=', '>=', '!=', '=', '<', '>'];
+    final properties = <(String, String, String)>[
+      (
+        'pos',
+        'PositionProperty',
+        'c.type = 0 and (case when c.odue != 0 then c.odue else c.due end)',
+      ),
+      ('ivl', 'IntervalProperty', 'ivl'),
+      ('reps', 'RepsProperty', 'reps'),
+      ('lapses', 'LapsesProperty', 'lapses'),
+    ];
+    for (final (name, _, left) in properties) {
+      for (final operator in operators) {
+        final compiled = compileSearchSql(
+          GroupNode(parse('prop:$name${operator}4')),
+        );
+        final predicate = name == 'pos'
+            ? '($left $operator 4)'
+            : '$left $operator 4';
+        expect(
+          compiled.sql,
+          'select c.id from cards c where ($predicate)',
+          reason: '$name $operator',
+        );
+        expect(compiled.arguments, isEmpty);
+        expect(compiled.requiredTable, RequiredTable.cards);
+      }
+    }
+
+    final noteResults = compileSearchSql(
+      GroupNode(parse('prop:pos<9')),
+      resultType: SearchResultType.notes,
+    );
+    expect(
+      noteResults.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '((c.type = 0 and (case when c.odue != 0 then c.odue else c.due end) < 9))',
+    );
+    expect(noteResults.requiredTable, RequiredTable.cardsAndNotes);
+
+    expect(
+      () => compileSearchSql(
+        GroupNode([
+          Search(const Property(operator: '=', kind: PositionProperty(-1))),
+        ]),
+      ),
+      throwsRangeError,
+    );
+  });
+
+  test('ease properties round as float32 and cast to unsigned 32-bit', () {
+    for (final (value, expected) in <(double, String)>[
+      (0.1, 'factor = 100'),
+      (1.0009999999, 'factor = 1001'),
+      (0.0004, 'factor = 0'),
+      (-2.5, 'factor = 0'),
+      (double.nan, 'factor = 0'),
+      (double.infinity, 'factor = 4294967295'),
+      (4294968.0, 'factor = 4294967295'),
+    ]) {
+      final dynamicCompiled = compileSearchSql(
+        GroupNode([Search(Property(operator: '=', kind: EaseProperty(value)))]),
+      );
+      expect(dynamicCompiled.sql, endsWith('$expected)'));
+      expect(dynamicCompiled.requiredTable, RequiredTable.cards);
+    }
+
+    for (final operator in const ['<=', '>=', '!=', '=', '<', '>']) {
+      final compiled = compileSearchSql(
+        GroupNode(parse('prop:ease${operator}0.1')),
+      );
+      expect(compiled.sql, endsWith('factor $operator 100)'));
+    }
+
+    expect(
+      () => compileSearchSql(
+        GroupNode([
+          Search(const Property(operator: 'or 1 --', kind: EaseProperty(1))),
+        ]),
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('scalar properties preserve nested boolean composition', () {
+    final timing = SearchSqlTiming(
+      daysElapsed: 10,
+      now: BigInt.zero,
+      learnAheadSecs: 0,
+      nextDayAt: BigInt.from(1700000000),
+    );
+    final compiled = compileSearchSql(
+      GroupNode([
+        Search(const Tag(tag: 'blue', mode: FieldSearchMode.normal)),
+        BooleanNode(NodeKind.and),
+        GroupNode([
+          Search(const Property(operator: '>=', kind: IntervalProperty(3))),
+          BooleanNode(NodeKind.or),
+          Search(
+            const Property(
+              operator: '=',
+              kind: CustomDataStringProperty(key: 'label', value: 'again'),
+            ),
+          ),
+          BooleanNode(NodeKind.or),
+          Search(
+            const Property(
+              operator: '>',
+              kind: RatedProperty(-1, AnyAnswerButton()),
+            ),
+          ),
+        ]),
+      ]),
+      resultType: SearchResultType.notes,
+      timing: timing,
+    );
+    expect(
+      compiled.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(n.tags regexp ? and '
+      '(ivl >= 3 or extract_custom_data(c.data, ?) = ? or '
+      'c.id in (select cid from revlog where id >= '
+      '${BigInt.from(1700000000 - 86400) * BigInt.from(1000)} and ease > 0)))',
+    );
+    expect(compiled.arguments, ['(?i).* blue(::| ).*', 'label', 'again']);
+    expect(compiled.requiredTable, RequiredTable.cardsAndNotes);
+  });
 }

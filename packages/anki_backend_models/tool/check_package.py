@@ -32,6 +32,9 @@ SOURCE_HASHES = {
     "rslib/src/media/mod.rs": "bcf4529fbf244f506221cc45e0683f432e1366dacebf176cf2dda1616e581424",
     "rslib/src/sync/media/database/client/mod.rs": "e07639f5018eac52b29657dda99eb9e16f186e734b6b3e530c75f6af93059e81",
     "rslib/src/config/mod.rs": "4d288b43ebfb365e083f2fcf352e6c6a87b973c0e8fea8aedcef872db8bd03eb",
+    "rslib/src/revlog/mod.rs": "e528d4708a21ae2da87705434249e2e842155e3a34161d556979e5d611b63faa",
+    "rslib/src/stats/service.rs": "bd65f462a7af8a3dfa1cb3c622fc6324d0e8ddca6535f6b20b1e3908efb3895e",
+    "proto/anki/stats.proto": "5b22c0aa2133b68eefc93964299668732941ee3688140cd98430b033ee567ea4",
 }
 
 
@@ -51,7 +54,7 @@ def main() -> int:
     if source_record.is_file():
         for line in source_record.read_text(encoding="utf-8").splitlines():
             match = re.fullmatch(
-                r"([0-9a-f]{64})  (rslib/src/[a-z_/]+\.(?:rs|css|tex))", line
+                r"([0-9a-f]{64})  ((?:rslib/src/[a-z_/]+\.(?:rs|css|tex)|proto/anki/[a-z_/]+\.proto))", line
             )
             if not match:
                 errors.append(f"SOURCE.sha256: invalid entry {line!r}")

@@ -12,7 +12,10 @@ conversions, and default configuration assets from `rslib/src/notetype/mod.rs`,
 `rslib/src/image_occlusion/notetype.css`; Deck and DeckConfig values and conversions
 from `rslib/src/decks/mod.rs`, `rslib/src/decks/name.rs`,
 `rslib/src/decks/service.rs`, `rslib/src/deckconfig/mod.rs`, and
-`rslib/src/deckconfig/service.rs`; media metadata values from
+`rslib/src/deckconfig/service.rs`; RevlogId, RevlogEntry, review kind values,
+protobuf conversions, and scheduling/statistics helpers from
+`rslib/src/revlog/mod.rs`, `rslib/src/stats/service.rs`, and
+`proto/anki/stats.proto`; media metadata values from
 `rslib/src/media/mod.rs` and
 `rslib/src/sync/media/database/client/mod.rs`; and collection config entry and
 scheduler version values from `rslib/src/config/mod.rs` at commit

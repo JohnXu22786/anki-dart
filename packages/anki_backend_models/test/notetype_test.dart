@@ -60,6 +60,23 @@ void main() {
         throwsA(isA<InvalidModelValue>()
             .having((error) => error.message, 'message', 'Empty field name')),
       );
+
+      final invalidAfterCleanup = NoteField(
+        name: '::',
+        config: proto.Notetype_Field_Config(),
+      );
+      expect(
+        () => invalidAfterCleanup.fixName(),
+        throwsA(isA<InvalidModelValue>()
+            .having((error) => error.message, 'message', 'Field name: ')),
+      );
+      expect(invalidAfterCleanup.name, '');
+
+      final nonWhitespaceControls = NoteField(
+        name: '\u001cName\u001c',
+        config: proto.Notetype_Field_Config(),
+      )..fixName();
+      expect(nonWhitespaceControls.name, '\u001cName\u001c');
     });
 
     test('default and cloze configurations match pinned upstream assets', () {

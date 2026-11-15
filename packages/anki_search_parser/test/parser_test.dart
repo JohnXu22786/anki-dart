@@ -175,7 +175,11 @@ void main() {
             (e) => e.code, 'code', SearchErrorCode.invalidWholeNumber)));
     expect(() => parse('card:65536'),
         returnsNormally); // overflow falls back to a template name
-    expect(() => parse('prop:cdn:clé=1'), returnsNormally);
+    expect(
+      () => parse('prop:cdn:é=1'),
+      throwsA(isA<SearchParseException>()
+          .having((e) => e.code, 'code', SearchErrorCode.invalidPropProperty)),
+    );
     expect(((parse('prop:ease=0.1').single as Search).value as Property).kind,
         const TypeMatcher<EaseProperty>());
   });

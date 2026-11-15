@@ -114,8 +114,9 @@ final class _Parser {
         fail(SearchErrorCode.unopenedGroup, remainingAt: at);
       fail(SearchErrorCode.other, remainingAt: tokenStart);
     }
-    if (term.toLowerCase() == 'and') return const BooleanNode(NodeKind.and);
-    if (term.toLowerCase() == 'or') return const BooleanNode(NodeKind.or);
+    final asciiTerm = _asciiLowercase(term);
+    if (asciiTerm == 'and') return const BooleanNode(NodeKind.and);
+    if (asciiTerm == 'or') return const BooleanNode(NodeKind.or);
     return Search(_searchNode(term));
   }
 
@@ -209,7 +210,7 @@ final class _Parser {
   }
 
   SearchNode _withArgument(String key, String val) {
-    switch (key.toLowerCase()) {
+    switch (_asciiLowercase(key)) {
       case 'deck':
         return Deck(_unescape(val));
       case 'note':
@@ -293,8 +294,7 @@ final class _Parser {
 
   SearchNode _property(String clause) {
     final match = RegExp(
-            r'^(ivl|due|reps|lapses|ease|pos|rated|resched|s|d|r|cdn:[\p{L}\p{N}]+|cds:[\p{L}\p{N}]+)',
-            unicode: true)
+            r'^(ivl|due|reps|lapses|ease|pos|rated|resched|s|d|r|cdn:[A-Za-z0-9]+|cds:[A-Za-z0-9]+)')
         .firstMatch(clause);
     if (match == null)
       fail(SearchErrorCode.invalidPropProperty,
@@ -401,17 +401,22 @@ final class _Parser {
       _toInt64(_bigInt(value, context));
 
   SearchNode _rated(String value) {
-    final parts = value.split(':');
-    final days = _uint(parts.first, 'rated:');
+    final separator = value.indexOf(':');
+    final days =
+        _uint(separator < 0 ? value : value.substring(0, separator), 'rated:');
     return Rated(
         days: days < 1 ? 1 : days,
-        ease: _answer(parts.length > 1 ? parts[1] : null, value));
+        ease: _answer(
+            separator < 0 ? null : value.substring(separator + 1), value));
   }
 
   PropertyKind _propRated(String value, String context) {
-    final parts = value.split(':');
-    return RatedProperty(_negativeInt32(parts.first, context),
-        _answer(parts.length > 1 ? parts[1] : null, context));
+    final separator = value.indexOf(':');
+    return RatedProperty(
+        _negativeInt32(
+            separator < 0 ? value : value.substring(0, separator), context),
+        _answer(
+            separator < 0 ? null : value.substring(separator + 1), context));
   }
 
   RatingKind _answer(String? value, String context) {
@@ -473,6 +478,11 @@ final class _Parser {
         mode: FieldSearchMode.normal);
   }
 }
+
+String _asciiLowercase(String value) => value.replaceAllMapped(
+      RegExp('[A-Z]'),
+      (match) => String.fromCharCode(match[0]!.codeUnitAt(0) + 32),
+    );
 
 // fixnum is imported lazily here to keep all 64-bit values exact on JS.
 Int64 _toInt64(BigInt value) => Int64.parseInt(value.toString());

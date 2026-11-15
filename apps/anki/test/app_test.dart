@@ -50,9 +50,35 @@ void main() {
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
       expect(find.text('Profile name can’t be empty'), findsOneWidget);
+      await tester.enterText(find.byKey(const Key('profile-name')), 'a' * 51);
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Profile name must be 50 characters or fewer'),
+        findsOneWidget,
+      );
+
+      profiles.failNextCreate = true;
+      await tester.enterText(find.byKey(const Key('profile-name')), 'Ignored');
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+      expect(find.text('Profile could not be saved'), findsOneWidget);
+      expect(profiles.items.any((item) => item.name == 'Ignored'), isFalse);
+
+      await tester.tap(find.byKey(const Key('add-profile')));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('profile-name')), 'Work');
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
+      expect(profiles.items.any((item) => item.name == 'Work'), isTrue);
+
+      profiles.failNextRename = true;
+      await tester.tap(find.byKey(const Key('rename-p1')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('profile-name')), 'Ignored');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('Profile could not be saved'), findsOneWidget);
       expect(profiles.items.any((item) => item.name == 'Work'), isTrue);
 
       await tester.tap(find.byKey(const Key('rename-p1')));
@@ -61,6 +87,12 @@ void main() {
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
       expect(profiles.items.any((item) => item.name == 'Study'), isTrue);
+
+      profiles.failNextSwitch = true;
+      await tester.tap(find.byKey(const Key('select-p1')));
+      await tester.pumpAndSettle();
+      expect(find.text('Profile could not be switched'), findsOneWidget);
+      expect(profiles.active.id.value, 'default');
 
       await tester.tap(find.byKey(const Key('select-p1')));
       await tester.pumpAndSettle();
@@ -247,6 +279,9 @@ final class _Profiles implements ProfileRepository {
 
   final List<String> events;
   bool failNextLoad = false;
+  bool failNextCreate = false;
+  bool failNextRename = false;
+  bool failNextSwitch = false;
   final items = <ProfileItem>[
     const ProfileItem(id: ProfileId.defaultId, name: 'Default'),
   ];
@@ -267,11 +302,19 @@ final class _Profiles implements ProfileRepository {
 
   @override
   Future<void> create(ProfileName name) async {
+    if (failNextCreate) {
+      failNextCreate = false;
+      throw StateError('profile create failed');
+    }
     items.add(ProfileItem(id: ProfileId('p1'), name: name.value));
   }
 
   @override
   Future<void> rename(ProfileId id, ProfileName name) async {
+    if (failNextRename) {
+      failNextRename = false;
+      throw StateError('profile rename failed');
+    }
     final index = items.indexWhere((item) => item.id == id);
     items[index] = ProfileItem(id: id, name: name.value);
     if (active.id == id) active = items[index];
@@ -279,6 +322,10 @@ final class _Profiles implements ProfileRepository {
 
   @override
   Future<void> switchTo(ProfileId id) async {
+    if (failNextSwitch) {
+      failNextSwitch = false;
+      throw StateError('profile switch failed');
+    }
     active = items.singleWhere((item) => item.id == id);
   }
 }

@@ -45,8 +45,9 @@ final class CollectionSqliteOptions {
 
   /// Registers additional source-specific SQL functions and collations before
   /// the collection schema is inspected. `field_at_index`, `process_text`,
-  /// `fnvhash`, `extract_original_position`, and `extract_custom_data` are
-  /// installed by default; remaining Core functions and `unicase` are
+  /// `fnvhash`, `extract_original_position`, `extract_custom_data`, and
+  /// `extract_fsrs_variable` are installed by default; remaining Core functions
+  /// and `unicase` are
   /// host-provided.
   final FutureOr<void> Function(CommonDatabase database)? configureConnection;
 }
@@ -57,8 +58,8 @@ final class CollectionSqliteOptions {
 /// exclusive locking, 4096-byte pages, a 40 MiB page cache, the source's
 /// legacy-file-format setting, WAL, and a bounded cache for the hot exclusive
 /// transaction statements. Core's `field_at_index`, `process_text`,
-/// `fnvhash`, `extract_original_position`, and `extract_custom_data` functions
-/// are installed on every connection; other functions and collations are not.
+/// `fnvhash`, card-data, and FSRS extraction functions are installed on every
+/// connection; other functions and collations are not.
 final class CollectionSqliteStorage
     implements CollectionOpenDatabase, CollectionSchemaMigrationDatabase {
   CollectionSqliteStorage._(this._database, this._driver);

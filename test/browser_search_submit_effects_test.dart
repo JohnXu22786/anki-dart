@@ -48,14 +48,11 @@ void main() {
         history: history,
       );
 
-      expect(
-        effects.map((effect) => effect.runtimeType),
-        [
-          BrowserSearchHistoryLoadingEffect,
-          BrowserCloseSearchViewEventEffect,
-          BrowserSearchSubmittedEffect,
-        ],
-      );
+      expect(effects.map((effect) => effect.runtimeType), [
+        BrowserSearchHistoryLoadingEffect,
+        BrowserCloseSearchViewEventEffect,
+        BrowserSearchSubmittedEffect,
+      ]);
       final loading = (effects[0] as BrowserSearchHistoryLoadingEffect).history;
       const addedEntry = BrowserSearchHistoryEntry(
         query: 'search query',
@@ -73,68 +70,75 @@ void main() {
       ]);
       expect(history.entries, [addedEntry, oldEntry]);
       expect(
-          identical(
-              (effects[2] as BrowserSearchSubmittedEffect).search, request),
-          isTrue);
+        identical((effects[2] as BrowserSearchSubmittedEffect).search, request),
+        isTrue,
+      );
       expect(request.query, ' \u00a0search query\t ');
     });
 
-    test('blank unfiltered request still publishes unchanged Loading history',
-        () {
-      const existingEntry = BrowserSearchHistoryEntry(
-        query: 'existing',
-        tags: ['kept'],
-      );
-      final history = BrowserSearchHistoryModel(entries: [existingEntry]);
-      const request = BrowserSearchRequest(query: ' \u00a0\t ');
+    test(
+      'blank unfiltered request still publishes unchanged Loading history',
+      () {
+        const existingEntry = BrowserSearchHistoryEntry(
+          query: 'existing',
+          tags: ['kept'],
+        );
+        final history = BrowserSearchHistoryModel(entries: [existingEntry]);
+        const request = BrowserSearchRequest(query: ' \u00a0\t ');
 
-      final effects = browserSubmitCurrentSearchEffects(
-        request,
-        history: history,
-      );
+        final effects = browserSubmitCurrentSearchEffects(
+          request,
+          history: history,
+        );
 
-      expect(
-        effects.map((effect) => effect.runtimeType),
-        [
+        expect(effects.map((effect) => effect.runtimeType), [
           BrowserSearchHistoryLoadingEffect,
           BrowserCloseSearchViewEventEffect,
           BrowserSearchSubmittedEffect,
-        ],
-      );
-      final loading = (effects[0] as BrowserSearchHistoryLoadingEffect).history;
-      expect(loading, BrowserSearchHistoryLoading([existingEntry]));
-      expect(history.entries, [existingEntry]);
-      expect(
+        ]);
+        final loading =
+            (effects[0] as BrowserSearchHistoryLoadingEffect).history;
+        expect(loading, BrowserSearchHistoryLoading([existingEntry]));
+        expect(history.entries, [existingEntry]);
+        expect(
           identical(
-              (effects[2] as BrowserSearchSubmittedEffect).search, request),
-          isTrue);
-      expect(effects.whereType<BrowserSearchScreenOpenEffect>(), isEmpty);
-    });
+            (effects[2] as BrowserSearchSubmittedEffect).search,
+            request,
+          ),
+          isTrue,
+        );
+        expect(effects.whereType<BrowserSearchScreenOpenEffect>(), isEmpty);
+      },
+    );
 
     test(
-        'blank query with filters is recorded without changing submitted request',
-        () {
-      final history = BrowserSearchHistoryModel();
-      const request = BrowserSearchRequest(
-        query: ' \t',
-        filters: BrowserSearchFilters(flags: [4]),
-      );
+      'blank query with filters is recorded without changing submitted request',
+      () {
+        final history = BrowserSearchHistoryModel();
+        const request = BrowserSearchRequest(
+          query: ' \t',
+          filters: BrowserSearchFilters(flags: [4]),
+        );
 
-      final effects = browserSubmitCurrentSearchEffects(
-        request,
-        history: history,
-      );
+        final effects = browserSubmitCurrentSearchEffects(
+          request,
+          history: history,
+        );
 
-      expect(
-        (effects[0] as BrowserSearchHistoryLoadingEffect).history.input,
-        [
-          const BrowserSearchHistoryEntry(query: '', flags: [4])
-        ],
-      );
-      expect((effects[2] as BrowserSearchSubmittedEffect).search.query, ' \t');
-      expect(history.entries, [
-        const BrowserSearchHistoryEntry(query: '', flags: [4])
-      ]);
-    });
+        expect(
+          (effects[0] as BrowserSearchHistoryLoadingEffect).history.input,
+          [
+            const BrowserSearchHistoryEntry(query: '', flags: [4]),
+          ],
+        );
+        expect(
+          (effects[2] as BrowserSearchSubmittedEffect).search.query,
+          ' \t',
+        );
+        expect(history.entries, [
+          const BrowserSearchHistoryEntry(query: '', flags: [4]),
+        ]);
+      },
+    );
   });
 }

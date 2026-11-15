@@ -48,17 +48,16 @@ void main() {
         'nosuggest:Field',
         'nosuggest:nc:Field',
       ]) {
-        expect(
-          typeAnswerClozeIndexForQuestion('[[type:$declaration]]', 8),
-          0,
-        );
+        expect(typeAnswerClozeIndexForQuestion('[[type:$declaration]]', 8), 0);
       }
     });
 
-    test('a cloze modifier with an empty field name still derives its index',
-        () {
-      expect(typeAnswerClozeIndexForQuestion('[[type:cloze:]]', 2), 3);
-    });
+    test(
+      'a cloze modifier with an empty field name still derives its index',
+      () {
+        expect(typeAnswerClozeIndexForQuestion('[[type:cloze:]]', 2), 3);
+      },
+    );
 
     test('wraps card ordinal plus one as a signed Kotlin Int', () {
       expect(
@@ -83,20 +82,22 @@ void main() {
       }
     });
 
-    test('parses the first source marker, including its exact modifier case',
-        () {
-      expect(
-        typeAnswerClozeIndexForQuestion(
-          '[[type:Cloze:Text]] then [[type:cloze:Other]]',
-          2,
-        ),
-        0,
-      );
-      expect(
-        typeAnswerClozeIndexForQuestion('[[type:nosuggest:cloze:Text]]', 2),
-        3,
-      );
-    });
+    test(
+      'parses the first source marker, including its exact modifier case',
+      () {
+        expect(
+          typeAnswerClozeIndexForQuestion(
+            '[[type:Cloze:Text]] then [[type:cloze:Other]]',
+            2,
+          ),
+          0,
+        );
+        expect(
+          typeAnswerClozeIndexForQuestion('[[type:nosuggest:cloze:Text]]', 2),
+          3,
+        );
+      },
+    );
   });
 
   group('typeAnswerContentForCloze', () {

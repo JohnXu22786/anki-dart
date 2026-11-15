@@ -61,10 +61,7 @@ final class AnswerTimerRunning extends AnswerTimerState {
 
 /// The timer is paused with its accumulated [elapsedTimeMs].
 final class AnswerTimerPaused extends AnswerTimerState {
-  const AnswerTimerPaused({
-    required this.elapsedTimeMs,
-    required this.limitMs,
-  });
+  const AnswerTimerPaused({required this.elapsedTimeMs, required this.limitMs});
 
   final int elapsedTimeMs;
   final int limitMs;
@@ -106,8 +103,8 @@ final class AnswerTimerStopped extends AnswerTimerState {
 /// class exposes the current state; it does not create a periodic display tick.
 class AnswerTimer {
   AnswerTimer({required ElapsedRealtimeClock elapsedRealtime})
-      : _elapsedRealtime = elapsedRealtime,
-        _stateController = StreamController<void>.broadcast();
+    : _elapsedRealtime = elapsedRealtime,
+      _stateController = StreamController<void>.broadcast();
 
   final ElapsedRealtimeClock _elapsedRealtime;
   final StreamController<void> _stateController;
@@ -119,38 +116,41 @@ class AnswerTimer {
   /// Replays the current state and conflates rapid pending updates per listener.
   /// This mirrors `StateFlow` when multiple states change before a collector
   /// can process them.
-  Stream<AnswerTimerState> get stateStream => Stream<void>.multi((controller) {
-        Timer? pendingNotification;
-        var isPaused = false;
-        var isCancelled = false;
+  Stream<AnswerTimerState> get stateStream =>
+      Stream<void>.multi((controller) {
+            Timer? pendingNotification;
+            var isPaused = false;
+            var isCancelled = false;
 
-        void notifyLatest() {
-          if (isPaused || isCancelled || pendingNotification != null) return;
-          pendingNotification = Timer(Duration.zero, () {
-            pendingNotification = null;
-            if (!isPaused && !isCancelled) controller.add(null);
-          });
-        }
+            void notifyLatest() {
+              if (isPaused || isCancelled || pendingNotification != null)
+                return;
+              pendingNotification = Timer(Duration.zero, () {
+                pendingNotification = null;
+                if (!isPaused && !isCancelled) controller.add(null);
+              });
+            }
 
-        final subscription =
-            _stateController.stream.listen((_) => notifyLatest());
-        controller.onPause = () {
-          isPaused = true;
-          pendingNotification?.cancel();
-          pendingNotification = null;
-        };
-        controller.onResume = () {
-          isPaused = false;
-          notifyLatest();
-        };
-        controller.onCancel = () {
-          isCancelled = true;
-          pendingNotification?.cancel();
-          pendingNotification = null;
-          return subscription.cancel();
-        };
-        notifyLatest();
-      }, isBroadcast: true)
+            final subscription = _stateController.stream.listen(
+              (_) => notifyLatest(),
+            );
+            controller.onPause = () {
+              isPaused = true;
+              pendingNotification?.cancel();
+              pendingNotification = null;
+            };
+            controller.onResume = () {
+              isPaused = false;
+              notifyLatest();
+            };
+            controller.onCancel = () {
+              isCancelled = true;
+              pendingNotification?.cancel();
+              pendingNotification = null;
+              return subscription.cancel();
+            };
+            notifyLatest();
+          }, isBroadcast: true)
           // Notifications carry no snapshot: a state change before delivery is
           // picked up here instead of emitting the superseded state.
           .map((_) => _state)
@@ -167,10 +167,9 @@ class AnswerTimer {
     if (!shouldShow) {
       _setState(const AnswerTimerHidden());
     } else {
-      _setState(AnswerTimerRunning(
-        baseTime: _elapsedRealtime(),
-        limitMs: limitMs,
-      ));
+      _setState(
+        AnswerTimerRunning(baseTime: _elapsedRealtime(), limitMs: limitMs),
+      );
     }
   }
 
@@ -179,15 +178,16 @@ class AnswerTimer {
     switch (_state) {
       case AnswerTimerRunning(:final baseTime, :final limitMs):
         final elapsed = _elapsedRealtime() - baseTime;
-        _setState(AnswerTimerStopped(
-          elapsedTimeMs: elapsed > limitMs ? limitMs : elapsed,
-          limitMs: limitMs,
-        ));
+        _setState(
+          AnswerTimerStopped(
+            elapsedTimeMs: elapsed > limitMs ? limitMs : elapsed,
+            limitMs: limitMs,
+          ),
+        );
       case AnswerTimerPaused(:final elapsedTimeMs, :final limitMs):
-        _setState(AnswerTimerStopped(
-          elapsedTimeMs: elapsedTimeMs,
-          limitMs: limitMs,
-        ));
+        _setState(
+          AnswerTimerStopped(elapsedTimeMs: elapsedTimeMs, limitMs: limitMs),
+        );
       case AnswerTimerHidden() || AnswerTimerStopped():
         return;
     }
@@ -198,10 +198,12 @@ class AnswerTimer {
     final current = _state;
     if (current case AnswerTimerRunning(:final baseTime, :final limitMs)) {
       final elapsed = _elapsedRealtime() - baseTime;
-      _setState(AnswerTimerPaused(
-        elapsedTimeMs: elapsed > limitMs ? limitMs : elapsed,
-        limitMs: limitMs,
-      ));
+      _setState(
+        AnswerTimerPaused(
+          elapsedTimeMs: elapsed > limitMs ? limitMs : elapsed,
+          limitMs: limitMs,
+        ),
+      );
     }
   }
 
@@ -210,15 +212,16 @@ class AnswerTimer {
     final current = _state;
     if (current case AnswerTimerPaused(:final elapsedTimeMs, :final limitMs)) {
       if (elapsedTimeMs < limitMs) {
-        _setState(AnswerTimerRunning(
-          baseTime: _elapsedRealtime() - elapsedTimeMs,
-          limitMs: limitMs,
-        ));
+        _setState(
+          AnswerTimerRunning(
+            baseTime: _elapsedRealtime() - elapsedTimeMs,
+            limitMs: limitMs,
+          ),
+        );
       } else {
-        _setState(AnswerTimerStopped(
-          elapsedTimeMs: elapsedTimeMs,
-          limitMs: limitMs,
-        ));
+        _setState(
+          AnswerTimerStopped(elapsedTimeMs: elapsedTimeMs, limitMs: limitMs),
+        );
       }
     }
   }

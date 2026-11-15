@@ -72,18 +72,20 @@ void main() {
       expect(moved, [first, second]);
     });
 
-    test('entries with the same query but different filters remain distinct',
-        () {
-      final history = BrowserSearchHistoryModel();
-      const first = BrowserSearchHistoryEntry(query: 'query', deckIds: [1]);
-      const second = BrowserSearchHistoryEntry(query: 'query', deckIds: [2]);
+    test(
+      'entries with the same query but different filters remain distinct',
+      () {
+        final history = BrowserSearchHistoryModel();
+        const first = BrowserSearchHistoryEntry(query: 'query', deckIds: [1]);
+        const second = BrowserSearchHistoryEntry(query: 'query', deckIds: [2]);
 
-      history.addRecent(first);
-      history.addRecent(second);
+        history.addRecent(first);
+        history.addRecent(second);
 
-      expect(history.entries, [second, first]);
-      expect(first, isNot(second));
-    });
+        expect(history.entries, [second, first]);
+        expect(first, isNot(second));
+      },
+    );
 
     test('keeps newest entries first and caps the default history at 30', () {
       final history = BrowserSearchHistoryModel();
@@ -148,59 +150,73 @@ void main() {
     });
 
     test('defaults missing optional arrays to empty', () {
-      expect(
-        BrowserSearchHistoryJsonCodec.decode('[{"q":"1"}]'),
-        [const BrowserSearchHistoryEntry(query: '1')],
-      );
+      expect(BrowserSearchHistoryJsonCodec.decode('[{"q":"1"}]'), [
+        const BrowserSearchHistoryEntry(query: '1'),
+      ]);
     });
 
-    test('preserves signed 64-bit ID boundaries and rejects out-of-range IDs',
-        () {
-      final entry = BrowserSearchHistoryEntry(
-        query: 'ids',
-        deckIds: [
-          int.parse('9223372036854775807'),
-          int.parse('-9223372036854775808'),
-        ],
-        noteTypeIds: [
-          int.parse('-9223372036854775808'),
-          int.parse('9223372036854775807'),
-        ],
-      );
+    test(
+      'preserves signed 64-bit ID boundaries and rejects out-of-range IDs',
+      () {
+        final entry = BrowserSearchHistoryEntry(
+          query: 'ids',
+          deckIds: [
+            int.parse('9223372036854775807'),
+            int.parse('-9223372036854775808'),
+          ],
+          noteTypeIds: [
+            int.parse('-9223372036854775808'),
+            int.parse('9223372036854775807'),
+          ],
+        );
 
-      expect(
-        BrowserSearchHistoryJsonCodec.decode(
-          BrowserSearchHistoryJsonCodec.encode([entry]),
-        ),
-        [entry],
-      );
-      expect(
-        BrowserSearchHistoryJsonCodec.decode(
-          '[{"q":"bad","did":[9223372036854775808]}]',
-        ),
-        isEmpty,
-      );
-      expect(
-        BrowserSearchHistoryJsonCodec.decode(
-          '[{"q":"bad","ntid":[-9223372036854775809]}]',
-        ),
-        isEmpty,
-      );
+        expect(
+          BrowserSearchHistoryJsonCodec.decode(
+            BrowserSearchHistoryJsonCodec.encode([entry]),
+          ),
+          [entry],
+        );
+        expect(
+          BrowserSearchHistoryJsonCodec.decode(
+            '[{"q":"bad","did":[9223372036854775808]}]',
+          ),
+          isEmpty,
+        );
+        expect(
+          BrowserSearchHistoryJsonCodec.decode(
+            '[{"q":"bad","ntid":[-9223372036854775809]}]',
+          ),
+          isEmpty,
+        );
+      },
+    );
+
+    test('preserves raw 64-bit JSON IDs beyond JavaScript safe integers', () {
+      const json = '[{"q":"ids","did":[9007199254740993]}]';
+
+      expect(BrowserSearchHistoryJsonCodec.decode(json).single.deckIds, [
+        9007199254740993,
+      ]);
     });
 
-    test('falls back to an empty history for malformed or incompatible JSON',
-        () {
-      for (final json in [
-        'A',
-        '{"q":"1"}',
-        '[{"query":"1"}]',
-        '[{"q":"valid"},{"q":42}]',
-        '[{"q":"valid","unexpected":true}]',
-      ]) {
-        expect(BrowserSearchHistoryJsonCodec.decode(json), isEmpty,
-            reason: json);
-      }
-    });
+    test(
+      'falls back to an empty history for malformed or incompatible JSON',
+      () {
+        for (final json in [
+          'A',
+          '{"q":"1"}',
+          '[{"query":"1"}]',
+          '[{"q":"valid"},{"q":42}]',
+          '[{"q":"valid","unexpected":true}]',
+        ]) {
+          expect(
+            BrowserSearchHistoryJsonCodec.decode(json),
+            isEmpty,
+            reason: json,
+          );
+        }
+      },
+    );
 
     test('falls back to an empty history for invalid persisted enum codes', () {
       expect(
@@ -215,7 +231,8 @@ void main() {
       );
       expect(
         BrowserSearchHistoryJsonCodec.decode(
-            '[{"q":"invalid","f":[2147483648]}]'),
+          '[{"q":"invalid","f":[2147483648]}]',
+        ),
         isEmpty,
       );
     });

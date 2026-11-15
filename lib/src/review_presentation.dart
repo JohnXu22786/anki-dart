@@ -31,9 +31,9 @@ class StudyCounts {
     int learnCount = 0,
     int reviewCount = 0,
     this.activeQueue = ReviewQueueKind.newCards,
-  })  : newCount = newCount.toString(),
-        learnCount = learnCount.toString(),
-        reviewCount = reviewCount.toString();
+  }) : newCount = newCount.toString(),
+       learnCount = learnCount.toString(),
+       reviewCount = reviewCount.toString();
 
   static StudyCounts fromQueueState<T>(ReviewQueueState<T> state) =>
       StudyCounts(

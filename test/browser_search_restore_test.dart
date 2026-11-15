@@ -60,54 +60,58 @@ void main() {
       );
 
       expect(filters, isNotNull);
-      expect(filters!.decks.map((deck) => deck.name),
-          ['Default', 'Language::Spanish']);
+      expect(filters!.decks.map((deck) => deck.name), [
+        'Default',
+        'Language::Spanish',
+      ]);
       expect(filters.flags, [1, 4]);
       expect(filters.tags, ['Hello::World', 'tag']);
       expect(filters.noteTypes.map((type) => type.name), ['Basic', 'Cloze']);
       expect(filters.cardStateCodes, [0, 1, 2, 3, 4]);
     });
 
-    test('search filters and requests use Kotlin data-class value equality',
-        () {
-      final firstDeck = BrowserDeckNameId(name: 'Default', id: 1);
-      final firstNoteType = BrowserNoteTypeNameId(name: 'Basic', id: 3);
-      final firstFilters = BrowserSearchFilters(
-        decks: [firstDeck],
-        flags: [1, 4],
-        tags: ['tag'],
-        noteTypes: [firstNoteType],
-        cardStateCodes: [0, 2],
-      );
-      final equalFilters = BrowserSearchFilters(
-        decks: [BrowserDeckNameId(name: 'Default', id: 1)],
-        flags: [1, 4],
-        tags: ['tag'],
-        // NoteTypeNameID is a regular Kotlin class, so it retains identity.
-        noteTypes: [firstNoteType],
-        cardStateCodes: [0, 2],
-      );
-      final differentNoteType = BrowserSearchFilters(
-        decks: [firstDeck],
-        flags: [1, 4],
-        tags: ['tag'],
-        noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
-        cardStateCodes: [0, 2],
-      );
+    test(
+      'search filters and requests use Kotlin data-class value equality',
+      () {
+        final firstDeck = BrowserDeckNameId(name: 'Default', id: 1);
+        final firstNoteType = BrowserNoteTypeNameId(name: 'Basic', id: 3);
+        final firstFilters = BrowserSearchFilters(
+          decks: [firstDeck],
+          flags: [1, 4],
+          tags: ['tag'],
+          noteTypes: [firstNoteType],
+          cardStateCodes: [0, 2],
+        );
+        final equalFilters = BrowserSearchFilters(
+          decks: [BrowserDeckNameId(name: 'Default', id: 1)],
+          flags: [1, 4],
+          tags: ['tag'],
+          // NoteTypeNameID is a regular Kotlin class, so it retains identity.
+          noteTypes: [firstNoteType],
+          cardStateCodes: [0, 2],
+        );
+        final differentNoteType = BrowserSearchFilters(
+          decks: [firstDeck],
+          flags: [1, 4],
+          tags: ['tag'],
+          noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
+          cardStateCodes: [0, 2],
+        );
 
-      expect(firstDeck, BrowserDeckNameId(name: 'Default', id: 1));
-      expect(firstFilters, equalFilters);
-      expect(firstFilters.hashCode, equalFilters.hashCode);
-      expect(firstFilters, isNot(differentNoteType));
+        expect(firstDeck, BrowserDeckNameId(name: 'Default', id: 1));
+        expect(firstFilters, equalFilters);
+        expect(firstFilters.hashCode, equalFilters.hashCode);
+        expect(firstFilters, isNot(differentNoteType));
 
-      final request = BrowserSearchRequest(query: 'q', filters: firstFilters);
-      final equalRequest = BrowserSearchRequest(
-        query: 'q',
-        filters: equalFilters,
-      );
-      expect(request, equalRequest);
-      expect(request.hashCode, equalRequest.hashCode);
-    });
+        final request = BrowserSearchRequest(query: 'q', filters: firstFilters);
+        final equalRequest = BrowserSearchRequest(
+          query: 'q',
+          filters: equalFilters,
+        );
+        expect(request, equalRequest);
+        expect(request.hashCode, equalRequest.hashCode);
+      },
+    );
 
     test('restores the original query with its structured filters', () {
       const entry = BrowserSearchHistoryEntry(
@@ -161,47 +165,50 @@ void main() {
       ]);
     });
 
-    test('converts a request to an ID-based history entry and trims its query',
-        () {
-      final request = BrowserSearchRequest(
-        query: '\u00a0\t query text \u00a0',
-        filters: BrowserSearchFilters(
-          decks: [
-            BrowserDeckNameId(name: 'Default', id: 1),
-            BrowserDeckNameId(name: 'Default', id: 1),
-          ],
-          flags: [1, 4],
-          tags: ['tag', 'other'],
-          noteTypes: [
-            BrowserNoteTypeNameId(name: 'Cloze', id: 4),
-            BrowserNoteTypeNameId(name: 'Basic', id: 3),
-          ],
-          cardStateCodes: [4, 0],
-        ),
-      );
+    test(
+      'converts a request to an ID-based history entry and trims its query',
+      () {
+        final request = BrowserSearchRequest(
+          query: '\u00a0\t query text \u00a0',
+          filters: BrowserSearchFilters(
+            decks: [
+              BrowserDeckNameId(name: 'Default', id: 1),
+              BrowserDeckNameId(name: 'Default', id: 1),
+            ],
+            flags: [1, 4],
+            tags: ['tag', 'other'],
+            noteTypes: [
+              BrowserNoteTypeNameId(name: 'Cloze', id: 4),
+              BrowserNoteTypeNameId(name: 'Basic', id: 3),
+            ],
+            cardStateCodes: [4, 0],
+          ),
+        );
 
-      expect(
-        request.toHistoryEntry(),
-        const BrowserSearchHistoryEntry(
-          query: 'query text',
-          deckIds: [1, 1],
-          flags: [1, 4],
-          tags: ['tag', 'other'],
-          noteTypeIds: [4, 3],
-          cardStateCodes: [4, 0],
-        ),
-      );
+        expect(
+          request.toHistoryEntry(),
+          const BrowserSearchHistoryEntry(
+            query: 'query text',
+            deckIds: [1, 1],
+            flags: [1, 4],
+            tags: ['tag', 'other'],
+            noteTypeIds: [4, 3],
+            cardStateCodes: [4, 0],
+          ),
+        );
 
-      const sourceWhitespace = BrowserSearchRequest(query: '\u0085query\u0085');
-      expect(
-        sourceWhitespace.toHistoryEntry().query,
-        '\u0085query\u0085',
-      );
-    });
+        const sourceWhitespace = BrowserSearchRequest(
+          query: '\u0085query\u0085',
+        );
+        expect(sourceWhitespace.toHistoryEntry().query, '\u0085query\u0085');
+      },
+    );
 
     test('returns null when any deck ID cannot be resolved', () {
-      const entry =
-          BrowserSearchHistoryEntry(query: 'missing', deckIds: [1, 99]);
+      const entry = BrowserSearchHistoryEntry(
+        query: 'missing',
+        deckIds: [1, 99],
+      );
 
       expect(
         BrowserSearchRequest.fromHistoryEntry(
@@ -214,8 +221,10 @@ void main() {
     });
 
     test('returns null when any note-type ID cannot be resolved', () {
-      const entry =
-          BrowserSearchHistoryEntry(query: 'missing', noteTypeIds: [3, 99]);
+      const entry = BrowserSearchHistoryEntry(
+        query: 'missing',
+        noteTypeIds: [3, 99],
+      );
 
       expect(
         BrowserSearchRequest.fromHistoryEntry(

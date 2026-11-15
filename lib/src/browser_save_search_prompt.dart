@@ -26,6 +26,4 @@
 /// Only null and the exactly empty string are ignored. Other values, including
 /// whitespace-only queries, are returned unchanged. The host emits the prompt.
 String? browserSaveSearchPromptQuery(String? tempSearchQuery) =>
-    tempSearchQuery == null || tempSearchQuery.isEmpty
-    ? null
-    : tempSearchQuery;
+    tempSearchQuery == null || tempSearchQuery.isEmpty ? null : tempSearchQuery;

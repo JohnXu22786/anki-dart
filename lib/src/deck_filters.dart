@@ -41,13 +41,13 @@ class DeckFilters {
 
   /// Whether every token occurs in [name].
   bool deckNamesMatchFilters(String name) => _filters.every(
-      (filter) => filter.deckNameMatchesFilter(name, _localeNameForMatching));
+    (filter) => filter.deckNameMatchesFilter(name, _localeNameForMatching),
+  );
 
   /// Whether at least one token matches the last deck-name component.
   bool deckLastNameMatchesAFilter(String name) => _filters.any(
-        (filter) =>
-            filter.deckLastNameMatchesFilter(name, _localeNameForMatching),
-      );
+    (filter) => filter.deckLastNameMatchesFilter(name, _localeNameForMatching),
+  );
 
   /// Whether a deck should remain visible for this query.
   bool accept(String name) =>
@@ -122,10 +122,10 @@ bool _isKotlinWhitespace(int codeUnit) =>
 /// A single token in a [DeckFilters] query.
 class DeckFilter {
   DeckFilter(this.filter)
-      : endsWithSingleColon = filter.endsWith(':') && !filter.endsWith('::'),
-        trimmedFilter = filter.endsWith(':') && !filter.endsWith('::')
-            ? filter.replaceAll(RegExp(r':+$'), '')
-            : filter;
+    : endsWithSingleColon = filter.endsWith(':') && !filter.endsWith('::'),
+      trimmedFilter = filter.endsWith(':') && !filter.endsWith('::')
+          ? filter.replaceAll(RegExp(r':+$'), '')
+          : filter;
 
   final String filter;
   final bool endsWithSingleColon;
@@ -176,10 +176,7 @@ class DeckFilter {
       return false;
     }
 
-    return _equalsIgnoreCase(
-      containing.substring(start, end),
-      contained,
-    );
+    return _equalsIgnoreCase(containing.substring(start, end), contained);
   }
 }
 

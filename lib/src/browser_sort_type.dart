@@ -132,8 +132,8 @@ final class BrowserSortSavePlan {
   });
 
   const BrowserSortSavePlan.noOrdering()
-      : cardBrowserNoSorting = true,
-        collectionConfigWrites = const [];
+    : cardBrowserNoSorting = true,
+      collectionConfigWrites = const [];
 
   final bool cardBrowserNoSorting;
   final List<BrowserSortConfigWrite> collectionConfigWrites;
@@ -143,18 +143,17 @@ final class BrowserSortSavePlan {
 BrowserSortSavePlan buildBrowserSortSavePlan({
   required BrowserSortType sortType,
   required BrowserSortConfigKeys configKeys,
-}) =>
-    switch (sortType) {
-      BrowserSortNoOrdering() => const BrowserSortSavePlan.noOrdering(),
-      BrowserSortCollectionOrdering(:final key, :final reverse) =>
-        BrowserSortSavePlan(
-          cardBrowserNoSorting: false,
-          collectionConfigWrites: [
-            BrowserSortConfigWrite(key: configKeys.columnKey, value: key),
-            BrowserSortConfigWrite(key: configKeys.reverseKey, value: reverse),
-          ],
-        ),
-    };
+}) => switch (sortType) {
+  BrowserSortNoOrdering() => const BrowserSortSavePlan.noOrdering(),
+  BrowserSortCollectionOrdering(:final key, :final reverse) =>
+    BrowserSortSavePlan(
+      cardBrowserNoSorting: false,
+      collectionConfigWrites: [
+        BrowserSortConfigWrite(key: configKeys.columnKey, value: key),
+        BrowserSortConfigWrite(key: configKeys.reverseKey, value: reverse),
+      ],
+    ),
+};
 
 /// One ordered host action in a Card Browser sort-type update.
 sealed class BrowserSortTypeUpdateEffect {

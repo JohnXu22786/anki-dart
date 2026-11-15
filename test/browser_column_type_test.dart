@@ -90,8 +90,9 @@ void main() {
 
     test('resolves the exact source column key and rejects unknown keys', () {
       expect(
-        BrowserColumn.fromColumnKey('template')
-            .typeFor(BrowserColumnMode.notes),
+        BrowserColumn.fromColumnKey(
+          'template',
+        ).typeFor(BrowserColumnMode.notes),
         BrowserColumnType.numeric,
       );
       expect(

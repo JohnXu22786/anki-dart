@@ -5640,3 +5640,26 @@ Ankitects Pty Ltd (2022) and declares `GPL-3.0-or-later`. Its header also notes
 incorporated `AGPL-3.0-or-later` `browser.py` code; this adaptation contains no
 browser implementation. The Dart adapter and tests are Copyright © 2026 John
 Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`
+  (`refreshBackendColumns` and `updateActiveColumns`; pinned AnkiDroid 2.25.3
+  commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is licensed
+  `GPL-3.0-or-later` and has no separate copyright holder in its header. The
+  portable keyed registry and active-column callback boundary are adapted in
+  `lib/src/browser_column_registry.dart` and
+  `lib/src/browser_active_column_update_plan.dart`, with source-derived tests
+  in `test/browser_column_registry_test.dart` and
+  `test/browser_active_column_update_callbacks_test.dart`. Preference read
+  exceptions retain the source fallback boundary; Backend,
+  SharedPreferences, coroutine, and StateFlow implementations remain
+  host-owned. The Dart adaptation and tests are Copyright © 2026 John Tsui
+  under `GPL-3.0-or-later`; root `COPYING` remains unchanged.
+- `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt`
+  (`selectedCardIds` and `currentCard`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) is licensed `GPL-3.0-or-later`
+  and has no separate copyright holder in its header. Its selected-ID index
+  handoff is adapted in `lib/src/previewer_card_selection.dart`, with
+  source-derived cases in `test/previewer_card_selection_test.dart`. Android
+  SavedStateHandle/IdsFile and collection-backed card loading remain
+  host-owned. The Dart adaptation and tests are Copyright © 2026 John Tsui
+  under `GPL-3.0-or-later`; root `COPYING` remains unchanged.

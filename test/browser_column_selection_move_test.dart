@@ -26,17 +26,19 @@ import 'package:test/test.dart';
 
 void main() {
   group('Browser Column Selection move plan', () {
-    test('usage rows cannot start a drag while other row types move vertically',
-        () {
-      expect(
-        browserColumnSelectionDragMode(isUsageItem: true),
-        BrowserColumnSelectionDragMode.disabled,
-      );
-      expect(
-        browserColumnSelectionDragMode(isUsageItem: false),
-        BrowserColumnSelectionDragMode.vertical,
-      );
-    });
+    test(
+      'usage rows cannot start a drag while other row types move vertically',
+      () {
+        expect(
+          browserColumnSelectionDragMode(isUsageItem: true),
+          BrowserColumnSelectionDragMode.disabled,
+        );
+        expect(
+          browserColumnSelectionDragMode(isUsageItem: false),
+          BrowserColumnSelectionDragMode.vertical,
+        );
+      },
+    );
 
     test('target position zero rejects the move before producing swaps', () {
       final plan = planBrowserColumnSelectionMove(
@@ -88,19 +90,21 @@ void main() {
       expect(plan.adjacentSwaps, isEmpty);
     });
 
-    test('positions are passed through without normalization or validation',
-        () {
-      final plan = planBrowserColumnSelectionMove(
-        fromPosition: -1,
-        toPosition: 2,
-      );
+    test(
+      'positions are passed through without normalization or validation',
+      () {
+        final plan = planBrowserColumnSelectionMove(
+          fromPosition: -1,
+          toPosition: 2,
+        );
 
-      expect(plan.accepted, isTrue);
-      expect(plan.adjacentSwaps, const [
-        BrowserColumnPositionSwap(-1, 0),
-        BrowserColumnPositionSwap(0, 1),
-        BrowserColumnPositionSwap(1, 2),
-      ]);
-    });
+        expect(plan.accepted, isTrue);
+        expect(plan.adjacentSwaps, const [
+          BrowserColumnPositionSwap(-1, 0),
+          BrowserColumnPositionSwap(0, 1),
+          BrowserColumnPositionSwap(1, 2),
+        ]);
+      },
+    );
   });
 }

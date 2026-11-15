@@ -57,76 +57,82 @@ void main() {
       expect(result.warningUpdate.value, isNull);
     });
 
-    test('a missing exact-name field leaves metadata and sets unknown warning',
-        () {
-      final result = resolveTypeAnswerFieldResult(
-        fieldName: 'Back',
-        fields: const [
-          TypeAnswerFieldMetadata(
-            name: 'back',
-            font: 'font',
-            fontSize: 18,
-            languageHint: null,
-          ),
-        ],
-        noteValues: const {},
-        clozeIndex: 0,
-        localizedUnknownFieldWarning: 'Unknown field: Back',
-        localizedEmptyClozeFrontWarning: 'No cloze on the front',
-      );
+    test(
+      'a missing exact-name field leaves metadata and sets unknown warning',
+      () {
+        final result = resolveTypeAnswerFieldResult(
+          fieldName: 'Back',
+          fields: const [
+            TypeAnswerFieldMetadata(
+              name: 'back',
+              font: 'font',
+              fontSize: 18,
+              languageHint: null,
+            ),
+          ],
+          noteValues: const {},
+          clozeIndex: 0,
+          localizedUnknownFieldWarning: 'Unknown field: Back',
+          localizedEmptyClozeFrontWarning: 'No cloze on the front',
+        );
 
-      expect(result.correctAnswer, isNull);
-      expect(result.matchedField, isNull);
-      expect(result.warningUpdate.kind, TypeAnswerWarningUpdateKind.set);
-      expect(result.warningUpdate.value, 'Unknown field: Back');
-    });
+        expect(result.correctAnswer, isNull);
+        expect(result.matchedField, isNull);
+        expect(result.warningUpdate.kind, TypeAnswerWarningUpdateKind.set);
+        expect(result.warningUpdate.value, 'Unknown field: Back');
+      },
+    );
 
-    test('a missing field with a nonzero cloze index sets empty-front warning',
-        () {
-      final result = resolveTypeAnswerFieldResult(
-        fieldName: 'Back',
-        fields: const [],
-        noteValues: const {},
-        clozeIndex: 1,
-        localizedUnknownFieldWarning: 'Unknown field: Back',
-        localizedEmptyClozeFrontWarning: 'No cloze on the front',
-      );
+    test(
+      'a missing field with a nonzero cloze index sets empty-front warning',
+      () {
+        final result = resolveTypeAnswerFieldResult(
+          fieldName: 'Back',
+          fields: const [],
+          noteValues: const {},
+          clozeIndex: 1,
+          localizedUnknownFieldWarning: 'Unknown field: Back',
+          localizedEmptyClozeFrontWarning: 'No cloze on the front',
+        );
 
-      expect(result.correctAnswer, isNull);
-      expect(result.matchedField, isNull);
-      expect(result.warningUpdate.kind, TypeAnswerWarningUpdateKind.set);
-      expect(result.warningUpdate.value, 'No cloze on the front');
-    });
+        expect(result.correctAnswer, isNull);
+        expect(result.matchedField, isNull);
+        expect(result.warningUpdate.kind, TypeAnswerWarningUpdateKind.set);
+        expect(result.warningUpdate.value, 'No cloze on the front');
+      },
+    );
 
-    test('empty note value nulls correct answer but preserves prior warning',
-        () {
-      const field = TypeAnswerFieldMetadata(
-        name: 'Back',
-        font: '',
-        fontSize: 0,
-        languageHint: null,
-      );
+    test(
+      'empty note value nulls correct answer but preserves prior warning',
+      () {
+        const field = TypeAnswerFieldMetadata(
+          name: 'Back',
+          font: '',
+          fontSize: 0,
+          languageHint: null,
+        );
 
-      final result = resolveTypeAnswerFieldResult(
-        fieldName: 'Back',
-        fields: const [field],
-        noteValues: const {'Back': ''},
-        clozeIndex: 0,
-        localizedUnknownFieldWarning: 'Unknown field: Back',
-        localizedEmptyClozeFrontWarning: 'No cloze on the front',
-      );
+        final result = resolveTypeAnswerFieldResult(
+          fieldName: 'Back',
+          fields: const [field],
+          noteValues: const {'Back': ''},
+          clozeIndex: 0,
+          localizedUnknownFieldWarning: 'Unknown field: Back',
+          localizedEmptyClozeFrontWarning: 'No cloze on the front',
+        );
 
-      expect(result.correctAnswer, isNull);
-      expect(identical(result.matchedField, field), isTrue);
-      expect(result.matchedField!.font, '');
-      expect(result.matchedField!.fontSize, 0);
-      expect(result.matchedField!.languageHint, isNull);
-      expect(
-        result.warningUpdate.kind,
-        TypeAnswerWarningUpdateKind.preservePrevious,
-      );
-      expect(result.warningUpdate.value, isNull);
-    });
+        expect(result.correctAnswer, isNull);
+        expect(identical(result.matchedField, field), isTrue);
+        expect(result.matchedField!.font, '');
+        expect(result.matchedField!.fontSize, 0);
+        expect(result.matchedField!.languageHint, isNull);
+        expect(
+          result.warningUpdate.kind,
+          TypeAnswerWarningUpdateKind.preservePrevious,
+        );
+        expect(result.warningUpdate.value, isNull);
+      },
+    );
 
     test('nonempty cloze answer is narrowed and clears the warning', () {
       const field = TypeAnswerFieldMetadata(
@@ -150,57 +156,62 @@ void main() {
       expect(result.warningUpdate.kind, TypeAnswerWarningUpdateKind.clear);
     });
 
-    test('no matching cloze content preserves the warning after field match',
-        () {
-      const field = TypeAnswerFieldMetadata(
-        name: 'Text',
-        font: 'font',
-        fontSize: 18,
-        languageHint: null,
-      );
+    test(
+      'no matching cloze content preserves the warning after field match',
+      () {
+        const field = TypeAnswerFieldMetadata(
+          name: 'Text',
+          font: 'font',
+          fontSize: 18,
+          languageHint: null,
+        );
 
-      final result = resolveTypeAnswerFieldResult(
-        fieldName: 'Text',
-        fields: const [field],
-        noteValues: const {'Text': '{{c2::other}}'},
-        clozeIndex: 1,
-        localizedUnknownFieldWarning: 'Unknown field: Text',
-        localizedEmptyClozeFrontWarning: 'No cloze on the front',
-      );
+        final result = resolveTypeAnswerFieldResult(
+          fieldName: 'Text',
+          fields: const [field],
+          noteValues: const {'Text': '{{c2::other}}'},
+          clozeIndex: 1,
+          localizedUnknownFieldWarning: 'Unknown field: Text',
+          localizedEmptyClozeFrontWarning: 'No cloze on the front',
+        );
 
-      expect(result.correctAnswer, isNull);
-      expect(identical(result.matchedField, field), isTrue);
-      expect(
-        result.warningUpdate.kind,
-        TypeAnswerWarningUpdateKind.preservePrevious,
-      );
-    });
+        expect(result.correctAnswer, isNull);
+        expect(identical(result.matchedField, field), isTrue);
+        expect(
+          result.warningUpdate.kind,
+          TypeAnswerWarningUpdateKind.preservePrevious,
+        );
+      },
+    );
 
     test(
-        'selected field absent from note values preserves source lookup failure',
-        () {
-      expect(
-        () => resolveTypeAnswerFieldResult(
-          fieldName: 'Back',
-          fields: const [
-            TypeAnswerFieldMetadata(
-              name: 'Back',
-              font: 'font',
-              fontSize: 18,
-              languageHint: null,
+      'selected field absent from note values preserves source lookup failure',
+      () {
+        expect(
+          () => resolveTypeAnswerFieldResult(
+            fieldName: 'Back',
+            fields: const [
+              TypeAnswerFieldMetadata(
+                name: 'Back',
+                font: 'font',
+                fontSize: 18,
+                languageHint: null,
+              ),
+            ],
+            noteValues: const {},
+            clozeIndex: 0,
+            localizedUnknownFieldWarning: 'Unknown field: Back',
+            localizedEmptyClozeFrontWarning: 'No cloze on the front',
+          ),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.message,
+              'message',
+              contains("No field named 'Back' found"),
             ),
-          ],
-          noteValues: const {},
-          clozeIndex: 0,
-          localizedUnknownFieldWarning: 'Unknown field: Back',
-          localizedEmptyClozeFrontWarning: 'No cloze on the front',
-        ),
-        throwsA(isA<ArgumentError>().having(
-          (error) => error.message,
-          'message',
-          contains("No field named 'Back' found"),
-        )),
-      );
-    });
+          ),
+        );
+      },
+    );
   });
 }

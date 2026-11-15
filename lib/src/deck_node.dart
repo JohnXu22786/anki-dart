@@ -36,22 +36,21 @@ class DeckNode extends IterableBase<DeckNode> {
     this.revCount = 0,
     this.children = const [],
     bool? isSyntheticDeck,
-  })  : _lastDeckNameComponent = lastDeckNameComponent,
-        isSyntheticDeck = isSyntheticDeck ?? depth < 0;
+  }) : _lastDeckNameComponent = lastDeckNameComponent,
+       isSyntheticDeck = isSyntheticDeck ?? depth < 0;
 
   factory DeckNode.syntheticRoot({
     List<DeckNode> children = const [],
     bool collapsed = false,
-  }) =>
-      DeckNode(
-        did: 0,
-        fullDeckName: '',
-        lastDeckNameComponent: '',
-        depth: -1,
-        children: children,
-        collapsed: collapsed,
-        isSyntheticDeck: true,
-      );
+  }) => DeckNode(
+    did: 0,
+    fullDeckName: '',
+    lastDeckNameComponent: '',
+    depth: -1,
+    children: children,
+    collapsed: collapsed,
+    isSyntheticDeck: true,
+  );
 
   final int did;
   final String fullDeckName;
@@ -66,12 +65,10 @@ class DeckNode extends IterableBase<DeckNode> {
   final bool isSyntheticDeck;
 
   /// Whether any review, learning, or new cards are ready to study.
-  bool hasCardsReadyToStudy() =>
-      revCount > 0 || newCount > 0 || lrnCount > 0;
+  bool hasCardsReadyToStudy() => revCount > 0 || newCount > 0 || lrnCount > 0;
 
   @override
-  String toString() =>
-      '$fullDeckName, $did, $revCount, $lrnCount, $newCount';
+  String toString() => '$fullDeckName, $did, $revCount, $lrnCount, $newCount';
 
   String get lastDeckNameComponent =>
       _lastDeckNameComponent ?? fullDeckName.split('::').last;
@@ -119,12 +116,12 @@ class DeckNode extends IterableBase<DeckNode> {
   /// The backend caps the root aggregate, while subdecks share their parent's
   /// limits, so this sums each top-level child exactly once.
   int totalCardsDue() => children.fold(0, (total, child) {
-        final childDue = _addInt32(
-          _addInt32(child.newCount, child.revCount),
-          child.lrnCount,
-        );
-        return _addInt32(total, childDue);
-      });
+    final childDue = _addInt32(
+      _addInt32(child.newCount, child.revCount),
+      child.lrnCount,
+    );
+    return _addInt32(total, childDue);
+  });
 }
 
 /// Returns whether [childDeckIds] contains only the default deck.

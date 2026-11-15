@@ -26,55 +26,48 @@ import 'package:test/test.dart';
 
 void main() {
   group('ReviewerBindingMap', () {
-    test('retains duplicate gesture registrations in action and list order',
-        () {
-      final bindings = ReviewerBindingMap(
-        bindingsByCommand: {
-          ViewerCommand.ANSWER_GOOD: [
-            ReviewerBindingValue.forGesture(Gesture.tapCenter),
-          ],
-          ViewerCommand.SHOW_ANSWER: [
-            ReviewerBindingValue.forGesture(
-              Gesture.tapCenter,
-              side: ReviewerCardSide.question,
-            ),
-            ReviewerBindingValue.forGesture(
-              Gesture.tapCenter,
-              side: ReviewerCardSide.answer,
-            ),
-          ],
-        },
-      );
+    test(
+      'retains duplicate gesture registrations in action and list order',
+      () {
+        final bindings = ReviewerBindingMap(
+          bindingsByCommand: {
+            ViewerCommand.ANSWER_GOOD: [
+              ReviewerBindingValue.forGesture(Gesture.tapCenter),
+            ],
+            ViewerCommand.SHOW_ANSWER: [
+              ReviewerBindingValue.forGesture(
+                Gesture.tapCenter,
+                side: ReviewerCardSide.question,
+              ),
+              ReviewerBindingValue.forGesture(
+                Gesture.tapCenter,
+                side: ReviewerCardSide.answer,
+              ),
+            ],
+          },
+        );
 
-      final mapped = bindings.bindingsForGesture(Gesture.tapCenter);
-      expect(
-        mapped.map((entry) => entry.command),
-        [
+        final mapped = bindings.bindingsForGesture(Gesture.tapCenter);
+        expect(mapped.map((entry) => entry.command), [
           ViewerCommand.SHOW_ANSWER,
           ViewerCommand.SHOW_ANSWER,
           ViewerCommand.ANSWER_GOOD,
-        ],
-      );
-      expect(
-        mapped.map((entry) => entry.binding.side),
-        [
+        ]);
+        expect(mapped.map((entry) => entry.binding.side), [
           ReviewerCardSide.question,
           ReviewerCardSide.answer,
           ReviewerCardSide.both,
-        ],
-      );
-      expect(bindings.isGestureBound(Gesture.tapCenter), isTrue);
-      expect(bindings.isGestureBound(Gesture.tapLeft), isFalse);
-    });
+        ]);
+        expect(bindings.isGestureBound(Gesture.tapCenter), isTrue);
+        expect(bindings.isGestureBound(Gesture.tapLeft), isFalse);
+      },
+    );
 
     test('looks up key bindings without filtering by reviewer card side', () {
       final bindings = ReviewerBindingMap(
         bindingsByCommand: {
           ViewerCommand.ANSWER_GOOD: [
-            ReviewerBindingValue.forKeyCode(
-              88,
-              side: ReviewerCardSide.answer,
-            ),
+            ReviewerBindingValue.forKeyCode(88, side: ReviewerCardSide.answer),
           ],
           ViewerCommand.SHOW_ANSWER: [
             ReviewerBindingValue.forKeyCode(
@@ -88,14 +81,14 @@ void main() {
       final mapped = bindings.bindingsForKey(
         ReviewerKeyCodeBinding(keyCode: 88),
       );
-      expect(
-        mapped.map((entry) => entry.command),
-        [ViewerCommand.SHOW_ANSWER, ViewerCommand.ANSWER_GOOD],
-      );
-      expect(
-        mapped.map((entry) => entry.binding.side),
-        [ReviewerCardSide.question, ReviewerCardSide.answer],
-      );
+      expect(mapped.map((entry) => entry.command), [
+        ViewerCommand.SHOW_ANSWER,
+        ViewerCommand.ANSWER_GOOD,
+      ]);
+      expect(mapped.map((entry) => entry.binding.side), [
+        ReviewerCardSide.question,
+        ReviewerCardSide.answer,
+      ]);
       expect(
         bindings.bindingsForKey(
           ReviewerKeyCodeBinding(
@@ -119,7 +112,9 @@ void main() {
 
       expect(bindings.axisRegistrations, hasLength(1));
       expect(
-          bindings.axisRegistrations.single.command, ViewerCommand.SHOW_ANSWER);
+        bindings.axisRegistrations.single.command,
+        ViewerCommand.SHOW_ANSWER,
+      );
       expect(bindings.axisRegistrations.single.binding, axis);
       expect(bindings.bindingsForKey(axis.binding), isEmpty);
       expect(bindings.bindingsForKey(unknown.binding), isEmpty);
@@ -147,8 +142,9 @@ void main() {
         [ViewerCommand.ANSWER_GOOD, ViewerCommand.SHOW_ANSWER],
       );
       expect(
-        ReviewerBindingMap(bindingsByCommand: const {})
-            .bindingsForGesture(Gesture.tapCenter),
+        ReviewerBindingMap(
+          bindingsByCommand: const {},
+        ).bindingsForGesture(Gesture.tapCenter),
         isEmpty,
       );
     });

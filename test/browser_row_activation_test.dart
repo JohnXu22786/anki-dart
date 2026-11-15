@@ -27,42 +27,38 @@ void main() {
       topOffset: 4,
     );
 
-    test('normal phone and fragmented taps request the matching editor route',
-        () {
-      final phonePlan = planBrowserRowActivation(
-        selectedRows: const [BrowserRowId(10)],
-        selection: selection,
-        isInMultiSelectMode: false,
-        isFragmented: false,
-      );
+    test(
+      'normal phone and fragmented taps request the matching editor route',
+      () {
+        final phonePlan = planBrowserRowActivation(
+          selectedRows: const [BrowserRowId(10)],
+          selection: selection,
+          isInMultiSelectMode: false,
+          isFragmented: false,
+        );
 
-      expect(
-        phonePlan.effects.map((effect) => effect.kind),
-        [
+        expect(phonePlan.effects.map((effect) => effect.kind), [
           BrowserRowActivationEffectKind.endMultiSelectModeForEditor,
           BrowserRowActivationEffectKind.launchEditorActivityIfAvailable,
-        ],
-      );
-      expect(phonePlan.effects.first.selectionTransition, isNull);
-      expect(phonePlan.effects.last.rowId, selection.rowId);
+        ]);
+        expect(phonePlan.effects.first.selectionTransition, isNull);
+        expect(phonePlan.effects.last.rowId, selection.rowId);
 
-      final tabletPlan = planBrowserRowActivation(
-        selectedRows: const [],
-        selection: selection,
-        isInMultiSelectMode: false,
-        isFragmented: true,
-      );
+        final tabletPlan = planBrowserRowActivation(
+          selectedRows: const [],
+          selection: selection,
+          isInMultiSelectMode: false,
+          isFragmented: true,
+        );
 
-      expect(
-        tabletPlan.effects.map((effect) => effect.kind),
-        [
+        expect(tabletPlan.effects.map((effect) => effect.kind), [
           BrowserRowActivationEffectKind.setPaneRow,
           BrowserRowActivationEffectKind.loadEditorInPaneIfAvailable,
-        ],
-      );
-      expect(tabletPlan.effects.first.rowId, selection.rowId);
-      expect(tabletPlan.effects.last.rowId, selection.rowId);
-    });
+        ]);
+        expect(tabletPlan.effects.first.rowId, selection.rowId);
+        expect(tabletPlan.effects.last.rowId, selection.rowId);
+      },
+    );
 
     test('multi-select add and phone deselect only toggle selection', () {
       final beforeAdd = [const BrowserRowId(10)];
@@ -78,10 +74,10 @@ void main() {
         addPlan.effects.single.kind,
         BrowserRowActivationEffectKind.toggleSelection,
       );
-      expect(
-        addPlan.effects.single.selectionTransition!.selectedRows,
-        [const BrowserRowId(10), selection.rowId],
-      );
+      expect(addPlan.effects.single.selectionTransition!.selectedRows, [
+        const BrowserRowId(10),
+        selection.rowId,
+      ]);
       expect(beforeAdd, [const BrowserRowId(10)]);
 
       final deselectPlan = planBrowserRowActivation(
@@ -96,10 +92,9 @@ void main() {
         deselectPlan.effects.single.kind,
         BrowserRowActivationEffectKind.toggleSelection,
       );
-      expect(
-        deselectPlan.effects.single.selectionTransition!.selectedRows,
-        [const BrowserRowId(10)],
-      );
+      expect(deselectPlan.effects.single.selectionTransition!.selectedRows, [
+        const BrowserRowId(10),
+      ]);
     });
 
     test('fragmented multi-select deselection reloads pane after toggle', () {
@@ -111,18 +106,14 @@ void main() {
         isFragmented: true,
       );
 
-      expect(
-        plan.effects.map((effect) => effect.kind),
-        [
-          BrowserRowActivationEffectKind.toggleSelection,
-          BrowserRowActivationEffectKind.setPaneRow,
-          BrowserRowActivationEffectKind.loadEditorInPaneIfAvailable,
-        ],
-      );
-      expect(
-        plan.effects.first.selectionTransition!.selectedRows,
-        [const BrowserRowId(10)],
-      );
+      expect(plan.effects.map((effect) => effect.kind), [
+        BrowserRowActivationEffectKind.toggleSelection,
+        BrowserRowActivationEffectKind.setPaneRow,
+        BrowserRowActivationEffectKind.loadEditorInPaneIfAvailable,
+      ]);
+      expect(plan.effects.first.selectionTransition!.selectedRows, [
+        const BrowserRowId(10),
+      ]);
       expect(plan.effects[1].rowId, selection.rowId);
       expect(plan.effects[2].rowId, selection.rowId);
       expect(before, [const BrowserRowId(10), selection.rowId]);

@@ -77,12 +77,12 @@ final class BrowserSearchFilters {
 
   @override
   int get hashCode => Object.hash(
-        Object.hashAll(decks),
-        Object.hashAll(flags),
-        Object.hashAll(tags),
-        Object.hashAll(noteTypes),
-        Object.hashAll(cardStateCodes),
-      );
+    Object.hashAll(decks),
+    Object.hashAll(flags),
+    Object.hashAll(tags),
+    Object.hashAll(noteTypes),
+    Object.hashAll(cardStateCodes),
+  );
 
   /// Resolves stored IDs against host-provided mappings.
   ///
@@ -175,15 +175,15 @@ final class BrowserSearchRequest {
 
   /// Converts a request to the stable ID-based history format.
   BrowserSearchHistoryEntry toHistoryEntry() => BrowserSearchHistoryEntry(
-        query: trimKotlinWhitespace(query),
-        deckIds: filters.decks.map((deck) => deck.id).toList(growable: false),
-        flags: filters.flags,
-        tags: filters.tags,
-        noteTypeIds: filters.noteTypes
-            .map((noteType) => noteType.id)
-            .toList(growable: false),
-        cardStateCodes: filters.cardStateCodes,
-      );
+    query: trimKotlinWhitespace(query),
+    deckIds: filters.decks.map((deck) => deck.id).toList(growable: false),
+    flags: filters.flags,
+    tags: filters.tags,
+    noteTypeIds: filters.noteTypes
+        .map((noteType) => noteType.id)
+        .toList(growable: false),
+    cardStateCodes: filters.cardStateCodes,
+  );
 }
 
 bool _listEquals<T>(List<T> left, List<T> right) {

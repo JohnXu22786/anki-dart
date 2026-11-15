@@ -52,6 +52,12 @@ jobs:
         run: |
           packages/anki_backend_protocol/tool/generate.sh
           git diff --exit-code -- packages/anki_backend_protocol/lib
+          untracked=$(git ls-files --others --exclude-standard -- packages/anki_backend_protocol/lib)
+          if [[ -n "$untracked" ]]; then
+            echo "Generated protocol output includes untracked files:" >&2
+            echo "$untracked" >&2
+            exit 1
+          fi
       - name: Check formatting
         working-directory: packages/anki_backend_protocol
         run: dart format --output=none --set-exit-if-changed lib/anki_backend_protocol.dart test tool
@@ -64,6 +70,9 @@ jobs:
       - name: Compile for the web-compatible Dart target
         working-directory: packages/anki_backend_protocol
         run: dart compile js tool/compile_smoke.dart -o /tmp/anki_backend_protocol.js
+      - name: Test SPDX normalization and checks
+        working-directory: packages/anki_backend_protocol
+        run: python3 -m unittest discover -s test -p 'test_*.py' -v
       - name: Validate source license and generated files
         working-directory: packages/anki_backend_protocol
         run: python3 tool/check_package.py

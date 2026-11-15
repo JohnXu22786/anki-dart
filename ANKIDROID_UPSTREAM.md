@@ -1,5 +1,20 @@
 # AnkiDroid source baseline
 
+## Anki Core collection schema catalog (Unit 4.1)
+
+[`packages/anki_collection_schema`](packages/anki_collection_schema/README.md)
+PORTED: schema SQL/catalog and version compatibility. PARTIAL: ordered migration
+callback contract only; the callbacks are not implemented here. Remaining
+collection storage work includes SQLite execution and transactions, database
+open/close, CRUD, and the data transformations. The package provides the
+platform-neutral schema catalog for Anki Core at commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It exposes the schema 11 creation
+SQL, ordered upgrade definitions through schema 18, the schema 18-to-11
+downgrade order, and the pinned too-old/too-new version rules. Its callbacks name the source-side transformations and preserve their order.
+The Dart package, SQL source, fixtures, and tests are AGPL-3.0-or-later;
+`SOURCE.sha256` pins the exact upstream SQL and Rust files used. See its
+`NOTICE.md` for provenance and `tool/verify_source.py` for verification.
+
 ## LibAnki Collection raw backend forwarding
 
 [`collection_remaining_raw.dart`](lib/src/collection_remaining_raw.dart) and its

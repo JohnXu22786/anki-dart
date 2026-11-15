@@ -207,3 +207,29 @@ jobs:
       - name: Validate AGPL provenance and source hashes
         working-directory: packages/anki_backend_models
         run: python3 tool/check_package.py
+  anki-collection-schema:
+    name: AGPL Anki collection schema catalog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve schema package dependencies
+        working-directory: packages/anki_collection_schema
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_collection_schema
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze schema package
+        working-directory: packages/anki_collection_schema
+        run: dart analyze lib test tool
+      - name: Test schema catalog and source fixtures
+        working-directory: packages/anki_collection_schema
+        run: dart test
+      - name: Compile web-compatible smoke target
+        working-directory: packages/anki_collection_schema
+        run: dart compile js tool/compile_smoke.dart -o /tmp/anki_collection_schema.js
+      - name: Validate AGPL source hashes and package metadata
+        working-directory: packages/anki_collection_schema
+        run: python3 tool/check_package.py

@@ -48,7 +48,7 @@ final class ReviewerCommandBinding {
 final class ReviewerBindingMap {
   ReviewerBindingMap({
     required Map<ViewerCommand, Iterable<ReviewerBindingValue>>
-        bindingsByCommand,
+    bindingsByCommand,
     Iterable<ViewerCommand>? actions,
   }) {
     final keys = <ReviewerBindingContent, List<ReviewerCommandBinding>>{};
@@ -93,9 +93,7 @@ final class ReviewerBindingMap {
 
   /// Registrations for a typed key binding, without card-side filtering.
   /// Non-key bindings return an empty list.
-  List<ReviewerCommandBinding> bindingsForKey(
-    ReviewerBindingContent binding,
-  ) =>
+  List<ReviewerCommandBinding> bindingsForKey(ReviewerBindingContent binding) =>
       binding.isKey ? _keyMap[binding] ?? const [] : const [];
 
   static Map<K, List<V>> _freezeMap<K, V>(Map<K, List<V>> values) =>

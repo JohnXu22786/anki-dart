@@ -64,18 +64,16 @@ final class BrowserRequestPresetSearchDirective
 
 /// The source-ordered values and actions for a preset search.
 final class BrowserPresetSearchPlan {
-  BrowserPresetSearchPlan({
-    required this.query,
-    required this.updatedRequest,
-  }) : directives = List.unmodifiable([
-         BrowserEmitPresetFilterQueryDirective(query),
-         BrowserUpdatePresetSearchRequestDirective(updatedRequest),
-         BrowserRequestPresetSearchDirective(
-           request: updatedRequest,
-           forceRefresh: true,
-           fromUserSearch: false,
-         ),
-       ]);
+  BrowserPresetSearchPlan({required this.query, required this.updatedRequest})
+    : directives = List.unmodifiable([
+        BrowserEmitPresetFilterQueryDirective(query),
+        BrowserUpdatePresetSearchRequestDirective(updatedRequest),
+        BrowserRequestPresetSearchDirective(
+          request: updatedRequest,
+          forceRefresh: true,
+          fromUserSearch: false,
+        ),
+      ]);
 
   final String query;
   final BrowserSearchRequest updatedRequest;
@@ -105,8 +103,5 @@ BrowserPresetSearchPlan? planBrowserPresetSearch({
     query: query,
     filters: currentRequest.filters,
   );
-  return BrowserPresetSearchPlan(
-    query: query,
-    updatedRequest: updatedRequest,
-  );
+  return BrowserPresetSearchPlan(query: query, updatedRequest: updatedRequest);
 }

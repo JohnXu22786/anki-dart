@@ -62,27 +62,29 @@ void main() {
       expect(inspectedIds, [7, 2]);
     });
 
-    test('a mixed selection selects suspend and short-circuits at first other',
-        () {
-      final inspectedIds = <int>[];
-      const queueStates = {
-        7: BrowserSuspendQueueState.suspended,
-        2: BrowserSuspendQueueState.other,
-        9: BrowserSuspendQueueState.suspended,
-      };
+    test(
+      'a mixed selection selects suspend and short-circuits at first other',
+      () {
+        final inspectedIds = <int>[];
+        const queueStates = {
+          7: BrowserSuspendQueueState.suspended,
+          2: BrowserSuspendQueueState.other,
+          9: BrowserSuspendQueueState.suspended,
+        };
 
-      final operation = planBrowserBulkSuspendToggle(
-        hasSelectedRows: true,
-        selectedCardIds: const [7, 2, 9],
-        queueForCard: (id) {
-          inspectedIds.add(id);
-          return queueStates[id]!;
-        },
-      );
+        final operation = planBrowserBulkSuspendToggle(
+          hasSelectedRows: true,
+          selectedCardIds: const [7, 2, 9],
+          queueForCard: (id) {
+            inspectedIds.add(id);
+            return queueStates[id]!;
+          },
+        );
 
-      expect(operation, BrowserBulkSuspendOperation.suspend);
-      expect(inspectedIds, [7, 2]);
-    });
+        expect(operation, BrowserBulkSuspendOperation.suspend);
+        expect(inspectedIds, [7, 2]);
+      },
+    );
 
     test('none suspended selects suspend', () {
       expect(

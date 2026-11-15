@@ -42,17 +42,18 @@ final class BrowserSearchTextState {
 
   /// Toggles Basic/Advanced mode without changing either text buffer.
   BrowserSearchTextState toggleAdvancedSearch() => BrowserSearchTextState(
-        isAdvancedSearch: !isAdvancedSearch,
-        basicText: basicText,
-        advancedText: advancedText,
-      );
+    isAdvancedSearch: !isAdvancedSearch,
+    basicText: basicText,
+    advancedText: advancedText,
+  );
 
   /// Appends text to Advanced mode, whether or not it is currently selected.
   ///
   /// Matches the source's Kotlin `isNotBlank()` test and exact `endsWith(" ")`
   /// delimiter check, then always appends one trailing ASCII space.
   BrowserSearchTextState appendAdvancedSearch(String searchText) {
-    final needsSeparator = trimKotlinWhitespace(advancedText).isNotEmpty &&
+    final needsSeparator =
+        trimKotlinWhitespace(advancedText).isNotEmpty &&
         !advancedText.endsWith(' ');
     return BrowserSearchTextState(
       isAdvancedSearch: isAdvancedSearch,

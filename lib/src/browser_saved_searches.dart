@@ -75,7 +75,7 @@ Map<String, String> browserSavedSearchesToConfigMap(
 /// [configValues] and persists [configValues] after a successful mutation.
 final class BrowserSavedSearchesModel {
   BrowserSavedSearchesModel({Map<String, String> configValues = const {}})
-      : _configValues = Map.of(configValues);
+    : _configValues = Map.of(configValues);
 
   final Map<String, String> _configValues;
 

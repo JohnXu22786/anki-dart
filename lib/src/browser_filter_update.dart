@@ -33,8 +33,9 @@ sealed class BrowserFilterUpdate {
   final BrowserSearchFilters state;
 
   /// The source's initial `System(SearchFilters.EMPTY)` state.
-  static const BrowserFilterUpdate initial =
-      BrowserFilterUpdateSystem(BrowserSearchFilters());
+  static const BrowserFilterUpdate initial = BrowserFilterUpdateSystem(
+    BrowserSearchFilters(),
+  );
 }
 
 /// A user-originated filter change that can initiate a search when closed.
@@ -71,16 +72,15 @@ final class BrowserFilterUpdateSystem extends BrowserFilterUpdate {
 BrowserFilterUpdate browserSetDecksFilter({
   required BrowserSearchFilters currentFilters,
   required List<BrowserDeckNameId> decks,
-}) =>
-    BrowserFilterUpdateUser(
-      BrowserSearchFilters(
-        decks: decks,
-        flags: currentFilters.flags,
-        tags: currentFilters.tags,
-        noteTypes: currentFilters.noteTypes,
-        cardStateCodes: currentFilters.cardStateCodes,
-      ),
-    );
+}) => BrowserFilterUpdateUser(
+  BrowserSearchFilters(
+    decks: decks,
+    flags: currentFilters.flags,
+    tags: currentFilters.tags,
+    noteTypes: currentFilters.noteTypes,
+    cardStateCodes: currentFilters.cardStateCodes,
+  ),
+);
 
 /// Projects AnkiDroid's `setTagsFilter()` into a user-originated update.
 ///
@@ -89,16 +89,15 @@ BrowserFilterUpdate browserSetDecksFilter({
 BrowserFilterUpdate browserSetTagsFilter({
   required BrowserSearchFilters currentFilters,
   required List<String> tags,
-}) =>
-    BrowserFilterUpdateUser(
-      BrowserSearchFilters(
-        decks: currentFilters.decks,
-        flags: currentFilters.flags,
-        tags: tags,
-        noteTypes: currentFilters.noteTypes,
-        cardStateCodes: currentFilters.cardStateCodes,
-      ),
-    );
+}) => BrowserFilterUpdateUser(
+  BrowserSearchFilters(
+    decks: currentFilters.decks,
+    flags: currentFilters.flags,
+    tags: tags,
+    noteTypes: currentFilters.noteTypes,
+    cardStateCodes: currentFilters.cardStateCodes,
+  ),
+);
 
 /// Projects AnkiDroid's `setCardStateFilter()` into a user-originated update.
 ///
@@ -107,16 +106,15 @@ BrowserFilterUpdate browserSetTagsFilter({
 BrowserFilterUpdate browserSetCardStateFilter({
   required BrowserSearchFilters currentFilters,
   required List<int> cardStateCodes,
-}) =>
-    BrowserFilterUpdateUser(
-      BrowserSearchFilters(
-        decks: currentFilters.decks,
-        flags: currentFilters.flags,
-        tags: currentFilters.tags,
-        noteTypes: currentFilters.noteTypes,
-        cardStateCodes: cardStateCodes,
-      ),
-    );
+}) => BrowserFilterUpdateUser(
+  BrowserSearchFilters(
+    decks: currentFilters.decks,
+    flags: currentFilters.flags,
+    tags: currentFilters.tags,
+    noteTypes: currentFilters.noteTypes,
+    cardStateCodes: cardStateCodes,
+  ),
+);
 
 /// Projects AnkiDroid's `setFlagsFilter()` into a user-originated update.
 ///
@@ -125,16 +123,15 @@ BrowserFilterUpdate browserSetCardStateFilter({
 BrowserFilterUpdate browserSetFlagsFilter({
   required BrowserSearchFilters currentFilters,
   required List<int> flags,
-}) =>
-    BrowserFilterUpdateUser(
-      BrowserSearchFilters(
-        decks: currentFilters.decks,
-        flags: flags,
-        tags: currentFilters.tags,
-        noteTypes: currentFilters.noteTypes,
-        cardStateCodes: currentFilters.cardStateCodes,
-      ),
-    );
+}) => BrowserFilterUpdateUser(
+  BrowserSearchFilters(
+    decks: currentFilters.decks,
+    flags: flags,
+    tags: currentFilters.tags,
+    noteTypes: currentFilters.noteTypes,
+    cardStateCodes: currentFilters.cardStateCodes,
+  ),
+);
 
 /// Projects one source filter/text/screen snapshot into a search request.
 ///

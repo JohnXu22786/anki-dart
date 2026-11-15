@@ -61,7 +61,7 @@ final class BrowserRowActivationEffect {
 /// The ordered, immutable plan for one source `CardBrowserViewModel.onTap`.
 final class BrowserRowActivationPlan {
   BrowserRowActivationPlan._(Iterable<BrowserRowActivationEffect> effects)
-      : effects = List.unmodifiable(effects);
+    : effects = List.unmodifiable(effects);
 
   /// Effects in the order the host must apply them.
   final List<BrowserRowActivationEffect> effects;

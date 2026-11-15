@@ -34,14 +34,11 @@ void main() {
         localizedEmptyClozeFrontWarning: 'Empty cloze front',
       );
 
-      expect(
-        plan.effects,
-        const [
-          TypeAnswerInfoSetCombining(true),
-          TypeAnswerInfoSetNoSuggest(false),
-          TypeAnswerInfoSetCorrectAnswer(null),
-        ],
-      );
+      expect(plan.effects, const [
+        TypeAnswerInfoSetCombining(true),
+        TypeAnswerInfoSetNoSuggest(false),
+        TypeAnswerInfoSetCorrectAnswer(null),
+      ]);
       expect(plan.failure, isNull);
     });
 
@@ -78,24 +75,21 @@ void main() {
         localizedEmptyClozeFrontWarning: 'Empty cloze front',
       );
 
-      expect(
-        plan.effects,
-        [
-          const TypeAnswerInfoSetCombining(true),
-          const TypeAnswerInfoSetNoSuggest(false),
-          const TypeAnswerInfoSetCorrectAnswer(null),
-          const TypeAnswerInfoSetCombining(false),
-          const TypeAnswerInfoSetNoSuggest(true),
-          const TypeAnswerInfoSetCorrectAnswer(
-            ' before {{c1::answer :: hint}} after ',
-          ),
-          const TypeAnswerInfoSetCorrectAnswer('answer '),
-          const TypeAnswerInfoSetFont('First font'),
-          const TypeAnswerInfoSetFontSize(19),
-          const TypeAnswerInfoSetLanguageHint(null),
-          const TypeAnswerInfoSetWarning(null),
-        ],
-      );
+      expect(plan.effects, [
+        const TypeAnswerInfoSetCombining(true),
+        const TypeAnswerInfoSetNoSuggest(false),
+        const TypeAnswerInfoSetCorrectAnswer(null),
+        const TypeAnswerInfoSetCombining(false),
+        const TypeAnswerInfoSetNoSuggest(true),
+        const TypeAnswerInfoSetCorrectAnswer(
+          ' before {{c1::answer :: hint}} after ',
+        ),
+        const TypeAnswerInfoSetCorrectAnswer('answer '),
+        const TypeAnswerInfoSetFont('First font'),
+        const TypeAnswerInfoSetFontSize(19),
+        const TypeAnswerInfoSetLanguageHint(null),
+        const TypeAnswerInfoSetWarning(null),
+      ]);
       expect(plan.failure, isNull);
 
       final zeroIndexCloze = planTypeAnswerInfoUpdate(
@@ -107,9 +101,9 @@ void main() {
         localizedEmptyClozeFrontWarning: 'Empty cloze front',
       );
       expect(
-        zeroIndexCloze.effects
-            .whereType<TypeAnswerInfoSetCorrectAnswer>()
-            .map((effect) => effect.value),
+        zeroIndexCloze.effects.whereType<TypeAnswerInfoSetCorrectAnswer>().map(
+          (effect) => effect.value,
+        ),
         [null, '{{c1::not selected}}'],
       );
     });
@@ -140,21 +134,21 @@ void main() {
         localizedEmptyClozeFrontWarning: 'Empty cloze front',
       );
 
-      expect(ordinary.effects.last,
-          const TypeAnswerInfoSetWarning('Unknown Missing'));
-      expect(cloze.effects.last,
-          const TypeAnswerInfoSetWarning('Empty cloze front'));
-      expect(zeroIndexCloze.effects.last,
-          const TypeAnswerInfoSetWarning('Unknown Missing'));
+      expect(
+        ordinary.effects.last,
+        const TypeAnswerInfoSetWarning('Unknown Missing'),
+      );
+      expect(
+        cloze.effects.last,
+        const TypeAnswerInfoSetWarning('Empty cloze front'),
+      );
+      expect(
+        zeroIndexCloze.effects.last,
+        const TypeAnswerInfoSetWarning('Unknown Missing'),
+      );
       for (final plan in [ordinary, cloze, zeroIndexCloze]) {
-        expect(
-          plan.effects.whereType<TypeAnswerInfoSetFont>(),
-          isEmpty,
-        );
-        expect(
-          plan.effects.whereType<TypeAnswerInfoSetFontSize>(),
-          isEmpty,
-        );
+        expect(plan.effects.whereType<TypeAnswerInfoSetFont>(), isEmpty);
+        expect(plan.effects.whereType<TypeAnswerInfoSetFontSize>(), isEmpty);
         expect(
           plan.effects.whereType<TypeAnswerInfoSetLanguageHint>(),
           isEmpty,
@@ -178,21 +172,18 @@ void main() {
         localizedEmptyClozeFrontWarning: 'Empty cloze front',
       );
 
-      expect(
-        plan.effects,
-        const [
-          TypeAnswerInfoSetCombining(true),
-          TypeAnswerInfoSetNoSuggest(false),
-          TypeAnswerInfoSetCorrectAnswer(null),
-          TypeAnswerInfoSetCombining(true),
-          TypeAnswerInfoSetNoSuggest(false),
-          TypeAnswerInfoSetCorrectAnswer(''),
-          TypeAnswerInfoSetFont('Field font'),
-          TypeAnswerInfoSetFontSize(16),
-          TypeAnswerInfoSetLanguageHint('en-US'),
-          TypeAnswerInfoSetCorrectAnswer(null),
-        ],
-      );
+      expect(plan.effects, const [
+        TypeAnswerInfoSetCombining(true),
+        TypeAnswerInfoSetNoSuggest(false),
+        TypeAnswerInfoSetCorrectAnswer(null),
+        TypeAnswerInfoSetCombining(true),
+        TypeAnswerInfoSetNoSuggest(false),
+        TypeAnswerInfoSetCorrectAnswer(''),
+        TypeAnswerInfoSetFont('Field font'),
+        TypeAnswerInfoSetFontSize(16),
+        TypeAnswerInfoSetLanguageHint('en-US'),
+        TypeAnswerInfoSetCorrectAnswer(null),
+      ]);
       expect(plan.effects.whereType<TypeAnswerInfoSetWarning>(), isEmpty);
     });
 
@@ -213,16 +204,13 @@ void main() {
         localizedEmptyClozeFrontWarning: 'Empty cloze front',
       );
 
-      expect(
-        plan.effects,
-        const [
-          TypeAnswerInfoSetCombining(true),
-          TypeAnswerInfoSetNoSuggest(false),
-          TypeAnswerInfoSetCorrectAnswer(null),
-          TypeAnswerInfoSetCombining(false),
-          TypeAnswerInfoSetNoSuggest(true),
-        ],
-      );
+      expect(plan.effects, const [
+        TypeAnswerInfoSetCombining(true),
+        TypeAnswerInfoSetNoSuggest(false),
+        TypeAnswerInfoSetCorrectAnswer(null),
+        TypeAnswerInfoSetCombining(false),
+        TypeAnswerInfoSetNoSuggest(true),
+      ]);
       expect(plan.failure!.fieldName, 'Back');
       expect(plan.failure!.message, "No field named 'Back' found");
     });

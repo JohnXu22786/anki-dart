@@ -48,9 +48,8 @@ final class ReviewerKeyEventProjection {
 }
 
 /// A callback for one command/binding registration selected by a key event.
-typedef ReviewerKeyEventProcessor = bool Function(
-  ReviewerCommandBinding registration,
-);
+typedef ReviewerKeyEventProcessor =
+    bool Function(ReviewerCommandBinding registration);
 
 /// Applies the source key candidate and processor order to a [bindingMap].
 ///
@@ -73,10 +72,7 @@ bool dispatchReviewerKeyEvent({
   final candidates = <ReviewerBindingContent>[];
   if (event.keyCode != 0) {
     candidates.add(
-      ReviewerKeyCodeBinding(
-        keyCode: event.keyCode,
-        modifierKeys: modifiers,
-      ),
+      ReviewerKeyCodeBinding(keyCode: event.keyCode, modifierKeys: modifiers),
     );
   }
 

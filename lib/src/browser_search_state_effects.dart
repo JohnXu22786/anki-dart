@@ -126,7 +126,8 @@ List<BrowserSearchStateEffect> browserSelectSearchHistoryEntryEffects(
     cardStateCodes: currentFilters.cardStateCodes,
   );
   final textAfterEdit = textState.onSearchTextChanged(entry.query);
-  final restoredFilters = BrowserSearchFilters.fromHistoryEntry(
+  final restoredFilters =
+      BrowserSearchFilters.fromHistoryEntry(
         entry,
         deckNameMap: deckNameMap,
         noteTypeMap: noteTypeMap,
@@ -184,15 +185,14 @@ List<BrowserSearchStateEffect> browserSubmitSavedSearchEffects(
   BrowserSavedSearch search, {
   required BrowserSearchFilters currentFilters,
   required BrowserSearchTextState textState,
-}) =>
-    List.unmodifiable([
-      ...browserOnSearchTextChangedEffects(
-        search.query,
-        currentFilters: currentFilters,
-        textState: textState,
-      ),
-      const BrowserSearchScreenOpenEffect(isOpen: false),
-    ]);
+}) => List.unmodifiable([
+  ...browserOnSearchTextChangedEffects(
+    search.query,
+    currentFilters: currentFilters,
+    textState: textState,
+  ),
+  const BrowserSearchScreenOpenEffect(isOpen: false),
+]);
 
 /// Projects AnkiDroid's `syncState` calls in their source order.
 ///
@@ -200,13 +200,10 @@ List<BrowserSearchStateEffect> browserSubmitSavedSearchEffects(
 /// emits no text, screen-open, history-expanded, or SavedStateHandle effects.
 List<BrowserSearchStateEffect> browserSyncStateEffects(
   BrowserSearchRequest search,
-) =>
-    List.unmodifiable([
-      BrowserFilterUpdateEffect(
-        BrowserFilterUpdateSystem(search.filters),
-      ),
-      BrowserSearchSubmittedEffect(search),
-    ]);
+) => List.unmodifiable([
+  BrowserFilterUpdateEffect(BrowserFilterUpdateSystem(search.filters)),
+  BrowserSearchSubmittedEffect(search),
+]);
 
 /// Projects `submitCurrentSearch(searchToSubmit)` in source order.
 ///
@@ -238,23 +235,16 @@ List<BrowserSearchStateEffect> browserSubmitCurrentSearchEffects(
 /// among them. The host owns the actual StateFlow and SavedStateHandle writes.
 List<BrowserSearchStateEffect> browserResetSearchStateEffects(
   BrowserSearchRequest submittedSearch,
-) =>
-    List.unmodifiable([
-      const BrowserAdvancedSearchModeEffect(enabled: false),
-      BrowserBasicSearchTextEffect(submittedSearch.query),
-      BrowserAdvancedSearchTextEffect(submittedSearch.query),
-      BrowserFilterUpdateEffect(
-        BrowserFilterUpdateSystem(submittedSearch.filters),
-      ),
-      const BrowserSearchScreenOpenEffect(isOpen: false),
-      const BrowserSavedStateKeyRemovalEffect(browserAdvancedSearchStateKey),
-      const BrowserSavedStateKeyRemovalEffect(
-        browserBasicSearchTextStateKey,
-      ),
-      const BrowserSavedStateKeyRemovalEffect(
-        browserAdvancedSearchTextStateKey,
-      ),
-    ]);
+) => List.unmodifiable([
+  const BrowserAdvancedSearchModeEffect(enabled: false),
+  BrowserBasicSearchTextEffect(submittedSearch.query),
+  BrowserAdvancedSearchTextEffect(submittedSearch.query),
+  BrowserFilterUpdateEffect(BrowserFilterUpdateSystem(submittedSearch.filters)),
+  const BrowserSearchScreenOpenEffect(isOpen: false),
+  const BrowserSavedStateKeyRemovalEffect(browserAdvancedSearchStateKey),
+  const BrowserSavedStateKeyRemovalEffect(browserBasicSearchTextStateKey),
+  const BrowserSavedStateKeyRemovalEffect(browserAdvancedSearchTextStateKey),
+]);
 
 /// Applies only a text-related effect to the current headless text snapshot.
 ///
@@ -263,22 +253,21 @@ List<BrowserSearchStateEffect> browserResetSearchStateEffects(
 BrowserSearchTextState browserSearchTextStateAfterEffect(
   BrowserSearchTextState state,
   BrowserSearchStateEffect effect,
-) =>
-    switch (effect) {
-      BrowserAdvancedSearchModeEffect(:final enabled) => BrowserSearchTextState(
-          isAdvancedSearch: enabled,
-          basicText: state.basicText,
-          advancedText: state.advancedText,
-        ),
-      BrowserBasicSearchTextEffect(:final text) => BrowserSearchTextState(
-          isAdvancedSearch: state.isAdvancedSearch,
-          basicText: text,
-          advancedText: state.advancedText,
-        ),
-      BrowserAdvancedSearchTextEffect(:final text) => BrowserSearchTextState(
-          isAdvancedSearch: state.isAdvancedSearch,
-          basicText: state.basicText,
-          advancedText: text,
-        ),
-      _ => state,
-    };
+) => switch (effect) {
+  BrowserAdvancedSearchModeEffect(:final enabled) => BrowserSearchTextState(
+    isAdvancedSearch: enabled,
+    basicText: state.basicText,
+    advancedText: state.advancedText,
+  ),
+  BrowserBasicSearchTextEffect(:final text) => BrowserSearchTextState(
+    isAdvancedSearch: state.isAdvancedSearch,
+    basicText: text,
+    advancedText: state.advancedText,
+  ),
+  BrowserAdvancedSearchTextEffect(:final text) => BrowserSearchTextState(
+    isAdvancedSearch: state.isAdvancedSearch,
+    basicText: state.basicText,
+    advancedText: text,
+  ),
+  _ => state,
+};

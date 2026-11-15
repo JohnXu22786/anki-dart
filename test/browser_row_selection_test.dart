@@ -34,14 +34,14 @@ void main() {
       );
       expect(
         selection.hashCode,
-        const BrowserRowSelection(rowId: BrowserRowId(12), topOffset: 8)
-            .hashCode,
+        const BrowserRowSelection(
+          rowId: BrowserRowId(12),
+          topOffset: 8,
+        ).hashCode,
       );
       expect(
         selection,
-        isNot(
-          const BrowserRowSelection(rowId: BrowserRowId(12), topOffset: 9),
-        ),
+        isNot(const BrowserRowSelection(rowId: BrowserRowId(12), topOffset: 9)),
       );
     });
   });
@@ -68,10 +68,7 @@ void main() {
         transition.modeChange,
         const BrowserRowSelectionModeChange(
           cause: BrowserRowSelectionModeCause.rowSelected,
-          selection: BrowserRowSelection(
-            rowId: BrowserRowId(30),
-            topOffset: 5,
-          ),
+          selection: BrowserRowSelection(rowId: BrowserRowId(30), topOffset: 5),
         ),
       );
       expect(transition.isInMultiSelectMode, isTrue);
@@ -93,39 +90,41 @@ void main() {
         isInMultiSelectMode: true,
       );
 
-      expect(
-        transition.selectedRows,
-        [const BrowserRowId(10), const BrowserRowId(30)],
-      );
+      expect(transition.selectedRows, [
+        const BrowserRowId(10),
+        const BrowserRowId(30),
+      ]);
       expect(transition.modeChange, isNull);
       expect(transition.isInMultiSelectMode, isTrue);
       expect(transition.lastSelectedRowId, const BrowserRowId(20));
       expect(transition.refreshSelectedRows, isTrue);
     });
 
-    test('removing the final row emits DeselectRow and exits selection mode',
-        () {
-      const selection = BrowserRowSelection(
-        rowId: BrowserRowId(20),
-        topOffset: 3,
-      );
-      final transition = toggleBrowserRowSelection(
-        selectedRows: const [BrowserRowId(20)],
-        selection: selection,
-        isInMultiSelectMode: true,
-      );
-
-      expect(transition.selectedRows, isEmpty);
-      expect(
-        transition.modeChange,
-        const BrowserRowSelectionModeChange(
-          cause: BrowserRowSelectionModeCause.deselectRow,
+    test(
+      'removing the final row emits DeselectRow and exits selection mode',
+      () {
+        const selection = BrowserRowSelection(
+          rowId: BrowserRowId(20),
+          topOffset: 3,
+        );
+        final transition = toggleBrowserRowSelection(
+          selectedRows: const [BrowserRowId(20)],
           selection: selection,
-        ),
-      );
-      expect(transition.isInMultiSelectMode, isFalse);
-      expect(transition.refreshSelectedRows, isTrue);
-    });
+          isInMultiSelectMode: true,
+        );
+
+        expect(transition.selectedRows, isEmpty);
+        expect(
+          transition.modeChange,
+          const BrowserRowSelectionModeChange(
+            cause: BrowserRowSelectionModeCause.deselectRow,
+            selection: selection,
+          ),
+        );
+        expect(transition.isInMultiSelectMode, isFalse);
+        expect(transition.refreshSelectedRows, isTrue);
+      },
+    );
 
     test('adding after select-none keeps the active mode', () {
       final transition = toggleBrowserRowSelection(

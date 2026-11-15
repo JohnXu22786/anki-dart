@@ -74,57 +74,55 @@ class DisplayDeckNode {
 
   @override
   int get hashCode => Object.hash(
-        did,
-        fullDeckName,
-        lastDeckNameComponent,
-        collapsed,
-        canCollapse,
-        depth,
-        filtered,
-        newCount,
-        lrnCount,
-        revCount,
-        isSelected,
-      );
+    did,
+    fullDeckName,
+    lastDeckNameComponent,
+    collapsed,
+    canCollapse,
+    depth,
+    filtered,
+    newCount,
+    lrnCount,
+    revCount,
+    isSelected,
+  );
 
-  DisplayDeckNode withUpdatedDeckId(int deckId) => _copyWith(
-        isSelected: did == deckId,
-      );
+  DisplayDeckNode withUpdatedDeckId(int deckId) =>
+      _copyWith(isSelected: did == deckId);
 
   DisplayDeckNode _copyWith({bool? isSelected}) => DisplayDeckNode._(
-        deckNode: deckNode,
-        did: did,
-        fullDeckName: fullDeckName,
-        lastDeckNameComponent: lastDeckNameComponent,
-        collapsed: collapsed,
-        canCollapse: canCollapse,
-        depth: depth,
-        filtered: filtered,
-        newCount: newCount,
-        lrnCount: lrnCount,
-        revCount: revCount,
-        isSelected: isSelected ?? this.isSelected,
-      );
+    deckNode: deckNode,
+    did: did,
+    fullDeckName: fullDeckName,
+    lastDeckNameComponent: lastDeckNameComponent,
+    collapsed: collapsed,
+    canCollapse: canCollapse,
+    depth: depth,
+    filtered: filtered,
+    newCount: newCount,
+    lrnCount: lrnCount,
+    revCount: revCount,
+    isSelected: isSelected ?? this.isSelected,
+  );
 
   static DisplayDeckNode from(
     DeckNode node, {
     required bool matchesSearchOrChild,
     required int selectedDeckId,
-  }) =>
-      DisplayDeckNode._(
-        deckNode: node,
-        did: node.did,
-        fullDeckName: node.fullDeckName,
-        lastDeckNameComponent: node.lastDeckNameComponent,
-        collapsed: node.collapsed,
-        canCollapse: node.children.isNotEmpty && matchesSearchOrChild,
-        depth: node.depth,
-        filtered: node.filtered,
-        newCount: node.newCount,
-        lrnCount: node.lrnCount,
-        revCount: node.revCount,
-        isSelected: node.did == selectedDeckId,
-      );
+  }) => DisplayDeckNode._(
+    deckNode: node,
+    did: node.did,
+    fullDeckName: node.fullDeckName,
+    lastDeckNameComponent: node.lastDeckNameComponent,
+    collapsed: node.collapsed,
+    canCollapse: node.children.isNotEmpty && matchesSearchOrChild,
+    depth: node.depth,
+    filtered: node.filtered,
+    newCount: node.newCount,
+    lrnCount: node.lrnCount,
+    revCount: node.revCount,
+    isSelected: node.did == selectedDeckId,
+  );
 }
 
 /// Flattens matching deck rows, including their ancestor path and visible
@@ -133,15 +131,13 @@ List<DisplayDeckNode> filterAndFlattenDisplay(
   DeckNode root,
   DeckFilters filter, {
   required int selectedDeckId,
-}) =>
-    _flattenDeckTree(root, filter, selectedDeckId);
+}) => _flattenDeckTree(root, filter, selectedDeckId);
 
 extension DeckNodeDisplay on DeckNode {
   List<DisplayDeckNode> filterAndFlattenDisplay(
     DeckFilters filter, {
     required int selectedDeckId,
-  }) =>
-      _flattenDeckTree(this, filter, selectedDeckId);
+  }) => _flattenDeckTree(this, filter, selectedDeckId);
 }
 
 List<DisplayDeckNode> _flattenDeckTree(

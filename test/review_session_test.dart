@@ -70,333 +70,352 @@ void main() {
       expect(scheduler.answers, isEmpty);
     });
 
-    test('pauses for a scheduler timebox before showing the queued card',
-        () async {
-      final cardState = _queueState(1, 'question 1', 'answer 1');
-      final timedState = ReviewQueueState<Object>(
-        card: cardState.card,
-        schedulingSnapshot: cardState.schedulingSnapshot,
-        counts: cardState.counts,
-        activeQueue: cardState.activeQueue,
-        timeboxReached: const ReviewTimeboxReached(secs: 60, reps: 3),
-      );
-      final scheduler = _FakeReviewScheduler([cardState])
-        ..queueReadSequence = [timedState, cardState];
-      final session = ReviewSession<Object>(scheduler);
+    test(
+      'pauses for a scheduler timebox before showing the queued card',
+      () async {
+        final cardState = _queueState(1, 'question 1', 'answer 1');
+        final timedState = ReviewQueueState<Object>(
+          card: cardState.card,
+          schedulingSnapshot: cardState.schedulingSnapshot,
+          counts: cardState.counts,
+          activeQueue: cardState.activeQueue,
+          timeboxReached: const ReviewTimeboxReached(secs: 60, reps: 3),
+        );
+        final scheduler = _FakeReviewScheduler([cardState])
+          ..queueReadSequence = [timedState, cardState];
+        final session = ReviewSession<Object>(scheduler);
 
-      await session.start();
+        await session.start();
 
-      expect(session.phase, ReviewSessionPhase.timeboxReached);
-      expect(session.timeboxReached, timedState.timeboxReached);
-      expect(session.current, isNull);
-      expect(session.visibleContent, isNull);
-      await session.answerCard(ReviewRating.good);
-      expect(scheduler.answers, isEmpty);
+        expect(session.phase, ReviewSessionPhase.timeboxReached);
+        expect(session.timeboxReached, timedState.timeboxReached);
+        expect(session.current, isNull);
+        expect(session.visibleContent, isNull);
+        await session.answerCard(ReviewRating.good);
+        expect(scheduler.answers, isEmpty);
 
-      await session.continueAfterTimebox();
+        await session.continueAfterTimebox();
 
-      expect(scheduler.queueReads, 2);
-      expect(session.phase, ReviewSessionPhase.question);
-      expect(session.timeboxReached, isNull);
-      expect(session.current, same(cardState));
-      expect(session.visibleContent, 'question 1');
-    });
-
-    test('keeps the displayed side visible beneath a reached timebox',
-        () async {
-      final first = _queueState(1, 'question 1', 'answer 1');
-      final next = _queueState(2, 'question 2', 'answer 2');
-      final timedState = ReviewQueueState<Object>(
-        card: next.card,
-        schedulingSnapshot: next.schedulingSnapshot,
-        counts: next.counts,
-        activeQueue: next.activeQueue,
-        timeboxReached: const ReviewTimeboxReached(secs: 60, reps: 3),
-      );
-      final scheduler = _FakeReviewScheduler([first, next])
-        ..queueReadSequence = [first, timedState, next];
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
-      await session.showAnswer();
-
-      await session.answerCard(ReviewRating.good);
-
-      expect(session.phase, ReviewSessionPhase.timeboxReached);
-      expect(session.current, isNull);
-      expect(session.visibleContent, 'answer 1');
-      await session.answerCard(ReviewRating.again);
-      expect(scheduler.answers, hasLength(1));
-
-      scheduler.failNextQueueRead = true;
-      await expectLater(
-        session.continueAfterTimebox(),
-        throwsA(isA<StateError>()),
-      );
-
-      expect(session.phase, ReviewSessionPhase.loading);
-      expect(session.visibleContent, 'answer 1');
-
-      await session.retryCurrentQueueState();
-
-      expect(session.phase, ReviewSessionPhase.question);
-      expect(session.visibleContent, 'question 2');
-    });
-
-    test('retains the published counts through a timebox until normal reload',
-        () async {
-      final first = _queueState(
-        1,
-        'question 1',
-        'answer 1',
-        counts: const ReviewQueueCounts(
-          newCount: 3,
-          learnCount: 4,
-          reviewCount: 5,
-        ),
-        activeQueue: ReviewQueueKind.learning,
-      );
-      final queued = _queueState(
-        2,
-        'question 2',
-        'answer 2',
-        counts: const ReviewQueueCounts(
-          newCount: 90,
-          learnCount: 80,
-          reviewCount: 70,
-        ),
-        activeQueue: ReviewQueueKind.review,
-      );
-      final timeboxed = ReviewQueueState<Object>(
-        card: queued.card,
-        schedulingSnapshot: queued.schedulingSnapshot,
-        counts: queued.counts,
-        activeQueue: queued.activeQueue,
-        timeboxReached: const ReviewTimeboxReached(secs: 60, reps: 3),
-      );
-      final resumed = _queueState(
-        2,
-        'question 2',
-        'answer 2',
-        counts: const ReviewQueueCounts(
-          newCount: 2,
-          learnCount: 1,
-          reviewCount: 0,
-        ),
-        activeQueue: ReviewQueueKind.review,
-      );
-      final scheduler = _FakeReviewScheduler([first, resumed])
-        ..queueReadSequence = [first, timeboxed, resumed];
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
-      final published = session.displayedQueuePresentation;
-
-      expect(published.counts.newCount, 3);
-      expect(published.counts.learnCount, 4);
-      expect(published.counts.reviewCount, 5);
-      expect(published.activeQueue, ReviewQueueKind.learning);
-
-      await session.answerCard(ReviewRating.good);
-
-      expect(session.phase, ReviewSessionPhase.timeboxReached);
-      expect(session.current, isNull);
-      expect(session.displayedQueuePresentation, same(published));
-      expect(scheduler.answers, hasLength(1));
-      await session.answerCard(ReviewRating.again);
-      expect(scheduler.answers, hasLength(1));
-
-      await session.continueAfterTimebox();
-
-      expect(session.current, same(resumed));
-      expect(session.displayedQueuePresentation.counts.newCount, 2);
-      expect(session.displayedQueuePresentation.counts.learnCount, 1);
-      expect(session.displayedQueuePresentation.counts.reviewCount, 0);
-      expect(
-        session.displayedQueuePresentation.activeQueue,
-        ReviewQueueKind.review,
-      );
-    });
-
-    test('keeps displayed counts during queue loading and on completion',
-        () async {
-      final first = _queueState(
-        1,
-        'question 1',
-        'answer 1',
-        counts: const ReviewQueueCounts(
-          newCount: 4,
-          learnCount: 5,
-          reviewCount: 6,
-        ),
-        activeQueue: ReviewQueueKind.review,
-      );
-      final second = _queueState(
-        2,
-        'question 2',
-        'answer 2',
-        counts: const ReviewQueueCounts(
-          newCount: 1,
-          learnCount: 2,
-          reviewCount: 3,
-        ),
-        activeQueue: ReviewQueueKind.learning,
-      );
-      final scheduler = _FakeReviewScheduler([first, second]);
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
-      final firstPresentation = session.displayedQueuePresentation;
-      await session.showAnswer();
-      scheduler.failNextQueueRead = true;
-
-      await expectLater(
-        session.answerCard(ReviewRating.good),
-        throwsA(isA<StateError>()),
-      );
-
-      expect(session.phase, ReviewSessionPhase.loading);
-      expect(session.current, isNull);
-      expect(session.displayedQueuePresentation, same(firstPresentation));
-
-      await session.retryCurrentQueueState();
-
-      expect(session.current, same(second));
-      expect(session.displayedQueuePresentation.counts.newCount, 1);
-      expect(session.displayedQueuePresentation.counts.learnCount, 2);
-      expect(session.displayedQueuePresentation.counts.reviewCount, 3);
-      expect(
-        session.displayedQueuePresentation.activeQueue,
-        ReviewQueueKind.learning,
-      );
-      final secondPresentation = session.displayedQueuePresentation;
-      await session.showAnswer();
-      await session.answerCard(ReviewRating.easy);
-
-      expect(session.phase, ReviewSessionPhase.finished);
-      expect(session.current, isNull);
-      expect(session.displayedQueuePresentation, same(secondPresentation));
-    });
+        expect(scheduler.queueReads, 2);
+        expect(session.phase, ReviewSessionPhase.question);
+        expect(session.timeboxReached, isNull);
+        expect(session.current, same(cardState));
+        expect(session.visibleContent, 'question 1');
+      },
+    );
 
     test(
-        'waits for state mutations before showing an answer or sending a rating',
-        () async {
-      final first = _queueState(1, 'question 1', 'answer 1');
-      final second = _queueState(2, 'question 2', 'answer 2');
-      final scheduler = _FakeReviewScheduler([first, second]);
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
+      'keeps the displayed side visible beneath a reached timebox',
+      () async {
+        final first = _queueState(1, 'question 1', 'answer 1');
+        final next = _queueState(2, 'question 2', 'answer 2');
+        final timedState = ReviewQueueState<Object>(
+          card: next.card,
+          schedulingSnapshot: next.schedulingSnapshot,
+          counts: next.counts,
+          activeQueue: next.activeQueue,
+          timeboxReached: const ReviewTimeboxReached(secs: 60, reps: 3),
+        );
+        final scheduler = _FakeReviewScheduler([first, next])
+          ..queueReadSequence = [first, timedState, next];
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+        await session.showAnswer();
 
-      final revealGate = scheduler.blockNextMutation();
-      final reveal = session.showAnswer();
-      await Future<void>.delayed(Duration.zero);
-      expect(revealGate.started.isCompleted, isTrue);
-      expect(session.phase, ReviewSessionPhase.question);
-      revealGate.release.complete();
-      await reveal;
-      expect(session.phase, ReviewSessionPhase.answer);
+        await session.answerCard(ReviewRating.good);
 
-      await session.answerCard(ReviewRating.good);
-      final answerGate = scheduler.blockNextMutation();
-      final answer = session.answerCard(ReviewRating.easy);
-      await Future<void>.delayed(Duration.zero);
-      expect(answerGate.started.isCompleted, isTrue);
-      expect(scheduler.answers.map((call) => call.state), [first]);
-      answerGate.release.complete();
-      await answer;
-      expect(scheduler.answers.map((call) => call.state), [first, second]);
-    });
+        expect(session.phase, ReviewSessionPhase.timeboxReached);
+        expect(session.current, isNull);
+        expect(session.visibleContent, 'answer 1');
+        await session.answerCard(ReviewRating.again);
+        expect(scheduler.answers, hasLength(1));
 
-    test('publishes the post-mutation queue state before showing the answer',
-        () async {
-      final selected = _queueState(1, 'question 1', 'answer 1');
-      final updated = ReviewQueueState<Object>(
-        card: selected.card,
-        schedulingSnapshot: Object(),
-        counts: selected.counts,
-        activeQueue: selected.activeQueue,
-      );
-      final scheduler = _FakeReviewScheduler([selected])
-        ..stateAfterMutation = () => updated;
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
+        scheduler.failNextQueueRead = true;
+        await expectLater(
+          session.continueAfterTimebox(),
+          throwsA(isA<StateError>()),
+        );
 
-      await session.showAnswer();
+        expect(session.phase, ReviewSessionPhase.loading);
+        expect(session.visibleContent, 'answer 1');
 
-      expect(session.phase, ReviewSessionPhase.answer);
-      expect(session.current, same(updated));
-    });
+        await session.retryCurrentQueueState();
 
-    test('keeps the selected queue state when the mutation hook returns none',
-        () async {
-      final selected = _queueState(1, 'question 1', 'answer 1');
-      final scheduler = _FakeReviewScheduler([selected])
-        ..stateAfterMutation = () => null;
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
+        expect(session.phase, ReviewSessionPhase.question);
+        expect(session.visibleContent, 'question 2');
+      },
+    );
 
-      await session.showAnswer();
+    test(
+      'retains the published counts through a timebox until normal reload',
+      () async {
+        final first = _queueState(
+          1,
+          'question 1',
+          'answer 1',
+          counts: const ReviewQueueCounts(
+            newCount: 3,
+            learnCount: 4,
+            reviewCount: 5,
+          ),
+          activeQueue: ReviewQueueKind.learning,
+        );
+        final queued = _queueState(
+          2,
+          'question 2',
+          'answer 2',
+          counts: const ReviewQueueCounts(
+            newCount: 90,
+            learnCount: 80,
+            reviewCount: 70,
+          ),
+          activeQueue: ReviewQueueKind.review,
+        );
+        final timeboxed = ReviewQueueState<Object>(
+          card: queued.card,
+          schedulingSnapshot: queued.schedulingSnapshot,
+          counts: queued.counts,
+          activeQueue: queued.activeQueue,
+          timeboxReached: const ReviewTimeboxReached(secs: 60, reps: 3),
+        );
+        final resumed = _queueState(
+          2,
+          'question 2',
+          'answer 2',
+          counts: const ReviewQueueCounts(
+            newCount: 2,
+            learnCount: 1,
+            reviewCount: 0,
+          ),
+          activeQueue: ReviewQueueKind.review,
+        );
+        final scheduler = _FakeReviewScheduler([first, resumed])
+          ..queueReadSequence = [first, timeboxed, resumed];
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+        final published = session.displayedQueuePresentation;
 
-      expect(session.phase, ReviewSessionPhase.answer);
-      expect(session.current, same(selected));
-    });
+        expect(published.counts.newCount, 3);
+        expect(published.counts.learnCount, 4);
+        expect(published.counts.reviewCount, 5);
+        expect(published.activeQueue, ReviewQueueKind.learning);
 
-    test('answers with the queue snapshot read after the mutation hook',
-        () async {
-      final selected = _queueState(1, 'question 1', 'answer 1');
-      final updated = ReviewQueueState<Object>(
-        card: selected.card,
-        schedulingSnapshot: Object(),
-        counts: selected.counts,
-        activeQueue: selected.activeQueue,
-      );
-      final scheduler = _FakeReviewScheduler([selected])
-        ..stateAfterMutation = () => updated;
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
+        await session.answerCard(ReviewRating.good);
 
-      final mutation = scheduler.blockNextMutation();
-      final answer = session.answerCard(ReviewRating.good);
-      await mutation.started.future;
-      expect(scheduler.answers, isEmpty);
+        expect(session.phase, ReviewSessionPhase.timeboxReached);
+        expect(session.current, isNull);
+        expect(session.displayedQueuePresentation, same(published));
+        expect(scheduler.answers, hasLength(1));
+        await session.answerCard(ReviewRating.again);
+        expect(scheduler.answers, hasLength(1));
 
-      mutation.release.complete();
-      await answer;
+        await session.continueAfterTimebox();
 
-      expect(scheduler.answers.single.state, same(updated));
-    });
+        expect(session.current, same(resumed));
+        expect(session.displayedQueuePresentation.counts.newCount, 2);
+        expect(session.displayedQueuePresentation.counts.learnCount, 1);
+        expect(session.displayedQueuePresentation.counts.reviewCount, 0);
+        expect(
+          session.displayedQueuePresentation.activeQueue,
+          ReviewQueueKind.review,
+        );
+      },
+    );
 
-    test('does not grade when the post-mutation queue state is absent',
-        () async {
-      final selected = _queueState(1, 'question 1', 'answer 1');
-      final scheduler = _FakeReviewScheduler([selected])
-        ..stateAfterMutation = () => null;
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
+    test(
+      'keeps displayed counts during queue loading and on completion',
+      () async {
+        final first = _queueState(
+          1,
+          'question 1',
+          'answer 1',
+          counts: const ReviewQueueCounts(
+            newCount: 4,
+            learnCount: 5,
+            reviewCount: 6,
+          ),
+          activeQueue: ReviewQueueKind.review,
+        );
+        final second = _queueState(
+          2,
+          'question 2',
+          'answer 2',
+          counts: const ReviewQueueCounts(
+            newCount: 1,
+            learnCount: 2,
+            reviewCount: 3,
+          ),
+          activeQueue: ReviewQueueKind.learning,
+        );
+        final scheduler = _FakeReviewScheduler([first, second]);
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+        final firstPresentation = session.displayedQueuePresentation;
+        await session.showAnswer();
+        scheduler.failNextQueueRead = true;
 
-      await session.answerCard(ReviewRating.good);
+        await expectLater(
+          session.answerCard(ReviewRating.good),
+          throwsA(isA<StateError>()),
+        );
 
-      expect(scheduler.answers, isEmpty);
-      expect(session.current, same(selected));
-      expect(session.phase, ReviewSessionPhase.question);
-    });
+        expect(session.phase, ReviewSessionPhase.loading);
+        expect(session.current, isNull);
+        expect(session.displayedQueuePresentation, same(firstPresentation));
 
-    test('forwards rating and queue state then loads the next question',
-        () async {
-      final first = _queueState(1, 'question 1', 'answer 1');
-      final second = _queueState(2, 'question 2', 'answer 2');
-      final scheduler = _FakeReviewScheduler([first, second]);
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
+        await session.retryCurrentQueueState();
 
-      // The source action dispatcher routes ratings directly; it does not
-      // require the answer side to be visible before calling answerCard.
-      await session.answerCard(ReviewRating.good);
+        expect(session.current, same(second));
+        expect(session.displayedQueuePresentation.counts.newCount, 1);
+        expect(session.displayedQueuePresentation.counts.learnCount, 2);
+        expect(session.displayedQueuePresentation.counts.reviewCount, 3);
+        expect(
+          session.displayedQueuePresentation.activeQueue,
+          ReviewQueueKind.learning,
+        );
+        final secondPresentation = session.displayedQueuePresentation;
+        await session.showAnswer();
+        await session.answerCard(ReviewRating.easy);
 
-      expect(scheduler.answers, hasLength(1));
-      expect(scheduler.answers.single.state, same(first));
-      expect(scheduler.answers.single.rating, ReviewRating.good);
-      expect(session.current, same(second));
-      expect(session.phase, ReviewSessionPhase.question);
-      expect(session.visibleContent, 'question 2');
-    });
+        expect(session.phase, ReviewSessionPhase.finished);
+        expect(session.current, isNull);
+        expect(session.displayedQueuePresentation, same(secondPresentation));
+      },
+    );
+
+    test(
+      'waits for state mutations before showing an answer or sending a rating',
+      () async {
+        final first = _queueState(1, 'question 1', 'answer 1');
+        final second = _queueState(2, 'question 2', 'answer 2');
+        final scheduler = _FakeReviewScheduler([first, second]);
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+
+        final revealGate = scheduler.blockNextMutation();
+        final reveal = session.showAnswer();
+        await Future<void>.delayed(Duration.zero);
+        expect(revealGate.started.isCompleted, isTrue);
+        expect(session.phase, ReviewSessionPhase.question);
+        revealGate.release.complete();
+        await reveal;
+        expect(session.phase, ReviewSessionPhase.answer);
+
+        await session.answerCard(ReviewRating.good);
+        final answerGate = scheduler.blockNextMutation();
+        final answer = session.answerCard(ReviewRating.easy);
+        await Future<void>.delayed(Duration.zero);
+        expect(answerGate.started.isCompleted, isTrue);
+        expect(scheduler.answers.map((call) => call.state), [first]);
+        answerGate.release.complete();
+        await answer;
+        expect(scheduler.answers.map((call) => call.state), [first, second]);
+      },
+    );
+
+    test(
+      'publishes the post-mutation queue state before showing the answer',
+      () async {
+        final selected = _queueState(1, 'question 1', 'answer 1');
+        final updated = ReviewQueueState<Object>(
+          card: selected.card,
+          schedulingSnapshot: Object(),
+          counts: selected.counts,
+          activeQueue: selected.activeQueue,
+        );
+        final scheduler = _FakeReviewScheduler([selected])
+          ..stateAfterMutation = () => updated;
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+
+        await session.showAnswer();
+
+        expect(session.phase, ReviewSessionPhase.answer);
+        expect(session.current, same(updated));
+      },
+    );
+
+    test(
+      'keeps the selected queue state when the mutation hook returns none',
+      () async {
+        final selected = _queueState(1, 'question 1', 'answer 1');
+        final scheduler = _FakeReviewScheduler([selected])
+          ..stateAfterMutation = () => null;
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+
+        await session.showAnswer();
+
+        expect(session.phase, ReviewSessionPhase.answer);
+        expect(session.current, same(selected));
+      },
+    );
+
+    test(
+      'answers with the queue snapshot read after the mutation hook',
+      () async {
+        final selected = _queueState(1, 'question 1', 'answer 1');
+        final updated = ReviewQueueState<Object>(
+          card: selected.card,
+          schedulingSnapshot: Object(),
+          counts: selected.counts,
+          activeQueue: selected.activeQueue,
+        );
+        final scheduler = _FakeReviewScheduler([selected])
+          ..stateAfterMutation = () => updated;
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+
+        final mutation = scheduler.blockNextMutation();
+        final answer = session.answerCard(ReviewRating.good);
+        await mutation.started.future;
+        expect(scheduler.answers, isEmpty);
+
+        mutation.release.complete();
+        await answer;
+
+        expect(scheduler.answers.single.state, same(updated));
+      },
+    );
+
+    test(
+      'does not grade when the post-mutation queue state is absent',
+      () async {
+        final selected = _queueState(1, 'question 1', 'answer 1');
+        final scheduler = _FakeReviewScheduler([selected])
+          ..stateAfterMutation = () => null;
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+
+        await session.answerCard(ReviewRating.good);
+
+        expect(scheduler.answers, isEmpty);
+        expect(session.current, same(selected));
+        expect(session.phase, ReviewSessionPhase.question);
+      },
+    );
+
+    test(
+      'forwards rating and queue state then loads the next question',
+      () async {
+        final first = _queueState(1, 'question 1', 'answer 1');
+        final second = _queueState(2, 'question 2', 'answer 2');
+        final scheduler = _FakeReviewScheduler([first, second]);
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+
+        // The source action dispatcher routes ratings directly; it does not
+        // require the answer side to be visible before calling answerCard.
+        await session.answerCard(ReviewRating.good);
+
+        expect(scheduler.answers, hasLength(1));
+        expect(scheduler.answers.single.state, same(first));
+        expect(scheduler.answers.single.rating, ReviewRating.good);
+        expect(session.current, same(second));
+        expect(session.phase, ReviewSessionPhase.question);
+        expect(session.visibleContent, 'question 2');
+      },
+    );
 
     test('keeps the current card if the scheduler rejects an answer', () async {
       final first = _queueState(1, 'question 1', 'answer 1');
@@ -422,98 +441,101 @@ void main() {
       expect(scheduler.queueReads, 1);
     });
 
-    test('retries a failed queue refresh without regrading the consumed card',
-        () async {
-      final first = _queueState(1, 'question 1', 'answer 1');
-      final second = _queueState(2, 'question 2', 'answer 2');
-      final scheduler = _FakeReviewScheduler([first, second]);
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
-      await session.showAnswer();
-      scheduler.failNextQueueRead = true;
+    test(
+      'retries a failed queue refresh without regrading the consumed card',
+      () async {
+        final first = _queueState(1, 'question 1', 'answer 1');
+        final second = _queueState(2, 'question 2', 'answer 2');
+        final scheduler = _FakeReviewScheduler([first, second]);
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
+        await session.showAnswer();
+        scheduler.failNextQueueRead = true;
 
-      await expectLater(
-        session.answerCard(ReviewRating.good),
-        throwsA(isA<StateError>()),
-      );
+        await expectLater(
+          session.answerCard(ReviewRating.good),
+          throwsA(isA<StateError>()),
+        );
 
-      expect(session.current, isNull);
-      expect(session.phase, ReviewSessionPhase.loading);
-      expect(session.visibleContent, 'answer 1');
-      await session.answerCard(ReviewRating.again);
-      expect(scheduler.answers, hasLength(1));
+        expect(session.current, isNull);
+        expect(session.phase, ReviewSessionPhase.loading);
+        expect(session.visibleContent, 'answer 1');
+        await session.answerCard(ReviewRating.again);
+        expect(scheduler.answers, hasLength(1));
 
-      await session.retryCurrentQueueState();
+        await session.retryCurrentQueueState();
 
-      expect(session.current, same(second));
-      expect(session.phase, ReviewSessionPhase.question);
-      expect(scheduler.answers, hasLength(1));
-    });
+        expect(session.current, same(second));
+        expect(session.phase, ReviewSessionPhase.question);
+        expect(scheduler.answers, hasLength(1));
+      },
+    );
 
-    test('serializes ratings while the first scheduler answer is pending',
-        () async {
-      final first = _queueState(1, 'question 1', 'answer 1');
-      final second = _queueState(2, 'question 2', 'answer 2');
-      final scheduler = _FakeReviewScheduler([first, second]);
-      final answerGate = Completer<void>();
-      scheduler.firstAnswerGate = answerGate;
-      final session = ReviewSession<Object>(scheduler);
-      await session.start();
+    test(
+      'serializes ratings while the first scheduler answer is pending',
+      () async {
+        final first = _queueState(1, 'question 1', 'answer 1');
+        final second = _queueState(2, 'question 2', 'answer 2');
+        final scheduler = _FakeReviewScheduler([first, second]);
+        final answerGate = Completer<void>();
+        scheduler.firstAnswerGate = answerGate;
+        final session = ReviewSession<Object>(scheduler);
+        await session.start();
 
-      final firstAnswer = session.answerCard(ReviewRating.good);
-      await scheduler.firstAnswerStarted.future;
-      final secondAnswer = session.answerCard(ReviewRating.again);
-      answerGate.complete();
-      await Future.wait([firstAnswer, secondAnswer]);
+        final firstAnswer = session.answerCard(ReviewRating.good);
+        await scheduler.firstAnswerStarted.future;
+        final secondAnswer = session.answerCard(ReviewRating.again);
+        answerGate.complete();
+        await Future.wait([firstAnswer, secondAnswer]);
 
-      expect(
-        scheduler.answers.map((answer) => answer.state.card.id),
-        [1, 2],
-      );
-      expect(
-        scheduler.answers.map((answer) => answer.rating),
-        [ReviewRating.good, ReviewRating.again],
-      );
-      expect(session.phase, ReviewSessionPhase.finished);
-    });
+        expect(scheduler.answers.map((answer) => answer.state.card.id), [1, 2]);
+        expect(scheduler.answers.map((answer) => answer.rating), [
+          ReviewRating.good,
+          ReviewRating.again,
+        ]);
+        expect(session.phase, ReviewSessionPhase.finished);
+      },
+    );
 
-    test('finishes when the scheduler has no card initially or after the last',
-        () async {
-      final emptySession = ReviewSession<Object>(_FakeReviewScheduler([]));
-      await emptySession.start();
-      expect(emptySession.phase, ReviewSessionPhase.finished);
-      expect(emptySession.visibleContent, isNull);
+    test(
+      'finishes when the scheduler has no card initially or after the last',
+      () async {
+        final emptySession = ReviewSession<Object>(_FakeReviewScheduler([]));
+        await emptySession.start();
+        expect(emptySession.phase, ReviewSessionPhase.finished);
+        expect(emptySession.visibleContent, isNull);
 
-      final finalCard = _queueState(1, 'question 1', 'answer 1');
-      final finalSession =
-          ReviewSession<Object>(_FakeReviewScheduler([finalCard]));
-      await finalSession.start();
-      await finalSession.showAnswer();
-      await finalSession.answerCard(ReviewRating.again);
-      expect(finalSession.phase, ReviewSessionPhase.finished);
-      expect(finalSession.current, isNull);
-      expect(finalSession.visibleContent, isNull);
-    });
+        final finalCard = _queueState(1, 'question 1', 'answer 1');
+        final finalSession = ReviewSession<Object>(
+          _FakeReviewScheduler([finalCard]),
+        );
+        await finalSession.start();
+        await finalSession.showAnswer();
+        await finalSession.answerCard(ReviewRating.again);
+        expect(finalSession.phase, ReviewSessionPhase.finished);
+        expect(finalSession.current, isNull);
+        expect(finalSession.visibleContent, isNull);
+      },
+    );
   });
 }
 
-ReviewQueueState<Object> _queueState(int cardId, String question, String answer,
-        {ReviewQueueCounts counts = const ReviewQueueCounts(
-          newCount: 10,
-          learnCount: 5,
-          reviewCount: 20,
-        ),
-        ReviewQueueKind activeQueue = ReviewQueueKind.newCards}) =>
-    ReviewQueueState<Object>(
-      card: ReviewCard(
-        id: cardId,
-        questionHtml: question,
-        answerHtml: answer,
-      ),
-      schedulingSnapshot: Object(),
-      counts: counts,
-      activeQueue: activeQueue,
-    );
+ReviewQueueState<Object> _queueState(
+  int cardId,
+  String question,
+  String answer, {
+  ReviewQueueCounts counts = const ReviewQueueCounts(
+    newCount: 10,
+    learnCount: 5,
+    reviewCount: 20,
+  ),
+  ReviewQueueKind activeQueue = ReviewQueueKind.newCards,
+}) => ReviewQueueState<Object>(
+  card: ReviewCard(id: cardId, questionHtml: question, answerHtml: answer),
+  schedulingSnapshot: Object(),
+  counts: counts,
+  activeQueue: activeQueue,
+);
 
 class _FakeReviewScheduler implements ReviewScheduler<Object> {
   _FakeReviewScheduler(this._queue);

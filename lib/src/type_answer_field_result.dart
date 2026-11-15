@@ -56,13 +56,13 @@ final class TypeAnswerWarningUpdate {
   const TypeAnswerWarningUpdate._(this.kind, this.value);
 
   const TypeAnswerWarningUpdate.preservePrevious()
-      : this._(TypeAnswerWarningUpdateKind.preservePrevious, null);
+    : this._(TypeAnswerWarningUpdateKind.preservePrevious, null);
 
   const TypeAnswerWarningUpdate.clear()
-      : this._(TypeAnswerWarningUpdateKind.clear, null);
+    : this._(TypeAnswerWarningUpdateKind.clear, null);
 
   const TypeAnswerWarningUpdate.set(String warning)
-      : this._(TypeAnswerWarningUpdateKind.set, warning);
+    : this._(TypeAnswerWarningUpdateKind.set, warning);
 
   final TypeAnswerWarningUpdateKind kind;
   final String? value;

@@ -27,15 +27,12 @@ import 'package:test/test.dart';
 void main() {
   group('AnswerButtons', () {
     test('maps each rating to the matching reviewer answer command', () {
-      expect(
-        AnswerButtons.values,
-        [
-          AnswerButtons.again,
-          AnswerButtons.hard,
-          AnswerButtons.good,
-          AnswerButtons.easy,
-        ],
-      );
+      expect(AnswerButtons.values, [
+        AnswerButtons.again,
+        AnswerButtons.hard,
+        AnswerButtons.good,
+        AnswerButtons.easy,
+      ]);
       expect(
         {
           for (final rating in AnswerButtons.values)
@@ -53,17 +50,17 @@ void main() {
 
   group('AutomaticAnswerAction', () {
     test('decodes every persisted config code in source order', () {
-      expect(
-        AutomaticAnswerAction.values.map((action) => action.configValue),
-        [0, 1, 2, 3, 4],
-      );
-      expect(
-        [
-          for (var value = 0; value <= 4; value++)
-            AutomaticAnswerAction.fromConfigValue(value)
-        ],
-        AutomaticAnswerAction.values,
-      );
+      expect(AutomaticAnswerAction.values.map((action) => action.configValue), [
+        0,
+        1,
+        2,
+        3,
+        4,
+      ]);
+      expect([
+        for (var value = 0; value <= 4; value++)
+          AutomaticAnswerAction.fromConfigValue(value),
+      ], AutomaticAnswerAction.values);
     });
 
     test('uses BURY_CARD for unknown config integers', () {
@@ -72,10 +69,7 @@ void main() {
           AutomaticAnswerAction.fromConfigValue(-1),
           AutomaticAnswerAction.fromConfigValue(5),
         ],
-        [
-          AutomaticAnswerAction.buryCard,
-          AutomaticAnswerAction.buryCard,
-        ],
+        [AutomaticAnswerAction.buryCard, AutomaticAnswerAction.buryCard],
       );
     });
 

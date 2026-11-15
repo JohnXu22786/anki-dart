@@ -22,6 +22,8 @@ SOURCE_HASHES = {
     "rslib/src/decks/service.rs": "87c0df5a0a7f1307a55f46daac235868a994e96e9a7ae34f7322bb6c3d11bed5",
     "rslib/src/deckconfig/mod.rs": "1b85b99ae9188b5f8d2ccb6a23930bc636f86c1a775a564cd24d1017fcebcfac",
     "rslib/src/deckconfig/service.rs": "58b9d4da7924cfa95cec66061fe1b75be38c5109df710e6c01d22cbb0bceb4be",
+    "rslib/src/media/mod.rs": "bcf4529fbf244f506221cc45e0683f432e1366dacebf176cf2dda1616e581424",
+    "rslib/src/sync/media/database/client/mod.rs": "e07639f5018eac52b29657dda99eb9e16f186e734b6b3e530c75f6af93059e81",
 }
 
 

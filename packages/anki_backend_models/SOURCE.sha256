@@ -10,3 +10,5 @@ dc5a90c3465b7216b6ad1e42a0c44a2d18a99beea777023adcb63cb4abdf38d4  rslib/src/deck
 b04ee6f16a250d5ee5649e6ef122f5ecfeab5d7aebaf80d4d31093ca96e9b241  rslib/src/notetype/templates.rs
 1b85b99ae9188b5f8d2ccb6a23930bc636f86c1a775a564cd24d1017fcebcfac  rslib/src/deckconfig/mod.rs
 58b9d4da7924cfa95cec66061fe1b75be38c5109df710e6c01d22cbb0bceb4be  rslib/src/deckconfig/service.rs
+bcf4529fbf244f506221cc45e0683f432e1366dacebf176cf2dda1616e581424  rslib/src/media/mod.rs
+e07639f5018eac52b29657dda99eb9e16f186e734b6b3e530c75f6af93059e81  rslib/src/sync/media/database/client/mod.rs

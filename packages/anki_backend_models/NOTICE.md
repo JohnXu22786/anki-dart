@@ -7,7 +7,9 @@ conversions from `rslib/src/notetype/mod.rs`, `rslib/src/notetype/service.rs`,
 `rslib/src/notetype/fields.rs`, and `rslib/src/notetype/templates.rs`; Deck
 values and conversions from `rslib/src/decks/mod.rs`, `rslib/src/decks/name.rs`,
 and `rslib/src/decks/service.rs`; and DeckConfig values and conversions from
-`rslib/src/deckconfig/mod.rs` and `rslib/src/deckconfig/service.rs` at commit
+`rslib/src/deckconfig/mod.rs` and `rslib/src/deckconfig/service.rs`; media
+metadata values from `rslib/src/media/mod.rs` and
+`rslib/src/sync/media/database/client/mod.rs` at commit
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985` of
 [ankitects/anki](https://github.com/ankitects/anki). The upstream source is
 copyright Ankitects Pty Ltd and contributors and licensed under the GNU Affero

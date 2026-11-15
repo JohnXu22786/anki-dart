@@ -2,8 +2,9 @@
 
 The supported SQL compilation behavior is adapted from
 `rslib/src/search/sqlwriter.rs`, `rslib/src/search/parser.rs`,
-`rslib/src/timestamp.rs`, `rslib/src/card/mod.rs`, `rslib/src/text.rs`, and
-`rslib/src/decks/name.rs` at commit
+`rslib/src/timestamp.rs`, `rslib/src/card/mod.rs`, `rslib/src/text.rs`,
+`rslib/src/decks/name.rs`, `rslib/src/decks/mod.rs`,
+`rslib/src/storage/deck/mod.rs`, and `rslib/src/storage/deckconfig/mod.rs` at commit
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985` of
 [ankitects/anki](https://github.com/ankitects/anki). Their exact SHA-256 values
 are listed in `SOURCE.sha256`. The upstream files are Copyright Ankitects Pty Ltd and contributors and are licensed under the GNU Affero General Public License, version 3 or later.
@@ -11,7 +12,9 @@ are listed in `SOURCE.sha256`. The upstream files are Copyright Ankitects Pty Lt
 The Dart compiler and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. The compiler accepts the shared AST from
 `anki_search_parser`, supports name matching for decks, deck ID searches with
-host-supplied child expansions, notetypes and card templates,
+host-supplied child expansions, deck-preset searches using exact-name
+host-supplied deck-config resolution and current/original deck IDs, notetypes
+and card templates,
 tag predicates in normal, regex, and no-combining modes, state predicates
 using Core's `CardType` and `CardQueue` numeric values, day predicates using
 Core's previous-day cutoffs, rated searches and rated/reschedule properties

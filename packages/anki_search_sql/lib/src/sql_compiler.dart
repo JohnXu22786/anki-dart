@@ -68,9 +68,10 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 ///
 /// This is an incremental compiler, not complete search execution. Its current
 /// subset contains boolean structure, card/note/notetype ID predicates,
-/// notetype names, card template ordinals and names, tag predicates, deck names and IDs
-/// with or without children, flags, state and day predicates, scalar, rated and FSRS
-/// properties, custom-data predicates, and whole-collection queries. Other
+/// notetype names, card template ordinals and names, tag predicates, deck names,
+/// IDs with or without children, presets, flags, state and day predicates,
+/// scalar, rated and FSRS properties, custom-data predicates, and
+/// whole-collection queries. Other
 /// AST variants throw [UnsupportedSearchSqlNodeException]. Due state
 /// predicates require explicit [SearchSqlTiming] values; day predicates and
 /// due properties additionally require [SearchSqlTiming.nextDayAt]. ID-list
@@ -78,7 +79,9 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// parser; their exact spelling is preserved. [currentDeckName], when supplied,
 /// is the current deck's native name with path components separated by U+001F.
 /// [deckIdsWithChildren] supplies resolved deck ID expansions from the host;
-/// an absent key means the deck could not be resolved.
+/// an absent key means the deck could not be resolved. [deckIdsByPreset]
+/// supplies exact-name preset resolution from the host; an absent key means
+/// the preset did not resolve.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
@@ -86,6 +89,7 @@ CompiledSearchSql compileSearchSql(
   SearchSqlTiming? timing,
   String? currentDeckName,
   Map<BigInt, List<BigInt>> deckIdsWithChildren = const {},
+  Map<String, List<BigInt>> deckIdsByPreset = const {},
 }) {
   final itemTable = switch (resultType) {
     SearchResultType.cards => RequiredTable.cards,
@@ -118,7 +122,7 @@ CompiledSearchSql compileSearchSql(
   final arguments = <String>[];
   return CompiledSearchSql(
     sql:
-        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren)}',
+        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset)}',
     arguments: arguments,
     requiredTable: table,
   );
@@ -139,6 +143,7 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   Deck() ||
   DeckIdsWithoutChildren() ||
   DeckIdWithChildren() ||
+  Preset() ||
   Flag() ||
   State() ||
   AddedInDays() ||
@@ -173,13 +178,14 @@ String _writeNode(
   SearchSqlTiming? timing,
   String? currentDeckName,
   Map<BigInt, List<BigInt>> deckIdsWithChildren,
+  Map<String, List<BigInt>> deckIdsByPreset,
 ) => switch (node) {
   BooleanNode(kind: NodeKind.and) => ' and ',
   BooleanNode(kind: NodeKind.or) => ' or ',
   NegatedNode(:final node) =>
-    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren)}',
+    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset)}',
   GroupNode(:final nodes) =>
-    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren)).join()})',
+    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset)).join()})',
   Search(value: final search) => _writeSearch(
     search,
     noteIdColumn,
@@ -187,6 +193,7 @@ String _writeNode(
     timing,
     currentDeckName,
     deckIdsWithChildren,
+    deckIdsByPreset,
   ),
 };
 
@@ -197,6 +204,7 @@ String _writeSearch(
   SearchSqlTiming? timing,
   String? currentDeckName,
   Map<BigInt, List<BigInt>> deckIdsWithChildren,
+  Map<String, List<BigInt>> deckIdsByPreset,
 ) => switch (node) {
   CardIds(:final ids) => 'c.id in (${_validateIdList(ids)})',
   NoteIds(:final ids) => '$noteIdColumn in (${_validateIdList(ids)})',
@@ -205,6 +213,7 @@ String _writeSearch(
     id,
     deckIdsWithChildren,
   ),
+  Preset(:final name) => _writeDeckPreset(name, deckIdsByPreset),
   NotetypeIdSearch(:final id) => 'n.mid = $id',
   Notetype(:final name) => _writeNotetype(name, arguments),
   Tag(:final tag, :final mode) => _writeTag(tag, mode, arguments),
@@ -669,6 +678,15 @@ String _writeDeckIdWithChildren(
   // Parsing the decimal string avoids precision loss in JavaScript's number type.
   final ids = deckIdsWithChildren[BigInt.parse(id.toString())];
   return ids == null ? 'false' : 'c.did in (${ids.join(',')})';
+}
+
+String _writeDeckPreset(
+  String name,
+  Map<String, List<BigInt>> deckIdsByPreset,
+) {
+  if (!deckIdsByPreset.containsKey(name)) return 'false';
+  final ids = deckIdsByPreset[name]!.join(',');
+  return '(c.did in ($ids) or c.odid in ($ids))';
 }
 
 String _nativeDeckName(String name) => name

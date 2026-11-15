@@ -30,8 +30,9 @@ Core's localized Basic, Basic (type answer), Basic (and reversed), Basic
 translated names from its caller. Image Occlusion collection operations and
 bundled stock-name translation catalogs remain outside this slice. Field and
 template name cleanup, NFC normalization, and duplicate-name suffixing also
-follow the pinned notetype sources. Name uniqueness uses full Unicode 15.1.0
-case folding from `Unicode 15.1.0 CaseFolding.txt`, recorded in
+follow the pinned notetype sources. Name uniqueness uses full Unicode 12.1.0
+case folding, matching the generated table embedded by the pinned `unicase 2.6.0`
+dependency, from `Unicode 12.1.0 CaseFolding.txt`, recorded in
 `UNICODE_CASEFOLD.sha256` and covered by the repository's Unicode License V3
 text in `LICENSES/Unicode-License-V3.txt`. Deck and DeckConfig models cover
 stored values and protobuf conversion. Anki Core's DeckConfig defaults are

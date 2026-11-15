@@ -59,11 +59,27 @@ void main() {
               name: 'STRASSE', config: proto.Notetype_Template_Config()),
           CardTemplate(name: 'ς', config: proto.Notetype_Template_Config()),
           CardTemplate(name: 'Σ', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: '\uA7C0', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: '\uA7C1', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: '\u{10570}', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: '\u{10597}', config: proto.Notetype_Template_Config()),
         ],
         config: proto.Notetype_Config(),
       )..ensureNamesUnique();
-      expect(unicodeCaseNames.templates.map((template) => template.name),
-          ['Straße', 'STRASSE+', 'ς', 'Σ+']);
+      expect(unicodeCaseNames.templates.map((template) => template.name), [
+        'Straße',
+        'STRASSE+',
+        'ς',
+        'Σ+',
+        '\uA7C0',
+        '\uA7C1',
+        '\u{10570}',
+        '\u{10597}'
+      ]);
       value.fixFieldNames();
       value.fixTemplateNames();
 

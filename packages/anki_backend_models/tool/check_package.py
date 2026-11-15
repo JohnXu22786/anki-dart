@@ -9,7 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_COMMIT = "e64c6b1aee3e8d668fb8bbe084beada8e070d985"
-UNICODE_CASE_FOLDING = "4e55acfdc32825a22e87670e9056a3bf94ad7c5400065778e9e10f8314372bcf"
+UNICODE_CASE_FOLDING = "9c772627c6ee77eea6a17b42927b8ee28ca05dc65d6a511062104baaf3d12294"
 SOURCE_HASHES = {
     "rslib/src/card/mod.rs": "cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9",
     "rslib/src/card/service.rs": "8ddddbf879e08cb70ea00e9f00ac6c98f9f3988af65c48598a6cbb2fc11558b6",
@@ -64,7 +64,7 @@ def main() -> int:
 
     unicode_manifest = ROOT / "UNICODE_CASEFOLD.sha256"
     expected_unicode_record = (
-        f"{UNICODE_CASE_FOLDING}  Unicode 15.1.0 CaseFolding.txt\n"
+        f"{UNICODE_CASE_FOLDING}  Unicode 12.1.0 CaseFolding.txt\n"
     )
     if not unicode_manifest.is_file() or unicode_manifest.read_text(
         encoding="utf-8"

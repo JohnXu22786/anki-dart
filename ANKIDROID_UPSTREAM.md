@@ -4224,3 +4224,30 @@ notes incorporated `AGPL-3.0-or-later` `browser.py` code. This adaptation
 contains only the GPL forwarding boundaries and copies no AGPL browser
 implementation. The Dart adapter and tests are Copyright © 2026 John Tsui under
 `GPL-3.0-or-later`; root `COPYING` remains byte-identical.
+
+## Unit 7 LibAnki and common-helper sweep
+
+Pinned source: AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. This sweep compared the
+source-facing Collection, Card, Note, Media, and common helper contracts with
+the public exports, focused tests, README, and NOTICE. The table records the
+remaining portable candidates; existing models in Units 2–6 and Units 420–433
+were not duplicated.
+
+| Candidate | Status | Evidence and boundary |
+|---|---|---|
+| `EmptyCardsReport.emptyCids()` (`Collection.kt:1530`) | Newly modeled | `flattenEmptyCardIds()` in `lib/src/collection_libanki_helpers.dart`; `test/collection_libanki_helpers_test.dart`. It flattens host-supplied card-ID groups in report order, retaining duplicates. The host owns the generated report type and its construction. |
+| `Collection.clozeNumbersInNote(note)` sorted result (`Collection.kt:1545–1553`) | Newly modeled | `sortClozeOrdinals()` in `lib/src/collection_libanki_helpers.dart`; `test/collection_libanki_helpers_test.dart`. Only the Kotlin `sorted()` projection is ported; note conversion and cloze extraction remain backend-owned. |
+| `Collection.schemaChanged()` (`Collection.kt:388`) | Newly modeled | `collectionSchemaChanged()` in `lib/src/collection_libanki_helpers.dart`; `test/collection_libanki_helpers_test.dart`. It reads host-supplied schema and last-sync values in source order and preserves the strict `>` comparison; DB reads remain host-owned. |
+| `Collection.notesOfCards(ids)` and `filterToValidCards(ids)` (`Collection.kt:1535–1560`) | Host/backend-owned | These execute SQL through the collection DB and use source query-string construction. No DB adapter, SQL execution, or ID-query algorithm is added. |
+| `Collection.requireMediaFolder()` / `mediaFolder` (`Collection.kt:1566–1575`) | Already modeled / host-owned | `lib/src/collection_files.dart` and `test/collection_files_test.dart` model host callbacks and the existing storage boundary; actual path and filesystem behavior remain host-owned. |
+| Card load/projection, clone, equality/hash, description, template selection, timers, deck-config helpers, flags, and render cache | Already modeled | `lib/src/backend_card_projection.dart`, `card_backend_load.dart`, `card_clone.dart`, `card_equality_hash_code.dart`, `card_description.dart`, `card_template_selection.dart`, `card_review_timer.dart`, `card_deck_config_methods.dart`, `card_user_flag.dart`, and `libanki_card_render_output_cache.dart`, with matching focused tests. `currentDeckId()` is the existing `getDeckIdForCard(oDid:, did:)` helper in `lib/src/card_utils.dart`. |
+| Note construction/load, card queries, ephemeral cards, field and tag operations, backend projection, clone/equality/hash | Already modeled | `note_constructors.dart`, `note_backend_load.dart`, `note_card_queries.dart`, `note_ephemeral_card.dart`, `note_dictionary_interface.dart`, `note_set_field.dart`, `note_tag_wrappers.dart`, `note_remove_tag.dart`, `note_fields_check_wrapper.dart`, and `note_object_methods.dart`; matching focused tests are in `test/note_*_test.dart`. |
+| Media initialization, path/file wrappers, media-filename escaping, and backend forwarding | Already modeled / host-owned | `lib/src/media.dart`, `media_filename_iri.dart`, and the focused `test/media_*` cases cover the portable callback contracts. File I/O, media scanning/parsing, logging, and backend work stay host-owned; the AGPL `Sound.kt` parser is excluded. |
+| Common JSON, time, hash, tags, collection/file, and value helpers mapped elsewhere in this source map | Already modeled | Existing public exports and focused tests include `json_container.dart`, `hash_util.dart`, `time_utils.dart`, `time_manager.dart`, `tags.dart`, `collection_files.dart`, and the mapped value-model files. The sweep found no additional uncovered portable helper in those mapped groups. |
+| Collection persistence, imports/exports, SQL, scheduling, generated request/response objects, and Rust-backed methods | Host/backend-owned or already mapped | Existing forwarding/model entries remain in place, including Collection sync/preferences and raw forwarding. Units 420–433 are not duplicated; generated protocols and backend algorithms are not copied. |
+
+`Collection.kt` is GPL-3.0-or-later and also identifies a separate incorporated
+AGPL browser.py source. This unit copies only the three GPL helper contracts above
+and no browser.py implementation. The Dart code and tests are Copyright © 2026
+John Tsui under GPL-3.0-or-later. Root `COPYING` remains byte-identical.

@@ -93,10 +93,6 @@ void main() {
         ).sql,
         'select n.id from notes n where (true)',
       );
-      expect(
-        () => compileSearchSql(GroupNode([Search(TextSearch('unsupported'))])),
-        throwsA(isA<UnsupportedSearchSqlNodeException>()),
-      );
       for (final value in [-1, 8]) {
         expect(
           () => compileSearchSql(GroupNode([Search(Flag(value))])),
@@ -630,6 +626,135 @@ void main() {
       expect(normalized.arguments, [r'(?i)Café.*']);
     },
   );
+
+  test(
+    'unqualified text search matches Core SQL wildcard and note semantics',
+    () {
+      final plain = compileSearchSql(
+        GroupNode([Search(const TextSearch(r'foo*bar\*baz%'))]),
+        resultType: SearchResultType.notes,
+      );
+      expect(
+        plain.sql,
+        'select n.id from notes n where '
+        "((n.sfld like ?1 escape '\\' or n.flds like ?1 escape '\\'))",
+      );
+      expect(plain.arguments, [r'%foo%bar*baz\%%']);
+      expect(plain.requiredTable, RequiredTable.notes);
+
+      final folded = compileSearchSql(
+        GroupNode([Search(const TextSearch('Cafe\u0301'))]),
+        textSearchContext: const SearchSqlTextContext(
+          ignoreAccentsInSearch: true,
+        ),
+      );
+      expect(folded.arguments, ['%Cafe%']);
+      expect(
+        folded.sql,
+        'select c.id from cards c, notes n where c.nid=n.id and '
+        "((coalesce(process_text(cast(n.sfld as text), 1), n.sfld) like ?1 escape '\\' or "
+        "coalesce(process_text(n.flds, 1), n.flds) like ?1 escape '\\'))",
+      );
+
+      final normalized = compileSearchSql(
+        GroupNode([Search(const TextSearch('Cafe\u0301'))]),
+        normalizeNoteText: true,
+      );
+      expect(normalized.arguments, ['%Café%']);
+
+      final composed = compileSearchSql(
+        GroupNode([
+          Search(const Notetype('Basic')),
+          BooleanNode(NodeKind.and),
+          Search(const TextSearch('front')),
+        ]),
+        resultType: SearchResultType.notes,
+      );
+      expect(
+        composed.sql,
+        'select n.id from notes n where '
+        '(n.mid in (select id from notetypes where name = ?) and '
+        "(n.sfld like ?2 escape '\\' or n.flds like ?2 escape '\\'))",
+      );
+      expect(composed.arguments, ['Basic', '%front%']);
+    },
+  );
+
+  test('no-combining and cloze searches retain Core flags and field map', () {
+    final noCombining = compileSearchSql(
+      GroupNode([Search(const NoCombining('Café'))]),
+    );
+    expect(noCombining.arguments, ['%Cafe%']);
+    expect(
+      noCombining.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and '
+      "((coalesce(process_text(cast(n.sfld as text), 1), n.sfld) like ?1 escape '\\' or "
+      "coalesce(process_text(n.flds, 1), n.flds) like ?1 escape '\\'))",
+    );
+
+    final stripClozes = compileSearchSql(
+      GroupNode([Search(const StripClozes('café'))]),
+      textSearchContext: SearchSqlTextContext(
+        ignoreAccentsInSearch: true,
+        clozeNotetypeIds: [BigInt.from(10), BigInt.from(11)],
+        fieldsByNotetype: [
+          TextNotetypeSearchContext(
+            notetypeId: BigInt.from(10),
+            totalFieldsInNote: 3,
+            sortFieldExcluded: true,
+            fieldRangesToSearch: [
+              SearchableFieldRange(0, 1),
+              SearchableFieldRange(2, 3),
+            ],
+          ),
+        ],
+      ),
+    );
+    expect(stripClozes.arguments, ['%cafe%']);
+    expect(
+      stripClozes.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and '
+      '((n.mid = 10 or n.mid = 11) and '
+      "((n.mid = 10 and (coalesce(process_text(n.flds, 3), n.flds) like '' || ?1 || '\u001f%\u001f%' escape '\\' or "
+      "coalesce(process_text(n.flds, 3), n.flds) like '%\u001f%\u001f' || ?1 || '' escape '\\'))))",
+    );
+
+    final sortFieldVisible = compileSearchSql(
+      GroupNode([Search(const TextSearch('x'))]),
+      resultType: SearchResultType.notes,
+      textSearchContext: SearchSqlTextContext(
+        fieldsByNotetype: [
+          TextNotetypeSearchContext(
+            notetypeId: BigInt.from(22),
+            totalFieldsInNote: 2,
+            sortFieldExcluded: false,
+            fieldRangesToSearch: [SearchableFieldRange(1, 2)],
+          ),
+        ],
+      ),
+    );
+    expect(
+      sortFieldVisible.sql,
+      'select n.id from notes n where '
+      "(((n.mid = 22 and (n.flds like '%\u001f' || ?1 || '' escape '\\' or n.sfld like ?1 escape '\\'))))",
+    );
+
+    final noClozeNoteTypes = compileSearchSql(
+      GroupNode([Search(const StripClozes('x'))]),
+      resultType: SearchResultType.notes,
+      textSearchContext: const SearchSqlTextContext(),
+    );
+    expect(
+      noClozeNoteTypes.sql,
+      'select n.id from notes n where '
+      "(() and (coalesce(process_text(cast(n.sfld as text), 2), n.sfld) like ?1 escape '\\' or coalesce(process_text(n.flds, 2), n.flds) like ?1 escape '\\'))",
+    );
+
+    expect(
+      () => compileSearchSql(GroupNode([Search(const StripClozes('x'))])),
+      throwsArgumentError,
+    );
+  });
 
   test('tag special values and escaped wildcards match Core semantics', () {
     for (final tag in ['none', '*']) {

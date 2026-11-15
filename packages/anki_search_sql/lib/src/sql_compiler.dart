@@ -83,6 +83,45 @@ final class RegexFieldsByNotetype {
   final List<RegexNotetypeSearchContext> contexts;
 }
 
+/// One ordered source range of fields that can be searched. [end] is
+/// exclusive, matching Rust's `Range<u32>` in the pinned writer.
+final class SearchableFieldRange {
+  const SearchableFieldRange(this.start, this.end);
+
+  final int start;
+  final int end;
+}
+
+/// Searchable-field layout for one notetype, resolved by the host.
+final class TextNotetypeSearchContext {
+  const TextNotetypeSearchContext({
+    required this.notetypeId,
+    required this.totalFieldsInNote,
+    required this.sortFieldExcluded,
+    required this.fieldRangesToSearch,
+  });
+
+  final BigInt notetypeId;
+  final int totalFieldsInNote;
+  final bool sortFieldExcluded;
+  final List<SearchableFieldRange> fieldRangesToSearch;
+}
+
+/// Collection settings and host-resolved fields for unqualified text searches.
+/// A null [fieldsByNotetype] means Core found no excluded fields and falls back
+/// to searching both `sfld` and `flds` for every note.
+final class SearchSqlTextContext {
+  const SearchSqlTextContext({
+    this.ignoreAccentsInSearch = false,
+    this.fieldsByNotetype,
+    this.clozeNotetypeIds = const [],
+  });
+
+  final bool ignoreAccentsInSearch;
+  final List<TextNotetypeSearchContext>? fieldsByNotetype;
+  final List<BigInt> clozeNotetypeIds;
+}
+
 final class UnsupportedSearchSqlNodeException extends UnsupportedError {
   UnsupportedSearchSqlNodeException(Object node)
     : super('Search SQL subset does not support ${node.runtimeType}.');
@@ -94,7 +133,7 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// subset contains boolean structure, card/note/notetype ID predicates,
 /// notetype names, card template ordinals and names, tag predicates, deck names,
 /// IDs with or without children, presets, flags, state and day predicates,
-/// scalar, rated and FSRS properties, custom-data predicates, and
+/// scalar, rated and FSRS properties, custom-data predicates, regex and
 /// whole-collection queries. Other
 /// AST variants throw [UnsupportedSearchSqlNodeException]. Due state
 /// predicates require explicit [SearchSqlTiming] values; day predicates and
@@ -109,6 +148,9 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// source-derived notetype field visibility for regex searches; when omitted,
 /// the generic `n.flds` fallback is used. [normalizeNoteText] enables NFC
 /// normalization of regex patterns to match the collection configuration.
+/// [textSearchContext] provides collection settings and notetype search-field
+/// visibility for unqualified text predicates. When omitted, accent folding
+/// is disabled and all note fields are searched.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
@@ -119,6 +161,7 @@ CompiledSearchSql compileSearchSql(
   Map<String, List<BigInt>> deckIdsByPreset = const {},
   RegexFieldsByNotetype? regexFieldsByNotetype,
   bool normalizeNoteText = false,
+  SearchSqlTextContext? textSearchContext,
 }) {
   final itemTable = switch (resultType) {
     SearchResultType.cards => RequiredTable.cards,
@@ -151,7 +194,7 @@ CompiledSearchSql compileSearchSql(
   final arguments = <String>[];
   return CompiledSearchSql(
     sql:
-        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText)}',
+        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext)}',
     arguments: arguments,
     requiredTable: table,
   );
@@ -180,6 +223,9 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   NotetypeIdSearch() ||
   Notetype() ||
   RegexSearch() ||
+  TextSearch() ||
+  NoCombining() ||
+  StripClozes() ||
   Tag() ||
   EditedInDays() => RequiredTable.notes,
   Rated() ||
@@ -211,13 +257,14 @@ String _writeNode(
   Map<String, List<BigInt>> deckIdsByPreset,
   RegexFieldsByNotetype? regexFieldsByNotetype,
   bool normalizeNoteText,
+  SearchSqlTextContext? textSearchContext,
 ) => switch (node) {
   BooleanNode(kind: NodeKind.and) => ' and ',
   BooleanNode(kind: NodeKind.or) => ' or ',
   NegatedNode(:final node) =>
-    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText)}',
+    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext)}',
   GroupNode(:final nodes) =>
-    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText)).join()})',
+    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext)).join()})',
   Search(value: final search) => _writeSearch(
     search,
     noteIdColumn,
@@ -228,6 +275,7 @@ String _writeNode(
     deckIdsByPreset,
     regexFieldsByNotetype,
     normalizeNoteText,
+    textSearchContext,
   ),
 };
 
@@ -241,6 +289,7 @@ String _writeSearch(
   Map<String, List<BigInt>> deckIdsByPreset,
   RegexFieldsByNotetype? regexFieldsByNotetype,
   bool normalizeNoteText,
+  SearchSqlTextContext? textSearchContext,
 ) => switch (node) {
   CardIds(:final ids) => 'c.id in (${_validateIdList(ids)})',
   NoteIds(:final ids) => '$noteIdColumn in (${_validateIdList(ids)})',
@@ -258,6 +307,29 @@ String _writeSearch(
     arguments,
     regexFieldsByNotetype,
     normalizeNoteText,
+  ),
+  TextSearch(:final text) => _writeUnqualified(
+    text,
+    arguments,
+    textSearchContext,
+    normalizeNoteText: normalizeNoteText,
+  ),
+  NoCombining(:final text) => _writeUnqualified(
+    text,
+    arguments,
+    textSearchContext,
+    noCombining: true,
+    normalizeNoteText: normalizeNoteText,
+  ),
+  StripClozes(:final text) => _writeUnqualified(
+    text,
+    arguments,
+    textSearchContext ??
+        (throw ArgumentError(
+          'StripClozes requires explicit SearchSqlTextContext values.',
+        )),
+    stripClozes: true,
+    normalizeNoteText: normalizeNoteText,
   ),
   CardTemplate(kind: final kind) => _writeTemplate(kind, arguments),
   DeckIdsWithoutChildren(:final ids) =>
@@ -829,6 +901,62 @@ String _writeRegex(
   return '(${clauses.join(' or ')})';
 }
 
+String _writeUnqualified(
+  String rawText,
+  List<String> arguments,
+  SearchSqlTextContext? context, {
+  bool noCombining = false,
+  bool stripClozes = false,
+  bool normalizeNoteText = false,
+}) {
+  var text = normalizeNoteText ? unorm.nfc(rawText) : rawText;
+  text = _toSql(text);
+  if (noCombining || context?.ignoreAccentsInSearch == true) {
+    text = _withoutCombining(text);
+  }
+  arguments.add('%$text%');
+  final argumentIndex = arguments.length;
+
+  final flags =
+      (noCombining || context?.ignoreAccentsInSearch == true ? 1 : 0) |
+      (stripClozes ? 2 : 0);
+  final sfldExpression = flags == 0
+      ? 'n.sfld'
+      : 'coalesce(process_text(cast(n.sfld as text), $flags), n.sfld)';
+  final fieldsExpression = flags == 0
+      ? 'n.flds'
+      : 'coalesce(process_text(n.flds, $flags), n.flds)';
+
+  final clozeClause = stripClozes
+      ? '(${(context?.clozeNotetypeIds ?? const <BigInt>[]).map((id) => 'n.mid = $id').join(' or ')}) and '
+      : '';
+  final fieldContexts = context?.fieldsByNotetype;
+  final searchClause = fieldContexts == null
+      ? "($sfldExpression like ?$argumentIndex escape '\\' or "
+            "$fieldsExpression like ?$argumentIndex escape '\\')"
+      : '(${fieldContexts.map((fieldContext) {
+          final fieldClause = <String>[];
+          for (final range in fieldContext.fieldRangesToSearch) {
+            if (range.start < 0 || range.end <= range.start || range.end > fieldContext.totalFieldsInNote) {
+              throw RangeError('Searchable field ranges must be non-empty and within the note field count.');
+            }
+            final pattern = List<String>.generate(fieldContext.totalFieldsInNote, (index) {
+              if (index == range.start) return "' || ?$argumentIndex || '";
+              if (range.start < index && index < range.end) return '';
+              return '%';
+            }).join('\u001f');
+            fieldClause.add("$fieldsExpression like '$pattern' escape '\\'");
+          }
+          if (!fieldContext.sortFieldExcluded) {
+            fieldClause.add("$sfldExpression like ?$argumentIndex escape '\\'");
+          }
+          return '(n.mid = ${fieldContext.notetypeId} and '
+              '(${fieldClause.join(' or ')}))';
+        }).join(' or ')})';
+
+  return '$clozeClause$searchClause';
+}
+
 const _noCombiningReplacements = <String, String>{
   '€': 'E',
   'Æ': 'AE',
@@ -889,6 +1017,19 @@ final RegExp _escapedTextPattern = RegExp(r'\\(.)');
 
 String _toText(String text) =>
     text.replaceAllMapped(_escapedTextPattern, (match) => match[1]!);
+
+final RegExp _sqlWildcardPattern = RegExp(r'\\[\\*]|[*%]');
+
+String _toSql(String text) => text.replaceAllMapped(
+  _sqlWildcardPattern,
+  (match) => switch (match[0]) {
+    r'\\' => r'\\',
+    r'\*' => '*',
+    '*' => '%',
+    '%' => r'\%',
+    _ => throw StateError('Unexpected SQL wildcard match.'),
+  },
+);
 
 String _validateIdList(String ids) {
   if (!_idListPattern.hasMatch(ids)) {

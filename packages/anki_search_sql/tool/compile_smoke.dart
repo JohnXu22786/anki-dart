@@ -66,6 +66,24 @@ void main() {
       '${regexQuery.sql}; ${regexQuery.arguments}',
     );
   }
+  final textQuery = compileSearchSql(
+    GroupNode([Search(const TextSearch('front*back'))]),
+    resultType: SearchResultType.notes,
+    textSearchContext: SearchSqlTextContext(
+      fieldsByNotetype: [
+        TextNotetypeSearchContext(
+          notetypeId: BigInt.parse('9007199254740993'),
+          totalFieldsInNote: 2,
+          sortFieldExcluded: true,
+          fieldRangesToSearch: const [SearchableFieldRange(0, 1)],
+        ),
+      ],
+    ),
+  );
+  if (!textQuery.sql.contains('n.mid = 9007199254740993') ||
+      textQuery.arguments.single != '%front%back%') {
+    throw StateError('Text search precision/JS smoke test failed');
+  }
   final largeDeckId = Int64.parseInt('9223372036854775807');
   final largeDeckQuery = compileSearchSql(
     GroupNode([Search(DeckIdWithChildren(largeDeckId))]),

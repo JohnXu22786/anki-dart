@@ -436,4 +436,172 @@ void main() {
       );
     }
   });
+
+  test('added and edited day predicates use next-day cutoff units', () {
+    final timing = SearchSqlTiming(
+      daysElapsed: 0,
+      now: BigInt.zero,
+      learnAheadSecs: 0,
+      nextDayAt: BigInt.from(1700000000),
+    );
+    final added = compileSearchSql(
+      GroupNode([Search(const AddedInDays(2))]),
+      timing: timing,
+    );
+    expect(added.sql, 'select c.id from cards c where (c.id > 1699827200000)');
+    expect(added.requiredTable, RequiredTable.cards);
+    expect(added.arguments, isEmpty);
+
+    final addedToNotes = compileSearchSql(
+      GroupNode([Search(const AddedInDays(2))]),
+      resultType: SearchResultType.notes,
+      timing: timing,
+    );
+    expect(
+      addedToNotes.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(c.id > 1699827200000)',
+    );
+    expect(addedToNotes.requiredTable, RequiredTable.cardsAndNotes);
+
+    final edited = compileSearchSql(
+      GroupNode([Search(const EditedInDays(2))]),
+      resultType: SearchResultType.notes,
+      timing: timing,
+    );
+    expect(edited.sql, 'select n.id from notes n where (n.mod > 1699827200)');
+    expect(edited.requiredTable, RequiredTable.notes);
+    expect(edited.arguments, isEmpty);
+
+    final maxDays = compileSearchSql(
+      GroupNode([Search(const AddedInDays(4294967295))]),
+      timing: timing,
+    );
+    expect(
+      maxDays.sql,
+      'select c.id from cards c where (c.id > -371083474288000000)',
+    );
+  });
+
+  test(
+    'introduced day predicate excludes manual reschedules in correlated SQL',
+    () {
+      final compiled = compileSearchSql(
+        GroupNode([Search(const IntroducedInDays(5))]),
+        timing: SearchSqlTiming(
+          daysElapsed: 0,
+          now: BigInt.zero,
+          learnAheadSecs: 0,
+          nextDayAt: BigInt.from(1700000000),
+        ),
+      );
+      expect(
+        compiled.sql,
+        'select c.id from cards c where '
+        '(((SELECT coalesce(min(id) > 1699568000000, false) FROM revlog '
+        'WHERE cid = c.id AND ease != 0) AND c.id IN '
+        '(SELECT cid FROM revlog WHERE id > 1699568000000)))',
+      );
+      expect(compiled.requiredTable, RequiredTable.cards);
+      expect(compiled.arguments, isEmpty);
+    },
+  );
+
+  test('day predicates compose and validate u32 and signed 64-bit cutoffs', () {
+    final timing = SearchSqlTiming(
+      daysElapsed: 0,
+      now: BigInt.zero,
+      learnAheadSecs: 0,
+      nextDayAt: BigInt.from(1700000000),
+    );
+    final nested = compileSearchSql(
+      GroupNode([
+        Search(Notetype('Basic*')),
+        BooleanNode(NodeKind.and),
+        GroupNode([
+          Search(const AddedInDays(0)),
+          BooleanNode(NodeKind.or),
+          Search(const EditedInDays(1)),
+        ]),
+        BooleanNode(NodeKind.and),
+        Search(Notetype('Cloze*')),
+      ]),
+      resultType: SearchResultType.notes,
+      timing: timing,
+    );
+    expect(
+      nested.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(n.mid in (select id from notetypes where name regexp ?) and '
+      '(c.id > 1700000000000 or n.mod > 1699913600) and '
+      'n.mid in (select id from notetypes where name regexp ?))',
+    );
+    expect(nested.arguments, [r'(?i)^Basic.*$', r'(?i)^Cloze.*$']);
+    expect(nested.requiredTable, RequiredTable.cardsAndNotes);
+
+    for (final days in [-1, 4294967296]) {
+      for (final node in <SearchNode>[
+        AddedInDays(days),
+        EditedInDays(days),
+        IntroducedInDays(days),
+      ]) {
+        expect(
+          () => compileSearchSql(GroupNode([Search(node)]), timing: timing),
+          throwsRangeError,
+          reason: '${node.runtimeType}:$days',
+        );
+      }
+    }
+    expect(
+      () => compileSearchSql(
+        GroupNode([Search(const AddedInDays(1))]),
+        timing: SearchSqlTiming(
+          daysElapsed: 0,
+          now: BigInt.zero,
+          learnAheadSecs: 0,
+        ),
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => compileSearchSql(GroupNode([Search(const EditedInDays(1))])),
+      throwsArgumentError,
+    );
+    expect(
+      () => compileSearchSql(
+        GroupNode([Search(const EditedInDays(0))]),
+        timing: SearchSqlTiming(
+          daysElapsed: 0,
+          now: BigInt.zero,
+          learnAheadSecs: 0,
+          nextDayAt: BigInt.parse('9223372036854775808'),
+        ),
+      ),
+      throwsRangeError,
+    );
+    expect(
+      () => compileSearchSql(
+        GroupNode([Search(const AddedInDays(0))]),
+        timing: SearchSqlTiming(
+          daysElapsed: 0,
+          now: BigInt.zero,
+          learnAheadSecs: 0,
+          nextDayAt: BigInt.parse('9223372036854775807'),
+        ),
+      ),
+      throwsRangeError,
+    );
+    expect(
+      () => compileSearchSql(
+        GroupNode([Search(const EditedInDays(1))]),
+        timing: SearchSqlTiming(
+          daysElapsed: 0,
+          now: BigInt.zero,
+          learnAheadSecs: 0,
+          nextDayAt: BigInt.parse('-9223372036854775808'),
+        ),
+      ),
+      throwsRangeError,
+    );
+  });
 }

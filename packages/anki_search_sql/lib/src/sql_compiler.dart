@@ -7,6 +7,9 @@ enum SearchResultType { cards, notes }
 enum RequiredTable { notes, cards, cardsAndNotes, cardsOrNotes }
 
 final RegExp _idListPattern = RegExp(r'^(\p{Nd}+,)*\p{Nd}+$', unicode: true);
+final BigInt _minI64 = BigInt.parse('-9223372036854775808');
+final BigInt _maxI64 = BigInt.parse('9223372036854775807');
+final BigInt _maxU32 = BigInt.parse('4294967295');
 
 extension RequiredTableCombination on RequiredTable {
   RequiredTable combine(RequiredTable other) => switch ((this, other)) {
@@ -32,22 +35,25 @@ final class CompiledSearchSql {
   final RequiredTable requiredTable;
 }
 
-/// Timing values needed to compile a `state:due` predicate deterministically.
+/// Timing values needed to compile time-dependent predicates deterministically.
 ///
 /// Values use the same units and ranges as pinned Anki Core: [daysElapsed] is
 /// the collection day number, [now] is Unix seconds, and [learnAheadSecs] is
-/// the configured learning cutoff in seconds. The state SQL predicate does not
-/// use Core's `next_day_at` value.
+/// the configured learning cutoff in seconds. [nextDayAt], when supplied, is
+/// the collection's next-day rollover timestamp in Unix seconds. Day-based
+/// predicates require [nextDayAt]; due-state predicates do not.
 final class SearchSqlTiming {
   SearchSqlTiming({
     required this.daysElapsed,
     required this.now,
     required this.learnAheadSecs,
+    this.nextDayAt,
   });
 
   final int daysElapsed;
   final BigInt now;
   final int learnAheadSecs;
+  final BigInt? nextDayAt;
 }
 
 final class UnsupportedSearchSqlNodeException extends UnsupportedError {
@@ -60,11 +66,12 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// This is an incremental compiler, not complete search execution. Its current
 /// subset contains boolean structure, card/note/notetype ID predicates,
 /// notetype names, card template ordinals and names, tag predicates, deck IDs
-/// without children, flags, state predicates, and whole-collection queries.
-/// Other AST variants throw [UnsupportedSearchSqlNodeException]. Due state
-/// predicates require explicit [SearchSqlTiming] values. ID-list nodes must
-/// use comma-separated decimal digits accepted by the shared parser; their
-/// exact spelling is preserved.
+/// without children, flags, state and day predicates, and whole-collection
+/// queries. Other AST variants throw [UnsupportedSearchSqlNodeException]. Due
+/// state predicates require explicit [SearchSqlTiming] values; day predicates
+/// additionally require [SearchSqlTiming.nextDayAt]. ID-list nodes must use
+/// comma-separated decimal digits accepted by the shared parser; their exact
+/// spelling is preserved.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
@@ -121,8 +128,13 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   CardIds() ||
   DeckIdsWithoutChildren() ||
   Flag() ||
-  State() => RequiredTable.cards,
-  NotetypeIdSearch() || Notetype() || Tag() => RequiredTable.notes,
+  State() ||
+  AddedInDays() ||
+  IntroducedInDays() => RequiredTable.cards,
+  NotetypeIdSearch() ||
+  Notetype() ||
+  Tag() ||
+  EditedInDays() => RequiredTable.notes,
   CardTemplate() => RequiredTable.cardsAndNotes,
   NoteIds() || WholeCollection() => RequiredTable.cardsOrNotes,
   _ => throw UnsupportedSearchSqlNodeException(node),
@@ -165,6 +177,11 @@ String _writeSearch(
         'c.odid in (${_validateIdList(ids)})))',
   Flag(:final value) => '(c.flags & 7) == ${_validateFlag(value)}',
   State(:final kind) => _writeState(kind, timing),
+  AddedInDays(:final days) =>
+    'c.id > ${_previousDayCutoffMillis(days, timing)}',
+  EditedInDays(:final days) =>
+    'n.mod > ${_previousDayCutoffSeconds(days, timing)}',
+  IntroducedInDays(:final days) => _writeIntroduced(days, timing),
   WholeCollection() => 'true',
   _ => throw UnsupportedSearchSqlNodeException(node),
 };
@@ -208,6 +225,57 @@ SearchSqlTiming _requireTiming(SearchSqlTiming? timing) {
     throw ArgumentError('state:due requires explicit SearchSqlTiming values.');
   }
   return timing;
+}
+
+String _writeIntroduced(int days, SearchSqlTiming? timing) {
+  final cutoff = _previousDayCutoffMillis(days, timing);
+  return '((SELECT coalesce(min(id) > $cutoff, false) FROM revlog '
+      'WHERE cid = c.id AND ease != 0) AND c.id IN '
+      '(SELECT cid FROM revlog WHERE id > $cutoff))';
+}
+
+BigInt _previousDayCutoffSeconds(int days, SearchSqlTiming? timing) {
+  _validateDays(days);
+  final nextDayAt = _requireNextDayAt(timing);
+  if (nextDayAt < _minI64 || nextDayAt > _maxI64) {
+    throw RangeError(
+      'nextDayAt must be a signed 64-bit Unix timestamp in seconds.',
+    );
+  }
+  final cutoff = nextDayAt - BigInt.from(days) * BigInt.from(86400);
+  if (cutoff < _minI64 || cutoff > _maxI64) {
+    throw RangeError('previous-day cutoff exceeds the signed 64-bit range.');
+  }
+  return cutoff;
+}
+
+BigInt _previousDayCutoffMillis(int days, SearchSqlTiming? timing) {
+  final cutoff = _previousDayCutoffSeconds(days, timing) * BigInt.from(1000);
+  if (cutoff < _minI64 || cutoff > _maxI64) {
+    throw RangeError(
+      'previous-day cutoff milliseconds exceed the signed 64-bit range.',
+    );
+  }
+  return cutoff;
+}
+
+void _validateDays(int days) {
+  if (days < 0 || BigInt.from(days) > _maxU32) {
+    throw RangeError.range(days, 0, 0xffffffff, 'days');
+  }
+}
+
+BigInt _requireNextDayAt(SearchSqlTiming? timing) {
+  if (timing == null) {
+    throw ArgumentError(
+      'Day predicates require explicit SearchSqlTiming values.',
+    );
+  }
+  final nextDayAt = timing.nextDayAt;
+  if (nextDayAt == null) {
+    throw ArgumentError('Day predicates require SearchSqlTiming.nextDayAt.');
+  }
+  return nextDayAt;
 }
 
 String _writeNotetype(String name, List<String> arguments) {

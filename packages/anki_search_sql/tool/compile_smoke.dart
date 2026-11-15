@@ -41,4 +41,17 @@ void main() {
           '(c.queue in (1,4) and c.due <= 1700000030)))') {
     throw StateError('Search due state JavaScript smoke test failed');
   }
+  final addedQuery = compileSearchSql(
+    GroupNode([Search(const AddedInDays(0))]),
+    timing: SearchSqlTiming(
+      daysElapsed: 0,
+      now: BigInt.zero,
+      learnAheadSecs: 0,
+      nextDayAt: BigInt.parse('9007199254741'),
+    ),
+  );
+  if (addedQuery.sql !=
+      'select c.id from cards c where (c.id > 9007199254741000)') {
+    throw StateError('Added-day SQL JavaScript precision smoke test failed');
+  }
 }

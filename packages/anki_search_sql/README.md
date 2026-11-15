@@ -103,6 +103,10 @@ sort SQL, required-table choices, reverse behavior, and temporary `sort_order`
 preparation SQL. Run any returned preparation statements on the same connection
 before the compiled SELECT. Due and retrievability card sorting require explicit
 `SearchSqlTiming`; custom sort clauses are passed through exactly as Core does.
+`executeSearchSqlPlan` applies these statements sequentially through a
+platform-neutral host interface, then queries IDs with the compiler's ordered
+arguments. The host keeps one connection for both operations and provides a
+lossless database-integer-to-`BigInt` mapping on JavaScript targets.
 State predicates require the cards table. A
 `state:due`, `rated:`, rated properties, and due properties also require explicit
 `SearchSqlTiming` values when

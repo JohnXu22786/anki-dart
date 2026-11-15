@@ -17,13 +17,13 @@ against the repository's AnkiDroid 2.25.3 baseline at commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. Schema and migration SQL remain in
 the separately licensed `anki_collection_schema` package.
 
-The collection connection also registers Core's deterministic
-`field_at_index(flds, index)` SQLite function from `rslib/src/storage/sqlite.rs`
-for first-field note lookup and `process_text(text, flags)` from the same source.
-The text function adapts `without_combining` and `strip_clozes` from
-`rslib/src/text.rs` and `rslib/src/cloze.rs`. Other Core SQLite functions and
-collations remain outside this adapter until their own source-derived units are
-completed.
+The collection connection registers Core's deterministic
+`field_at_index(flds, index)`, `process_text(text, flags)`, and variadic
+`fnvhash(i64...)` SQLite functions from `rslib/src/storage/sqlite.rs`.
+`process_text` adapts `without_combining` and `strip_clozes` from
+`rslib/src/text.rs` and `rslib/src/cloze.rs`; `fnvhash` follows the pinned
+`fnv` 1.0.7 hasher. Other Core SQLite functions and collations remain outside
+this adapter until their own source-derived units are completed.
 
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently

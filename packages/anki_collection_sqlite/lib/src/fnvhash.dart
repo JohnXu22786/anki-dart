@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import 'dart:typed_data';
+
 import 'package:sqlite3/common.dart';
 
 final _fnvOffsetBasis = BigInt.parse('14695981039346656037');
@@ -23,12 +25,15 @@ void registerFnvHashFunction(CommonDatabase database) {
 ///
 /// Each value is fed as its little-endian two's-complement 8-byte sequence.
 /// The unsigned FNV-1a result is returned as the corresponding signed i64.
-BigInt fnvHashSqlArguments(List<Object?> arguments) {
+BigInt fnvHashSqlArguments(List<Object?> arguments, {Endian? endian}) {
+  final byteOrder = endian ?? Endian.host;
   var hash = _fnvOffsetBasis;
   for (var index = 0; index < arguments.length; index++) {
     final value = _signedI64(arguments[index], index);
     for (var byteIndex = 0; byteIndex < 8; byteIndex++) {
-      final byte = (value >> (byteIndex * 8)) & BigInt.from(0xff);
+      final shift =
+          (byteOrder == Endian.little ? byteIndex : 7 - byteIndex) * 8;
+      final byte = (value >> shift) & BigInt.from(0xff);
       hash = ((hash ^ byte) * _fnvPrime) & _mask64;
     }
   }

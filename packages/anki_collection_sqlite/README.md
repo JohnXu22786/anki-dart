@@ -82,8 +82,9 @@ legacy-file-format setting, and WAL. It maintains the source's bounded
 uses through its cached-prepare API. Schema probes, integrity checks, rollback,
 and SQL batches use direct query/execute APIs in the source too, so the adapter
 does not retain those statements. Set `androidTempStore` on Android to use
-memory for temporary tables. The adapter currently implements the Core
-`field_at_index` and `process_text` scalar functions; other Anki scalar functions and collations,
+memory for temporary tables. The adapter implements Core's
+`field_at_index`, `process_text`, and `fnvhash` scalar functions; other Anki
+scalar functions and collations,
 note mutations, undo/redo, media indexing, backup/restore, synchronization, and
 encryption remain outside this package's current scope.
 

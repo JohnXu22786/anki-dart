@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import 'dart:typed_data';
+
 import 'package:anki_collection_sqlite/src/fnvhash.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
@@ -11,6 +13,14 @@ void main() {
     expect(fnvHashSqlArguments([-1]), BigInt.parse('-8289690350564177859'));
     expect(fnvHashSqlArguments([1, 2]), BigInt.parse('8581494755304202342'));
     expect(fnvHashSqlArguments([2, 1]), BigInt.parse('513837244993915590'));
+    expect(
+      fnvHashSqlArguments([1], endian: Endian.big),
+      BigInt.parse('-6284782960179005422'),
+    );
+    expect(
+      fnvHashSqlArguments([1, 2], endian: Endian.big),
+      BigInt.parse('-813523861073794324'),
+    );
     expect(
       fnvHashSqlArguments([BigInt.parse('9223372036854775807')]),
       BigInt.parse('-8289549613075766851'),

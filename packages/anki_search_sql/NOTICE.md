@@ -22,6 +22,7 @@ unqualified text, no-combining, and cloze-stripped searches with host-supplied
 field ranges, accent configuration, and cloze notetype IDs,
 word-boundary searches using Core wildcard-to-regex conversion and accent
 handling,
+duplicate-search SQL using ordered host-resolved note IDs,
 field-qualified searches in normal, regex, and no-combining modes using host
 notetype field snapshots and Core-compatible field matching,
 state predicates using Core's `CardType` and `CardQueue` numeric values, day
@@ -38,6 +39,6 @@ FSRS variable calls, float32 SQL spelling, and float32 Difficulty transform.
 Retrievability preserves Core's timing argument order, New-card false branch,
 and original-due fallback. The custom-data predicates preserve Core's SQL
 clauses, float32 value spelling, and bound key/value argument order. It uses no
-platform-specific database package and does not implement duplicate detection,
-the FSRS SQL functions, or search execution. The repository root `COPYING`
-file remains unchanged.
+platform-specific database package and does not perform the host duplicate
+lookup, implement FSRS SQL functions, or execute search SQL. The repository
+root `COPYING` file remains unchanged.

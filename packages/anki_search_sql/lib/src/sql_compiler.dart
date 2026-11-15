@@ -151,6 +151,30 @@ final class SearchSqlFieldContext {
   final List<SearchSqlNotetypeFields> notetypes;
 }
 
+/// Note IDs found by the host's Core-compatible duplicate lookup for one
+/// notetype and raw AST query text.
+final class SearchSqlDuplicateMatch {
+  const SearchSqlDuplicateMatch({
+    required this.notetypeId,
+    required this.queryText,
+    required this.noteIds,
+  });
+
+  final BigInt notetypeId;
+  final String queryText;
+  final List<BigInt> noteIds;
+}
+
+/// Duplicate-search results resolved by the host against one collection
+/// snapshot. Query text is the exact raw AST text; the host applies Core's NFC,
+/// HTML stripping, checksum lookup, and full text comparison before supplying
+/// the ordered note IDs.
+final class SearchSqlDuplicatesContext {
+  const SearchSqlDuplicatesContext(this.matches);
+
+  final List<SearchSqlDuplicateMatch> matches;
+}
+
 final class UnsupportedSearchSqlNodeException extends UnsupportedError {
   UnsupportedSearchSqlNodeException(Object node)
     : super('Search SQL subset does not support ${node.runtimeType}.');
@@ -182,6 +206,9 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// is disabled and all note fields are searched.
 /// [fieldSearchContext] supplies ordered notetype fields for Dart to resolve
 /// field-qualified query names and Anki globs.
+/// [duplicatesContext] supplies host-resolved note IDs for duplicate searches.
+/// It is required when the AST contains a `Duplicates` node; a missing match
+/// within an explicit context emits Core's empty `n.id in ()` list.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
@@ -194,6 +221,7 @@ CompiledSearchSql compileSearchSql(
   bool normalizeNoteText = false,
   SearchSqlTextContext? textSearchContext,
   SearchSqlFieldContext? fieldSearchContext,
+  SearchSqlDuplicatesContext? duplicatesContext,
 }) {
   final itemTable = switch (resultType) {
     SearchResultType.cards => RequiredTable.cards,
@@ -226,7 +254,7 @@ CompiledSearchSql compileSearchSql(
   final arguments = <String>[];
   return CompiledSearchSql(
     sql:
-        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext, fieldSearchContext)}',
+        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext, fieldSearchContext, duplicatesContext)}',
     arguments: arguments,
     requiredTable: table,
   );
@@ -255,6 +283,7 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   NotetypeIdSearch() ||
   Notetype() ||
   RegexSearch() ||
+  Duplicates() ||
   WordBoundary() ||
   SingleFieldSearch() ||
   TextSearch() ||
@@ -278,7 +307,6 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   Property(kind: CustomDataStringProperty()) => RequiredTable.cards,
   CardTemplate() => RequiredTable.cardsAndNotes,
   NoteIds() || WholeCollection() => RequiredTable.cardsOrNotes,
-  _ => throw UnsupportedSearchSqlNodeException(node),
 };
 
 String _writeNode(
@@ -293,13 +321,14 @@ String _writeNode(
   bool normalizeNoteText,
   SearchSqlTextContext? textSearchContext,
   SearchSqlFieldContext? fieldSearchContext,
+  SearchSqlDuplicatesContext? duplicatesContext,
 ) => switch (node) {
   BooleanNode(kind: NodeKind.and) => ' and ',
   BooleanNode(kind: NodeKind.or) => ' or ',
   NegatedNode(:final node) =>
-    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext, fieldSearchContext)}',
+    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext, fieldSearchContext, duplicatesContext)}',
   GroupNode(:final nodes) =>
-    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext, fieldSearchContext)).join()})',
+    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext, fieldSearchContext, duplicatesContext)).join()})',
   Search(value: final search) => _writeSearch(
     search,
     noteIdColumn,
@@ -312,6 +341,7 @@ String _writeNode(
     normalizeNoteText,
     textSearchContext,
     fieldSearchContext,
+    duplicatesContext,
   ),
 };
 
@@ -327,6 +357,7 @@ String _writeSearch(
   bool normalizeNoteText,
   SearchSqlTextContext? textSearchContext,
   SearchSqlFieldContext? fieldSearchContext,
+  SearchSqlDuplicatesContext? duplicatesContext,
 ) => switch (node) {
   CardIds(:final ids) => 'c.id in (${_validateIdList(ids)})',
   NoteIds(:final ids) => '$noteIdColumn in (${_validateIdList(ids)})',
@@ -337,6 +368,11 @@ String _writeSearch(
   ),
   Preset(:final name) => _writeDeckPreset(name, deckIdsByPreset),
   NotetypeIdSearch(:final id) => 'n.mid = $id',
+  Duplicates(:final notetypeId, :final text) => _writeDuplicates(
+    BigInt.parse(notetypeId.toString()),
+    text,
+    duplicatesContext,
+  ),
   Notetype(:final name) => _writeNotetype(name, arguments),
   Tag(:final tag, :final mode) => _writeTag(tag, mode, arguments),
   SingleFieldSearch(:final field, :final text, :final mode) =>
@@ -438,7 +474,6 @@ String _writeSearch(
   Property(:final operator, kind: RetrievabilityProperty(:final value)) =>
     _writeRetrievabilityProperty(operator, value, timing),
   WholeCollection() => 'true',
-  _ => throw UnsupportedSearchSqlNodeException(node),
 };
 
 const _propertyOperators = {'<=', '>=', '!=', '=', '<', '>'};
@@ -818,6 +853,24 @@ String _writeNotetype(String name, List<String> arguments) {
   }
   arguments.add(_toText(normalized));
   return 'n.mid in (select id from notetypes where name = ?)';
+}
+
+String _writeDuplicates(
+  BigInt notetypeId,
+  String queryText,
+  SearchSqlDuplicatesContext? context,
+) {
+  if (context == null) {
+    throw ArgumentError(
+      'Duplicates requires explicit SearchSqlDuplicatesContext values.',
+    );
+  }
+  final matches = context.matches.where(
+    (entry) => entry.notetypeId == notetypeId && entry.queryText == queryText,
+  );
+  final ids = matches.isEmpty ? const <BigInt>[] : matches.first.noteIds;
+  final checkedIds = ids.map((id) => _validateI64(id, 'duplicate note ID'));
+  return 'n.id in (${checkedIds.join(',')})';
 }
 
 String _writeDeck(

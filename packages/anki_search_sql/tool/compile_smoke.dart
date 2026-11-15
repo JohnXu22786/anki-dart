@@ -75,6 +75,32 @@ void main() {
       wordBoundaryQuery.arguments.single != r'(?i)\bword.*end\b') {
     throw StateError('Word-boundary JavaScript smoke test failed');
   }
+  final duplicatesQuery = compileSearchSql(
+    GroupNode([
+      Search(
+        Duplicates(
+          notetypeId: Int64.parseInt('9007199254740993'),
+          text: '<b>same</b>',
+        ),
+      ),
+    ]),
+    resultType: SearchResultType.notes,
+    duplicatesContext: SearchSqlDuplicatesContext([
+      SearchSqlDuplicateMatch(
+        notetypeId: BigInt.parse('9007199254740993'),
+        queryText: '<b>same</b>',
+        noteIds: [
+          BigInt.parse('9007199254740993'),
+          BigInt.parse('9223372036854775807'),
+        ],
+      ),
+    ]),
+  );
+  if (duplicatesQuery.sql !=
+      'select n.id from notes n where '
+          '(n.id in (9007199254740993,9223372036854775807))') {
+    throw StateError('Duplicate search JavaScript precision smoke test failed');
+  }
   final textQuery = compileSearchSql(
     GroupNode([Search(const TextSearch('front*back'))]),
     resultType: SearchResultType.notes,

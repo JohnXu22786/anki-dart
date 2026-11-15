@@ -59,7 +59,7 @@ grammar, and their exact spelling is preserved without numeric conversion.
 The compiler is pure Dart, deterministic, and platform-neutral. It does not
 execute SQL. The compiler preserves the upstream Unicode-decimal ID spelling
 in generated SQL; SQLite may reject such a query, as in the pinned writer.
-Duplicate detection, remaining glob predicates, sorting, browser tables,
+Host duplicate lookup, remaining glob predicates, sorting, browser tables,
 database execution, and UI remain outside this package; this subset is not
 complete Anki search execution. Custom-data and state predicates
 require the cards table, and the host must register `extract_custom_data()`.
@@ -92,6 +92,11 @@ case-insensitive names, Anki glob patterns, and source field ranges in Dart;
 the host does not need to implement field-search SQL or wildcard matching.
 Omitting this context for a non-special field name is rejected. The special
 field names `*`, `_*`, and `*_` do not require the snapshot.
+`Duplicates` accepts `SearchSqlDuplicatesContext` with ordered note IDs from the
+host's collection snapshot. The host follows Core's NFC setting, HTML stripping
+with media filename preservation, checksum query, and full stripped-text
+comparison; the compiler requires the context and emits the matching `n.id in`
+list, including Core's empty `()` list when no result is supplied.
 State predicates require the cards table. A
 `state:due`, `rated:`, rated properties, and due properties also require explicit
 `SearchSqlTiming` values when

@@ -7,9 +7,10 @@ conversions, and default configuration assets from `rslib/src/notetype/mod.rs`,
 `rslib/src/notetype/service.rs`, `rslib/src/notetype/fields.rs`,
 `rslib/src/notetype/templates.rs`, `rslib/src/notetype/styling.css`,
 `rslib/src/notetype/cloze_styling.css`, `rslib/src/notetype/header.tex`,
-`rslib/src/notetype/stock.rs`, `rslib/src/image_occlusion/notetype.rs`, and
-`rslib/src/image_occlusion/notetype.css`; Deck and DeckConfig values and
-conversions from `rslib/src/decks/mod.rs`, `rslib/src/decks/name.rs`,
+`rslib/src/notetype/stock.rs`,
+`rslib/src/image_occlusion/notetype.rs`, and
+`rslib/src/image_occlusion/notetype.css`; Deck and DeckConfig values and conversions
+from `rslib/src/decks/mod.rs`, `rslib/src/decks/name.rs`,
 `rslib/src/decks/service.rs`, `rslib/src/deckconfig/mod.rs`, and
 `rslib/src/deckconfig/service.rs`; media metadata values from
 `rslib/src/media/mod.rs` and
@@ -38,7 +39,7 @@ pinned notetype sources. Name uniqueness uses full Unicode 12.1.0 case folding,
 matching the generated table embedded by pinned `unicase 2.6.0`, from
 `Unicode 12.1.0 CaseFolding.txt`; its digest is recorded in
 `UNICODE_CASEFOLD.sha256` and the data is covered by the repository's Unicode
-License V3 text at `LICENSES/Unicode-License-V3.txt`. Deck and DeckConfig models
-include stored values, conversions, and pinned defaults. Media metadata and
-collection configuration values are also included. This package does not
+License V3 text at `LICENSES/Unicode-License-V3.txt`. Deck and DeckConfig
+models include stored values, conversions, and pinned defaults. Media metadata
+and collection configuration values are also included. This package does not
 change the root `COPYING` file.

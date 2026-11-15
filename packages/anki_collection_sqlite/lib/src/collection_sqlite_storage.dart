@@ -38,9 +38,9 @@ final class CollectionSqliteOptions {
   /// memory there. The caller selects this from its platform entry point.
   final bool androidTempStore;
 
-  /// Registers source-specific SQL functions and collations before the
-  /// collection schema is inspected. Anki uses custom functions and the
-  /// `unicase` collation that are outside this storage adapter's scope.
+  /// Registers additional source-specific SQL functions and collations before
+  /// the collection schema is inspected. `field_at_index` is installed by
+  /// default; remaining Core functions and `unicase` are host-provided.
   final FutureOr<void> Function(CommonDatabase database)? configureConnection;
 }
 

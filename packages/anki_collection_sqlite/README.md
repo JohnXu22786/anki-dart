@@ -81,9 +81,10 @@ legacy-file-format setting, and WAL. It maintains the source's bounded
 uses through its cached-prepare API. Schema probes, integrity checks, rollback,
 and SQL batches use direct query/execute APIs in the source too, so the adapter
 does not retain those statements. Set `androidTempStore` on Android to use
-memory for temporary tables. The adapter does not implement note mutations,
-Anki scalar functions or collations, undo/redo, media indexing, backup/restore,
-synchronization, or encryption.
+memory for temporary tables. The adapter currently implements the Core
+`field_at_index` scalar function; other Anki scalar functions and collations,
+note mutations, undo/redo, media indexing, backup/restore, synchronization, and
+encryption remain outside this package's current scope.
 
 `sqlite3` publishes native bindings for Android, iOS, Windows, macOS, and
 Linux. Its WebAssembly target is tested in the package CI with

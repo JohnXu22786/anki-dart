@@ -28,7 +28,8 @@ assets recorded in `SOURCE.sha256`. `StockNotetypeFactory` implements Anki
 Core's localized Basic, Basic (type answer), Basic (and reversed), Basic
 (optional reversed), Cloze, and Image Occlusion note types, while accepting
 translated names from its caller. Image Occlusion collection operations and
-bundled stock-name translation catalogs remain outside this slice. Deck and
-DeckConfig models cover stored values and protobuf conversion. Anki Core's
-DeckConfig defaults are provided explicitly. This package does not change the
-root `COPYING` file.
+bundled stock-name translation catalogs remain outside this slice. Field and
+template name cleanup, NFC normalization, and duplicate-name suffixing also
+follow the pinned notetype sources. Deck and DeckConfig models cover stored
+values and protobuf conversion. Anki Core's DeckConfig defaults are provided
+explicitly. This package does not change the root `COPYING` file.

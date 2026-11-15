@@ -4,6 +4,7 @@
 
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
+import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
 import 'card_template.dart';
 import 'note_field.dart';
@@ -51,7 +52,7 @@ class Notetype {
         templates = List<CardTemplate>.of(templates);
 
   final NotetypeId id;
-  final String name;
+  String name;
   final Int64 mtimeSecs;
   final int usn;
   final List<NoteField> fields;
@@ -121,6 +122,39 @@ class Notetype {
         config: value.hasConfig() ? value.config : proto.Notetype_Config(),
       );
 
+  /// Normalize this notetype and all child names to Unicode NFC.
+  void normalizeNames() {
+    name = unorm.nfc(name);
+    for (final field in fields) {
+      field.name = unorm.nfc(field.name);
+    }
+    for (final template in templates) {
+      template.name = unorm.nfc(template.name);
+    }
+  }
+
+  /// Fix field names in order, stopping at the first invalid name.
+  void fixFieldNames() {
+    for (final field in fields) {
+      field.fixName();
+    }
+  }
+
+  /// Fix template names in order, stopping at the first invalid name.
+  void fixTemplateNames() {
+    for (final template in templates) {
+      template.fixName();
+    }
+  }
+
+  /// Append `+` to repeated template and field names like Anki Core.
+  void ensureNamesUnique() {
+    _ensureNamesUnique(templates.map((template) => template.name).toList(),
+        (index, name) => templates[index].name = name);
+    _ensureNamesUnique(fields.map((field) => field.name).toList(),
+        (index, name) => fields[index].name = name);
+  }
+
   proto.Notetype toProto() => proto.Notetype(
         id: id.value,
         name: name,
@@ -130,4 +164,18 @@ class Notetype {
         templates: templates.map((template) => template.toProto()).toList(),
         config: config,
       );
+}
+
+void _ensureNamesUnique(
+  List<String> names,
+  void Function(int index, String name) assign,
+) {
+  final seen = <String>{};
+  for (var index = 0; index < names.length; index++) {
+    var name = names[index];
+    while (!seen.add(name.toLowerCase())) {
+      name = '$name+';
+    }
+    assign(index, name);
+  }
 }

@@ -7,6 +7,61 @@ import 'package:test/test.dart';
 
 void main() {
   group('Notetype', () {
+    test('normalizes, fixes, and uniquifies names like Anki Core', () {
+      final field = NoteField.newField(
+        '  # /^ t:e{s"t} field name #/^  ',
+        randomU64: () => BigInt.one,
+      );
+      field.fixName();
+      expect(field.name, 'test field name #/^');
+
+      final quotedTemplate = CardTemplate.newTemplate(
+        'Card "1"',
+        'q',
+        'a',
+        randomU64: () => BigInt.one,
+      )..fixName();
+      expect(quotedTemplate.name, 'Card 1');
+      expect(
+        () => CardTemplate.newTemplate('""', 'q', 'a',
+            randomU64: () => BigInt.one)
+          ..fixName(),
+        throwsA(isA<InvalidModelValue>().having((error) => error.message,
+            'message', 'Template name contains only quotes')),
+      );
+
+      final value = Notetype(
+        name: 'Cafe\u0301',
+        fields: [
+          NoteField(name: 'e\u0301', config: proto.Notetype_Field_Config()),
+          NoteField(name: 'É', config: proto.Notetype_Field_Config()),
+        ],
+        templates: [
+          CardTemplate(name: 'Card', config: proto.Notetype_Template_Config()),
+          CardTemplate(name: 'Card', config: proto.Notetype_Template_Config()),
+          CardTemplate(name: 'card', config: proto.Notetype_Template_Config()),
+        ],
+        config: proto.Notetype_Config(),
+      );
+      value.normalizeNames();
+      expect(value.name, 'Café');
+      expect(value.fields.first.name, 'é');
+      value.ensureNamesUnique();
+      expect(value.templates.map((template) => template.name),
+          ['Card', 'Card+', 'card++']);
+      expect(value.fields.map((field) => field.name), ['é', 'É+']);
+      value.fixFieldNames();
+      value.fixTemplateNames();
+
+      final emptyField =
+          NoteField(name: '', config: proto.Notetype_Field_Config());
+      expect(
+        () => emptyField.fixName(),
+        throwsA(isA<InvalidModelValue>()
+            .having((error) => error.message, 'message', 'Empty field name')),
+      );
+    });
+
     test('default and cloze configurations match pinned upstream assets', () {
       final defaults = Notetype.ankiDefault();
       expect(defaults.id.value, Int64.ZERO);

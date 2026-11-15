@@ -50,6 +50,20 @@ void main() {
       expect(value.templates.map((template) => template.name),
           ['Card', 'Card+', 'card++']);
       expect(value.fields.map((field) => field.name), ['é', 'É+']);
+
+      final unicodeCaseNames = Notetype(
+        templates: [
+          CardTemplate(
+              name: 'Straße', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: 'STRASSE', config: proto.Notetype_Template_Config()),
+          CardTemplate(name: 'ς', config: proto.Notetype_Template_Config()),
+          CardTemplate(name: 'Σ', config: proto.Notetype_Template_Config()),
+        ],
+        config: proto.Notetype_Config(),
+      )..ensureNamesUnique();
+      expect(unicodeCaseNames.templates.map((template) => template.name),
+          ['Straße', 'STRASSE+', 'ς', 'Σ+']);
       value.fixFieldNames();
       value.fixTemplateNames();
 

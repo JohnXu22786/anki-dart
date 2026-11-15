@@ -66,6 +66,15 @@ void main() {
       '${regexQuery.sql}; ${regexQuery.arguments}',
     );
   }
+  final wordBoundaryQuery = compileSearchSql(
+    GroupNode([Search(const WordBoundary('word*end'))]),
+    resultType: SearchResultType.notes,
+    textSearchContext: const SearchSqlTextContext(ignoreAccentsInSearch: true),
+  );
+  if (!wordBoundaryQuery.sql.contains('coalesce(process_text(n.flds, 1)') ||
+      wordBoundaryQuery.arguments.single != r'(?i)\bword.*end\b') {
+    throw StateError('Word-boundary JavaScript smoke test failed');
+  }
   final textQuery = compileSearchSql(
     GroupNode([Search(const TextSearch('front*back'))]),
     resultType: SearchResultType.notes,

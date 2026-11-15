@@ -1023,6 +1023,44 @@ void main() {
     expect(nonempty.arguments, ['%']);
   });
 
+  test('word-boundary search delegates Core regex matching and text flags', () {
+    final basic = compileSearchSql(
+      GroupNode([Search(const WordBoundary('foo*bar'))]),
+      resultType: SearchResultType.notes,
+    );
+    expect(basic.sql, 'select n.id from notes n where (n.flds regexp ?1)');
+    expect(basic.arguments, [r'(?i)\bfoo.*bar\b']);
+    expect(basic.requiredTable, RequiredTable.notes);
+
+    final normalized = compileSearchSql(
+      GroupNode([
+        Search(const Notetype('Basic')),
+        BooleanNode(NodeKind.and),
+        Search(const WordBoundary('Cafe\u0301')),
+      ]),
+      resultType: SearchResultType.notes,
+      regexFieldsByNotetype: RegexFieldsByNotetype([
+        RegexNotetypeSearchContext(
+          notetypeId: BigInt.parse('9007199254740993'),
+          totalFieldsInNote: 3,
+          includedFieldIndices: [0, 2],
+        ),
+      ]),
+      normalizeNoteText: true,
+      textSearchContext: const SearchSqlTextContext(
+        ignoreAccentsInSearch: true,
+      ),
+    );
+    expect(
+      normalized.sql,
+      'select n.id from notes n where '
+      '(n.mid in (select id from notetypes where name = ?) and '
+      '((n.mid = 9007199254740993 and '
+      'regexp_fields(?2, coalesce(process_text(n.flds, 1), n.flds), 0,2))))',
+    );
+    expect(normalized.arguments, ['Basic', r'(?i)\bCafe\b']);
+  });
+
   test('tag special values and escaped wildcards match Core semantics', () {
     for (final tag in ['none', '*']) {
       final compiled = compileSearchSql(

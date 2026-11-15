@@ -8,6 +8,9 @@ void main() {
   if (extractOriginalPosition('{"pos":4294967296}') != null) {
     throw StateError('Web card-data position accepted value above u32');
   }
+  if (extractOriginalPosition('{"pos":42,"s":1e999}') != null) {
+    throw StateError('Web position ignored an invalid unrelated number');
+  }
   if (extractCustomData('{"cd":"{\\"z\\":1,\\"a\\":2}"}', 'a') != '2') {
     throw StateError('Web card-data custom JSON lookup failed');
   }

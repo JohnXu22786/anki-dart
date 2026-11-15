@@ -11,6 +11,7 @@ void main() {
       expect(extractOriginalPosition('{"pos":42}'), 42);
       expect(extractOriginalPosition('{"pos":4294967295}'), 4294967295);
       expect(extractOriginalPosition('{"pos":42,"cd":5}'), isNull);
+      expect(extractOriginalPosition('{"pos":42,"s":1e999}'), isNull);
       expect(extractOriginalPosition('[42]'), 42);
       expect(extractOriginalPosition('{"pos":-1}'), isNull);
       expect(extractOriginalPosition('{"pos":4294967296}'), isNull);

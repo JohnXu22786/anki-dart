@@ -38,6 +38,7 @@ int? extractOriginalPosition(Object? cardData) {
 
 bool _cardDataObjectParses(String cardData) {
   try {
+    validateLosslessJson(cardData);
     final decoded = jsonDecode(cardData);
     if (decoded is Map<String, Object?>) {
       return !decoded.containsKey('cd') || decoded['cd'] is String;

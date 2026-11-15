@@ -17,7 +17,8 @@ EXPECTED_IDENTIFIERS = {
 
 def main() -> int:
     errors: list[str] = []
-    dart_files = sorted((*((ROOT / "lib").rglob("*.dart")), *((ROOT / "test").rglob("*.dart"))))
+    dart_roots = (ROOT / "lib", ROOT / "test", ROOT / "apps" / "anki" / "lib", ROOT / "apps" / "anki" / "test")
+    dart_files = sorted(path for root in dart_roots for path in root.rglob("*.dart"))
     for path in dart_files:
         text = path.read_text(encoding="utf-8")
         match = re.search(r"^\s*(?://|/\*|\*)?\s*SPDX-License-Identifier:\s*([^\s*]+)\s*$", text, re.MULTILINE)

@@ -47,7 +47,8 @@ final class CollectionSqliteOptions {
 /// legacy-file-format setting, WAL, and a bounded cache for the hot exclusive
 /// transaction statements. SQLite functions and collations used by the wider
 /// Anki collection engine are not installed by this adapter.
-final class CollectionSqliteStorage implements CollectionOpenDatabase {
+final class CollectionSqliteStorage
+    implements CollectionOpenDatabase, CollectionSchemaMigrationDatabase {
   CollectionSqliteStorage._(this._database, this._driver);
 
   final CommonDatabase _database;
@@ -129,13 +130,53 @@ final class CollectionSqliteStorage implements CollectionOpenDatabase {
     await _flush();
   }
 
-  /// Flushes pending platform writes and closes the connection once.
+  /// Optionally downgrades the collection, flushes pending platform writes,
+  /// and closes the connection once.
   ///
-  /// Repeated calls are harmless. The collection file is never deleted.
-  Future<void> close() async {
+  /// [desiredVersion] supports 18 as a no-op and 11 as the catalogued schema
+  /// downgrade followed by switching SQLite to delete journal mode. A schema
+  /// 11 downgrade requires its host callbacks. Repeated calls are harmless.
+  /// The collection file is never deleted.
+  Future<void> close({
+    int? desiredVersion,
+    CollectionSchemaMigrationCallbacks? callbacks,
+  }) async {
     if (_closed) return;
     Object? closeError;
     StackTrace? closeStack;
+
+    try {
+      if (desiredVersion != null) {
+        if (desiredVersion != 11 && desiredVersion != 18) {
+          throw ArgumentError.value(
+            desiredVersion,
+            'desiredVersion',
+            'must be 11 or 18',
+          );
+        }
+        if (desiredVersion == 11) {
+          if (callbacks == null) {
+            throw ArgumentError.notNull('callbacks');
+          }
+          await downgradeCollectionSchema(
+            this,
+            callbacks,
+            toVersion: desiredVersion,
+          );
+          final journalMode = _database
+              .select('pragma journal_mode = delete')
+              .first
+              .columnAt(0);
+          if (journalMode != 'delete') {
+            throw StateError('unable to switch journal mode to delete');
+          }
+        }
+      }
+    } catch (error, stackTrace) {
+      closeError = error;
+      closeStack = stackTrace;
+    }
+
     for (final statement in _statementCache.values.toList()) {
       try {
         statement.close();
@@ -154,16 +195,16 @@ final class CollectionSqliteStorage implements CollectionOpenDatabase {
         closeStack ??= stackTrace;
       }
     }
+    try {
+      await _flush();
+    } catch (error, stackTrace) {
+      closeError ??= error;
+      closeStack ??= stackTrace;
+    }
+    if (_connectionClosed) _closed = true;
     if (closeError != null) {
-      try {
-        await _flush();
-      } catch (_) {
-        // Preserve the original statement or database close failure.
-      }
       Error.throwWithStackTrace(closeError, closeStack!);
     }
-    await _flush();
-    _closed = true;
   }
 
   /// Alias for [close] for callers using disposable-resource terminology.
@@ -171,6 +212,33 @@ final class CollectionSqliteStorage implements CollectionOpenDatabase {
 
   Future<void> _flush() async {
     await Future<void>.sync(() => _driver.flush?.call());
+  }
+
+  /// Flushes the WAL into the database and truncates it.
+  ///
+  /// Checkpointing requires an idle connection and surfaces SQLite's return
+  /// code instead of treating a busy result as success.
+  Future<void> checkpoint() async {
+    if (!_database.autocommit) throw StateError('active transaction');
+    final result = _database.select('pragma wal_checkpoint(truncate)');
+    final returnCode = result.first.columnAt(0) as int;
+    if (returnCode != 0) throw StateError('unable to checkpoint');
+    await _flush();
+  }
+
+  /// Returns true when SQLite reports corruption or cannot run quick_check.
+  Future<bool> quickCheckCorrupt() async {
+    try {
+      final result = _database.select('pragma quick_check');
+      return result.first.columnAt(0) != 'ok';
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Runs Anki Core's database maintenance statements in source order.
+  Future<void> optimize() async {
+    await executeBatch('vacuum; reindex; analyze');
   }
 
   void _executeCached(String sql) {

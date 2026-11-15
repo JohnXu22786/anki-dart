@@ -210,6 +210,218 @@ void main() {
     expect(await database.queryInt('pragma temp_store'), 2);
     await database.close();
   });
+
+  test('quick check reports healthy databases as not corrupt', () async {
+    final database = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+    );
+
+    expect(await database.quickCheckCorrupt(), isFalse);
+
+    await database.close();
+  });
+
+  test('quick check reports SQLite integrity findings as corruption', () async {
+    final database = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+    );
+    await database.executeBatch('''
+      create table checked (value integer check (value > 0));
+      pragma ignore_check_constraints = on;
+      insert into checked values (-1);
+      pragma ignore_check_constraints = off;
+    ''');
+
+    expect(await database.quickCheckCorrupt(), isTrue);
+
+    await database.close();
+  });
+
+  test('checkpoint truncates WAL and flushes driver persistence', () async {
+    var flushes = 0;
+    final database = await CollectionSqliteStorage.open(
+      driver: CollectionSqliteDriver(
+        openDatabase: (location) => sqlite3.open(location),
+        flush: () => flushes++,
+      ),
+      location: path,
+    );
+    await database.executeBatch('create table checkpointed (id integer);');
+
+    await database.checkpoint();
+
+    expect(flushes, 3, reason: 'checkpoint awaits driver persistence');
+    expect(await database.queryString('pragma journal_mode'), 'wal');
+    await database.close();
+  });
+
+  test(
+    'checkpoint rejects active transactions without committing them',
+    () async {
+      final database = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+      );
+      await database.beginExclusive();
+      await database.executeBatch(
+        'create table still_transactional (id integer);',
+      );
+
+      await expectLater(database.checkpoint(), throwsStateError);
+
+      await database.rollback();
+      await database.close();
+      final reopened = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+      );
+      expect(
+        await reopened.queryExists(
+          "select null from sqlite_master where name = 'still_transactional'",
+        ),
+        isFalse,
+      );
+      await reopened.close();
+    },
+  );
+
+  test(
+    'optimize analyzes and leaves the file-backed database usable',
+    () async {
+      final database = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+      );
+      await database.executeBatch('''
+      create table optimized (id integer primary key, value text);
+      create index optimized_value on optimized(value);
+      insert into optimized(value) values ('first'), ('second'), ('third');
+    ''');
+
+      await database.optimize();
+
+      expect(
+        await database.queryInt('select count(*) from sqlite_stat1'),
+        greaterThan(0),
+      );
+      expect(
+        await database.queryString("select value from optimized where id = 2"),
+        'second',
+      );
+      await database.close();
+    },
+  );
+
+  test('close to schema 18 is a no-op', () async {
+    final database = await _openLatestCollection(path);
+    final callbacks = _Callbacks(database, calls: []);
+
+    await database.close(desiredVersion: 18, callbacks: callbacks);
+
+    final reopened = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+      options: _schemaOptions,
+    );
+    expect(await reopened.queryInt('select ver from col'), 18);
+    expect(await reopened.queryString('pragma journal_mode'), 'wal');
+    expect(callbacks.calls, isEmpty);
+    await reopened.close();
+  });
+
+  test(
+    'close to schema 11 applies catalog downgrade and journal mode',
+    () async {
+      final database = await _openLatestCollection(path);
+      final callbackCalls = <String>[];
+      final callbacks = _Callbacks(database, calls: callbackCalls);
+
+      await database.close(desiredVersion: 11, callbacks: callbacks);
+
+      expect(callbackCalls, [
+        'downgradeDeckConfFrom16',
+        'downgradeDecksFrom15',
+        'downgradeNotetypesFrom15',
+        'downgradeConfigFrom14',
+        'downgradeTagsFrom14',
+      ]);
+      final reopened = sqlite3.open(path);
+      expect(reopened.select('select ver from col').first['ver'], 11);
+      expect(
+        reopened.select('pragma journal_mode').first.columnAt(0),
+        'delete',
+      );
+      reopened.close();
+    },
+  );
+
+  test(
+    'invalid close target closes resources but preserves the collection',
+    () async {
+      final database = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+      );
+      await database.executeBatch('create table retained (id integer);');
+
+      await expectLater(
+        database.close(desiredVersion: 14),
+        throwsArgumentError,
+      );
+
+      expect(await File(path).exists(), isTrue);
+      final reopened = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+      );
+      expect(await reopened.queryInt('select count(*) from retained'), 0);
+      await reopened.close();
+    },
+  );
+
+  test(
+    'downgrade callback failure rolls back and still closes database',
+    () async {
+      final database = await _openLatestCollection(path);
+      final failure = StateError('downgrade callback failed');
+      final callbacks = _Callbacks(
+        database,
+        failure: failure,
+        failureName: 'downgradeNotetypesFrom15',
+      );
+
+      await expectLater(
+        database.close(desiredVersion: 11, callbacks: callbacks),
+        throwsA(same(failure)),
+      );
+
+      expect(await File(path).exists(), isTrue);
+      final reopened = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+        options: _schemaOptions,
+      );
+      expect(await reopened.queryInt('select ver from col'), 18);
+      expect(await reopened.queryString('pragma journal_mode'), 'wal');
+      await reopened.close();
+    },
+  );
+}
+
+Future<CollectionSqliteStorage> _openLatestCollection(String path) async {
+  final database = await CollectionSqliteStorage.open(
+    driver: _nativeDriver,
+    location: path,
+    options: _schemaOptions,
+  );
+  await openOrCreateCollection(
+    database,
+    _Callbacks(database),
+    serverMode: true,
+  );
+  return database;
 }
 
 final CollectionSqliteDriver _nativeDriver = CollectionSqliteDriver(
@@ -225,10 +437,12 @@ final CollectionSqliteOptions _schemaOptions = CollectionSqliteOptions(
 );
 
 final class _Callbacks implements CollectionOpenCallbacks {
-  _Callbacks(this.database, {this.failure});
+  _Callbacks(this.database, {this.failure, this.failureName, this.calls});
 
   final CollectionSqliteStorage database;
   final Object? failure;
+  final String? failureName;
+  final List<String>? calls;
 
   @override
   void initializeCollectionMetadata({required bool serverMode}) {
@@ -246,5 +460,8 @@ final class _Callbacks implements CollectionOpenCallbacks {
   void addStockNoteTypes() {}
 
   @override
-  void run(String name, {bool? serverMode}) {}
+  void run(String name, {bool? serverMode}) {
+    calls?.add(name);
+    if (name == failureName) throw failure!;
+  }
 }

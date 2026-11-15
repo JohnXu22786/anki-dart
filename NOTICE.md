@@ -1591,6 +1591,7 @@ AnkiDroid 2.25.3 commit
 © 2026 John Tsui and marked `GPL-3.0-or-later`. The method keeps Kotlin/JVM
 `Double.toLong()` behavior (truncate, NaN to zero, and saturation at signed
 64-bit bounds), followed by binary64 subtraction of the converted whole value.
+Its public `whole` field is `BigInt` to retain Long values on JavaScript.
 Root `COPYING` remains byte-identical.
 
 `lib/src/card_type_name.dart` and `test/card_type_name_test.dart` adapt the
@@ -3711,7 +3712,9 @@ is derived from `ReviewReminder.kt`, Copyright © 2025 Eric Li
 `ReviewRemindersDatabaseTest.kt`, Copyright © 2025 Eric Li
 <ericli3690@gmail.com>; both are licensed `GPL-3.0-or-later` upstream. It
 preserves the reminder-ID-keyed map, source field order and names, and the
-polymorphic scope discriminator and payload. SharedPreferences,
+polymorphic scope discriminator and payload. Deck IDs and timestamps use
+`BigInt`; exact JSON number tokenization prevents JavaScript rounding during
+decode and preserves decimal-number output during encode. SharedPreferences,
 schema/database handling, mutexes/coroutines, scheduling, and Android UI remain
 host-side. Value iteration order is not a contract. The focused Dart cases are
 source-derived behavior tests, not a port of an Android group test harness.
@@ -4531,7 +4534,8 @@ pinned direct test file is Copyright © 2026 Dhanush Sugganahalli under
 GPL-3.0-or-later. The Dart implementation and tests are Copyright © 2026 John
 Tsui under the same license. The adapters preserve the source's callback order,
 signed duration truncation and remainder behavior, and greater-than-59-hour
-wrap. The host supplies `SimpleDateFormat` with `Locale.US` and its default
+wrap. Long-valued callbacks and results use BigInt to preserve the full JVM Long
+range on JavaScript. The host supplies `SimpleDateFormat` with `Locale.US` and its default
 zone, Kotlin `Duration.inWholeMilliseconds` / `String.format` behavior, and
 `Calendar` including time zone, DST and Gregorian behavior. Root `COPYING`
 remains byte-identical.

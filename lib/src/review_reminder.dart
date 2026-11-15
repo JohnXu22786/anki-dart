@@ -44,7 +44,7 @@ final class ReviewReminder {
   static ReviewReminder createReviewReminder({
     required ReviewReminderId id,
     required ReviewReminderTime time,
-    required int latestNotifTime,
+    required BigInt latestNotifTime,
     ReviewReminderCardTriggerThreshold cardTriggerThreshold =
         ReviewReminderCardTriggerThreshold.zero,
     ReviewReminderScope scope = const GlobalReminderScope(),
@@ -67,12 +67,14 @@ final class ReviewReminder {
   final ReviewReminderCardTriggerThreshold cardTriggerThreshold;
   final ReviewReminderScope scope;
   bool enabled;
-  int latestNotifTime;
+
+  /// Epoch milliseconds from the source signed Long timestamp.
+  BigInt latestNotifTime;
   final String profileID;
   final bool onlyNotifyIfNoReviews;
 
   /// Updates the last notification attempt time to the host-supplied timestamp.
-  void updateLatestNotifTime({required int currentTimestamp}) {
+  void updateLatestNotifTime({required BigInt currentTimestamp}) {
     latestNotifTime = currentTimestamp;
   }
 

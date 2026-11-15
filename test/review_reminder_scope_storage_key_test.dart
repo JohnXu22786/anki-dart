@@ -42,7 +42,9 @@ void main() {
         9223372036854775807,
       ]) {
         expect(
-          reviewReminderScopeStorageKey(DeckSpecificReminderScope(deckId)),
+          reviewReminderScopeStorageKey(
+            DeckSpecificReminderScope(BigInt.from(deckId)),
+          ),
           'deck_$deckId',
         );
       }

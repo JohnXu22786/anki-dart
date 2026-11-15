@@ -23,7 +23,7 @@ import 'package:test/test.dart';
 void main() {
   group('LibAnki Note clone', () {
     test('returns the exact host clone and invokes cloning once', () {
-      final clone = _HostNote(1);
+      final clone = _HostNote.bigInt(BigInt.one);
       var cloneCalls = 0;
       var castCalls = 0;
 
@@ -102,7 +102,7 @@ void main() {
 
   group('LibAnki Note equality', () {
     test('returns true for self before class or ID access', () {
-      final note = _HostNote(1);
+      final note = _HostNote.bigInt(BigInt.one);
       var classChecks = 0;
       var idReads = 0;
 
@@ -116,7 +116,7 @@ void main() {
           },
           noteId: (_) {
             idReads++;
-            return 1;
+            return BigInt.one;
           },
         ),
         isTrue,
@@ -126,7 +126,7 @@ void main() {
     });
 
     test('returns false for null before class or ID access', () {
-      final note = _HostNote(1);
+      final note = _HostNote.bigInt(BigInt.one);
       var classChecks = 0;
       var idReads = 0;
 
@@ -140,7 +140,7 @@ void main() {
           },
           noteId: (_) {
             idReads++;
-            return 1;
+            return BigInt.one;
           },
         ),
         isFalse,
@@ -150,7 +150,7 @@ void main() {
     });
 
     test('returns false for different runtime classes without reading IDs', () {
-      final first = _HostNote(1);
+      final first = _HostNote.bigInt(BigInt.one);
       final other = _OtherHostNote(1);
       final classChecks = <(Object, Object)>[];
       var idReads = 0;
@@ -165,7 +165,7 @@ void main() {
           },
           noteId: (_) {
             idReads++;
-            return 1;
+            return BigInt.one;
           },
         ),
         isFalse,
@@ -175,9 +175,9 @@ void main() {
     });
 
     test('compares distinct same-class Notes by IDs in source order', () {
-      final first = _HostNote(42);
-      final sameId = _HostNote(42);
-      final differentId = _HostNote(43);
+      final first = _HostNote.bigInt(BigInt.parse('9007199254740993'));
+      final sameId = _HostNote.bigInt(BigInt.parse('9007199254740993'));
+      final differentId = _HostNote.bigInt(BigInt.parse('9007199254740994'));
       final classChecks = <(Object, Object)>[];
       final idReads = <Object>[];
 
@@ -186,7 +186,7 @@ void main() {
         return self.runtimeType == other.runtimeType;
       }
 
-      int noteId(Object note) {
+      BigInt noteId(Object note) {
         idReads.add(note);
         return (note as _HostNote).id;
       }
@@ -216,14 +216,16 @@ void main() {
 
   group('LibAnki Note hash code', () {
     test('folds signed Long IDs to the JVM signed 32-bit hash', () {
-      for (final (id, expected) in <(int, int)>[
-        (0, 0),
-        (0x7fffffff, 0x7fffffff),
-        (0x100000001, 0),
-        (0x7fffffff00000001, 0x7ffffffe),
-        (-1, 0),
-        (-0x100000001, 1),
-        (-0x8000000000000000, -0x80000000),
+      for (final (id, expected) in <(BigInt, int)>[
+        (BigInt.zero, 0),
+        (BigInt.from(0x7fffffff), 0x7fffffff),
+        (BigInt.parse('4294967297'), 0),
+        (BigInt.parse('9223372032559808513'), 0x7ffffffe),
+        (BigInt.from(-1), 0),
+        (BigInt.parse('-4294967297'), 1),
+        (BigInt.parse('-9223372036854775808'), -0x80000000),
+        (BigInt.parse('9223372036854775807'), -0x80000000),
+        (BigInt.parse('9007199254740993'), 0x00200001),
       ]) {
         expect(libankiNoteHashCode(id), expected, reason: 'ID $id');
       }
@@ -232,9 +234,9 @@ void main() {
 }
 
 final class _HostNote {
-  const _HostNote(this.id);
+  const _HostNote.bigInt(this.id);
 
-  final int id;
+  final BigInt id;
 }
 
 final class _OtherHostNote {

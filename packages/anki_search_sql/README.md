@@ -7,9 +7,10 @@ template ordinals and names, tag predicates in normal, regex, and no-combining
 modes, unqualified text, regex, and word-boundary searches, field-qualified
 search in normal, regex, and no-combining modes, deck IDs with and without
 children, deck-preset predicates, card flags,
-all card state predicates, added/edited/introduced day predicates, and
-whole-collection queries. It
-preserves source table selection and card/note SELECT shapes. Named deck
+all card state predicates, added/edited/introduced day predicates,
+whole-collection queries, and source-compatible browser sort orders. It
+preserves source table selection
+and card/note SELECT shapes. Named deck
 searches match the deck and its descendants by normalized native path, and
 also match the original deck of cards in filtered decks. `deck:*` and
 `deck:filtered` use Core's special predicates; `deck:current` accepts an
@@ -59,7 +60,7 @@ grammar, and their exact spelling is preserved without numeric conversion.
 The compiler is pure Dart, deterministic, and platform-neutral. It does not
 execute SQL. The compiler preserves the upstream Unicode-decimal ID spelling
 in generated SQL; SQLite may reject such a query, as in the pinned writer.
-Host duplicate lookup, remaining glob predicates, sorting, browser tables,
+Host duplicate lookup, remaining glob predicates, browser tables,
 database execution, and UI remain outside this package; this subset is not
 complete Anki search execution. Custom-data and state predicates
 require the cards table, and the host must register `extract_custom_data()`.
@@ -97,6 +98,11 @@ host's collection snapshot. The host follows Core's NFC setting, HTML stripping
 with media filename preservation, checksum query, and full stripped-text
 comparison; the compiler requires the context and emits the matching `n.id in`
 list, including Core's empty `()` list when no result is supplied.
+`compileSearchSqlWithSort` maps Core browser column keys and default directions,
+sort SQL, required-table choices, reverse behavior, and temporary `sort_order`
+preparation SQL. Run any returned preparation statements on the same connection
+before the compiled SELECT. Due and retrievability card sorting require explicit
+`SearchSqlTiming`; custom sort clauses are passed through exactly as Core does.
 State predicates require the cards table. A
 `state:due`, `rated:`, rated properties, and due properties also require explicit
 `SearchSqlTiming` values when

@@ -25,4 +25,22 @@ void main() {
   if (!nonempty.contains('Back')) {
     throw StateError('nonempty Note fields differ on JavaScript');
   }
+  final hasDuplicate = isDuplicateNoteField(
+    note: Note(id: Int64(2), notetypeId: Int64(3), fields: ['answer']),
+    firstFieldWithoutHtml: 'answer',
+    loadFieldsByChecksum: (notetypeId, checksum) {
+      if (notetypeId != Int64(3) || checksum != fieldChecksum('answer')) {
+        throw StateError('duplicate Note query arguments differ on JavaScript');
+      }
+      return [
+        NoteChecksumMatch(
+          noteId: Int64(4),
+          firstField: '<b>answer</b>',
+        ),
+      ];
+    },
+  );
+  if (!hasDuplicate) {
+    throw StateError('duplicate Note check differs on JavaScript');
+  }
 }

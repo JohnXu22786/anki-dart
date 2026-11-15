@@ -1,0 +1,4 @@
+analyzer:
+  errors:
+    # Generated protobuf service clients keep this field for descriptor parity.
+    unused_field: ignore

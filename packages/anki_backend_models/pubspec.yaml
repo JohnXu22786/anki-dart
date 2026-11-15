@@ -1,5 +1,5 @@
 name: anki_backend_models
-description: Shared Dart Card and Note domain models ported from Anki Core.
+description: Shared Dart Anki backend models ported from Anki Core.
 version: 0.1.0
 publish_to: none
 license: AGPL-3.0-or-later

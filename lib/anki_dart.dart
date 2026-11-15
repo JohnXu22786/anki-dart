@@ -79,6 +79,7 @@ export 'src/chip_checked_background.dart';
 export 'src/collection_get_card_or_null.dart';
 export 'src/collection_complete_tag_raw.dart';
 export 'src/collection_remaining_raw.dart';
+export 'src/collection_sync_preferences.dart';
 export 'src/collection_image_occlusion_raw.dart';
 export 'src/collection_card_stats_data.dart';
 export 'src/collection_get_review_logs.dart';

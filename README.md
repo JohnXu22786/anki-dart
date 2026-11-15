@@ -24,6 +24,28 @@ under `GPL-3.0-or-later`; root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
 
+## LibAnki Collection sync status and preferences
+
+[`collection_sync_preferences.dart`](lib/src/collection_sync_preferences.dart) and
+its focused tests adapt `Collection.syncStatus(auth)`,
+`mediaSyncStatus(auth)`, `getPreferences()`, and `setPreferences(preferences)`
+from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1349–1376`, pinned
+to `d9bf072f814a0c37d30a694192593b31ff2df875`. The wrappers pass the exact
+auth or Preferences object to the matching backend callback, return its exact
+result, and propagate callback failures. The pinned media-status method accepts
+auth but calls the backend without it; the adapter preserves that behavior.
+SyncAuth, Preferences, response and OpChanges types, serialization, and backend
+work remain host-owned. The source file credits Norbert Nagold (2011), Kostas
+Spyropoulos (2012), and Ankitects Pty Ltd (2022) and declares
+`GPL-3.0-or-later`; its separate AGPL browser.py notice is unrelated to these
+wrappers, and no browser code is copied. No direct pinned tests for these
+wrappers were found; the focused Dart cases are source-derived. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`. Root `COPYING` remains byte-identical. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
+source mapping and attribution.
+
 ## LibAnki Collection card-stats forwarding
 
 [`collectionCardStatsData()`](lib/src/collection_card_stats_data.dart) adapts

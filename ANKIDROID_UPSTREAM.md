@@ -20,6 +20,27 @@ under `GPL-3.0-or-later`; root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
 
+## LibAnki Collection sync status and preferences
+
+`lib/src/collection_sync_preferences.dart` and
+`test/collection_sync_preferences_test.dart` adapt
+`Collection.syncStatus(auth)`, `mediaSyncStatus(auth)`, `getPreferences()`, and
+`setPreferences(preferences)` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1349–1376`, pinned
+to `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapters forward the exact
+auth or Preferences object where the pinned backend call receives it, return
+the exact generic response, and propagate callback failures unchanged.
+`mediaSyncStatus` intentionally accepts auth but does not forward it because
+the pinned Collection implementation calls `backend.mediaSyncStatus()` with no
+argument. SyncAuth, Preferences, response and OpChanges types, serialization,
+and backend behavior remain host-side. No direct pinned tests for these
+Collection wrappers were found; focused Dart tests are source-derived.
+`Collection.kt` credits Norbert Nagold (2011), Kostas Spyropoulos (2012), and
+Ankitects Pty Ltd (2022) and declares `GPL-3.0-or-later`; its separately noted
+AGPL browser.py code is not copied by these adapters. The Dart implementation
+and tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root
+`COPYING` remains byte-identical.
+
 ## `Collection.cardStatsData(cardId)`
 
 `lib/src/collection_card_stats_data.dart` adapts only the forwarding boundary

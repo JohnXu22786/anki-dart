@@ -49,7 +49,7 @@ void main() {
       () {
         final time = ReviewReminderTime(hour: 8, minute: 45);
         final threshold = ReviewReminderCardTriggerThreshold(4);
-        const scope = DeckSpecificReminderScope(32);
+        final scope = DeckSpecificReminderScope(BigInt.from(32));
         final schema = ReviewReminderSchemaV1(
           id: ReviewReminderId(7),
           time: time,
@@ -94,7 +94,7 @@ void main() {
     () {
       final time = ReviewReminderTime(hour: 13, minute: 5);
       final threshold = ReviewReminderCardTriggerThreshold(12);
-      const scope = DeckSpecificReminderScope(91);
+      final scope = DeckSpecificReminderScope(BigInt.from(91));
       final schema = ReviewReminderSchemaV2(
         id: ReviewReminderId(3),
         time: time,
@@ -105,7 +105,7 @@ void main() {
         onlyNotifyIfNoReviews: true,
       );
       final currentId = ReviewReminderId(44);
-      const currentTimestamp = 1793451900000;
+      final currentTimestamp = BigInt.from(1793451900000);
 
       final migrated = schema.migrate(
         id: currentId,
@@ -141,7 +141,7 @@ void main() {
           id: ReviewReminderId(2),
           time: otherTime,
           cardTriggerThreshold: ReviewReminderCardTriggerThreshold(8),
-          scope: const DeckSpecificReminderScope(42),
+          scope: DeckSpecificReminderScope(BigInt.from(42)),
           enabled: true,
           profileID: 'second',
           onlyNotifyIfNoReviews: true,
@@ -161,7 +161,7 @@ void main() {
         allocateId: () => allocatedIds[allocationIndex++],
         currentEpochMilliseconds: () {
           clockCalls++;
-          return 1700000000000 + clockCalls;
+          return BigInt.from(1700000000000 + clockCalls);
         },
       );
 
@@ -175,7 +175,7 @@ void main() {
       expect(first.cardTriggerThreshold.threshold, 5);
       expect(first.scope, const GlobalReminderScope());
       expect(first.enabled, isFalse);
-      expect(first.latestNotifTime, 1700000000001);
+      expect(first.latestNotifTime, BigInt.from(1700000000001));
       expect(first.profileID, 'first');
       expect(first.onlyNotifyIfNoReviews, isFalse);
 
@@ -183,9 +183,9 @@ void main() {
       expect(second.id, ReviewReminderId(102));
       expect(second.time, otherTime);
       expect(second.cardTriggerThreshold.threshold, 8);
-      expect(second.scope, const DeckSpecificReminderScope(42));
+      expect(second.scope, DeckSpecificReminderScope(BigInt.from(42)));
       expect(second.enabled, isTrue);
-      expect(second.latestNotifTime, 1700000000002);
+      expect(second.latestNotifTime, BigInt.from(1700000000002));
       expect(second.profileID, 'second');
       expect(second.onlyNotifyIfNoReviews, isTrue);
     });
@@ -196,7 +196,7 @@ void main() {
         final reminder = ReviewReminder.createReviewReminder(
           id: ReviewReminderId(11),
           time: ReviewReminderTime(hour: 9, minute: 0),
-          latestNotifTime: 500,
+          latestNotifTime: BigInt.from(500),
         );
         final migrated = migrateReviewReminderSchemas(
           {ReviewReminderId(99): reminder},
@@ -219,11 +219,11 @@ void main() {
           ReviewReminderId(1): ReviewReminder.createReviewReminder(
             id: ReviewReminderId(1),
             time: ReviewReminderTime(hour: 8, minute: 0),
-            latestNotifTime: 0,
+            latestNotifTime: BigInt.from(0),
           ),
         };
         ReviewReminderId allocateId() => ReviewReminderId(20);
-        int now() => 0;
+        BigInt now() => BigInt.zero;
 
         expect(
           () => migrateReviewReminderSchemas(

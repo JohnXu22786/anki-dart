@@ -20,13 +20,12 @@
  * kept in unicode_15_case_data.dart under its separate license.
  */
 
-import 'dart:io' show Platform;
-
+import 'platform_locale_name.dart';
 import 'unicode_15_case_data.dart';
 
 String localeLowercase(String value, String localeName) {
   final effectiveLocaleName = localeName.isEmpty
-      ? Platform.localeName
+      ? platformLocaleName
       : localeName;
   final language = effectiveLocaleName
       .replaceAll('_', '-')

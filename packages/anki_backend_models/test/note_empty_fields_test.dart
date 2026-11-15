@@ -22,6 +22,8 @@ void main() {
     test('uses ASCII whitespace and only accepts the source tag forms', () {
       expect(fieldIsEmpty('\t\n\u000b\f\r'), isTrue);
       expect(fieldIsEmpty('\u0085\u00a0\u3000'), isFalse);
+      expect(fieldIsEmpty('&nbsp;'), isFalse);
+      expect(fieldIsEmpty('&#32;'), isFalse);
       expect(fieldIsEmpty('<span></span>'), isFalse);
       expect(fieldIsEmpty('<br  />'), isFalse);
       expect(fieldIsEmpty('<div\n>'), isFalse);

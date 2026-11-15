@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_models/anki_backend_models.dart';
+import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
@@ -10,5 +11,18 @@ void main() {
   }
   if (fieldChecksum('test') != 2840236005) {
     throw StateError('unsigned SHA-1 checksum differs on JavaScript');
+  }
+  final fields = fixNoteFieldCount(['front', 'back', 'extra'], 2);
+  if (fields.length != 2 || fields[1] != 'back; extra') {
+    throw StateError('field-count migration differs on JavaScript');
+  }
+  if (!fieldIsEmpty('<BR />') || fieldIsEmpty('\u00a0')) {
+    throw StateError('field emptiness differs on JavaScript');
+  }
+  final nonempty = Note(fields: ['answer']).nonEmptyFields([
+    NoteField(name: 'Back', config: proto.Notetype_Field_Config()),
+  ]);
+  if (!nonempty.contains('Back')) {
+    throw StateError('nonempty Note fields differ on JavaScript');
   }
 }

@@ -1,0 +1,16 @@
+name: anki_search_sql
+description: Platform-neutral subset compiler for Anki search SQL.
+version: 0.1.0
+publish_to: none
+license: AGPL-3.0-or-later
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+
+dependencies:
+  anki_search_parser:
+    path: ../anki_search_parser
+  fixnum: ^1.1.0
+
+dev_dependencies:
+  test: ^1.25.8

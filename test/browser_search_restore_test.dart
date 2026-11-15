@@ -132,6 +132,24 @@ void main() {
       expect(request.filters.noteTypes.single.name, 'Cloze');
     });
 
+    test('resolves portable BigInt IDs against host mappings', () {
+      final id = BigInt.parse('9007199254740993');
+      final entry = BrowserSearchHistoryEntry(
+        query: 'large id',
+        deckIds: [id],
+        noteTypeIds: [id],
+      );
+
+      final restored = BrowserSearchFilters.fromHistoryEntry(
+        entry,
+        deckNameMap: [BrowserDeckNameId(name: 'Large deck', id: id)],
+        noteTypeMap: [BrowserNoteTypeNameId(name: 'Large type', id: id)],
+      );
+
+      expect(restored?.decks.single.id, id);
+      expect(restored?.noteTypes.single.id, id);
+    });
+
     test('preserves repeated IDs and uses the first matching host mapping', () {
       const entry = BrowserSearchHistoryEntry(
         query: 'duplicates',

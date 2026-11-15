@@ -20,13 +20,15 @@
  * ANKIIDROID_UPSTREAM.md.
  */
 
-/// The whole `Long` portion and the remaining `double` from a source value.
-typedef WholeAndFraction = ({int whole, double fraction});
+/// The whole `Long` portion as an exact [BigInt] and its remaining `double`.
+/// The [whole] component is [BigInt] so it can retain every signed JVM Long
+/// value on JavaScript as well as the Dart VM.
+typedef WholeAndFraction = ({BigInt whole, double fraction});
 
 const _longUpperBound = 9223372036854775808.0;
 const _longLowerBound = -9223372036854775808.0;
-const _longMax = 9223372036854775807;
-const _longMin = -9223372036854775808;
+final _longMax = BigInt.parse('9223372036854775807');
+final _longMin = BigInt.parse('-9223372036854775808');
 
 /// Splits [value] using Kotlin/JVM `Double.toLong()` and subtraction semantics.
 ///
@@ -36,13 +38,13 @@ const _longMin = -9223372036854775808;
 /// order, using binary64 arithmetic.
 WholeAndFraction wholeAndFraction(double value) {
   final whole = _toKotlinLong(value);
-  final fraction = value - whole;
+  final fraction = value - whole.toDouble();
   return (whole: whole, fraction: fraction);
 }
 
-int _toKotlinLong(double value) {
-  if (value.isNaN) return 0;
+BigInt _toKotlinLong(double value) {
+  if (value.isNaN) return BigInt.zero;
   if (value >= _longUpperBound) return _longMax;
   if (value <= _longLowerBound) return _longMin;
-  return value.toInt();
+  return BigInt.from(value);
 }

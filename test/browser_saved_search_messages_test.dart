@@ -41,8 +41,9 @@ void main() {
     test('duplicate add projects SAVED_SEARCH_DUPLICATE_ADDED', () {
       final saved = BrowserSavedSearchesModel();
       saved.add(const BrowserSavedSearch(name: 'a', query: 'b'));
-      final result =
-          saved.add(const BrowserSavedSearch(name: 'a', query: 'another'));
+      final result = saved.add(
+        const BrowserSavedSearch(name: 'a', query: 'another'),
+      );
 
       expect(
         browserSavedSearchUserMessageForMutation(
@@ -54,9 +55,7 @@ void main() {
     });
 
     test('successful delete projects SAVED_SEARCH_DELETED', () {
-      final saved = BrowserSavedSearchesModel(
-        configValues: {'a': 'b'},
-      );
+      final saved = BrowserSavedSearchesModel(configValues: {'a': 'b'});
       final result = saved.removeByName('a');
 
       expect(

@@ -29,8 +29,7 @@ void main() {
       expect(_node(lrnCount: 1).hasCardsReadyToStudy(), isTrue);
       expect(_node(revCount: 1).hasCardsReadyToStudy(), isTrue);
       expect(
-        _node(newCount: -1, lrnCount: 0, revCount: -2)
-            .hasCardsReadyToStudy(),
+        _node(newCount: -1, lrnCount: 0, revCount: -2).hasCardsReadyToStudy(),
         isFalse,
       );
     });

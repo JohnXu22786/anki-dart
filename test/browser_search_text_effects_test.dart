@@ -46,18 +46,22 @@ void main() {
       );
 
       expect(effects, hasLength(2));
-      expect(
-        effects.map((effect) => effect.runtimeType),
-        [BrowserFilterUpdateEffect, BrowserBasicSearchTextEffect],
-      );
+      expect(effects.map((effect) => effect.runtimeType), [
+        BrowserFilterUpdateEffect,
+        BrowserBasicSearchTextEffect,
+      ]);
       final update = (effects[0] as BrowserFilterUpdateEffect).update;
       expect(update, isA<BrowserFilterUpdateUser>());
       _expectShallowFilterCopy(update.state, filters);
-      expect((effects[1] as BrowserBasicSearchTextEffect).text,
-          ' first\r 🙂\tlast ');
+      expect(
+        (effects[1] as BrowserBasicSearchTextEffect).text,
+        ' first\r 🙂\tlast ',
+      );
 
-      final updatedText =
-          effects.fold(state, browserSearchTextStateAfterEffect);
+      final updatedText = effects.fold(
+        state,
+        browserSearchTextStateAfterEffect,
+      );
       expect(updatedText.isAdvancedSearch, isFalse);
       expect(updatedText.basicText, ' first\r 🙂\tlast ');
       expect(updatedText.advancedText, state.advancedText);
@@ -78,18 +82,22 @@ void main() {
       );
 
       expect(effects, hasLength(2));
-      expect(
-        effects.map((effect) => effect.runtimeType),
-        [BrowserFilterUpdateEffect, BrowserAdvancedSearchTextEffect],
-      );
+      expect(effects.map((effect) => effect.runtimeType), [
+        BrowserFilterUpdateEffect,
+        BrowserAdvancedSearchTextEffect,
+      ]);
       final update = (effects[0] as BrowserFilterUpdateEffect).update;
       expect(update, isA<BrowserFilterUpdateUser>());
       _expectShallowFilterCopy(update.state, filters);
-      expect((effects[1] as BrowserAdvancedSearchTextEffect).text,
-          'left\r right ');
+      expect(
+        (effects[1] as BrowserAdvancedSearchTextEffect).text,
+        'left\r right ',
+      );
 
-      final updatedText =
-          effects.fold(state, browserSearchTextStateAfterEffect);
+      final updatedText = effects.fold(
+        state,
+        browserSearchTextStateAfterEffect,
+      );
       expect(updatedText.isAdvancedSearch, isTrue);
       expect(updatedText.basicText, state.basicText);
       expect(updatedText.advancedText, 'left\r right ');

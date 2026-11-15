@@ -54,7 +54,7 @@ enum BrowserColumn {
   originalPosition('originalPosition', BrowserColumnType.numeric);
 
   const BrowserColumn(this.key, this.cardsType, [BrowserColumnType? notesType])
-      : notesType = notesType ?? cardsType;
+    : notesType = notesType ?? cardsType;
 
   final String key;
   final BrowserColumnType cardsType;
@@ -80,8 +80,8 @@ enum BrowserColumn {
 /// host responsibilities.
 final class BrowserColumnCollection {
   BrowserColumnCollection(List<BrowserColumn> columns)
-      : columns = UnmodifiableListView(columns),
-        count = columns.length;
+    : columns = UnmodifiableListView(columns),
+      count = columns.length;
 
   final List<BrowserColumn> columns;
   final int count;
@@ -127,8 +127,9 @@ final class BrowserColumnCollection {
     ).columns.map<BrowserColumn?>((column) => column).toList();
     if (!mutate(values)) return null;
 
-    final collection =
-        BrowserColumnCollection(values.whereType<BrowserColumn>().toList());
+    final collection = BrowserColumnCollection(
+      values.whereType<BrowserColumn>().toList(),
+    );
     return BrowserColumnUpdate(
       collection: collection,
       preferenceValue: collection.preferenceValue,
@@ -161,8 +162,11 @@ final class BrowserColumnCollection {
   }
 
   static BrowserColumnCollection _parse(String value) {
-    final columns =
-        value.split('|').map(BrowserColumn.fromColumnKey).toSet().toList();
+    final columns = value
+        .split('|')
+        .map(BrowserColumn.fromColumnKey)
+        .toSet()
+        .toList();
     return BrowserColumnCollection(columns);
   }
 }

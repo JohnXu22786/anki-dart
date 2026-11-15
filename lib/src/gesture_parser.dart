@@ -141,9 +141,9 @@ class GestureParser {
   GestureParser({
     required GestureParserConfig config,
     GestureDelayScheduler? scheduler,
-  })  : _config = config,
-        _scheduler = scheduler ?? const _TimerGestureDelayScheduler(),
-        _swipeThresholdBase = _float32(100 / config.swipeSensitivity);
+  }) : _config = config,
+       _scheduler = scheduler ?? const _TimerGestureDelayScheduler(),
+       _swipeThresholdBase = _float32(100 / config.swipeSensitivity);
 
   static const String paramX = 'x';
   static const String paramY = 'y';

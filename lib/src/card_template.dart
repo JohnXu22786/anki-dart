@@ -88,11 +88,11 @@ final class CardTemplate {
     required String preClass,
     required String preContent,
     required String postContent,
-  })  : _preStyle = preStyle,
-        _preScript = preScript,
-        _preClass = preClass,
-        _preContent = preContent,
-        _postContent = postContent;
+  }) : _preStyle = preStyle,
+       _preScript = preScript,
+       _preClass = preClass,
+       _preContent = preContent,
+       _postContent = postContent;
 
   final String _preStyle;
   final String _preScript;
@@ -106,11 +106,10 @@ final class CardTemplate {
     required String style,
     required String script,
     required String cardClass,
-  }) =>
-      RenderedCard(
-        '$_preStyle$style$_preScript$script$_preClass$cardClass'
-        '$_preContent$content$_postContent',
-      );
+  }) => RenderedCard(
+    '$_preStyle$style$_preScript$script$_preClass$cardClass'
+    '$_preContent$content$_postContent',
+  );
 }
 
 /// Wraps card question/answer content in AnkiDroid's `qa` container.

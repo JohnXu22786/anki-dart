@@ -42,14 +42,8 @@ void main() {
         final plan = planDeckPickerAddNote(deckId: deckId, setAsCurrent: true);
 
         expect(plan.steps, hasLength(2));
-        expect(
-          (plan.steps[0] as DeckPickerSelectForNavigation).deckId,
-          deckId,
-        );
-        expect(
-          (plan.steps[1] as DeckPickerNavigateToAddNote).deckId,
-          deckId,
-        );
+        expect((plan.steps[0] as DeckPickerSelectForNavigation).deckId, deckId);
+        expect((plan.steps[1] as DeckPickerNavigateToAddNote).deckId, deckId);
       }
     });
 
@@ -97,8 +91,9 @@ void main() {
       expect(plan.steps, hasLength(1));
       final navigate = plan.steps.single as DeckPickerNavigateToDeckOptions;
       expect(navigate.deckId, 58);
-      final filteredState = navigate.filteredState
-          as DeckPickerResolveFilteredStateFromCollection;
+      final filteredState =
+          navigate.filteredState
+              as DeckPickerResolveFilteredStateFromCollection;
       expect(filteredState.deckId, 58);
     });
   });

@@ -25,27 +25,31 @@ import 'package:test/test.dart';
 
 void main() {
   group('Browser column selection save plan', () {
-    test('unchanged selection dismisses but still supplies an update request',
-        () {
-      final initial = [BrowserColumn.question, BrowserColumn.tags];
-      final selected = [BrowserColumn.question, BrowserColumn.tags];
-      final plan = planBrowserColumnSelectionSave(
-        initialSelectedColumns: initial,
-        selectedColumns: selected,
-        mode: BrowserColumnMode.cards,
-      );
+    test(
+      'unchanged selection dismisses but still supplies an update request',
+      () {
+        final initial = [BrowserColumn.question, BrowserColumn.tags];
+        final selected = [BrowserColumn.question, BrowserColumn.tags];
+        final plan = planBrowserColumnSelectionSave(
+          initialSelectedColumns: initial,
+          selectedColumns: selected,
+          mode: BrowserColumnMode.cards,
+        );
 
-      expect(plan.hasUnsavedChanges, isFalse);
-      expect(plan.effectsBeforeUpdate,
-          [BrowserColumnSelectionSaveEffect.dismissDialog]);
-      expect(plan.updateRequest.columns, selected);
-      expect(plan.updateRequest.mode, BrowserColumnMode.cards);
+        expect(plan.hasUnsavedChanges, isFalse);
+        expect(plan.effectsBeforeUpdate, [
+          BrowserColumnSelectionSaveEffect.dismissDialog,
+        ]);
+        expect(plan.updateRequest.columns, selected);
+        expect(plan.updateRequest.mode, BrowserColumnMode.cards);
 
-      final outcome = plan.complete(false);
-      expect(outcome.effects,
-          [BrowserColumnSelectionSaveEffect.showNoColumnsMessage]);
-      expect(outcome.returnedValue, isFalse);
-    });
+        final outcome = plan.complete(false);
+        expect(outcome.effects, [
+          BrowserColumnSelectionSaveEffect.showNoColumnsMessage,
+        ]);
+        expect(outcome.returnedValue, isFalse);
+      },
+    );
 
     test('unchanged selection still completes after a successful update', () {
       final plan = planBrowserColumnSelectionSave(
@@ -54,32 +58,39 @@ void main() {
         mode: BrowserColumnMode.notes,
       );
 
-      expect(plan.effectsBeforeUpdate,
-          [BrowserColumnSelectionSaveEffect.dismissDialog]);
+      expect(plan.effectsBeforeUpdate, [
+        BrowserColumnSelectionSaveEffect.dismissDialog,
+      ]);
       final outcome = plan.complete(true);
 
       expect(outcome.effects, [BrowserColumnSelectionSaveEffect.dismissDialog]);
       expect(outcome.returnedValue, isTrue);
     });
 
-    test('changed columns update first and dismiss after a successful update',
-        () {
-      final plan = planBrowserColumnSelectionSave(
-        initialSelectedColumns: const [BrowserColumn.question],
-        selectedColumns: [BrowserColumn.tags, BrowserColumn.deck],
-        mode: BrowserColumnMode.notes,
-      );
+    test(
+      'changed columns update first and dismiss after a successful update',
+      () {
+        final plan = planBrowserColumnSelectionSave(
+          initialSelectedColumns: const [BrowserColumn.question],
+          selectedColumns: [BrowserColumn.tags, BrowserColumn.deck],
+          mode: BrowserColumnMode.notes,
+        );
 
-      expect(plan.hasUnsavedChanges, isTrue);
-      expect(plan.effectsBeforeUpdate, isEmpty);
-      expect(
-          plan.updateRequest.columns, [BrowserColumn.tags, BrowserColumn.deck]);
-      expect(plan.updateRequest.mode, BrowserColumnMode.notes);
+        expect(plan.hasUnsavedChanges, isTrue);
+        expect(plan.effectsBeforeUpdate, isEmpty);
+        expect(plan.updateRequest.columns, [
+          BrowserColumn.tags,
+          BrowserColumn.deck,
+        ]);
+        expect(plan.updateRequest.mode, BrowserColumnMode.notes);
 
-      final outcome = plan.complete(true);
-      expect(outcome.effects, [BrowserColumnSelectionSaveEffect.dismissDialog]);
-      expect(outcome.returnedValue, isTrue);
-    });
+        final outcome = plan.complete(true);
+        expect(outcome.effects, [
+          BrowserColumnSelectionSaveEffect.dismissDialog,
+        ]);
+        expect(outcome.returnedValue, isTrue);
+      },
+    );
 
     test('an empty selection failure maps to the no-columns message', () {
       final plan = planBrowserColumnSelectionSave(
@@ -93,35 +104,41 @@ void main() {
       expect(plan.updateRequest.columns, isEmpty);
       final outcome = plan.complete(false);
 
-      expect(outcome.effects,
-          [BrowserColumnSelectionSaveEffect.showNoColumnsMessage]);
+      expect(outcome.effects, [
+        BrowserColumnSelectionSaveEffect.showNoColumnsMessage,
+      ]);
       expect(outcome.returnedValue, isFalse);
     });
 
-    test('column comparison is structural but preserves order and duplicates',
-        () {
-      final sameValues = planBrowserColumnSelectionSave(
-        initialSelectedColumns: [BrowserColumn.question, BrowserColumn.tags],
-        selectedColumns: [BrowserColumn.question, BrowserColumn.tags],
-        mode: BrowserColumnMode.cards,
-      );
-      final reorderedValues = planBrowserColumnSelectionSave(
-        initialSelectedColumns: const [
-          BrowserColumn.question,
-          BrowserColumn.tags
-        ],
-        selectedColumns: const [BrowserColumn.tags, BrowserColumn.question],
-        mode: BrowserColumnMode.cards,
-      );
-      final duplicateValues = planBrowserColumnSelectionSave(
-        initialSelectedColumns: const [BrowserColumn.question],
-        selectedColumns: const [BrowserColumn.question, BrowserColumn.question],
-        mode: BrowserColumnMode.cards,
-      );
+    test(
+      'column comparison is structural but preserves order and duplicates',
+      () {
+        final sameValues = planBrowserColumnSelectionSave(
+          initialSelectedColumns: [BrowserColumn.question, BrowserColumn.tags],
+          selectedColumns: [BrowserColumn.question, BrowserColumn.tags],
+          mode: BrowserColumnMode.cards,
+        );
+        final reorderedValues = planBrowserColumnSelectionSave(
+          initialSelectedColumns: const [
+            BrowserColumn.question,
+            BrowserColumn.tags,
+          ],
+          selectedColumns: const [BrowserColumn.tags, BrowserColumn.question],
+          mode: BrowserColumnMode.cards,
+        );
+        final duplicateValues = planBrowserColumnSelectionSave(
+          initialSelectedColumns: const [BrowserColumn.question],
+          selectedColumns: const [
+            BrowserColumn.question,
+            BrowserColumn.question,
+          ],
+          mode: BrowserColumnMode.cards,
+        );
 
-      expect(sameValues.hasUnsavedChanges, isFalse);
-      expect(reorderedValues.hasUnsavedChanges, isTrue);
-      expect(duplicateValues.hasUnsavedChanges, isTrue);
-    });
+        expect(sameValues.hasUnsavedChanges, isFalse);
+        expect(reorderedValues.hasUnsavedChanges, isTrue);
+        expect(duplicateValues.hasUnsavedChanges, isTrue);
+      },
+    );
   });
 }

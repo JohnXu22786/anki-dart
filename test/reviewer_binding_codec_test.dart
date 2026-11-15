@@ -28,13 +28,15 @@ void main() {
   const codec = ReviewerBindingCodec();
 
   group('ReviewerBindingCodec', () {
-    test('null, empty, and unversioned preference values produce no entries',
-        () {
-      expect(codec.decode(null), isEmpty);
-      expect(codec.decode(''), isEmpty);
-      expect(codec.decode('r⍝TAP_TOP2'), isEmpty);
-      expect(codec.decode('2/r⍝TAP_TOP2'), isEmpty);
-    });
+    test(
+      'null, empty, and unversioned preference values produce no entries',
+      () {
+        expect(codec.decode(null), isEmpty);
+        expect(codec.decode(''), isEmpty);
+        expect(codec.decode('r⍝TAP_TOP2'), isEmpty);
+        expect(codec.decode('2/r⍝TAP_TOP2'), isEmpty);
+      },
+    );
 
     test('splits list values and filters empty entries', () {
       final bindings = codec.decode('1/||r⍝TAP_TOP2|||r⍝TAP_BOTTOM1|');
@@ -94,10 +96,10 @@ void main() {
         bindings.map((binding) => binding.kind),
         everyElement(ReviewerBindingKind.nonGesture),
       );
-      expect(
-        bindings.map((binding) => binding.toPreferenceString()),
-        ['r⌨22', 'r◯2 1.02'],
-      );
+      expect(bindings.map((binding) => binding.toPreferenceString()), [
+        'r⌨22',
+        'r◯2 1.02',
+      ]);
     });
 
     test('uses Java Float serialization and ignores extra axis tokens', () {
@@ -107,10 +109,11 @@ void main() {
       );
 
       expect(bindings, hasLength(3));
-      expect(
-        bindings.map((binding) => binding.toPreferenceString()),
-        ['r◯0 1.02', 'r◯0 1.02', 'r◯0 0.12'],
-      );
+      expect(bindings.map((binding) => binding.toPreferenceString()), [
+        'r◯0 1.02',
+        'r◯0 1.02',
+        'r◯0 0.12',
+      ]);
     });
 
     test('rounds hexadecimal floats directly to binary32 at boundaries', () {
@@ -123,17 +126,14 @@ void main() {
         'r◯0 0x1.fffffep1272',
       );
 
-      expect(
-        bindings.map((binding) => binding.toPreferenceString()),
-        [
-          'r◯0 0.02',
-          'r◯0 Infinity2',
-          'r◯0 0.02',
-          'r◯0 0.02',
-          'r◯0 1.4E-452',
-          'r◯0 3.4028235E382',
-        ],
-      );
+      expect(bindings.map((binding) => binding.toPreferenceString()), [
+        'r◯0 0.02',
+        'r◯0 Infinity2',
+        'r◯0 0.02',
+        'r◯0 0.02',
+        'r◯0 1.4E-452',
+        'r◯0 3.4028235E382',
+      ]);
     });
 
     test('hexadecimal floats that round beyond binary32 become infinity', () {
@@ -141,42 +141,39 @@ void main() {
         '1/r◯0 0x1.ffffff8p1272|r◯0 -0x1.ffffff8p1272',
       );
 
-      expect(
-        bindings.map((binding) => binding.toPreferenceString()),
-        ['r◯0 Infinity2', 'r◯0 -Infinity2'],
-      );
+      expect(bindings.map((binding) => binding.toPreferenceString()), [
+        'r◯0 Infinity2',
+        'r◯0 -Infinity2',
+      ]);
     });
 
     test('uses ties-to-even decimal digits when formatting Java floats', () {
-      final bindings = codec.decode(
-        '1/r◯0 -0x1.8f5e8p122|r◯0 0x1.d725aap212',
-      );
+      final bindings = codec.decode('1/r◯0 -0x1.8f5e8p122|r◯0 0x1.d725aap212');
 
-      expect(
-        bindings.map((binding) => binding.toPreferenceString()),
-        ['r◯0 -6389.90622', 'r◯0 3859637.22'],
-      );
+      expect(bindings.map((binding) => binding.toPreferenceString()), [
+        'r◯0 -6389.90622',
+        'r◯0 3859637.22',
+      ]);
     });
 
-    test('parses decimal Float32 midpoint values without binary64 double-round',
-        () {
-      final bindings = codec.decode(
-        '1/r◯0 1.00000005960464477539062500000000000000012|'
-        'r◯0 1.0000000596046447753906252|'
-        'r◯0 1.00000005960464477539062492|'
-        'r◯0 -1.00000005960464477539062500000000000000012',
-      );
+    test(
+      'parses decimal Float32 midpoint values without binary64 double-round',
+      () {
+        final bindings = codec.decode(
+          '1/r◯0 1.00000005960464477539062500000000000000012|'
+          'r◯0 1.0000000596046447753906252|'
+          'r◯0 1.00000005960464477539062492|'
+          'r◯0 -1.00000005960464477539062500000000000000012',
+        );
 
-      expect(
-        bindings.map((binding) => binding.toPreferenceString()),
-        [
+        expect(bindings.map((binding) => binding.toPreferenceString()), [
           'r◯0 1.00000012',
           'r◯0 1.02',
           'r◯0 1.02',
           'r◯0 -1.00000012',
-        ],
-      );
-    });
+        ]);
+      },
+    );
 
     test('handles extreme decimal float exponents like Java', () {
       final bindings = codec.decode(
@@ -185,10 +182,11 @@ void main() {
         'r◯0 -1e-9999999999999999999999992',
       );
 
-      expect(
-        bindings.map((binding) => binding.toPreferenceString()),
-        ['r◯0 0.02', 'r◯0 Infinity2', 'r◯0 -0.02'],
-      );
+      expect(bindings.map((binding) => binding.toPreferenceString()), [
+        'r◯0 0.02',
+        'r◯0 Infinity2',
+        'r◯0 -0.02',
+      ]);
     });
 
     test('uses Java float parsing whitespace boundaries', () {
@@ -218,30 +216,34 @@ void main() {
       expect(codec.encode(bindings), '1/r◯0 1.02|r◯20 -1.02');
     });
 
-    test('accepts a missing reviewer prefix and maps unknown suffixes to both',
-        () {
-      final bindings = codec.decode('1/⍝TAP_TOP0|r⍝TAP_BOTTOMx');
+    test(
+      'accepts a missing reviewer prefix and maps unknown suffixes to both',
+      () {
+        final bindings = codec.decode('1/⍝TAP_TOP0|r⍝TAP_BOTTOMx');
 
-      expect(bindings, hasLength(2));
-      expect(bindings[0].gesture, Gesture.tapTop);
-      expect(bindings[0].side, ReviewerCardSide.question);
-      expect(bindings[1].gesture, Gesture.tapBottom);
-      expect(bindings[1].side, ReviewerCardSide.both);
-    });
+        expect(bindings, hasLength(2));
+        expect(bindings[0].gesture, Gesture.tapTop);
+        expect(bindings[0].side, ReviewerCardSide.question);
+        expect(bindings[1].gesture, Gesture.tapBottom);
+        expect(bindings[1].side, ReviewerCardSide.both);
+      },
+    );
 
-    test('malformed and unknown bindings stay invalid and are omitted on write',
-        () {
-      final bindings = codec.decode(
-        '1/|r⍝NOT_A_GESTURE2|z0|r0|r⌨not-a-number0||',
-      );
+    test(
+      'malformed and unknown bindings stay invalid and are omitted on write',
+      () {
+        final bindings = codec.decode(
+          '1/|r⍝NOT_A_GESTURE2|z0|r0|r⌨not-a-number0||',
+        );
 
-      expect(bindings, hasLength(4));
-      expect(
-        bindings.map((binding) => binding.kind),
-        everyElement(ReviewerBindingKind.unknown),
-      );
-      expect(codec.encode(bindings), '1/');
-    });
+        expect(bindings, hasLength(4));
+        expect(
+          bindings.map((binding) => binding.kind),
+          everyElement(ReviewerBindingKind.unknown),
+        );
+        expect(codec.encode(bindings), '1/');
+      },
+    );
 
     test('uses UTF-16 code units when removing the side suffix', () {
       final bindings = codec.decode('1/r⍝TAP_TOP😀');
@@ -252,25 +254,27 @@ void main() {
     });
   });
 
-  test('router factory ignores non-gesture and missing preference bindings',
-      () {
-    ViewerCommand? routedCommand;
-    final router = GestureCommandRouter.fromPreferenceValues(
-      isEnabled: true,
-      cornerTouchEnabled: true,
-      serializedBindingsByCommand: {
-        // An absent preference must not add the source's keyboard defaults.
-        ViewerCommand.ANSWER_GOOD: null,
-        ViewerCommand.ANSWER_AGAIN: '1/r⌨291|r⍝TAP_TOP1',
-      },
-      executeCommand: (command, _) {
-        routedCommand = command;
-        return true;
-      },
-    );
+  test(
+    'router factory ignores non-gesture and missing preference bindings',
+    () {
+      ViewerCommand? routedCommand;
+      final router = GestureCommandRouter.fromPreferenceValues(
+        isEnabled: true,
+        cornerTouchEnabled: true,
+        serializedBindingsByCommand: {
+          // An absent preference must not add the source's keyboard defaults.
+          ViewerCommand.ANSWER_GOOD: null,
+          ViewerCommand.ANSWER_AGAIN: '1/r⌨291|r⍝TAP_TOP1',
+        },
+        executeCommand: (command, _) {
+          routedCommand = command;
+          return true;
+        },
+      );
 
-    expect(router.route(Gesture.tapTop), isTrue);
-    expect(routedCommand, ViewerCommand.ANSWER_AGAIN);
-    expect(router.route(Gesture.tapBottom), isFalse);
-  });
+      expect(router.route(Gesture.tapTop), isTrue);
+      expect(routedCommand, ViewerCommand.ANSWER_AGAIN);
+      expect(router.route(Gesture.tapBottom), isFalse);
+    },
+  );
 }

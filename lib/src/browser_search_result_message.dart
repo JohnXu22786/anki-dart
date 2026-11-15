@@ -81,7 +81,5 @@ BrowserSearchResultMessage? browserSearchResultMessage({
   if (rowCount == 0) {
     return const BrowserSearchResultNoCardsInSelectedDeck();
   }
-  return const BrowserSearchResultCardCount(
-    includeSearchAllDecksAction: true,
-  );
+  return const BrowserSearchResultCardCount(includeSearchAllDecksAction: true);
 }

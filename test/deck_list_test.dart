@@ -64,37 +64,51 @@ void main() {
         selectedDeckId: 4,
       );
 
-      expect(
-        visible.map((deck) => deck.lastDeckNameComponent),
-        ['Science', 'Math', 'Algebra', 'Group'],
-      );
+      expect(visible.map((deck) => deck.lastDeckNameComponent), [
+        'Science',
+        'Math',
+        'Algebra',
+        'Group',
+      ]);
       expect(visible.map((deck) => deck.depth), [0, 1, 2, 3]);
       expect(visible.last.isSelected, isTrue);
       expect(visible.first.canCollapse, isFalse);
     });
 
-    test('a matching collapsed deck keeps its children hidden during search',
-        () {
-      final visible = _scienceTree().filterAndFlattenDisplay(
-        DeckFilters.create('math'),
-        selectedDeckId: 2,
-      );
+    test(
+      'a matching collapsed deck keeps its children hidden during search',
+      () {
+        final visible = _scienceTree().filterAndFlattenDisplay(
+          DeckFilters.create('math'),
+          selectedDeckId: 2,
+        );
 
-      expect(
-        visible.map((deck) => deck.lastDeckNameComponent),
-        ['Science', 'Math'],
-      );
-      expect(visible.last.canCollapse, isTrue);
-      expect(visible.last.isSelected, isTrue);
-    });
+        expect(visible.map((deck) => deck.lastDeckNameComponent), [
+          'Science',
+          'Math',
+        ]);
+        expect(visible.last.canCollapse, isTrue);
+        expect(visible.last.isSelected, isTrue);
+      },
+    );
 
     test('search includes ancestor paths and excludes unrelated branches', () {
       final tree = DeckNode.syntheticRoot(
         children: [
-          _deck(1, 'Science', 0, children: [
-            _deck(2, 'Math', 1,
-                collapsed: true, children: [_deck(3, 'Algebra', 2)])
-          ]),
+          _deck(
+            1,
+            'Science',
+            0,
+            children: [
+              _deck(
+                2,
+                'Math',
+                1,
+                collapsed: true,
+                children: [_deck(3, 'Algebra', 2)],
+              ),
+            ],
+          ),
           _deck(10, 'Languages', 0, children: [_deck(11, 'French', 1)]),
         ],
       );
@@ -104,10 +118,11 @@ void main() {
         selectedDeckId: 3,
       );
 
-      expect(
-        visible.map((deck) => deck.lastDeckNameComponent),
-        ['Science', 'Math', 'Algebra'],
-      );
+      expect(visible.map((deck) => deck.lastDeckNameComponent), [
+        'Science',
+        'Math',
+        'Algebra',
+      ]);
       expect(visible.map((deck) => deck.isSelected), [false, false, true]);
     });
 
@@ -117,10 +132,10 @@ void main() {
         selectedDeckId: 4,
       );
 
-      expect(
-        visible.map((deck) => deck.lastDeckNameComponent),
-        ['Science', 'Math'],
-      );
+      expect(visible.map((deck) => deck.lastDeckNameComponent), [
+        'Science',
+        'Math',
+      ]);
     });
   });
 
@@ -136,21 +151,31 @@ void main() {
       expect(root.totalCardsDue(), 365);
     });
 
-    test('uses top-level aggregates instead of the capped root or subdecks',
-        () {
-      final cappedRoot = DeckNode.syntheticRoot(children: [
-        _deck(1, 'A', 1, newCount: 9999),
-        _deck(2, 'B', 1, newCount: 9999),
-      ]);
-      final parent = _deck(3, 'Parent', 1, newCount: 9905, children: [
-        _deck(4, 'Sub1', 2, newCount: 9905),
-        _deck(5, 'Sub2', 2, newCount: 9905),
-      ]);
-      final nestedRoot = DeckNode.syntheticRoot(children: [parent]);
+    test(
+      'uses top-level aggregates instead of the capped root or subdecks',
+      () {
+        final cappedRoot = DeckNode.syntheticRoot(
+          children: [
+            _deck(1, 'A', 1, newCount: 9999),
+            _deck(2, 'B', 1, newCount: 9999),
+          ],
+        );
+        final parent = _deck(
+          3,
+          'Parent',
+          1,
+          newCount: 9905,
+          children: [
+            _deck(4, 'Sub1', 2, newCount: 9905),
+            _deck(5, 'Sub2', 2, newCount: 9905),
+          ],
+        );
+        final nestedRoot = DeckNode.syntheticRoot(children: [parent]);
 
-      expect(cappedRoot.totalCardsDue(), 19998);
-      expect(nestedRoot.totalCardsDue(), 9905);
-    });
+        expect(cappedRoot.totalCardsDue(), 19998);
+        expect(nestedRoot.totalCardsDue(), 9905);
+      },
+    );
 
     test('wraps signed 32-bit overflow like Kotlin Int arithmetic', () {
       final root = DeckNode.syntheticRoot(
@@ -165,9 +190,7 @@ void main() {
 
     test('wraps signed 32-bit underflow like Kotlin Int arithmetic', () {
       final root = DeckNode.syntheticRoot(
-        children: [
-          _deck(1, 'A', 1, newCount: -0x80000000, revCount: -1),
-        ],
+        children: [_deck(1, 'A', 1, newCount: -0x80000000, revCount: -1)],
       );
 
       expect(root.totalCardsDue(), 0x7fffffff);
@@ -207,8 +230,13 @@ void main() {
 DeckNode _scienceTree() {
   final group = _deck(4, 'Science::Math::Algebra::Group', 3);
   final algebra = _deck(3, 'Science::Math::Algebra', 2, children: [group]);
-  final math =
-      _deck(2, 'Science::Math', 1, collapsed: true, children: [algebra]);
+  final math = _deck(
+    2,
+    'Science::Math',
+    1,
+    collapsed: true,
+    children: [algebra],
+  );
   final science = _deck(1, 'Science', 0, children: [math]);
 
   return DeckNode.syntheticRoot(children: [science]);
@@ -223,14 +251,13 @@ DeckNode _deck(
   int lrnCount = 0,
   int revCount = 0,
   List<DeckNode> children = const [],
-}) =>
-    DeckNode(
-      did: did,
-      fullDeckName: fullDeckName,
-      depth: depth,
-      collapsed: collapsed,
-      newCount: newCount,
-      lrnCount: lrnCount,
-      revCount: revCount,
-      children: children,
-    );
+}) => DeckNode(
+  did: did,
+  fullDeckName: fullDeckName,
+  depth: depth,
+  collapsed: collapsed,
+  newCount: newCount,
+  lrnCount: lrnCount,
+  revCount: revCount,
+  children: children,
+);

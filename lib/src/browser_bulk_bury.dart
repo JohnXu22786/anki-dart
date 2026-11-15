@@ -74,8 +74,9 @@ BrowserBulkBuryPlan? planBrowserBulkBuryToggle<T>({
 }) {
   if (!hasSelectedRows) return null;
 
-  final wantUnbury =
-      selectedCardIds.every((cardId) => queueForCard(cardId).isBuried);
+  final wantUnbury = selectedCardIds.every(
+    (cardId) => queueForCard(cardId).isBuried,
+  );
   return BrowserBulkBuryPlan(
     wasBuried: !wantUnbury,
     count: selectedCardIds.length,

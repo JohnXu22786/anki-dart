@@ -31,7 +31,8 @@ import 'java_float_format.dart';
 /// exact NightTheme.DARK to [nightDark].
 enum CardAppearanceThemeProjection { dayOther, dayPlain, nightOther, nightDark }
 
-const _reviewerCustomFontStyle = "BODY {font-family: 'OpenSans';"
+const _reviewerCustomFontStyle =
+    "BODY {font-family: 'OpenSans';"
     'font-weight: normal;font-style: normal;font-stretch: normal;}';
 
 /// Returns `CardAppearance.style`: the fixed ReviewerCustomFonts CSS followed
@@ -43,13 +44,12 @@ String composeCardAppearanceStyle({
   required double fontScale,
   required int cardZoom,
   required int imageZoom,
-}) =>
-    appendCardAppearanceCss(
-      _reviewerCustomFontStyle,
-      fontScale: fontScale,
-      cardZoom: cardZoom,
-      imageZoom: imageZoom,
-    );
+}) => appendCardAppearanceCss(
+  _reviewerCustomFontStyle,
+  fontScale: fontScale,
+  cardZoom: cardZoom,
+  imageZoom: imageZoom,
+);
 
 /// Applies AnkiDroid's exact global bold-weight replacement to rendered text.
 String fixCardAppearanceBoldStyle(String content) =>
@@ -130,8 +130,9 @@ String _javaPercentDouble(int percent) {
   final exponential = value.toStringAsExponential();
   final exponentIndex = exponential.indexOf('e');
   final significand = exponential.substring(0, exponentIndex);
-  final javaSignificand =
-      significand.contains('.') ? significand : '$significand.0';
+  final javaSignificand = significand.contains('.')
+      ? significand
+      : '$significand.0';
   final exponent = int.parse(exponential.substring(exponentIndex + 1));
   return '${javaSignificand}E$exponent';
 }

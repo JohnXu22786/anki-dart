@@ -74,25 +74,27 @@ void main() {
       );
     });
 
-    test('zero and negative row counts follow the direct source comparison',
-        () {
-      expect(
-        projectBrowserSelectAllOrNoneState(
-          selectedRows: const [],
-          isInMultiSelectMode: true,
-          rowCount: 0,
-        ),
-        BrowserSelectAllOrNoneState.selectNone,
-      );
-      expect(
-        projectBrowserSelectAllOrNoneState(
-          selectedRows: const [],
-          isInMultiSelectMode: true,
-          rowCount: -1,
-        ),
-        BrowserSelectAllOrNoneState.selectNone,
-      );
-    });
+    test(
+      'zero and negative row counts follow the direct source comparison',
+      () {
+        expect(
+          projectBrowserSelectAllOrNoneState(
+            selectedRows: const [],
+            isInMultiSelectMode: true,
+            rowCount: 0,
+          ),
+          BrowserSelectAllOrNoneState.selectNone,
+        );
+        expect(
+          projectBrowserSelectAllOrNoneState(
+            selectedRows: const [],
+            isInMultiSelectMode: true,
+            rowCount: -1,
+          ),
+          BrowserSelectAllOrNoneState.selectNone,
+        );
+      },
+    );
 
     test('duplicate row IDs count once like the source selected-row Set', () {
       expect(

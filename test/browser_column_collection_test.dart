@@ -136,8 +136,10 @@ void main() {
         },
       )!;
 
-      expect(
-          update.collection.columns, [BrowserColumn.deck, BrowserColumn.deck]);
+      expect(update.collection.columns, [
+        BrowserColumn.deck,
+        BrowserColumn.deck,
+      ]);
       expect(update.preferenceValue, 'deck|deck');
       expect(
         BrowserColumnCollection.load(
@@ -148,32 +150,39 @@ void main() {
       );
     });
 
-    test('exposes read-only views while retaining constructor list aliasing',
-        () {
-      final input = <BrowserColumn>[BrowserColumn.question];
-      final collection = BrowserColumnCollection(input);
+    test(
+      'exposes read-only views while retaining constructor list aliasing',
+      () {
+        final input = <BrowserColumn>[BrowserColumn.question];
+        final collection = BrowserColumnCollection(input);
 
-      expect(
-        () => collection.columns.add(BrowserColumn.tags),
-        throwsUnsupportedError,
-      );
+        expect(
+          () => collection.columns.add(BrowserColumn.tags),
+          throwsUnsupportedError,
+        );
 
-      // The Kotlin constructor retains the supplied List reference and caches
-      // count once, so later changes through another alias remain observable.
-      input.add(BrowserColumn.tags);
-      expect(collection.columns, [BrowserColumn.question, BrowserColumn.tags]);
-      expect(collection.count, 1);
-    });
+        // The Kotlin constructor retains the supplied List reference and caches
+        // count once, so later changes through another alias remain observable.
+        input.add(BrowserColumn.tags);
+        expect(collection.columns, [
+          BrowserColumn.question,
+          BrowserColumn.tags,
+        ]);
+        expect(collection.count, 1);
+      },
+    );
 
-    test('backend key projection is a snapshot when the source list changes',
-        () {
-      final input = <BrowserColumn>[BrowserColumn.question];
-      final collection = BrowserColumnCollection(input);
-      final keys = collection.backendKeys;
+    test(
+      'backend key projection is a snapshot when the source list changes',
+      () {
+        final input = <BrowserColumn>[BrowserColumn.question];
+        final collection = BrowserColumnCollection(input);
+        final keys = collection.backendKeys;
 
-      input.add(BrowserColumn.tags);
+        input.add(BrowserColumn.tags);
 
-      expect(keys, ['question']);
-    });
+        expect(keys, ['question']);
+      },
+    );
   });
 }

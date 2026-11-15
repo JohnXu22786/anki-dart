@@ -34,17 +34,19 @@ void main() {
       expect(tree.find(7), same(tree.children[0].children.single));
     });
 
-    test('searches children depth first in order and returns null if absent',
-        () {
-      final first = _node(7);
-      final tree = _node(0, [
-        _node(2, [first]),
-        _node(3, [_node(7)]),
-      ]);
+    test(
+      'searches children depth first in order and returns null if absent',
+      () {
+        final first = _node(7);
+        final tree = _node(0, [
+          _node(2, [first]),
+          _node(3, [_node(7)]),
+        ]);
 
-      expect(tree.find(7), same(first));
-      expect(tree.find(99), isNull);
-    });
+        expect(tree.find(7), same(first));
+        expect(tree.find(99), isNull);
+      },
+    );
 
     test('find includes a matching synthetic node', () {
       final synthetic = DeckNode.syntheticRoot(children: [_node(1)]);
@@ -54,18 +56,22 @@ void main() {
   });
 
   group('DeckNode preorder traversal', () {
-    test('visits self and descendants in child order, skipping synthetic nodes',
-        () {
-      final tree = DeckNode.syntheticRoot(children: [
-        _node(1, [
-          _node(2),
-          DeckNode.syntheticRoot(children: [_node(3)]),
-        ]),
-        _node(4),
-      ]);
+    test(
+      'visits self and descendants in child order, skipping synthetic nodes',
+      () {
+        final tree = DeckNode.syntheticRoot(
+          children: [
+            _node(1, [
+              _node(2),
+              DeckNode.syntheticRoot(children: [_node(3)]),
+            ]),
+            _node(4),
+          ],
+        );
 
-      expect(tree.preorder.map((node) => node.did), [1, 2, 3, 4]);
-    });
+        expect(tree.preorder.map((node) => node.did), [1, 2, 3, 4]);
+      },
+    );
 
     test('supports direct iteration with the same preorder', () {
       final tree = DeckNode.syntheticRoot(children: [_node(1), _node(2)]);
@@ -89,9 +95,5 @@ void main() {
   });
 }
 
-DeckNode _node(int did, [List<DeckNode> children = const []]) => DeckNode(
-      did: did,
-      fullDeckName: 'Deck $did',
-      depth: 0,
-      children: children,
-    );
+DeckNode _node(int did, [List<DeckNode> children = const []]) =>
+    DeckNode(did: did, fullDeckName: 'Deck $did', depth: 0, children: children);

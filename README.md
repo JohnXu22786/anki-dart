@@ -4,6 +4,9 @@ This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 
+The package targets Dart VM hosts, including Android. Web is not a supported
+target because locale-sensitive helpers use `dart:io` platform information.
+
 ## LibAnki Collection raw backend forwarding
 
 [`collection_remaining_raw.dart`](lib/src/collection_remaining_raw.dart) and its

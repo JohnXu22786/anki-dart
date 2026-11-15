@@ -62,17 +62,18 @@ void main() {
     });
 
     test('advanced append uses Kotlin blank and exact ASCII-space checks', () {
-      final blankCurrent =
-          const BrowserSearchTextState(advancedText: '\u00a0\t\u2003')
-              .appendAdvancedSearch('term');
-      final nonAsciiSpaceSuffix =
-          const BrowserSearchTextState(advancedText: 'word\t')
-              .appendAdvancedSearch('term');
-      final asciiSpaceSuffix =
-          const BrowserSearchTextState(advancedText: 'word  ')
-              .appendAdvancedSearch('term');
-      final emptyAppend = const BrowserSearchTextState(advancedText: 'word')
-          .appendAdvancedSearch('');
+      final blankCurrent = const BrowserSearchTextState(
+        advancedText: '\u00a0\t\u2003',
+      ).appendAdvancedSearch('term');
+      final nonAsciiSpaceSuffix = const BrowserSearchTextState(
+        advancedText: 'word\t',
+      ).appendAdvancedSearch('term');
+      final asciiSpaceSuffix = const BrowserSearchTextState(
+        advancedText: 'word  ',
+      ).appendAdvancedSearch('term');
+      final emptyAppend = const BrowserSearchTextState(
+        advancedText: 'word',
+      ).appendAdvancedSearch('');
 
       expect(blankCurrent.advancedText, '\u00a0\t\u2003term ');
       expect(nonAsciiSpaceSuffix.advancedText, 'word\t term ');
@@ -101,16 +102,19 @@ void main() {
       expect(state.displayedText, 'replaced');
     });
 
-    test('applying a saved query to empty Basic text adds a trailing space',
-        () {
-      final state =
-          const BrowserSearchTextState().applySavedSearch('sample\nquery');
+    test(
+      'applying a saved query to empty Basic text adds a trailing space',
+      () {
+        final state = const BrowserSearchTextState().applySavedSearch(
+          'sample\nquery',
+        );
 
-      expect(state.isAdvancedSearch, isFalse);
-      expect(state.basicText, 'sample query ');
-      expect(state.displayedText, 'sample query ');
-      expect(state.advancedText, '');
-    });
+        expect(state.isAdvancedSearch, isFalse);
+        expect(state.basicText, 'sample query ');
+        expect(state.displayedText, 'sample query ');
+        expect(state.advancedText, '');
+      },
+    );
 
     test('applying a saved query replaces existing Basic text', () {
       final state = const BrowserSearchTextState(

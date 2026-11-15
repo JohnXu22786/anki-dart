@@ -52,21 +52,30 @@ void main() {
       expect(key.toString(), '⌨Ctrl+Alt+9');
     });
 
-    test('uses signed 32-bit key codes and returns Unknown outside that range',
-        () {
-      expect(
-        (codec.decodeBinding('⌨2147483647') as ReviewerKeyCodeBinding).keyCode,
-        2147483647,
-      );
-      expect(
-        (codec.decodeBinding('⌨-2147483648') as ReviewerKeyCodeBinding).keyCode,
-        -2147483648,
-      );
-      expect(codec.decodeBinding('⌨2147483648'), isA<ReviewerUnknownBinding>());
-      expect(
-          codec.decodeBinding('⌨-2147483649'), isA<ReviewerUnknownBinding>());
-      expect(codec.decodeBinding('⌨+'), isA<ReviewerUnknownBinding>());
-    });
+    test(
+      'uses signed 32-bit key codes and returns Unknown outside that range',
+      () {
+        expect(
+          (codec.decodeBinding('⌨2147483647') as ReviewerKeyCodeBinding)
+              .keyCode,
+          2147483647,
+        );
+        expect(
+          (codec.decodeBinding('⌨-2147483648') as ReviewerKeyCodeBinding)
+              .keyCode,
+          -2147483648,
+        );
+        expect(
+          codec.decodeBinding('⌨2147483648'),
+          isA<ReviewerUnknownBinding>(),
+        );
+        expect(
+          codec.decodeBinding('⌨-2147483649'),
+          isA<ReviewerUnknownBinding>(),
+        );
+        expect(codec.decodeBinding('⌨+'), isA<ReviewerUnknownBinding>());
+      },
+    );
 
     test('typed key-code constructors enforce the source Int range', () {
       expect(
@@ -95,7 +104,9 @@ void main() {
       final supplementary = codec.decodeBinding('✅😀');
       expect(supplementary, isA<ReviewerUnicodeCharacterBinding>());
       expect(
-          (supplementary as ReviewerUnicodeCharacterBinding).codeUnit, 0xD83D);
+        (supplementary as ReviewerUnicodeCharacterBinding).codeUnit,
+        0xD83D,
+      );
       expect(supplementary.toString().codeUnits.last, 0xD83D);
     });
 
@@ -123,23 +134,26 @@ void main() {
       expect(codec.encode([binding]), '1/r✅Ctrl+A1');
     });
 
-    test('deserialization accepts separator character but factory rejects it',
-        () {
-      final decoded = codec.decodeBinding('✅|');
-      final made = ReviewerBindingValue.forUnicodeCharacter(0x7C);
+    test(
+      'deserialization accepts separator character but factory rejects it',
+      () {
+        final decoded = codec.decodeBinding('✅|');
+        final made = ReviewerBindingValue.forUnicodeCharacter(0x7C);
 
-      expect(decoded, isA<ReviewerUnicodeCharacterBinding>());
-      expect((decoded as ReviewerUnicodeCharacterBinding).toString(), '✅|');
-      expect(made.binding, isA<ReviewerUnknownBinding>());
-      expect(made.isValid, isFalse);
-      expect(made.toPreferenceString(), isNull);
-    });
+        expect(decoded, isA<ReviewerUnicodeCharacterBinding>());
+        expect((decoded as ReviewerUnicodeCharacterBinding).toString(), '✅|');
+        expect(made.binding, isA<ReviewerUnknownBinding>());
+        expect(made.isValid, isFalse);
+        expect(made.toPreferenceString(), isNull);
+      },
+    );
 
     test('distinguishes parsed no-modifier keys from AppDefined defaults', () {
       final parsed =
           codec.decodeBinding('✅A') as ReviewerUnicodeCharacterBinding;
-      final made = ReviewerBindingValue.forUnicodeCharacter(0x41).binding
-          as ReviewerUnicodeCharacterBinding;
+      final made =
+          ReviewerBindingValue.forUnicodeCharacter(0x41).binding
+              as ReviewerUnicodeCharacterBinding;
 
       expect(parsed.modifierKeys, isNot(isA<ReviewerAppDefinedModifierKeys>()));
       expect(parsed.modifierKeys.shiftMatches(true), isFalse);
@@ -171,16 +185,18 @@ void main() {
       expect(noModifier.hashCode, control.hashCode);
     });
 
-    test('unknown data object instances compare equally with the same hash',
-        () {
-      final first = ReviewerUnknownBinding();
-      final second = ReviewerUnknownBinding();
+    test(
+      'unknown data object instances compare equally with the same hash',
+      () {
+        final first = ReviewerUnknownBinding();
+        final second = ReviewerUnknownBinding();
 
-      expect(first, second);
-      expect(first.hashCode, second.hashCode);
-      expect(first.isValid, isFalse);
-      expect(first.toString(), isEmpty);
-    });
+        expect(first, second);
+        expect(first.hashCode, second.hashCode);
+        expect(first.isValid, isFalse);
+        expect(first.toString(), isEmpty);
+      },
+    );
   });
 
   group('reviewer binding wrapper semantics', () {
@@ -195,8 +211,13 @@ void main() {
       );
       final both = ReviewerBindingValue.forKeyCode(88);
 
-      expect(codec.encode([question, answer, both]),
-          '1/r⌨88' '0|r⌨88' '1|r⌨88' '2');
+      expect(
+        codec.encode([question, answer, both]),
+        '1/r⌨88'
+        '0|r⌨88'
+        '1|r⌨88'
+        '2',
+      );
       expect(question, both);
       expect(both, answer);
       expect(question, isNot(answer));

@@ -51,16 +51,18 @@ void main() {
       );
     });
 
-    test('replaces the first unanchored flag match and preserves later matches',
-        () {
-      expect(
-        browserSearchTermsWithFlag(
-          searchTerms: 'someflag:3 flag:4 is:new',
-          flagCode: 7,
-        ),
-        'someflag:7 flag:4 is:new',
-      );
-    });
+    test(
+      'replaces the first unanchored flag match and preserves later matches',
+      () {
+        expect(
+          browserSearchTermsWithFlag(
+            searchTerms: 'someflag:3 flag:4 is:new',
+            flagCode: 7,
+          ),
+          'someflag:7 flag:4 is:new',
+        );
+      },
+    );
 
     test('consumes exactly one character after the first flag prefix', () {
       expect(
@@ -69,23 +71,22 @@ void main() {
       );
     });
 
-    test('contains without a regex match leaves the original query unchanged',
-        () {
-      for (final suffix in ['', '\n', '\r', '\u0085', '\u2028', '\u2029']) {
-        final query = 'flag:$suffix';
-        expect(
-          browserSearchTermsWithFlag(searchTerms: query, flagCode: 4),
-          query,
-        );
-      }
-    });
+    test(
+      'contains without a regex match leaves the original query unchanged',
+      () {
+        for (final suffix in ['', '\n', '\r', '\u0085', '\u2028', '\u2029']) {
+          final query = 'flag:$suffix';
+          expect(
+            browserSearchTermsWithFlag(searchTerms: query, flagCode: 4),
+            query,
+          );
+        }
+      },
+    );
 
     test('the first match can follow an incomplete line-terminated prefix', () {
       expect(
-        browserSearchTermsWithFlag(
-          searchTerms: 'flag:\n flag:2',
-          flagCode: 5,
-        ),
+        browserSearchTermsWithFlag(searchTerms: 'flag:\n flag:2', flagCode: 5),
         'flag:\n flag:5',
       );
     });
@@ -99,10 +100,7 @@ void main() {
 
     test('a Unicode supplementary character is replaced as one regex dot', () {
       expect(
-        browserSearchTermsWithFlag(
-          searchTerms: 'flag:🐈 is:new',
-          flagCode: 6,
-        ),
+        browserSearchTermsWithFlag(searchTerms: 'flag:🐈 is:new', flagCode: 6),
         'flag:6 is:new',
       );
     });

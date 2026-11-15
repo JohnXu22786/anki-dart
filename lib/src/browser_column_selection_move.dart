@@ -30,10 +30,9 @@ enum BrowserColumnSelectionDragMode { disabled, vertical }
 /// Returns the source-equivalent movement capability for a row.
 BrowserColumnSelectionDragMode browserColumnSelectionDragMode({
   required bool isUsageItem,
-}) =>
-    isUsageItem
-        ? BrowserColumnSelectionDragMode.disabled
-        : BrowserColumnSelectionDragMode.vertical;
+}) => isUsageItem
+    ? BrowserColumnSelectionDragMode.disabled
+    : BrowserColumnSelectionDragMode.vertical;
 
 /// One adjacent pair passed to Kotlin's `Collections.swap` by `swapPositions`.
 final class BrowserColumnPositionSwap {

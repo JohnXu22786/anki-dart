@@ -16,11 +16,20 @@ rollback on failure. The runner accepts synchronous or asynchronous host
 adapters through `CollectionSchemaMigrationDatabase` and
 `CollectionSchemaMigrationCallbacks`; it does not select a SQLite driver.
 
-Only transactional execution of the existing plans is implemented. The
-package does not create or open collections, inspect integrity, configure WAL,
-implement the named transformation callbacks, provide table CRUD or defaults,
-or implement undo or a complete collection engine. Host integrations supply
-the database adapter and callback implementations.
+The package also orchestrates the source open/create sequence through injected
+host contracts: it detects an absent collection, rejects incompatible schema
+versions, optionally checks integrity, and performs schema 11 creation,
+ordered upgrades, and default callbacks in one exclusive transaction. Existing
+schema 18 collections are a no-op. The open/create runner reuses the migration
+catalog without opening a nested transaction.
+
+The host supplies the database adapter and callbacks. In particular, metadata
+initialization supplies the source-compatible clock, version 1 creation date,
+local timezone offset, and schema 11 default-config serialization. Named
+migration callbacks and default deck/config/note-type creation remain host
+responsibilities. This package does not configure WAL, provide a concrete
+driver, implement collection CRUD, close/checkpoint a collection, or provide
+undo or a complete collection engine.
 
 To verify the source hashes against the pinned Anki Core checkout:
 

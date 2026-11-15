@@ -3,10 +3,11 @@
 ## Anki Core collection schema catalog (Unit 4.1)
 
 [`packages/anki_collection_schema`](packages/anki_collection_schema/README.md)
-PORTED: schema SQL/catalog and version compatibility. PARTIAL: ordered migration
-callback contract only; the callbacks are not implemented here. Remaining
-collection storage work includes SQLite execution and transactions, database
-open/close, CRUD, and the data transformations. The package provides the
+PORTED: schema SQL/catalog and version compatibility. PARTIAL: transactional
+execution of the catalogued migration plans; host adapters still supply the
+database and callbacks. Remaining collection storage work includes collection
+creation/open/close, integrity checks, WAL handling, CRUD, defaults, undo, and
+the callback transformations. The package provides the
 platform-neutral schema catalog for Anki Core at commit
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It exposes the schema 11 creation
 SQL, ordered upgrade definitions through schema 18, the schema 18-to-11

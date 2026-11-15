@@ -9,11 +9,18 @@ supported schema 18 to 11 downgrade. `collectionSchemaVersionStatus()` retains
 the source's too-old/too-new compatibility outcomes, including rejection of
 versions 12 and 13 as too new.
 
-This is a schema-definition slice. It does not open collections, execute SQL,
-manage transactions, implement callback transformations, or provide CRUD. A
-storage adapter must execute the plan atomically with an appropriate SQLite
-executor and supply the named callbacks, including the server-mode argument
-where marked.
+This is a platform-neutral schema and migration package. It includes a
+transactional plan runner that executes the catalogued SQL batches and named
+callbacks in source order, using an exclusive transaction and attempting
+rollback on failure. The runner accepts synchronous or asynchronous host
+adapters through `CollectionSchemaMigrationDatabase` and
+`CollectionSchemaMigrationCallbacks`; it does not select a SQLite driver.
+
+Only transactional execution of the existing plans is implemented. The
+package does not create or open collections, inspect integrity, configure WAL,
+implement the named transformation callbacks, provide table CRUD or defaults,
+or implement undo or a complete collection engine. Host integrations supply
+the database adapter and callback implementations.
 
 To verify the source hashes against the pinned Anki Core checkout:
 

@@ -19,8 +19,11 @@ the separately licensed `anki_collection_schema` package.
 
 The collection connection also registers Core's deterministic
 `field_at_index(flds, index)` SQLite function from `rslib/src/storage/sqlite.rs`
-for first-field note lookup. Other Core SQLite functions and collations remain
-outside this adapter until their own source-derived units are completed.
+for first-field note lookup and `process_text(text, flags)` from the same source.
+The text function adapts `without_combining` and `strip_clozes` from
+`rslib/src/text.rs` and `rslib/src/cloze.rs`. Other Core SQLite functions and
+collations remain outside this adapter until their own source-derived units are
+completed.
 
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently

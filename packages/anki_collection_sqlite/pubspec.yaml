@@ -16,6 +16,7 @@ dependencies:
     path: ../anki_search_sql
   fixnum: ^1.1.0
   sqlite3: ^3.9.1
+  unorm_dart: ^0.3.3
   web: ^1.1.2
 
 dev_dependencies:

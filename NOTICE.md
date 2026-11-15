@@ -1886,6 +1886,19 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   `launchCatchingIO`, lifecycle, Flow delivery, and Android shortcut handling.
   Root `COPYING` remains byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:215–222,482–498`
+  (`deleteSelectedDeck`, `createIcon`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later`; the file header contains no
+  copyright text, and no method-specific authorship is asserted. The selected
+  deck lookup followed by delete-job delegation/join, and the shortcut name
+  lookup followed by basename and payload emission, are adapted in
+  `lib/src/deck_picker_lookup_callbacks.dart`, with focused cases in
+  `test/deck_picker_delete_selected_deck_callbacks_test.dart` and
+  `test/deck_picker_create_icon_callbacks_test.dart`. The host retains actual
+  collection access, coroutine/Job semantics, IO scheduling, Flow delivery,
+  and Android shortcut handling. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:908–927`
   (`onAppendSelectedRows` and `onRemoveSelectedRows`; pinned AnkiDroid 2.25.3
   commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares

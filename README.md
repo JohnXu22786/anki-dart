@@ -1933,10 +1933,17 @@ Android lifecycle, StateFlow, localization, and UI.
   removal, focus reset to default deck ID `1`, then the deck name and deleted
   card count notification. The host resolves `decks.getLegacy(did)!!.name`
   first, runs removal undoably, and applies later effects only after success.
-  `deleteSelectedDeck` remains host-side: it reads the selected ID, delegates
-  to `deleteDeck`, and joins that job. Collection access, the source null
-  assertion, undo, coroutine, and Flow behavior stay host-side. Cases are
+  `deleteSelectedDeckPickerDeck` reads the selected ID once before delegating
+  and joining the delete job, preserving Kotlin `Job.join()`'s wait-without-
+  rethrow behavior at the host callback boundary. Collection access, the source
+  null assertion, undo, coroutine, and Flow behavior stay host-side. Cases are
   source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker shortcut creation: `createDeckPickerIcon` resolves the exact full
+  name through the host, derives its basename, then emits `ShortcutData` with
+  the original deck ID and full name. The host retains collection lookup, IO
+  scheduling, Flow delivery, and Android shortcut handling. Callback failures
+  stop later effects and propagate unchanged; focused cases are source-derived.
+  See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker default-child predicate: `onlyHasDefaultDeck` returns true only
   for exactly one child with the default deck ID (`1`); empty and multi-child
   inputs return false. The host supplies child IDs; due-tree construction and

@@ -14,6 +14,7 @@ SOURCE_HASHES = {
     "rslib/src/card/service.rs": "8ddddbf879e08cb70ea00e9f00ac6c98f9f3988af65c48598a6cbb2fc11558b6",
     "rslib/src/notes/mod.rs": "5df79b58906206a87c5a28a06f886227df74e6a65d061d2cb915d35b34d35893",
     "rslib/src/notetype/mod.rs": "4f133ddf970d954e80cf3352d5bd91bf73418a1d71eaa1fb863218569d4198cb",
+    "rslib/src/notetype/stock.rs": "a2f5175e8dcff92c01bfc09ed30f0e085253b8de01be6769019e505f5704ae15",
     "rslib/src/notetype/cloze_styling.css": "17d12d52e6321d5f17be18911f47433110d39e9a52d23eeb13bfe7787932639d",
     "rslib/src/notetype/header.tex": "9e1dcea96178f505ec330c20efea94e11350d671f245612bc8cae1960e9223b7",
     "rslib/src/notetype/styling.css": "e50d4c220958517e9418a1bfe849fe0f3fc74a507600aafe00fc9d7a94733740",

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/generic.pb.dart' as generic;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;

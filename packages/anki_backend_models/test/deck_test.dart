@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as config_proto;
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as deck_proto;

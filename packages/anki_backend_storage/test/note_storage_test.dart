@@ -60,11 +60,12 @@ CREATE TABLE notes (
     expect(row['csum'], replacement.checksum);
     expect(
       () => storage.updateNote(_note()),
-      throwsA(isA<AssertionError>()),
+      throwsStateError,
     );
   });
 
   test('add assigns a generated 64-bit ID and joins fields and tags', () {
+    expect(() => storage.addNote(_note(id: 1)), throwsStateError);
     final note = _note(fields: ['front', 'back'], tags: ['tag']);
     storage.addNote(note);
 

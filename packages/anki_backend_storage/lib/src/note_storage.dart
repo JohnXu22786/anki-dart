@@ -32,7 +32,9 @@ class NoteStorage {
   /// Updates an existing row. The note must already have its derived fields
   /// prepared by [Note.prepareForUpdate].
   void updateNote(Note note) {
-    assert(note.id != Int64.ZERO);
+    if (note.id == Int64.ZERO) {
+      throw StateError('note ID must be nonzero before it can be updated');
+    }
     final parameters = _noteParameters(note)..removeAt(0);
     parameters.add(note.id);
     db.prepareCached(_updateSql).execute(parameters);
@@ -40,7 +42,9 @@ class NoteStorage {
 
   /// Inserts a new note and assigns SQLite's generated 64-bit row ID to it.
   void addNote(Note note) {
-    assert(note.id == Int64.ZERO);
+    if (note.id != Int64.ZERO) {
+      throw StateError('note ID must be zero before it can be added');
+    }
     db.prepareCached(_addSql).execute([
       _nowMillis(),
       ..._noteParameters(note, includeId: false),

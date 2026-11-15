@@ -84,6 +84,28 @@ void main() {
       textQuery.arguments.single != '%front%back%') {
     throw StateError('Text search precision/JS smoke test failed');
   }
+  final fieldQuery = compileSearchSql(
+    GroupNode([
+      Search(
+        const SingleFieldSearch(
+          field: 'F*',
+          text: r'^a+$',
+          mode: FieldSearchMode.regex,
+        ),
+      ),
+    ]),
+    resultType: SearchResultType.notes,
+    fieldSearchContext: SearchSqlFieldContext([
+      SearchSqlNotetypeFields(
+        notetypeId: BigInt.parse('9007199254740993'),
+        fields: const [SearchSqlField(name: 'Front', ordinal: 0)],
+      ),
+    ]),
+  );
+  if (!fieldQuery.sql.contains('n.mid = 9007199254740993') ||
+      fieldQuery.arguments.single != r'(?i)^a+$') {
+    throw StateError('Field search precision/JS smoke test failed');
+  }
   final largeDeckId = Int64.parseInt('9223372036854775807');
   final largeDeckQuery = compileSearchSql(
     GroupNode([Search(DeckIdWithChildren(largeDeckId))]),

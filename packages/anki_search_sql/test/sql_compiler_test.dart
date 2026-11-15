@@ -756,6 +756,273 @@ void main() {
     );
   });
 
+  test('field-qualified searches resolve exact names and Anki globs', () {
+    final context = SearchSqlFieldContext([
+      SearchSqlNotetypeFields(
+        notetypeId: BigInt.parse('9007199254740993'),
+        fields: const [
+          SearchSqlField(name: 'Name', ordinal: 0),
+          SearchSqlField(name: 'Front', ordinal: 1),
+          SearchSqlField(name: 'Back', ordinal: 2),
+        ],
+      ),
+      SearchSqlNotetypeFields(
+        notetypeId: BigInt.from(8),
+        fields: const [
+          SearchSqlField(name: 'Fíeld', ordinal: 0),
+          SearchSqlField(name: 'Other', ordinal: 1),
+        ],
+      ),
+    ]);
+
+    final exact = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: 'front',
+            text: 'hello*world',
+            mode: FieldSearchMode.normal,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: context,
+    );
+    expect(
+      exact.sql,
+      'select n.id from notes n where '
+      "(((n.mid = 9007199254740993 and (n.flds like '%\u001f' || ?1 || '\u001f%' escape '\\'))))",
+    );
+    expect(exact.arguments, ['hello%world']);
+    final cardProjection = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: 'Front',
+            text: 'x',
+            mode: FieldSearchMode.normal,
+          ),
+        ),
+      ]),
+      fieldSearchContext: context,
+    );
+    expect(cardProjection.requiredTable, RequiredTable.cardsAndNotes);
+    expect(
+      cardProjection.sql,
+      startsWith('select c.id from cards c, notes n where c.nid=n.id and '),
+    );
+
+    final escapedValue = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: 'Front',
+            text: r'hello\*100%',
+            mode: FieldSearchMode.normal,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: context,
+    );
+    expect(escapedValue.arguments, [r'hello*100\%']);
+
+    final glob = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: 'F*',
+            text: 'x',
+            mode: FieldSearchMode.regex,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: context,
+    );
+    expect(
+      glob.sql,
+      'select n.id from notes n where '
+      '(((n.mid = 8 and regexp_fields(?1, n.flds, 0)) or '
+      '(n.mid = 9007199254740993 and regexp_fields(?1, n.flds, 1))))',
+    );
+    expect(glob.arguments, [r'(?i)x']);
+
+    final unicodeName = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: 'FÍELD',
+            text: '^a+\$',
+            mode: FieldSearchMode.regex,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: context,
+    );
+    expect(
+      unicodeName.sql,
+      'select n.id from notes n where '
+      '(((n.mid = 8 and regexp_fields(?1, n.flds, 0))))',
+    );
+    expect(unicodeName.arguments, [r'(?i)^a+$']);
+
+    final normalized = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: 'Front',
+            text: 'Cafe\u0301',
+            mode: FieldSearchMode.regex,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: context,
+      normalizeNoteText: true,
+    );
+    expect(normalized.arguments, [r'(?i)Café']);
+
+    final numbered = compileSearchSql(
+      GroupNode([
+        Search(const Notetype('Basic')),
+        BooleanNode(NodeKind.and),
+        Search(
+          const SingleFieldSearch(
+            field: 'Front',
+            text: 'x',
+            mode: FieldSearchMode.regex,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: context,
+    );
+    expect(numbered.arguments, ['Basic', r'(?i)x']);
+    expect(numbered.sql, contains('regexp_fields(?2, n.flds, 1)'));
+  });
+
+  test('field search all-field aliases and no-combining follow Core modes', () {
+    final fields = SearchSqlFieldContext([
+      SearchSqlNotetypeFields(
+        notetypeId: BigInt.from(1),
+        fields: const [
+          SearchSqlField(name: 'Front', ordinal: 0),
+          SearchSqlField(name: 'Front Extra', ordinal: 1),
+          SearchSqlField(name: 'Back', ordinal: 2),
+        ],
+      ),
+    ]);
+    final allFields = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: '_*',
+            text: 'foo*bar',
+            mode: FieldSearchMode.noCombining,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: fields,
+    );
+    expect(
+      allFields.sql,
+      'select n.id from notes n where (regexp_fields(?1, n.flds))',
+    );
+    expect(allFields.arguments, [r'(?is)^foo.*bar$']);
+
+    final regexAllFields = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: '*_',
+            text: r'^foo$',
+            mode: FieldSearchMode.regex,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+    );
+    expect(
+      regexAllFields.sql,
+      'select n.id from notes n where (regexp_fields(?1, n.flds))',
+    );
+    expect(regexAllFields.arguments, [r'(?i)^foo$']);
+
+    final noCombining = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: 'Front',
+            text: 'Café',
+            mode: FieldSearchMode.noCombining,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: fields,
+    );
+    expect(noCombining.arguments, ['Cafe']);
+    expect(
+      noCombining.sql,
+      'select n.id from notes n where '
+      "(((n.mid = 1 and (coalesce(process_text(n.flds, 1), n.flds) like '' || ?1 || '\u001f%\u001f%' escape '\\'))))",
+    );
+
+    final missing = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: 'Missing',
+            text: 'x',
+            mode: FieldSearchMode.normal,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: fields,
+    );
+    expect(missing.sql, 'select n.id from notes n where (false)');
+    expect(missing.arguments, isEmpty);
+
+    expect(
+      () => compileSearchSql(
+        GroupNode([
+          Search(
+            const SingleFieldSearch(
+              field: 'Front',
+              text: 'x',
+              mode: FieldSearchMode.normal,
+            ),
+          ),
+        ]),
+      ),
+      throwsArgumentError,
+    );
+
+    final nonempty = compileSearchSql(
+      GroupNode([
+        Search(
+          const SingleFieldSearch(
+            field: 'F*',
+            text: '*',
+            mode: FieldSearchMode.normal,
+          ),
+        ),
+      ]),
+      resultType: SearchResultType.notes,
+      fieldSearchContext: fields,
+    );
+    expect(
+      nonempty.sql,
+      'select n.id from notes n where '
+      "(((n.mid = 1 and (n.flds like '' || ?1 || '\u001f%\u001f%' escape '\\' or n.flds like '%\u001f' || ?1 || '\u001f%' escape '\\'))))",
+    );
+    expect(nonempty.arguments, ['%']);
+  });
+
   test('tag special values and escaped wildcards match Core semantics', () {
     for (final tag in ['none', '*']) {
       final compiled = compileSearchSql(

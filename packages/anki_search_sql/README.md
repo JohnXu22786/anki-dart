@@ -4,7 +4,8 @@ This AGPL-3.0-or-later package compiles a bounded subset of the typed AST from
 `anki_search_parser` to source-compatible Anki SQL. It supports boolean
 operators, groups, negation, card and note IDs, notetype IDs and names, card
 template ordinals and names, tag predicates in normal, regex, and no-combining
-modes, unqualified text and regex searches, deck IDs with and without children,
+modes, unqualified text and regex searches, field-qualified search in normal,
+regex, and no-combining modes, deck IDs with and without children,
 deck-preset predicates, card flags,
 all card state predicates, added/edited/introduced day predicates, and
 whole-collection queries. It
@@ -58,9 +59,9 @@ grammar, and their exact spelling is preserved without numeric conversion.
 The compiler is pure Dart, deterministic, and platform-neutral. It does not
 execute SQL. The compiler preserves the upstream Unicode-decimal ID spelling
 in generated SQL; SQLite may reject such a query, as in the pinned writer.
-Field-qualified search, duplicate detection, remaining glob predicates,
-sorting, browser tables, database execution, and UI remain outside this
-package; this subset is not complete Anki search execution. Custom-data and state predicates
+Duplicate detection, remaining glob predicates, sorting, browser tables,
+database execution, and UI remain outside this package; this subset is not
+complete Anki search execution. Custom-data and state predicates
 require the cards table, and the host must register `extract_custom_data()`.
 Tag predicates require the notes table and preserve Core's `none`, `*`, space,
 wildcard, case-insensitive regex, and no-combining `process_text` SQL behavior.
@@ -82,6 +83,12 @@ of searchable fields and sort-field visibility. Omitting it searches both
 `normalizeNoteText` setting for NFC normalization. Their `process_text` flags
 match Core's `NoCombining` and `StripClozes` bits; the host must register
 `process_text()` and populate context from the same collection snapshot.
+`SingleFieldSearch` accepts `SearchSqlFieldContext` with an ordered snapshot of
+notetype IDs and field names/ordinals. The compiler resolves exact Unicode
+case-insensitive names, Anki glob patterns, and source field ranges in Dart;
+the host does not need to implement field-search SQL or wildcard matching.
+Omitting this context for a non-special field name is rejected. The special
+field names `*`, `_*`, and `*_` do not require the snapshot.
 State predicates require the cards table. A
 `state:due`, `rated:`, rated properties, and due properties also require explicit
 `SearchSqlTiming` values when

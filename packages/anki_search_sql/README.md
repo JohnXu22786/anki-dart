@@ -4,9 +4,10 @@ This AGPL-3.0-or-later package compiles a bounded subset of the typed AST from
 `anki_search_parser` to source-compatible Anki SQL. It supports boolean
 operators, groups, negation, card and note IDs, notetype IDs and names, card
 template ordinals and names, tag predicates in normal, regex, and no-combining
-modes, deck IDs without children, card flags, all card state predicates, and
-whole-collection queries. It preserves source table selection and card/note
-SELECT shapes. Unsupported AST nodes throw explicitly.
+modes, deck IDs without children, card flags, all card state predicates,
+added/edited/introduced day predicates, and whole-collection queries. It
+preserves source table selection and card/note SELECT shapes. Unsupported AST
+nodes throw explicitly.
 ID-list AST values follow the shared parser's comma-separated decimal-digit
 grammar, and their exact spelling is preserved without numeric conversion.
 
@@ -22,11 +23,18 @@ the host's responsibility. State predicates require the cards table. A
 `state:due` predicate also requires explicit `SearchSqlTiming` values when
 calling `compileSearchSql`: `daysElapsed` is the collection day number,
 `now` is a `BigInt` containing Unix seconds, and `learnAheadSecs` is the
-learning cutoff in seconds. `daysElapsed` and `learnAheadSecs` follow Core's
-unsigned 32-bit ranges, and an overflowing signed 64-bit `now + learnAheadSecs`
-is rejected. The pinned state SQL uses
-`daysElapsed`, `now`, and `learnAheadSecs`; Core's `next_day_at` is not used by
-this predicate. No timing is read from a collection or system clock.
+learning cutoff in seconds. The `added:`, `edited:`, and `introduced:`
+predicates require `nextDayAt`, a `BigInt` containing the collection's
+next-day rollover timestamp in Unix seconds, within the signed 64-bit range.
+Their day values follow Core's unsigned 32-bit range. Cutoffs and millisecond
+conversion are checked against signed 64-bit bounds before exact decimal SQL
+values are emitted. An omitted or out-of-range `nextDayAt` is rejected. No
+timing is read from a collection or system clock. `state:due` uses the same
+explicit timing object with
+`daysElapsed` as the collection day number, `now` as Unix seconds, and
+`learnAheadSecs` as the learning cutoff in seconds. Those values follow Core's
+unsigned 32-bit ranges, and an overflowing signed 64-bit
+`now + learnAheadSecs` is rejected.
 
 Run `dart pub get`, `dart format --output=none --set-exit-if-changed lib test tool`,
 `dart analyze lib test tool`, and `dart test`. For JavaScript ID precision,

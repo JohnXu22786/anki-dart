@@ -1223,3 +1223,21 @@ and declares `GPL-3.0-or-later`. It separately notes incorporated
 orchestration calls and no browser implementation. The Dart adaptation and
 tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical.
+
+## Reviewer edited-tags operation
+
+`executeReviewerEditedTags()` in `lib/src/reviewer_edited_tags_operation.dart`
+adapts the callback sequence in `ReviewerViewModel.onEditedTags()` from
+`AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt:665–679`,
+pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. It resolves the current card and
+note once, reads the note's ordered tags once, skips the write and undoable
+update for equal lists, otherwise writes `selectedTags.joinToString(" ")` and
+then requests the undoable note update for that same note. Callback errors
+propagate unchanged and stop subsequent work. Collection access, tag mutation,
+undo storage, logging, and coroutine delivery remain host-owned. No direct
+pinned `ReviewerViewModelTest` assertion was found; focused source-derived
+cases are in `test/reviewer_edited_tags_operation_test.dart`. The source file
+declares `GPL-3.0-or-later` and names no separate copyright holder. The Dart
+adaptation and tests are Copyright © 2026 John Tsui under the same license;
+root `COPYING` remains byte-identical.

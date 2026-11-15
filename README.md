@@ -2821,9 +2821,13 @@ Android lifecycle, StateFlow, localization, and UI.
   elements, and whitespace. The pinned `onEditedTags` implementation is at
   `ReviewerViewModel.kt:665–679`, called from `ReviewerFragment.kt:670`; no
   direct pinned `ReviewerViewModelTest` assertion was found, so focused Dart
-  cases are source-derived. Current-card/note/collection lookup,
-  `note.setTagsFromStr`, undoable `updateNote`, logging, and coroutine delivery
-  remain host-side. Card Browser and Previewer mark-tag paths are separate.
+  cases are source-derived. Card Browser and Previewer mark-tag paths are
+  separate.
+  `executeReviewerEditedTags()` also preserves the source callback sequence:
+  resolve the current card and note, read ordered tags, skip mutation on exact
+  list equality, write the joined selected tags, then request the undoable note
+  update. Callback failures propagate and stop later work; collection, tag
+  mutation, and undo storage remain host-owned.
 - Reviewer answer-button next-time lookup:
   `projectReviewerAnswerButtonsNextTimeUpdate()` awaits the host preference
   callback first, skips the queue callback when hidden, then awaits the queue

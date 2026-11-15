@@ -2,3 +2,4 @@
 export 'src/parser.dart';
 export 'src/search_ast.dart';
 export 'src/search_error.dart';
+export 'src/writer.dart';

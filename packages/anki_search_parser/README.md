@@ -2,8 +2,10 @@
 
 This AGPL-3.0-or-later package ports the Anki Core search query grammar into
 platform-neutral Dart. It produces a typed AST for boolean grouping, text and
-field searches, built-in search terms, properties, and parser errors. Field
-search modes convert to the checked-in `anki_backend_protocol` enum.
+field searches, built-in search terms, properties, and parser errors. The
+package also writes canonical query syntax, normalizes queries, replaces
+matching search-node kinds, and escapes deck search terms. Field search modes
+convert to the checked-in `anki_backend_protocol` enum.
 
 The package covers parsing and AST values only. SQL generation, collection
 search execution, Browser table rendering and ordering remain unported. The

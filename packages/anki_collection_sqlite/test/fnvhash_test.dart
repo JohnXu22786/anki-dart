@@ -9,10 +9,19 @@ void main() {
   test('fnvhash matches Core signed i64 FNV-1a vectors', () {
     expect(fnvHashSqlArguments([]), BigInt.parse('-3750763034362895579'));
     expect(fnvHashSqlArguments([0]), BigInt.parse('-6284781860667377211'));
-    expect(fnvHashSqlArguments([1]), BigInt.parse('-8517097267634966620'));
+    expect(
+      fnvHashSqlArguments([1]),
+      _nativeEndian('-8517097267634966620', '-6284782960179005422'),
+    );
     expect(fnvHashSqlArguments([-1]), BigInt.parse('-8289690350564177859'));
-    expect(fnvHashSqlArguments([1, 2]), BigInt.parse('8581494755304202342'));
-    expect(fnvHashSqlArguments([2, 1]), BigInt.parse('513837244993915590'));
+    expect(
+      fnvHashSqlArguments([1, 2]),
+      _nativeEndian('8581494755304202342', '-813523861073794324'),
+    );
+    expect(
+      fnvHashSqlArguments([2, 1]),
+      _nativeEndian('513837244993915590', '7010824780627146380'),
+    );
     expect(
       fnvHashSqlArguments([1], endian: Endian.big),
       BigInt.parse('-6284782960179005422'),
@@ -23,11 +32,11 @@ void main() {
     );
     expect(
       fnvHashSqlArguments([BigInt.parse('9223372036854775807')]),
-      BigInt.parse('-8289549613075766851'),
+      _nativeEndian('-8289549613075766851', '2537960875119846589'),
     );
     expect(
       fnvHashSqlArguments([BigInt.parse('-9223372036854775808')]),
-      BigInt.parse('-6284922598155788219'),
+      _nativeEndian('-6284922598155788219', '2750429125540792901'),
     );
     expect(() => fnvHashSqlArguments([1.0]), throwsArgumentError);
     expect(() => fnvHashSqlArguments([BigInt.one << 63]), throwsArgumentError);
@@ -38,20 +47,25 @@ void main() {
     addTearDown(database.close);
     registerFnvHashFunction(database);
 
-    expect(database.select('SELECT fnvhash()').single[0], -3750763034362895579);
     expect(
-      database.select('SELECT fnvhash(1, 2)').single[0],
-      8581494755304202342,
+      _asBigInt(database.select('SELECT fnvhash()').single[0]),
+      BigInt.parse('-3750763034362895579'),
     );
     expect(
-      database.select('SELECT fnvhash(2, 1)').single[0],
-      513837244993915590,
+      _asBigInt(database.select('SELECT fnvhash(1, 2)').single[0]),
+      _nativeEndian('8581494755304202342', '-813523861073794324'),
     );
     expect(
-      database.select('SELECT fnvhash(?)', [
-        BigInt.parse('9223372036854775807'),
-      ]).single[0],
-      -8289549613075766851,
+      _asBigInt(database.select('SELECT fnvhash(2, 1)').single[0]),
+      _nativeEndian('513837244993915590', '7010824780627146380'),
+    );
+    expect(
+      _asBigInt(
+        database.select('SELECT fnvhash(?)', [
+          BigInt.parse('9223372036854775807'),
+        ]).single[0],
+      ),
+      _nativeEndian('-8289549613075766851', '2537960875119846589'),
     );
     expect(
       () => database.select("SELECT fnvhash('1')"),
@@ -59,3 +73,12 @@ void main() {
     );
   });
 }
+
+BigInt _nativeEndian(String littleEndian, String bigEndian) =>
+    BigInt.parse(Endian.host == Endian.little ? littleEndian : bigEndian);
+
+BigInt _asBigInt(Object? value) => switch (value) {
+  int() => BigInt.from(value),
+  BigInt() => value,
+  _ => throw StateError('Expected SQLite integer, found $value'),
+};

@@ -1,0 +1,72 @@
+/*
+ * Copyright (c) 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import 'package:anki_dart/profile_onboarding.dart';
+
+import 'app_contracts.dart';
+import 'profile_manager.dart';
+
+export 'app_contracts.dart';
+
+/// Startup and profile boundaries implemented by the platform/backend host.
+///
+/// Storage selection, persistence, collection opening, and profile switching
+/// lifecycle remain behind these injected interfaces.
+final class AppServices {
+  AppServices({
+    required this.startup,
+    required this.profiles,
+    ProfileId Function()? generateProfileId,
+  }) : profileManager = ProfileManager(
+         profiles,
+         generateProfileId: generateProfileId,
+       );
+
+  final StartupService startup;
+  final ProfileRepository profiles;
+  final ProfileManager profileManager;
+}
+
+/// Default host boundary until platform storage and backend adapters are wired.
+final class UnconfiguredAppServices
+    implements StartupService, ProfileRepository {
+  const UnconfiguredAppServices();
+
+  @override
+  Future<bool> isFirstRun() async => true;
+
+  @override
+  Future<void> completeOnboarding() => Future.error(
+    UnsupportedError('Platform storage adapter is not configured.'),
+  );
+
+  @override
+  Future<ProfileSnapshot> load() => Future.error(
+    UnsupportedError('Profile storage adapter is not configured.'),
+  );
+
+  @override
+  Future<void> create(
+    ProfileId id,
+    ProfileName name, {
+    bool isActive = false,
+  }) => Future.error(
+    UnsupportedError('Profile storage adapter is not configured.'),
+  );
+
+  @override
+  Future<void> rename(ProfileId id, ProfileName name) => Future.error(
+    UnsupportedError('Profile storage adapter is not configured.'),
+  );
+
+  @override
+  Future<void> persistActiveProfile(ProfileId id) => Future.error(
+    UnsupportedError('Profile storage adapter is not configured.'),
+  );
+
+  @override
+  Iterable<Future<ProfileSwitchBlockReason?> Function()>
+  get profileSwitchChecks => const [];
+}

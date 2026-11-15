@@ -5690,3 +5690,19 @@ host-owned. `Collection.kt` is GPL-3.0-or-later and separately identifies
 incorporated AGPL browser.py code; this adaptation contains none of that code.
 The Dart code and tests are Copyright © 2026 John Tsui under
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## Flutter profile onboarding and navigation
+
+`apps/anki/lib/startup_shell.dart`, `apps/anki/lib/profile_manager.dart`,
+`apps/anki/lib/l10n/app_en.arb`, and `apps/anki/test/app_test.dart` adapt shared
+profile onboarding and profile-list
+behavior from AnkiDroid 2.25.3 at
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Source references are
+`ProfileManager.kt`, `ProfileName.kt`, `SwitchProfilesScreen.kt`,
+`AddProfileDialog.kt`, `SetupStorage.kt`, `BackendSetup.kt`, `StoragePolicy.kt`,
+and `StartupGuards.kt`; the referenced files declare `GPL-3.0-or-later`. No
+upstream assets or translated resource strings are copied. Host storage,
+backend, and profile repository adapters remain injected and are not included.
+The app code and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`; root `COPYING` remains unchanged. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) for the behavior mapping.

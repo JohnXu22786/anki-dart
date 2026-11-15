@@ -2,6 +2,7 @@
 
 The supported SQL compilation behavior is adapted from
 `rslib/src/search/sqlwriter.rs`, `rslib/src/search/parser.rs`,
+`rslib/src/storage/sqlite.rs`,
 `rslib/src/timestamp.rs`, `rslib/src/card/mod.rs`, `rslib/src/text.rs`,
 `rslib/src/decks/name.rs`, `rslib/src/decks/mod.rs`,
 `rslib/src/storage/deck/mod.rs`, and `rslib/src/storage/deckconfig/mod.rs` at commit
@@ -17,6 +18,8 @@ host-supplied deck-config resolution and current/original deck IDs, notetypes
 and card templates,
 tag predicates in normal, regex, and no-combining modes, unqualified regex
 searches with host-supplied field visibility and optional NFC normalization,
+unqualified text, no-combining, and cloze-stripped searches with host-supplied
+field ranges, accent configuration, and cloze notetype IDs,
 state predicates using Core's `CardType` and `CardQueue` numeric values, day
 predicates using Core's previous-day cutoffs, rated searches and rated/reschedule properties
 using Core's revlog cutoffs and ease filters, basic due/position/interval/reps/

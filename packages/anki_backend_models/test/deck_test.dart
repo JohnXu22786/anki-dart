@@ -104,6 +104,14 @@ void main() {
       expect(Deck.fromProto(value).name, 'Café::blank::blank::blank');
     });
 
+    test('deck names use Rust Unicode whitespace boundaries', () {
+      final value = deck_proto.Deck(
+        name: '\u0085Anki\u0085',
+        normal: deck_proto.Deck_Normal(),
+      );
+      expect(Deck.fromProto(value).name, 'Anki');
+    });
+
     test('effective desired retention falls back only when unset', () {
       final config = config_proto.DeckConfig_Config(desiredRetention: 0.91);
       final unset = Deck.newNormal();

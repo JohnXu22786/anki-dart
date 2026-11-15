@@ -17,6 +17,11 @@ SOURCE_HASHES = {
     "rslib/src/notetype/service.rs": "6fc566d68509e21ae4b294bf6fe45c3f458d81eb459c454e2faf9c6c19c44b9f",
     "rslib/src/notetype/fields.rs": "531d82f2917cab0d27828e2477ee51f4f533e9f81a499dcb2bc5632be6262a3a",
     "rslib/src/notetype/templates.rs": "b04ee6f16a250d5ee5649e6ef122f5ecfeab5d7aebaf80d4d31093ca96e9b241",
+    "rslib/src/decks/mod.rs": "dc5a90c3465b7216b6ad1e42a0c44a2d18a99beea777023adcb63cb4abdf38d4",
+    "rslib/src/decks/name.rs": "0a4e33f5a92d2c479c4cbd59664b0de30a50a41453dbe131fc9c809f5afc5f4d",
+    "rslib/src/decks/service.rs": "87c0df5a0a7f1307a55f46daac235868a994e96e9a7ae34f7322bb6c3d11bed5",
+    "rslib/src/deckconfig/mod.rs": "1b85b99ae9188b5f8d2ccb6a23930bc636f86c1a775a564cd24d1017fcebcfac",
+    "rslib/src/deckconfig/service.rs": "58b9d4da7924cfa95cec66061fe1b75be38c5109df710e6c01d22cbb0bceb4be",
 }
 
 
@@ -54,8 +59,16 @@ def main() -> int:
 
     for path in sorted((ROOT / "lib").rglob("*.dart")):
         text = path.read_text(encoding="utf-8")
+        if not text.startswith("// SPDX-License-Identifier: AGPL-3.0-or-later\n"):
+            errors.append(f"{path.relative_to(ROOT)}: AGPL SPDX header is missing")
         if "import 'dart:io'" in text or 'import "dart:io"' in text:
             errors.append(f"{path.relative_to(ROOT)}: VM-only dart:io import is forbidden")
+    for directory in ("test", "tool"):
+        for path in sorted((ROOT / directory).rglob("*.dart")):
+            if not path.read_text(encoding="utf-8").startswith(
+                "// SPDX-License-Identifier: AGPL-3.0-or-later\n"
+            ):
+                errors.append(f"{path.relative_to(ROOT)}: AGPL SPDX header is missing")
     if not (ROOT / "lib" / "anki_backend_models.dart").is_file():
         errors.append("lib/anki_backend_models.dart: public model export is missing")
 

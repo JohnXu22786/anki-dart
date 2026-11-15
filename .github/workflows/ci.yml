@@ -45,6 +45,7 @@ jobs:
       - uses: arduino/setup-protoc@v3
         with:
           version: 29.3
+          repo-token: ${{ github.token }}
       - name: Resolve protocol package dependencies
         working-directory: packages/anki_backend_protocol
         run: dart pub get

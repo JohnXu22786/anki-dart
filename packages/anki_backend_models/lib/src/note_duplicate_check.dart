@@ -14,7 +14,7 @@ class NoteChecksumMatch {
 }
 
 /// Host adapter for Anki Core's `note_fields_by_checksum()` storage query.
-typedef NoteFieldsByChecksum = Iterable<NoteChecksumMatch> Function(
+typedef NoteFieldsByChecksum = List<NoteChecksumMatch> Function(
   Int64 notetypeId,
   int checksum,
 );

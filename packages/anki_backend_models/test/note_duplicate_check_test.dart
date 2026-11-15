@@ -47,24 +47,29 @@ void main() {
       expect(duplicate, isFalse);
     });
 
-    test('stops at the first match and preserves iterable order', () {
+    test('loads the full checksum query before comparing in source order', () {
       var consumed = 0;
-      Iterable<NoteChecksumMatch> matches() sync* {
-        consumed++;
-        yield NoteChecksumMatch(noteId: Int64(2), firstField: 'test');
-        consumed++;
-        yield NoteChecksumMatch(noteId: Int64(3), firstField: 'test');
+      List<NoteChecksumMatch> loadMatches() {
+        final rows = <NoteChecksumMatch>[];
+        for (final match in [
+          NoteChecksumMatch(noteId: Int64(2), firstField: 'test'),
+          NoteChecksumMatch(noteId: Int64(3), firstField: 'test'),
+        ]) {
+          consumed++;
+          rows.add(match);
+        }
+        return rows;
       }
 
       expect(
         isDuplicateNoteField(
           note: note,
           firstFieldWithoutHtml: 'test',
-          loadFieldsByChecksum: (_, __) => matches(),
+          loadFieldsByChecksum: (_, __) => loadMatches(),
         ),
         isTrue,
       );
-      expect(consumed, 1);
+      expect(consumed, 2);
     });
 
     test('propagates storage callback failures unchanged', () {

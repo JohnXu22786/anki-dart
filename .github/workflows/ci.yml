@@ -293,6 +293,8 @@ jobs:
         run: |
           dart compile js tool/process_text_web_smoke.dart -o /tmp/anki_process_text_web.js
           node /tmp/anki_process_text_web.js
+          dart compile js tool/fnvhash_web_smoke.dart -o /tmp/anki_fnvhash_web.js
+          node /tmp/anki_fnvhash_web.js
       - name: Validate AGPL metadata and Dart SPDX headers
         working-directory: packages/anki_collection_sqlite
         run: python3 tool/check_package.py

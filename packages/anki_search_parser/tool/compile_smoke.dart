@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_search_parser/anki_search_parser.dart';
+import 'package:fixnum/fixnum.dart';
 
 void main() {
   final nodes = parse('mid:9223372036854775807 prop:ivl>3 foo:re:bar');
@@ -17,6 +18,13 @@ void main() {
   }
   if (deckSearch(r'a*b_c\d') != r'deck:a\*b\_c\\d') {
     throw StateError('Search writer JavaScript escaping smoke test failed');
+  }
+  const maxId = '9223372036854775807';
+  final built = SearchNodeBuilder.fromNoteIds([Int64.parseInt(maxId)]);
+  if (writeNode(built.toNode()) != 'nid:$maxId') {
+    throw StateError(
+      'Search builder JavaScript ID precision smoke test failed',
+    );
   }
   if (writeNode(
           const Search(Property(operator: '=', kind: EaseProperty(0.1)))) !=

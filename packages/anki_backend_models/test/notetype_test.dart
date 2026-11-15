@@ -50,6 +50,36 @@ void main() {
       expect(value.templates.map((template) => template.name),
           ['Card', 'Card+', 'card++']);
       expect(value.fields.map((field) => field.name), ['é', 'É+']);
+
+      final unicodeCaseNames = Notetype(
+        templates: [
+          CardTemplate(
+              name: 'Straße', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: 'STRASSE', config: proto.Notetype_Template_Config()),
+          CardTemplate(name: 'ς', config: proto.Notetype_Template_Config()),
+          CardTemplate(name: 'Σ', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: '\uA7C0', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: '\uA7C1', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: '\u{10570}', config: proto.Notetype_Template_Config()),
+          CardTemplate(
+              name: '\u{10597}', config: proto.Notetype_Template_Config()),
+        ],
+        config: proto.Notetype_Config(),
+      )..ensureNamesUnique();
+      expect(unicodeCaseNames.templates.map((template) => template.name), [
+        'Straße',
+        'STRASSE+',
+        'ς',
+        'Σ+',
+        '\uA7C0',
+        '\uA7C1',
+        '\u{10570}',
+        '\u{10597}'
+      ]);
       value.fixFieldNames();
       value.fixTemplateNames();
 
@@ -60,6 +90,23 @@ void main() {
         throwsA(isA<InvalidModelValue>()
             .having((error) => error.message, 'message', 'Empty field name')),
       );
+
+      final invalidAfterCleanup = NoteField(
+        name: '::',
+        config: proto.Notetype_Field_Config(),
+      );
+      expect(
+        () => invalidAfterCleanup.fixName(),
+        throwsA(isA<InvalidModelValue>()
+            .having((error) => error.message, 'message', 'Field name: ')),
+      );
+      expect(invalidAfterCleanup.name, '');
+
+      final nonWhitespaceControls = NoteField(
+        name: '\u001cName\u001c',
+        config: proto.Notetype_Field_Config(),
+      )..fixName();
+      expect(nonWhitespaceControls.name, '\u001cName\u001c');
     });
 
     test('default and cloze configurations match pinned upstream assets', () {

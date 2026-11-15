@@ -8,6 +8,7 @@ import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
 import 'card_template.dart';
 import 'note_field.dart';
+import 'unicode_casefold.dart';
 
 /// The signed 64-bit identity used for Anki note types.
 class NotetypeId {
@@ -173,7 +174,7 @@ void _ensureNamesUnique(
   final seen = <String>{};
   for (var index = 0; index < names.length; index++) {
     var name = names[index];
-    while (!seen.add(name.toLowerCase())) {
+    while (!seen.add(unicodeCaseFold(name))) {
       name = '$name+';
     }
     assign(index, name);

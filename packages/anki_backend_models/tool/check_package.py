@@ -9,6 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_COMMIT = "e64c6b1aee3e8d668fb8bbe084beada8e070d985"
+UNICODE_CASE_FOLDING = "9c772627c6ee77eea6a17b42927b8ee28ca05dc65d6a511062104baaf3d12294"
 SOURCE_HASHES = {
     "rslib/src/card/mod.rs": "cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9",
     "rslib/src/card/service.rs": "8ddddbf879e08cb70ea00e9f00ac6c98f9f3988af65c48598a6cbb2fc11558b6",
@@ -63,6 +64,15 @@ def main() -> int:
             errors.append("SOURCE.sha256: entries do not match the pinned upstream file hashes")
     else:
         errors.append("SOURCE.sha256: source digest manifest is missing")
+
+    unicode_manifest = ROOT / "UNICODE_CASEFOLD.sha256"
+    expected_unicode_record = (
+        f"{UNICODE_CASE_FOLDING}  Unicode 12.1.0 CaseFolding.txt\n"
+    )
+    if not unicode_manifest.is_file() or unicode_manifest.read_text(
+        encoding="utf-8"
+    ) != expected_unicode_record:
+        errors.append("UNICODE_CASEFOLD.sha256: Unicode folding data hash is incorrect")
 
     license_text = (ROOT / "LICENSE").read_text(encoding="utf-8") if (ROOT / "LICENSE").is_file() else ""
     if "GNU AFFERO GENERAL PUBLIC LICENSE" not in license_text or "Version 3" not in license_text:

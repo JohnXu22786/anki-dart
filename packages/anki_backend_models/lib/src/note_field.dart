@@ -41,8 +41,8 @@ class NoteField {
   /// Apply the field-name cleanup rules from Anki Core before saving.
   void fixName() {
     if (name.isEmpty) throw const InvalidModelValue('Empty field name');
-    var cleaned = name.replaceAll(RegExp(r'[:{}"]'), '');
-    final trimmedWhitespace = _trimRustWhitespace(cleaned);
+    name = name.replaceAll(RegExp(r'[:{}"]'), '');
+    final trimmedWhitespace = _trimRustWhitespace(name);
     final runes = trimmedWhitespace.runes.toList(growable: false);
     var start = 0;
     while (start < runes.length &&
@@ -54,7 +54,7 @@ class NoteField {
     }
     final trimmed = String.fromCharCodes(runes.skip(start));
     if (trimmed.isEmpty) {
-      throw InvalidModelValue('Field name: $cleaned');
+      throw InvalidModelValue('Field name: $name');
     }
     if (trimmed.length != name.length) name = trimmed;
   }
@@ -74,7 +74,7 @@ class NoteField {
 
   bool _isRustCharWhitespace(int rune) =>
       (rune >= 0x9 && rune <= 0xd) ||
-      (rune >= 0x1c && rune <= 0x20) ||
+      rune == 0x20 ||
       rune == 0x85 ||
       rune == 0xa0 ||
       rune == 0x1680 ||

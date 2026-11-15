@@ -5710,3 +5710,29 @@ backend, and profile repository adapters remain injected and are not included.
 The app code and tests are Copyright © 2026 John Tsui under
 `GPL-3.0-or-later`; root `COPYING` remains unchanged. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) for the behavior mapping.
+
+## Flutter Deck Picker and filtered-deck options surface
+
+`apps/anki/lib/deck_picker_screen.dart` adapts the portable Flutter presentation
+surface from AnkiDroid 2.25.3, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Behavioral sources are
+`AnkiDroid/src/main/java/com/ichi2/anki/DeckPicker.kt`,
+`DeckPickerFloatingActionMenu.kt`, `deckpicker/DeckPickerViewModel.kt`,
+`deckpicker/DisplayDeckNode.kt`, `deckpicker/DeckFilters.kt`,
+`dialogs/DeckPickerContextMenu.kt`, `contextmenu/DeckPickerMenuContentProvider.kt`,
+and `filtered/FilteredDeckOptionsFragment.kt`, `FilteredDeckOptionsState.kt`,
+and `FilteredDeckOptionsViewModel.kt`. The matching shared Dart tree, display,
+filter, selection, and filtered-deck contracts remain the portable behavior
+boundary; collection and scheduler operations remain injected host callbacks.
+Upstream copyright notices are retained for the referenced AnkiDroid files:
+Andrew Dubya, Nicolas Raoul, Edu Zamora, Daniel Svard, Norbert Nagold, and
+Timothy Rae (`DeckPicker.kt`); Akshay Jadhav (`DeckPickerFloatingActionMenu.kt`);
+Gautam Bhetanabhotla (`DisplayDeckNode.kt`); Arthur Milchior (`DeckFilters.kt`);
+Timothy Rae (`DeckPickerContextMenu.kt`); Hari Srinivasan
+(`DeckPickerMenuContentProvider.kt`); and lukstbit (filtered-deck fragment,
+state, and view model). The referenced files declare `GPL-3.0-or-later`.
+`apps/anki/lib/l10n/app_en.arb` adds new English UI strings; no upstream
+translated strings or visual assets were copied. The screen and tests are
+Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING` remains
+unchanged. See [`docs/DECK_PICKER_UI_GAP_REPORT.md`](docs/DECK_PICKER_UI_GAP_REPORT.md)
+for screen-by-screen mapping, accessibility notes, and remaining adapter gaps.

@@ -234,6 +234,33 @@ void main() {
     tester.view.resetDevicePixelRatio();
   });
 
+  testWidgets(
+    'active profile opens the portable deck picker and returns home',
+    (tester) async {
+      final events = <String>[];
+      await tester.pumpWidget(
+        AppRouter(
+          services: AppServices(
+            startup: _Startup(firstRun: false, events: events),
+            profiles: _Profiles(events),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Open decks'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Decks are unavailable until a collection service is connected.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(find.text('Active profile: Default'), findsOneWidget);
+    },
+  );
+
   test('Flutter UI keeps its dependency on the separate pure Dart package', () {
     final appManifest = File('pubspec.yaml').readAsStringSync();
     final domainManifest = File('../../pubspec.yaml').readAsStringSync();

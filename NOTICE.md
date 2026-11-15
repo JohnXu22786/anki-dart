@@ -5742,8 +5742,11 @@ for screen-by-screen mapping, accessibility notes, and remaining adapter gaps.
 `packages/anki_search_sql` adapts a limited SQL compilation slice from Anki
 Core's `rslib/src/search/sqlwriter.rs` and `rslib/src/search/parser.rs`, pinned
 to commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It emits boolean,
-card/note/notetype ID, deck ID without children, card flag, and whole-collection
-predicates with source-compatible table selection and result SELECT shape.
+card/note/notetype ID, deck ID without children, card flag, custom-data
+existence and string/number property, and whole-collection predicates with
+source-compatible table selection and result SELECT shape. Custom-data keys
+and string values are bound in source order; numeric values use float32 SQL
+spelling.
 Unsupported typed AST variants throw. Text/tag matching, regular expressions,
 sorting, database execution, and UI are not included. The upstream files are
 Copyright Ankitects Pty Ltd and contributors under GNU AGPL version 3 or later;

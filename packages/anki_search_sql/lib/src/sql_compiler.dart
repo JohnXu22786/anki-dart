@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import 'dart:typed_data';
+
 import 'package:anki_search_parser/anki_search_parser.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
@@ -66,12 +68,12 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// This is an incremental compiler, not complete search execution. Its current
 /// subset contains boolean structure, card/note/notetype ID predicates,
 /// notetype names, card template ordinals and names, tag predicates, deck IDs
-/// without children, flags, state and day predicates, and whole-collection
-/// queries. Other AST variants throw [UnsupportedSearchSqlNodeException]. Due
-/// state predicates require explicit [SearchSqlTiming] values; day predicates
-/// additionally require [SearchSqlTiming.nextDayAt]. ID-list nodes must use
-/// comma-separated decimal digits accepted by the shared parser; their exact
-/// spelling is preserved.
+/// without children, flags, state and day predicates, custom-data predicates,
+/// and whole-collection queries. Other AST variants throw
+/// [UnsupportedSearchSqlNodeException]. Due state predicates require explicit
+/// [SearchSqlTiming] values; day predicates additionally require
+/// [SearchSqlTiming.nextDayAt]. ID-list nodes must use comma-separated decimal
+/// digits accepted by the shared parser; their exact spelling is preserved.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
@@ -135,6 +137,9 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   Notetype() ||
   Tag() ||
   EditedInDays() => RequiredTable.notes,
+  CustomData() ||
+  Property(kind: CustomDataNumberProperty()) ||
+  Property(kind: CustomDataStringProperty()) => RequiredTable.cards,
   CardTemplate() => RequiredTable.cardsAndNotes,
   NoteIds() || WholeCollection() => RequiredTable.cardsOrNotes,
   _ => throw UnsupportedSearchSqlNodeException(node),
@@ -182,9 +187,103 @@ String _writeSearch(
   EditedInDays(:final days) =>
     'n.mod > ${_previousDayCutoffSeconds(days, timing)}',
   IntroducedInDays(:final days) => _writeIntroduced(days, timing),
+  CustomData(:final value) => _writeCustomData(value, arguments),
+  Property(
+    :final operator,
+    kind: CustomDataNumberProperty(:final key, :final value),
+  ) =>
+    _writeCustomDataNumber(operator, key, value, arguments),
+  Property(
+    :final operator,
+    kind: CustomDataStringProperty(:final key, :final value),
+  ) =>
+    _writeCustomDataString(operator, key, value, arguments),
   WholeCollection() => 'true',
   _ => throw UnsupportedSearchSqlNodeException(node),
 };
+
+String _writeCustomData(String key, List<String> arguments) {
+  arguments.add(key);
+  return 'extract_custom_data(c.data, ?) is not null';
+}
+
+String _writeCustomDataNumber(
+  String operator,
+  String key,
+  double value,
+  List<String> arguments,
+) {
+  _validateCustomDataOperator(operator);
+  arguments.add(key);
+  return 'cast(extract_custom_data(c.data, ?) as float) $operator '
+      '${_formatCustomDataFloat(value)}';
+}
+
+String _writeCustomDataString(
+  String operator,
+  String key,
+  String value,
+  List<String> arguments,
+) {
+  _validateCustomDataOperator(operator);
+  arguments
+    ..add(key)
+    ..add(value);
+  return 'extract_custom_data(c.data, ?) $operator ?';
+}
+
+void _validateCustomDataOperator(String operator) {
+  if (!const {'<=', '>=', '!=', '=', '<', '>'}.contains(operator)) {
+    throw ArgumentError.value(
+      operator,
+      'operator',
+      'Invalid property operator.',
+    );
+  }
+}
+
+String _formatCustomDataFloat(double value) {
+  final float32 = _roundToFloat32(value);
+  if (float32.isNaN) return 'NaN';
+  if (float32 == double.infinity) return 'inf';
+  if (float32 == double.negativeInfinity) return '-inf';
+
+  for (var precision = 1; precision <= 9; precision++) {
+    final candidate = float32.toStringAsPrecision(precision);
+    final parsed = double.parse(candidate);
+    if (_roundToFloat32(parsed) == float32) {
+      return _expandFloatExponent(candidate);
+    }
+  }
+  return _expandFloatExponent(float32.toString());
+}
+
+double _roundToFloat32(double value) {
+  final data = ByteData(4)..setFloat32(0, value);
+  return data.getFloat32(0);
+}
+
+String _expandFloatExponent(String value) {
+  final exponentIndex = value.toLowerCase().indexOf('e');
+  if (exponentIndex < 0) {
+    return value.endsWith('.0') ? value.substring(0, value.length - 2) : value;
+  }
+
+  final mantissa = value.substring(0, exponentIndex);
+  final exponent = int.parse(value.substring(exponentIndex + 1));
+  final negative = mantissa.startsWith('-');
+  final unsignedMantissa = negative ? mantissa.substring(1) : mantissa;
+  final decimalIndex = unsignedMantissa.indexOf('.');
+  final digits = unsignedMantissa.replaceAll('.', '');
+  final point =
+      (decimalIndex < 0 ? unsignedMantissa.length : decimalIndex) + exponent;
+  final expanded = point <= 0
+      ? '0.${'0' * -point}$digits'
+      : point >= digits.length
+      ? '$digits${'0' * (point - digits.length)}'
+      : '${digits.substring(0, point)}.${digits.substring(point)}';
+  return '${negative ? '-' : ''}$expanded';
+}
 
 String _writeState(StateKind kind, SearchSqlTiming? timing) => switch (kind) {
   StateKind.newCard => 'c.type = 0',

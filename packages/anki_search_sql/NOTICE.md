@@ -11,7 +11,9 @@ The Dart compiler and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. The compiler accepts the shared AST from
 `anki_search_parser`, supports name matching for notetypes and card templates,
 tag predicates in normal, regex, and no-combining modes, state predicates
-using Core's `CardType` and `CardQueue` numeric values, and day predicates using
-Core's previous-day cutoffs. It uses no platform-specific database package and
-does not implement field text matching or search execution. The repository
-root `COPYING` file remains unchanged.
+using Core's `CardType` and `CardQueue` numeric values, day predicates using
+Core's previous-day cutoffs, and custom-data existence and numeric/string
+property predicates. The custom-data predicates preserve Core's SQL clauses,
+float32 value spelling, and bound key/value argument order. It uses no
+platform-specific database package and does not implement field text matching
+or search execution. The repository root `COPYING` file remains unchanged.

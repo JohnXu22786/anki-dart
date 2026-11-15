@@ -6,8 +6,11 @@ operators, groups, negation, card and note IDs, notetype IDs and names, card
 template ordinals and names, tag predicates in normal, regex, and no-combining
 modes, deck IDs without children, card flags, all card state predicates,
 added/edited/introduced day predicates, and whole-collection queries. It
-preserves source table selection and card/note SELECT shapes. Unsupported AST
-nodes throw explicitly.
+preserves source table selection and card/note SELECT shapes. Custom-data
+existence and string/number property comparisons use Core's
+`extract_custom_data(c.data, ?)` expressions; keys and string values remain
+bound arguments, while numeric values use Core-compatible float32 spelling.
+Unsupported AST nodes throw explicitly.
 ID-list AST values follow the shared parser's comma-separated decimal-digit
 grammar, and their exact spelling is preserved without numeric conversion.
 
@@ -16,7 +19,8 @@ execute SQL. The compiler preserves the upstream Unicode-decimal ID spelling
 in generated SQL; SQLite may reject such a query, as in the pinned writer.
 Field text matching, other regex/glob searches, sorting, browser tables,
 database execution, and UI remain outside this package; this subset is not
-complete Anki search execution. Tag predicates require the notes table and
+complete Anki search execution. Custom-data and state predicates require the
+cards table, and the host must register `extract_custom_data()`. Tag predicates require the notes table and
 preserve Core's `none`, `*`, space, wildcard, case-insensitive regex, and
 no-combining `process_text` SQL behavior. Regex function registration remains
 the host's responsibility. State predicates require the cards table. A

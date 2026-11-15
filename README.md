@@ -20,8 +20,9 @@ The Dart package, SQL source, fixtures, and tests are AGPL-3.0-or-later;
 
 [`packages/anki_search_sql`](packages/anki_search_sql/README.md) compiles a
 bounded subset of the typed search AST to Anki SQL, including source-compatible
-tag predicates. It preserves Core's normal, regex, no-combining, wildcard, and
-special tag behavior; SQL execution and regex-function registration remain
+tag and custom-data predicates. It preserves Core's normal, regex,
+no-combining, wildcard, and special tag behavior; SQL execution,
+`extract_custom_data()` registration, and regex-function registration remain
 host responsibilities. Its exact Anki Core source hashes are recorded in
 `packages/anki_search_sql/SOURCE.sha256`.
 

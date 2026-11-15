@@ -604,4 +604,142 @@ void main() {
       throwsRangeError,
     );
   });
+
+  test('custom-data existence and properties require cards', () {
+    final exists = compileSearchSql(
+      GroupNode([Search(const CustomData('retention'))]),
+    );
+    expect(
+      exists.sql,
+      'select c.id from cards c where '
+      '(extract_custom_data(c.data, ?) is not null)',
+    );
+    expect(exists.arguments, ['retention']);
+    expect(exists.requiredTable, RequiredTable.cards);
+
+    final noteResults = compileSearchSql(
+      GroupNode([Search(const CustomData('retention'))]),
+      resultType: SearchResultType.notes,
+    );
+    expect(
+      noteResults.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(extract_custom_data(c.data, ?) is not null)',
+    );
+    expect(noteResults.arguments, ['retention']);
+    expect(noteResults.requiredTable, RequiredTable.cardsAndNotes);
+  });
+
+  test(
+    'custom-data properties use Core operators and bind key/value arguments',
+    () {
+      const operators = ['<=', '>=', '!=', '=', '<', '>'];
+      for (final operator in operators) {
+        final number = compileSearchSql(
+          GroupNode([
+            Search(
+              Property(
+                operator: operator,
+                kind: const CustomDataNumberProperty(key: "a'!", value: 2.5),
+              ),
+            ),
+          ]),
+        );
+        expect(
+          number.sql,
+          'select c.id from cards c where '
+          '(cast(extract_custom_data(c.data, ?) as float) $operator 2.5)',
+        );
+        expect(number.arguments, ["a'!"]);
+        expect(number.requiredTable, RequiredTable.cards);
+
+        final string = compileSearchSql(
+          GroupNode([
+            Search(
+              Property(
+                operator: operator,
+                kind: const CustomDataStringProperty(
+                  key: "k';--",
+                  value: "v' OR 1=1 --",
+                ),
+              ),
+            ),
+          ]),
+        );
+        expect(
+          string.sql,
+          'select c.id from cards c where '
+          '(extract_custom_data(c.data, ?) $operator ?)',
+        );
+        expect(string.arguments, ["k';--", "v' OR 1=1 --"]);
+        expect(string.requiredTable, RequiredTable.cards);
+      }
+    },
+  );
+
+  test('custom-data properties compose and preserve float32 spellings', () {
+    final compiled = compileSearchSql(
+      GroupNode([
+        Search(const Notetype('Basic')),
+        BooleanNode(NodeKind.and),
+        GroupNode([
+          Search(
+            const Property(
+              operator: '>=',
+              kind: CustomDataNumberProperty(key: 'ease', value: 0.1),
+            ),
+          ),
+          BooleanNode(NodeKind.or),
+          Search(
+            const Property(
+              operator: '=',
+              kind: CustomDataStringProperty(key: 'label', value: 'again'),
+            ),
+          ),
+        ]),
+      ]),
+      resultType: SearchResultType.notes,
+    );
+    expect(
+      compiled.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(n.mid in (select id from notetypes where name = ?) and '
+      '(cast(extract_custom_data(c.data, ?) as float) >= 0.1 or '
+      'extract_custom_data(c.data, ?) = ?))',
+    );
+    expect(compiled.arguments, ['Basic', 'ease', 'label', 'again']);
+    expect(compiled.requiredTable, RequiredTable.cardsAndNotes);
+
+    for (final valueAndSql in <(String, String)>[
+      ('NaN', 'NaN'),
+      ('+inf', 'inf'),
+      ('-inf', '-inf'),
+      ('1e-45', '0.${'0' * 44}1'),
+      ('3.4028235e38', '340282350000000000000000000000000000000'),
+      ('3.5e38', 'inf'),
+    ]) {
+      final (value, sqlValue) = valueAndSql;
+      final number = compileSearchSql(GroupNode(parse('prop:cdn:x=$value')));
+      expect(number.sql, endsWith('as float) = $sqlValue)'));
+      expect(number.arguments, ['x']);
+    }
+
+    expect(
+      () => compileSearchSql(
+        GroupNode([
+          Search(
+            const Property(
+              operator: 'or true --',
+              kind: CustomDataStringProperty(key: 'x', value: 'y'),
+            ),
+          ),
+        ]),
+      ),
+      throwsArgumentError,
+    );
+
+    final finite = compileSearchSql(GroupNode(parse('prop:cdn:x=0.1')));
+    expect(finite.sql, endsWith('as float) = 0.1)'));
+    expect(finite.arguments, ['x']);
+  });
 }

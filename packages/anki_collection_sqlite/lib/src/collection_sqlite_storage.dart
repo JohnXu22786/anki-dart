@@ -49,8 +49,8 @@ final class CollectionSqliteOptions {
 /// This configures SQLite before schema inspection with zero busy timeout,
 /// exclusive locking, 4096-byte pages, a 40 MiB page cache, the source's
 /// legacy-file-format setting, WAL, and a bounded cache for the hot exclusive
-/// transaction statements. SQLite functions and collations used by the wider
-/// Anki collection engine are not installed by this adapter.
+/// transaction statements. Core's `field_at_index` function is installed on
+/// every connection; the other engine functions and collations are not.
 final class CollectionSqliteStorage
     implements CollectionOpenDatabase, CollectionSchemaMigrationDatabase {
   CollectionSqliteStorage._(this._database, this._driver);

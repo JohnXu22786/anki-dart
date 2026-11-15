@@ -102,6 +102,18 @@ void main() {
         throwsA(isA<SqliteException>()),
       );
       await database.close();
+
+      final reopened = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+      );
+      expect(
+        await reopened.queryString(
+          "SELECT field_at_index('first' || char(31) || 'second', 1)",
+        ),
+        'second',
+      );
+      await reopened.close();
     },
   );
 

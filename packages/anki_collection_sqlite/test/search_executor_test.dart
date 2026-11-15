@@ -61,4 +61,40 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test(
+    'rejects an adapter result outside the Core signed 64-bit ID range',
+    () async {
+      final invalid = CollectionSqliteSearchExecutor(
+        _SingleValueDatabase(BigInt.parse('9223372036854775808')),
+      );
+
+      await expectLater(
+        invalid.queryIds('SELECT id', const []),
+        throwsRangeError,
+      );
+    },
+  );
+}
+
+final class _SingleValueDatabase implements CommonDatabase {
+  _SingleValueDatabase(this.value);
+
+  final BigInt value;
+
+  @override
+  ResultSet select(String sql, [List<Object?> parameters = const []]) =>
+      ResultSet(
+        ['id'],
+        null,
+        [
+          <Object?>[value],
+        ],
+      );
+
+  @override
+  void execute(String sql, [List<Object?> parameters = const []]) {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

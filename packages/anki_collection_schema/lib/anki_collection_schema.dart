@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 John Tsui
 
-/// Portable catalog of the collection schema pinned in Anki Core.
+/// Portable collection schema catalog and transactional migration plan runner.
 ///
-/// This package describes SQL and source-side migration callbacks. It does not
-/// open a database, execute SQL, provide SQLite drivers, or implement those
-/// callbacks. An adapter must run creation/upgrades transactionally using the
-/// operations and order exposed here.
+/// This package does not open collections, provide a SQLite driver, or
+/// implement the source-side migration callbacks. A host supplies database
+/// and callback adapters to execute the catalogued plans.
 library;
 
 export 'src/collection_schema.dart';
+export 'src/migration_runner.dart';

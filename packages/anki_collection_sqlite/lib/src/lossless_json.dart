@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'dart:convert';
+import 'dart:typed_data';
 
 /// Parses JSON while retaining integer literals that JavaScript numbers round.
 Object? parseLosslessJson(String source) => _Parser(source).parse();
@@ -7,6 +8,24 @@ Object? parseLosslessJson(String source) => _Parser(source).parse();
 /// Validates a full JSON document with serde_json-compatible number bounds.
 void validateLosslessJson(String source) {
   parseLosslessJson(source);
+}
+
+/// Reads a JSON integer without passing through JavaScript's double precision.
+BigInt? losslessJsonInteger(Object? value) {
+  if (value is! _RawNumber || value.lexeme.contains(RegExp(r'[.eE]'))) {
+    return null;
+  }
+  return BigInt.tryParse(value.lexeme);
+}
+
+/// Converts a parsed JSON number to `f32` using its original numeric lexeme.
+double? losslessJsonFloat32(Object? value) {
+  if (value is _RawNumber) return value.asFloat32();
+  if (value is num) {
+    final data = ByteData(4)..setFloat32(0, value.toDouble());
+    return data.getFloat32(0);
+  }
+  return null;
 }
 
 /// Renders JSON like Core's `serde_json::Value`, including sorted object keys.
@@ -43,6 +62,20 @@ final class _RawNumber {
   const _RawNumber(this.lexeme);
 
   final String lexeme;
+
+  double asFloat32() {
+    if (!lexeme.contains(RegExp(r'[.eE]'))) {
+      final integer = BigInt.parse(lexeme);
+      final maxU64 = (BigInt.one << 64) - BigInt.one;
+      final minI64 = -(BigInt.one << 63);
+      if (integer >= minI64 && integer <= maxU64) {
+        return _roundIntegerToFloat32(integer);
+      }
+    }
+    final value = double.parse(lexeme);
+    final data = ByteData(4)..setFloat32(0, value);
+    return data.getFloat32(0);
+  }
 
   String encode() {
     if (!lexeme.contains(RegExp(r'[.eE]'))) {
@@ -90,6 +123,36 @@ String _encodeRyuCompatibleFloat(double value) {
   return '$sign'
       '${digits.substring(0, decimalPosition)}.'
       '${digits.substring(decimalPosition)}';
+}
+
+double _roundIntegerToFloat32(BigInt value) {
+  if (value == BigInt.zero) return 0.0;
+  final negative = value.isNegative;
+  final magnitude = value.abs();
+  var exponent = magnitude.bitLength - 1;
+  BigInt significand;
+  if (magnitude.bitLength <= 24) {
+    significand = magnitude << (24 - magnitude.bitLength);
+  } else {
+    final shift = magnitude.bitLength - 24;
+    significand = magnitude >> shift;
+    final remainder = magnitude - (significand << shift);
+    final halfway = BigInt.one << (shift - 1);
+    if (remainder > halfway || (remainder == halfway && significand.isOdd)) {
+      significand += BigInt.one;
+    }
+    if (significand.bitLength > 24) {
+      significand >>= 1;
+      exponent++;
+    }
+  }
+  final signBit = negative ? 0x80000000 : 0;
+  final bits = exponent > 127
+      ? signBit | 0x7f800000
+      : signBit | ((exponent + 127) << 23) | (significand.toInt() - (1 << 23));
+  return (ByteData(
+    4,
+  )..setUint32(0, bits, Endian.big)).getFloat32(0, Endian.big);
 }
 
 final class _Parser {

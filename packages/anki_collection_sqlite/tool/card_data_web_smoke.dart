@@ -25,4 +25,8 @@ void main() {
   if (extractFsrsVariable('{"s":0.9}', 's') != 0.8999999761581421) {
     throw StateError('Web FSRS value did not retain Core f32 precision');
   }
+  if (extractFsrsVariable('{"s":18014401730707455}', 's') !=
+      18014400656965632.0) {
+    throw StateError('Web FSRS integer did not round directly to Core f32');
+  }
 }

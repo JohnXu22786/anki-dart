@@ -18,12 +18,16 @@ void main() {
       0.8999999761581421,
     );
     expect(extractFsrsVariable('[null,0.5,2,0.9]', 's'), 0.5);
+    expect(
+      extractFsrsVariable('{"s":18014401730707455}', 's'),
+      18014400656965632.0,
+    );
   });
 
   test('returns null for absent, malformed, or non-text inputs', () {
     expect(extractFsrsVariable('{"s":"0.5"}', 's'), isNull);
     expect(extractFsrsVariable('{"s":null}', 's'), isNull);
-    expect(extractFsrsVariable('{"s":1e100}', 's'), isNull);
+    expect(extractFsrsVariable('{"s":1e100}', 's')!.isInfinite, isTrue);
     expect(extractFsrsVariable('{"s":0.5,"cd":42}', 's'), isNull);
     expect(extractFsrsVariable('{bad json', 's'), isNull);
     expect(extractFsrsVariable('', 's'), isNull);

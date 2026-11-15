@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import 'dart:typed_data';
-
 import 'package:sqlite3/common.dart';
 
-import 'card_data_functions.dart';
+import 'lossless_json.dart';
 
 /// Installs Core's `extract_fsrs_variable(card_data, key)` SQLite function.
 void registerFsrsVariableFunction(CommonDatabase database) {
@@ -25,9 +23,23 @@ double? extractFsrsVariable(Object? cardData, Object? key) {
     'dr' => 3,
     _ => throw StateError('invalid key: $key'),
   };
-  final value = cardDataField(cardData, key, sequenceIndex);
-  if (value is! num) return null;
-  final data = ByteData(4)..setFloat32(0, value.toDouble());
-  final rounded = data.getFloat32(0);
-  return rounded.isFinite ? rounded : null;
+  final value = _losslessCardDataField(cardData, key, sequenceIndex);
+  return losslessJsonFloat32(value);
+}
+
+Object? _losslessCardDataField(String source, String key, int sequenceIndex) {
+  try {
+    final decoded = parseLosslessJson(source);
+    if (decoded is Map<String, Object?>) {
+      if (decoded.containsKey('cd') && decoded['cd'] is! String) return null;
+      return decoded[key];
+    }
+    if (decoded is List<Object?>) {
+      if (decoded.length > 6 && decoded[6] is! String) return null;
+      if (decoded.length > sequenceIndex) return decoded[sequenceIndex];
+    }
+    return null;
+  } on FormatException {
+    return null;
+  }
 }

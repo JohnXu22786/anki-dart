@@ -2,9 +2,12 @@
 import 'package:anki_backend_protocol/anki/notes.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
 
+import 'field_checksum.dart';
 import 'ids.dart';
 import 'base91.dart';
 import 'notetype.dart';
+import 'note_field_normalization.dart';
+import 'note_text.dart';
 
 /// An Anki note's stored identity, fields and tags.
 class Note {
@@ -69,6 +72,43 @@ class Note {
   void _markDirty() {
     _sortField = null;
     _checksum = null;
+  }
+
+  /// Prepare fields and cached values before saving, matching Anki Core's
+  /// `Note::prepare_for_update()` contract.
+  ///
+  /// Fields are cleaned in place. The checksum is derived from the first field
+  /// and the sort field from the configured field ordinal.
+  void prepareForUpdate(Notetype notetype, {required bool normalizeText}) {
+    if (notetype.id.value != notetypeId) {
+      throw StateError('note and notetype IDs do not match');
+    }
+    final expectedFieldCount =
+        notetype.fields.isEmpty ? 1 : notetype.fields.length;
+    if (expectedFieldCount != _fields.length) {
+      throw StateError(
+        'note has ${_fields.length} fields, expected $expectedFieldCount',
+      );
+    }
+
+    _markDirty();
+    for (var index = 0; index < _fields.length; index++) {
+      _fields[index] = normalizeNoteField(
+        _fields[index],
+        normalizeText: normalizeText,
+      );
+    }
+
+    final field1NoHtml = stripHtmlPreservingMediaFilenames(_fields.first);
+    final checksum = fieldChecksum(field1NoHtml);
+    final sortFieldIndex = notetype.config.sortFieldIdx;
+    final sortField = sortFieldIndex == 0
+        ? field1NoHtml
+        : stripHtmlPreservingMediaFilenames(
+            sortFieldIndex < _fields.length ? _fields[sortFieldIndex] : '',
+          );
+    _sortField = sortField;
+    _checksum = checksum;
   }
 
   factory Note.fromProto(proto.Note value) => Note(

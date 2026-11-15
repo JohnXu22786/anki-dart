@@ -34,9 +34,13 @@ SOURCE_HASHES = {
     "rslib/src/config/mod.rs": "4d288b43ebfb365e083f2fcf352e6c6a87b973c0e8fea8aedcef872db8bd03eb",
     "rslib/src/revlog/mod.rs": "e528d4708a21ae2da87705434249e2e842155e3a34161d556979e5d611b63faa",
     "rslib/src/stats/service.rs": "bd65f462a7af8a3dfa1cb3c622fc6324d0e8ddca6535f6b20b1e3908efb3895e",
+    "rslib/src/text.rs": "2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762",
     "proto/anki/stats.proto": "5b22c0aa2133b68eefc93964299668732941ee3688140cd98430b033ee567ea4",
 }
-
+THIRD_PARTY_HASHES = {
+    "htmlescape-0.3.1.crate": "e9025058dae765dee5070ec375f591e2ba14638c63feff74f13805a72e523163",
+    "htmlescape-0.3.1/src/entities.rs": "a332c354a31bc57150f24987eb23324d3b87e8a33dda0ca553474d5c955b20d7",
+}
 
 def main() -> int:
     errors: list[str] = []
@@ -65,6 +69,22 @@ def main() -> int:
     else:
         errors.append("SOURCE.sha256: source digest manifest is missing")
 
+    third_party_manifest = ROOT / "THIRD_PARTY_SOURCE.sha256"
+    third_party_actual: dict[str, str] = {}
+    if third_party_manifest.is_file():
+        for line in third_party_manifest.read_text(encoding="utf-8").splitlines():
+            match = re.fullmatch(r"([0-9a-f]{64})  (.+)", line)
+            if not match:
+                errors.append(f"THIRD_PARTY_SOURCE.sha256: invalid entry {line!r}")
+                continue
+            third_party_actual[match.group(2)] = match.group(1)
+        if third_party_actual != THIRD_PARTY_HASHES:
+            errors.append("THIRD_PARTY_SOURCE.sha256: htmlescape 0.3.1 hashes are incorrect")
+    else:
+        errors.append("THIRD_PARTY_SOURCE.sha256: third-party source digest manifest is missing")
+    if not (ROOT / "LICENSES" / "Apache-2.0.txt").is_file():
+        errors.append("LICENSES/Apache-2.0.txt: htmlescape data license text is missing")
+
     unicode_manifest = ROOT / "UNICODE_CASEFOLD.sha256"
     expected_unicode_record = (
         f"{UNICODE_CASE_FOLDING}  Unicode 12.1.0 CaseFolding.txt\n"
@@ -83,8 +103,11 @@ def main() -> int:
 
     for path in sorted((ROOT / "lib").rglob("*.dart")):
         text = path.read_text(encoding="utf-8")
-        if not text.startswith("// SPDX-License-Identifier: AGPL-3.0-or-later\n"):
-            errors.append(f"{path.relative_to(ROOT)}: AGPL SPDX header is missing")
+        identifier = (
+            "Apache-2.0" if path.name == "html_entities.dart" else "AGPL-3.0-or-later"
+        )
+        if not text.startswith(f"// SPDX-License-Identifier: {identifier}\n"):
+            errors.append(f"{path.relative_to(ROOT)}: {identifier} SPDX header is missing")
         if "import 'dart:io'" in text or 'import "dart:io"' in text:
             errors.append(f"{path.relative_to(ROOT)}: VM-only dart:io import is forbidden")
     for directory in ("test", "tool"):

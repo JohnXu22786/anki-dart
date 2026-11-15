@@ -3,6 +3,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_collection_schema/anki_collection_schema.dart';
@@ -118,6 +119,99 @@ final class CollectionSqliteStorage
     );
     return rows.isEmpty ? null : _cardFromRow(rows.first);
   }
+
+  /// Updates all persisted scheduling fields for [card].
+  Future<void> updateCard(Card card) async {
+    _database.execute('''
+      UPDATE cards SET nid = ?, did = ?, ord = ?, mod = ?, usn = ?,
+        type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?,
+        lapses = ?, left = ?, odue = ?, odid = ?, flags = ?, data = ?
+      WHERE id = ?
+    ''', _cardValues(card)..add(_toSqlInt64(card.id)));
+  }
+
+  /// Inserts [card], allocating a new row ID if the current time ID is taken.
+  ///
+  /// Returns the ID assigned by SQLite, including the source's collision
+  /// allocation behavior. The shared [Card] model is immutable, so callers
+  /// receive the assigned ID instead of having the model mutated in place.
+  Future<CardId> addCard(Card card) async {
+    final values = _cardValues(card);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final statement = _database.prepare('''
+      INSERT INTO cards (
+        id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+        lapses, left, odue, odid, flags, data
+      ) VALUES (
+        CASE WHEN ?1 IN (SELECT id FROM cards)
+          THEN (SELECT max(id) + 1 FROM cards) ELSE ?1 END,
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      )
+    ''');
+    try {
+      statement.execute([now, ...values]);
+      return Int64(_database.lastInsertRowId);
+    } finally {
+      statement.close();
+    }
+  }
+
+  /// Inserts [card] only when its ID is unused, returning whether a row was
+  /// inserted. Constraints handled by SQLite's `OR IGNORE` policy return
+  /// `false`; SQLite errors not handled by that policy are surfaced.
+  Future<bool> addCardIfUnique(Card card) async {
+    final values = _cardValues(card);
+    final statement = _database.prepare('''
+      INSERT OR IGNORE INTO cards (
+        id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+        lapses, left, odue, odid, flags, data
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''');
+    try {
+      statement.execute([_toSqlInt64(card.id), ...values]);
+      return _database.updatedRows == 1;
+    } finally {
+      statement.close();
+    }
+  }
+
+  /// Inserts or replaces [card] using its provided ID, as used by sync/undo.
+  Future<void> addOrUpdateCard(Card card) async {
+    _database.execute(
+      '''
+      INSERT OR REPLACE INTO cards (
+        id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+        lapses, left, odue, odid, flags, data
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+      [_toSqlInt64(card.id), ..._cardValues(card)],
+    );
+  }
+
+  /// Removes [id]. Deleting a missing row succeeds without a result.
+  Future<void> removeCard(CardId id) async {
+    _database.execute('DELETE FROM cards WHERE id = ?', [_toSqlInt64(id)]);
+  }
+
+  List<Object?> _cardValues(Card card) => [
+    _toSqlInt64(card.noteId),
+    _toSqlInt64(card.deckId),
+    card.templateIdx,
+    _toSqlInt64(card.mtimeSecs),
+    card.usn,
+    card.ctype.value,
+    card.queue.value,
+    card.due,
+    card.interval,
+    card.easeFactorRaw,
+    card.reps,
+    card.lapses,
+    card.remainingStepsRaw,
+    card.originalDue,
+    _toSqlInt64(card.originalDeckId),
+    card.flags,
+    _cardDataJson(card),
+  ];
 
   /// Returns all stored cards for [noteId], in SQLite's natural query order.
   Future<List<Card>> allCardsOfNote(NoteId noteId) async => _database
@@ -344,6 +438,80 @@ Card _cardFromRow(Row row) {
     lastReviewTimeSecs: data.lastReviewTimeSecs,
     customData: data.customData,
   );
+}
+
+String _cardDataJson(Card card) {
+  final data = <String>[];
+  void add(String key, Object? value) =>
+      data.add('${jsonEncode(key)}:${jsonEncode(value)}');
+  void addFloat(String key, double value, int decimalPlaces) => data.add(
+    '${jsonEncode(key)}:${_roundCardDataFloat(value, decimalPlaces)}',
+  );
+
+  if (card.originalPosition != null) add('pos', card.originalPosition);
+  final memoryState = card.memoryState;
+  if (memoryState != null) {
+    addFloat('s', memoryState.stability, 4);
+    addFloat('d', memoryState.difficulty, 3);
+  }
+  if (card.desiredRetention != null) {
+    addFloat('dr', card.desiredRetention!, 2);
+  }
+  if (card.decay != null) addFloat('decay', card.decay!, 3);
+  if (card.lastReviewTimeSecs != null) {
+    data.add('"lrt":${card.lastReviewTimeSecs}');
+  }
+  if (card.customData.isNotEmpty && card.customData != '{}') {
+    add('cd', card.customData);
+  }
+  return '{${data.join(',')}}';
+}
+
+String _roundCardDataFloat(double value, int decimalPlaces) {
+  if (!value.isFinite) return 'null';
+  final factor = switch (decimalPlaces) {
+    2 => 100.0,
+    3 => 1000.0,
+    4 => 10000.0,
+    _ => throw ArgumentError.value(decimalPlaces, 'decimalPlaces'),
+  };
+  final float32 = Float32List(1);
+  float32[0] = value * factor;
+  if (!float32[0].isFinite) return 'null';
+  final rounded = float32[0].roundToDouble();
+  float32[0] = rounded / factor;
+  final roundedFloat = float32[0];
+  for (var precision = 1; precision <= 9; precision++) {
+    var shortest = roundedFloat.toStringAsPrecision(precision);
+    float32[0] = double.parse(shortest);
+    if (float32[0] == roundedFloat) {
+      if (!shortest.contains('.') && !shortest.contains('e')) {
+        shortest = '$shortest.0';
+      }
+      return _normalizeCardDataExponent(shortest);
+    }
+  }
+  return roundedFloat.toString();
+}
+
+String _normalizeCardDataExponent(String value) {
+  final exponentMarker = value.indexOf('e');
+  if (exponentMarker == -1) return value;
+  final exponent = int.parse(value.substring(exponentMarker + 1));
+  if (exponent < 0 || exponent >= 16) return value.replaceFirst('e+', 'e');
+
+  final mantissa = value.substring(0, exponentMarker);
+  final sign = mantissa.startsWith('-') ? '-' : '';
+  final decimalIndex = mantissa.indexOf('.');
+  final digits = mantissa.replaceAll(RegExp(r'[.-]'), '');
+  final integerDigits =
+      (decimalIndex == -1 ? mantissa.length : decimalIndex) -
+      sign.length +
+      exponent;
+  if (integerDigits >= digits.length) {
+    return '$sign$digits${List.filled(integerDigits - digits.length, '0').join()}.0';
+  }
+  return '$sign${digits.substring(0, integerDigits)}.${digits.substring(integerDigits)}';
 }
 
 Note _noteFromRow(Row row) => Note(

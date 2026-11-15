@@ -2,9 +2,13 @@
 
 The SQLite connection pragmas in this adapter follow Anki Core's
 `rslib/src/storage/sqlite.rs` at commit
-`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The card and note query SQL and row
-conversions adapt `rslib/src/storage/card/mod.rs`,
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The card query and mutation SQL
+and row conversions adapt `rslib/src/storage/card/mod.rs`,
 `rslib/src/storage/card/get_card.sql`, `rslib/src/storage/card/data.rs`,
+`rslib/src/storage/card/update_card.sql`,
+`rslib/src/storage/card/add_card.sql`,
+`rslib/src/storage/card/add_card_if_unique.sql`,
+`rslib/src/storage/card/add_or_update.sql`,
 `rslib/src/storage/note/mod.rs`, `rslib/src/storage/note/get.sql`, and
 `rslib/src/storage/note/get_without_fields.sql` at the same commit; their
 SHA-256 digests are recorded in `SOURCE.sha256`. The adapter reuses the shared

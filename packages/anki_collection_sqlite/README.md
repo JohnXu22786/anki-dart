@@ -4,7 +4,7 @@
 location to `CollectionOpenDatabase`. It opens through the provided driver,
 applies Anki Core's connection pragmas, forwards schema queries and SQL batches
 to SQLite, and closes the connection without deleting the collection. It also
-provides the pinned stored card and note read operations below, using shared
+provides pinned stored card and note reads and card row mutations, using shared
 models from `anki_backend_models`. The schema/open runner and metadata/default
 callbacks remain in `anki_collection_schema`.
 
@@ -14,6 +14,16 @@ The storage reader methods are `getCard`, `allCardsOfNote`,
 empty lists or sets. Only `allCardIdsOfNoteInTemplateOrder` orders by template
 ordinal, matching Anki Core. Card JSON conversion preserves Anki's invalid-data
 defaults, and note fields and tags use Anki's stored separators.
+
+Card mutation methods are `updateCard`, `addCard`, `addCardIfUnique`,
+`addOrUpdateCard`, and `removeCard`. They preserve Anki Core's row columns,
+bind order, compact card-data JSON, ID collision allocation, insert-or-ignore
+result, and SQLite error and transaction behavior. `addCard` returns the
+assigned ID because the shared `Card` model is immutable. It uses the current
+millisecond timestamp as the proposed row ID, allocating `max(id) + 1` on a
+collision, while persisting the card's supplied `mod` value. These methods do
+not create notes, schedule cards, or add transaction boundaries; callers own
+transactions.
 
 The native entry point uses the bundled SQLite from `sqlite3`:
 
@@ -62,9 +72,8 @@ legacy-file-format setting, and WAL. It maintains the source's bounded
 uses through its cached-prepare API. Schema probes, integrity checks, rollback,
 and SQL batches use direct query/execute APIs in the source too, so the adapter
 does not retain those statements. Set `androidTempStore` on Android to use
-memory for temporary tables. The adapter currently implements only the six
-card/note read methods above; it does not implement collection writes, Anki
-scalar functions or collations, undo/redo, media indexing, backup/restore,
+memory for temporary tables. The adapter does not implement note mutations,
+Anki scalar functions or collations, undo/redo, media indexing, backup/restore,
 synchronization, or encryption.
 
 `sqlite3` publishes native bindings for Android, iOS, Windows, macOS, and

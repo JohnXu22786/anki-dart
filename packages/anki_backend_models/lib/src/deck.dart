@@ -15,9 +15,32 @@ String _humanDeckName(String value) => value.split('::').map((component) {
           component.runes.where((rune) => !(rune <= 0x1f || rune == 0x7f)),
         ),
       );
-      final trimmed = normalized.replaceAll(RegExp(r'^[\s:]+|[\s:]+$'), '');
+      final runes = normalized.runes.toList(growable: false);
+      var start = 0;
+      var end = runes.length;
+      while (start < end && _isRustDeckWhitespaceOrColon(runes[start])) {
+        start++;
+      }
+      while (end > start && _isRustDeckWhitespaceOrColon(runes[end - 1])) {
+        end--;
+      }
+      final trimmed = String.fromCharCodes(runes.sublist(start, end));
       return trimmed.isEmpty ? 'blank' : trimmed;
     }).join('::');
+
+bool _isRustDeckWhitespaceOrColon(int rune) =>
+    rune == 0x3a ||
+    (rune >= 0x9 && rune <= 0xd) ||
+    rune == 0x20 ||
+    rune == 0x85 ||
+    rune == 0xa0 ||
+    rune == 0x1680 ||
+    (rune >= 0x2000 && rune <= 0x200a) ||
+    rune == 0x2028 ||
+    rune == 0x2029 ||
+    rune == 0x202f ||
+    rune == 0x205f ||
+    rune == 0x3000;
 
 sealed class DeckKind {
   const DeckKind();

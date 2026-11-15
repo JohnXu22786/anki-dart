@@ -1,0 +1,11 @@
+name: anki_scheduler_timing
+description: Platform-neutral Anki scheduler day timing behavior.
+version: 0.1.0
+publish_to: none
+license: AGPL-3.0-or-later
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+
+dev_dependencies:
+  test: ^1.25.8

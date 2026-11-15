@@ -68,7 +68,7 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// This is an incremental compiler, not complete search execution. Its current
 /// subset contains boolean structure, card/note/notetype ID predicates,
 /// notetype names, card template ordinals and names, tag predicates, deck IDs
-/// without children, flags, state and day predicates, basic scalar and rated
+/// without children, flags, state and day predicates, scalar, rated and FSRS
 /// properties, custom-data predicates, and whole-collection queries. Other
 /// AST variants throw [UnsupportedSearchSqlNodeException]. Due state
 /// predicates require explicit [SearchSqlTiming] values; day predicates and
@@ -146,6 +146,9 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   Property(kind: LapsesProperty()) ||
   Property(kind: EaseProperty()) ||
   Property(kind: RatedProperty()) => RequiredTable.cards,
+  Property(kind: StabilityProperty()) ||
+  Property(kind: DifficultyProperty()) ||
+  Property(kind: RetrievabilityProperty()) => RequiredTable.cards,
   CustomData() ||
   Property(kind: CustomDataNumberProperty()) ||
   Property(kind: CustomDataStringProperty()) => RequiredTable.cards,
@@ -232,6 +235,12 @@ String _writeSearch(
     _writeIntegerProperty(operator, 'lapses', value),
   Property(:final operator, kind: EaseProperty(:final value)) =>
     _writeEaseProperty(operator, value),
+  Property(:final operator, kind: StabilityProperty(:final value)) =>
+    _writeFsrsVariableProperty(operator, 's', value),
+  Property(:final operator, kind: DifficultyProperty(:final value)) =>
+    _writeDifficultyProperty(operator, value),
+  Property(:final operator, kind: RetrievabilityProperty(:final value)) =>
+    _writeRetrievabilityProperty(operator, value, timing),
   WholeCollection() => 'true',
   _ => throw UnsupportedSearchSqlNodeException(node),
 };
@@ -308,6 +317,54 @@ String _writeEaseProperty(String operator, double ease) {
       ? 0xffffffff
       : factor.toInt();
   return 'factor $operator $unsignedFactor';
+}
+
+String _writeFsrsVariableProperty(String operator, String key, double value) {
+  _validatePropertyOperator(operator);
+  return 'extract_fsrs_variable(c.data, \'$key\') $operator '
+      '${_formatCustomDataFloat(value)}';
+}
+
+String _writeDifficultyProperty(String operator, double difficulty) {
+  _validatePropertyOperator(operator);
+  final float32 = _roundToFloat32(difficulty);
+  final transformed = _roundToFloat32(_roundToFloat32(float32 * 9.0) + 1.0);
+  return 'extract_fsrs_variable(c.data, \'d\') $operator '
+      '${_formatCustomDataFloat(transformed)}';
+}
+
+String _writeRetrievabilityProperty(
+  String operator,
+  double value,
+  SearchSqlTiming? timing,
+) {
+  _validatePropertyOperator(operator);
+  final resolvedTiming = _requireFsrsPropertyTiming(timing);
+  final daysElapsed = resolvedTiming.daysElapsed;
+  if (daysElapsed < 0 || BigInt.from(daysElapsed) > _maxU32) {
+    throw RangeError.range(daysElapsed, 0, 0xffffffff, 'daysElapsed');
+  }
+  final nextDayAt = _validateI64(resolvedTiming.nextDayAt!, 'nextDayAt');
+  final now = _validateI64(resolvedTiming.now, 'now');
+  return 'case when c.type = 0 then false else '
+      '(extract_fsrs_retrievability(c.data, '
+      'case when c.odue !=0 then c.odue else c.due end, c.ivl, '
+      '$daysElapsed, $nextDayAt, $now) $operator '
+      '${_formatCustomDataFloat(value)}) end';
+}
+
+SearchSqlTiming _requireFsrsPropertyTiming(SearchSqlTiming? timing) {
+  if (timing == null) {
+    throw ArgumentError(
+      'Retrievability properties require explicit SearchSqlTiming values.',
+    );
+  }
+  if (timing.nextDayAt == null) {
+    throw ArgumentError(
+      'Retrievability properties require SearchSqlTiming.nextDayAt.',
+    );
+  }
+  return timing;
 }
 
 String _writeCustomData(String key, List<String> arguments) {

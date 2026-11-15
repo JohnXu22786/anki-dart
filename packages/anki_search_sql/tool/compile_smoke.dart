@@ -110,4 +110,24 @@ void main() {
   if (easeProperty.sql != 'select c.id from cards c where (factor = 1001)') {
     throw StateError('Ease property float32 JavaScript smoke test failed');
   }
+  final fsrsTiming = SearchSqlTiming(
+    daysElapsed: 42,
+    now: BigInt.from(1700000030),
+    learnAheadSecs: 30,
+    nextDayAt: BigInt.from(1700000000),
+  );
+  final fsrsProperties = compileSearchSql(
+    GroupNode(parse('prop:s=1.23456789 prop:d=0.1 prop:r>=0.75')),
+    timing: fsrsTiming,
+  );
+  if (fsrsProperties.sql !=
+      'select c.id from cards c where '
+          '(extract_fsrs_variable(c.data, \'s\') = 1.2345679 and '
+          'extract_fsrs_variable(c.data, \'d\') = 1.9000001 and '
+          'case when c.type = 0 then false else '
+          '(extract_fsrs_retrievability(c.data, '
+          'case when c.odue !=0 then c.odue else c.due end, c.ivl, '
+          '42, 1700000000, 1700000030) >= 0.75) end)') {
+    throw StateError('FSRS JavaScript SQL smoke test failed');
+  }
 }

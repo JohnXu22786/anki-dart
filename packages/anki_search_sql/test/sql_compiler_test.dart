@@ -1164,4 +1164,180 @@ void main() {
     expect(compiled.arguments, ['(?i).* blue(::| ).*', 'label', 'again']);
     expect(compiled.requiredTable, RequiredTable.cardsAndNotes);
   });
+
+  test('FSRS stability and difficulty properties match Core formatting', () {
+    const operators = ['<=', '>=', '!=', '=', '<', '>'];
+    for (final operator in operators) {
+      final stability = compileSearchSql(
+        GroupNode(parse('prop:s${operator}1.25')),
+      );
+      expect(
+        stability.sql,
+        'select c.id from cards c where '
+        '(extract_fsrs_variable(c.data, \'s\') $operator 1.25)',
+        reason: 'stability $operator',
+      );
+      expect(stability.arguments, isEmpty);
+      expect(stability.requiredTable, RequiredTable.cards);
+
+      final difficulty = compileSearchSql(
+        GroupNode(parse('prop:d${operator}2.5')),
+      );
+      expect(
+        difficulty.sql,
+        'select c.id from cards c where '
+        '(extract_fsrs_variable(c.data, \'d\') $operator 23.5)',
+        reason: 'difficulty $operator',
+      );
+      expect(difficulty.arguments, isEmpty);
+      expect(difficulty.requiredTable, RequiredTable.cards);
+    }
+
+    final rounded = compileSearchSql(GroupNode(parse('prop:s=1.23456789')));
+    expect(
+      rounded.sql,
+      'select c.id from cards c where '
+      '(extract_fsrs_variable(c.data, \'s\') = 1.2345679)',
+    );
+    expect(
+      compileSearchSql(GroupNode(parse('prop:s=1e-8'))).sql,
+      'select c.id from cards c where '
+      '(extract_fsrs_variable(c.data, \'s\') = 0.00000001)',
+    );
+    expect(
+      compileSearchSql(GroupNode(parse('prop:s=inf'))).sql,
+      'select c.id from cards c where '
+      '(extract_fsrs_variable(c.data, \'s\') = inf)',
+    );
+    expect(
+      compileSearchSql(GroupNode(parse('prop:d=nan'))).sql,
+      'select c.id from cards c where '
+      '(extract_fsrs_variable(c.data, \'d\') = NaN)',
+    );
+    expect(
+      compileSearchSql(GroupNode(parse('prop:d=0.1'))).sql,
+      'select c.id from cards c where '
+      '(extract_fsrs_variable(c.data, \'d\') = 1.9000001)',
+    );
+    expect(
+      compileSearchSql(GroupNode(parse('prop:s=3.4028235e38'))).sql,
+      'select c.id from cards c where '
+      '(extract_fsrs_variable(c.data, \'s\') = '
+      '340282350000000000000000000000000000000)',
+    );
+
+    expect(
+      () => compileSearchSql(
+        GroupNode([
+          Search(
+            const Property(operator: 'or 1 --', kind: StabilityProperty(1.0)),
+          ),
+        ]),
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('FSRS retrievability uses Core timing and New-card behavior', () {
+    final timing = SearchSqlTiming(
+      daysElapsed: 42,
+      now: BigInt.from(1700000030),
+      learnAheadSecs: 30,
+      nextDayAt: BigInt.from(1700000000),
+    );
+    const operators = ['<=', '>=', '!=', '=', '<', '>'];
+    for (final operator in operators) {
+      final compiled = compileSearchSql(
+        GroupNode(parse('prop:r${operator}0.75')),
+        timing: timing,
+      );
+      expect(
+        compiled.sql,
+        'select c.id from cards c where '
+        '(case when c.type = 0 then false else '
+        '(extract_fsrs_retrievability(c.data, '
+        'case when c.odue !=0 then c.odue else c.due end, c.ivl, '
+        '42, 1700000000, 1700000030) $operator 0.75) end)',
+        reason: 'retrievability $operator',
+      );
+      expect(compiled.arguments, isEmpty);
+      expect(compiled.requiredTable, RequiredTable.cards);
+    }
+
+    final notes = compileSearchSql(
+      GroupNode([
+        Search(const Tag(tag: 'blue', mode: FieldSearchMode.normal)),
+        BooleanNode(NodeKind.and),
+        GroupNode([
+          NegatedNode(
+            Search(
+              const Property(operator: '>=', kind: RetrievabilityProperty(0.5)),
+            ),
+          ),
+          BooleanNode(NodeKind.or),
+          Search(const Property(operator: '=', kind: IntervalProperty(3))),
+        ]),
+      ]),
+      resultType: SearchResultType.notes,
+      timing: timing,
+    );
+    expect(
+      notes.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(n.tags regexp ? and '
+      '(not case when c.type = 0 then false else '
+      '(extract_fsrs_retrievability(c.data, '
+      'case when c.odue !=0 then c.odue else c.due end, c.ivl, '
+      '42, 1700000000, 1700000030) >= 0.5) end or ivl = 3))',
+    );
+    expect(notes.arguments, ['(?i).* blue(::| ).*']);
+    expect(notes.requiredTable, RequiredTable.cardsAndNotes);
+  });
+
+  test('FSRS retrievability validates explicit timing and Core ranges', () {
+    final query = GroupNode(parse('prop:r>0.5'));
+    expect(() => compileSearchSql(query), throwsArgumentError);
+    expect(
+      () => compileSearchSql(
+        query,
+        timing: SearchSqlTiming(
+          daysElapsed: 0,
+          now: BigInt.zero,
+          learnAheadSecs: 0,
+        ),
+      ),
+      throwsArgumentError,
+    );
+
+    final validNow = BigInt.from(1700000000);
+    final validNextDay = BigInt.from(1700000000);
+    for (final timing in <SearchSqlTiming>[
+      SearchSqlTiming(
+        daysElapsed: -1,
+        now: validNow,
+        learnAheadSecs: 0,
+        nextDayAt: validNextDay,
+      ),
+      SearchSqlTiming(
+        daysElapsed: 4294967296,
+        now: validNow,
+        learnAheadSecs: 0,
+        nextDayAt: validNextDay,
+      ),
+      SearchSqlTiming(
+        daysElapsed: 0,
+        now: BigInt.parse('9223372036854775808'),
+        learnAheadSecs: 0,
+        nextDayAt: validNextDay,
+      ),
+      SearchSqlTiming(
+        daysElapsed: 0,
+        now: validNow,
+        learnAheadSecs: 0,
+        nextDayAt: BigInt.parse('-9223372036854775809'),
+      ),
+    ]) {
+      expect(() => compileSearchSql(query, timing: timing), throwsRangeError);
+    }
+  });
 }

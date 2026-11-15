@@ -1,13 +1,15 @@
 # anki-dart
 
-## Anki Core collection schema catalog (Unit 4.1)
+## Anki Core collection schema and open/create (Units 4.1–4.3)
 
 [`packages/anki_collection_schema`](packages/anki_collection_schema/README.md)
-PORTED: schema SQL/catalog and version compatibility. PARTIAL: transactional
-execution of the catalogued migration plans; host adapters still supply the
-database and callbacks. Remaining collection storage work includes collection
-creation/open/close, integrity checks, WAL handling, CRUD, defaults, undo, and
-the callback transformations. The package provides the
+PORTED: schema SQL/catalog, version compatibility, and host-neutral
+open/create orchestration. The orchestration preserves source ordering for
+schema creation, optional integrity checks, migrations, and default callbacks
+inside one outer transaction. Host adapters still supply the database,
+metadata/timezone/clock/default-config rules, and migration/default callbacks.
+It does not provide a concrete driver, collection close/checkpoint, WAL
+handling, CRUD, undo, or callback transformations. The package provides the
 platform-neutral schema catalog for Anki Core at commit
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It exposes the schema 11 creation
 SQL, ordered upgrade definitions through schema 18, the schema 18-to-11

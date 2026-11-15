@@ -1,5 +1,5 @@
 name: anki_collection_schema
-description: Pinned, platform-neutral Anki collection schema and migration catalog.
+description: Platform-neutral Anki collection schema, migrations, and open/create orchestration.
 version: 0.1.0
 publish_to: none
 license: AGPL-3.0-or-later

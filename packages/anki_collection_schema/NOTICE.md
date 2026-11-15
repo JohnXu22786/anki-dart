@@ -13,10 +13,11 @@ under the GNU Affero General Public License, version 3 or later.
 
 The Dart API and tests are Copyright (C) 2026 John Tsui and distributed under
 AGPL-3.0-or-later. The package implements platform-neutral transactional
-execution of the catalogued plans. It does not provide a database driver,
-collection creation/open/close, integrity checks, WAL handling, table CRUD,
-defaults, undo, or the named Rust transformations. A host supplies the
-database and callback implementations.
+execution of the catalogued plans and the collection open/create sequence. It
+does not provide a database driver, close/checkpoint a collection, configure
+WAL, implement table CRUD, undo, or the named Rust transformations/defaults. A
+host supplies the database and callback implementations, including
+clock/timezone/default-config rules for metadata initialization.
 
 Run `python3 tool/verify_source.py /path/to/anki-core` from this package to
 verify all recorded source hashes against a checkout at the pinned commit.

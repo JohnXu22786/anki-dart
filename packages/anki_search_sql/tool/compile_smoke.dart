@@ -27,4 +27,18 @@ void main() {
   if (nameQuery.arguments.join('|') != r'(?i)^Basic.*$|(?i)^Front.*$') {
     throw StateError('Search name JavaScript compilation smoke test failed');
   }
+  final dueQuery = compileSearchSql(
+    GroupNode([Search(State(StateKind.due))]),
+    timing: SearchSqlTiming(
+      daysElapsed: 42,
+      now: BigInt.from(1700000000),
+      learnAheadSecs: 30,
+    ),
+  );
+  if (dueQuery.sql !=
+      'select c.id from cards c where '
+          '(((c.queue in (2,3) and c.due <= 42) or '
+          '(c.queue in (1,4) and c.due <= 1700000030)))') {
+    throw StateError('Search due state JavaScript smoke test failed');
+  }
 }

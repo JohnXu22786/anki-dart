@@ -313,4 +313,127 @@ void main() {
     ]);
     expect(compiled.requiredTable, RequiredTable.notes);
   });
+
+  test('state predicates match pinned card type and queue values', () {
+    final cases = <(StateKind, String)>[
+      (StateKind.newCard, 'c.type = 0'),
+      (StateKind.review, 'c.type in (2, 3)'),
+      (StateKind.learning, 'c.type in (1, 3)'),
+      (StateKind.buried, 'c.queue in (-2,-3)'),
+      (StateKind.userBuried, 'c.queue = -3'),
+      (StateKind.schedBuried, 'c.queue = -2'),
+      (StateKind.suspended, 'c.queue = -1'),
+    ];
+
+    for (final (kind, predicate) in cases) {
+      final compiled = compileSearchSql(GroupNode([Search(State(kind))]));
+      expect(compiled.sql, 'select c.id from cards c where ($predicate)');
+      expect(compiled.requiredTable, RequiredTable.cards);
+      expect(compiled.arguments, isEmpty);
+    }
+
+    final notes = compileSearchSql(
+      GroupNode([Search(State(StateKind.newCard))]),
+      resultType: SearchResultType.notes,
+    );
+    expect(
+      notes.sql,
+      'select distinct n.id from cards c, notes n where '
+      'c.nid=n.id and (c.type = 0)',
+    );
+    expect(notes.requiredTable, RequiredTable.cardsAndNotes);
+  });
+
+  test('due state uses explicit timing and pinned cutoff boundaries', () {
+    final compiled = compileSearchSql(
+      GroupNode([Search(State(StateKind.due))]),
+      timing: SearchSqlTiming(
+        daysElapsed: 42,
+        now: BigInt.from(1700000000),
+        learnAheadSecs: 30,
+      ),
+    );
+    expect(
+      compiled.sql,
+      'select c.id from cards c where '
+      '(((c.queue in (2,3) and c.due <= 42) or '
+      '(c.queue in (1,4) and c.due <= 1700000030)))',
+    );
+    expect(compiled.arguments, isEmpty);
+
+    expect(
+      () => compileSearchSql(GroupNode([Search(State(StateKind.due))])),
+      throwsArgumentError,
+    );
+  });
+
+  test('state predicates compose with existing predicates and arguments', () {
+    final compiled = compileSearchSql(
+      GroupNode([
+        Search(Notetype('Basic*')),
+        BooleanNode(NodeKind.and),
+        GroupNode([
+          Search(State(StateKind.due)),
+          BooleanNode(NodeKind.or),
+          Search(const Tag(tag: r'^math$', mode: FieldSearchMode.regex)),
+        ]),
+      ]),
+      resultType: SearchResultType.notes,
+      timing: SearchSqlTiming(
+        daysElapsed: 8,
+        now: BigInt.from(100),
+        learnAheadSecs: 5,
+      ),
+    );
+    expect(
+      compiled.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(n.mid in (select id from notetypes where name regexp ?) and '
+      '(((c.queue in (2,3) and c.due <= 8) or '
+      '(c.queue in (1,4) and c.due <= 105)) or regexp_tags(?2, n.tags)))',
+    );
+    expect(compiled.arguments, [r'(?i)^Basic.*$', r'(?i)^math$']);
+    expect(compiled.requiredTable, RequiredTable.cardsAndNotes);
+  });
+
+  test('due timing rejects values outside Core ranges and cutoff overflow', () {
+    final validNow = BigInt.from(1700000000);
+    for (final timing in <SearchSqlTiming>[
+      SearchSqlTiming(daysElapsed: -1, now: validNow, learnAheadSecs: 0),
+      SearchSqlTiming(
+        daysElapsed: 4294967296,
+        now: validNow,
+        learnAheadSecs: 0,
+      ),
+      SearchSqlTiming(daysElapsed: 0, now: validNow, learnAheadSecs: -1),
+      SearchSqlTiming(
+        daysElapsed: 0,
+        now: validNow,
+        learnAheadSecs: 4294967296,
+      ),
+      SearchSqlTiming(
+        daysElapsed: 0,
+        now: BigInt.parse('9223372036854775807'),
+        learnAheadSecs: 1,
+      ),
+      SearchSqlTiming(
+        daysElapsed: 0,
+        now: BigInt.parse('9223372036854775808'),
+        learnAheadSecs: 0,
+      ),
+      SearchSqlTiming(
+        daysElapsed: 0,
+        now: BigInt.parse('-9223372036854775809'),
+        learnAheadSecs: 0,
+      ),
+    ]) {
+      expect(
+        () => compileSearchSql(
+          GroupNode([Search(State(StateKind.due))]),
+          timing: timing,
+        ),
+        throwsRangeError,
+      );
+    }
+  });
 }

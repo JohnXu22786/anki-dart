@@ -8,8 +8,11 @@ environment:
   sdk: '>=3.11.0 <4.0.0'
 
 dependencies:
+  anki_backend_models:
+    path: ../anki_backend_models
   anki_collection_schema:
     path: ../anki_collection_schema
+  fixnum: ^1.1.0
   sqlite3: ^3.9.1
   web: ^1.1.2
 

@@ -13,6 +13,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_COMMIT = "e64c6b1aee3e8d668fb8bbe084beada8e070d985"
 SOURCE_HASHES = {
+    "rslib/src/scheduler/mod.rs": "0c147a58a2de9dd4e1f1dc199d0cf89b0e3d1e690bb70182d0ca91fd7e8fc0c1",
     "rslib/src/scheduler/timing.rs": "a9aeea597aa76b57a90bf91124d4245bde91c672f60e56337460a60300795f17",
     "rslib/src/timestamp.rs": "31929938c48febe39f445fa61e8aa0d134e0c93b6bdec5aad8250f5f931720b5",
 }

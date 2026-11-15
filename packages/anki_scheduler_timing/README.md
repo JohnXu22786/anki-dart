@@ -14,5 +14,11 @@ offset. Supplying both rollover and creation offset selects `schedTimingTodayV2N
 `v1CreationDate` also takes an explicit local offset, and
 `fixedOffsetFromMinutes` preserves the source's ±23-hour clamping behavior.
 
+`currentDueDay` applies a signed day delta with Anki Core's `u32` to `i32`
+reinterpretation and floor-at-zero behavior. `isUnixEpochTimestamp` identifies
+seconds-based due values using the strict `due > 1_000_000_000` threshold.
+
 The pinned Rust source and its SHA-256 digest are recorded in `SOURCE.sha256`.
-The source is from Anki Core commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`.
+The sources are from Anki Core commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`; the helper implementations come
+from `rslib/src/scheduler/mod.rs` and `rslib/src/scheduler/timing.rs`.

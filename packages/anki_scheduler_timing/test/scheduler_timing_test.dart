@@ -7,6 +7,27 @@ int _stamp(int year, int month, int day, int hour, {int west = 0}) =>
     west * 60;
 
 void main() {
+  group('scheduler timing helpers', () {
+    test('current due day casts elapsed u32 to i32 before applying delta', () {
+      expect(currentDueDay(daysElapsed: 8, delta: -3), 5);
+      expect(currentDueDay(daysElapsed: 2, delta: -3), 0);
+      // Rust's `u32 as i32` cast keeps the low 32 bits, then interprets them
+      // as signed before adding the delta.
+      expect(currentDueDay(daysElapsed: 0x80000000, delta: 0x7fffffff), 0);
+      expect(currentDueDay(daysElapsed: 0xffffffff, delta: 2), 1);
+      // The source addition is i32 arithmetic, so release builds wrap before
+      // applying max(0).
+      expect(currentDueDay(daysElapsed: 0x7fffffff, delta: 1), 0);
+    });
+
+    test('epoch due detection uses a strict threshold', () {
+      expect(isUnixEpochTimestamp(999999999), isFalse);
+      expect(isUnixEpochTimestamp(1000000000), isFalse);
+      expect(isUnixEpochTimestamp(1000000001), isTrue);
+      expect(isUnixEpochTimestamp(0x7fffffff), isTrue);
+    });
+  });
+
   group('today timing', () {
     test(
       'v1 uses fixed elapsed days and preserves signed conversion behavior',

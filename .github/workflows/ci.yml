@@ -29,6 +29,10 @@ jobs:
         run: dart analyze lib test
       - name: Run tests
         run: dart test
+      - name: Compile and run portable helper smoke test on JavaScript
+        run: |
+          dart compile js tool/web_compat_smoke.dart -o /tmp/anki_dart_web_compat.js
+          node /tmp/anki_dart_web_compat.js
       - name: Validate licenses and COPYING
         run: python3 tool/check_licenses.py
 

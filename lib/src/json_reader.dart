@@ -105,7 +105,12 @@ abstract interface class JsonReaderContainerAdapter<
 final class JsonIntegerValue {
   const JsonIntegerValue(this.value, {required this.isLong});
 
-  final int value;
+  /// Exact integral value independent of the host's native integer width.
+  ///
+  /// JavaScript numbers cannot represent every signed 64-bit integer. Keeping
+  /// this as [BigInt] lets a web host convert it to its own 32/64-bit JSON
+  /// container without rounding the token first.
+  final BigInt value;
   final bool isLong;
 
   @override
@@ -200,13 +205,14 @@ Object _readJsonNumber<TObject extends Object, TArray extends Object>(
   JsonReaderContainerAdapter<TObject, TArray> containers,
 ) {
   final integer = BigInt.tryParse(literal);
-  final longMin = BigInt.from(-9223372036854775808);
-  final longMax = BigInt.from(9223372036854775807);
+  final longMin = BigInt.parse('-9223372036854775808');
+  final longMax = BigInt.parse('9223372036854775807');
   if (integer != null && integer >= longMin && integer <= longMax) {
-    final value = integer.toInt();
     return JsonIntegerValue(
-      value,
-      isLong: value < -2147483648 || value > 2147483647,
+      integer,
+      isLong:
+          integer < BigInt.from(-2147483648) ||
+          integer > BigInt.from(2147483647),
     );
   }
 

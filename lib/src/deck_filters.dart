@@ -22,9 +22,8 @@
  * revision recorded in ANKIDROID_UPSTREAM.md.
  */
 
-import 'dart:io' show Platform;
-
 import 'locale_lowercase.dart';
+import 'platform_locale_name.dart';
 
 /// A deck search query with AnkiDroid's token and path matching rules.
 class DeckFilters {
@@ -73,7 +72,7 @@ class DeckFilters {
     return DeckFilters._(
       tokens,
       localeName.isEmpty ? null : localeName,
-      localeNameProvider ?? (() => Platform.localeName),
+      localeNameProvider ?? (() => platformLocaleName),
     );
   }
 }

@@ -4266,3 +4266,28 @@ were not duplicated.
 AGPL browser.py source. This unit copies only the three GPL helper contracts above
 and no browser.py implementation. The Dart code and tests are Copyright © 2026
 John Tsui under GPL-3.0-or-later. Root `COPYING` remains byte-identical.
+
+## Flutter profile onboarding and navigation
+
+`apps/anki/lib/startup_shell.dart` implements shared first-run onboarding and
+profile-list interactions; `apps/anki/lib/profile_manager.dart` keeps default
+profile selection, unique ID generation, and ordered switch safety checks in
+Dart; `apps/anki/lib/app_contracts.dart` and `app_services.dart` define the
+injected startup/storage and profile repository boundaries. The UI behavior is
+adapted from AnkiDroid 2.25.3, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`: profile naming and creation from
+`AnkiDroid/src/main/java/com/ichi2/anki/multiprofile/ProfileManager.kt`, name
+validation from `multiprofile/ProfileName.kt`, profile-list and edit affordance
+from `preferences/profiles/SwitchProfilesScreen.kt`, the add-name dialog from
+`preferences/profiles/AddProfileDialog.kt`, and startup/storage setup contracts
+from `startup/SetupStorage.kt`, `BackendSetup.kt`, `StoragePolicy.kt`, and
+`StartupGuards.kt`. The pinned ProfileManager creates a `Default` profile when
+none is registered and persists profile creation and rename through its
+registry. Host storage selection, backend initialization, profile persistence,
+and lifecycle-safe switching are represented by the Dart interfaces and are
+deferred to platform adapters; no OS-specific behavior or persistence is
+invented here. The app adds a shared first-run entry screen because the Flutter
+app previously had only a neutral shell. No upstream images, assets, or
+translated strings are copied. The referenced AnkiDroid Kotlin files declare
+`GPL-3.0-or-later`; the Flutter adaptation and widget tests are Copyright ©
+2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` is unchanged.

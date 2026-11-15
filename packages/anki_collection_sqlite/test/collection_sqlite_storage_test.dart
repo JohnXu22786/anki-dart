@@ -59,6 +59,52 @@ void main() {
     await reopened.close();
   });
 
+  test(
+    'registers Core field_at_index semantics on each collection connection',
+    () async {
+      final database = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+      );
+
+      expect(
+        await database.queryString(
+          "SELECT field_at_index('first' || char(31) || '' || char(31) || 'third', 0)",
+        ),
+        'first',
+      );
+      expect(
+        await database.queryString(
+          "SELECT field_at_index('first' || char(31) || '' || char(31) || 'third', 1)",
+        ),
+        '',
+      );
+      expect(
+        await database.queryString(
+          "SELECT field_at_index('first' || char(31) || '' || char(31) || 'third', 2)",
+        ),
+        'third',
+      );
+      expect(
+        await database.queryString("SELECT field_at_index('only', 65535)"),
+        '',
+      );
+      expect(
+        await database.queryString("SELECT field_at_index('only', 1)"),
+        '',
+      );
+      await expectLater(
+        database.queryString("SELECT field_at_index('only', 65536)"),
+        throwsA(isA<SqliteException>()),
+      );
+      await expectLater(
+        database.queryString('SELECT field_at_index(NULL, 0)'),
+        throwsA(isA<SqliteException>()),
+      );
+      await database.close();
+    },
+  );
+
   test('upgrades supported schema 14 fixture using the real database', () async {
     final database = await CollectionSqliteStorage.open(
       driver: _nativeDriver,

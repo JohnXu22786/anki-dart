@@ -17,6 +17,11 @@ against the repository's AnkiDroid 2.25.3 baseline at commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. Schema and migration SQL remain in
 the separately licensed `anki_collection_schema` package.
 
+The collection connection also registers Core's deterministic
+`field_at_index(flds, index)` SQLite function from `rslib/src/storage/sqlite.rs`
+for first-field note lookup. Other Core SQLite functions and collations remain
+outside this adapter until their own source-derived units are completed.
+
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently
 licensed `sqlite3` package (MIT). See this package's `LICENSE` file for the

@@ -72,6 +72,7 @@ final class CollectionSqliteStorage
       () => driver.openDatabase(location),
     );
     try {
+      _registerCoreFieldIndexFunction(database);
       database.execute('pragma busy_timeout = 0');
       database.execute('pragma locking_mode = exclusive');
       database.execute('pragma page_size = 4096');
@@ -425,6 +426,31 @@ final class CollectionSqliteStorage
     }
     statement.execute();
   }
+}
+
+void _registerCoreFieldIndexFunction(CommonDatabase database) {
+  database.createFunction(
+    functionName: 'field_at_index',
+    argumentCount: const AllowedArgumentCount(2),
+    deterministic: true,
+    directOnly: false,
+    function: (arguments) {
+      final fields = arguments[0];
+      if (fields is! String) {
+        throw ArgumentError.value(
+          fields,
+          'fields',
+          'must be stored field text',
+        );
+      }
+      final index = arguments[1];
+      if (index is! int || index < 0 || index > 0xffff) {
+        throw RangeError('field_at_index index must fit Core u16');
+      }
+      final values = fields.split('\x1f');
+      return index < values.length ? values[index] : '';
+    },
+  );
 }
 
 Card _cardFromRow(Row row) {

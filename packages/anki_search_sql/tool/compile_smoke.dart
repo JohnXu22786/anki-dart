@@ -54,4 +54,23 @@ void main() {
       'select c.id from cards c where (c.id > 9007199254741000)') {
     throw StateError('Added-day SQL JavaScript precision smoke test failed');
   }
+  final customDataQuery = compileSearchSql(
+    GroupNode([
+      Search(const CustomData("x';--")),
+      BooleanNode(NodeKind.and),
+      Search(
+        const Property(
+          operator: '>=',
+          kind: CustomDataNumberProperty(key: 'n', value: 0.1),
+        ),
+      ),
+    ]),
+  );
+  if (customDataQuery.sql !=
+          'select c.id from cards c where '
+              '(extract_custom_data(c.data, ?) is not null and '
+              'cast(extract_custom_data(c.data, ?) as float) >= 0.1)' ||
+      customDataQuery.arguments.join('|') != "x';--|n") {
+    throw StateError('Custom-data JavaScript SQL smoke test failed');
+  }
 }

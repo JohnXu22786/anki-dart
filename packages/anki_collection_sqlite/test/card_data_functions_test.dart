@@ -51,6 +51,7 @@ void main() {
       ),
       '{"":1,"𐀀":2}',
     );
+    expect(extractCustomData('{"pos":1e999,"cd":"{\"x\":1}"}', 'x'), isNull);
     expect(extractCustomData(cardData, 'missing'), isNull);
     expect(extractCustomData('{bad json', 'r'), isNull);
     expect(extractCustomData('{"cd":""}', 'r'), isNull);

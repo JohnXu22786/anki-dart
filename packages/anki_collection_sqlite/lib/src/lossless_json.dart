@@ -4,6 +4,11 @@ import 'dart:convert';
 /// Parses JSON while retaining integer literals that JavaScript numbers round.
 Object? parseLosslessJson(String source) => _Parser(source).parse();
 
+/// Validates a full JSON document with serde_json-compatible number bounds.
+void validateLosslessJson(String source) {
+  parseLosslessJson(source);
+}
+
 /// Renders JSON like Core's `serde_json::Value`, including sorted object keys.
 String encodeLosslessJson(Object? value) => switch (value) {
   _RawNumber() => value.encode(),

@@ -78,6 +78,7 @@ Object? extractCustomData(Object? cardData, Object? key) {
 
 Object? _cardDataField(String cardData, String key, int sequenceIndex) {
   try {
+    validateLosslessJson(cardData);
     final decoded = jsonDecode(cardData);
     if (decoded is Map<String, Object?>) return decoded[key];
     if (decoded is List<Object?> && decoded.length > sequenceIndex) {

@@ -13,3 +13,4 @@ export 'src/media_metadata.dart';
 export 'src/collection_config.dart';
 export 'src/base91.dart';
 export 'src/stock_notetype.dart';
+export 'src/revlog.dart';

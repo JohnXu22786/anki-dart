@@ -6,11 +6,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # Anki Flutter app
 
 The shared Flutter app provides first-run storage onboarding, an active-profile
-home, and profile selection, creation, and renaming on Android, iOS, web,
-Windows, macOS, and Linux. The root `anki_dart` package remains headless pure
-Dart; `apps/anki` depends on it through a local path dependency.
+home, profile selection, creation, and renaming, plus the responsive Deck
+Picker and filtered-deck options UI on Android, iOS, web, Windows, macOS, and
+Linux. The root `anki_dart` package remains headless pure Dart; `apps/anki`
+depends on it through a local path dependency.
 
-`AppServices` injects the storage/startup and profile repository boundaries.
+`AppServices` injects storage/startup, profile, and deck picker repository
+boundaries. The Deck Picker renders host-projected deck trees, counts, and
+filtered-deck options; it delegates selection, study, deck operations, and
+filtered-deck building to the injected `DeckPickerRepository`. The default
+repository shows a localized unavailable state until a platform/backend
+adapter is connected.
 The shared Dart profile manager chooses the default profile, generates unique
 IDs, and runs ordered profile-switch safety checks. Platform adapters still
 need to persist storage decisions, initialize the backend, store profile data,

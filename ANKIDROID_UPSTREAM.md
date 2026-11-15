@@ -4291,3 +4291,23 @@ app previously had only a neutral shell. No upstream images, assets, or
 translated strings are copied. The referenced AnkiDroid Kotlin files declare
 `GPL-3.0-or-later`; the Flutter adaptation and widget tests are Copyright ©
 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` is unchanged.
+
+## Flutter Deck Picker and filtered-deck UI
+
+`apps/anki/lib/deck_picker_screen.dart` and its widget tests adapt the
+cross-platform Deck Picker and filtered-deck options surface from AnkiDroid
+2.25.3, pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`. The shared Dart
+`DeckNode`, `DeckFilters`, and `DisplayDeckNode.filterAndFlattenDisplay()`
+contracts supply hierarchy, search, flattening, and counts. `DeckPickerRepository`
+is the typed injected collection/navigation boundary; the screen does not
+persist collection data or perform scheduler operations. The filtered-deck
+form is seeded from host-projected `FilteredDeckOptions`, including card-order
+labels and backend order enum numbers, and edited values are passed as a typed request so
+the host can use its existing options and operation plans. Source menu ordering and conditional
+action visibility follow `DeckPickerFloatingActionMenu.kt`,
+`DeckPickerContextMenu.kt`, and `DeckPickerMenuContentProvider.kt`. The complete
+screen/flow contract mapping and remaining adapter requirements are recorded in
+[`docs/DECK_PICKER_UI_GAP_REPORT.md`](docs/DECK_PICKER_UI_GAP_REPORT.md).
+The Flutter surface, newly authored English ARB resources, and tests are
+Copyright © 2026 John Tsui under `GPL-3.0-or-later`; upstream source attribution
+is retained here and in `NOTICE.md`. Root `COPYING` remains unchanged.

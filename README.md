@@ -6114,10 +6114,13 @@ and [NOTICE.md](NOTICE.md).
 [`flattenEmptyCardIds()` and `sortClozeOrdinals()`](lib/src/collection_libanki_helpers.dart)
 adapt the pure collection helper steps in AnkiDroid 2.25.3
 `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` (pinned to
-`d9bf072f814a0c37d30a694192593b31ff2df875`, lines 1530 and 1545–1553).
+`d9bf072f814a0c37d30a694192593b31ff2df875`, lines 388, 1530, and
+1545–1553).
 The first flattens host-supplied empty-card ID groups in order; the second
-returns a fresh ascending list from backend-supplied cloze ordinals. Generated
-report types, note conversion, cloze extraction, Collection DB access, and Rust
+returns a fresh ascending list from backend-supplied cloze ordinals. The same
+module exposes `collectionSchemaChanged()` for the source's strict schema-time
+comparison, with DB reads supplied in source order by the host. Generated report
+types, note conversion, cloze extraction, Collection DB access, and Rust
 behavior remain host-owned. Focused source-derived cases are in
 `test/collection_libanki_helpers_test.dart`. `Collection.kt` is
 `GPL-3.0-or-later`; although its header separately identifies AGPL browser.py

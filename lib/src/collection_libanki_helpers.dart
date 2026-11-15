@@ -34,3 +34,16 @@ List<int> flattenEmptyCardIds(Iterable<Iterable<int>> cardIdsByReport) =>
 /// backend's cloze-number extraction.
 List<int> sortClozeOrdinals(Iterable<int> backendOrdinals) =>
     backendOrdinals.toList()..sort();
+
+/// Returns whether the schema modification timestamp is newer than last sync.
+///
+/// This adapts `Collection.schemaChanged()` while leaving both DB reads to the
+/// host. The source reads the schema timestamp before the last-sync timestamp.
+bool collectionSchemaChanged({
+  required int Function() readSchemaModified,
+  required int Function() readLastSync,
+}) {
+  final schemaModified = readSchemaModified();
+  final lastSync = readLastSync();
+  return schemaModified > lastSync;
+}

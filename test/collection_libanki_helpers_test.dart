@@ -48,5 +48,56 @@ void main() {
       expect(backendOrdinals, [3, 1, 2, 1]);
       expect(sortClozeOrdinals([]), isEmpty);
     });
+
+    test(
+      'schema change reads source fields in order with a strict boundary',
+      () {
+        final calls = <String>[];
+
+        bool isChanged(int schemaModified, int lastSync) =>
+            collectionSchemaChanged(
+              readSchemaModified: () {
+                calls.add('schema');
+                return schemaModified;
+              },
+              readLastSync: () {
+                calls.add('lastSync');
+                return lastSync;
+              },
+            );
+
+        expect(isChanged(10, 9), isTrue);
+        expect(isChanged(9, 9), isFalse);
+        expect(isChanged(8, 9), isFalse);
+        expect(calls, [
+          'schema',
+          'lastSync',
+          'schema',
+          'lastSync',
+          'schema',
+          'lastSync',
+        ]);
+      },
+    );
+
+    test(
+      'schema change propagates the first callback failure and skips later read',
+      () {
+        final failure = StateError('schema read failed');
+        var lastSyncRead = false;
+
+        expect(
+          () => collectionSchemaChanged(
+            readSchemaModified: () => throw failure,
+            readLastSync: () {
+              lastSyncRead = true;
+              return 0;
+            },
+          ),
+          throwsA(same(failure)),
+        );
+        expect(lastSyncRead, isFalse);
+      },
+    );
   });
 }

@@ -5628,11 +5628,13 @@ Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
 `lib/src/collection_libanki_helpers.dart` and
 `test/collection_libanki_helpers_test.dart` adapt `EmptyCardsReport.emptyCids()`
-and the final sort in `Collection.clozeNumbersInNote()` from AnkiDroid 2.25.3
-`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:1530,1545–1553`,
+the final sort in `Collection.clozeNumbersInNote()`, and the strict comparison in
+`Collection.schemaChanged()` from AnkiDroid 2.25.3
+`libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:388,1530,1545–1553`,
 pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`. The adapters preserve
-source-order flattening and return ascending cloze ordinals in a fresh list;
-the host supplies the underlying IDs and backend cloze results. Generated
+source-order flattening, ascending cloze ordinals in a fresh list, and schema
+modification-before-last-sync read order. The host supplies the underlying IDs,
+backend cloze results, and DB reads. Generated
 protocols, database access, cloze extraction, and Rust algorithms remain
 host-owned. `Collection.kt` is GPL-3.0-or-later and separately identifies
 incorporated AGPL browser.py code; this adaptation contains none of that code.

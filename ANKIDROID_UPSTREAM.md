@@ -4235,6 +4235,7 @@ were not duplicated.
 |---|---|---|
 | `EmptyCardsReport.emptyCids()` (`Collection.kt:1530`) | Newly modeled | `flattenEmptyCardIds()` in `lib/src/collection_libanki_helpers.dart`; `test/collection_libanki_helpers_test.dart`. It flattens host-supplied card-ID groups in report order, retaining duplicates. The host owns the generated report type and its construction. |
 | `Collection.clozeNumbersInNote(note)` sorted result (`Collection.kt:1545–1553`) | Newly modeled | `sortClozeOrdinals()` in `lib/src/collection_libanki_helpers.dart`; `test/collection_libanki_helpers_test.dart`. Only the Kotlin `sorted()` projection is ported; note conversion and cloze extraction remain backend-owned. |
+| `Collection.schemaChanged()` (`Collection.kt:388`) | Newly modeled | `collectionSchemaChanged()` in `lib/src/collection_libanki_helpers.dart`; `test/collection_libanki_helpers_test.dart`. It reads host-supplied schema and last-sync values in source order and preserves the strict `>` comparison; DB reads remain host-owned. |
 | `Collection.notesOfCards(ids)` and `filterToValidCards(ids)` (`Collection.kt:1535–1560`) | Host/backend-owned | These execute SQL through the collection DB and use source query-string construction. No DB adapter, SQL execution, or ID-query algorithm is added. |
 | `Collection.requireMediaFolder()` / `mediaFolder` (`Collection.kt:1566–1575`) | Already modeled / host-owned | `lib/src/collection_files.dart` and `test/collection_files_test.dart` model host callbacks and the existing storage boundary; actual path and filesystem behavior remain host-owned. |
 | Card load/projection, clone, equality/hash, description, template selection, timers, deck-config helpers, flags, and render cache | Already modeled | `lib/src/backend_card_projection.dart`, `card_backend_load.dart`, `card_clone.dart`, `card_equality_hash_code.dart`, `card_description.dart`, `card_template_selection.dart`, `card_review_timer.dart`, `card_deck_config_methods.dart`, `card_user_flag.dart`, and `libanki_card_render_output_cache.dart`, with matching focused tests. `currentDeckId()` is the existing `getDeckIdForCard(oDid:, did:)` helper in `lib/src/card_utils.dart`. |
@@ -4244,6 +4245,6 @@ were not duplicated.
 | Collection persistence, imports/exports, SQL, scheduling, generated request/response objects, and Rust-backed methods | Host/backend-owned or already mapped | Existing forwarding/model entries remain in place, including Collection sync/preferences and raw forwarding. Units 420–433 are not duplicated; generated protocols and backend algorithms are not copied. |
 
 `Collection.kt` is GPL-3.0-or-later and also identifies a separate incorporated
-AGPL browser.py source. This unit copies only the two GPL helper contracts above
+AGPL browser.py source. This unit copies only the three GPL helper contracts above
 and no browser.py implementation. The Dart code and tests are Copyright © 2026
 John Tsui under GPL-3.0-or-later. Root `COPYING` remains byte-identical.

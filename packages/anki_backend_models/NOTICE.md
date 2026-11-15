@@ -1,7 +1,7 @@
 # Source and license notice
 
 This package ports Anki Core Card and Note values, protobuf conversions, and
-field checksum and field normalization behavior from
+field checksum, field normalization, and field-count migration behavior from
 `rslib/src/card/mod.rs`, `rslib/src/card/service.rs`, and
 `rslib/src/notes/mod.rs`; Notetype, NoteField and CardTemplate values and
 conversions from `rslib/src/notetype/mod.rs`, `rslib/src/notetype/service.rs`,

@@ -454,7 +454,7 @@ final class _Parser {
   }
 
   void _checkIds(String value, String context) {
-    if (!RegExp(r'^(\d+,)*\d+$').hasMatch(value))
+    if (!RegExp(r'^(\p{Nd}+,)*\p{Nd}+$', unicode: true).hasMatch(value))
       fail(SearchErrorCode.other,
           info: 'expected only digits and commas in $context:',
           remainingInput: value);

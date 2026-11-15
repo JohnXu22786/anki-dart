@@ -108,6 +108,7 @@ void main() {
             .having((n) => n.mode, 'mode', FieldSearchMode.regex));
     expect(value('nid:1237123712,2,3'),
         isA<NoteIds>().having((n) => n.ids, 'ids', '1237123712,2,3'));
+    expect(value('nid:١'), isA<NoteIds>().having((n) => n.ids, 'ids', '١'));
     expect(value('is:due'),
         isA<State>().having((n) => n.kind, 'state', StateKind.due));
     expect(value('flag:3'), isA<Flag>().having((n) => n.value, 'flag', 3));

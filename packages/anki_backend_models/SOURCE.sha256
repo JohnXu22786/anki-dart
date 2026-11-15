@@ -1,4 +1,5 @@
 cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9  rslib/src/card/mod.rs
+478a35d1248be262ed2d0941202ac8f201c7eb0a5c57b7198d3ace03898fd1c5  rslib/src/cloze.rs
 8ddddbf879e08cb70ea00e9f00ac6c98f9f3988af65c48598a6cbb2fc11558b6  rslib/src/card/service.rs
 dc5a90c3465b7216b6ad1e42a0c44a2d18a99beea777023adcb63cb4abdf38d4  rslib/src/decks/mod.rs
 0a4e33f5a92d2c479c4cbd59664b0de30a50a41453dbe131fc9c809f5afc5f4d  rslib/src/decks/name.rs
@@ -22,6 +23,7 @@ e07639f5018eac52b29657dda99eb9e16f186e734b6b3e530c75f6af93059e81  rslib/src/sync
 e528d4708a21ae2da87705434249e2e842155e3a34161d556979e5d611b63faa  rslib/src/revlog/mod.rs
 bd65f462a7af8a3dfa1cb3c622fc6324d0e8ddca6535f6b20b1e3908efb3895e  rslib/src/stats/service.rs
 5b22c0aa2133b68eefc93964299668732941ee3688140cd98430b033ee567ea4  proto/anki/stats.proto
+cbd4cb07075d51d7854c94bccf0b00a47f5b7f5b8ac5be1246f7ddcf003799f6  proto/anki/notes.proto
 2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762  rslib/src/text.rs
 59e5d111308ffd61a818704ffda53922e3600ed435e4b220ce32adbecdf460e3  rslib/src/template.rs
 e875a63c641393c0a6904872bd55ebe164a4eceff8aa07686ca246fe6d54de23  rslib/src/storage/note/mod.rs

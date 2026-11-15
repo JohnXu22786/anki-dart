@@ -7,7 +7,10 @@ and HTML/media-aware field text behavior from `rslib/src/card/mod.rs`,
 `rslib/src/text.rs`; field emptiness and Note field-presence behavior from
 `rslib/src/template.rs` and `rslib/src/notes/mod.rs`; checksum-filtered Note
 duplicate checks from `rslib/src/notes/mod.rs` and
-`rslib/src/storage/note/mod.rs`; Notetype, NoteField and CardTemplate values,
+`rslib/src/storage/note/mod.rs`; note field validation and cloze parsing from
+`rslib/src/notes/mod.rs`, `rslib/src/cloze.rs`, `rslib/src/notetype/mod.rs`,
+`rslib/src/template.rs`, `rslib/src/text.rs`, and `proto/anki/notes.proto`;
+Notetype, NoteField and CardTemplate values,
 conversions,
 and default configuration assets from `rslib/src/notetype/mod.rs`,
 `rslib/src/notetype/service.rs`, `rslib/src/notetype/fields.rs`,

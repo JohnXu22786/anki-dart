@@ -12,6 +12,7 @@ SOURCE_COMMIT = "e64c6b1aee3e8d668fb8bbe084beada8e070d985"
 UNICODE_CASE_FOLDING = "9c772627c6ee77eea6a17b42927b8ee28ca05dc65d6a511062104baaf3d12294"
 SOURCE_HASHES = {
     "rslib/src/card/mod.rs": "cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9",
+    "rslib/src/cloze.rs": "478a35d1248be262ed2d0941202ac8f201c7eb0a5c57b7198d3ace03898fd1c5",
     "rslib/src/card/service.rs": "8ddddbf879e08cb70ea00e9f00ac6c98f9f3988af65c48598a6cbb2fc11558b6",
     "rslib/src/notes/mod.rs": "5df79b58906206a87c5a28a06f886227df74e6a65d061d2cb915d35b34d35893",
     "rslib/src/notetype/mod.rs": "4f133ddf970d954e80cf3352d5bd91bf73418a1d71eaa1fb863218569d4198cb",
@@ -38,6 +39,7 @@ SOURCE_HASHES = {
     "rslib/src/storage/note/mod.rs": "e875a63c641393c0a6904872bd55ebe164a4eceff8aa07686ca246fe6d54de23",
     "rslib/src/template.rs": "59e5d111308ffd61a818704ffda53922e3600ed435e4b220ce32adbecdf460e3",
     "proto/anki/stats.proto": "5b22c0aa2133b68eefc93964299668732941ee3688140cd98430b033ee567ea4",
+    "proto/anki/notes.proto": "cbd4cb07075d51d7854c94bccf0b00a47f5b7f5b8ac5be1246f7ddcf003799f6",
 }
 THIRD_PARTY_HASHES = {
     "htmlescape-0.3.1.crate": "e9025058dae765dee5070ec375f591e2ba14638c63feff74f13805a72e523163",

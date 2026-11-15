@@ -28,14 +28,16 @@ final class BrowserDeckNameId {
   const BrowserDeckNameId({required this.name, required this.id});
 
   final String name;
-  final int id;
+
+  /// Use `BigInt` on targets where collection IDs exceed the exact `int` range.
+  final Object id;
 
   @override
   bool operator ==(Object other) =>
-      other is BrowserDeckNameId && other.name == name && other.id == id;
+      other is BrowserDeckNameId && other.name == name && _sameId(other.id, id);
 
   @override
-  int get hashCode => Object.hash(name, id);
+  int get hashCode => Object.hash(name, id.toString());
 }
 
 /// A host-supplied note type name and its stable collection ID.
@@ -47,7 +49,9 @@ final class BrowserNoteTypeNameId {
   BrowserNoteTypeNameId({required this.name, required this.id});
 
   final String name;
-  final int id;
+
+  /// Use `BigInt` on targets where collection IDs exceed the exact `int` range.
+  final Object id;
 }
 
 /// Structured Card Browser filters independent of query-string generation.
@@ -97,7 +101,7 @@ final class BrowserSearchFilters {
     for (final id in entry.deckIds) {
       BrowserDeckNameId? match;
       for (final deck in deckNameMap) {
-        if (deck.id == id) {
+        if (_sameId(deck.id, id)) {
           match = deck;
           break;
         }
@@ -110,7 +114,7 @@ final class BrowserSearchFilters {
     for (final id in entry.noteTypeIds) {
       BrowserNoteTypeNameId? match;
       for (final noteType in noteTypeMap) {
-        if (noteType.id == id) {
+        if (_sameId(noteType.id, id)) {
           match = noteType;
           break;
         }
@@ -128,6 +132,21 @@ final class BrowserSearchFilters {
     );
   }
 }
+
+bool _sameId(Object left, Object right) {
+  final leftInteger = _exactInteger(left);
+  final rightInteger = _exactInteger(right);
+  if (leftInteger != null && rightInteger != null) {
+    return leftInteger == rightInteger;
+  }
+  return left == right;
+}
+
+BigInt? _exactInteger(Object value) => switch (value) {
+  BigInt integer => integer,
+  int integer => BigInt.from(integer),
+  _ => null,
+};
 
 /// Whether the current Card Browser filters represent all decks.
 ///

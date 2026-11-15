@@ -28,7 +28,11 @@ import 'package:test/test.dart';
 void main() {
   group('ScheduleRemindersDestination.toIntent', () {
     test('forwards exact context and fresh deck-specific scopes unchanged', () {
-      for (final deckId in [0, -17, 9223372036854775807]) {
+      for (final deckId in [
+        BigInt.zero,
+        BigInt.from(-17),
+        BigInt.parse('9223372036854775807'),
+      ]) {
         final context = Object();
         final results = [Object(), Object()];
         final calls = <(Object, ReviewReminderScope)>[];
@@ -65,7 +69,7 @@ void main() {
     test('host callback failure propagates unchanged without retry', () {
       final failure = StateError('getIntent failed');
       var calls = 0;
-      final destination = ScheduleRemindersDestination(-3);
+      final destination = ScheduleRemindersDestination(BigInt.from(-3));
 
       expect(
         () => destination.toIntent<Object, Object>(Object(), (_, _) {

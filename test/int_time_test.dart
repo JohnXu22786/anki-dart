@@ -25,12 +25,17 @@ import 'package:test/test.dart';
 void main() {
   group('intTime', () {
     test('truncates signed milliseconds toward zero', () {
-      final cases = <(int, int)>[
-        (1234, 1),
-        (-1, 0),
-        (-999, 0),
-        (-1001, -1),
-        (-2345, -2),
+      final cases = <(BigInt, BigInt)>[
+        (BigInt.from(1234), BigInt.from(1)),
+        (BigInt.from(-1), BigInt.zero),
+        (BigInt.from(-999), BigInt.zero),
+        (BigInt.from(-1001), BigInt.from(-1)),
+        (BigInt.from(-2345), BigInt.from(-2)),
+        (BigInt.parse('9223372036854775807'), BigInt.parse('9223372036854775')),
+        (
+          BigInt.parse('-9223372036854775808'),
+          BigInt.parse('-9223372036854775'),
+        ),
       ];
 
       for (final (milliseconds, expected) in cases) {
@@ -49,11 +54,11 @@ void main() {
         Object(),
         intTimeMS: (_) {
           reads++;
-          return 2345;
+          return BigInt.from(2345);
         },
       );
 
-      expect(seconds, 2);
+      expect(seconds, BigInt.from(2));
       expect(reads, 1);
     });
 

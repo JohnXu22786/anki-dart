@@ -57,7 +57,7 @@ void main() {
         intTimeMS: (actualTime) {
           events.add('clock');
           expect(identical(actualTime, time), isTrue);
-          return 1_700_000_000_123;
+          return BigInt.from(1_700_000_000_123);
         },
         createGregorianCalendar: () {
           events.add('createCalendar');
@@ -66,7 +66,7 @@ void main() {
         setTimeInMillis: (actualCalendar, milliseconds) {
           events.add('setTimeInMillis');
           expect(identical(actualCalendar, calendar), isTrue);
-          expect(milliseconds, 1_699_999_999_123);
+          expect(milliseconds, BigInt.from(1_699_999_999_123));
         },
         getTime: (actualCalendar) {
           events.add('getTime');
@@ -102,17 +102,21 @@ void main() {
 
     test('matches Kotlin Long conversion and wrapping arithmetic', () {
       const twoTo63 = 9223372036854775808.0;
-      final cases = <(double, int, int)>[
-        (-1.9, 0, 1000),
-        (double.nan, 5, 5),
-        (double.infinity, 0, 1000),
-        (twoTo63, 0, 1000),
-        (-twoTo63, 0, 0),
-        (1.9, -9223372036854775808, 9223372036854774808),
+      final cases = <(double, BigInt, BigInt)>[
+        (-1.9, BigInt.zero, BigInt.from(1000)),
+        (double.nan, BigInt.from(5), BigInt.from(5)),
+        (double.infinity, BigInt.zero, BigInt.from(1000)),
+        (twoTo63, BigInt.zero, BigInt.from(1000)),
+        (-twoTo63, BigInt.zero, BigInt.zero),
+        (
+          1.9,
+          BigInt.parse('-9223372036854775808'),
+          BigInt.parse('9223372036854774808'),
+        ),
       ];
 
       for (final (offset, clock, expected) in cases) {
-        var assignedMilliseconds = 0;
+        var assignedMilliseconds = BigInt.zero;
         genToday(
           Object(),
           offset,
@@ -153,7 +157,7 @@ void main() {
           },
           intTimeMS: (_) {
             events.add('clock');
-            return 0;
+            return BigInt.zero;
           },
           createGregorianCalendar: () {
             events.add('createCalendar');

@@ -74,9 +74,11 @@ final class GlobalReminderScope extends ReviewReminderScope {
 }
 
 final class DeckSpecificReminderScope extends ReviewReminderScope {
+  /// Creates a scope from an exact source `Long` deck ID.
   const DeckSpecificReminderScope(this.deckId);
 
-  final int deckId;
+  /// The source deck ID is a signed Long, represented as [BigInt] for web safety.
+  final BigInt deckId;
 
   @override
   bool operator ==(Object other) =>
@@ -127,7 +129,7 @@ final class ReviewReminderFormState {
   factory ReviewReminderFormState.add({
     required ReviewReminderTime currentTime,
     required ReviewReminderScope scope,
-    required int allDecksId,
+    required BigInt allDecksId,
   }) => ReviewReminderFormState._(
     time: currentTime,
     deckSelected: switch (scope) {
@@ -142,7 +144,7 @@ final class ReviewReminderFormState {
 
   factory ReviewReminderFormState.edit({
     required ReviewReminderProjection reminder,
-    required int allDecksId,
+    required BigInt allDecksId,
   }) => ReviewReminderFormState._(
     time: reminder.time,
     deckSelected: switch (reminder.scope) {
@@ -156,7 +158,9 @@ final class ReviewReminderFormState {
   );
 
   ReviewReminderTime? time;
-  int? deckSelected;
+
+  /// Selected deck ID as an exact signed-Long value.
+  BigInt? deckSelected;
   int? cardTriggerThreshold;
   bool? onlyNotifyIfNoReviews;
   bool? advancedSettingsOpen;
@@ -166,7 +170,7 @@ final class ReviewReminderFormState {
     time = value;
   }
 
-  void setDeckSelected(int deckId) {
+  void setDeckSelected(BigInt deckId) {
     deckSelected = deckId;
   }
 
@@ -188,8 +192,8 @@ final class ReviewReminderFormState {
   /// the current time when the form's time value is null at submission.
   ReviewReminderProjection outputStateAsReminder({
     required ReviewReminderTime currentTime,
-    required int allDecksId,
-    required int defaultDeckId,
+    required BigInt allDecksId,
+    required BigInt defaultDeckId,
   }) {
     final threshold = cardTriggerThreshold ?? 1;
     if (threshold < 0) {

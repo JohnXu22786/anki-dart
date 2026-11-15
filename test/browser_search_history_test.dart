@@ -199,6 +199,31 @@ void main() {
       ]);
     });
 
+    test('encodes portable BigInt IDs as exact JSON number tokens', () {
+      final entry = BrowserSearchHistoryEntry(
+        query: 'ids',
+        deckIds: [BigInt.parse('9007199254740993')],
+      );
+
+      expect(
+        BrowserSearchHistoryJsonCodec.encode([entry]),
+        '[{"q":"ids","did":[9007199254740993]}]',
+      );
+    });
+
+    test(
+      'keeps escaped marker-like query text when preserving JSON numbers',
+      () {
+        const markerLikeQuery = '\u0000anki-dart-number-0';
+        final decoded = BrowserSearchHistoryJsonCodec.decode(
+          r'[{"q":"\u0000anki-dart-number-0","did":[7]}]',
+        );
+
+        expect(decoded.single.query, markerLikeQuery);
+        expect(decoded.single.deckIds, [7]);
+      },
+    );
+
     test(
       'falls back to an empty history for malformed or incompatible JSON',
       () {

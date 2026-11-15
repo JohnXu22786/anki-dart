@@ -56,7 +56,7 @@ final class ReviewReminderGroup {
   final Map<ReviewReminderId, ReviewReminder> _reminders;
 
   /// Encodes this group's reminders using AnkiDroid's current JSON schema.
-  String serializeToString() => jsonEncode({
+  String serializeToString() => _jsonEncodeExact({
     for (final entry in _reminders.entries)
       entry.key.value.toString(): _reminderToJson(entry.value),
   });
@@ -141,7 +141,7 @@ abstract final class ReviewReminderSchemaV2MapCodec {
 }
 
 Map<ReviewReminderId, ReviewReminder> _decodeReminderMap(String json) {
-  final decoded = jsonDecode(json) as Map<String, dynamic>;
+  final decoded = _jsonDecodeExact(json) as Map<String, dynamic>;
   return {
     for (final entry in decoded.entries)
       ReviewReminderId(int.parse(entry.key)): _reminderFromJson(
@@ -197,7 +197,7 @@ Map<String, Object?> _reminderToJson(ReviewReminder reminder) => {
   'cardTriggerThreshold': reminder.cardTriggerThreshold.threshold,
   'scope': _scopeToJson(reminder.scope),
   'enabled': reminder.enabled,
-  'latestNotifTime': reminder.latestNotifTime,
+  'latestNotifTime': _requireLong(reminder.latestNotifTime),
   'profileID': reminder.profileID,
   'onlyNotifyIfNoReviews': reminder.onlyNotifyIfNoReviews,
 };
@@ -206,7 +206,7 @@ Map<ReviewReminderId, T> _decodeSchemaMap<T>(
   String json,
   T Function(Map<String, dynamic>) decodeValue,
 ) {
-  final decoded = jsonDecode(json) as Map<String, dynamic>;
+  final decoded = _jsonDecodeExact(json) as Map<String, dynamic>;
   return {
     for (final entry in decoded.entries)
       ReviewReminderId(int.parse(entry.key)): decodeValue(
@@ -218,7 +218,7 @@ Map<ReviewReminderId, T> _decodeSchemaMap<T>(
 String _encodeSchemaMap<T>(
   Map<ReviewReminderId, T> schemas,
   Map<String, Object?> Function(T) encodeValue,
-) => jsonEncode({
+) => _jsonEncodeExact({
   for (final entry in schemas.entries)
     entry.key.value.toString(): encodeValue(entry.value),
 });
@@ -317,24 +317,154 @@ Map<String, Object?> _scopeToJson(ReviewReminderScope scope) => switch (scope) {
   GlobalReminderScope() => {'type': _globalScopeType},
   DeckSpecificReminderScope(:final deckId) => {
     'type': _deckSpecificScopeType,
-    'did': deckId,
+    'did': _requireLong(deckId),
   },
 };
 
 int _int32(Object? value) {
-  final number = value as int;
-  if (number < -2147483648 || number > 2147483647) {
+  final number = _asBigInt(value);
+  if (number == null) throw FormatException('Expected a signed 32-bit integer');
+  if (number < BigInt.from(-2147483648) || number > BigInt.from(2147483647)) {
     throw FormatException('Expected a signed 32-bit integer');
+  }
+  return number.toInt();
+}
+
+BigInt _int64(Object? value) {
+  final number = _asBigInt(value);
+  if (number == null) throw FormatException('Expected a signed 64-bit integer');
+  final minimum = BigInt.parse('-9223372036854775808');
+  final maximum = BigInt.parse('9223372036854775807');
+  if (number < minimum || number > maximum) {
+    throw FormatException('Expected a signed 64-bit integer');
   }
   return number;
 }
 
-int _int64(Object? value) {
-  final number = value as int;
-  if (number < -9223372036854775808 || number > 9223372036854775807) {
-    throw FormatException('Expected a signed 64-bit integer');
+BigInt _requireLong(BigInt value) {
+  final minimum = BigInt.parse('-9223372036854775808');
+  final maximum = BigInt.parse('9223372036854775807');
+  if (value < minimum || value > maximum) {
+    throw ArgumentError.value(
+      value,
+      'value',
+      'Must fit a signed 64-bit integer',
+    );
   }
-  return number;
+  return value;
+}
+
+BigInt? _asBigInt(Object? value) => switch (value) {
+  BigInt integer => integer,
+  int integer => BigInt.from(integer),
+  _ => null,
+};
+
+/// Decodes JSON while preserving integer number tokens as [BigInt]. The host
+/// JSON decoder would round values above 2^53 on JavaScript before validation.
+Object? _jsonDecodeExact(String source) {
+  final parsed = jsonDecode(source);
+  final reserved = <String>{};
+  _collectStrings(parsed, reserved);
+  var prefix = '\u0000anki-dart-long-';
+  while (source.contains(prefix) || reserved.any((s) => s.contains(prefix))) {
+    prefix = '$prefix-';
+  }
+  final tokens = <String, String>{};
+  final transformed = StringBuffer();
+  var index = 0;
+  var numberIndex = 0;
+  while (index < source.length) {
+    final character = source[index];
+    if (character == '"') {
+      final start = index++;
+      while (index < source.length) {
+        if (source[index] == r'\') {
+          index += 2;
+        } else if (source[index++] == '"') {
+          break;
+        }
+      }
+      transformed.write(source.substring(start, index));
+      continue;
+    }
+    if (character == '-' || _isJsonDigit(character)) {
+      final match = _jsonNumberPattern.matchAsPrefix(source, index);
+      if (match == null) throw const FormatException('Invalid JSON number');
+      final marker = '$prefix${numberIndex++}';
+      tokens[marker] = match.group(0)!;
+      transformed.write(jsonEncode(marker));
+      index = match.end;
+      continue;
+    }
+    transformed.write(character);
+    index++;
+  }
+  return jsonDecode(
+    transformed.toString(),
+    reviver: (_, value) {
+      if (value is! String) return value;
+      final literal = tokens[value];
+      if (literal == null) return value;
+      final integer = BigInt.tryParse(literal);
+      if (integer != null) return integer;
+      final number = double.parse(literal);
+      if (!number.isFinite)
+        throw const FormatException('Non-finite JSON number');
+      return number;
+    },
+  );
+}
+
+final _jsonNumberPattern = RegExp(
+  r'-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?',
+);
+
+bool _isJsonDigit(String value) =>
+    value.codeUnitAt(0) >= 0x30 && value.codeUnitAt(0) <= 0x39;
+
+void _collectStrings(Object? value, Set<String> strings) {
+  switch (value) {
+    case String string:
+      strings.add(string);
+    case List list:
+      for (final item in list) {
+        _collectStrings(item, strings);
+      }
+    case Map map:
+      for (final entry in map.entries) {
+        if (entry.key is String) strings.add(entry.key as String);
+        _collectStrings(entry.value, strings);
+      }
+  }
+}
+
+String _jsonEncodeExact(Object? value) {
+  final strings = <String>{};
+  _collectStrings(value, strings);
+  var prefix = '\u0000anki-dart-long-';
+  while (strings.any((s) => s.contains(prefix))) {
+    prefix = '$prefix-';
+  }
+  final replacements = <String, String>{};
+  Object? replaceBigInts(Object? item) {
+    if (item is BigInt) {
+      final marker = '$prefix${replacements.length}';
+      replacements[marker] = item.toString();
+      return marker;
+    }
+    if (item is List) return item.map(replaceBigInts).toList();
+    if (item is Map) {
+      return item.map((key, val) => MapEntry(key, replaceBigInts(val)));
+    }
+    return item;
+  }
+
+  var result = jsonEncode(replaceBigInts(value));
+  for (final entry in replacements.entries) {
+    result = result.replaceAll(jsonEncode(entry.key), entry.value);
+  }
+  return result;
 }
 
 void _requireJsonKeys(

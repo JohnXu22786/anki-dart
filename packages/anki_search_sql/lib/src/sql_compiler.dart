@@ -67,19 +67,21 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 ///
 /// This is an incremental compiler, not complete search execution. Its current
 /// subset contains boolean structure, card/note/notetype ID predicates,
-/// notetype names, card template ordinals and names, tag predicates, deck IDs
+/// notetype names, card template ordinals and names, tag predicates, deck names and IDs
 /// without children, flags, state and day predicates, scalar, rated and FSRS
 /// properties, custom-data predicates, and whole-collection queries. Other
 /// AST variants throw [UnsupportedSearchSqlNodeException]. Due state
 /// predicates require explicit [SearchSqlTiming] values; day predicates and
 /// due properties additionally require [SearchSqlTiming.nextDayAt]. ID-list
 /// nodes must use comma-separated decimal digits accepted by the shared
-/// parser; their exact spelling is preserved.
+/// parser; their exact spelling is preserved. [currentDeckName], when supplied,
+/// is the current deck's native name with path components separated by U+001F.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
   RequiredTable requiredTables = RequiredTable.cardsOrNotes,
   SearchSqlTiming? timing,
+  String? currentDeckName,
 }) {
   final itemTable = switch (resultType) {
     SearchResultType.cards => RequiredTable.cards,
@@ -111,7 +113,8 @@ CompiledSearchSql compileSearchSql(
 
   final arguments = <String>[];
   return CompiledSearchSql(
-    sql: '$select${_writeNode(node, noteIdColumn, arguments, timing)}',
+    sql:
+        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName)}',
     arguments: arguments,
     requiredTable: table,
   );
@@ -129,6 +132,7 @@ RequiredTable _requiredTableForNode(Node node) => switch (node) {
 
 RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   CardIds() ||
+  Deck() ||
   DeckIdsWithoutChildren() ||
   Flag() ||
   State() ||
@@ -162,18 +166,20 @@ String _writeNode(
   String noteIdColumn,
   List<String> arguments,
   SearchSqlTiming? timing,
+  String? currentDeckName,
 ) => switch (node) {
   BooleanNode(kind: NodeKind.and) => ' and ',
   BooleanNode(kind: NodeKind.or) => ' or ',
   NegatedNode(:final node) =>
-    'not ${_writeNode(node, noteIdColumn, arguments, timing)}',
+    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName)}',
   GroupNode(:final nodes) =>
-    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing)).join()})',
+    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName)).join()})',
   Search(value: final search) => _writeSearch(
     search,
     noteIdColumn,
     arguments,
     timing,
+    currentDeckName,
   ),
 };
 
@@ -182,9 +188,11 @@ String _writeSearch(
   String noteIdColumn,
   List<String> arguments,
   SearchSqlTiming? timing,
+  String? currentDeckName,
 ) => switch (node) {
   CardIds(:final ids) => 'c.id in (${_validateIdList(ids)})',
   NoteIds(:final ids) => '$noteIdColumn in (${_validateIdList(ids)})',
+  Deck(:final name) => _writeDeck(name, arguments, currentDeckName),
   NotetypeIdSearch(:final id) => 'n.mid = $id',
   Notetype(:final name) => _writeNotetype(name, arguments),
   Tag(:final tag, :final mode) => _writeTag(tag, mode, arguments),
@@ -623,6 +631,59 @@ String _writeNotetype(String name, List<String> arguments) {
   arguments.add(_toText(normalized));
   return 'n.mid in (select id from notetypes where name = ?)';
 }
+
+String _writeDeck(
+  String name,
+  List<String> arguments,
+  String? currentDeckName,
+) {
+  if (name == '*') return 'true';
+  if (name == 'filtered') return 'c.odid != 0';
+
+  final nativeRegex = name == 'current'
+      ? RegExp.escape(currentDeckName ?? 'Default')
+      : _nativeDeckName(_toRegex(unorm.nfc(name)));
+  arguments.add('(?i)^$nativeRegex(\$|\x1f)');
+  final argumentIndex = arguments.length;
+  return '(c.did in (select id from decks where name regexp ?$argumentIndex) '
+      'or (c.odid != 0 and c.odid in '
+      '(select id from decks where name regexp ?$argumentIndex)))';
+}
+
+String _nativeDeckName(String name) => name
+    .split('::')
+    .map((component) {
+      final withoutControls = component.replaceAll(
+        RegExp(r'[\x00-\x1f\x7f]'),
+        '',
+      );
+      final codePoints = withoutControls.runes.toList();
+      var start = 0;
+      var end = codePoints.length;
+      while (start < end && _isDeckNameEdge(codePoints[start])) {
+        start++;
+      }
+      while (end > start && _isDeckNameEdge(codePoints[end - 1])) {
+        end--;
+      }
+      final trimmed = String.fromCharCodes(codePoints.sublist(start, end));
+      return trimmed.isEmpty ? 'blank' : unorm.nfc(trimmed);
+    })
+    .join('\x1f');
+
+bool _isDeckNameEdge(int codePoint) =>
+    codePoint == 0x3a ||
+    codePoint >= 0x9 && codePoint <= 0xd ||
+    codePoint == 0x20 ||
+    codePoint == 0x85 ||
+    codePoint == 0xa0 ||
+    codePoint == 0x1680 ||
+    codePoint >= 0x2000 && codePoint <= 0x200a ||
+    codePoint == 0x2028 ||
+    codePoint == 0x2029 ||
+    codePoint == 0x202f ||
+    codePoint == 0x205f ||
+    codePoint == 0x3000;
 
 String _writeTemplate(TemplateKind kind, List<String> arguments) =>
     switch (kind) {

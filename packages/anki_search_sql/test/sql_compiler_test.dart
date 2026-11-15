@@ -149,6 +149,111 @@ void main() {
     expect(template.requiredTable, RequiredTable.cardsAndNotes);
   });
 
+  test('deck special values and named deck globs follow Core SQL', () {
+    for (final (name, sql) in <(String, String)>[
+      ('*', 'true'),
+      ('filtered', 'c.odid != 0'),
+    ]) {
+      final compiled = compileSearchSql(GroupNode([Search(Deck(name))]));
+      expect(compiled.sql, 'select c.id from cards c where ($sql)');
+      expect(compiled.arguments, isEmpty);
+      expect(compiled.requiredTable, RequiredTable.cards);
+    }
+
+    final glob = compileSearchSql(
+      GroupNode([Search(Deck('Parent::Child*_*'))]),
+    );
+    expect(
+      glob.sql,
+      'select c.id from cards c where '
+      '((c.did in (select id from decks where name regexp ?1) or '
+      '(c.odid != 0 and c.odid in (select id from decks where name regexp ?1))))',
+    );
+    expect(glob.arguments, ['(?i)^Parent\x1fChild.*..*(\$|\x1f)']);
+    expect(glob.requiredTable, RequiredTable.cards);
+
+    final escaped = compileSearchSql(
+      GroupNode([Search(Deck(r'Parent::A\*\_'))]),
+    );
+    expect(escaped.arguments, ['(?i)^Parent\x1fA\\*_(\$|\x1f)']);
+
+    final childIncluded = compileSearchSql(GroupNode([Search(Deck('Parent'))]));
+    expect(childIncluded.arguments, ['(?i)^Parent(\$|\x1f)']);
+  });
+
+  test('deck names normalize native paths component by component', () {
+    final compiled = compileSearchSql(
+      GroupNode([Search(Deck('  Cafe\u0301  ::  \u0001 : :  '))]),
+    );
+    expect(compiled.arguments, ['(?i)^Café\x1fblank(\$|\x1f)']);
+
+    final controls = compileSearchSql(
+      GroupNode([Search(Deck('  A\u0001B  :: \u0002 '))]),
+    );
+    expect(controls.arguments, ['(?i)^AB\x1fblank(\$|\x1f)']);
+
+    final unicodeWhitespace = compileSearchSql(
+      GroupNode([Search(Deck('\u0085Names\u00a0'))]),
+    );
+    expect(unicodeWhitespace.arguments, ['(?i)^Names(\$|\x1f)']);
+  });
+
+  test('current deck names use explicit input or Default fallback', () {
+    final current = compileSearchSql(
+      GroupNode([Search(Deck('current'))]),
+      currentDeckName: 'Course\x1fToday*',
+    );
+    expect(current.arguments, ['(?i)^Course\x1fToday\\*(\$|\x1f)']);
+
+    final fallback = compileSearchSql(GroupNode([Search(Deck('current'))]));
+    expect(fallback.arguments, ['(?i)^Default(\$|\x1f)']);
+  });
+
+  test('deck predicates compose with cards, notes, and other searches', () {
+    final cards = compileSearchSql(
+      GroupNode([
+        Search(Deck('Parent')),
+        BooleanNode(NodeKind.and),
+        Search(DeckIdsWithoutChildren('7')),
+        BooleanNode(NodeKind.and),
+        Search(State(StateKind.review)),
+        BooleanNode(NodeKind.and),
+        NegatedNode(Search(Deck('Hidden'))),
+        BooleanNode(NodeKind.and),
+        Search(const Property(operator: '>=', kind: StabilityProperty(1.2))),
+      ]),
+    );
+    expect(cards.requiredTable, RequiredTable.cards);
+    expect(cards.arguments, ['(?i)^Parent(\$|\x1f)', '(?i)^Hidden(\$|\x1f)']);
+    expect(
+      cards.sql,
+      contains('c.did in (select id from decks where name regexp ?1)'),
+    );
+    expect(cards.sql, contains('c.did in (7)'));
+    expect(cards.sql, contains('c.type in (2, 3)'));
+    expect(cards.sql, contains('not (c.did in (select id from decks'));
+    expect(cards.sql, contains("extract_fsrs_variable(c.data, 's') >= 1.2"));
+
+    final notes = compileSearchSql(
+      GroupNode([
+        Search(Deck('Parent')),
+        BooleanNode(NodeKind.and),
+        Search(Notetype('Basic')),
+        BooleanNode(NodeKind.and),
+        Search(const Tag(tag: 'math', mode: FieldSearchMode.normal)),
+      ]),
+      resultType: SearchResultType.notes,
+    );
+    expect(notes.sql, startsWith('select distinct n.id from cards c, notes n'));
+    expect(notes.sql, contains('c.nid=n.id'));
+    expect(notes.requiredTable, RequiredTable.cardsAndNotes);
+    expect(notes.arguments, [
+      '(?i)^Parent(\$|\x1f)',
+      'Basic',
+      r'(?i).* math(::| ).*',
+    ]);
+  });
+
   test('glob names emit anchored regexes with Core wildcard escaping', () {
     final notetype = compileSearchSql(
       GroupNode([Search(Notetype('Cafe\u0301*\\_*'))]),

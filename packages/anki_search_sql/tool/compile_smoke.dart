@@ -27,6 +27,25 @@ void main() {
   if (nameQuery.arguments.join('|') != r'(?i)^Basic.*$|(?i)^Front.*$') {
     throw StateError('Search name JavaScript compilation smoke test failed');
   }
+  final deckQuery = compileSearchSql(
+    GroupNode([Search(Deck('Parent::Child*'))]),
+  );
+  if (deckQuery.arguments.single != '(?i)^Parent\x1fChild.*(\$|\x1f)') {
+    throw StateError('Deck name JavaScript regex smoke test failed');
+  }
+  final currentDeckQuery = compileSearchSql(
+    GroupNode([Search(Deck('current'))]),
+    currentDeckName: 'Course\x1fToday*',
+  );
+  if (currentDeckQuery.arguments.single != '(?i)^Course\x1fToday\\*(\$|\x1f)') {
+    throw StateError('Current deck JavaScript SQL smoke test failed');
+  }
+  final fallbackDeckQuery = compileSearchSql(
+    GroupNode([Search(Deck('current'))]),
+  );
+  if (fallbackDeckQuery.arguments.single != '(?i)^Default(\$|\x1f)') {
+    throw StateError('Default deck JavaScript SQL smoke test failed');
+  }
   final dueQuery = compileSearchSql(
     GroupNode([Search(State(StateKind.due))]),
     timing: SearchSqlTiming(

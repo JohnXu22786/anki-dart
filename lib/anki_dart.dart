@@ -209,6 +209,7 @@ export 'src/deck_picker_scheduler_upgrade_prompt.dart';
 export 'src/deck_picker_schedule_review_reminders_request.dart';
 export 'src/deck_picker_export_deck_request.dart';
 export 'src/deck_picker_manage_note_types_request.dart';
+export 'src/deck_picker_lookup_callbacks.dart';
 export 'src/manage_note_types_state.dart';
 export 'src/manage_note_types_delete_plan.dart';
 export 'src/manage_note_type_delete_plan.dart';

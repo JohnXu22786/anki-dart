@@ -1,0 +1,6 @@
+423e00d89092a4f1ab8e03923bfa8db455748043276c7bd647e2704bfcf7da95  rslib/src/storage/card/mod.rs
+de3e7ee9078249f1a1aeae370e16b667c83ff527584448b2767a908b6c741918  rslib/src/storage/card/get_card.sql
+aacbb588af4cf902eeb54d15cecc37a35b410441d67839f48929fea9fd515a89  rslib/src/storage/card/data.rs
+e875a63c641393c0a6904872bd55ebe164a4eceff8aa07686ca246fe6d54de23  rslib/src/storage/note/mod.rs
+50b1fba1332e814aa24bcd2b0f56d834de6a3bebb8f48c9c00cd5d979c6133a5  rslib/src/storage/note/get.sql
+9b00b18974bf53fe01a7d3e3cfcaa93507ee208e1198d0bc8358476f939ec5a4  rslib/src/storage/note/get_without_fields.sql

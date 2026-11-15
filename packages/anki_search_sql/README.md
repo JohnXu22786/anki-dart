@@ -10,6 +10,10 @@ preserves source table selection and card/note SELECT shapes. Custom-data
 existence and string/number property comparisons use Core's
 `extract_custom_data(c.data, ?)` expressions; keys and string values remain
 bound arguments, while numeric values use Core-compatible float32 spelling.
+Rated searches and `prop:rated`/`prop:resched` comparisons use Core's revlog
+subqueries, day cutoffs, operators, and ease filters. They require explicit
+`SearchSqlTiming.nextDayAt`; cutoff arithmetic and emitted millisecond values
+are checked against signed 64-bit bounds.
 Unsupported AST nodes throw explicitly.
 ID-list AST values follow the shared parser's comma-separated decimal-digit
 grammar, and their exact spelling is preserved without numeric conversion.
@@ -24,7 +28,8 @@ cards table, and the host must register `extract_custom_data()`. Tag predicates 
 preserve Core's `none`, `*`, space, wildcard, case-insensitive regex, and
 no-combining `process_text` SQL behavior. Regex function registration remains
 the host's responsibility. State predicates require the cards table. A
-`state:due` predicate also requires explicit `SearchSqlTiming` values when
+`state:due`, `rated:`, and rated property predicates also require explicit
+`SearchSqlTiming` values when
 calling `compileSearchSql`: `daysElapsed` is the collection day number,
 `now` is a `BigInt` containing Unix seconds, and `learnAheadSecs` is the
 learning cutoff in seconds. The `added:`, `edited:`, and `introduced:`
@@ -39,6 +44,14 @@ explicit timing object with
 `learnAheadSecs` as the learning cutoff in seconds. Those values follow Core's
 unsigned 32-bit ranges, and an overflowing signed 64-bit
 `now + learnAheadSecs` is rejected.
+
+The plain `rated:` form accepts unsigned 32-bit day counts and uses Core's
+`>` comparison against the negated day count. `prop:rated` accepts signed
+32-bit nonpositive day counts and uses its supplied comparison operator;
+`prop:resched` emits the manual-reschedule (`ease = 0`) rating class. Answer
+buttons, any answer (`ease > 0`), and manual rescheduling retain their Core
+revlog filters. Rated searches require cards and revlog; note results join
+cards to notes and select distinct note IDs.
 
 Run `dart pub get`, `dart format --output=none --set-exit-if-changed lib test tool`,
 `dart analyze lib test tool`, and `dart test`. For JavaScript ID precision,

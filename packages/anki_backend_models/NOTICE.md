@@ -3,7 +3,7 @@
 This package ports Anki Core Card and Note domain values, protobuf conversions,
 field checksum, field normalization, Note::fix_field_count, note preparation,
 and HTML/media-aware field text behavior from `rslib/src/card/mod.rs`,
-`rslib/src/card/service.rs`, `rslib/src/notes/mod.rs`, `rslib/src/storage/note/mod.rs`, and `rslib/src/text.rs`; duplicate Note first-field checks use the checksum-filtered storage query contract.
+`rslib/src/card/service.rs`, `rslib/src/notes/mod.rs`, `rslib/src/storage/note/mod.rs`, and `rslib/src/text.rs`; duplicate Note first-field checks use the checksum-filtered storage query contract; note field validation and cloze parsing use `rslib/src/notes/mod.rs`, `rslib/src/cloze.rs`, `rslib/src/notetype/mod.rs`, `rslib/src/template.rs`, `rslib/src/text.rs`, and `proto/anki/notes.proto`.
 field emptiness and Note field-presence behavior from `rslib/src/template.rs` and
 `rslib/src/notes/mod.rs`; Notetype, NoteField
 and CardTemplate values, conversions, and default configuration assets from

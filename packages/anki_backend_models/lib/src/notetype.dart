@@ -8,6 +8,7 @@ import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
 import 'card_template.dart';
 import 'note_field.dart';
+import 'notetype_cloze_fields.dart';
 import 'unicode_casefold.dart';
 
 /// The signed 64-bit identity used for Anki note types.
@@ -59,6 +60,26 @@ class Notetype {
   final List<NoteField> fields;
   final List<CardTemplate> templates;
   final proto.Notetype_Config config;
+
+  /// Whether this note type uses Anki Core's cloze card generation rules.
+  bool get isCloze => config.kind == proto.Notetype_Config_Kind.KIND_CLOZE;
+
+  /// Field ordinals referenced through a `cloze` filter in the first
+  /// question template. Field-name lookup uses Core's case-insensitive match.
+  Set<int> get clozeFields {
+    if (!isCloze || templates.isEmpty) return {};
+    final names =
+        clozeFieldNamesInFirstQuestion(templates.first.config.qFormat);
+    final ordinals = <int>{};
+    for (final name in names) {
+      final foldedName = unicodeCaseFold(name);
+      final ordinal = fields.indexWhere(
+        (field) => unicodeCaseFold(field.name) == foldedName,
+      );
+      if (ordinal >= 0) ordinals.add(ordinal);
+    }
+    return ordinals;
+  }
 
   /// The stored defaults created by Anki Core's `Notetype::default()`.
   factory Notetype.ankiDefault() => Notetype(config: defaultConfig());

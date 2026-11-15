@@ -18,6 +18,10 @@ void main() {
     expect(fixNoteFieldCount([], 0), isEmpty);
   });
 
+  test('rejects a negative field count', () {
+    expect(() => fixNoteFieldCount(['a', 'b'], -1), throwsArgumentError);
+  });
+
   test('does not mutate its input when the count already matches', () {
     final fields = ['front', 'back'];
     expect(fixNoteFieldCount(fields, 2), fields);

@@ -6,6 +6,9 @@
 /// same `; ` separator used by Anki Core. At least one existing field is kept
 /// when reducing a non-empty field list.
 List<String> fixNoteFieldCount(List<String> fields, int noteTypeFieldCount) {
+  if (noteTypeFieldCount < 0) {
+    throw ArgumentError.value(noteTypeFieldCount, 'noteTypeFieldCount');
+  }
   final fixed = List<String>.of(fields);
   while (fixed.length < noteTypeFieldCount) {
     fixed.add('');

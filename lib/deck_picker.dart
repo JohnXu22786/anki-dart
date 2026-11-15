@@ -7,4 +7,5 @@
 export 'src/deck_filters.dart';
 export 'src/deck_node.dart';
 export 'src/display_deck_node.dart';
-export 'src/filtered_deck_options.dart' show FilteredDeckOptions, SearchTermState;
+export 'src/filtered_deck_options.dart'
+    show FilteredDeckOptions, SearchTermState;

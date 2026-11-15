@@ -402,7 +402,7 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
             SizedBox(
               width: row.depth.clamp(0, 5).toDouble() * (compact ? 8.0 : 20.0),
             ),
-            if (deck.children.isNotEmpty)
+            if (row.canCollapse)
               SizedBox(
                 width: 40,
                 child: IconButton(

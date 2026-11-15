@@ -313,11 +313,13 @@ void main() {
     expect(find.text('Languages'), findsOneWidget);
     expect(find.text('Spanish').first, findsOneWidget);
     expect(find.text('Topic 3'), findsNothing);
+    expect(find.byTooltip('Collapse Languages'), findsNothing);
 
     final searchField = tester.widget<TextField>(find.byType(TextField).first);
     await tester.tap(find.byTooltip('Clear search'));
     await tester.pumpAndSettle();
     expect(searchField.controller!.text, isEmpty);
+    expect(find.byTooltip('Collapse Languages'), findsOneWidget);
     expect(find.text('Topic 3'), findsOneWidget);
   });
 

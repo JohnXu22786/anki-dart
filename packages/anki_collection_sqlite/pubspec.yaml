@@ -1,0 +1,17 @@
+name: anki_collection_sqlite
+description: Cross-platform SQLite adapter for Anki collection schema opening.
+version: 0.1.0
+publish_to: none
+license: AGPL-3.0-or-later
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+
+dependencies:
+  anki_collection_schema:
+    path: ../anki_collection_schema
+  sqlite3: ^3.9.1
+  web: ^1.1.2
+
+dev_dependencies:
+  test: ^1.25.8

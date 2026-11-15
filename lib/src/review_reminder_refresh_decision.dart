@@ -38,7 +38,7 @@ ReviewReminder? refreshReviewReminderNotification({
   required ReviewReminderGroup reminders,
   required ReviewReminderId id,
   required DateTime checkTime,
-  required int updatedAtEpochMilliseconds,
+  required BigInt updatedAtEpochMilliseconds,
 }) {
   final storedReminder = reminders[id];
   if (storedReminder == null) return null;
@@ -46,7 +46,7 @@ ReviewReminder? refreshReviewReminderNotification({
   if (wasLatestReviewReminderNotificationDelivered(
     now: checkTime,
     time: storedReminder.time,
-    latestNotifTime: DateTime.fromMillisecondsSinceEpoch(
+    latestNotifTime: _dateTimeFromSignedLongEpochMilliseconds(
       storedReminder.latestNotifTime,
     ),
   )) {
@@ -58,4 +58,13 @@ ReviewReminder? refreshReviewReminderNotification({
   );
   reminders[id] = storedReminder;
   return storedReminder;
+}
+
+DateTime _dateTimeFromSignedLongEpochMilliseconds(BigInt milliseconds) {
+  final maxDateTimeMilliseconds = BigInt.from(8640000000000000);
+  if (milliseconds < -maxDateTimeMilliseconds ||
+      milliseconds > maxDateTimeMilliseconds) {
+    throw RangeError('Timestamp is outside the supported DateTime range');
+  }
+  return DateTime.fromMillisecondsSinceEpoch(milliseconds.toInt());
 }

@@ -1,0 +1,103 @@
+# Anki collection SQLite adapter
+
+`anki_collection_sqlite` adapts a caller-selected SQLite driver and collection
+location to `CollectionOpenDatabase`. It opens through the provided driver,
+applies Anki Core's connection pragmas, forwards schema queries and SQL batches
+to SQLite, and closes the connection without deleting the collection. It also
+provides pinned stored card and note reads and card row mutations, using shared
+models from `anki_backend_models`. The schema/open runner and metadata/default
+callbacks remain in `anki_collection_schema`.
+
+The storage reader methods are `getCard`, `allCardsOfNote`,
+`allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and
+`getAllNoteIds`. Missing single rows return `null`; collection queries return
+empty lists or sets. Only `allCardIdsOfNoteInTemplateOrder` orders by template
+ordinal, matching Anki Core. Card JSON conversion preserves Anki's invalid-data
+defaults, and note fields and tags use Anki's stored separators.
+
+Card mutation methods are `updateCard`, `addCard`, `addCardIfUnique`,
+`addOrUpdateCard`, and `removeCard`. They preserve Anki Core's row columns,
+bind order, compact card-data JSON, ID collision allocation, insert-or-ignore
+result, and SQLite error and transaction behavior. `addCard` returns the
+assigned ID because the shared `Card` model is immutable. It uses the current
+millisecond timestamp as the proposed row ID, allocating `max(id) + 1` on a
+collision, while persisting the card's supplied `mod` value. These methods do
+not create notes, schedule cards, or add transaction boundaries; callers own
+transactions.
+
+The native entry point uses the bundled SQLite from `sqlite3`:
+
+```dart
+import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:anki_collection_sqlite/anki_collection_sqlite_native.dart';
+
+final database = await CollectionSqliteStorage.open(
+  driver: nativeCollectionSqliteDriver(),
+  location: selectedCollectionPath,
+  options: CollectionSqliteOptions(androidTempStore: isAndroid),
+);
+```
+
+`location` comes from the host; the package does not choose a directory or
+rename, replace, or delete an existing user file. Applications may instead
+inject their own `CollectionSqliteDriver` to select a different driver or
+driver configuration.
+
+`close()` keeps existing callers source-compatible. Callers that need Anki's
+close-time schema downgrade can use `close(desiredVersion: 11, callbacks: ...)`;
+the adapter runs the existing schema catalog and callback sequence in one
+exclusive transaction, then switches SQLite to delete journal mode. Target 18
+is a no-op. `checkpoint()` rejects active transactions, checks SQLite's
+checkpoint return code, and awaits the driver's persistence hook. `quickCheckCorrupt()`
+returns false only when SQLite reports exactly `ok`, and treats a SQLite error
+or any other result as corruption. `optimize()` runs `vacuum; reindex; analyze`
+in Anki Core's order. These operations surface errors from the selected SQLite
+driver; the adapter does not silently mask driver-specific unsupported WAL or
+maintenance behavior.
+
+Before schema inspection, `CollectionSqliteOptions.configureConnection` can
+register host-owned functions and collations. Anki Core's SQLite configuration
+uses `field_at_index`, `regexp`, `regexp_fields`, `regexp_tags`, `process_text`,
+`fnvhash`, several `extract_*` functions, and the Unicode-aware `unicase`
+collation. This package does not implement those functions or collation. A
+host must register the applicable implementations before opening collections
+that depend on them; the default schema-11-to-18 migration path creates
+`unicase` indexes and therefore requires that registration.
+
+The adapter applies the source connection settings: zero busy timeout,
+exclusive locking, 4096-byte page size, a 40 MiB SQLite page cache, the source
+legacy-file-format setting, and WAL. It maintains the source's bounded
+50-entry prepared statement cache for the hot transaction controls
+(`BEGIN EXCLUSIVE` and `COMMIT`), which are the only operations the source
+uses through its cached-prepare API. Schema probes, integrity checks, rollback,
+and SQL batches use direct query/execute APIs in the source too, so the adapter
+does not retain those statements. Set `androidTempStore` on Android to use
+memory for temporary tables. The adapter does not implement note mutations,
+Anki scalar functions or collations, undo/redo, media indexing, backup/restore,
+synchronization, or encryption.
+
+`sqlite3` publishes native bindings for Android, iOS, Windows, macOS, and
+Linux. Its WebAssembly target is tested in the package CI with
+`tool/web_compile_smoke.dart`. The optional `anki_collection_sqlite_web.dart`
+entry point configures SQLite with an IndexedDB-backed virtual file system and
+an explicit `flush()` hook; it is marked experimental by sqlite3 and does not
+guarantee crash durability. Do not treat that Web driver as validated durable
+collection storage. A host requiring durable Web collections must provide a
+separately validated driver that implements the same injected boundary.
+
+The adapter depends on [`sqlite3` 3.9.1](https://pub.dev/packages/sqlite3).
+Its package documentation lists native targets as Android, iOS, Linux, macOS,
+and Windows; its separate WebAssembly implementation is explicitly marked
+experimental.
+
+Run the real file-backed adapter tests with `dart test`. Compile the
+Web-compatible API and experimental persistent-storage setup with:
+
+```sh
+dart compile js tool/web_compile_smoke.dart -o /tmp/anki_collection_sqlite.js
+```
+
+`tool/web_persistence_smoke.dart` is a browser smoke test that writes a row,
+flushes the IndexedDB-backed file system, reopens the SQLite file, and reads
+the row back. Compile it with `dart compile js` and serve it with a matching
+`sqlite3.wasm` asset to exercise that experimental path in a browser.

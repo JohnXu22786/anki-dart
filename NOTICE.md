@@ -1591,6 +1591,7 @@ AnkiDroid 2.25.3 commit
 © 2026 John Tsui and marked `GPL-3.0-or-later`. The method keeps Kotlin/JVM
 `Double.toLong()` behavior (truncate, NaN to zero, and saturation at signed
 64-bit bounds), followed by binary64 subtraction of the converted whole value.
+Its public `whole` field is `BigInt` to retain Long values on JavaScript.
 Root `COPYING` remains byte-identical.
 
 `lib/src/card_type_name.dart` and `test/card_type_name_test.dart` adapt the
@@ -3711,7 +3712,9 @@ is derived from `ReviewReminder.kt`, Copyright © 2025 Eric Li
 `ReviewRemindersDatabaseTest.kt`, Copyright © 2025 Eric Li
 <ericli3690@gmail.com>; both are licensed `GPL-3.0-or-later` upstream. It
 preserves the reminder-ID-keyed map, source field order and names, and the
-polymorphic scope discriminator and payload. SharedPreferences,
+polymorphic scope discriminator and payload. Deck IDs and timestamps use
+`BigInt`; exact JSON number tokenization prevents JavaScript rounding during
+decode and preserves decimal-number output during encode. SharedPreferences,
 schema/database handling, mutexes/coroutines, scheduling, and Android UI remain
 host-side. Value iteration order is not a contract. The focused Dart cases are
 source-derived behavior tests, not a port of an Android group test harness.
@@ -4531,7 +4534,8 @@ pinned direct test file is Copyright © 2026 Dhanush Sugganahalli under
 GPL-3.0-or-later. The Dart implementation and tests are Copyright © 2026 John
 Tsui under the same license. The adapters preserve the source's callback order,
 signed duration truncation and remainder behavior, and greater-than-59-hour
-wrap. The host supplies `SimpleDateFormat` with `Locale.US` and its default
+wrap. Long-valued callbacks and results use BigInt to preserve the full JVM Long
+range on JavaScript. The host supplies `SimpleDateFormat` with `Locale.US` and its default
 zone, Kotlin `Duration.inWholeMilliseconds` / `String.format` behavior, and
 `Calendar` including time zone, DST and Gregorian behavior. Root `COPYING`
 remains byte-identical.
@@ -5690,3 +5694,59 @@ host-owned. `Collection.kt` is GPL-3.0-or-later and separately identifies
 incorporated AGPL browser.py code; this adaptation contains none of that code.
 The Dart code and tests are Copyright © 2026 John Tsui under
 `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## Flutter profile onboarding and navigation
+
+`apps/anki/lib/startup_shell.dart`, `apps/anki/lib/profile_manager.dart`,
+`apps/anki/lib/l10n/app_en.arb`, and `apps/anki/test/app_test.dart` adapt shared
+profile onboarding and profile-list
+behavior from AnkiDroid 2.25.3 at
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Source references are
+`ProfileManager.kt`, `ProfileName.kt`, `SwitchProfilesScreen.kt`,
+`AddProfileDialog.kt`, `SetupStorage.kt`, `BackendSetup.kt`, `StoragePolicy.kt`,
+and `StartupGuards.kt`; the referenced files declare `GPL-3.0-or-later`. No
+upstream assets or translated resource strings are copied. Host storage,
+backend, and profile repository adapters remain injected and are not included.
+The app code and tests are Copyright © 2026 John Tsui under
+`GPL-3.0-or-later`; root `COPYING` remains unchanged. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) for the behavior mapping.
+
+## Flutter Deck Picker and filtered-deck options surface
+
+`apps/anki/lib/deck_picker_screen.dart` adapts the portable Flutter presentation
+surface from AnkiDroid 2.25.3, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`. Behavioral sources are
+`AnkiDroid/src/main/java/com/ichi2/anki/DeckPicker.kt`,
+`DeckPickerFloatingActionMenu.kt`, `deckpicker/DeckPickerViewModel.kt`,
+`deckpicker/DisplayDeckNode.kt`, `deckpicker/DeckFilters.kt`,
+`dialogs/DeckPickerContextMenu.kt`, `contextmenu/DeckPickerMenuContentProvider.kt`,
+and `filtered/FilteredDeckOptionsFragment.kt`, `FilteredDeckOptionsState.kt`,
+and `FilteredDeckOptionsViewModel.kt`. The matching shared Dart tree, display,
+filter, selection, and filtered-deck contracts remain the portable behavior
+boundary; collection and scheduler operations remain injected host callbacks.
+Upstream copyright notices are retained for the referenced AnkiDroid files:
+Andrew Dubya, Nicolas Raoul, Edu Zamora, Daniel Svard, Norbert Nagold, and
+Timothy Rae (`DeckPicker.kt`); Akshay Jadhav (`DeckPickerFloatingActionMenu.kt`);
+Gautam Bhetanabhotla (`DisplayDeckNode.kt`); Arthur Milchior (`DeckFilters.kt`);
+Timothy Rae (`DeckPickerContextMenu.kt`); Hari Srinivasan
+(`DeckPickerMenuContentProvider.kt`); and lukstbit (filtered-deck fragment,
+state, and view model). The referenced files declare `GPL-3.0-or-later`.
+`apps/anki/lib/l10n/app_en.arb` adds new English UI strings; no upstream
+translated strings or visual assets were copied. The screen and tests are
+Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING` remains
+unchanged. See [`docs/DECK_PICKER_UI_GAP_REPORT.md`](docs/DECK_PICKER_UI_GAP_REPORT.md)
+for screen-by-screen mapping, accessibility notes, and remaining adapter gaps.
+
+## Anki Core search SQL subset
+
+`packages/anki_search_sql` adapts a limited SQL compilation slice from Anki
+Core's `rslib/src/search/sqlwriter.rs` and `rslib/src/search/parser.rs`, pinned
+to commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It emits boolean,
+card/note/notetype ID, deck ID without children, card flag, and whole-collection
+predicates with source-compatible table selection and result SELECT shape.
+Unsupported typed AST variants throw. Text/tag matching, regular expressions,
+sorting, database execution, and UI are not included. The upstream files are
+Copyright Ankitects Pty Ltd and contributors under GNU AGPL version 3 or later;
+their SHA-256 hashes are recorded in `packages/anki_search_sql/SOURCE.sha256`.
+The Dart package and tests are Copyright © 2026 John Tsui under
+AGPL-3.0-or-later. Root `COPYING` remains byte-identical.

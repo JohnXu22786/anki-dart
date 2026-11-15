@@ -1,14 +1,14 @@
 # Source and license notice
 
 This package ports Anki Core Card and Note domain values, protobuf conversions,
-field checksum, field normalization, and Note::fix_field_count behavior from
-`rslib/src/card/mod.rs`, `rslib/src/card/service.rs`, and
-`rslib/src/notes/mod.rs`; Notetype, NoteField and CardTemplate values,
-conversions, and default configuration assets from `rslib/src/notetype/mod.rs`,
-`rslib/src/notetype/service.rs`, `rslib/src/notetype/fields.rs`,
-`rslib/src/notetype/templates.rs`, `rslib/src/notetype/styling.css`,
-`rslib/src/notetype/cloze_styling.css`, `rslib/src/notetype/header.tex`,
-`rslib/src/notetype/stock.rs`, `rslib/src/image_occlusion/notetype.rs`, and
+and field checksum, field normalization, and Note::fix_field_count behavior from `rslib/src/card/mod.rs`,
+`rslib/src/card/service.rs`, and `rslib/src/notes/mod.rs`; Notetype, NoteField
+and CardTemplate values, conversions, and default configuration assets from
+`rslib/src/notetype/mod.rs`, `rslib/src/notetype/service.rs`,
+`rslib/src/notetype/fields.rs`, `rslib/src/notetype/templates.rs`,
+`rslib/src/notetype/styling.css`, `rslib/src/notetype/cloze_styling.css`,
+`rslib/src/notetype/header.tex`, `rslib/src/notetype/stock.rs`,
+`rslib/src/image_occlusion/notetype.rs`, and
 `rslib/src/image_occlusion/notetype.css`; Deck and DeckConfig values and
 conversions from `rslib/src/decks/mod.rs`, `rslib/src/decks/name.rs`,
 `rslib/src/decks/service.rs`, `rslib/src/deckconfig/mod.rs`, and

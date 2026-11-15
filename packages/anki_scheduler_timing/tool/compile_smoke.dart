@@ -2,6 +2,15 @@
 import 'package:anki_scheduler_timing/anki_scheduler_timing.dart';
 
 void main() {
+  if (currentDueDay(daysElapsed: 0xffffffff, delta: 2) != 1 ||
+      currentDueDay(daysElapsed: 0x80000000, delta: 0x7fffffff) != 0 ||
+      currentDueDay(daysElapsed: 0x7fffffff, delta: 1) != 0) {
+    throw StateError('due-day signed conversion is incorrect');
+  }
+  if (isUnixEpochTimestamp(1000000000) || !isUnixEpochTimestamp(1000000001)) {
+    throw StateError('epoch due threshold is incorrect');
+  }
+
   const now = 8_000_000_000_000;
   final result = schedTimingTodayV2New(
     creationSecs: now - 86400,

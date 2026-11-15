@@ -1,5 +1,5 @@
 name: anki_app
-description: Flutter application shell for the Anki Dart workspace.
+description: Flutter application for the Anki Dart workspace.
 publish_to: none
 version: 0.1.0+1
 
@@ -7,9 +7,12 @@ environment:
   sdk: ^3.13.7
 
 dependencies:
+  characters: ^1.4.0
   anki_dart:
     path: ../..
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
 
 dev_dependencies:
@@ -19,3 +22,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true

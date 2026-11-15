@@ -1,0 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+library anki_backend_storage;
+
+export 'src/note_storage.dart';

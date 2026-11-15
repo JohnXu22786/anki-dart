@@ -29,7 +29,7 @@ class Note {
         _sortField = sortField,
         _checksum = checksum?.toUnsigned(32);
 
-  final NoteId id;
+  NoteId id;
   final String guid;
   final Int64 notetypeId;
   final Int64 mtimeSecs;

@@ -9,5 +9,5 @@ import 'package:crypto/crypto.dart';
 /// behavior before passing text here.
 int fieldChecksum(String text) {
   final digest = sha1.convert(utf8.encode(text)).bytes;
-  return digest.take(4).fold(0, (value, byte) => (value << 8) | byte);
+  return digest.take(4).fold(0, (value, byte) => value * 256 + byte);
 }

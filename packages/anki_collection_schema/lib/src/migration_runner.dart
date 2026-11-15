@@ -41,17 +41,35 @@ Future<void> upgradeCollectionSchemaToLatest(
   if (steps.isEmpty) return;
 
   await _executeTransaction(database, () async {
-    for (final step in steps) {
-      for (final operation in step.operations) {
-        await _executeOperation(
-          database,
-          callbacks,
-          operation,
-          serverMode: serverMode,
-        );
-      }
-    }
+    await executeCollectionSchemaUpgradesInTransaction(
+      database,
+      callbacks,
+      fromVersion: fromVersion,
+      serverMode: serverMode,
+    );
   });
+}
+
+/// Executes the catalogued upgrade operations without starting or committing
+/// a transaction. The caller must already have started a transaction and must
+/// commit or roll it back. This is intended for host workflows that combine
+/// schema upgrades with collection initialization in one atomic transaction.
+Future<void> executeCollectionSchemaUpgradesInTransaction(
+  CollectionSchemaMigrationDatabase database,
+  CollectionSchemaMigrationCallbacks callbacks, {
+  required int fromVersion,
+  required bool serverMode,
+}) async {
+  for (final step in collectionSchemaUpgradeStepsFor(fromVersion)) {
+    for (final operation in step.operations) {
+      await _executeOperation(
+        database,
+        callbacks,
+        operation,
+        serverMode: serverMode,
+      );
+    }
+  }
 }
 
 /// Runs the source's supported schema downgrade target.

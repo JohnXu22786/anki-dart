@@ -15,4 +15,7 @@ void main() {
       '9007199254740993') {
     throw StateError('Web custom JSON integer lost precision beyond 2^53');
   }
+  if (extractCustomData('{"pos":1e999,"cd":"{\\"x\\":1}"}', 'x') != null) {
+    throw StateError('Web CardData accepted an out-of-range unrelated number');
+  }
 }

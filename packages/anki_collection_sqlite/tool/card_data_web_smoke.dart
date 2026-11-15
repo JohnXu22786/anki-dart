@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_collection_sqlite/src/card_data_functions.dart';
+import 'package:anki_collection_sqlite/src/fsrs_variable_function.dart';
 
 void main() {
   if (extractOriginalPosition('{"pos":4294967295}') != 4294967295) {
@@ -20,5 +21,8 @@ void main() {
   }
   if (extractCustomData('{"pos":1e999,"cd":"{\\"x\\":1}"}', 'x') != null) {
     throw StateError('Web CardData accepted an out-of-range unrelated number');
+  }
+  if (extractFsrsVariable('{"s":0.9}', 's') != 0.8999999761581421) {
+    throw StateError('Web FSRS value did not retain Core f32 precision');
   }
 }

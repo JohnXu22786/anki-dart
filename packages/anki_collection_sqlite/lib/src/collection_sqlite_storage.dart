@@ -12,6 +12,7 @@ import 'package:sqlite3/common.dart';
 
 import 'card_data_functions.dart';
 import 'fnvhash.dart';
+import 'fsrs_variable_function.dart';
 import 'process_text.dart';
 
 const _preparedStatementCacheCapacity = 50;
@@ -83,6 +84,7 @@ final class CollectionSqliteStorage
       registerProcessTextFunction(database);
       registerFnvHashFunction(database);
       registerCardDataFunctions(database);
+      registerFsrsVariableFunction(database);
       database.execute('pragma busy_timeout = 0');
       database.execute('pragma locking_mode = exclusive');
       database.execute('pragma page_size = 4096');

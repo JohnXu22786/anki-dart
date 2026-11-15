@@ -68,8 +68,8 @@ register host-owned functions and collations. Anki Core's SQLite configuration
 uses `field_at_index`, `regexp`, `regexp_fields`, `regexp_tags`, `process_text`,
 `fnvhash`, several `extract_*` functions, and the Unicode-aware `unicase`
 collation. This package implements `field_at_index`, `process_text`, `fnvhash`,
-`extract_original_position`, and `extract_custom_data`; it does not implement
-the remaining functions or collation. A
+`extract_original_position`, `extract_custom_data`, and `extract_fsrs_variable`;
+it does not implement the remaining functions or collation. A
 host must register the applicable implementations before opening collections
 that depend on them; the default schema-11-to-18 migration path creates
 `unicase` indexes and therefore requires that registration.
@@ -82,11 +82,11 @@ legacy-file-format setting, and WAL. It maintains the source's bounded
 uses through its cached-prepare API. Schema probes, integrity checks, rollback,
 and SQL batches use direct query/execute APIs in the source too, so the adapter
 does not retain those statements. Set `androidTempStore` on Android to use
-memory for temporary tables. The adapter implements Core's
-`field_at_index`, `process_text`, `fnvhash`, `extract_original_position`, and
-`extract_custom_data` scalar functions; other Anki scalar functions and collations,
-note mutations, undo/redo, media indexing, backup/restore, synchronization, and
-encryption remain outside this package's current scope.
+memory for temporary tables. The adapter implements Core's `field_at_index`,
+`process_text`, `fnvhash`, `extract_original_position`, `extract_custom_data`,
+and `extract_fsrs_variable` scalar functions; other Anki scalar functions and
+collations, note mutations, undo/redo, media indexing, backup/restore,
+synchronization, and encryption remain outside this package's current scope.
 
 `sqlite3` publishes native bindings for Android, iOS, Windows, macOS, and
 Linux. Its WebAssembly target is tested in the package CI with

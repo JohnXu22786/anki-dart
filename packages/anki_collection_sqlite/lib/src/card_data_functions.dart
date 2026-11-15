@@ -27,7 +27,7 @@ void registerCardDataFunctions(CommonDatabase database) {
 int? extractOriginalPosition(Object? cardData) {
   if (cardData is! String) return null;
   if (!_cardDataObjectParses(cardData)) return null;
-  final value = _cardDataField(cardData, 'pos', 0);
+  final value = cardDataField(cardData, 'pos', 0);
   return switch (value) {
     int() when value >= 0 && value <= 0xffffffff => value,
     BigInt() when value >= BigInt.zero && value <= BigInt.from(0xffffffff) =>
@@ -55,7 +55,7 @@ bool _cardDataObjectParses(String cardData) {
 /// Extracts a value from the compact card-data `cd` JSON object.
 Object? extractCustomData(Object? cardData, Object? key) {
   if (cardData is! String || cardData.isEmpty || key is! String) return null;
-  final serializedCustomData = _cardDataField(cardData, 'cd', 6);
+  final serializedCustomData = cardDataField(cardData, 'cd', 6);
   if (serializedCustomData is! String || serializedCustomData.isEmpty) {
     return null;
   }
@@ -77,13 +77,18 @@ Object? extractCustomData(Object? cardData, Object? key) {
   }
 }
 
-Object? _cardDataField(String cardData, String key, int sequenceIndex) {
+/// Reads a compact `CardData` field from JSON object or sequence storage.
+Object? cardDataField(String cardData, String key, int sequenceIndex) {
   try {
     validateLosslessJson(cardData);
     final decoded = jsonDecode(cardData);
-    if (decoded is Map<String, Object?>) return decoded[key];
-    if (decoded is List<Object?> && decoded.length > sequenceIndex) {
-      return decoded[sequenceIndex];
+    if (decoded is Map<String, Object?>) {
+      if (decoded.containsKey('cd') && decoded['cd'] is! String) return null;
+      return decoded[key];
+    }
+    if (decoded is List<Object?>) {
+      if (decoded.length > 6 && decoded[6] is! String) return null;
+      if (decoded.length > sequenceIndex) return decoded[sequenceIndex];
     }
     return null;
   } on FormatException {

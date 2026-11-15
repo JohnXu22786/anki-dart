@@ -8,6 +8,15 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+AGPL_SPDX = "AGPL-3.0-or-later"
+SPDX_PATTERN = re.compile(
+    r"^\s*(?://|/\*|\*)?\s*SPDX-License-Identifier:\s*([^\s*]+)\s*$",
+    re.MULTILINE,
+)
+UPSTREAM_PROTO_LICENSE = (
+    "// License: GNU AGPL, version 3 or later; "
+    "http://www.gnu.org/licenses/agpl.html"
+)
 EXPECTED_SOURCE_COMMIT = "e64c6b1aee3e8d668fb8bbe084beada8e070d985"
 EXPECTED_FILES = {
     "ankidroid.proto", "ankihub.proto", "ankiweb.proto", "backend.proto",
@@ -17,6 +26,29 @@ EXPECTED_FILES = {
     "links.proto", "media.proto", "notes.proto", "notetypes.proto",
     "scheduler.proto", "search.proto", "stats.proto", "sync.proto", "tags.proto",
 }
+
+
+def generated_spdx_error(text: str) -> str | None:
+    identifiers = SPDX_PATTERN.findall(text)
+    if identifiers != [AGPL_SPDX]:
+        return f"expected exactly one {AGPL_SPDX} SPDX tag, found {identifiers}"
+    return None
+
+
+def proto_license_error(text: str, source_spdx: str | None, source_name: str) -> str | None:
+    if source_spdx != AGPL_SPDX:
+        return f"source manifest must tag this schema {AGPL_SPDX}, found {source_spdx!r}"
+    identifiers = SPDX_PATTERN.findall(text)
+    if any(identifier != AGPL_SPDX for identifier in identifiers):
+        return f"found non-AGPL SPDX identifiers {identifiers}"
+    license_headers = [
+        line for line in text.splitlines()[:10] if line.startswith("// License:")
+    ]
+    if license_headers and any(UPSTREAM_PROTO_LICENSE not in line for line in license_headers):
+        return "conflicting upstream license header"
+    if not license_headers and source_name != "ankidroid.proto":
+        return "missing the pinned upstream AGPL license header"
+    return None
 
 
 def main() -> int:
@@ -30,17 +62,22 @@ def main() -> int:
         )
 
     source_record = ROOT / "proto" / "SOURCE.sha256"
-    recorded: dict[str, str] = {}
+    recorded: dict[str, tuple[str, str]] = {}
     if source_record.is_file():
         for line in source_record.read_text(encoding="utf-8").splitlines():
-            match = re.fullmatch(r"([0-9a-f]{64})  anki/([a-z0-9_]+\.proto)", line)
+            match = re.fullmatch(
+                r"([0-9a-f]{64})  ([^ ]+)  anki/([a-z0-9_]+\.proto)", line
+            )
             if not match:
                 errors.append(f"proto/SOURCE.sha256: invalid entry {line!r}")
                 continue
-            recorded[match.group(2)] = match.group(1)
+            digest, source_spdx, name = match.groups()
+            if source_spdx != AGPL_SPDX:
+                errors.append(f"proto/anki/{name}: source manifest has non-AGPL SPDX {source_spdx}")
+            recorded[name] = (digest, source_spdx)
         if set(recorded) != EXPECTED_FILES:
             errors.append("proto/SOURCE.sha256: entries do not match the 25 schema files")
-        for name, digest in recorded.items():
+        for name, (digest, _) in recorded.items():
             path = schemas / name
             if path.is_file() and sha256(path.read_bytes()).hexdigest() != digest:
                 errors.append(f"proto/anki/{name}: source digest does not match proto/SOURCE.sha256")
@@ -79,6 +116,9 @@ def main() -> int:
         )
     for path in sorted(generated_root.glob("*.dart")):
         text = path.read_text(encoding="utf-8")
+        license_error = generated_spdx_error(text)
+        if license_error is not None:
+            errors.append(f"{path.relative_to(ROOT)}: {license_error}")
         if "Generated code. Do not modify." not in text:
             errors.append(f"{path.relative_to(ROOT)}: missing generated-code marker")
         if "import 'dart:io'" in text or 'import "dart:io"' in text:
@@ -87,6 +127,13 @@ def main() -> int:
             errors.append(f"{path.relative_to(ROOT)}: generated protocol code has trailing whitespace")
         if text.endswith("\n\n"):
             errors.append(f"{path.relative_to(ROOT)}: generated protocol code has extra blank lines at EOF")
+
+    for path in sorted(schemas.glob("*.proto")):
+        source_entry = recorded.get(path.name)
+        source_spdx = source_entry[1] if source_entry is not None else None
+        license_error = proto_license_error(path.read_text(encoding="utf-8"), source_spdx, path.name)
+        if license_error is not None:
+            errors.append(f"{path.relative_to(ROOT)}: {license_error}")
 
     barrel = ROOT / "lib" / "anki_backend_protocol.dart"
     if not barrel.is_file():

@@ -1,5 +1,20 @@
 # AnkiDroid source baseline
 
+## Anki Core search SQL subset
+
+`packages/anki_search_sql` consumes the typed AST from
+`packages/anki_search_parser` and adapts the bounded boolean, ID, flag, and
+whole-collection SQL subset from Anki Core's `rslib/src/search/sqlwriter.rs`
+and `rslib/src/search/parser.rs`, pinned to
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The package implements source table
+selection and the card/note result SELECT shapes, preserving card/note ID list
+spellings and safe 64-bit notetype ID formatting. Unsupported AST variants
+throw; text and tag matching, regex/glob operations, sorting, browser tables,
+database execution, and UI remain unported. Exact source hashes and license
+attribution are in `packages/anki_search_sql/SOURCE.sha256` and
+`packages/anki_search_sql/NOTICE.md`. The package and tests are Copyright ©
+2026 John Tsui under AGPL-3.0-or-later. Root `COPYING` remains unchanged.
+
 ## Anki Core collection schema catalog (Unit 4.1)
 
 [`packages/anki_collection_schema`](packages/anki_collection_schema/README.md)

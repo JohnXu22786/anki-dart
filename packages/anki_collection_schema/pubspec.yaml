@@ -1,0 +1,12 @@
+name: anki_collection_schema
+description: Pinned, platform-neutral Anki collection schema and migration catalog.
+version: 0.1.0
+publish_to: none
+license: AGPL-3.0-or-later
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+
+dev_dependencies:
+  crypto: 3.0.7
+  test: ^1.25.8

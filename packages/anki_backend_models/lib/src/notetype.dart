@@ -31,10 +31,10 @@ class NotetypeId {
 
 /// Stored Anki note type values and their official backend configuration.
 ///
-/// The upstream default constructor fills CSS and LaTeX assets that are outside
-/// this conversion slice. When an incoming protobuf omits `config`, this model
-/// uses the generated protocol message's default config, as the service
-/// conversion does.
+/// [ankiDefault], [defaultConfig] and [clozeConfig] reproduce Anki Core's
+/// default CSS and LaTeX assets. When [fromProto] receives a protobuf with no
+/// `config`, it uses the generated protocol message's default config, matching
+/// the service conversion behavior.
 class Notetype {
   Notetype({
     NotetypeId? id,

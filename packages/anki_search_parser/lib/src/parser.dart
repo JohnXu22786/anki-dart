@@ -28,12 +28,13 @@ final class _Parser {
           {String? provided,
           String? context,
           String? info,
+          String? remainingInput,
           int? remainingAt}) =>
       throw SearchParseException(code,
           provided: provided,
           context: context,
           info: info,
-          remaining: rest(remainingAt));
+          remaining: remainingInput ?? rest(remainingAt));
   bool get _space => charAt() == ' ' || charAt() == '\u3000';
   void skipSpace() {
     while (_space) at++;
@@ -167,16 +168,19 @@ final class _Parser {
   }
 
   String _unquoted() {
+    final tokenStart = at;
     final out = <String>[];
     while (!done) {
       final c = charAt();
       if (c == '"' || c == '(' || c == ')' || c == ' ' || c == '\u3000') break;
       if (c == '\\') {
         if (at + 1 >= chars.length)
-          fail(SearchErrorCode.unknownEscape, provided: '\\', remainingAt: at);
+          fail(SearchErrorCode.unknownEscape,
+              provided: '\\', remainingAt: tokenStart);
         final next = chars[at + 1];
         if (next == ' ' || next == '\u3000')
-          fail(SearchErrorCode.unknownEscape, provided: '\\', remainingAt: at);
+          fail(SearchErrorCode.unknownEscape,
+              provided: '\\', remainingAt: tokenStart);
         out
           ..add(c)
           ..add(next);
@@ -201,7 +205,7 @@ final class _Parser {
         continue;
       }
       if (value[i] == ':') {
-        if (i == 0) fail(SearchErrorCode.missingKey, remainingAt: 0);
+        if (i == 0) fail(SearchErrorCode.missingKey, remainingInput: value);
         return _withArgument(
             _unescape(value.substring(0, i)), value.substring(i + 1));
       }
@@ -288,7 +292,7 @@ final class _Parser {
   int _flag(String value) {
     final n = RegExp(r'^\+?\d+$').hasMatch(value) ? int.tryParse(value) : null;
     if (n == null || n < 0 || n > 7)
-      fail(SearchErrorCode.invalidFlag, remainingAt: 0);
+      fail(SearchErrorCode.invalidFlag, remainingInput: value);
     return n;
   }
 
@@ -298,13 +302,13 @@ final class _Parser {
         .firstMatch(clause);
     if (match == null)
       fail(SearchErrorCode.invalidPropProperty,
-          provided: clause, remainingAt: 0);
+          provided: clause, remainingInput: clause);
     final property = match.group(0)!;
     final tail = clause.substring(match.end);
     final opMatch = RegExp(r'^(<=|>=|!=|=|<|>)').firstMatch(tail);
     if (opMatch == null)
       fail(SearchErrorCode.invalidPropOperator,
-          provided: property, remainingAt: 0);
+          provided: property, remainingInput: clause);
     final op = opMatch.group(0)!;
     final num = tail.substring(op.length);
     PropertyKind kind;
@@ -359,7 +363,7 @@ final class _Parser {
     final n = RegExp(r'^\+?\d+$').hasMatch(num) ? int.tryParse(num) : null;
     if (n == null || n < 0 || n > 0xffffffff)
       fail(SearchErrorCode.invalidPositiveWholeNumber,
-          context: context, provided: num, remainingAt: 0);
+          context: context, provided: num, remainingInput: context);
     return n;
   }
 
@@ -367,7 +371,7 @@ final class _Parser {
     final n = int.tryParse(num);
     if (n == null || n < -0x80000000 || n > 0x7fffffff)
       fail(SearchErrorCode.invalidWholeNumber,
-          context: context, provided: num, remainingAt: 0);
+          context: context, provided: num, remainingInput: context);
     return n;
   }
 
@@ -375,7 +379,7 @@ final class _Parser {
     final n = int.tryParse(num);
     if (n == null || n < -0x80000000 || n > 0 || n > 0x7fffffff)
       fail(SearchErrorCode.invalidNegativeWholeNumber,
-          context: context, provided: num, remainingAt: 0);
+          context: context, provided: num, remainingInput: context);
     return n;
   }
 
@@ -383,7 +387,7 @@ final class _Parser {
     final n = double.tryParse(num);
     if (n == null)
       fail(SearchErrorCode.invalidNumber,
-          context: context, provided: num, remainingAt: 0);
+          context: context, provided: num, remainingInput: context);
     return (Float32List(1)..[0] = n)[0];
   }
 
@@ -393,7 +397,7 @@ final class _Parser {
         n < -(BigInt.one << 63) ||
         n > (BigInt.one << 63) - BigInt.one)
       fail(SearchErrorCode.invalidWholeNumber,
-          context: context, provided: value, remainingAt: 0);
+          context: context, provided: value, remainingInput: context);
     return n;
   }
 
@@ -424,7 +428,7 @@ final class _Parser {
     final n = int.tryParse(value);
     if (n == null || n < 1 || n > 4)
       fail(SearchErrorCode.invalidAnswerButton,
-          context: context, provided: value, remainingAt: 0);
+          context: context, provided: value, remainingInput: context);
     return AnswerButton(n);
   }
 
@@ -440,13 +444,14 @@ final class _Parser {
         _ => _invalidState(value),
       };
   StateKind _invalidState(String value) {
-    fail(SearchErrorCode.invalidState, provided: value, remainingAt: 0);
+    fail(SearchErrorCode.invalidState, provided: value, remainingInput: value);
   }
 
   void _checkIds(String value, String context) {
     if (!RegExp(r'^(\d+,)*\d+$').hasMatch(value))
       fail(SearchErrorCode.other,
-          info: 'expected only digits and commas in $context:', remainingAt: 0);
+          info: 'expected only digits and commas in $context:',
+          remainingInput: value);
   }
 
   SearchNode _dupe(String value) {
@@ -455,7 +460,7 @@ final class _Parser {
     final id = _int64(idText, value);
     if (comma < 0)
       fail(SearchErrorCode.other,
-          info: "invalid 'dupe:' search", remainingAt: 0);
+          info: "invalid 'dupe:' search", remainingInput: value);
     return Duplicates(
         notetypeId: id,
         text: _unescapeQuotesAndBackslashes(value.substring(comma + 1)));

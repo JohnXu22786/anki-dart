@@ -259,4 +259,27 @@ void main() {
       expect(FieldSearchModeProto.fromProto(mode.toProto()), mode);
     }
   });
+
+  test('parser errors retain the source context slice', () {
+    final cases = <String, String>{
+      'added:nope': 'added:',
+      'flag:8': '8',
+      'is:invalid': 'invalid',
+      'prop:ivl>nope': 'ivl>nope',
+      'prop:=1': '=1',
+      'rated:1:5': '1:5',
+      'nid:1,x': '1,x',
+      'dupe:1': '1',
+      r'foo\': r'foo\',
+      r'\%': r'\%',
+    };
+    for (final entry in cases.entries) {
+      expect(
+        () => parse(entry.key),
+        throwsA(isA<SearchParseException>()
+            .having((error) => error.remaining, 'remaining', entry.value)),
+        reason: entry.key,
+      );
+    }
+  });
 }

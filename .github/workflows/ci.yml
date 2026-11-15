@@ -166,3 +166,30 @@ jobs:
       - name: Build iOS without code signing
         working-directory: apps/anki
         run: flutter build ios --no-codesign
+
+  anki-backend-models:
+    name: AGPL Anki card and note models
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve model package dependencies
+        working-directory: packages/anki_backend_models
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_backend_models
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze model package
+        working-directory: packages/anki_backend_models
+        run: dart analyze lib test tool
+      - name: Test card and note models
+        working-directory: packages/anki_backend_models
+        run: dart test
+      - name: Compile for the web-compatible Dart target
+        working-directory: packages/anki_backend_models
+        run: dart compile js tool/compile_smoke.dart -o /tmp/anki_backend_models.js
+      - name: Validate AGPL provenance and source hashes
+        working-directory: packages/anki_backend_models
+        run: python3 tool/check_package.py

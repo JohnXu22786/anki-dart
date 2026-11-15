@@ -39,7 +39,17 @@ String replaceSearchNode(List<Node> existing, Node replacement) {
 
 /// Create a deck search term with Anki wildcard and backslash escaping.
 String deckSearch(String name) =>
-    writeNode(Search(Deck(_escapeAnkiWildcards(name))));
+    writeNode(Search(Deck(escapeAnkiWildcards(name))));
+
+/// Escape Anki wildcards and backslashes in names used by search nodes.
+String escapeAnkiWildcards(String text) =>
+    text.replaceAllMapped(RegExp(r'[\\*_]'), (match) => '\\${match[0]}');
+
+/// Escape a name as Anki Core's programmatic search builder does.
+///
+/// `_*` is a special wildcard spelling and is preserved as-is.
+String escapeAnkiWildcardsForSearchNode(String text) =>
+    text == '_*' ? text : escapeAnkiWildcards(text);
 
 String _writeSearchNode(SearchNode node) => switch (node) {
       TextSearch(:final text) => _maybeQuote(text.replaceAll(':', r'\:')),
@@ -189,6 +199,3 @@ String _trimDecimalZeros(String value) {
       .replaceFirst(RegExp(r'0+$'), '')
       .replaceFirst(RegExp(r'\.$'), '');
 }
-
-String _escapeAnkiWildcards(String text) =>
-    text.replaceAllMapped(RegExp(r'[\\*_]'), (match) => '\\${match[0]}');

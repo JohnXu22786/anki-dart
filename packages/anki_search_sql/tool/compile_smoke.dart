@@ -46,6 +46,26 @@ void main() {
   if (fallbackDeckQuery.arguments.single != '(?i)^Default(\$|\x1f)') {
     throw StateError('Default deck JavaScript SQL smoke test failed');
   }
+  final regexQuery = compileSearchSql(
+    GroupNode([Search(const RegexSearch(r'^\d+$'))]),
+    regexFieldsByNotetype: RegexFieldsByNotetype([
+      RegexNotetypeSearchContext(
+        notetypeId: BigInt.parse('9007199254740993'),
+        totalFieldsInNote: 2,
+        includedFieldIndices: [1],
+      ),
+    ]),
+  );
+  if (regexQuery.sql !=
+          'select c.id from cards c, notes n where c.nid=n.id and '
+              '(((n.mid = 9007199254740993 and '
+              'regexp_fields(?1, n.flds, 1))))' ||
+      regexQuery.arguments.single != r'(?i)^\d+$') {
+    throw StateError(
+      'Regex JavaScript precision smoke test failed: '
+      '${regexQuery.sql}; ${regexQuery.arguments}',
+    );
+  }
   final largeDeckId = Int64.parseInt('9223372036854775807');
   final largeDeckQuery = compileSearchSql(
     GroupNode([Search(DeckIdWithChildren(largeDeckId))]),

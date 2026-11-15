@@ -59,6 +59,30 @@ final class SearchSqlTiming {
   final BigInt? nextDayAt;
 }
 
+/// Field visibility supplied by the host for one notetype's unqualified
+/// regex search context.
+final class RegexNotetypeSearchContext {
+  const RegexNotetypeSearchContext({
+    required this.notetypeId,
+    required this.totalFieldsInNote,
+    required this.includedFieldIndices,
+  });
+
+  final BigInt notetypeId;
+  final int totalFieldsInNote;
+  final List<int> includedFieldIndices;
+}
+
+/// Source-derived field visibility for unqualified regex searches.
+///
+/// Pass `null` to [compileSearchSql] when no notetypes exclude fields from
+/// search. A non-null value emits one regex clause per context in list order.
+final class RegexFieldsByNotetype {
+  const RegexFieldsByNotetype(this.contexts);
+
+  final List<RegexNotetypeSearchContext> contexts;
+}
+
 final class UnsupportedSearchSqlNodeException extends UnsupportedError {
   UnsupportedSearchSqlNodeException(Object node)
     : super('Search SQL subset does not support ${node.runtimeType}.');
@@ -81,7 +105,10 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// [deckIdsWithChildren] supplies resolved deck ID expansions from the host;
 /// an absent key means the deck could not be resolved. [deckIdsByPreset]
 /// supplies exact-name preset resolution from the host; an absent key means
-/// the preset did not resolve.
+/// the preset did not resolve. [regexFieldsByNotetype] supplies the host's
+/// source-derived notetype field visibility for regex searches; when omitted,
+/// the generic `n.flds` fallback is used. [normalizeNoteText] enables NFC
+/// normalization of regex patterns to match the collection configuration.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
@@ -90,6 +117,8 @@ CompiledSearchSql compileSearchSql(
   String? currentDeckName,
   Map<BigInt, List<BigInt>> deckIdsWithChildren = const {},
   Map<String, List<BigInt>> deckIdsByPreset = const {},
+  RegexFieldsByNotetype? regexFieldsByNotetype,
+  bool normalizeNoteText = false,
 }) {
   final itemTable = switch (resultType) {
     SearchResultType.cards => RequiredTable.cards,
@@ -122,7 +151,7 @@ CompiledSearchSql compileSearchSql(
   final arguments = <String>[];
   return CompiledSearchSql(
     sql:
-        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset)}',
+        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText)}',
     arguments: arguments,
     requiredTable: table,
   );
@@ -150,6 +179,7 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   IntroducedInDays() => RequiredTable.cards,
   NotetypeIdSearch() ||
   Notetype() ||
+  RegexSearch() ||
   Tag() ||
   EditedInDays() => RequiredTable.notes,
   Rated() ||
@@ -179,13 +209,15 @@ String _writeNode(
   String? currentDeckName,
   Map<BigInt, List<BigInt>> deckIdsWithChildren,
   Map<String, List<BigInt>> deckIdsByPreset,
+  RegexFieldsByNotetype? regexFieldsByNotetype,
+  bool normalizeNoteText,
 ) => switch (node) {
   BooleanNode(kind: NodeKind.and) => ' and ',
   BooleanNode(kind: NodeKind.or) => ' or ',
   NegatedNode(:final node) =>
-    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset)}',
+    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText)}',
   GroupNode(:final nodes) =>
-    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset)).join()})',
+    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText)).join()})',
   Search(value: final search) => _writeSearch(
     search,
     noteIdColumn,
@@ -194,6 +226,8 @@ String _writeNode(
     currentDeckName,
     deckIdsWithChildren,
     deckIdsByPreset,
+    regexFieldsByNotetype,
+    normalizeNoteText,
   ),
 };
 
@@ -205,6 +239,8 @@ String _writeSearch(
   String? currentDeckName,
   Map<BigInt, List<BigInt>> deckIdsWithChildren,
   Map<String, List<BigInt>> deckIdsByPreset,
+  RegexFieldsByNotetype? regexFieldsByNotetype,
+  bool normalizeNoteText,
 ) => switch (node) {
   CardIds(:final ids) => 'c.id in (${_validateIdList(ids)})',
   NoteIds(:final ids) => '$noteIdColumn in (${_validateIdList(ids)})',
@@ -217,6 +253,12 @@ String _writeSearch(
   NotetypeIdSearch(:final id) => 'n.mid = $id',
   Notetype(:final name) => _writeNotetype(name, arguments),
   Tag(:final tag, :final mode) => _writeTag(tag, mode, arguments),
+  RegexSearch(:final pattern) => _writeRegex(
+    pattern,
+    arguments,
+    regexFieldsByNotetype,
+    normalizeNoteText,
+  ),
   CardTemplate(kind: final kind) => _writeTemplate(kind, arguments),
   DeckIdsWithoutChildren(:final ids) =>
     '(c.did in (${_validateIdList(ids)}) or (c.odid != 0 and '
@@ -760,6 +802,31 @@ String _writeTag(String tag, FieldSearchMode mode, List<String> arguments) {
   return mode == FieldSearchMode.normal
       ? 'n.tags regexp ?'
       : 'coalesce(process_text(n.tags, 1), n.tags) regexp ?';
+}
+
+String _writeRegex(
+  String pattern,
+  List<String> arguments,
+  RegexFieldsByNotetype? fieldsByNotetype,
+  bool normalizeNoteText,
+) {
+  final regex = normalizeNoteText ? unorm.nfc(pattern) : pattern;
+  arguments.add('(?i)$regex');
+  final argumentIndex = arguments.length;
+  final contexts = fieldsByNotetype?.contexts;
+  if (contexts == null) {
+    return 'n.flds regexp ?$argumentIndex';
+  }
+
+  final clauses = contexts.map((context) {
+    final fieldClause =
+        context.includedFieldIndices.length == context.totalFieldsInNote
+        ? 'n.flds regexp ?$argumentIndex'
+        : 'regexp_fields(?$argumentIndex, n.flds, '
+              '${context.includedFieldIndices.join(',')})';
+    return '(n.mid = ${context.notetypeId} and $fieldClause)';
+  });
+  return '(${clauses.join(' or ')})';
 }
 
 const _noCombiningReplacements = <String, String>{

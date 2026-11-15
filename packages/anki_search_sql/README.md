@@ -4,7 +4,8 @@ This AGPL-3.0-or-later package compiles a bounded subset of the typed AST from
 `anki_search_parser` to source-compatible Anki SQL. It supports boolean
 operators, groups, negation, card and note IDs, notetype IDs and names, card
 template ordinals and names, tag predicates in normal, regex, and no-combining
-modes, deck IDs with and without children, deck-preset predicates, card flags,
+modes, unqualified regex searches, deck IDs with and without children,
+deck-preset predicates, card flags,
 all card state predicates, added/edited/introduced day predicates, and
 whole-collection queries. It
 preserves source table selection and card/note SELECT shapes. Named deck
@@ -57,13 +58,21 @@ grammar, and their exact spelling is preserved without numeric conversion.
 The compiler is pure Dart, deterministic, and platform-neutral. It does not
 execute SQL. The compiler preserves the upstream Unicode-decimal ID spelling
 in generated SQL; SQLite may reject such a query, as in the pinned writer.
-Field text matching, other regex/glob searches, sorting, browser tables,
-database execution, and UI remain outside this package; this subset is not
-complete Anki search execution. Custom-data and state predicates require the
-cards table, and the host must register `extract_custom_data()`. Tag predicates require the notes table and
-preserve Core's `none`, `*`, space, wildcard, case-insensitive regex, and
-no-combining `process_text` SQL behavior. Regex function registration remains
-the host's responsibility. State predicates require the cards table. A
+Raw text search, field-qualified search, other regex/glob predicates, sorting,
+browser tables, database execution, and UI remain outside this package; this
+subset is not complete Anki search execution. Custom-data and state predicates
+require the cards table, and the host must register `extract_custom_data()`.
+Tag predicates require the notes table and preserve Core's `none`, `*`, space,
+wildcard, case-insensitive regex, and no-combining `process_text` SQL behavior.
+Regex function registration remains the host's responsibility.
+`RegexSearch` requires the notes table and emits
+Core's case-insensitive `n.flds regexp` clause without interpreting or changing
+the regex. `regexFieldsByNotetype` accepts source-derived notetype IDs, total
+field counts, and included field indices from the host; omit it when no fields
+are excluded, or pass each notetype context to emit Core's `regexp_fields`
+clauses. The compiler does not load a collection or resolve field visibility.
+`normalizeNoteText` optionally NFC-normalizes only regex patterns and defaults
+to false. State predicates require the cards table. A
 `state:due`, `rated:`, rated properties, and due properties also require explicit
 `SearchSqlTiming` values when
 calling `compileSearchSql`: `daysElapsed` is the collection day number,

@@ -549,6 +549,88 @@ void main() {
     expect(noCombining.arguments, [r'(?i).* Cafe(::| ).*']);
   });
 
+  test(
+    'regex searches use Core field exclusions and preserve regex syntax',
+    () {
+      final fallback = compileSearchSql(
+        GroupNode([Search(const RegexSearch(r'^[a-z]+\d$'))]),
+      );
+      expect(
+        fallback.sql,
+        'select c.id from cards c, notes n where c.nid=n.id and '
+        '(n.flds regexp ?1)',
+      );
+      expect(fallback.arguments, [r'(?i)^[a-z]+\d$']);
+      expect(fallback.requiredTable, RequiredTable.cardsAndNotes);
+
+      final explicit = compileSearchSql(
+        GroupNode([Search(const RegexSearch(r'\w+'))]),
+        regexFieldsByNotetype: RegexFieldsByNotetype([
+          RegexNotetypeSearchContext(
+            notetypeId: BigInt.parse('9007199254740993'),
+            totalFieldsInNote: 3,
+            includedFieldIndices: [0, 1, 2],
+          ),
+          RegexNotetypeSearchContext(
+            notetypeId: BigInt.from(7),
+            totalFieldsInNote: 4,
+            includedFieldIndices: [3, 1],
+          ),
+          RegexNotetypeSearchContext(
+            notetypeId: BigInt.from(8),
+            totalFieldsInNote: 2,
+            includedFieldIndices: [],
+          ),
+        ]),
+      );
+      expect(
+        explicit.sql,
+        'select c.id from cards c, notes n where c.nid=n.id and '
+        '(((n.mid = 9007199254740993 and n.flds regexp ?1) or '
+        '(n.mid = 7 and regexp_fields(?1, n.flds, 3,1)) or '
+        '(n.mid = 8 and regexp_fields(?1, n.flds, ))))',
+      );
+      expect(explicit.arguments, [r'(?i)\w+']);
+    },
+  );
+
+  test(
+    'regex normalization, argument indices, and note projection are explicit',
+    () {
+      final pattern = 'Cafe\u0301.*';
+      final unnormalized = compileSearchSql(
+        GroupNode([
+          Search(Notetype('Basic')),
+          BooleanNode(NodeKind.and),
+          GroupNode([
+            Search(const RegexSearch('Cafe\u0301.*')),
+            BooleanNode(NodeKind.or),
+            NegatedNode(Search(const RegexSearch(r'\bword\b'))),
+          ]),
+        ]),
+        resultType: SearchResultType.notes,
+      );
+      expect(
+        unnormalized.sql,
+        'select n.id from notes n where '
+        '(n.mid in (select id from notetypes where name = ?) and '
+        '(n.flds regexp ?2 or not n.flds regexp ?3))',
+      );
+      expect(unnormalized.arguments, [
+        'Basic',
+        '(?i)$pattern',
+        r'(?i)\bword\b',
+      ]);
+      expect(unnormalized.requiredTable, RequiredTable.notes);
+
+      final normalized = compileSearchSql(
+        GroupNode([Search(RegexSearch(pattern))]),
+        normalizeNoteText: true,
+      );
+      expect(normalized.arguments, [r'(?i)Café.*']);
+    },
+  );
+
   test('tag special values and escaped wildcards match Core semantics', () {
     for (final tag in ['none', '*']) {
       final compiled = compileSearchSql(

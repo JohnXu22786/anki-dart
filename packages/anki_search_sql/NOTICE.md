@@ -15,9 +15,10 @@ under AGPL-3.0-or-later. The compiler accepts the shared AST from
 host-supplied child expansions, deck-preset searches using exact-name
 host-supplied deck-config resolution and current/original deck IDs, notetypes
 and card templates,
-tag predicates in normal, regex, and no-combining modes, state predicates
-using Core's `CardType` and `CardQueue` numeric values, day predicates using
-Core's previous-day cutoffs, rated searches and rated/reschedule properties
+tag predicates in normal, regex, and no-combining modes, unqualified regex
+searches with host-supplied field visibility and optional NFC normalization,
+state predicates using Core's `CardType` and `CardQueue` numeric values, day
+predicates using Core's previous-day cutoffs, rated searches and rated/reschedule properties
 using Core's revlog cutoffs and ease filters, basic due/position/interval/reps/
 lapses/ease property predicates, FSRS stability, difficulty and retrievability
 property predicates, and custom-data existence and numeric/string property

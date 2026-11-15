@@ -50,20 +50,16 @@ void main() {
       expect(identical(plan.updatedRequest.filters, filters), isTrue);
       expect(currentRequest.query, 'previous query');
       expect(identical(currentRequest.filters, filters), isTrue);
-      expect(
-        plan.directives.map((directive) => directive.runtimeType),
-        [
-          BrowserEmitTagFilterQueryDirective,
-          BrowserUpdateTagFilterSearchRequestDirective,
-          BrowserRequestTagFilterSearchDirective,
-        ],
-      );
+      expect(plan.directives.map((directive) => directive.runtimeType), [
+        BrowserEmitTagFilterQueryDirective,
+        BrowserUpdateTagFilterSearchRequestDirective,
+        BrowserRequestTagFilterSearchDirective,
+      ]);
 
-      final emit =
-          plan.directives[0] as BrowserEmitTagFilterQueryDirective;
+      final emit = plan.directives[0] as BrowserEmitTagFilterQueryDirective;
       expect(emit.query, plan.query);
-      final update = plan.directives[1]
-          as BrowserUpdateTagFilterSearchRequestDirective;
+      final update =
+          plan.directives[1] as BrowserUpdateTagFilterSearchRequestDirective;
       expect(identical(update.request, plan.updatedRequest), isTrue);
       final search =
           plan.directives[2] as BrowserRequestTagFilterSearchDirective;
@@ -72,21 +68,24 @@ void main() {
       expect(search.fromUserSearch, isFalse);
     });
 
-    test('uses the default refresh flags and preserves an empty host string', () {
-      const currentRequest = BrowserSearchRequest(query: 'old query');
+    test(
+      'uses the default refresh flags and preserves an empty host string',
+      () {
+        const currentRequest = BrowserSearchRequest(query: 'old query');
 
-      final plan = planBrowserTagFilterSearch(
-        resolvedSearchString: '',
-        currentRequest: currentRequest,
-      );
+        final plan = planBrowserTagFilterSearch(
+          resolvedSearchString: '',
+          currentRequest: currentRequest,
+        );
 
-      expect(plan.query, '()');
-      expect(plan.directives, hasLength(3));
-      final search =
-          plan.directives.last as BrowserRequestTagFilterSearchDirective;
-      expect(search.forceRefresh, isTrue);
-      expect(search.fromUserSearch, isFalse);
-      expect(search.request, same(plan.updatedRequest));
-    });
+        expect(plan.query, '()');
+        expect(plan.directives, hasLength(3));
+        final search =
+            plan.directives.last as BrowserRequestTagFilterSearchDirective;
+        expect(search.forceRefresh, isTrue);
+        expect(search.fromUserSearch, isFalse);
+        expect(search.request, same(plan.updatedRequest));
+      },
+    );
   });
 }

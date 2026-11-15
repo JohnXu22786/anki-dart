@@ -36,16 +36,18 @@ void main() {
       expect(DeckFilters.create('foo\u00a0bar').accept('foo::bar'), isFalse);
     });
 
-    test('keeps single-colon and double-colon partial path searches distinct',
-        () {
-      final singleColon = DeckFilters.create('u:');
-      final doubleColon = DeckFilters.create('u::');
+    test(
+      'keeps single-colon and double-colon partial path searches distinct',
+      () {
+        final singleColon = DeckFilters.create('u:');
+        final doubleColon = DeckFilters.create('u::');
 
-      expect(singleColon.accept('foo::bar::bu'), isTrue);
-      expect(singleColon.accept('foo::bar::buz'), isFalse);
-      expect(doubleColon.accept('foo::bar::bu'), isFalse);
-      expect(doubleColon.accept('foo::bar::bu::plop'), isTrue);
-    });
+        expect(singleColon.accept('foo::bar::bu'), isTrue);
+        expect(singleColon.accept('foo::bar::buz'), isFalse);
+        expect(doubleColon.accept('foo::bar::bu'), isFalse);
+        expect(doubleColon.accept('foo::bar::bu::plop'), isTrue);
+      },
+    );
 
     test('uses invariant query casing with Turkish deck-name casing', () {
       expect(DeckFilter.containsAtPosition('ı', 1, 'i', 1), isTrue);
@@ -71,40 +73,49 @@ void main() {
 
     test('adds Lithuanian dot above before an acute accent', () {
       expect(
-        DeckFilters.create('i\u0307\u0301', localeName: 'lt_LT')
-            .accept('I\u0301'),
+        DeckFilters.create(
+          'i\u0307\u0301',
+          localeName: 'lt_LT',
+        ).accept('I\u0301'),
         isTrue,
       );
     });
 
     test('adds Lithuanian dot above across lower-class combining marks', () {
       expect(
-        DeckFilters.create('i\u0307\u0327\u0301', localeName: 'lt_LT')
-            .accept('I\u0327\u0301'),
+        DeckFilters.create(
+          'i\u0307\u0327\u0301',
+          localeName: 'lt_LT',
+        ).accept('I\u0327\u0301'),
         isTrue,
       );
     });
 
     test('stops Lithuanian More Above at a class-zero mark', () {
       expect(
-        DeckFilter('i\u0307\u0903\u0301')
-            .deckNameMatchesFilter('I\u0903\u0301', 'lt_LT'),
+        DeckFilter(
+          'i\u0307\u0903\u0301',
+        ).deckNameMatchesFilter('I\u0903\u0301', 'lt_LT'),
         isFalse,
       );
     });
 
     test('removes the Turkish dot after I across lower-class marks', () {
       expect(
-        DeckFilters.create('i\u0327', localeName: 'tr_TR')
-            .accept('I\u0327\u0307'),
+        DeckFilters.create(
+          'i\u0327',
+          localeName: 'tr_TR',
+        ).accept('I\u0327\u0307'),
         isTrue,
       );
     });
 
     test('removes the Lithuanian dot after a soft-dotted letter', () {
       expect(
-        DeckFilters.create('i\u0327', localeName: 'lt_LT')
-            .accept('i\u0327\u0307'),
+        DeckFilters.create(
+          'i\u0327',
+          localeName: 'lt_LT',
+        ).accept('i\u0327\u0307'),
         isTrue,
       );
     });
@@ -148,8 +159,10 @@ void main() {
 
     test('trims Kotlin whitespace without trimming next-line characters', () {
       expect(
-        DeckFilters.create('\u001Cfoo\u001C', localeName: 'en_US')
-            .accept('foo'),
+        DeckFilters.create(
+          '\u001Cfoo\u001C',
+          localeName: 'en_US',
+        ).accept('foo'),
         isTrue,
       );
       expect(
@@ -157,8 +170,10 @@ void main() {
         isFalse,
       );
       expect(
-        DeckFilters.create('foo\u0085', localeName: 'en_US')
-            .accept('foo\u0085'),
+        DeckFilters.create(
+          'foo\u0085',
+          localeName: 'en_US',
+        ).accept('foo\u0085'),
         isTrue,
       );
     });

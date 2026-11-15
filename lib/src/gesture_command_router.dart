@@ -81,10 +81,8 @@ enum ViewerCommand {
 }
 
 /// Executes a command selected for a parsed reviewer gesture.
-typedef GestureCommandExecutor = bool Function(
-  ViewerCommand command,
-  Gesture? fromGesture,
-);
+typedef GestureCommandExecutor =
+    bool Function(ViewerCommand command, Gesture? fromGesture);
 
 /// Routes already-parsed gestures using bindings resolved by the host.
 ///
@@ -129,9 +127,9 @@ class GestureCommandRouter {
     required Map<ViewerCommand, Iterable<Gesture>> bindingsByCommand,
     this.executeCommand,
   }) : _commandsByGesture = _resolveBindings(
-          bindingsByCommand,
-          cornerTouchEnabled: cornerTouchEnabled,
-        );
+         bindingsByCommand,
+         cornerTouchEnabled: cornerTouchEnabled,
+       );
 
   /// Whether callers should consider reviewer gestures enabled.
   ///
@@ -179,8 +177,7 @@ class GestureCommandRouter {
       switch (gesture) {
         Gesture.twoFingerTap ||
         Gesture.threeFingerTap ||
-        Gesture.fourFingerTap =>
-          false,
+        Gesture.fourFingerTap => false,
         _ => true,
       };
 

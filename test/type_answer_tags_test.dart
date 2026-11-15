@@ -33,22 +33,18 @@ void main() {
     });
 
     test('removes all nonoverlapping tags', () {
-      expect(
-        removeTypeAnswerTags('a[[type:Front]]b[[type:Back]]c'),
-        'abc',
-      );
+      expect(removeTypeAnswerTags('a[[type:Front]]b[[type:Back]]c'), 'abc');
     });
 
     test('does not match an empty payload', () {
-      expect(removeTypeAnswerTags('before [[type:]] after'),
-          'before [[type:]] after');
+      expect(
+        removeTypeAnswerTags('before [[type:]] after'),
+        'before [[type:]] after',
+      );
     });
 
     test('an empty opener can extend through a later closing delimiter', () {
-      expect(
-        removeTypeAnswerTags('[[type:]][[type:Back]]'),
-        '',
-      );
+      expect(removeTypeAnswerTags('[[type:]][[type:Back]]'), '');
     });
 
     test('matches the literal prefix with source case sensitivity', () {

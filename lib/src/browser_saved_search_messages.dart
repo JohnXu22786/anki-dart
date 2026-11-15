@@ -44,14 +44,13 @@ typedef BrowserSavedSearchMutationResult = (bool, List<BrowserSavedSearch>);
 BrowserSavedSearchUserMessage browserSavedSearchUserMessageForMutation({
   required BrowserSavedSearchMutationOperation operation,
   required BrowserSavedSearchMutationResult result,
-}) =>
-    switch ((operation, result.$1)) {
-      (BrowserSavedSearchMutationOperation.add, true) =>
-        BrowserSavedSearchUserMessage.SEARCH_SAVED,
-      (BrowserSavedSearchMutationOperation.add, false) =>
-        BrowserSavedSearchUserMessage.SAVED_SEARCH_DUPLICATE_ADDED,
-      (BrowserSavedSearchMutationOperation.delete, true) =>
-        BrowserSavedSearchUserMessage.SAVED_SEARCH_DELETED,
-      (BrowserSavedSearchMutationOperation.delete, false) =>
-        BrowserSavedSearchUserMessage.SAVED_SEARCH_NAME_DOES_NOT_EXIST,
-    };
+}) => switch ((operation, result.$1)) {
+  (BrowserSavedSearchMutationOperation.add, true) =>
+    BrowserSavedSearchUserMessage.SEARCH_SAVED,
+  (BrowserSavedSearchMutationOperation.add, false) =>
+    BrowserSavedSearchUserMessage.SAVED_SEARCH_DUPLICATE_ADDED,
+  (BrowserSavedSearchMutationOperation.delete, true) =>
+    BrowserSavedSearchUserMessage.SAVED_SEARCH_DELETED,
+  (BrowserSavedSearchMutationOperation.delete, false) =>
+    BrowserSavedSearchUserMessage.SAVED_SEARCH_NAME_DOES_NOT_EXIST,
+};

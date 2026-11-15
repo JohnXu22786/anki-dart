@@ -25,10 +25,14 @@ import 'dart:io' show Platform;
 import 'unicode_15_case_data.dart';
 
 String localeLowercase(String value, String localeName) {
-  final effectiveLocaleName =
-      localeName.isEmpty ? Platform.localeName : localeName;
-  final language =
-      effectiveLocaleName.replaceAll('_', '-').split('-').first.toLowerCase();
+  final effectiveLocaleName = localeName.isEmpty
+      ? Platform.localeName
+      : localeName;
+  final language = effectiveLocaleName
+      .replaceAll('_', '-')
+      .split('-')
+      .first
+      .toLowerCase();
   if (language == 'tr' || language == 'az') {
     return _lowercaseTurkic(value);
   }

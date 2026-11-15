@@ -37,9 +37,9 @@ final class PreviewerNavigationModel {
     int initialIndex = 0,
     bool initialShowingAnswer = false,
     bool initialBackSideOnly = false,
-  })  : currentIndex = initialIndex,
-        showingAnswer = initialShowingAnswer,
-        backSideOnly = initialBackSideOnly;
+  }) : currentIndex = initialIndex,
+       showingAnswer = initialShowingAnswer,
+       backSideOnly = initialBackSideOnly;
 
   final int cardsCount;
 

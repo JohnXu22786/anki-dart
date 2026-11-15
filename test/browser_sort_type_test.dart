@@ -104,26 +104,28 @@ void main() {
       );
     });
 
-    test('the global no-sorting flag short-circuits config and maps sort order',
-        () {
-      expect(
-        resolveBrowserSortType(
-          noSorting: true,
-          config: const {'cards.column': 'unknown', 'cards.reverse': true},
-          configKeys: const BrowserSortConfigKeys(
-            columnKey: 'cards.column',
-            reverseKey: 'cards.reverse',
+    test(
+      'the global no-sorting flag short-circuits config and maps sort order',
+      () {
+        expect(
+          resolveBrowserSortType(
+            noSorting: true,
+            config: const {'cards.column': 'unknown', 'cards.reverse': true},
+            configKeys: const BrowserSortConfigKeys(
+              columnKey: 'cards.column',
+              reverseKey: 'cards.reverse',
+            ),
+            availableColumnKeys: const {},
           ),
-          availableColumnKeys: const {},
-        ),
-        isA<BrowserSortNoOrdering>(),
-      );
-      expect(browserSortOrder(noSorting: true), BrowserSortOrder.noOrdering);
-      expect(
-        browserSortOrder(noSorting: false),
-        BrowserSortOrder.useCollectionOrdering,
-      );
-    });
+          isA<BrowserSortNoOrdering>(),
+        );
+        expect(browserSortOrder(noSorting: true), BrowserSortOrder.noOrdering);
+        expect(
+          browserSortOrder(noSorting: false),
+          BrowserSortOrder.useCollectionOrdering,
+        );
+      },
+    );
 
     test('an unknown saved column falls back to no ordering', () {
       expect(
@@ -145,50 +147,43 @@ void main() {
       );
     });
 
-    test('saving collection ordering writes mode keys before clearing no-sort',
-        () {
-      final plan = buildBrowserSortSavePlan(
-        sortType: const BrowserSortCollectionOrdering(
-          key: 'noteTags',
-          reverse: true,
-        ),
-        configKeys: const BrowserSortConfigKeys(
-          columnKey: 'notes.column',
-          reverseKey: 'notes.reverse',
-        ),
-      );
-
-      expect(plan.cardBrowserNoSorting, isFalse);
-      expect(
-        plan.collectionConfigWrites,
-        const [
-          BrowserSortConfigWrite(key: 'notes.column', value: 'noteTags'),
-          BrowserSortConfigWrite(
-            key: 'notes.reverse',
-            value: true,
+    test(
+      'saving collection ordering writes mode keys before clearing no-sort',
+      () {
+        final plan = buildBrowserSortSavePlan(
+          sortType: const BrowserSortCollectionOrdering(
+            key: 'noteTags',
+            reverse: true,
           ),
-        ],
-      );
+          configKeys: const BrowserSortConfigKeys(
+            columnKey: 'notes.column',
+            reverseKey: 'notes.reverse',
+          ),
+        );
 
-      final cardsPlan = buildBrowserSortSavePlan(
-        sortType: const BrowserSortCollectionOrdering(
-          key: 'deck',
-          reverse: false,
-        ),
-        configKeys: const BrowserSortConfigKeys(
-          columnKey: 'cards.column',
-          reverseKey: 'cards.reverse',
-        ),
-      );
-      expect(cardsPlan.cardBrowserNoSorting, isFalse);
-      expect(
-        cardsPlan.collectionConfigWrites,
-        const [
+        expect(plan.cardBrowserNoSorting, isFalse);
+        expect(plan.collectionConfigWrites, const [
+          BrowserSortConfigWrite(key: 'notes.column', value: 'noteTags'),
+          BrowserSortConfigWrite(key: 'notes.reverse', value: true),
+        ]);
+
+        final cardsPlan = buildBrowserSortSavePlan(
+          sortType: const BrowserSortCollectionOrdering(
+            key: 'deck',
+            reverse: false,
+          ),
+          configKeys: const BrowserSortConfigKeys(
+            columnKey: 'cards.column',
+            reverseKey: 'cards.reverse',
+          ),
+        );
+        expect(cardsPlan.cardBrowserNoSorting, isFalse);
+        expect(cardsPlan.collectionConfigWrites, const [
           BrowserSortConfigWrite(key: 'cards.column', value: 'deck'),
           BrowserSortConfigWrite(key: 'cards.reverse', value: false),
-        ],
-      );
-    });
+        ]);
+      },
+    );
 
     test('saving no ordering only sets the shared no-sort flag', () {
       const plan = BrowserSortSavePlan.noOrdering();
@@ -200,10 +195,7 @@ void main() {
       expect(
         resolveBrowserSortType(
           noSorting: plan.cardBrowserNoSorting,
-          config: const {
-            'cards.column': 'deck',
-            'cards.reverse': false,
-          },
+          config: const {'cards.column': 'deck', 'cards.reverse': false},
           configKeys: const BrowserSortConfigKeys(
             columnKey: 'cards.column',
             reverseKey: 'cards.reverse',

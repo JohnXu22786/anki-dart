@@ -38,9 +38,9 @@ enum QuestionAction implements AutoAdvanceAction {
 
   /// Decodes the pinned integer code, falling back to `SHOW_ANSWER`.
   static QuestionAction fromCode(int code) => values.firstWhere(
-        (action) => action.code == code,
-        orElse: () => QuestionAction.showAnswer,
-      );
+    (action) => action.code == code,
+    orElse: () => QuestionAction.showAnswer,
+  );
 }
 
 /// An action that can run after the answer side is shown.
@@ -57,9 +57,9 @@ enum AnswerAction implements AutoAdvanceAction {
 
   /// Decodes the pinned integer code, falling back to `BURY_CARD`.
   static AnswerAction fromCode(int code) => values.firstWhere(
-        (action) => action.code == code,
-        orElse: () => AnswerAction.buryCard,
-      );
+    (action) => action.code == code,
+    orElse: () => AnswerAction.buryCard,
+  );
 }
 
 /// The already-resolved Auto Advance values for the current card's deck.
@@ -92,12 +92,12 @@ class AutoAdvanceSettings {
 
   @override
   int get hashCode => Object.hash(
-        questionAction,
-        answerAction,
-        durationToShowQuestionFor,
-        durationToShowAnswerFor,
-        waitForAudio,
-      );
+    questionAction,
+    answerAction,
+    durationToShowQuestionFor,
+    durationToShowAnswerFor,
+    waitForAudio,
+  );
 }
 
 /// Loads settings for the deck containing [card].
@@ -145,10 +145,11 @@ class AutoAdvanceCancellation {
 
 /// A suspended listener receives an action and its cancellable execution
 /// context.
-typedef AutoAdvanceActionListener = FutureOr<void> Function(
-  AutoAdvanceAction action,
-  AutoAdvanceCancellation cancellation,
-);
+typedef AutoAdvanceActionListener =
+    FutureOr<void> Function(
+      AutoAdvanceAction action,
+      AutoAdvanceCancellation cancellation,
+    );
 
 /// The reviewer Auto Advance timer and deck-settings lifecycle.
 ///
@@ -163,12 +164,12 @@ class AutoAdvance<TCard> {
     required AutoAdvanceSettingsAdapter<TCard> settingsAdapter,
     required AutoAdvanceActionListener listener,
     AutoAdvanceScheduler? scheduler,
-  })  : _settingsAdapter = settingsAdapter,
-        _listener = listener,
-        _scheduler = scheduler ?? const _TimerAutoAdvanceScheduler(),
-        _settings = Future<AutoAdvanceSettings>.sync(
-          () => settingsAdapter.loadForCard(initialCard),
-        );
+  }) : _settingsAdapter = settingsAdapter,
+       _listener = listener,
+       _scheduler = scheduler ?? const _TimerAutoAdvanceScheduler(),
+       _settings = Future<AutoAdvanceSettings>.sync(
+         () => settingsAdapter.loadForCard(initialCard),
+       );
 
   final AutoAdvanceSettingsAdapter<TCard> _settingsAdapter;
   final AutoAdvanceActionListener _listener;

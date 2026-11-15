@@ -112,17 +112,16 @@ void main() {
     test('source result value has structural equality and hash', () {
       const plan = BrowserBulkBuryPlan(wasBuried: true, count: 2);
 
-      expect(
-        plan,
-        const BrowserBulkBuryPlan(wasBuried: true, count: 2),
-      );
+      expect(plan, const BrowserBulkBuryPlan(wasBuried: true, count: 2));
       expect(
         plan.hashCode,
         const BrowserBulkBuryPlan(wasBuried: true, count: 2).hashCode,
       );
       expect(plan, isNot(const BrowserBulkBuryPlan(wasBuried: true, count: 3)));
       expect(
-          plan, isNot(const BrowserBulkBuryPlan(wasBuried: false, count: 2)));
+        plan,
+        isNot(const BrowserBulkBuryPlan(wasBuried: false, count: 2)),
+      );
     });
   });
 }

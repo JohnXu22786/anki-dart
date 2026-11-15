@@ -67,13 +67,13 @@ final class BrowserSearchHistoryEntry {
 
   @override
   int get hashCode => Object.hash(
-        query,
-        Object.hashAll(deckIds),
-        Object.hashAll(flags),
-        Object.hashAll(tags),
-        Object.hashAll(noteTypeIds),
-        Object.hashAll(cardStateCodes),
-      );
+    query,
+    Object.hashAll(deckIds),
+    Object.hashAll(flags),
+    Object.hashAll(tags),
+    Object.hashAll(noteTypeIds),
+    Object.hashAll(cardStateCodes),
+  );
 }
 
 /// Headless Card Browser history ordering and eviction behavior.
@@ -98,9 +98,7 @@ final class BrowserSearchHistoryModel {
   ///
   /// A blank query without filters is skipped. As in the source, a negative
   /// [maxEntries] fails only when a non-empty search reaches the truncation.
-  List<BrowserSearchHistoryEntry> addRecent(
-    BrowserSearchHistoryEntry entry,
-  ) {
+  List<BrowserSearchHistoryEntry> addRecent(BrowserSearchHistoryEntry entry) {
     final updatedEntries = List<BrowserSearchHistoryEntry>.of(_entries);
     if (entry.isSearchEmpty) return List.unmodifiable(updatedEntries);
 

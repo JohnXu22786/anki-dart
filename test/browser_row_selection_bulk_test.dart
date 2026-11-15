@@ -62,42 +62,47 @@ void main() {
         availableRows: const [
           BrowserRowId(20),
           BrowserRowId(10),
-          BrowserRowId(20)
+          BrowserRowId(20),
         ],
         isInMultiSelectMode: true,
       );
 
       expect(transition.changed, isFalse);
-      expect(
-          transition.selectedRows, const [BrowserRowId(10), BrowserRowId(20)]);
+      expect(transition.selectedRows, const [
+        BrowserRowId(10),
+        BrowserRowId(20),
+      ]);
       expect(transition.isInMultiSelectMode, isTrue);
       expect(transition.effects, isEmpty);
     });
   });
 
   group('planBrowserSelectNone', () {
-    test('snapshots selection, clears rows, and refreshes without ending mode',
-        () {
-      final transition = planBrowserSelectNone(
-        selectedRows: const [
+    test(
+      'snapshots selection, clears rows, and refreshes without ending mode',
+      () {
+        final transition = planBrowserSelectNone(
+          selectedRows: const [
+            BrowserRowId(30),
+            BrowserRowId(10),
+            BrowserRowId(20),
+          ],
+          isInMultiSelectMode: true,
+        );
+
+        expect(transition.changed, isTrue);
+        expect(transition.previouslySelectedRows, const [
           BrowserRowId(30),
           BrowserRowId(10),
           BrowserRowId(20),
-        ],
-        isInMultiSelectMode: true,
-      );
-
-      expect(transition.changed, isTrue);
-      expect(transition.previouslySelectedRows, const [
-        BrowserRowId(30),
-        BrowserRowId(10),
-        BrowserRowId(20),
-      ]);
-      expect(transition.selectedRows, isEmpty);
-      expect(transition.isInMultiSelectMode, isTrue);
-      expect(
-          transition.effects, [BrowserBulkSelectionEffect.refreshSelectedRows]);
-    });
+        ]);
+        expect(transition.selectedRows, isEmpty);
+        expect(transition.isInMultiSelectMode, isTrue);
+        expect(transition.effects, [
+          BrowserBulkSelectionEffect.refreshSelectedRows,
+        ]);
+      },
+    );
 
     test('does nothing when selection is already empty', () {
       final transition = planBrowserSelectNone(
@@ -158,8 +163,10 @@ void main() {
         isInMultiSelectMode: false,
       );
 
-      expect(
-          transition.selectedRows, const [BrowserRowId(10), BrowserRowId(20)]);
+      expect(transition.selectedRows, const [
+        BrowserRowId(10),
+        BrowserRowId(20),
+      ]);
       expect(transition.effects, [
         BrowserBulkSelectionEffect.emitMultiSelectOther,
         BrowserBulkSelectionEffect.refreshSelectedRows,
@@ -173,7 +180,7 @@ void main() {
         availableRows: const [
           BrowserRowId(10),
           BrowserRowId(20),
-          BrowserRowId(30)
+          BrowserRowId(30),
         ],
         isInMultiSelectMode: true,
       );
@@ -184,8 +191,9 @@ void main() {
         BrowserRowId(20),
       ]);
       expect(transition.isInMultiSelectMode, isTrue);
-      expect(
-          transition.effects, [BrowserBulkSelectionEffect.refreshSelectedRows]);
+      expect(transition.effects, [
+        BrowserBulkSelectionEffect.refreshSelectedRows,
+      ]);
     });
   });
 }

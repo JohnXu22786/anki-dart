@@ -51,46 +51,56 @@ void main() {
       expect(projection.showHistoryToggle, isFalse);
     });
 
-    test('six collapsed items show five and the toggle uses full history size',
-        () {
-      final allItems = _loadedItems(6);
-      final projection = BrowserSearchHistoryDisplayModel().project(allItems);
+    test(
+      'six collapsed items show five and the toggle uses full history size',
+      () {
+        final allItems = _loadedItems(6);
+        final projection = BrowserSearchHistoryDisplayModel().project(allItems);
 
-      expect(projection.items.entryToSearchString, hasLength(5));
-      expect(projection.items.entryToSearchString,
-          allItems.entryToSearchString.take(5));
-      expect(projection.showHistoryToggle, isTrue);
-    });
+        expect(projection.items.entryToSearchString, hasLength(5));
+        expect(
+          projection.items.entryToSearchString,
+          allItems.entryToSearchString.take(5),
+        );
+        expect(projection.showHistoryToggle, isTrue);
+      },
+    );
 
     test('expansion shows all entries and collapse preserves source order', () {
       final model = BrowserSearchHistoryDisplayModel();
       final items = _loadedItems(8);
 
       model.toggleHistoryExpanded();
-      expect(model.project(items).items.entryToSearchString,
-          items.entryToSearchString);
+      expect(
+        model.project(items).items.entryToSearchString,
+        items.entryToSearchString,
+      );
 
       model.toggleHistoryExpanded();
-      expect(model.project(items).items.entryToSearchString,
-          items.entryToSearchString.take(5));
-    });
-
-    test('truncating Loading preserves its shape and null search-string pairs',
-        () {
-      final entries = _entries(6);
-      final loading = BrowserSearchHistoryLoading(entries);
-
-      expect(loading.isNotEmpty(), isTrue);
-      final projection = BrowserSearchHistoryDisplayModel().project(loading);
-
-      expect(projection.items, isA<BrowserSearchHistoryLoading>());
-      final visible = projection.items as BrowserSearchHistoryLoading;
-      expect(visible.input, entries.take(5));
       expect(
-        visible.entryToSearchString,
-        entries.take(5).map((entry) => (entry: entry, searchString: null)),
+        model.project(items).items.entryToSearchString,
+        items.entryToSearchString.take(5),
       );
     });
+
+    test(
+      'truncating Loading preserves its shape and null search-string pairs',
+      () {
+        final entries = _entries(6);
+        final loading = BrowserSearchHistoryLoading(entries);
+
+        expect(loading.isNotEmpty(), isTrue);
+        final projection = BrowserSearchHistoryDisplayModel().project(loading);
+
+        expect(projection.items, isA<BrowserSearchHistoryLoading>());
+        final visible = projection.items as BrowserSearchHistoryLoading;
+        expect(visible.input, entries.take(5));
+        expect(
+          visible.entryToSearchString,
+          entries.take(5).map((entry) => (entry: entry, searchString: null)),
+        );
+      },
+    );
 
     test('Loading captures entry pairs when it is constructed', () {
       final entries = _entries(1);
@@ -132,7 +142,7 @@ void main() {
         for (final entry in _entries(6))
           (
             entry: entry,
-            searchString: entry.query == 'search 2' ? null : 's:${entry.query}'
+            searchString: entry.query == 'search 2' ? null : 's:${entry.query}',
           ),
       ]);
 
@@ -153,9 +163,9 @@ void main() {
 }
 
 List<BrowserSearchHistoryEntry> _entries(int count) => [
-      for (var index = 0; index < count; index++)
-        BrowserSearchHistoryEntry(query: 'search $index'),
-    ];
+  for (var index = 0; index < count; index++)
+    BrowserSearchHistoryEntry(query: 'search $index'),
+];
 
 BrowserSearchHistoryLoaded _loadedItems(int count) =>
     BrowserSearchHistoryLoaded([

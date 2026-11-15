@@ -49,97 +49,113 @@ void main() {
       expect(state.limitMs, 5000);
     });
 
-    test('state stream replays the current state and emits transitions',
-        () async {
-      final clock = _FakeClock(1000);
-      final timer = AnswerTimer(elapsedRealtime: clock.read)
-        ..configureForCard(shouldShow: true, limitMs: 5000);
+    test(
+      'state stream replays the current state and emits transitions',
+      () async {
+        final clock = _FakeClock(1000);
+        final timer = AnswerTimer(elapsedRealtime: clock.read)
+          ..configureForCard(shouldShow: true, limitMs: 5000);
 
-      final states = StreamIterator<AnswerTimerState>(timer.stateStream);
-      expect(await states.moveNext(), isTrue);
-      expect(states.current,
-          const AnswerTimerRunning(baseTime: 1000, limitMs: 5000));
-      clock.now = 2000;
-      timer.onPause();
-      expect(await states.moveNext(), isTrue);
-      expect(states.current,
-          const AnswerTimerPaused(elapsedTimeMs: 1000, limitMs: 5000));
-      clock.now = 4000;
-      timer.onResume();
-      expect(await states.moveNext(), isTrue);
-      expect(states.current,
-          const AnswerTimerRunning(baseTime: 3000, limitMs: 5000));
-      timer.hide();
-      expect(await states.moveNext(), isTrue);
-      expect(states.current, const AnswerTimerHidden());
-      await states.cancel();
-    });
+        final states = StreamIterator<AnswerTimerState>(timer.stateStream);
+        expect(await states.moveNext(), isTrue);
+        expect(
+          states.current,
+          const AnswerTimerRunning(baseTime: 1000, limitMs: 5000),
+        );
+        clock.now = 2000;
+        timer.onPause();
+        expect(await states.moveNext(), isTrue);
+        expect(
+          states.current,
+          const AnswerTimerPaused(elapsedTimeMs: 1000, limitMs: 5000),
+        );
+        clock.now = 4000;
+        timer.onResume();
+        expect(await states.moveNext(), isTrue);
+        expect(
+          states.current,
+          const AnswerTimerRunning(baseTime: 3000, limitMs: 5000),
+        );
+        timer.hide();
+        expect(await states.moveNext(), isTrue);
+        expect(states.current, const AnswerTimerHidden());
+        await states.cancel();
+      },
+    );
 
-    test('state stream conflates rapid pending transitions to the latest',
-        () async {
-      final clock = _FakeClock(1000);
-      final timer = AnswerTimer(elapsedRealtime: clock.read)
-        ..configureForCard(shouldShow: true, limitMs: 5000);
-      final states = StreamIterator<AnswerTimerState>(timer.stateStream);
+    test(
+      'state stream conflates rapid pending transitions to the latest',
+      () async {
+        final clock = _FakeClock(1000);
+        final timer = AnswerTimer(elapsedRealtime: clock.read)
+          ..configureForCard(shouldShow: true, limitMs: 5000);
+        final states = StreamIterator<AnswerTimerState>(timer.stateStream);
 
-      expect(await states.moveNext(), isTrue);
-      expect(states.current,
-          const AnswerTimerRunning(baseTime: 1000, limitMs: 5000));
-      clock.now = 2000;
-      timer.onPause();
-      clock.now = 3000;
-      timer.onResume();
-      timer.hide();
-      expect(await states.moveNext(), isTrue);
-      expect(states.current, const AnswerTimerHidden());
-      await states.cancel();
-    });
+        expect(await states.moveNext(), isTrue);
+        expect(
+          states.current,
+          const AnswerTimerRunning(baseTime: 1000, limitMs: 5000),
+        );
+        clock.now = 2000;
+        timer.onPause();
+        clock.now = 3000;
+        timer.onResume();
+        timer.hide();
+        expect(await states.moveNext(), isTrue);
+        expect(states.current, const AnswerTimerHidden());
+        await states.cancel();
+      },
+    );
 
-    test('state stream replays the latest value if replay is still pending',
-        () async {
-      final clock = _FakeClock(1000);
-      final timer = AnswerTimer(elapsedRealtime: clock.read)
-        ..configureForCard(shouldShow: true, limitMs: 5000);
-      final states = <AnswerTimerState>[];
-      final subscription = timer.stateStream.listen(states.add);
+    test(
+      'state stream replays the latest value if replay is still pending',
+      () async {
+        final clock = _FakeClock(1000);
+        final timer = AnswerTimer(elapsedRealtime: clock.read)
+          ..configureForCard(shouldShow: true, limitMs: 5000);
+        final states = <AnswerTimerState>[];
+        final subscription = timer.stateStream.listen(states.add);
 
-      scheduleMicrotask(timer.hide);
-      await Future<void>.delayed(Duration.zero);
+        scheduleMicrotask(timer.hide);
+        await Future<void>.delayed(Duration.zero);
 
-      expect(states, const <AnswerTimerState>[AnswerTimerHidden()]);
-      await subscription.cancel();
-    });
+        expect(states, const <AnswerTimerState>[AnswerTimerHidden()]);
+        await subscription.cancel();
+      },
+    );
 
-    test('state stream reads the latest state when replay is delivered',
-        () async {
-      final clock = _FakeClock(1000);
-      final timer = AnswerTimer(elapsedRealtime: clock.read)
-        ..configureForCard(shouldShow: true, limitMs: 5000);
-      final states = <AnswerTimerState>[];
-      var replacePendingReplay = false;
-      late StreamSubscription<AnswerTimerState> subscription;
+    test(
+      'state stream reads the latest state when replay is delivered',
+      () async {
+        final clock = _FakeClock(1000);
+        final timer = AnswerTimer(elapsedRealtime: clock.read)
+          ..configureForCard(shouldShow: true, limitMs: 5000);
+        final states = <AnswerTimerState>[];
+        var replacePendingReplay = false;
+        late StreamSubscription<AnswerTimerState> subscription;
 
-      await runZoned(
-        () async {
-          subscription = timer.stateStream.listen(states.add);
-          replacePendingReplay = true;
-          await Future<void>.delayed(const Duration(milliseconds: 10));
-          expect(states, const <AnswerTimerState>[AnswerTimerHidden()]);
-          await subscription.cancel();
-        },
-        zoneSpecification: ZoneSpecification(
-          scheduleMicrotask: (self, parent, zone, callback) {
-            parent.scheduleMicrotask(zone, () {
-              if (replacePendingReplay) {
-                replacePendingReplay = false;
-                timer.hide();
-              }
-              callback();
-            });
+        await runZoned(
+          () async {
+            subscription = timer.stateStream.listen(states.add);
+            replacePendingReplay = true;
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+            expect(states, const <AnswerTimerState>[AnswerTimerHidden()]);
+            await subscription.cancel();
           },
-        ),
-      );
-    });
+          zoneSpecification: ZoneSpecification(
+            scheduleMicrotask: (self, parent, zone, callback) {
+              parent.scheduleMicrotask(zone, () {
+                if (replacePendingReplay) {
+                  replacePendingReplay = false;
+                  timer.hide();
+                }
+                callback();
+              });
+            },
+          ),
+        );
+      },
+    );
 
     test('stopping a running timer records elapsed time and caps at limit', () {
       final clock = _FakeClock(1000);
@@ -207,34 +223,36 @@ void main() {
       expect(state.limitMs, 10000);
     });
 
-    test('hide forces Hidden and nonmatching transitions leave state intact',
-        () {
-      final clock = _FakeClock(1000);
-      final timer = AnswerTimer(elapsedRealtime: clock.read);
+    test(
+      'hide forces Hidden and nonmatching transitions leave state intact',
+      () {
+        final clock = _FakeClock(1000);
+        final timer = AnswerTimer(elapsedRealtime: clock.read);
 
-      timer.onPause();
-      timer.onResume();
-      timer.stop();
-      expect(timer.state, isA<AnswerTimerHidden>());
+        timer.onPause();
+        timer.onResume();
+        timer.stop();
+        expect(timer.state, isA<AnswerTimerHidden>());
 
-      timer.configureForCard(shouldShow: true, limitMs: 10000);
-      final running = timer.state;
-      timer.onResume();
-      expect(timer.state, same(running));
+        timer.configureForCard(shouldShow: true, limitMs: 10000);
+        final running = timer.state;
+        timer.onResume();
+        expect(timer.state, same(running));
 
-      timer.hide();
-      expect(timer.state, isA<AnswerTimerHidden>());
-      timer.onPause();
-      expect(timer.state, isA<AnswerTimerHidden>());
+        timer.hide();
+        expect(timer.state, isA<AnswerTimerHidden>());
+        timer.onPause();
+        expect(timer.state, isA<AnswerTimerHidden>());
 
-      timer.configureForCard(shouldShow: true, limitMs: 10000);
-      timer.stop();
-      final stopped = timer.state;
-      timer.stop();
-      timer.onPause();
-      timer.onResume();
-      expect(timer.state, same(stopped));
-    });
+        timer.configureForCard(shouldShow: true, limitMs: 10000);
+        timer.stop();
+        final stopped = timer.state;
+        timer.stop();
+        timer.onPause();
+        timer.onResume();
+        expect(timer.state, same(stopped));
+      },
+    );
 
     test('negative elapsed deltas are not lower-clamped', () {
       final clock = _FakeClock(100);
@@ -249,25 +267,27 @@ void main() {
       expect(state.limitMs, 1000);
     });
 
-    test('zero and negative limits use the source upper clamp and comparison',
-        () {
-      final clock = _FakeClock(100);
-      final timer = AnswerTimer(elapsedRealtime: clock.read)
-        ..configureForCard(shouldShow: true, limitMs: 0);
+    test(
+      'zero and negative limits use the source upper clamp and comparison',
+      () {
+        final clock = _FakeClock(100);
+        final timer = AnswerTimer(elapsedRealtime: clock.read)
+          ..configureForCard(shouldShow: true, limitMs: 0);
 
-      clock.now = 110;
-      timer.onPause();
-      expect((timer.state as AnswerTimerPaused).elapsedTimeMs, 0);
-      timer.onResume();
-      expect(timer.state, isA<AnswerTimerStopped>());
+        clock.now = 110;
+        timer.onPause();
+        expect((timer.state as AnswerTimerPaused).elapsedTimeMs, 0);
+        timer.onResume();
+        expect(timer.state, isA<AnswerTimerStopped>());
 
-      timer.configureForCard(shouldShow: true, limitMs: -5);
-      clock.now = 110;
-      timer.stop();
-      final state = timer.state as AnswerTimerStopped;
-      expect(state.elapsedTimeMs, -5);
-      expect(state.limitMs, -5);
-    });
+        timer.configureForCard(shouldShow: true, limitMs: -5);
+        clock.now = 110;
+        timer.stop();
+        final state = timer.state as AnswerTimerStopped;
+        expect(state.elapsedTimeMs, -5);
+        expect(state.limitMs, -5);
+      },
+    );
   });
 }
 

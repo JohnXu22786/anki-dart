@@ -56,19 +56,13 @@ void main() {
     });
 
     test('decodes the pinned integer codes and fallback actions', () {
-      expect(
-        QuestionAction.values.map((action) => action.code),
-        [0, 1],
-      );
+      expect(QuestionAction.values.map((action) => action.code), [0, 1]);
       expect(QuestionAction.fromCode(0), QuestionAction.showAnswer);
       expect(QuestionAction.fromCode(1), QuestionAction.showReminder);
       expect(QuestionAction.fromCode(-1), QuestionAction.showAnswer);
       expect(QuestionAction.fromCode(99), QuestionAction.showAnswer);
 
-      expect(
-        AnswerAction.values.map((action) => action.code),
-        [0, 1, 2, 3, 4],
-      );
+      expect(AnswerAction.values.map((action) => action.code), [0, 1, 2, 3, 4]);
       expect(AnswerAction.fromCode(0), AnswerAction.buryCard);
       expect(AnswerAction.fromCode(1), AnswerAction.answerAgain);
       expect(AnswerAction.fromCode(2), AnswerAction.answerGood);
@@ -78,67 +72,71 @@ void main() {
       expect(AnswerAction.fromCode(99), AnswerAction.buryCard);
     });
 
-    test('waits the configured question and answer delays before dispatch',
-        () async {
-      final delay = _FakeDelay();
-      final actions = <AutoAdvanceAction>[];
-      final settings = _settings(
-        questionAction: QuestionAction.showReminder,
-        answerAction: AnswerAction.answerHard,
-        questionDelay: const Duration(seconds: 2),
-        answerDelay: const Duration(seconds: 3),
-      );
-      final autoAdvance = _autoAdvance(
-        settingsByDeck: {1: settings},
-        scheduler: delay,
-        actions: actions,
-      )..isEnabled = true;
+    test(
+      'waits the configured question and answer delays before dispatch',
+      () async {
+        final delay = _FakeDelay();
+        final actions = <AutoAdvanceAction>[];
+        final settings = _settings(
+          questionAction: QuestionAction.showReminder,
+          answerAction: AnswerAction.answerHard,
+          questionDelay: const Duration(seconds: 2),
+          answerDelay: const Duration(seconds: 3),
+        );
+        final autoAdvance = _autoAdvance(
+          settingsByDeck: {1: settings},
+          scheduler: delay,
+          actions: actions,
+        )..isEnabled = true;
 
-      await autoAdvance.onShowQuestion();
-      await delay.flush();
-      await delay.advanceBy(const Duration(seconds: 1));
-      expect(actions, isEmpty);
-      await delay.advanceBy(const Duration(seconds: 1));
-      expect(actions, [QuestionAction.showReminder]);
+        await autoAdvance.onShowQuestion();
+        await delay.flush();
+        await delay.advanceBy(const Duration(seconds: 1));
+        expect(actions, isEmpty);
+        await delay.advanceBy(const Duration(seconds: 1));
+        expect(actions, [QuestionAction.showReminder]);
 
-      await autoAdvance.onShowAnswer();
-      await delay.flush();
-      await delay.advanceBy(const Duration(seconds: 2));
-      expect(actions, [QuestionAction.showReminder]);
-      await delay.advanceBy(const Duration(seconds: 1));
-      expect(actions, [QuestionAction.showReminder, AnswerAction.answerHard]);
-    });
+        await autoAdvance.onShowAnswer();
+        await delay.flush();
+        await delay.advanceBy(const Duration(seconds: 2));
+        expect(actions, [QuestionAction.showReminder]);
+        await delay.advanceBy(const Duration(seconds: 1));
+        expect(actions, [QuestionAction.showReminder, AnswerAction.answerHard]);
+      },
+    );
 
-    test('disabled events and nonpositive durations do not schedule actions',
-        () async {
-      final delay = _FakeDelay();
-      final actions = <AutoAdvanceAction>[];
-      final autoAdvance = _autoAdvance(
-        settingsByDeck: {
-          1: _settings(
-            questionDelay: const Duration(seconds: 2),
-            answerDelay: Duration.zero,
-          ),
-          2: _settings(
-            questionDelay: const Duration(seconds: -1),
-            answerDelay: const Duration(seconds: 1),
-          ),
-        },
-        scheduler: delay,
-        actions: actions,
-      );
+    test(
+      'disabled events and nonpositive durations do not schedule actions',
+      () async {
+        final delay = _FakeDelay();
+        final actions = <AutoAdvanceAction>[];
+        final autoAdvance = _autoAdvance(
+          settingsByDeck: {
+            1: _settings(
+              questionDelay: const Duration(seconds: 2),
+              answerDelay: Duration.zero,
+            ),
+            2: _settings(
+              questionDelay: const Duration(seconds: -1),
+              answerDelay: const Duration(seconds: 1),
+            ),
+          },
+          scheduler: delay,
+          actions: actions,
+        );
 
-      await autoAdvance.onShowQuestion();
-      autoAdvance.isEnabled = true;
-      await autoAdvance.onShowAnswer();
-      await delay.advanceBy(const Duration(seconds: 5));
-      expect(actions, isEmpty);
+        await autoAdvance.onShowQuestion();
+        autoAdvance.isEnabled = true;
+        await autoAdvance.onShowAnswer();
+        await delay.advanceBy(const Duration(seconds: 5));
+        expect(actions, isEmpty);
 
-      autoAdvance.onCardChange(const _Card(2));
-      await autoAdvance.onShowQuestion();
-      await delay.advanceBy(const Duration(seconds: 5));
-      expect(actions, isEmpty);
-    });
+        autoAdvance.onCardChange(const _Card(2));
+        await autoAdvance.onShowQuestion();
+        await delay.advanceBy(const Duration(seconds: 5));
+        expect(actions, isEmpty);
+      },
+    );
 
     test('disabling cancels the pending question timer', () async {
       final delay = _FakeDelay();
@@ -187,127 +185,135 @@ void main() {
       expect(actions, [AnswerAction.answerGood]);
     });
 
-    test('card changes cancel the current timer and reload deck settings',
-        () async {
-      final delay = _FakeDelay();
-      final actions = <AutoAdvanceAction>[];
-      final adapter = _FakeSettingsAdapter({
-        1: _settings(
-          questionAction: QuestionAction.showAnswer,
-          questionDelay: const Duration(seconds: 1),
-          waitForAudio: false,
-        ),
-        2: _settings(
-          questionAction: QuestionAction.showReminder,
-          questionDelay: const Duration(seconds: 2),
-          waitForAudio: true,
-        ),
-      });
-      final autoAdvance = AutoAdvance<_Card>(
-        initialCard: const _Card(1),
-        settingsAdapter: adapter,
-        listener: (action, _) => actions.add(action),
-        scheduler: delay,
-      )..isEnabled = true;
-
-      expect(await autoAdvance.shouldWaitForAudio(), isFalse);
-      await autoAdvance.onShowQuestion();
-      await delay.flush();
-      autoAdvance.onCardChange(const _Card(2));
-      expect(await autoAdvance.shouldWaitForAudio(), isTrue);
-      await delay.advanceBy(const Duration(seconds: 1));
-      expect(actions, isEmpty);
-
-      await autoAdvance.onShowQuestion();
-      await delay.flush();
-      await delay.advanceBy(const Duration(seconds: 2));
-
-      expect(adapter.loadedDecks, [1, 2]);
-      expect(actions, [QuestionAction.showReminder]);
-    });
-
-    test('disabling signals cancellation to a suspended question listener',
-        () async {
-      final delay = _FakeDelay();
-      final listenerStarted = Completer<void>();
-      final listenerCancelled = Completer<void>();
-      final autoAdvance = AutoAdvance<_Card>(
-        initialCard: const _Card(1),
-        settingsAdapter: _FakeSettingsAdapter({
-          1: _settings(questionDelay: const Duration(seconds: 1)),
-        }),
-        listener: (action, cancellation) async {
-          listenerStarted.complete();
-          await cancellation.whenCancelled;
-          listenerCancelled.complete();
-        },
-        scheduler: delay,
-      )..isEnabled = true;
-
-      await autoAdvance.onShowQuestion();
-      await delay.flush();
-      await delay.advanceBy(const Duration(seconds: 1));
-      await listenerStarted.future;
-
-      autoAdvance.isEnabled = false;
-      await listenerCancelled.future;
-    });
-
-    test('card changes signal cancellation to a suspended answer listener',
-        () async {
-      final delay = _FakeDelay();
-      final listenerStarted = Completer<void>();
-      final listenerCancelled = Completer<void>();
-      final autoAdvance = AutoAdvance<_Card>(
-        initialCard: const _Card(1),
-        settingsAdapter: _FakeSettingsAdapter({
-          1: _settings(answerDelay: const Duration(seconds: 1)),
-          2: _settings(),
-        }),
-        listener: (action, cancellation) async {
-          listenerStarted.complete();
-          await cancellation.whenCancelled;
-          listenerCancelled.complete();
-        },
-        scheduler: delay,
-      )..isEnabled = true;
-
-      await autoAdvance.onShowAnswer();
-      await delay.flush();
-      await delay.advanceBy(const Duration(seconds: 1));
-      await listenerStarted.future;
-
-      autoAdvance.onCardChange(const _Card(2));
-      await listenerCancelled.future;
-    });
-
-    test('a repeated same-side event leaves the older timer untracked',
-        () async {
-      final delay = _FakeDelay();
-      final actions = <AutoAdvanceAction>[];
-      final autoAdvance = _autoAdvance(
-        settingsByDeck: {
+    test(
+      'card changes cancel the current timer and reload deck settings',
+      () async {
+        final delay = _FakeDelay();
+        final actions = <AutoAdvanceAction>[];
+        final adapter = _FakeSettingsAdapter({
           1: _settings(
-            questionAction: QuestionAction.showReminder,
-            questionDelay: const Duration(seconds: 3),
+            questionAction: QuestionAction.showAnswer,
+            questionDelay: const Duration(seconds: 1),
+            waitForAudio: false,
           ),
-        },
-        scheduler: delay,
-        actions: actions,
-      )..isEnabled = true;
+          2: _settings(
+            questionAction: QuestionAction.showReminder,
+            questionDelay: const Duration(seconds: 2),
+            waitForAudio: true,
+          ),
+        });
+        final autoAdvance = AutoAdvance<_Card>(
+          initialCard: const _Card(1),
+          settingsAdapter: adapter,
+          listener: (action, _) => actions.add(action),
+          scheduler: delay,
+        )..isEnabled = true;
 
-      await autoAdvance.onShowQuestion();
-      await delay.flush();
-      await delay.advanceBy(const Duration(seconds: 1));
-      await autoAdvance.onShowQuestion();
-      await delay.flush();
-      autoAdvance.isEnabled = false;
+        expect(await autoAdvance.shouldWaitForAudio(), isFalse);
+        await autoAdvance.onShowQuestion();
+        await delay.flush();
+        autoAdvance.onCardChange(const _Card(2));
+        expect(await autoAdvance.shouldWaitForAudio(), isTrue);
+        await delay.advanceBy(const Duration(seconds: 1));
+        expect(actions, isEmpty);
 
-      await delay.advanceBy(const Duration(seconds: 2));
-      expect(actions, [QuestionAction.showReminder]);
-      await delay.advanceBy(const Duration(seconds: 1));
-      expect(actions, [QuestionAction.showReminder]);
-    });
+        await autoAdvance.onShowQuestion();
+        await delay.flush();
+        await delay.advanceBy(const Duration(seconds: 2));
+
+        expect(adapter.loadedDecks, [1, 2]);
+        expect(actions, [QuestionAction.showReminder]);
+      },
+    );
+
+    test(
+      'disabling signals cancellation to a suspended question listener',
+      () async {
+        final delay = _FakeDelay();
+        final listenerStarted = Completer<void>();
+        final listenerCancelled = Completer<void>();
+        final autoAdvance = AutoAdvance<_Card>(
+          initialCard: const _Card(1),
+          settingsAdapter: _FakeSettingsAdapter({
+            1: _settings(questionDelay: const Duration(seconds: 1)),
+          }),
+          listener: (action, cancellation) async {
+            listenerStarted.complete();
+            await cancellation.whenCancelled;
+            listenerCancelled.complete();
+          },
+          scheduler: delay,
+        )..isEnabled = true;
+
+        await autoAdvance.onShowQuestion();
+        await delay.flush();
+        await delay.advanceBy(const Duration(seconds: 1));
+        await listenerStarted.future;
+
+        autoAdvance.isEnabled = false;
+        await listenerCancelled.future;
+      },
+    );
+
+    test(
+      'card changes signal cancellation to a suspended answer listener',
+      () async {
+        final delay = _FakeDelay();
+        final listenerStarted = Completer<void>();
+        final listenerCancelled = Completer<void>();
+        final autoAdvance = AutoAdvance<_Card>(
+          initialCard: const _Card(1),
+          settingsAdapter: _FakeSettingsAdapter({
+            1: _settings(answerDelay: const Duration(seconds: 1)),
+            2: _settings(),
+          }),
+          listener: (action, cancellation) async {
+            listenerStarted.complete();
+            await cancellation.whenCancelled;
+            listenerCancelled.complete();
+          },
+          scheduler: delay,
+        )..isEnabled = true;
+
+        await autoAdvance.onShowAnswer();
+        await delay.flush();
+        await delay.advanceBy(const Duration(seconds: 1));
+        await listenerStarted.future;
+
+        autoAdvance.onCardChange(const _Card(2));
+        await listenerCancelled.future;
+      },
+    );
+
+    test(
+      'a repeated same-side event leaves the older timer untracked',
+      () async {
+        final delay = _FakeDelay();
+        final actions = <AutoAdvanceAction>[];
+        final autoAdvance = _autoAdvance(
+          settingsByDeck: {
+            1: _settings(
+              questionAction: QuestionAction.showReminder,
+              questionDelay: const Duration(seconds: 3),
+            ),
+          },
+          scheduler: delay,
+          actions: actions,
+        )..isEnabled = true;
+
+        await autoAdvance.onShowQuestion();
+        await delay.flush();
+        await delay.advanceBy(const Duration(seconds: 1));
+        await autoAdvance.onShowQuestion();
+        await delay.flush();
+        autoAdvance.isEnabled = false;
+
+        await delay.advanceBy(const Duration(seconds: 2));
+        expect(actions, [QuestionAction.showReminder]);
+        await delay.advanceBy(const Duration(seconds: 1));
+        expect(actions, [QuestionAction.showReminder]);
+      },
+    );
   });
 }
 
@@ -317,26 +323,24 @@ AutoAdvanceSettings _settings({
   Duration questionDelay = Duration.zero,
   Duration answerDelay = Duration.zero,
   bool waitForAudio = false,
-}) =>
-    AutoAdvanceSettings(
-      questionAction: questionAction,
-      answerAction: answerAction,
-      durationToShowQuestionFor: questionDelay,
-      durationToShowAnswerFor: answerDelay,
-      waitForAudio: waitForAudio,
-    );
+}) => AutoAdvanceSettings(
+  questionAction: questionAction,
+  answerAction: answerAction,
+  durationToShowQuestionFor: questionDelay,
+  durationToShowAnswerFor: answerDelay,
+  waitForAudio: waitForAudio,
+);
 
 AutoAdvance<_Card> _autoAdvance({
   required Map<int, AutoAdvanceSettings> settingsByDeck,
   required _FakeDelay scheduler,
   required List<AutoAdvanceAction> actions,
-}) =>
-    AutoAdvance<_Card>(
-      initialCard: const _Card(1),
-      settingsAdapter: _FakeSettingsAdapter(settingsByDeck),
-      listener: (action, _) => actions.add(action),
-      scheduler: scheduler,
-    );
+}) => AutoAdvance<_Card>(
+  initialCard: const _Card(1),
+  settingsAdapter: _FakeSettingsAdapter(settingsByDeck),
+  listener: (action, _) => actions.add(action),
+  scheduler: scheduler,
+);
 
 class _Card {
   const _Card(this.deckId);

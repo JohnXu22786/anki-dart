@@ -47,10 +47,7 @@ void main() {
         isNotNull,
       );
       expect(
-        reviewerEditedTagsDirective(
-          existingTags: const [],
-          selectedTags: [],
-        ),
+        reviewerEditedTagsDirective(existingTags: const [], selectedTags: []),
         isNull,
       );
     });

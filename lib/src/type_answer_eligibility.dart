@@ -27,8 +27,7 @@
 bool typeAnswerValidForEditText({
   required bool useInputTag,
   required String? correctAnswer,
-}) =>
-    !useInputTag && correctAnswer != null;
+}) => !useInputTag && correctAnswer != null;
 
 /// Whether the source would request automatic focus for a valid answer field.
 ///

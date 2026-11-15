@@ -66,26 +66,28 @@ void main() {
       expect(plan.matchCase, isFalse);
     });
 
-    test('custom field is preserved and unchecked selection means all notes',
-        () {
-      final plan = planBrowserFindReplace(
-        field: 'Front\u0000field',
-        onlyOnSelectedNotes: false,
-        selectedNoteIds: const [31, 12],
-        search: 'x',
-        replacement: 'y',
-        regex: true,
-        matchCase: false,
-      );
+    test(
+      'custom field is preserved and unchecked selection means all notes',
+      () {
+        final plan = planBrowserFindReplace(
+          field: 'Front\u0000field',
+          onlyOnSelectedNotes: false,
+          selectedNoteIds: const [31, 12],
+          search: 'x',
+          replacement: 'y',
+          regex: true,
+          matchCase: false,
+        );
 
-      expect(plan.command, BrowserFindReplaceCommand.collection);
-      expect(plan.field, 'Front\u0000field');
-      expect(plan.noteIds, isEmpty);
-      expect(plan.search, 'x');
-      expect(plan.replacement, 'y');
-      expect(plan.regex, isTrue);
-      expect(plan.matchCase, isFalse);
-    });
+        expect(plan.command, BrowserFindReplaceCommand.collection);
+        expect(plan.field, 'Front\u0000field');
+        expect(plan.noteIds, isEmpty);
+        expect(plan.search, 'x');
+        expect(plan.replacement, 'y');
+        expect(plan.regex, isTrue);
+        expect(plan.matchCase, isFalse);
+      },
+    );
 
     test('host operation result count passes through unchanged', () {
       expect(browserFindReplaceResultCount(0), 0);

@@ -111,21 +111,23 @@ void main() {
       expect(rows, ['a']);
     });
 
-    test('invalid source position is passed through and fails before mutation',
-        () {
-      final plan = planBrowserColumnSelectionToggle(
-        rowKinds: const [
-          BrowserColumnSelectionRowKind.activeHeading,
-          BrowserColumnSelectionRowKind.availableHeading,
-        ],
-        fromPosition: -1,
-      );
-      final rows = ['a', 'b'];
+    test(
+      'invalid source position is passed through and fails before mutation',
+      () {
+        final plan = planBrowserColumnSelectionToggle(
+          rowKinds: const [
+            BrowserColumnSelectionRowKind.activeHeading,
+            BrowserColumnSelectionRowKind.availableHeading,
+          ],
+          fromPosition: -1,
+        );
+        final rows = ['a', 'b'];
 
-      expect(plan.fromPosition, -1);
-      expect(plan.availableHeadingPosition, 1);
-      expect(() => plan.applyTo(rows), throwsRangeError);
-      expect(rows, ['a', 'b']);
-    });
+        expect(plan.fromPosition, -1);
+        expect(plan.availableHeadingPosition, 1);
+        expect(() => plan.applyTo(rows), throwsRangeError);
+        expect(rows, ['a', 'b']);
+      },
+    );
   });
 }

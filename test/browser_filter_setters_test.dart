@@ -85,29 +85,32 @@ void main() {
     });
 
     test(
-        'card-state setter changes only card states and emits for equal values',
-        () {
-      final incoming = [1, 3, 4];
-      final update = browserSetCardStateFilter(
-        currentFilters: current,
-        cardStateCodes: incoming,
-      );
+      'card-state setter changes only card states and emits for equal values',
+      () {
+        final incoming = [1, 3, 4];
+        final update = browserSetCardStateFilter(
+          currentFilters: current,
+          cardStateCodes: incoming,
+        );
 
-      expect(update, isA<BrowserFilterUpdateUser>());
-      _expectCardStateUpdate(update.state, current, incoming);
-      expect(update.state.cardStateCodes, [1, 3, 4]);
+        expect(update, isA<BrowserFilterUpdateUser>());
+        _expectCardStateUpdate(update.state, current, incoming);
+        expect(update.state.cardStateCodes, [1, 3, 4]);
 
-      final equalIncoming = [0, 2];
-      final equalUpdate = browserSetCardStateFilter(
-        currentFilters: current,
-        cardStateCodes: equalIncoming,
-      );
-      expect(equalUpdate, isA<BrowserFilterUpdateUser>());
-      expect(equalUpdate.state, current);
-      expect(identical(equalUpdate.state, current), isFalse);
-      expect(
-          identical(equalUpdate.state.cardStateCodes, equalIncoming), isTrue);
-    });
+        final equalIncoming = [0, 2];
+        final equalUpdate = browserSetCardStateFilter(
+          currentFilters: current,
+          cardStateCodes: equalIncoming,
+        );
+        expect(equalUpdate, isA<BrowserFilterUpdateUser>());
+        expect(equalUpdate.state, current);
+        expect(identical(equalUpdate.state, current), isFalse);
+        expect(
+          identical(equalUpdate.state.cardStateCodes, equalIncoming),
+          isTrue,
+        );
+      },
+    );
 
     test('flag setter changes only flags and still emits for equal values', () {
       final incoming = [2, 3];

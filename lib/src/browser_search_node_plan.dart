@@ -34,7 +34,7 @@ sealed class BrowserSearchNodePlan {
 /// A typed boolean group. The source collapses groups containing one node.
 final class BrowserSearchGroupPlan extends BrowserSearchNodePlan {
   BrowserSearchGroupPlan._(this.joiner, List<BrowserSearchNodePlan> children)
-      : children = List.unmodifiable(children);
+    : children = List.unmodifiable(children);
 
   final BrowserSearchJoiner joiner;
   final List<BrowserSearchNodePlan> children;
@@ -62,7 +62,7 @@ enum BrowserSearchFlagValue {
   blue,
   pink,
   turquoise,
-  purple
+  purple,
 }
 
 final class BrowserSearchFlagTermPlan extends BrowserSearchNodePlan {
@@ -89,7 +89,7 @@ enum BrowserSearchCardStateValue {
   learning,
   review,
   buried,
-  suspended
+  suspended,
 }
 
 final class BrowserSearchCardStateTermPlan extends BrowserSearchNodePlan {
@@ -108,7 +108,8 @@ final class BrowserSearchCardStateTermPlan extends BrowserSearchNodePlan {
 BrowserSearchNodePlan buildBrowserSearchNodePlan(BrowserSearchRequest request) {
   final filters = request.filters;
   final query = trimKotlinWhitespace(request.query);
-  final hasFilters = filters.decks.isNotEmpty ||
+  final hasFilters =
+      filters.decks.isNotEmpty ||
       filters.flags.isNotEmpty ||
       filters.tags.isNotEmpty ||
       filters.noteTypes.isNotEmpty ||
@@ -121,8 +122,10 @@ BrowserSearchNodePlan buildBrowserSearchNodePlan(BrowserSearchRequest request) {
 
   void addOrGroup<T>(List<T> values, BrowserSearchNodePlan Function(T) term) {
     if (values.isEmpty) return;
-    final node =
-        _groupSearchNodes(values.map(term).toList(), BrowserSearchJoiner.or);
+    final node = _groupSearchNodes(
+      values.map(term).toList(),
+      BrowserSearchJoiner.or,
+    );
     if (node != null) nodes.add(node);
   }
 
@@ -154,23 +157,22 @@ BrowserSearchNodePlan? _groupSearchNodes(
 }
 
 BrowserSearchFlagValue _flagValue(int code) => switch (code) {
-      0 => BrowserSearchFlagValue.none,
-      1 => BrowserSearchFlagValue.red,
-      2 => BrowserSearchFlagValue.orange,
-      3 => BrowserSearchFlagValue.green,
-      4 => BrowserSearchFlagValue.blue,
-      5 => BrowserSearchFlagValue.pink,
-      6 => BrowserSearchFlagValue.turquoise,
-      7 => BrowserSearchFlagValue.purple,
-      _ => throw FormatException('Unsupported AnkiDroid flag code: $code'),
-    };
+  0 => BrowserSearchFlagValue.none,
+  1 => BrowserSearchFlagValue.red,
+  2 => BrowserSearchFlagValue.orange,
+  3 => BrowserSearchFlagValue.green,
+  4 => BrowserSearchFlagValue.blue,
+  5 => BrowserSearchFlagValue.pink,
+  6 => BrowserSearchFlagValue.turquoise,
+  7 => BrowserSearchFlagValue.purple,
+  _ => throw FormatException('Unsupported AnkiDroid flag code: $code'),
+};
 
 BrowserSearchCardStateValue _cardStateValue(int code) => switch (code) {
-      0 => BrowserSearchCardStateValue.newCard,
-      1 => BrowserSearchCardStateValue.learning,
-      2 => BrowserSearchCardStateValue.review,
-      3 => BrowserSearchCardStateValue.buried,
-      4 => BrowserSearchCardStateValue.suspended,
-      _ =>
-        throw FormatException('Unsupported AnkiDroid card-state code: $code'),
-    };
+  0 => BrowserSearchCardStateValue.newCard,
+  1 => BrowserSearchCardStateValue.learning,
+  2 => BrowserSearchCardStateValue.review,
+  3 => BrowserSearchCardStateValue.buried,
+  4 => BrowserSearchCardStateValue.suspended,
+  _ => throw FormatException('Unsupported AnkiDroid card-state code: $code'),
+};

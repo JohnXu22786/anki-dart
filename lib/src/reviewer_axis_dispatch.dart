@@ -35,9 +35,8 @@ typedef ReviewerAxisValueProvider = double Function(int axisValue);
 ///
 /// Its result is intentionally ignored while the event is processed, matching
 /// `BindingMap.onGenericMotionEvent()`.
-typedef ReviewerAxisEventProcessor = bool Function(
-  ReviewerCommandBinding registration,
-);
+typedef ReviewerAxisEventProcessor =
+    bool Function(ReviewerCommandBinding registration);
 
 /// Applies source axis-button threshold, debounce, and dispatch behavior.
 ///
@@ -47,10 +46,10 @@ typedef ReviewerAxisEventProcessor = bool Function(
 /// The host should return the platform's Float32 axis value as a Dart double.
 final class ReviewerAxisButtonDispatcher {
   ReviewerAxisButtonDispatcher({required ReviewerBindingMap bindingMap})
-      : _detectors = List.unmodifiable([
-          for (final registration in bindingMap.axisRegistrations)
-            _SingleAxisDetector(registration),
-        ]);
+    : _detectors = List.unmodifiable([
+        for (final registration in bindingMap.axisRegistrations)
+          _SingleAxisDetector(registration),
+      ]);
 
   final List<_SingleAxisDetector> _detectors;
 
@@ -79,8 +78,7 @@ final class ReviewerAxisButtonDispatcher {
 
 final class _SingleAxisDetector {
   _SingleAxisDetector(this.registration)
-      : _axisBinding =
-            registration.binding.binding as ReviewerAxisButtonBinding;
+    : _axisBinding = registration.binding.binding as ReviewerAxisButtonBinding;
 
   final ReviewerCommandBinding registration;
   final ReviewerAxisButtonBinding _axisBinding;

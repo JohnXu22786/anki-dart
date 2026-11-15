@@ -72,15 +72,17 @@ void main() {
       );
     });
 
-    test('nonempty card selection with no resolved notes follows all(empty)',
-        () {
-      expect(
-        planBrowserBulkMarkToggle(
-          selectedCardIds: const [10],
-          noteMarkedStates: const <bool>[],
-        ),
-        BrowserBulkMarkOperation.removeMarkedTag,
-      );
-    });
+    test(
+      'nonempty card selection with no resolved notes follows all(empty)',
+      () {
+        expect(
+          planBrowserBulkMarkToggle(
+            selectedCardIds: const [10],
+            noteMarkedStates: const <bool>[],
+          ),
+          BrowserBulkMarkOperation.removeMarkedTag,
+        );
+      },
+    );
   });
 }

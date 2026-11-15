@@ -37,31 +37,42 @@ void main() {
       expect(model.showingAnswer, isFalse);
     });
 
-    test('previous moves back and only hides the first answer in standard mode',
-        () {
-      final model = PreviewerNavigationModel(
-        cardsCount: 4,
-        initialIndex: 2,
-        initialShowingAnswer: true,
-      );
+    test(
+      'previous moves back and only hides the first answer in standard mode',
+      () {
+        final model = PreviewerNavigationModel(
+          cardsCount: 4,
+          initialIndex: 2,
+          initialShowingAnswer: true,
+        );
 
-      expect(model.onPreviousButtonClick(), PreviewerNavigationEffect.loadCard);
-      expect(model.currentIndex, 1);
-      expect(model.showingAnswer, isFalse);
+        expect(
+          model.onPreviousButtonClick(),
+          PreviewerNavigationEffect.loadCard,
+        );
+        expect(model.currentIndex, 1);
+        expect(model.showingAnswer, isFalse);
 
-      expect(model.onPreviousButtonClick(), PreviewerNavigationEffect.loadCard);
-      expect(model.currentIndex, 0);
-      expect(model.onPreviousButtonClick(), PreviewerNavigationEffect.none);
-      expect(model.currentIndex, 0);
+        expect(
+          model.onPreviousButtonClick(),
+          PreviewerNavigationEffect.loadCard,
+        );
+        expect(model.currentIndex, 0);
+        expect(model.onPreviousButtonClick(), PreviewerNavigationEffect.none);
+        expect(model.currentIndex, 0);
 
-      final backOnly = PreviewerNavigationModel(
-        cardsCount: 4,
-        initialShowingAnswer: true,
-        initialBackSideOnly: true,
-      );
-      expect(backOnly.onPreviousButtonClick(), PreviewerNavigationEffect.none);
-      expect(backOnly.showingAnswer, isTrue);
-    });
+        final backOnly = PreviewerNavigationModel(
+          cardsCount: 4,
+          initialShowingAnswer: true,
+          initialBackSideOnly: true,
+        );
+        expect(
+          backOnly.onPreviousButtonClick(),
+          PreviewerNavigationEffect.none,
+        );
+        expect(backOnly.showingAnswer, isTrue);
+      },
+    );
 
     test('slider uses one-based positions and ignores out-of-range values', () {
       final model = PreviewerNavigationModel(cardsCount: 4);
@@ -77,39 +88,49 @@ void main() {
       expect(model.currentIndex, 2);
     });
 
-    test('back-side-only mode affects toggles and subsequent card navigation',
-        () {
-      final model = PreviewerNavigationModel(cardsCount: 4);
+    test(
+      'back-side-only mode affects toggles and subsequent card navigation',
+      () {
+        final model = PreviewerNavigationModel(cardsCount: 4);
 
-      expect(model.toggleBackSideOnly(), PreviewerNavigationEffect.showAnswer);
-      expect(model.backSideOnly, isTrue);
-      expect(model.showingAnswer, isTrue);
+        expect(
+          model.toggleBackSideOnly(),
+          PreviewerNavigationEffect.showAnswer,
+        );
+        expect(model.backSideOnly, isTrue);
+        expect(model.showingAnswer, isTrue);
 
-      expect(model.onNextButtonClick(), PreviewerNavigationEffect.loadCard);
-      expect(model.currentIndex, 1);
-      expect(model.showingAnswer, isTrue);
-      expect(model.onPreviousButtonClick(), PreviewerNavigationEffect.loadCard);
-      expect(model.currentIndex, 0);
-      expect(model.showingAnswer, isTrue);
+        expect(model.onNextButtonClick(), PreviewerNavigationEffect.loadCard);
+        expect(model.currentIndex, 1);
+        expect(model.showingAnswer, isTrue);
+        expect(
+          model.onPreviousButtonClick(),
+          PreviewerNavigationEffect.loadCard,
+        );
+        expect(model.currentIndex, 0);
+        expect(model.showingAnswer, isTrue);
 
-      expect(
-          model.toggleBackSideOnly(), PreviewerNavigationEffect.showQuestion);
-      expect(model.backSideOnly, isFalse);
-      expect(model.showingAnswer, isFalse);
-      expect(model.onNextButtonClick(), PreviewerNavigationEffect.showAnswer);
-      expect(model.currentIndex, 0);
+        expect(
+          model.toggleBackSideOnly(),
+          PreviewerNavigationEffect.showQuestion,
+        );
+        expect(model.backSideOnly, isFalse);
+        expect(model.showingAnswer, isFalse);
+        expect(model.onNextButtonClick(), PreviewerNavigationEffect.showAnswer);
+        expect(model.currentIndex, 0);
 
-      final alreadyShowingAnswer = PreviewerNavigationModel(
-        cardsCount: 4,
-        initialShowingAnswer: true,
-      );
-      expect(
-        alreadyShowingAnswer.toggleBackSideOnly(),
-        PreviewerNavigationEffect.none,
-      );
-      expect(alreadyShowingAnswer.backSideOnly, isTrue);
-      expect(alreadyShowingAnswer.showingAnswer, isTrue);
-    });
+        final alreadyShowingAnswer = PreviewerNavigationModel(
+          cardsCount: 4,
+          initialShowingAnswer: true,
+        );
+        expect(
+          alreadyShowingAnswer.toggleBackSideOnly(),
+          PreviewerNavigationEffect.none,
+        );
+        expect(alreadyShowingAnswer.backSideOnly, isTrue);
+        expect(alreadyShowingAnswer.showingAnswer, isTrue);
+      },
+    );
 
     test('button enablement follows the source index and side expressions', () {
       final firstQuestion = PreviewerNavigationModel(cardsCount: 4);

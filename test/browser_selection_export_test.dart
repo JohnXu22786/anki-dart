@@ -35,10 +35,7 @@ void main() {
     test('uses Cards export kind and returns card IDs in source order', () {
       final plan = planBrowserSelectionExport(
         mode: BrowserColumnMode.cards,
-        selectedRows: const [
-          BrowserRowId(81),
-          BrowserRowId(24),
-        ],
+        selectedRows: const [BrowserRowId(81), BrowserRowId(24)],
       );
 
       expect(plan?.type, BrowserSelectionExportType.cards);
@@ -56,10 +53,7 @@ void main() {
     });
 
     test('copies selected IDs while preserving their iteration order', () {
-      final selectedRows = [
-        const BrowserRowId(91),
-        const BrowserRowId(15),
-      ];
+      final selectedRows = [const BrowserRowId(91), const BrowserRowId(15)];
 
       final plan = planBrowserSelectionExport(
         mode: BrowserColumnMode.cards,

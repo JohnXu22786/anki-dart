@@ -127,10 +127,10 @@ void main() {
         isA<ReviewerKeyCodeBinding>(),
         isA<ReviewerUnicodeCharacterBinding>(),
       ]);
-      expect(
-        seen.map((binding) => binding.binding.side),
-        [ReviewerCardSide.question, ReviewerCardSide.answer],
-      );
+      expect(seen.map((binding) => binding.binding.side), [
+        ReviewerCardSide.question,
+        ReviewerCardSide.answer,
+      ]);
     });
 
     test('uses exact Shift, Ctrl, and Alt states for both candidate kinds', () {
@@ -142,10 +142,7 @@ void main() {
       final bindings = ReviewerBindingMap(
         bindingsByCommand: {
           ViewerCommand.SHOW_ANSWER: [
-            ReviewerBindingValue.forKeyCode(
-              13,
-              modifierKeys: allModifiers,
-            ),
+            ReviewerBindingValue.forKeyCode(13, modifierKeys: allModifiers),
             ReviewerBindingValue.forUnicodeCharacter(
               0x41,
               modifierKeys: allModifiers,
@@ -317,17 +314,10 @@ void main() {
               13,
               side: ReviewerCardSide.question,
             ),
-            ReviewerBindingValue.forKeyCode(
-              13,
-              side: ReviewerCardSide.answer,
-            ),
+            ReviewerBindingValue.forKeyCode(13, side: ReviewerCardSide.answer),
           ],
-          ViewerCommand.ANSWER_GOOD: [
-            ReviewerBindingValue.forKeyCode(13),
-          ],
-          ViewerCommand.ANSWER_EASY: [
-            ReviewerBindingValue.forKeyCode(13),
-          ],
+          ViewerCommand.ANSWER_GOOD: [ReviewerBindingValue.forKeyCode(13)],
+          ViewerCommand.ANSWER_EASY: [ReviewerBindingValue.forKeyCode(13)],
         },
       );
       final seen = <ReviewerCommandBinding>[];
@@ -349,22 +339,16 @@ void main() {
       );
 
       expect(handled, isTrue);
-      expect(
-        seen.map((registration) => registration.command),
-        [
-          ViewerCommand.SHOW_ANSWER,
-          ViewerCommand.SHOW_ANSWER,
-          ViewerCommand.ANSWER_GOOD,
-        ],
-      );
-      expect(
-        seen.map((registration) => registration.binding.side),
-        [
-          ReviewerCardSide.question,
-          ReviewerCardSide.answer,
-          ReviewerCardSide.both,
-        ],
-      );
+      expect(seen.map((registration) => registration.command), [
+        ViewerCommand.SHOW_ANSWER,
+        ViewerCommand.SHOW_ANSWER,
+        ViewerCommand.ANSWER_GOOD,
+      ]);
+      expect(seen.map((registration) => registration.binding.side), [
+        ReviewerCardSide.question,
+        ReviewerCardSide.answer,
+        ReviewerCardSide.both,
+      ]);
     });
 
     test('returns false after rejected or absent processors', () {

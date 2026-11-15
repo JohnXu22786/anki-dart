@@ -27,20 +27,24 @@ import 'package:test/test.dart';
 void main() {
   group('Card Browser availability projections', () {
     test('history availability follows entry-to-search-string values', () {
-      expect(browserSearchHistoryIsAvailable(BrowserSearchHistoryLoading([])),
-          isFalse);
       expect(
-          browserSearchHistoryIsAvailable(const BrowserSearchHistoryLoaded([])),
-          isFalse);
+        browserSearchHistoryIsAvailable(BrowserSearchHistoryLoading([])),
+        isFalse,
+      );
+      expect(
+        browserSearchHistoryIsAvailable(const BrowserSearchHistoryLoaded([])),
+        isFalse,
+      );
 
       final entry = BrowserSearchHistoryEntry(query: 'saved query');
       expect(
-          browserSearchHistoryIsAvailable(BrowserSearchHistoryLoading([entry])),
-          isTrue);
+        browserSearchHistoryIsAvailable(BrowserSearchHistoryLoading([entry])),
+        isTrue,
+      );
       expect(
-        browserSearchHistoryIsAvailable(BrowserSearchHistoryLoaded([
-          (entry: entry, searchString: null),
-        ])),
+        browserSearchHistoryIsAvailable(
+          BrowserSearchHistoryLoaded([(entry: entry, searchString: null)]),
+        ),
         isTrue,
       );
     });

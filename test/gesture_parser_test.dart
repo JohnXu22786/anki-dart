@@ -49,33 +49,34 @@ void main() {
                 host: GestureParser.multiFingerHost,
                 touchCount: touchCount,
               );
-        parser.parse(
-          input,
-          _viewport(),
-          actual.add,
-        );
+        parser.parse(input, _viewport(), actual.add);
         expect(actual.removeLast(), expected);
       }
     });
 
-    test('malformed normal input is ignored but invalid multitap emits null',
-        () {
-      final parser = _parser();
-      final actual = <Gesture?>[];
+    test(
+      'malformed normal input is ignored but invalid multitap emits null',
+      () {
+        final parser = _parser();
+        final actual = <Gesture?>[];
 
-      parser.parse(_input(y: null), _viewport(), actual.add);
-      parser.parse(
-          _input(time: '9223372036854775808'), _viewport(), actual.add);
-      parser.parse(_input(x: '2147483648'), _viewport(), actual.add);
-      expect(actual, isEmpty);
+        parser.parse(_input(y: null), _viewport(), actual.add);
+        parser.parse(
+          _input(time: '9223372036854775808'),
+          _viewport(),
+          actual.add,
+        );
+        parser.parse(_input(x: '2147483648'), _viewport(), actual.add);
+        expect(actual, isEmpty);
 
-      parser.parse(
-        _input(host: GestureParser.multiFingerHost, touchCount: '5'),
-        _viewport(),
-        actual.add,
-      );
-      expect(actual, [null]);
-    });
+        parser.parse(
+          _input(host: GestureParser.multiFingerHost, touchCount: '5'),
+          _viewport(),
+          actual.add,
+        );
+        expect(actual, [null]);
+      },
+    );
 
     test('parses decimal digits like Kotlin UTF-16 integer parsing', () {
       final parser = _parser();
@@ -116,11 +117,7 @@ void main() {
       expect(supplementaryDigits, [null]);
 
       final outOfRangeValues = <Gesture?>[];
-      parser.parse(
-        _input(x: '٢١٤٧٤٨٣٦٤٨'),
-        _viewport(),
-        outOfRangeValues.add,
-      );
+      parser.parse(_input(x: '٢١٤٧٤٨٣٦٤٨'), _viewport(), outOfRangeValues.add);
       parser.parse(
         _input(time: '٩٢٢٣٣٧٢٠٣٦٨٥٤٧٧٥٨٠٨'),
         _viewport(),
@@ -130,30 +127,29 @@ void main() {
     });
 
     test(
-        'maps the nine grid targets and assigns exact cell boundaries down/right',
-        () {
-      final cases = <(int, int, Gesture)>[
-        (150, 250, Gesture.tapTopLeft),
-        (450, 250, Gesture.tapTop),
-        (750, 250, Gesture.tapTopRight),
-        (150, 750, Gesture.tapLeft),
-        (450, 750, Gesture.tapCenter),
-        (750, 750, Gesture.tapRight),
-        (150, 1250, Gesture.tapBottomLeft),
-        (450, 1250, Gesture.tapBottom),
-        (750, 1250, Gesture.tapBottomRight),
-        (300, 500, Gesture.tapCenter),
-        (600, 1000, Gesture.tapBottomRight),
-      ];
+      'maps the nine grid targets and assigns exact cell boundaries down/right',
+      () {
+        final cases = <(int, int, Gesture)>[
+          (150, 250, Gesture.tapTopLeft),
+          (450, 250, Gesture.tapTop),
+          (750, 250, Gesture.tapTopRight),
+          (150, 750, Gesture.tapLeft),
+          (450, 750, Gesture.tapCenter),
+          (750, 750, Gesture.tapRight),
+          (150, 1250, Gesture.tapBottomLeft),
+          (450, 1250, Gesture.tapBottom),
+          (750, 1250, Gesture.tapBottomRight),
+          (300, 500, Gesture.tapCenter),
+          (600, 1000, Gesture.tapBottomRight),
+        ];
 
-      for (final (x, y, expected) in cases) {
-        expect(
-          _parse(_parser(), _input(x: '$x', y: '$y')),
-          [expected],
-          reason: 'tap at ($x, $y)',
-        );
-      }
-    });
+        for (final (x, y, expected) in cases) {
+          expect(_parse(_parser(), _input(x: '$x', y: '$y')), [
+            expected,
+          ], reason: 'tap at ($x, $y)');
+        }
+      },
+    );
 
     test('four point regions preserve diagonal equality behavior', () {
       final cases = <(int, int, Gesture)>[
@@ -207,49 +203,47 @@ void main() {
     });
 
     test(
-        'swipe uses strict scaled threshold, dominant direction, and scroll guard',
-        () {
-      expect(_parse(_parser(), _input(deltaX: '100')), [Gesture.tapTopLeft]);
-      expect(_parse(_parser(), _input(deltaX: '101')), [Gesture.swipeRight]);
-      expect(
-        _parse(_parser(), _input(deltaX: '-2147483648')),
-        [Gesture.tapTopLeft],
-      );
-      expect(
-        _parse(_parser(), _input(deltaX: '150', deltaY: '150')),
-        [Gesture.swipeDown],
-      );
-      expect(
-        _parse(
-          _parser(),
-          _input(deltaX: '16777217', deltaY: '16777216'),
-        ),
-        [Gesture.swipeRight],
-      );
-      expect(
-        _parse(_parser(), _input(deltaX: '100'), viewport: _viewport(scale: 2)),
-        [Gesture.swipeRight],
-      );
-      expect(
-        _parse(
-          _parser(sensitivity: 0.2),
-          _input(deltaY: '-150', x: '450', y: '0'),
-        ),
-        [Gesture.tapTop],
-      );
-      expect(
-        _parse(_parser(sensitivity: 1.8), _input(deltaY: '-90')),
-        [Gesture.swipeUp],
-      );
-      expect(
-        _parse(_parser(), _input(deltaX: '150', scrollDirection: 'hv')),
-        [null],
-      );
-      expect(
-        _parse(_parser(), _input(deltaX: '150', scrollDirection: 'v')),
-        [Gesture.swipeRight],
-      );
-    });
+      'swipe uses strict scaled threshold, dominant direction, and scroll guard',
+      () {
+        expect(_parse(_parser(), _input(deltaX: '100')), [Gesture.tapTopLeft]);
+        expect(_parse(_parser(), _input(deltaX: '101')), [Gesture.swipeRight]);
+        expect(_parse(_parser(), _input(deltaX: '-2147483648')), [
+          Gesture.tapTopLeft,
+        ]);
+        expect(_parse(_parser(), _input(deltaX: '150', deltaY: '150')), [
+          Gesture.swipeDown,
+        ]);
+        expect(
+          _parse(_parser(), _input(deltaX: '16777217', deltaY: '16777216')),
+          [Gesture.swipeRight],
+        );
+        expect(
+          _parse(
+            _parser(),
+            _input(deltaX: '100'),
+            viewport: _viewport(scale: 2),
+          ),
+          [Gesture.swipeRight],
+        );
+        expect(
+          _parse(
+            _parser(sensitivity: 0.2),
+            _input(deltaY: '-150', x: '450', y: '0'),
+          ),
+          [Gesture.tapTop],
+        );
+        expect(_parse(_parser(sensitivity: 1.8), _input(deltaY: '-90')), [
+          Gesture.swipeUp,
+        ]);
+        expect(
+          _parse(_parser(), _input(deltaX: '150', scrollDirection: 'hv')),
+          [null],
+        );
+        expect(_parse(_parser(), _input(deltaX: '150', scrollDirection: 'v')), [
+          Gesture.swipeRight,
+        ]);
+      },
+    );
 
     test('disabled double taps are ignored without extending the timeout', () {
       final parser = _parser();
@@ -275,8 +269,10 @@ void main() {
       }
 
       final zeroTimeParser = _parser();
-      expect(_parse(zeroTimeParser, _input(x: '450', y: '1250', time: '0')),
-          isEmpty);
+      expect(
+        _parse(zeroTimeParser, _input(x: '450', y: '1250', time: '0')),
+        isEmpty,
+      );
 
       final wrappingParser = _parser();
       final wrappingActual = <Gesture?>[];
@@ -293,111 +289,137 @@ void main() {
       expect(wrappingActual, [Gesture.tapBottom]);
     });
 
-    test('enabled double tap cancels the pending single tap and dispatches now',
-        () async {
-      final earlyScheduler = _FakeGestureScheduler();
-      final earlyParser = _parser(
-        doubleTapEnabled: true,
-        scheduler: earlyScheduler,
-      );
-      final earlyActual = <Gesture?>[];
-      earlyParser.parse(
-        _input(x: '450', y: '1250', time: '100'),
-        _viewport(),
-        earlyActual.add,
-      );
-      expect(earlyActual, [Gesture.doubleTap]);
-      expect(earlyScheduler.handles, isEmpty);
+    test(
+      'enabled double tap cancels the pending single tap and dispatches now',
+      () async {
+        final earlyScheduler = _FakeGestureScheduler();
+        final earlyParser = _parser(
+          doubleTapEnabled: true,
+          scheduler: earlyScheduler,
+        );
+        final earlyActual = <Gesture?>[];
+        earlyParser.parse(
+          _input(x: '450', y: '1250', time: '100'),
+          _viewport(),
+          earlyActual.add,
+        );
+        expect(earlyActual, [Gesture.doubleTap]);
+        expect(earlyScheduler.handles, isEmpty);
 
-      final scheduler = _FakeGestureScheduler();
-      final parser = _parser(doubleTapEnabled: true, scheduler: scheduler);
-      final actual = <Gesture?>[];
+        final scheduler = _FakeGestureScheduler();
+        final parser = _parser(doubleTapEnabled: true, scheduler: scheduler);
+        final actual = <Gesture?>[];
 
-      parser.parse(
-          _input(x: '450', y: '1250', time: '10000'), _viewport(), actual.add);
-      expect(actual, isEmpty);
-      expect(
-          scheduler.handles.single.duration, const Duration(milliseconds: 200));
+        parser.parse(
+          _input(x: '450', y: '1250', time: '10000'),
+          _viewport(),
+          actual.add,
+        );
+        expect(actual, isEmpty);
+        expect(
+          scheduler.handles.single.duration,
+          const Duration(milliseconds: 200),
+        );
 
-      parser.parse(
-          _input(x: '450', y: '1250', time: '10199'), _viewport(), actual.add);
-      expect(actual, [Gesture.doubleTap]);
-      expect(scheduler.handles.single.isCancelled, isTrue);
+        parser.parse(
+          _input(x: '450', y: '1250', time: '10199'),
+          _viewport(),
+          actual.add,
+        );
+        expect(actual, [Gesture.doubleTap]);
+        expect(scheduler.handles.single.isCancelled, isTrue);
 
-      await scheduler.complete(0);
-      expect(actual, [Gesture.doubleTap]);
-    });
-
-    test('canceling the scheduled single tap suppresses its callback',
-        () async {
-      final scheduler = _FakeGestureScheduler();
-      final parser = _parser(doubleTapEnabled: true, scheduler: scheduler);
-      final actual = <Gesture?>[];
-
-      parser.parse(
-        _input(x: '450', y: '1250', time: '10000'),
-        _viewport(),
-        actual.add,
-      );
-      scheduler.handles.single.cancel();
-      await Future<void>.delayed(Duration.zero);
-
-      expect(actual, isEmpty);
-    });
+        await scheduler.complete(0);
+        expect(actual, [Gesture.doubleTap]);
+      },
+    );
 
     test(
-        'enabled single tap waits for timeout and equality starts another timer',
-        () async {
-      final scheduler = _FakeGestureScheduler();
-      final parser = _parser(doubleTapEnabled: true, scheduler: scheduler);
-      final actual = <Gesture?>[];
+      'canceling the scheduled single tap suppresses its callback',
+      () async {
+        final scheduler = _FakeGestureScheduler();
+        final parser = _parser(doubleTapEnabled: true, scheduler: scheduler);
+        final actual = <Gesture?>[];
 
-      parser.parse(
-          _input(x: '450', y: '1250', time: '10000'), _viewport(), actual.add);
-      expect(actual, isEmpty);
-      await scheduler.complete(0);
-      expect(actual, [Gesture.tapBottom]);
+        parser.parse(
+          _input(x: '450', y: '1250', time: '10000'),
+          _viewport(),
+          actual.add,
+        );
+        scheduler.handles.single.cancel();
+        await Future<void>.delayed(Duration.zero);
 
-      parser.parse(
-          _input(x: '450', y: '1250', time: '20000'), _viewport(), actual.add);
-      parser.parse(
-          _input(x: '450', y: '1250', time: '20200'), _viewport(), actual.add);
-      expect(scheduler.handles.length, 3);
-      expect(scheduler.handles[1].isCancelled, isFalse);
-      await scheduler.complete(1);
-      await scheduler.complete(2);
-      expect(actual, [Gesture.tapBottom, Gesture.tapBottom, Gesture.tapBottom]);
+        expect(actual, isEmpty);
+      },
+    );
 
-      final overwrittenScheduler = _FakeGestureScheduler();
-      final overwrittenParser = _parser(
-        doubleTapEnabled: true,
-        scheduler: overwrittenScheduler,
-      );
-      final overwrittenActual = <Gesture?>[];
+    test(
+      'enabled single tap waits for timeout and equality starts another timer',
+      () async {
+        final scheduler = _FakeGestureScheduler();
+        final parser = _parser(doubleTapEnabled: true, scheduler: scheduler);
+        final actual = <Gesture?>[];
 
-      overwrittenParser.parse(
-        _input(x: '450', y: '1250', time: '10000'),
-        _viewport(),
-        overwrittenActual.add,
-      );
-      overwrittenParser.parse(
-        _input(x: '450', y: '1250', time: '10200'),
-        _viewport(),
-        overwrittenActual.add,
-      );
-      overwrittenParser.parse(
-        _input(x: '450', y: '1250', time: '10250'),
-        _viewport(),
-        overwrittenActual.add,
-      );
+        parser.parse(
+          _input(x: '450', y: '1250', time: '10000'),
+          _viewport(),
+          actual.add,
+        );
+        expect(actual, isEmpty);
+        await scheduler.complete(0);
+        expect(actual, [Gesture.tapBottom]);
 
-      expect(overwrittenActual, [Gesture.doubleTap]);
-      expect(overwrittenScheduler.handles[0].isCancelled, isFalse);
-      expect(overwrittenScheduler.handles[1].isCancelled, isTrue);
-      await overwrittenScheduler.complete(0);
-      await overwrittenScheduler.complete(1);
-      expect(overwrittenActual, [Gesture.doubleTap, Gesture.tapBottom]);
-    });
+        parser.parse(
+          _input(x: '450', y: '1250', time: '20000'),
+          _viewport(),
+          actual.add,
+        );
+        parser.parse(
+          _input(x: '450', y: '1250', time: '20200'),
+          _viewport(),
+          actual.add,
+        );
+        expect(scheduler.handles.length, 3);
+        expect(scheduler.handles[1].isCancelled, isFalse);
+        await scheduler.complete(1);
+        await scheduler.complete(2);
+        expect(actual, [
+          Gesture.tapBottom,
+          Gesture.tapBottom,
+          Gesture.tapBottom,
+        ]);
+
+        final overwrittenScheduler = _FakeGestureScheduler();
+        final overwrittenParser = _parser(
+          doubleTapEnabled: true,
+          scheduler: overwrittenScheduler,
+        );
+        final overwrittenActual = <Gesture?>[];
+
+        overwrittenParser.parse(
+          _input(x: '450', y: '1250', time: '10000'),
+          _viewport(),
+          overwrittenActual.add,
+        );
+        overwrittenParser.parse(
+          _input(x: '450', y: '1250', time: '10200'),
+          _viewport(),
+          overwrittenActual.add,
+        );
+        overwrittenParser.parse(
+          _input(x: '450', y: '1250', time: '10250'),
+          _viewport(),
+          overwrittenActual.add,
+        );
+
+        expect(overwrittenActual, [Gesture.doubleTap]);
+        expect(overwrittenScheduler.handles[0].isCancelled, isFalse);
+        expect(overwrittenScheduler.handles[1].isCancelled, isTrue);
+        await overwrittenScheduler.complete(0);
+        await overwrittenScheduler.complete(1);
+        expect(overwrittenActual, [Gesture.doubleTap, Gesture.tapBottom]);
+      },
+    );
   });
 }
 
@@ -407,16 +429,15 @@ GestureParser _parser({
   bool doubleTapEnabled = false,
   Duration doubleTapTimeout = const Duration(milliseconds: 200),
   GestureDelayScheduler? scheduler,
-}) =>
-    GestureParser(
-      config: GestureParserConfig(
-        isDoubleTapEnabled: doubleTapEnabled,
-        gestureMode: mode,
-        swipeSensitivity: sensitivity,
-        doubleTapTimeout: doubleTapTimeout,
-      ),
-      scheduler: scheduler,
-    );
+}) => GestureParser(
+  config: GestureParserConfig(
+    isDoubleTapEnabled: doubleTapEnabled,
+    gestureMode: mode,
+    swipeSensitivity: sensitivity,
+    doubleTapTimeout: doubleTapTimeout,
+  ),
+  scheduler: scheduler,
+);
 
 GestureInput _input({
   String? host = 'tapOrSwipe',
@@ -427,19 +448,18 @@ GestureInput _input({
   String? time = '10000',
   String? touchCount = '1',
   String? scrollDirection,
-}) =>
-    GestureInput(
-      host: host,
-      queryParameters: {
-        GestureParser.paramX: x,
-        GestureParser.paramY: y,
-        GestureParser.paramDeltaX: deltaX,
-        GestureParser.paramDeltaY: deltaY,
-        GestureParser.paramTime: time,
-        GestureParser.paramTouchCount: touchCount,
-        GestureParser.paramScrollDirection: scrollDirection,
-      },
-    );
+}) => GestureInput(
+  host: host,
+  queryParameters: {
+    GestureParser.paramX: x,
+    GestureParser.paramY: y,
+    GestureParser.paramDeltaX: deltaX,
+    GestureParser.paramDeltaY: deltaY,
+    GestureParser.paramTime: time,
+    GestureParser.paramTouchCount: touchCount,
+    GestureParser.paramScrollDirection: scrollDirection,
+  },
+);
 
 GestureViewportState _viewport({
   double scale = 1,
@@ -447,14 +467,13 @@ GestureViewportState _viewport({
   int scrollY = 0,
   int width = 900,
   int height = 1500,
-}) =>
-    GestureViewportState(
-      scale: scale,
-      scrollX: scrollX,
-      scrollY: scrollY,
-      width: width,
-      height: height,
-    );
+}) => GestureViewportState(
+  scale: scale,
+  scrollX: scrollX,
+  scrollY: scrollY,
+  width: width,
+  height: height,
+);
 
 List<Gesture?> _parse(
   GestureParser parser,

@@ -93,53 +93,58 @@ void main() {
       expect(different, isNot(first));
     });
 
-    test('forwards opaque states and keeps backend labels in answer order',
-        () async {
-      final state = _queueState(activeQueue: ReviewQueueKind.review);
-      final backendStates = state.schedulingSnapshot;
-      final scheduler = _FakeNextStateDescriber(
-        const ['Again 3m', 'Hard 5m', 'Good 10m', 'Easy 4d'],
-      );
+    test(
+      'forwards opaque states and keeps backend labels in answer order',
+      () async {
+        final state = _queueState(activeQueue: ReviewQueueKind.review);
+        final backendStates = state.schedulingSnapshot;
+        final scheduler = _FakeNextStateDescriber(const [
+          'Again 3m',
+          'Hard 5m',
+          'Good 10m',
+          'Easy 4d',
+        ]);
 
-      final nextTimes = await AnswerButtonsNextTime.from(
-        state: state,
-        scheduler: scheduler,
-      );
+        final nextTimes = await AnswerButtonsNextTime.from(
+          state: state,
+          scheduler: scheduler,
+        );
 
-      expect(scheduler.receivedStates, same(backendStates));
-      expect(
-        [nextTimes.again, nextTimes.hard, nextTimes.good, nextTimes.easy],
-        ['Again 3m', 'Hard 5m', 'Good 10m', 'Easy 4d'],
-      );
-    });
+        expect(scheduler.receivedStates, same(backendStates));
+        expect(
+          [nextTimes.again, nextTimes.hard, nextTimes.good, nextTimes.easy],
+          ['Again 3m', 'Hard 5m', 'Good 10m', 'Easy 4d'],
+        );
+      },
+    );
 
-    test('fails when the backend omits one of the four required labels',
-        () async {
-      final state = _queueState(activeQueue: ReviewQueueKind.newCards);
-      final scheduler = _FakeNextStateDescriber(
-        const ['Again 3m', 'Hard 5m', 'Good 10m'],
-      );
+    test(
+      'fails when the backend omits one of the four required labels',
+      () async {
+        final state = _queueState(activeQueue: ReviewQueueKind.newCards);
+        final scheduler = _FakeNextStateDescriber(const [
+          'Again 3m',
+          'Hard 5m',
+          'Good 10m',
+        ]);
 
-      await expectLater(
-        AnswerButtonsNextTime.from(state: state, scheduler: scheduler),
-        throwsA(isA<RangeError>()),
-      );
-    });
+        await expectLater(
+          AnswerButtonsNextTime.from(state: state, scheduler: scheduler),
+          throwsA(isA<RangeError>()),
+        );
+      },
+    );
   });
 }
 
-ReviewQueueState<Object> _queueState({required ReviewQueueKind activeQueue}) =>
-    ReviewQueueState<Object>(
-      card: const ReviewCard(
-        id: 1,
-        questionHtml: 'question',
-        answerHtml: 'answer',
-      ),
-      schedulingSnapshot: Object(),
-      counts:
-          const ReviewQueueCounts(newCount: 0, learnCount: 8, reviewCount: 17),
-      activeQueue: activeQueue,
-    );
+ReviewQueueState<Object> _queueState({
+  required ReviewQueueKind activeQueue,
+}) => ReviewQueueState<Object>(
+  card: const ReviewCard(id: 1, questionHtml: 'question', answerHtml: 'answer'),
+  schedulingSnapshot: Object(),
+  counts: const ReviewQueueCounts(newCount: 0, learnCount: 8, reviewCount: 17),
+  activeQueue: activeQueue,
+);
 
 class _FakeNextStateDescriber implements ReviewNextStateDescriber<Object> {
   _FakeNextStateDescriber(this.labels);

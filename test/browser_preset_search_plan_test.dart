@@ -41,27 +41,30 @@ void main() {
       }
     });
 
-    test('marked search emits its query before copying and requesting search', () {
-      final currentFilters = BrowserSearchFilters(
-        decks: [const BrowserDeckNameId(name: 'Languages', id: 7)],
-        flags: [1, 4],
-        tags: ['keep tag'],
-        noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
-        cardStateCodes: [0, 2],
-      );
-      final currentRequest = BrowserSearchRequest(
-        query: 'old query',
-        filters: currentFilters,
-      );
+    test(
+      'marked search emits its query before copying and requesting search',
+      () {
+        final currentFilters = BrowserSearchFilters(
+          decks: [const BrowserDeckNameId(name: 'Languages', id: 7)],
+          flags: [1, 4],
+          tags: ['keep tag'],
+          noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: 3)],
+          cardStateCodes: [0, 2],
+        );
+        final currentRequest = BrowserSearchRequest(
+          query: 'old query',
+          filters: currentFilters,
+        );
 
-      final plan = planBrowserPresetSearch(
-        preset: BrowserPresetSearch.markedNotes,
-        hasSelectedRows: false,
-        currentRequest: currentRequest,
-      )!;
+        final plan = planBrowserPresetSearch(
+          preset: BrowserPresetSearch.markedNotes,
+          hasSelectedRows: false,
+          currentRequest: currentRequest,
+        )!;
 
-      _expectPresetSearch(plan, currentRequest, 'tag:marked');
-    });
+        _expectPresetSearch(plan, currentRequest, 'tag:marked');
+      },
+    );
 
     test(
       'suspended search emits its query before copying and requesting search',
@@ -97,25 +100,23 @@ void _expectPresetSearch(
 ) {
   expect(plan.query, query);
   expect(plan.updatedRequest.query, query);
-  expect(identical(plan.updatedRequest.filters, currentRequest.filters), isTrue);
-  expect(currentRequest.query, 'old query');
   expect(
-    plan.directives.map((directive) => directive.runtimeType),
-    [
-      BrowserEmitPresetFilterQueryDirective,
-      BrowserUpdatePresetSearchRequestDirective,
-      BrowserRequestPresetSearchDirective,
-    ],
+    identical(plan.updatedRequest.filters, currentRequest.filters),
+    isTrue,
   );
+  expect(currentRequest.query, 'old query');
+  expect(plan.directives.map((directive) => directive.runtimeType), [
+    BrowserEmitPresetFilterQueryDirective,
+    BrowserUpdatePresetSearchRequestDirective,
+    BrowserRequestPresetSearchDirective,
+  ]);
 
-  final emit =
-      plan.directives[0] as BrowserEmitPresetFilterQueryDirective;
+  final emit = plan.directives[0] as BrowserEmitPresetFilterQueryDirective;
   expect(emit.query, query);
   final update =
       plan.directives[1] as BrowserUpdatePresetSearchRequestDirective;
   expect(identical(update.request, plan.updatedRequest), isTrue);
-  final search =
-      plan.directives[2] as BrowserRequestPresetSearchDirective;
+  final search = plan.directives[2] as BrowserRequestPresetSearchDirective;
   expect(identical(search.request, plan.updatedRequest), isTrue);
   expect(search.forceRefresh, isTrue);
   expect(search.fromUserSearch, isFalse);

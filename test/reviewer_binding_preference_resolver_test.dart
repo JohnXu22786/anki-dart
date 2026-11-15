@@ -101,10 +101,7 @@ void main() {
       );
 
       expect(bindings.single.binding, isA<ReviewerKeyCodeBinding>());
-      expect(
-        (bindings.single.binding as ReviewerKeyCodeBinding).keyCode,
-        71,
-      );
+      expect((bindings.single.binding as ReviewerKeyCodeBinding).keyCode, 71);
     });
   });
 }

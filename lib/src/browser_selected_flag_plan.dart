@@ -55,12 +55,12 @@ final class BrowserSelectedCardsFlagPlan<TCardId, TFlag> {
     required this.selectedCardIds,
     required this.flag,
   }) : effects = List.unmodifiable([
-          BrowserSetSelectedCardsFlagEffect<TCardId, TFlag>(
-            cardIds: selectedCardIds,
-            flag: flag,
-          ),
-          BrowserPublishCardStateChangedEffect<TCardId, TFlag>(),
-        ]);
+         BrowserSetSelectedCardsFlagEffect<TCardId, TFlag>(
+           cardIds: selectedCardIds,
+           flag: flag,
+         ),
+         BrowserPublishCardStateChangedEffect<TCardId, TFlag>(),
+       ]);
 
   final List<TCardId> selectedCardIds;
   final TFlag flag;
@@ -77,12 +77,11 @@ final class BrowserSelectedCardsFlagPlan<TCardId, TFlag> {
 /// cased: the pinned method still performs the write and emits its change event
 /// when the list is empty. Card selection/lookup, the undoable collection write
 /// and event delivery remain host-side.
-BrowserSelectedCardsFlagPlan<TCardId, TFlag>
-    planBrowserSelectedCardsFlagUpdate<TCardId, TFlag>({
-  required List<TCardId> selectedCardIds,
-  required TFlag flag,
-}) =>
-        BrowserSelectedCardsFlagPlan<TCardId, TFlag>(
-          selectedCardIds: selectedCardIds,
-          flag: flag,
-        );
+BrowserSelectedCardsFlagPlan<TCardId, TFlag> planBrowserSelectedCardsFlagUpdate<
+  TCardId,
+  TFlag
+>({required List<TCardId> selectedCardIds, required TFlag flag}) =>
+    BrowserSelectedCardsFlagPlan<TCardId, TFlag>(
+      selectedCardIds: selectedCardIds,
+      flag: flag,
+    );

@@ -62,37 +62,19 @@ abstract final class ReviewerDefaultBindings {
   static const byCommand = <ViewerCommand, List<ReviewerDefaultBinding>>{
     ViewerCommand.SHOW_ANSWER: [],
     ViewerCommand.ANSWER_AGAIN: [
-      ReviewerDefaultKeyCode(
-        'KEYCODE_BUTTON_Y',
-        side: ReviewerCardSide.answer,
-      ),
+      ReviewerDefaultKeyCode('KEYCODE_BUTTON_Y', side: ReviewerCardSide.answer),
       ReviewerDefaultKeyCode('KEYCODE_1', side: ReviewerCardSide.answer),
-      ReviewerDefaultKeyCode(
-        'KEYCODE_NUMPAD_1',
-        side: ReviewerCardSide.answer,
-      ),
+      ReviewerDefaultKeyCode('KEYCODE_NUMPAD_1', side: ReviewerCardSide.answer),
     ],
     ViewerCommand.ANSWER_HARD: [
-      ReviewerDefaultKeyCode(
-        'KEYCODE_BUTTON_X',
-        side: ReviewerCardSide.answer,
-      ),
+      ReviewerDefaultKeyCode('KEYCODE_BUTTON_X', side: ReviewerCardSide.answer),
       ReviewerDefaultKeyCode('KEYCODE_2', side: ReviewerCardSide.answer),
-      ReviewerDefaultKeyCode(
-        'KEYCODE_NUMPAD_2',
-        side: ReviewerCardSide.answer,
-      ),
+      ReviewerDefaultKeyCode('KEYCODE_NUMPAD_2', side: ReviewerCardSide.answer),
     ],
     ViewerCommand.ANSWER_GOOD: [
-      ReviewerDefaultKeyCode(
-        'KEYCODE_BUTTON_B',
-        side: ReviewerCardSide.answer,
-      ),
+      ReviewerDefaultKeyCode('KEYCODE_BUTTON_B', side: ReviewerCardSide.answer),
       ReviewerDefaultKeyCode('KEYCODE_3', side: ReviewerCardSide.answer),
-      ReviewerDefaultKeyCode(
-        'KEYCODE_NUMPAD_3',
-        side: ReviewerCardSide.answer,
-      ),
+      ReviewerDefaultKeyCode('KEYCODE_NUMPAD_3', side: ReviewerCardSide.answer),
       ReviewerDefaultKeyCode(
         'KEYCODE_DPAD_CENTER',
         side: ReviewerCardSide.answer,
@@ -105,15 +87,9 @@ abstract final class ReviewerDefaultBindings {
       ),
     ],
     ViewerCommand.ANSWER_EASY: [
-      ReviewerDefaultKeyCode(
-        'KEYCODE_BUTTON_A',
-        side: ReviewerCardSide.answer,
-      ),
+      ReviewerDefaultKeyCode('KEYCODE_BUTTON_A', side: ReviewerCardSide.answer),
       ReviewerDefaultKeyCode('KEYCODE_4', side: ReviewerCardSide.answer),
-      ReviewerDefaultKeyCode(
-        'KEYCODE_NUMPAD_4',
-        side: ReviewerCardSide.answer,
-      ),
+      ReviewerDefaultKeyCode('KEYCODE_NUMPAD_4', side: ReviewerCardSide.answer),
     ],
     ViewerCommand.UNDO: [
       ReviewerDefaultKeyCode(
@@ -277,10 +253,7 @@ abstract final class ReviewerDefaultBindings {
       ReviewerDefaultKeyCode('KEYCODE_G', side: ReviewerCardSide.both),
     ],
     ViewerCommand.ADD_NOTE: [
-      ReviewerDefaultKeyCode(
-        'KEYCODE_A',
-        side: ReviewerCardSide.both,
-      ),
+      ReviewerDefaultKeyCode('KEYCODE_A', side: ReviewerCardSide.both),
     ],
     ViewerCommand.RESCHEDULE_NOTE: [],
     ViewerCommand.TOGGLE_AUTO_ADVANCE: [

@@ -30,14 +30,7 @@ import 'browser_search_history.dart';
 /// Invalid JSON or an incompatible entry decodes as an empty whole history,
 /// matching the source's `runCatching` fallback.
 abstract final class BrowserSearchHistoryJsonCodec {
-  static const Set<String> _fieldNames = {
-    'q',
-    'did',
-    'f',
-    't',
-    'ntid',
-    's',
-  };
+  static const Set<String> _fieldNames = {'q', 'did', 'f', 't', 'ntid', 's'};
   static const Set<int> _flagCodes = {0, 1, 2, 3, 4, 5, 6, 7};
   static const Set<int> _cardStateCodes = {0, 1, 2, 3, 4};
   static final BigInt _minimumLong = BigInt.parse('-9223372036854775808');
@@ -70,8 +63,9 @@ abstract final class BrowserSearchHistoryJsonCodec {
     }
     if (entry.tags.isNotEmpty) encoded['t'] = entry.tags;
     if (entry.noteTypeIds.isNotEmpty) {
-      encoded['ntid'] =
-          entry.noteTypeIds.map(_requireLong).toList(growable: false);
+      encoded['ntid'] = entry.noteTypeIds
+          .map(_requireLong)
+          .toList(growable: false);
     }
     if (entry.cardStateCodes.isNotEmpty) {
       encoded['s'] = entry.cardStateCodes

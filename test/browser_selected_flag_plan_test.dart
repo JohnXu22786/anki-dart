@@ -42,22 +42,21 @@ void main() {
       expect(mutation.flag, same(flag));
     });
 
-    test('orders successful flag mutation before state-changed publication',
-        () {
-      final plan = planBrowserSelectedCardsFlagUpdate(
-        selectedCardIds: <int>[1],
-        flag: 'blue',
-      );
+    test(
+      'orders successful flag mutation before state-changed publication',
+      () {
+        final plan = planBrowserSelectedCardsFlagUpdate(
+          selectedCardIds: <int>[1],
+          flag: 'blue',
+        );
 
-      expect(plan.effects, hasLength(2));
-      expect(
-        plan.effects.map((effect) => effect.runtimeType),
-        [
+        expect(plan.effects, hasLength(2));
+        expect(plan.effects.map((effect) => effect.runtimeType), [
           BrowserSetSelectedCardsFlagEffect<int, String>,
           BrowserPublishCardStateChangedEffect<int, String>,
-        ],
-      );
-    });
+        ]);
+      },
+    );
 
     test('empty selected IDs still produce both source effects', () {
       const ids = <int>[];
@@ -71,10 +70,7 @@ void main() {
       expect(plan.returnedCardIds, same(ids));
       expect(plan.effects, hasLength(2));
       expect(plan.effects.first, isA<BrowserSetSelectedCardsFlagEffect>());
-      expect(
-        plan.effects.last,
-        isA<BrowserPublishCardStateChangedEffect>(),
-      );
+      expect(plan.effects.last, isA<BrowserPublishCardStateChangedEffect>());
     });
   });
 }

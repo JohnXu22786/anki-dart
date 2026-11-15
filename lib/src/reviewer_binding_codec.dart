@@ -106,15 +106,16 @@ class ReviewerModifierKeys {
   }
 
   static ReviewerModifierKeys fromString(String value) => ReviewerModifierKeys(
-        shift: value.contains('Shift'),
-        ctrl: value.contains('Ctrl'),
-        alt: value.contains('Alt'),
-      );
+    shift: value.contains('Shift'),
+    ctrl: value.contains('Ctrl'),
+    alt: value.contains('Alt'),
+  );
 
   static const ReviewerModifierKeys none = ReviewerModifierKeys();
   static const ReviewerModifierKeys control = ReviewerModifierKeys(ctrl: true);
-  static const ReviewerModifierKeys shiftOnly =
-      ReviewerModifierKeys(shift: true);
+  static const ReviewerModifierKeys shiftOnly = ReviewerModifierKeys(
+    shift: true,
+  );
   static const ReviewerModifierKeys altOnly = ReviewerModifierKeys(alt: true);
 
   bool _semiStructurallyEquals(ReviewerModifierKeys other) {
@@ -129,10 +130,10 @@ class ReviewerModifierKeys {
 
   @override
   int get hashCode => _javaObjectsHash([
-        _javaBooleanHash(ctrl),
-        _javaBooleanHash(alt),
-        _javaBooleanHash(shiftMatches(true)),
-      ]);
+    _javaBooleanHash(ctrl),
+    _javaBooleanHash(alt),
+    _javaBooleanHash(shiftMatches(true)),
+  ]);
 }
 
 /// Default keyboard bindings may ignore shift when the source device is
@@ -244,7 +245,8 @@ final class ReviewerAxisButtonBinding extends ReviewerBindingContent {
   final double threshold;
 
   @override
-  String toBindingString() => '${ReviewerBindingCodec.axisPrefix}$axisValue '
+  String toBindingString() =>
+      '${ReviewerBindingCodec.axisPrefix}$axisValue '
       '${javaFloatToString(threshold)}';
 
   @override
@@ -272,8 +274,7 @@ final class ReviewerUnknownBinding extends ReviewerBindingContent {
   bool operator ==(Object other) => other is ReviewerUnknownBinding;
 
   @override
-  int get hashCode =>
-      0x554E4B4E; // Stable hash for source `data object` semantics.
+  int get hashCode => 0x554E4B4E; // Stable hash for source `data object` semantics.
 }
 
 /// A decoded reviewer preference entry.
@@ -284,34 +285,29 @@ final class ReviewerUnknownBinding extends ReviewerBindingContent {
 /// handling remain outside this value model. Unknown entries model
 /// `Binding.UnknownBinding` and are omitted when written.
 class ReviewerBindingValue {
-  const ReviewerBindingValue._({
-    required this.binding,
-    required this.side,
-  });
+  const ReviewerBindingValue._({required this.binding, required this.side});
 
   /// Constructs a serializable gesture binding.
   factory ReviewerBindingValue.forGesture(
     Gesture gesture, {
     ReviewerCardSide side = ReviewerCardSide.both,
-  }) =>
-      ReviewerBindingValue._(
-        binding: ReviewerGestureBinding(gesture),
-        side: side,
-      );
+  }) => ReviewerBindingValue._(
+    binding: ReviewerGestureBinding(gesture),
+    side: side,
+  );
 
   /// Constructs a source `Binding.KeyCode` value.
   factory ReviewerBindingValue.forKeyCode(
     int keyCode, {
     ReviewerModifierKeys modifierKeys = ReviewerModifierKeys.none,
     ReviewerCardSide side = ReviewerCardSide.both,
-  }) =>
-      ReviewerBindingValue._(
-        binding: ReviewerKeyCodeBinding(
-          keyCode: keyCode,
-          modifierKeys: modifierKeys,
-        ),
-        side: side,
-      );
+  }) => ReviewerBindingValue._(
+    binding: ReviewerKeyCodeBinding(
+      keyCode: keyCode,
+      modifierKeys: modifierKeys,
+    ),
+    side: side,
+  );
 
   /// Constructs a source `Binding.unicode` value. The factory defaults to
   /// shift-tolerant app-defined modifiers and rejects the list separator `|`.
@@ -319,31 +315,30 @@ class ReviewerBindingValue {
     int codeUnit, {
     ReviewerModifierKeys? modifierKeys,
     ReviewerCardSide side = ReviewerCardSide.both,
-  }) =>
-      ReviewerBindingValue._(
-        binding: codeUnit == ReviewerBindingCodec.separator.codeUnitAt(0)
-            ? const ReviewerUnknownBinding()
-            : ReviewerUnicodeCharacterBinding(
-                codeUnit: codeUnit,
-                modifierKeys:
-                    modifierKeys ?? ReviewerAppDefinedModifierKeys.allowShift(),
-              ),
-        side: side,
-      );
+  }) => ReviewerBindingValue._(
+    binding: codeUnit == ReviewerBindingCodec.separator.codeUnitAt(0)
+        ? const ReviewerUnknownBinding()
+        : ReviewerUnicodeCharacterBinding(
+            codeUnit: codeUnit,
+            modifierKeys:
+                modifierKeys ?? ReviewerAppDefinedModifierKeys.allowShift(),
+          ),
+    side: side,
+  );
 
   final ReviewerBindingContent binding;
   final ReviewerCardSide side;
 
   ReviewerBindingKind get kind => switch (binding) {
-        ReviewerGestureBinding() => ReviewerBindingKind.gesture,
-        ReviewerUnknownBinding() => ReviewerBindingKind.unknown,
-        _ => ReviewerBindingKind.nonGesture,
-      };
+    ReviewerGestureBinding() => ReviewerBindingKind.gesture,
+    ReviewerUnknownBinding() => ReviewerBindingKind.unknown,
+    _ => ReviewerBindingKind.nonGesture,
+  };
 
   Gesture? get gesture => switch (binding) {
-        ReviewerGestureBinding(:final gesture) => gesture,
-        _ => null,
-      };
+    ReviewerGestureBinding(:final gesture) => gesture,
+    _ => null,
+  };
 
   bool get isValid => binding.isValid;
 
@@ -370,9 +365,9 @@ class ReviewerBindingValue {
 
   @override
   int get hashCode => _javaObjectsHash([
-        binding.hashCode,
-        ReviewerBindingCodec.reviewerPrefix.codeUnitAt(0),
-      ]);
+    binding.hashCode,
+    ReviewerBindingCodec.reviewerPrefix.codeUnitAt(0),
+  ]);
 }
 
 /// Encodes and decodes the `1/` list of serialized AnkiDroid reviewer bindings.
@@ -402,8 +397,9 @@ class ReviewerBindingCodec {
       return const [];
     }
 
-    final entries =
-        preferenceValue.substring(versionPrefix.length).split(separator);
+    final entries = preferenceValue
+        .substring(versionPrefix.length)
+        .split(separator);
     return List.unmodifiable([
       for (final entry in entries)
         if (entry.isNotEmpty) _decodeEntry(entry),
@@ -425,8 +421,10 @@ class ReviewerBindingCodec {
     // Kotlin String.length/subString and String.last() operate on UTF-16 code
     // units, so remove exactly one unit for the side suffix.
     final sideUnit = entry.codeUnitAt(entry.length - 1);
-    final bindingWithOptionalReviewerPrefix =
-        entry.substring(0, entry.length - 1);
+    final bindingWithOptionalReviewerPrefix = entry.substring(
+      0,
+      entry.length - 1,
+    );
     final binding = bindingWithOptionalReviewerPrefix.startsWith(reviewerPrefix)
         ? bindingWithOptionalReviewerPrefix.substring(reviewerPrefix.length)
         : bindingWithOptionalReviewerPrefix;
@@ -578,16 +576,18 @@ class ReviewerBindingCodec {
     }
 
     final exponentIndex = unsigned.indexOf(RegExp('[eE]'));
-    final mantissa =
-        exponentIndex < 0 ? unsigned : unsigned.substring(0, exponentIndex);
+    final mantissa = exponentIndex < 0
+        ? unsigned
+        : unsigned.substring(0, exponentIndex);
     final decimalExponent = exponentIndex < 0
         ? BigInt.zero
         : BigInt.tryParse(unsigned.substring(exponentIndex + 1));
     if (decimalExponent == null) return null;
 
     final pointIndex = mantissa.indexOf('.');
-    final fractionalDigits =
-        pointIndex < 0 ? 0 : mantissa.length - pointIndex - 1;
+    final fractionalDigits = pointIndex < 0
+        ? 0
+        : mantissa.length - pointIndex - 1;
     var digits = mantissa.replaceAll('.', '').replaceFirst(RegExp(r'^0+'), '');
     if (digits.isEmpty) return negative ? -0.0 : 0.0;
     final trailingZeros =
@@ -598,7 +598,8 @@ class ReviewerBindingCodec {
 
     final significand = BigInt.tryParse(digits);
     if (significand == null) return null;
-    final powerOfTen = decimalExponent -
+    final powerOfTen =
+        decimalExponent -
         BigInt.from(fractionalDigits) +
         BigInt.from(trailingZeros);
     final decimalOrder = powerOfTen + BigInt.from(digits.length - 1);
@@ -608,8 +609,9 @@ class ReviewerBindingCodec {
     if (decimalOrder < BigInt.from(-60)) return negative ? -0.0 : 0.0;
 
     final power = powerOfTen.toInt();
-    final numerator =
-        power >= 0 ? significand * BigInt.from(10).pow(power) : significand;
+    final numerator = power >= 0
+        ? significand * BigInt.from(10).pow(power)
+        : significand;
     final denominator = power >= 0 ? BigInt.one : BigInt.from(10).pow(-power);
     return _roundRationalToFloat32(numerator, denominator, negative);
   }
@@ -635,8 +637,9 @@ class ReviewerBindingCodec {
     late final double rounded;
     if (topExponent >= -126) {
       final significandShift = 23 - topExponent;
-      final scaledNumerator =
-          significandShift >= 0 ? numerator << significandShift : numerator;
+      final scaledNumerator = significandShift >= 0
+          ? numerator << significandShift
+          : numerator;
       final scaledDenominator = significandShift >= 0
           ? denominator
           : denominator << -significandShift;
@@ -683,8 +686,9 @@ class ReviewerBindingCodec {
     if (exponent == null) return null;
 
     final pointIndex = significandText.indexOf('.');
-    final fractionalDigits =
-        pointIndex < 0 ? 0 : significandText.length - pointIndex - 1;
+    final fractionalDigits = pointIndex < 0
+        ? 0
+        : significandText.length - pointIndex - 1;
     final hexDigits = significandText.replaceAll('.', '');
     final significand = BigInt.tryParse(hexDigits, radix: 16);
     if (significand == null) return null;
@@ -726,8 +730,8 @@ class ReviewerBindingCodec {
         final discardedBits = -subnormalShift;
         subnormalSignificand =
             discardedBits > BigInt.from(significand.bitLength)
-                ? BigInt.zero
-                : _roundRightToEven(significand, discardedBits.toInt());
+            ? BigInt.zero
+            : _roundRightToEven(significand, discardedBits.toInt());
       }
       rounded = subnormalSignificand.toDouble() * math.pow(2.0, -149);
     }
@@ -845,7 +849,7 @@ int _javaObjectsHash(List<int> values) {
 }
 
 String _sideSuffix(ReviewerCardSide side) => switch (side) {
-      ReviewerCardSide.question => '0',
-      ReviewerCardSide.answer => '1',
-      ReviewerCardSide.both => '2',
-    };
+  ReviewerCardSide.question => '0',
+  ReviewerCardSide.answer => '1',
+  ReviewerCardSide.both => '2',
+};

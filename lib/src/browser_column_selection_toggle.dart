@@ -21,11 +21,7 @@
  */
 
 /// The host-projected row kinds used by AnkiDroid's column-selection adapter.
-enum BrowserColumnSelectionRowKind {
-  column,
-  activeHeading,
-  availableHeading,
-}
+enum BrowserColumnSelectionRowKind { column, activeHeading, availableHeading }
 
 /// Captures the indexes and side test used for one column toggle click.
 ///
@@ -65,9 +61,9 @@ final class BrowserColumnSelectionTogglePlan {
 BrowserColumnSelectionTogglePlan planBrowserColumnSelectionToggle({
   required List<BrowserColumnSelectionRowKind> rowKinds,
   required int fromPosition,
-}) =>
-    BrowserColumnSelectionTogglePlan(
-      fromPosition: fromPosition,
-      availableHeadingPosition:
-          rowKinds.indexOf(BrowserColumnSelectionRowKind.availableHeading),
-    );
+}) => BrowserColumnSelectionTogglePlan(
+  fromPosition: fromPosition,
+  availableHeadingPosition: rowKinds.indexOf(
+    BrowserColumnSelectionRowKind.availableHeading,
+  ),
+);

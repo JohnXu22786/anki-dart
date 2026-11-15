@@ -71,16 +71,18 @@ void main() {
       );
     });
 
-    test('selected-deck user searches with rows include the all-decks action',
-        () {
-      expect(
-        browserSearchResultMessage(
-          fromUserSearch: true,
-          hasSelectedAllDecks: false,
-          rowCount: 1,
-        ),
-        const BrowserSearchResultCardCount(includeSearchAllDecksAction: true),
-      );
-    });
+    test(
+      'selected-deck user searches with rows include the all-decks action',
+      () {
+        expect(
+          browserSearchResultMessage(
+            fromUserSearch: true,
+            hasSelectedAllDecks: false,
+            rowCount: 1,
+          ),
+          const BrowserSearchResultCardCount(includeSearchAllDecksAction: true),
+        );
+      },
+    );
   });
 }

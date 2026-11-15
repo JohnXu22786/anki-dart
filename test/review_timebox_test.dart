@@ -25,32 +25,31 @@ import 'package:test/test.dart';
 
 void main() {
   group('ReviewTimeboxTracker', () {
-    test('expires only after the limit and returns the limit and answer delta',
-        () {
-      var now = 100;
-      var limit = 60;
-      var answers = 10;
-      final tracker = ReviewTimeboxTracker(
-        intTimeSeconds: () => now,
-        timeboxSeconds: () => limit,
-        numberOfAnswersRecorded: () => answers,
-      );
-      tracker.startTimebox();
+    test(
+      'expires only after the limit and returns the limit and answer delta',
+      () {
+        var now = 100;
+        var limit = 60;
+        var answers = 10;
+        final tracker = ReviewTimeboxTracker(
+          intTimeSeconds: () => now,
+          timeboxSeconds: () => limit,
+          numberOfAnswersRecorded: () => answers,
+        );
+        tracker.startTimebox();
 
-      now = 160;
-      answers = 12;
-      expect(
-        tracker.timeboxReached(),
-        isNull,
-      );
+        now = 160;
+        answers = 12;
+        expect(tracker.timeboxReached(), isNull);
 
-      now = 161;
-      answers = 13;
-      final reached = tracker.timeboxReached();
+        now = 161;
+        answers = 13;
+        final reached = tracker.timeboxReached();
 
-      expect(reached?.secs, 60);
-      expect(reached?.reps, 3);
-    });
+        expect(reached?.secs, 60);
+        expect(reached?.reps, 3);
+      },
+    );
 
     test('a zero limit does not read the clock or reset the baseline', () {
       var now = 100;

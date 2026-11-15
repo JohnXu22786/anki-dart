@@ -91,6 +91,7 @@ class Note {
       );
     }
 
+    _markDirty();
     for (var index = 0; index < _fields.length; index++) {
       _fields[index] = normalizeNoteField(
         _fields[index],
@@ -99,13 +100,15 @@ class Note {
     }
 
     final field1NoHtml = stripHtmlPreservingMediaFilenames(_fields.first);
+    final checksum = fieldChecksum(field1NoHtml);
     final sortFieldIndex = notetype.config.sortFieldIdx;
-    _sortField = sortFieldIndex == 0
+    final sortField = sortFieldIndex == 0
         ? field1NoHtml
         : stripHtmlPreservingMediaFilenames(
             sortFieldIndex < _fields.length ? _fields[sortFieldIndex] : '',
           );
-    _checksum = fieldChecksum(field1NoHtml);
+    _sortField = sortField;
+    _checksum = checksum;
   }
 
   factory Note.fromProto(proto.Note value) => Note(

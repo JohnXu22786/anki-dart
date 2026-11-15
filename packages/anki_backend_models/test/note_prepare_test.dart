@@ -133,7 +133,12 @@ void main() {
         ),
         throwsStateError,
       );
-      final wrongCount = Note(notetypeId: Int64(7), fields: ['only one']);
+      final wrongCount = Note(
+        notetypeId: Int64(7),
+        fields: ['only one'],
+        sortField: 'stale sort',
+        checksum: 123,
+      );
       expect(
         () => wrongCount.prepareForUpdate(
           _notetype(),
@@ -141,6 +146,8 @@ void main() {
         ),
         throwsStateError,
       );
+      expect(wrongCount.sortField, 'stale sort');
+      expect(wrongCount.checksum, 123);
     });
   });
 }

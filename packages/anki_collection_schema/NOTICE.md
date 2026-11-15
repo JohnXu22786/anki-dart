@@ -12,9 +12,11 @@ manifest. Upstream is Copyright Ankitects Pty Ltd and contributors and licensed
 under the GNU Affero General Public License, version 3 or later.
 
 The Dart API and tests are Copyright (C) 2026 John Tsui and distributed under
-AGPL-3.0-or-later. This package does not implement a database driver, collection
-opening/closing, transaction execution, or the named Rust transformations; an
-adapter must implement and execute the callbacks in the catalog order.
+AGPL-3.0-or-later. The package implements platform-neutral transactional
+execution of the catalogued plans. It does not provide a database driver,
+collection creation/open/close, integrity checks, WAL handling, table CRUD,
+defaults, undo, or the named Rust transformations. A host supplies the
+database and callback implementations.
 
 Run `python3 tool/verify_source.py /path/to/anki-core` from this package to
 verify all recorded source hashes against a checkout at the pinned commit.

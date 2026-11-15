@@ -18,6 +18,13 @@ The Dart package, SQL source, fixtures, and tests are AGPL-3.0-or-later;
 `SOURCE.sha256` pins the exact upstream SQL and Rust files used. See its
 `NOTICE.md` for provenance and `tool/verify_source.py` for verification.
 
+[`packages/anki_search_sql`](packages/anki_search_sql/README.md) compiles a
+bounded subset of the typed search AST to Anki SQL, including source-compatible
+tag predicates. It preserves Core's normal, regex, no-combining, wildcard, and
+special tag behavior; SQL execution and regex-function registration remain
+host responsibilities. Its exact Anki Core source hashes are recorded in
+`packages/anki_search_sql/SOURCE.sha256`.
+
 [`packages/anki_collection_sqlite`](packages/anki_collection_sqlite/README.md)
 adds the concrete SQLite connection adapter for that open/create API. It uses
 the `sqlite3` package across native targets and provides an experimental,

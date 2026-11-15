@@ -213,4 +213,104 @@ void main() {
     ]);
     expect(compiled.requiredTable, RequiredTable.cardsAndNotes);
   });
+
+  test('tag modes use Core SQL clauses and matching transformations', () {
+    final normal = compileSearchSql(
+      GroupNode([
+        Search(const Tag(tag: 'foo_bar*', mode: FieldSearchMode.normal)),
+      ]),
+    );
+    expect(
+      normal.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and '
+      '(n.tags regexp ?)',
+    );
+    expect(normal.arguments, [r'(?i).* foo\Sbar\S*(::| ).*']);
+    expect(normal.requiredTable, RequiredTable.cardsAndNotes);
+
+    final regex = compileSearchSql(
+      GroupNode([
+        Search(const Tag(tag: r'^foo.*$', mode: FieldSearchMode.regex)),
+      ]),
+    );
+    expect(
+      regex.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and '
+      '(regexp_tags(?1, n.tags))',
+    );
+    expect(regex.arguments, [r'(?i)^foo.*$']);
+
+    final noCombining = compileSearchSql(
+      GroupNode([
+        Search(const Tag(tag: 'Café', mode: FieldSearchMode.noCombining)),
+      ]),
+    );
+    expect(
+      noCombining.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and '
+      '(coalesce(process_text(n.tags, 1), n.tags) regexp ?)',
+    );
+    expect(noCombining.arguments, [r'(?i).* Cafe(::| ).*']);
+  });
+
+  test('tag special values and escaped wildcards match Core semantics', () {
+    for (final tag in ['none', '*']) {
+      final compiled = compileSearchSql(
+        GroupNode([Search(Tag(tag: tag, mode: FieldSearchMode.normal))]),
+      );
+      expect(compiled.sql, contains(tag == 'none' ? 'n.tags = \'\'' : 'true'));
+      expect(compiled.arguments, isEmpty);
+    }
+
+    final space = compileSearchSql(
+      GroupNode([
+        Search(const Tag(tag: 'two words', mode: FieldSearchMode.normal)),
+      ]),
+    );
+    expect(space.sql, endsWith('(false)'));
+    expect(space.arguments, isEmpty);
+
+    final escaped = compileSearchSql(
+      GroupNode([
+        Search(const Tag(tag: r'Foo\*_*', mode: FieldSearchMode.normal)),
+      ]),
+    );
+    expect(escaped.arguments, [r'(?i).* Foo\*\S\S*(::| ).*']);
+
+    final escapedOnly = compileSearchSql(
+      GroupNode([
+        Search(const Tag(tag: r'Foo\*', mode: FieldSearchMode.normal)),
+      ]),
+    );
+    expect(escapedOnly.arguments, [r'(?i).* Foo\*(::| ).*']);
+    expect(escapedOnly.sql, endsWith('(n.tags regexp ?)'));
+  });
+
+  test('tag arguments retain ordering through nested boolean predicates', () {
+    final compiled = compileSearchSql(
+      GroupNode([
+        Search(Notetype('Basic*')),
+        BooleanNode(NodeKind.and),
+        GroupNode([
+          Search(const Tag(tag: 'Café*', mode: FieldSearchMode.noCombining)),
+          BooleanNode(NodeKind.or),
+          Search(const Tag(tag: r'^math::.*$', mode: FieldSearchMode.regex)),
+        ]),
+      ]),
+      resultType: SearchResultType.notes,
+    );
+    expect(
+      compiled.sql,
+      'select n.id from notes n where '
+      '(n.mid in (select id from notetypes where name regexp ?) and '
+      '(coalesce(process_text(n.tags, 1), n.tags) regexp ? or '
+      'regexp_tags(?3, n.tags)))',
+    );
+    expect(compiled.arguments, [
+      r'(?i)^Basic.*$',
+      r'(?i).* Cafe\S*(::| ).*',
+      r'(?i)^math::.*$',
+    ]);
+    expect(compiled.requiredTable, RequiredTable.notes);
+  });
 }

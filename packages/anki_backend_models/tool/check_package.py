@@ -13,6 +13,10 @@ SOURCE_HASHES = {
     "rslib/src/card/mod.rs": "cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9",
     "rslib/src/card/service.rs": "8ddddbf879e08cb70ea00e9f00ac6c98f9f3988af65c48598a6cbb2fc11558b6",
     "rslib/src/notes/mod.rs": "5df79b58906206a87c5a28a06f886227df74e6a65d061d2cb915d35b34d35893",
+    "rslib/src/notetype/mod.rs": "4f133ddf970d954e80cf3352d5bd91bf73418a1d71eaa1fb863218569d4198cb",
+    "rslib/src/notetype/service.rs": "6fc566d68509e21ae4b294bf6fe45c3f458d81eb459c454e2faf9c6c19c44b9f",
+    "rslib/src/notetype/fields.rs": "531d82f2917cab0d27828e2477ee51f4f533e9f81a499dcb2bc5632be6262a3a",
+    "rslib/src/notetype/templates.rs": "b04ee6f16a250d5ee5649e6ef122f5ecfeab5d7aebaf80d4d31093ca96e9b241",
 }
 
 
@@ -59,7 +63,7 @@ def main() -> int:
         print("Model package validation failed:", file=sys.stderr)
         print("\n".join(f"- {error}" for error in errors), file=sys.stderr)
         return 1
-    print("Validated pinned Card/Note source hashes, AGPL metadata, and platform-neutral imports.")
+    print("Validated pinned Anki model source hashes, AGPL metadata, and platform-neutral imports.")
     return 0
 
 

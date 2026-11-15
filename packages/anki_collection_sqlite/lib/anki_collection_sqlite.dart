@@ -2,3 +2,4 @@
 // Copyright (C) 2026 John Tsui
 
 export 'src/collection_sqlite_storage.dart';
+export 'src/search_executor.dart';

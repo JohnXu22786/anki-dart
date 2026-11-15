@@ -12,6 +12,8 @@ dependencies:
     path: ../anki_backend_models
   anki_collection_schema:
     path: ../anki_collection_schema
+  anki_search_sql:
+    path: ../anki_search_sql
   fixnum: ^1.1.0
   sqlite3: ^3.9.1
   web: ^1.1.2

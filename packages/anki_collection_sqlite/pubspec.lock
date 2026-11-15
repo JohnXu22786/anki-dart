@@ -38,6 +38,20 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  anki_search_parser:
+    dependency: transitive
+    description:
+      path: "../anki_search_parser"
+      relative: true
+    source: path
+    version: "0.1.0"
+  anki_search_sql:
+    dependency: "direct main"
+    description:
+      path: "../anki_search_sql"
+      relative: true
+    source: path
+    version: "0.1.0"
   args:
     dependency: transitive
     description:

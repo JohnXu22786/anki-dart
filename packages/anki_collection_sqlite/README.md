@@ -8,6 +8,13 @@ provides pinned stored card and note reads and card row mutations, using shared
 models from `anki_backend_models`. The schema/open runner and metadata/default
 callbacks remain in `anki_collection_schema`.
 
+`CollectionSqliteSearchExecutor` implements the platform-neutral search-plan
+host on an existing `CommonDatabase` connection. It executes Core's unbound
+multi-statement sort preparations on that connection, then reads signed 64-bit
+IDs from the ordered search query. The adapter preserves row order and binds
+search arguments as supplied. Search-specific SQLite functions and collations
+are not registered by this adapter and remain a separate migration unit.
+
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and
 `getAllNoteIds`. Missing single rows return `null`; collection queries return

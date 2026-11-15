@@ -1,0 +1,80 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import 'dart:convert';
+
+import 'package:sqlite3/common.dart';
+
+/// Installs Core's card-data extraction functions on a shared SQLite host.
+void registerCardDataFunctions(CommonDatabase database) {
+  database.createFunction(
+    functionName: 'extract_original_position',
+    argumentCount: const AllowedArgumentCount(1),
+    deterministic: true,
+    directOnly: false,
+    function: (arguments) => extractOriginalPosition(arguments[0]),
+  );
+  database.createFunction(
+    functionName: 'extract_custom_data',
+    argumentCount: const AllowedArgumentCount(2),
+    deterministic: true,
+    directOnly: false,
+    function: (arguments) => extractCustomData(arguments[0], arguments[1]),
+  );
+}
+
+/// Extracts compact card-data `pos`, returning null for Core's default value.
+int? extractOriginalPosition(Object? cardData) {
+  if (cardData is! String) return null;
+  final value = _cardDataField(cardData, 'pos', 0);
+  return switch (value) {
+    int() when value >= 0 && value <= 0xffffffff => value,
+    BigInt() when value >= BigInt.zero && value <= BigInt.from(0xffffffff) =>
+      value.toInt(),
+    _ => null,
+  };
+}
+
+/// Extracts a value from the compact card-data `cd` JSON object.
+Object? extractCustomData(Object? cardData, Object? key) {
+  if (cardData is! String || cardData.isEmpty || key is! String) return null;
+  final serializedCustomData = _cardDataField(cardData, 'cd', 6);
+  if (serializedCustomData is! String || serializedCustomData.isEmpty) {
+    return null;
+  }
+  final Object? customData;
+  try {
+    customData = jsonDecode(serializedCustomData);
+  } on FormatException {
+    return null;
+  }
+  if (customData is! Map<String, Object?> || !customData.containsKey(key)) {
+    return null;
+  }
+  final value = customData[key];
+  return value is String ? value : jsonEncode(_sortJsonObjectKeys(value));
+}
+
+Object? _cardDataField(String cardData, String key, int sequenceIndex) {
+  try {
+    final decoded = jsonDecode(cardData);
+    if (decoded is Map<String, Object?>) return decoded[key];
+    if (decoded is List<Object?> && decoded.length > sequenceIndex) {
+      return decoded[sequenceIndex];
+    }
+    return null;
+  } on FormatException {
+    return null;
+  }
+}
+
+Object? _sortJsonObjectKeys(Object? value) {
+  if (value is Map<String, Object?>) {
+    final keys = value.keys.toList()..sort();
+    return <String, Object?>{
+      for (final key in keys) key: _sortJsonObjectKeys(value[key]),
+    };
+  }
+  if (value is List<Object?>) {
+    return value.map(_sortJsonObjectKeys).toList();
+  }
+  return value;
+}

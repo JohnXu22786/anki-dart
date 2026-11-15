@@ -92,6 +92,18 @@ void main() {
         'Uber cafe',
       );
       expect(
+        await database.queryInt(
+          "SELECT extract_original_position('{\"pos\":42}')",
+        ),
+        42,
+      );
+      expect(
+        await database.queryString(
+          "SELECT extract_custom_data('{\"cd\":\"{\\\"x\\\":true}\"}', 'x')",
+        ),
+        'true',
+      );
+      expect(
         await database.queryInt('SELECT fnvhash(1, 2)'),
         8581494755304202342,
       );
@@ -128,6 +140,18 @@ void main() {
           "SELECT process_text('Über {{c1::café::hint}}', 3)",
         ),
         'Uber cafe',
+      );
+      expect(
+        await reopened.queryInt(
+          "SELECT extract_original_position('{\"pos\":42}')",
+        ),
+        42,
+      );
+      expect(
+        await reopened.queryString(
+          "SELECT extract_custom_data('{\"cd\":\"{\\\"x\\\":true}\"}', 'x')",
+        ),
+        'true',
       );
       expect(
         await reopened.queryInt('SELECT fnvhash(1, 2)'),

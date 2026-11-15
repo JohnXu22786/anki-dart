@@ -8,6 +8,133 @@ int _stamp(int year, int month, int day, int hour, {int west = 0}) =>
 
 void main() {
   group('today timing', () {
+    test(
+      'v1 uses fixed elapsed days and preserves signed conversion behavior',
+      () {
+        const created = 1_577_617_200; // 2019-12-01 03:00 UTC
+        final sameDay = schedTimingTodayV1(
+          creationSecs: created,
+          currentSecs: created + 86_399,
+        );
+        expect(sameDay.daysElapsed, 0);
+        expect(sameDay.nextDayAt, created + 86_400);
+
+        final nextDay = schedTimingTodayV1(
+          creationSecs: created,
+          currentSecs: created + 86_400,
+        );
+        expect(nextDay.daysElapsed, 1);
+        expect(nextDay.nextDayAt, created + 172_800);
+
+        final preEpoch = schedTimingTodayV1(
+          creationSecs: -86_400,
+          currentSecs: 0,
+        );
+        expect(preEpoch.daysElapsed, 1);
+        expect(preEpoch.nextDayAt, 86_400);
+
+        // Rust signed division truncates toward zero before the result is cast
+        // to u32, including for timestamps before the Unix epoch/creation.
+        final beforeCreation = schedTimingTodayV1(
+          creationSecs: created,
+          currentSecs: created - 86_400,
+        );
+        expect(beforeCreation.daysElapsed, 0xffffffff);
+        expect(beforeCreation.nextDayAt, created);
+      },
+    );
+
+    test('v2 legacy uses current offset and an exclusive next rollover', () {
+      const now = 1_584_491_078;
+      final atRollover = schedTimingTodayV2Legacy(
+        creationSecs: 1_533_564_000,
+        rolloverHour: 0,
+        currentSecs: now,
+        currentUtcOffsetMinutesWest: -600,
+      );
+      expect(atRollover.daysElapsed, 589);
+      expect(atRollover.nextDayAt, 1_584_540_000);
+
+      final fourAm = schedTimingTodayV2Legacy(
+        creationSecs: 1_524_038_400,
+        rolloverHour: 4,
+        currentSecs: now,
+        currentUtcOffsetMinutesWest: -600,
+      );
+      expect(fourAm.daysElapsed, 700);
+      expect(fourAm.nextDayAt, 1_584_554_400);
+
+      final before = schedTimingTodayV2Legacy(
+        creationSecs: _stamp(2018, 8, 6, 3, west: 360),
+        rolloverHour: 4,
+        currentSecs: _stamp(2018, 8, 9, 3, west: 420),
+        currentUtcOffsetMinutesWest: 420,
+      );
+      final at = schedTimingTodayV2Legacy(
+        creationSecs: _stamp(2018, 8, 6, 3, west: 360),
+        rolloverHour: 4,
+        currentSecs: _stamp(2018, 8, 9, 4, west: 420),
+        currentUtcOffsetMinutesWest: 420,
+      );
+      expect(before.daysElapsed, 2);
+      expect(at.daysElapsed, 3);
+      expect(at.nextDayAt, at.now);
+    });
+
+    test('dispatcher selects timing from optional settings', () {
+      final creation = _stamp(2018, 8, 6, 0, west: 360);
+      final now = _stamp(2018, 8, 9, 3, west: 420);
+      final v1 = schedTimingToday(
+        creationSecs: creation,
+        currentSecs: now,
+        currentUtcOffsetMinutesWest: 420,
+      );
+      final legacy = schedTimingToday(
+        creationSecs: creation,
+        currentSecs: now,
+        currentUtcOffsetMinutesWest: 420,
+        rolloverHour: 4,
+      );
+      final v2New = schedTimingToday(
+        creationSecs: creation,
+        currentSecs: now,
+        creationUtcOffsetMinutesWest: 360,
+        currentUtcOffsetMinutesWest: 420,
+        rolloverHour: 4,
+      );
+
+      expect(v1.daysElapsed, 3);
+      expect(v1.nextDayAt, creation + 4 * 86_400);
+      expect(legacy.daysElapsed, 3);
+      expect(legacy.nextDayAt, _stamp(2018, 8, 9, 4, west: 420));
+      expect(v2New.daysElapsed, 2);
+      expect(v2New.nextDayAt, _stamp(2018, 8, 9, 4, west: 420));
+    });
+
+    test('v1 creation cutoff uses the supplied local offset', () {
+      final beforeFour = v1CreationDate(
+        nowSecs: _stamp(2020, 5, 10, 1, west: -600),
+        localUtcOffsetMinutesWest: -600,
+      );
+      expect(beforeFour, _stamp(2020, 5, 9, 4, west: -600));
+
+      final afterFour = v1CreationDate(
+        nowSecs: _stamp(2020, 5, 10, 9, west: -600),
+        localUtcOffsetMinutesWest: -600,
+      );
+      expect(afterFour, _stamp(2020, 5, 10, 4, west: -600));
+
+      expect(fixedOffsetFromMinutes(5000), 1380);
+      expect(fixedOffsetFromMinutes(-5000), -1380);
+      expect(
+        () => v1CreationDate(
+          nowSecs: 8_210_266_876_800,
+          localUtcOffsetMinutesWest: 0,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('before, at, and after rollover use an inclusive boundary', () {
       final creation = _stamp(2019, 1, 1, 2);
       final before = schedTimingTodayV2New(

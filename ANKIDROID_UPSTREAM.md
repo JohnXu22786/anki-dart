@@ -4279,3 +4279,20 @@ space. Source hashes and attribution are recorded in the model package
 no matching Notetype field and returns distinct names, as the source set does.
 Focused tests are in `packages/anki_backend_models/test/note_empty_fields_test.dart`;
 source hashes and AGPL attribution are recorded in the model package notice.
+
+
+## Duplicate Note first-field checks
+
+`isDuplicateNoteField()` in
+`packages/anki_backend_models/lib/src/note_duplicate_check.dart` ports the
+portable portion of Anki Core's `Collection::is_duplicate()` from
+`rslib/src/notes/mod.rs` and its checksum-filtered query contract from
+`rslib/src/storage/note/mod.rs`, pinned to
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It computes the first-field
+checksum, requests candidate rows for the note's Notetype, skips the current
+Note ID, strips candidate HTML/media markup, compares in storage iteration
+order, and stops at the first duplicate. Storage, SQL, transactions, and
+collection error construction remain outside this helper and are supplied
+through the storage callback. Tests are in
+`packages/anki_backend_models/test/note_duplicate_check_test.dart`; source
+hashes and AGPL attribution are in the package manifests/notices.

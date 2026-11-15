@@ -1,0 +1,16 @@
+name: anki_search_parser
+description: Platform-neutral Anki search query grammar and AST.
+version: 0.1.0
+publish_to: none
+license: AGPL-3.0-or-later
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  anki_backend_protocol:
+    path: ../anki_backend_protocol
+  fixnum: ^1.1.0
+
+dev_dependencies:
+  test: 1.25.8

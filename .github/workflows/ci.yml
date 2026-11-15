@@ -262,3 +262,32 @@ jobs:
       - name: Validate AGPL metadata and Dart SPDX headers
         working-directory: packages/anki_collection_sqlite
         run: python3 tool/check_package.py
+
+  anki-search-parser:
+    name: AGPL Anki search query parser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve parser package dependencies
+        working-directory: packages/anki_search_parser
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_search_parser
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze parser package
+        working-directory: packages/anki_search_parser
+        run: dart analyze lib test tool
+      - name: Test parser grammar and error fixtures
+        working-directory: packages/anki_search_parser
+        run: dart test
+      - name: Compile and run JavaScript parser smoke test
+        working-directory: packages/anki_search_parser
+        run: |
+          dart compile js tool/compile_smoke.dart -o /tmp/anki_search_parser.js
+          node /tmp/anki_search_parser.js
+      - name: Validate AGPL provenance and source hash
+        working-directory: packages/anki_search_parser
+        run: python3 tool/check_package.py

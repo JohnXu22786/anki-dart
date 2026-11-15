@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-/// Day timing returned by [schedTimingTodayV2New].
+/// Day timing returned by a scheduler timing function.
 class SchedTimingToday {
   const SchedTimingToday({
     required this.now,
@@ -98,3 +98,122 @@ DateTime _localDateTime(int timestampSecs, int minutesWest) {
 int _civilDay(DateTime date) =>
     DateTime.utc(date.year, date.month, date.day).millisecondsSinceEpoch ~/
     Duration.millisecondsPerDay;
+
+/// Scheduler timing for the legacy v1 scheduler.
+///
+/// This version counts fixed 86,400-second periods from collection creation;
+/// timezone offsets and daylight saving transitions do not affect its days.
+SchedTimingToday schedTimingTodayV1({
+  required int creationSecs,
+  required int currentSecs,
+}) {
+  final daysElapsed = (currentSecs - creationSecs) ~/ Duration.secondsPerDay;
+  return SchedTimingToday(
+    now: currentSecs,
+    daysElapsed: daysElapsed.toUnsigned(32),
+    nextDayAt: creationSecs + (daysElapsed + 1) * Duration.secondsPerDay,
+  );
+}
+
+/// Builds the legacy v2 fixed offset, clamping whole minutes west of UTC to
+/// the range accepted by Chrono's `FixedOffset::west_opt` call path.
+int fixedOffsetFromMinutes(int minutesWest) => minutesWest.clamp(-1380, 1380);
+
+/// Computes legacy v2 timing using the current UTC offset for both collection
+/// creation and current time. This preserves the original cutoff behavior.
+SchedTimingToday schedTimingTodayV2Legacy({
+  required int creationSecs,
+  required int rolloverHour,
+  required int currentSecs,
+  required int currentUtcOffsetMinutesWest,
+}) {
+  _validateOffset(currentUtcOffsetMinutesWest);
+  _validateRolloverHour(rolloverHour);
+
+  final offset = currentUtcOffsetMinutesWest;
+  final created = _localDateTime(creationSecs, offset);
+  final now = _localDateTime(currentSecs, offset);
+  final rollover = rolloverHour % 24;
+  final creationRollover = _rolloverTimestamp(created, rollover, offset);
+  final daysElapsed =
+      ((currentSecs - creationRollover) ~/ Duration.secondsPerDay).toUnsigned(
+        32,
+      );
+  var nextDayAt = _rolloverTimestamp(now, rollover, offset);
+  if (nextDayAt < currentSecs) {
+    nextDayAt += Duration.secondsPerDay;
+  }
+
+  return SchedTimingToday(
+    now: currentSecs,
+    daysElapsed: daysElapsed,
+    nextDayAt: nextDayAt,
+  );
+}
+
+/// Selects the scheduler timing implementation from the collection settings.
+///
+/// Supply the UTC offsets in minutes west of UTC from the platform's timezone
+/// adapter. The scheduler calculation itself does not inspect machine-local
+/// timezone state.
+SchedTimingToday schedTimingToday({
+  required int creationSecs,
+  required int currentSecs,
+  int? creationUtcOffsetMinutesWest,
+  required int currentUtcOffsetMinutesWest,
+  int? rolloverHour,
+}) {
+  if (rolloverHour == null) {
+    return schedTimingTodayV1(
+      creationSecs: creationSecs,
+      currentSecs: currentSecs,
+    );
+  }
+  if (creationUtcOffsetMinutesWest == null) {
+    return schedTimingTodayV2Legacy(
+      creationSecs: creationSecs,
+      rolloverHour: rolloverHour,
+      currentSecs: currentSecs,
+      currentUtcOffsetMinutesWest: currentUtcOffsetMinutesWest,
+    );
+  }
+  return schedTimingTodayV2New(
+    creationSecs: creationSecs,
+    creationUtcOffsetMinutesWest: creationUtcOffsetMinutesWest,
+    currentSecs: currentSecs,
+    currentUtcOffsetMinutesWest: currentUtcOffsetMinutesWest,
+    rolloverHour: rolloverHour,
+  );
+}
+
+/// Returns the v1 collection creation cutoff using the supplied local offset.
+///
+/// Pass the platform-provided local offset in minutes west of UTC; this
+/// function does not query the host timezone.
+int v1CreationDate({
+  required int nowSecs,
+  required int localUtcOffsetMinutesWest,
+}) {
+  final offset = fixedOffsetFromMinutes(localUtcOffsetMinutesWest);
+  final now = _localDateTime(nowSecs, offset);
+  final rolloverAt = _rolloverTimestamp(now, 4, offset);
+  return rolloverAt > nowSecs
+      ? rolloverAt - Duration.secondsPerDay
+      : rolloverAt;
+}
+
+int _rolloverTimestamp(DateTime localDate, int rolloverHour, int minutesWest) {
+  final localMillis = DateTime.utc(
+    localDate.year,
+    localDate.month,
+    localDate.day,
+    rolloverHour,
+  ).millisecondsSinceEpoch;
+  return localMillis ~/ Duration.millisecondsPerSecond + minutesWest * 60;
+}
+
+void _validateRolloverHour(int rolloverHour) {
+  if (rolloverHour < 0 || rolloverHour > 255) {
+    throw ArgumentError.value(rolloverHour, 'rolloverHour', 'expected a u8');
+  }
+}

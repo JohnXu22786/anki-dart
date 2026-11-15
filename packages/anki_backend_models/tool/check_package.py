@@ -34,6 +34,7 @@ SOURCE_HASHES = {
     "rslib/src/config/mod.rs": "4d288b43ebfb365e083f2fcf352e6c6a87b973c0e8fea8aedcef872db8bd03eb",
     "rslib/src/revlog/mod.rs": "e528d4708a21ae2da87705434249e2e842155e3a34161d556979e5d611b63faa",
     "rslib/src/stats/service.rs": "bd65f462a7af8a3dfa1cb3c622fc6324d0e8ddca6535f6b20b1e3908efb3895e",
+    "rslib/src/text.rs": "2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762",
     "proto/anki/stats.proto": "5b22c0aa2133b68eefc93964299668732941ee3688140cd98430b033ee567ea4",
 }
 

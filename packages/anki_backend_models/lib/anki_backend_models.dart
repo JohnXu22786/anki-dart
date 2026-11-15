@@ -16,4 +16,5 @@ export 'src/stock_notetype.dart';
 export 'src/revlog.dart';
 export 'src/field_checksum.dart';
 export 'src/note_field_normalization.dart';
+export 'src/note_text.dart';
 export 'src/note_field_count.dart';

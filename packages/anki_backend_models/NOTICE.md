@@ -1,10 +1,11 @@
 # Source and license notice
 
 This package ports Anki Core Card and Note domain values, protobuf conversions,
-field checksum, field normalization, and Note::fix_field_count behavior from
-`rslib/src/card/mod.rs`, `rslib/src/card/service.rs`, and
-`rslib/src/notes/mod.rs`; Notetype, NoteField and CardTemplate values,
-conversions, and default configuration assets from `rslib/src/notetype/mod.rs`,
+field checksum, field normalization, Note::fix_field_count, note preparation,
+and HTML/media-aware field text behavior from `rslib/src/card/mod.rs`,
+`rslib/src/card/service.rs`, `rslib/src/notes/mod.rs`, and
+`rslib/src/text.rs`; Notetype, NoteField and CardTemplate values, conversions,
+and default configuration assets from `rslib/src/notetype/mod.rs`,
 `rslib/src/notetype/service.rs`, `rslib/src/notetype/fields.rs`,
 `rslib/src/notetype/templates.rs`, `rslib/src/notetype/styling.css`,
 `rslib/src/notetype/cloze_styling.css`, `rslib/src/notetype/header.tex`,
@@ -43,5 +44,6 @@ matching the generated table embedded by pinned `unicase 2.6.0`, from
 `UNICODE_CASEFOLD.sha256` and the data is covered by the repository's Unicode
 License V3 text at `LICENSES/Unicode-License-V3.txt`. Deck and DeckConfig models
 include stored values, conversions, and pinned defaults. Media metadata and
-collection configuration values are also included. This package does not
-change the root `COPYING` file.
+collection configuration values are also included. The `html` Dart package is
+used under its MIT license for HTML character-reference decoding. This package
+does not change the root `COPYING` file.

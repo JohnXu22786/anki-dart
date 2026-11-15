@@ -4251,3 +4251,19 @@ were not duplicated.
 AGPL browser.py source. This unit copies only the three GPL helper contracts above
 and no browser.py implementation. The Dart code and tests are Copyright © 2026
 John Tsui under GPL-3.0-or-later. Root `COPYING` remains byte-identical.
+
+
+## Note persistence derived fields
+
+`packages/anki_backend_models/lib/src/note.dart` implements
+`Note.prepareForUpdate()` from Anki Core `rslib/src/notes/mod.rs` at pinned
+commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It validates the notetype
+and field count, cleans the field strings, computes the first-field checksum,
+and derives the configured sort field in source order.
+`stripHtmlPreservingMediaFilenames()` in
+`packages/anki_backend_models/lib/src/note_text.dart` follows
+`rslib/src/text.rs`: it removes comments, script/style content and markup,
+retains media `src`/`data` filenames, decodes HTML references and maps NBSP to
+space. Source hashes and attribution are recorded in the model package
+`SOURCE.sha256` and `NOTICE.md`. Focused tests are in
+`packages/anki_backend_models/test/note_prepare_test.dart`.

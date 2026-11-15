@@ -43,6 +43,7 @@ void main() {
     expect(extractCustomData('{"cd":"{\\"n\\":1e-6}"}', 'n'), '1e-6');
     expect(extractCustomData('{"cd":"{\\"n\\":1e-5}"}', 'n'), '0.00001');
     expect(extractCustomData('{"cd":"{\\"n\\":1e999}"}', 'n'), isNull);
+    expect(extractCustomData('{"cd":"{\"bad\":1e999,\"n\":1}"}', 'n'), isNull);
     expect(
       extractCustomData(
         '{"cd":"{\\"nested\\":{\\"𐀀\\":2,\\"\\":1}}"}',

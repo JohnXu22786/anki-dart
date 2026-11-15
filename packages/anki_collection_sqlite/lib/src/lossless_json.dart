@@ -184,7 +184,9 @@ final class _Parser {
     if (match == null)
       throw FormatException('Invalid JSON number', source, index);
     index = match.end;
-    return _RawNumber(match.group(0)!);
+    final number = _RawNumber(match.group(0)!);
+    number.encode(); // serde_json validates every value while parsing.
+    return number;
   }
 
   Object? _parseLiteral(String literal, Object? value) {

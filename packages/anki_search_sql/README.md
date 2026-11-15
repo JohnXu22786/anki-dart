@@ -20,6 +20,14 @@ fallback, operators, and float32-to-u32 ease conversion. Due properties
 require explicit `SearchSqlTiming.daysElapsed` and `nextDayAt`; no collection
 or clock values are read implicitly. These card predicates use cards for card
 results and join cards to notes with distinct note IDs for note results.
+`prop:s` and `prop:d` use Core's `extract_fsrs_variable(c.data, 's'/'d')`
+function calls, float32 SQL rendering, and Difficulty's float32 `value * 9 + 1`
+transform. `prop:r` uses Core's `extract_fsrs_retrievability()` arguments and
+returns false for New card types; it requires explicit `daysElapsed`,
+`nextDayAt`, and `now` timing values, validating their Core integer ranges.
+These FSRS properties require the cards table, including distinct note-result
+projection through the cards/notes join. The host must register both FSRS SQL
+functions; this package does not implement either database function.
 Unsupported AST nodes throw explicitly.
 ID-list AST values follow the shared parser's comma-separated decimal-digit
 grammar, and their exact spelling is preserved without numeric conversion.

@@ -25,6 +25,18 @@ rename, replace, or delete an existing user file. Applications may instead
 inject their own `CollectionSqliteDriver` to select a different driver or
 driver configuration.
 
+`close()` keeps existing callers source-compatible. Callers that need Anki's
+close-time schema downgrade can use `close(desiredVersion: 11, callbacks: ...)`;
+the adapter runs the existing schema catalog and callback sequence in one
+exclusive transaction, then switches SQLite to delete journal mode. Target 18
+is a no-op. `checkpoint()` rejects active transactions, checks SQLite's
+checkpoint return code, and awaits the driver's persistence hook. `quickCheckCorrupt()`
+returns false only when SQLite reports exactly `ok`, and treats a SQLite error
+or any other result as corruption. `optimize()` runs `vacuum; reindex; analyze`
+in Anki Core's order. These operations surface errors from the selected SQLite
+driver; the adapter does not silently mask driver-specific unsupported WAL or
+maintenance behavior.
+
 Before schema inspection, `CollectionSqliteOptions.configureConnection` can
 register host-owned functions and collations. Anki Core's SQLite configuration
 uses `field_at_index`, `regexp`, `regexp_fields`, `regexp_tags`, `process_text`,

@@ -66,8 +66,10 @@ void main() {
     expect(parse('a"b"(c)'), parse('a b (c)'));
     final colonBeforeQuote = parse('foo:bar:"baz"');
     expect(colonBeforeQuote, hasLength(3));
-    expect(colonBeforeQuote[0],
-        const Search(SingleFieldSearch(field: 'foo', text: 'bar:', mode: FieldSearchMode.normal)));
+    expect(
+        colonBeforeQuote[0],
+        const Search(SingleFieldSearch(
+            field: 'foo', text: 'bar:', mode: FieldSearchMode.normal)));
     expect(colonBeforeQuote[1], const BooleanNode(NodeKind.and));
     expect(colonBeforeQuote[2], const Search(TextSearch('baz')));
 

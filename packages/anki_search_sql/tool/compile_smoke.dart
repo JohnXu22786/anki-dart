@@ -17,4 +17,14 @@ void main() {
           'c.nid=n.id and (n.mid = $maxId)') {
     throw StateError('Notetype ID JavaScript precision smoke test failed');
   }
+  final nameQuery = compileSearchSql(
+    GroupNode([
+      Search(Notetype('Basic*')),
+      BooleanNode(NodeKind.and),
+      Search(CardTemplate(TemplateName('Front*'))),
+    ]),
+  );
+  if (nameQuery.arguments.join('|') != r'(?i)^Basic.*$|(?i)^Front.*$') {
+    throw StateError('Search name JavaScript compilation smoke test failed');
+  }
 }

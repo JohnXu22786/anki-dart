@@ -117,4 +117,100 @@ void main() {
       }
     },
   );
+
+  test('literal notetype and template names follow Core text semantics', () {
+    final notetype = compileSearchSql(
+      GroupNode([Search(Notetype('Cafe\u0301\\*'))]),
+    );
+    expect(
+      notetype.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and '
+      '(n.mid in (select id from notetypes where name = ?))',
+    );
+    expect(notetype.arguments, ['Café*']);
+    expect(notetype.requiredTable, RequiredTable.cardsAndNotes);
+
+    final newline = compileSearchSql(
+      GroupNode([Search(Notetype('Line\\\nBreak'))]),
+    );
+    expect(newline.arguments, ['Line\\\nBreak']);
+
+    final template = compileSearchSql(
+      GroupNode([Search(CardTemplate(TemplateName('Fron\\*t')))]),
+      resultType: SearchResultType.notes,
+    );
+    expect(
+      template.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '((n.mid,c.ord) in '
+      '(select ntid,ord from templates where name = ?))',
+    );
+    expect(template.arguments, ['Fron*t']);
+    expect(template.requiredTable, RequiredTable.cardsAndNotes);
+  });
+
+  test('glob names emit anchored regexes with Core wildcard escaping', () {
+    final notetype = compileSearchSql(
+      GroupNode([Search(Notetype('Cafe\u0301*\\_*'))]),
+    );
+    expect(
+      notetype.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and '
+      '(n.mid in (select id from notetypes where name regexp ?))',
+    );
+    expect(notetype.arguments, [r'(?i)^Café.*_.*$']);
+
+    final template = compileSearchSql(
+      GroupNode([Search(CardTemplate(TemplateName(r'A.\**_')))]),
+    );
+    expect(
+      template.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and '
+      '((n.mid,c.ord) in '
+      '(select ntid,ord from templates where name regexp ?))',
+    );
+    expect(template.arguments, [r'(?i)^A\.\*.*.$']);
+  });
+
+  test('ordinal templates use cards and notes without SQL arguments', () {
+    final compiled = compileSearchSql(
+      GroupNode([Search(CardTemplate(TemplateOrdinal(2)))]),
+    );
+    expect(
+      compiled.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and (c.ord = 2)',
+    );
+    expect(compiled.arguments, isEmpty);
+    expect(compiled.requiredTable, RequiredTable.cardsAndNotes);
+  });
+
+  test('nested predicates combine tables and preserve argument order', () {
+    final compiled = compileSearchSql(
+      GroupNode([
+        Search(Notetype('Basic*')),
+        BooleanNode(NodeKind.and),
+        GroupNode([
+          Search(CardTemplate(TemplateName('Front*'))),
+          BooleanNode(NodeKind.or),
+          Search(CardTemplate(TemplateName('Back*'))),
+        ]),
+      ]),
+      resultType: SearchResultType.notes,
+    );
+    expect(
+      compiled.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(n.mid in (select id from notetypes where name regexp ?) and '
+      '((n.mid,c.ord) in '
+      '(select ntid,ord from templates where name regexp ?) or '
+      '(n.mid,c.ord) in '
+      '(select ntid,ord from templates where name regexp ?)))',
+    );
+    expect(compiled.arguments, [
+      r'(?i)^Basic.*$',
+      r'(?i)^Front.*$',
+      r'(?i)^Back.*$',
+    ]);
+    expect(compiled.requiredTable, RequiredTable.cardsAndNotes);
+  });
 }

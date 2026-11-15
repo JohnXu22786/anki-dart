@@ -11,6 +11,7 @@ dependencies:
   anki_search_parser:
     path: ../anki_search_parser
   fixnum: ^1.1.0
+  unorm_dart: ^0.3.3
 
 dev_dependencies:
   test: ^1.25.8

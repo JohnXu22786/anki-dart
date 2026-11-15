@@ -5736,3 +5736,17 @@ translated strings or visual assets were copied. The screen and tests are
 Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING` remains
 unchanged. See [`docs/DECK_PICKER_UI_GAP_REPORT.md`](docs/DECK_PICKER_UI_GAP_REPORT.md)
 for screen-by-screen mapping, accessibility notes, and remaining adapter gaps.
+
+## Anki Core search SQL subset
+
+`packages/anki_search_sql` adapts a limited SQL compilation slice from Anki
+Core's `rslib/src/search/sqlwriter.rs` and `rslib/src/search/parser.rs`, pinned
+to commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It emits boolean,
+card/note/notetype ID, deck ID without children, card flag, and whole-collection
+predicates with source-compatible table selection and result SELECT shape.
+Unsupported typed AST variants throw. Text/tag matching, regular expressions,
+sorting, database execution, and UI are not included. The upstream files are
+Copyright Ankitects Pty Ltd and contributors under GNU AGPL version 3 or later;
+their SHA-256 hashes are recorded in `packages/anki_search_sql/SOURCE.sha256`.
+The Dart package and tests are Copyright © 2026 John Tsui under
+AGPL-3.0-or-later. Root `COPYING` remains byte-identical.

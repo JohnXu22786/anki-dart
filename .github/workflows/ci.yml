@@ -291,3 +291,32 @@ jobs:
       - name: Validate AGPL provenance and source hash
         working-directory: packages/anki_search_parser
         run: python3 tool/check_package.py
+
+  anki-search-sql:
+    name: AGPL Anki search SQL subset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve SQL package dependencies
+        working-directory: packages/anki_search_sql
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_search_sql
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze SQL package
+        working-directory: packages/anki_search_sql
+        run: dart analyze lib test tool
+      - name: Test source-compatible SQL fixtures
+        working-directory: packages/anki_search_sql
+        run: dart test
+      - name: Compile and run JavaScript SQL smoke test
+        working-directory: packages/anki_search_sql
+        run: |
+          dart compile js tool/compile_smoke.dart -o /tmp/anki_search_sql.js
+          node /tmp/anki_search_sql.js
+      - name: Validate AGPL provenance and source hash
+        working-directory: packages/anki_search_sql
+        run: python3 tool/check_package.py

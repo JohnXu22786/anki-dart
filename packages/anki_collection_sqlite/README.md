@@ -67,7 +67,8 @@ Before schema inspection, `CollectionSqliteOptions.configureConnection` can
 register host-owned functions and collations. Anki Core's SQLite configuration
 uses `field_at_index`, `regexp`, `regexp_fields`, `regexp_tags`, `process_text`,
 `fnvhash`, several `extract_*` functions, and the Unicode-aware `unicase`
-collation. This package implements `field_at_index` and `process_text`; it does
+collation. This package implements `field_at_index`, `process_text`, and
+`fnvhash`; it does
 not implement the remaining functions or collation. A
 host must register the applicable implementations before opening collections
 that depend on them; the default schema-11-to-18 migration path creates

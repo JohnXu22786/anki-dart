@@ -92,6 +92,10 @@ void main() {
         'Uber cafe',
       );
       expect(
+        await database.queryInt('SELECT fnvhash(1, 2)'),
+        8581494755304202342,
+      );
+      expect(
         await database.queryString("SELECT field_at_index('only', 65535)"),
         '',
       );
@@ -124,6 +128,10 @@ void main() {
           "SELECT process_text('Über {{c1::café::hint}}', 3)",
         ),
         'Uber cafe',
+      );
+      expect(
+        await reopened.queryInt('SELECT fnvhash(1, 2)'),
+        8581494755304202342,
       );
       await reopened.close();
     },

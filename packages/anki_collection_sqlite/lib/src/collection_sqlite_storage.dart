@@ -10,6 +10,7 @@ import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:sqlite3/common.dart';
 
+import 'fnvhash.dart';
 import 'process_text.dart';
 
 const _preparedStatementCacheCapacity = 50;
@@ -41,9 +42,9 @@ final class CollectionSqliteOptions {
   final bool androidTempStore;
 
   /// Registers additional source-specific SQL functions and collations before
-  /// the collection schema is inspected. `field_at_index` and `process_text`
-  /// are installed by default; remaining Core functions and `unicase` are
-  /// host-provided.
+  /// the collection schema is inspected. `field_at_index`, `process_text`,
+  /// and `fnvhash` are installed by default; remaining Core functions and
+  /// `unicase` are host-provided.
   final FutureOr<void> Function(CommonDatabase database)? configureConnection;
 }
 
@@ -52,9 +53,9 @@ final class CollectionSqliteOptions {
 /// This configures SQLite before schema inspection with zero busy timeout,
 /// exclusive locking, 4096-byte pages, a 40 MiB page cache, the source's
 /// legacy-file-format setting, WAL, and a bounded cache for the hot exclusive
-/// transaction statements. Core's `field_at_index` and `process_text`
-/// functions are installed on every connection; the other engine functions
-/// and collations are not.
+/// transaction statements. Core's `field_at_index`, `process_text`, and
+/// `fnvhash` functions are installed on every connection; the other engine
+/// functions and collations are not.
 final class CollectionSqliteStorage
     implements CollectionOpenDatabase, CollectionSchemaMigrationDatabase {
   CollectionSqliteStorage._(this._database, this._driver);
@@ -78,6 +79,7 @@ final class CollectionSqliteStorage
     try {
       _registerCoreFieldIndexFunction(database);
       registerProcessTextFunction(database);
+      registerFnvHashFunction(database);
       database.execute('pragma busy_timeout = 0');
       database.execute('pragma locking_mode = exclusive');
       database.execute('pragma page_size = 4096');

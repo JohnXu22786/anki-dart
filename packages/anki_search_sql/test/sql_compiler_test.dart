@@ -742,4 +742,237 @@ void main() {
     expect(finite.sql, endsWith('as float) = 0.1)'));
     expect(finite.arguments, ['x']);
   });
+
+  test('rated search uses signed day cutoffs and answer ease classes', () {
+    const nextDayAt = 1700000000;
+    final timing = SearchSqlTiming(
+      daysElapsed: 0,
+      now: BigInt.from(nextDayAt),
+      learnAheadSecs: 0,
+      nextDayAt: BigInt.from(nextDayAt),
+    );
+
+    for (final (query, days, easeSql) in <(String, int, String)>[
+      ('rated:2', -2, ' and ease > 0'),
+      ('rated:0:1', -1, ' and ease = 1'),
+      ('rated:1:4', -1, ' and ease = 4'),
+    ]) {
+      final target = BigInt.from(nextDayAt + 86400 * days) * BigInt.from(1000);
+      final before =
+          BigInt.from(nextDayAt + 86400 * (days - 1)) * BigInt.from(1000);
+      final compiled = compileSearchSql(
+        GroupNode(parse(query)),
+        timing: timing,
+      );
+      expect(
+        compiled.sql,
+        'select c.id from cards c where (c.id in '
+        '(select cid from revlog where id >= $target$easeSql))',
+        reason: query,
+      );
+      expect(compiled.arguments, isEmpty);
+      expect(compiled.requiredTable, RequiredTable.cards);
+      expect(before < target, isTrue);
+    }
+
+    final parsedZero = compileSearchSql(
+      GroupNode(parse('rated:0:1')),
+      timing: timing,
+    );
+    final astZero = compileSearchSql(
+      GroupNode([Search(const Rated(days: 0, ease: AnswerButton(1)))]),
+      timing: timing,
+    );
+    expect(astZero.sql, parsedZero.sql);
+    expect(astZero.requiredTable, RequiredTable.cards);
+
+    final parsedReschedZero = compileSearchSql(
+      GroupNode(parse('resched:0')),
+      timing: timing,
+    );
+    final astReschedZero = compileSearchSql(
+      GroupNode([Search(const Rated(days: 0, ease: ManualReschedule()))]),
+      timing: timing,
+    );
+    expect(astReschedZero.sql, parsedReschedZero.sql);
+
+    final notes = compileSearchSql(
+      GroupNode(parse('rated:3:2')),
+      resultType: SearchResultType.notes,
+      timing: timing,
+    );
+    expect(
+      notes.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(c.id in (select cid from revlog where id >= '
+      '${(BigInt.from(nextDayAt) - BigInt.from(3 * 86400)) * BigInt.from(1000)} '
+      'and ease = 2))',
+    );
+    expect(notes.requiredTable, RequiredTable.cardsAndNotes);
+
+    expect(
+      () => compileSearchSql(GroupNode(parse('rated:1'))),
+      throwsArgumentError,
+      reason: 'rated predicates require explicit rollover timing',
+    );
+    expect(
+      () => parse('rated:4294967296'),
+      throwsA(isA<SearchParseException>()),
+    );
+    expect(
+      () => compileSearchSql(
+        GroupNode(parse('rated:4294967295')),
+        timing: timing,
+      ),
+      returnsNormally,
+    );
+    expect(
+      () => compileSearchSql(
+        GroupNode(parse('rated:1')),
+        timing: SearchSqlTiming(
+          daysElapsed: 0,
+          now: BigInt.zero,
+          learnAheadSecs: 0,
+          nextDayAt: BigInt.parse('9223372036854775807'),
+        ),
+      ),
+      throwsRangeError,
+    );
+  });
+
+  test('rated property operators, signed days, and nesting match Core', () {
+    const nextDayAt = 1700000000;
+    final timing = SearchSqlTiming(
+      daysElapsed: 0,
+      now: BigInt.from(nextDayAt),
+      learnAheadSecs: 0,
+      nextDayAt: BigInt.from(nextDayAt),
+    );
+
+    final target = BigInt.from(nextDayAt - 2 * 86400) * BigInt.from(1000);
+    final before = BigInt.from(nextDayAt - 3 * 86400) * BigInt.from(1000);
+    final cases = <(String, String)>[
+      ('prop:rated>-2:1', 'id >= $target and ease = 1'),
+      ('prop:rated>=-2:2', 'id >= $before and ease = 2'),
+      ('prop:rated<-2:3', 'id < $before and ease = 3'),
+      ('prop:rated<=-2:4', 'id < $target and ease = 4'),
+      (
+        'prop:rated=-2',
+        'id between $before and ${target - BigInt.one} and ease > 0',
+      ),
+      (
+        'prop:rated!=-2',
+        'id not between $before and ${target - BigInt.one} and ease > 0',
+      ),
+      (
+        'prop:resched=-2',
+        'id between $before and ${target - BigInt.one} and ease = 0',
+      ),
+    ];
+    for (final (query, predicate) in cases) {
+      final compiled = compileSearchSql(
+        GroupNode(parse(query)),
+        timing: timing,
+      );
+      expect(
+        compiled.sql,
+        'select c.id from cards c where '
+        '(c.id in (select cid from revlog where $predicate))',
+        reason: query,
+      );
+      expect(compiled.arguments, isEmpty);
+      expect(compiled.requiredTable, RequiredTable.cards);
+    }
+
+    final zeroDays = compileSearchSql(
+      GroupNode(parse('prop:rated=-0:3')),
+      timing: timing,
+    );
+
+    final positiveDays = compileSearchSql(
+      GroupNode([
+        Search(
+          const Property(
+            operator: '>=',
+            kind: RatedProperty(1, AnswerButton(2)),
+          ),
+        ),
+      ]),
+      timing: timing,
+    );
+    expect(
+      positiveDays.sql,
+      'select c.id from cards c where '
+      '(c.id in (select cid from revlog where id >= '
+      '${BigInt.from(nextDayAt) * BigInt.from(1000)} and ease = 2))',
+    );
+    expect(
+      zeroDays.sql,
+      'select c.id from cards c where '
+      '(c.id in (select cid from revlog where id between '
+      '${BigInt.from(nextDayAt - 86400) * BigInt.from(1000)} and '
+      '${BigInt.from(nextDayAt) * BigInt.from(1000) - BigInt.one} and ease = 3))',
+    );
+
+    final nested = compileSearchSql(
+      GroupNode([
+        Search(CustomData('due')),
+        BooleanNode(NodeKind.and),
+        GroupNode([
+          Search(
+            const Property(
+              operator: '>=',
+              kind: RatedProperty(-1, AnswerButton(2)),
+            ),
+          ),
+          BooleanNode(NodeKind.or),
+          Search(
+            const Property(
+              operator: '=',
+              kind: RatedProperty(-1, ManualReschedule()),
+            ),
+          ),
+        ]),
+      ]),
+      resultType: SearchResultType.notes,
+      timing: timing,
+    );
+    expect(
+      nested.sql,
+      'select distinct n.id from cards c, notes n where c.nid=n.id and '
+      '(extract_custom_data(c.data, ?) is not null and '
+      '(c.id in (select cid from revlog where id >= '
+      '${BigInt.from(nextDayAt - 2 * 86400) * BigInt.from(1000)} and ease = 2) or '
+      'c.id in (select cid from revlog where id between '
+      '${BigInt.from(nextDayAt - 2 * 86400) * BigInt.from(1000)} and '
+      '${BigInt.from(nextDayAt - 86400) * BigInt.from(1000) - BigInt.one} '
+      'and ease = 0)))',
+    );
+    expect(nested.arguments, ['due']);
+    expect(nested.requiredTable, RequiredTable.cardsAndNotes);
+
+    expect(() => parse('prop:rated>1'), throwsA(isA<SearchParseException>()));
+    expect(
+      () => parse('prop:rated>-2147483648:5'),
+      throwsA(isA<SearchParseException>()),
+    );
+    expect(
+      () => parse('prop:rated>-2147483649'),
+      throwsA(isA<SearchParseException>()),
+    );
+    expect(
+      () => compileSearchSql(
+        GroupNode([
+          Search(
+            const Property(
+              operator: '=',
+              kind: RatedProperty(2147483648, AnyAnswerButton()),
+            ),
+          ),
+        ]),
+        timing: timing,
+      ),
+      throwsRangeError,
+    );
+  });
 }

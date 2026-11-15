@@ -54,6 +54,21 @@ void main() {
       'select c.id from cards c where (c.id > 9007199254741000)') {
     throw StateError('Added-day SQL JavaScript precision smoke test failed');
   }
+  final ratedQuery = compileSearchSql(
+    GroupNode(parse('prop:rated=-0:3')),
+    timing: SearchSqlTiming(
+      daysElapsed: 0,
+      now: BigInt.zero,
+      learnAheadSecs: 0,
+      nextDayAt: BigInt.parse('9007199254741'),
+    ),
+  );
+  if (ratedQuery.sql !=
+      'select c.id from cards c where (c.id in '
+          '(select cid from revlog where id between 9007199168341000 and '
+          '9007199254740999 and ease = 3))') {
+    throw StateError('Rated SQL JavaScript precision smoke test failed');
+  }
   final customDataQuery = compileSearchSql(
     GroupNode([
       Search(const CustomData("x';--")),

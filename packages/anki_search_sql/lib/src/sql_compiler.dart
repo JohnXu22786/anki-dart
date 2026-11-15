@@ -137,6 +137,7 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   Notetype() ||
   Tag() ||
   EditedInDays() => RequiredTable.notes,
+  Rated() || Property(kind: RatedProperty()) => RequiredTable.cards,
   CustomData() ||
   Property(kind: CustomDataNumberProperty()) ||
   Property(kind: CustomDataStringProperty()) => RequiredTable.cards,
@@ -187,6 +188,12 @@ String _writeSearch(
   EditedInDays(:final days) =>
     'n.mod > ${_previousDayCutoffSeconds(days, timing)}',
   IntroducedInDays(:final days) => _writeIntroduced(days, timing),
+  Rated(:final days, :final ease) => _writeRated(
+    '>',
+    -BigInt.from(_validateRatedDays(days, ease)),
+    ease,
+    timing,
+  ),
   CustomData(:final value) => _writeCustomData(value, arguments),
   Property(
     :final operator,
@@ -198,6 +205,13 @@ String _writeSearch(
     kind: CustomDataStringProperty(:final key, :final value),
   ) =>
     _writeCustomDataString(operator, key, value, arguments),
+  Property(:final operator, kind: RatedProperty(:final days, :final rating)) =>
+    _writeRated(
+      operator,
+      BigInt.from(_validateRatedPropertyDays(days)),
+      rating,
+      timing,
+    ),
   WholeCollection() => 'true',
   _ => throw UnsupportedSearchSqlNodeException(node),
 };
@@ -205,6 +219,78 @@ String _writeSearch(
 String _writeCustomData(String key, List<String> arguments) {
   arguments.add(key);
   return 'extract_custom_data(c.data, ?) is not null';
+}
+
+String _writeRated(
+  String operator,
+  BigInt days,
+  RatingKind rating,
+  SearchSqlTiming? timing,
+) {
+  if (!const {'<=', '>=', '!=', '=', '<', '>'}.contains(operator)) {
+    throw ArgumentError.value(
+      operator,
+      'operator',
+      'Invalid property operator.',
+    );
+  }
+  final nextDayAt = _requireNextDayAt(timing);
+  if (nextDayAt < _minI64 || nextDayAt > _maxI64) {
+    throw RangeError(
+      'nextDayAt must be a signed 64-bit Unix timestamp in seconds.',
+    );
+  }
+
+  final secondsPerDay = BigInt.from(86400);
+  final targetCutoff = _ratedCutoffMillis(nextDayAt + secondsPerDay * days);
+  final dayBeforeCutoff = _ratedCutoffMillis(
+    nextDayAt + secondsPerDay * (days - BigInt.one),
+  );
+  final dayBeforeTarget = switch (operator) {
+    '>' => ' >= $targetCutoff',
+    '>=' => ' >= $dayBeforeCutoff',
+    '<' => ' < $dayBeforeCutoff',
+    '<=' => ' < $targetCutoff',
+    '=' =>
+      ' between $dayBeforeCutoff and ${_validateI64(targetCutoff - BigInt.one, 'rated cutoff')}',
+    '!=' =>
+      ' not between $dayBeforeCutoff and ${_validateI64(targetCutoff - BigInt.one, 'rated cutoff')}',
+    _ => throw StateError('Validated rated operator became invalid.'),
+  };
+  final easeClause = switch (rating) {
+    AnswerButton(:final value) when value >= 1 && value <= 4 =>
+      ' and ease = $value',
+    AnyAnswerButton() => ' and ease > 0',
+    ManualReschedule() => ' and ease = 0',
+    AnswerButton(:final value) => throw RangeError.range(value, 1, 4, 'button'),
+  };
+  return 'c.id in (select cid from revlog where id$dayBeforeTarget$easeClause)';
+}
+
+BigInt _ratedCutoffMillis(BigInt seconds) {
+  _validateI64(seconds, 'rated cutoff seconds');
+  return _validateI64(seconds * BigInt.from(1000), 'rated cutoff milliseconds');
+}
+
+BigInt _validateI64(BigInt value, String name) {
+  if (value < _minI64 || value > _maxI64) {
+    throw RangeError('$name exceeds the signed 64-bit range.');
+  }
+  return value;
+}
+
+int _validateRatedDays(int days, RatingKind rating) {
+  if (days < 0 || BigInt.from(days) > _maxU32) {
+    throw RangeError.range(days, 0, 0xffffffff, 'days');
+  }
+  return days == 0 && rating is! ManualReschedule ? 1 : days;
+}
+
+int _validateRatedPropertyDays(int days) {
+  if (days < -0x80000000 || days > 0x7fffffff) {
+    throw RangeError.range(days, -0x80000000, 0x7fffffff, 'days');
+  }
+  return days;
 }
 
 String _writeCustomDataNumber(

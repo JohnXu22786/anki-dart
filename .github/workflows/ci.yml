@@ -233,3 +233,32 @@ jobs:
       - name: Validate AGPL source hashes and package metadata
         working-directory: packages/anki_collection_schema
         run: python3 tool/check_package.py
+  anki-collection-sqlite:
+    name: AGPL Anki collection SQLite adapter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve SQLite adapter dependencies
+        working-directory: packages/anki_collection_sqlite
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_collection_sqlite
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze SQLite adapter
+        working-directory: packages/anki_collection_sqlite
+        run: dart analyze lib test tool
+      - name: Test real SQLite storage adapter
+        working-directory: packages/anki_collection_sqlite
+        run: dart test
+      - name: Compile native SQLite driver smoke target
+        working-directory: packages/anki_collection_sqlite
+        run: dart compile exe tool/native_compile_smoke.dart -o /tmp/anki_collection_sqlite
+      - name: Compile web and IndexedDB driver smoke target
+        working-directory: packages/anki_collection_sqlite
+        run: dart compile js tool/web_compile_smoke.dart -o /tmp/anki_collection_sqlite.js
+      - name: Validate AGPL metadata and Dart SPDX headers
+        working-directory: packages/anki_collection_sqlite
+        run: python3 tool/check_package.py

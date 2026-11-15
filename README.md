@@ -18,6 +18,14 @@ The Dart package, SQL source, fixtures, and tests are AGPL-3.0-or-later;
 `SOURCE.sha256` pins the exact upstream SQL and Rust files used. See its
 `NOTICE.md` for provenance and `tool/verify_source.py` for verification.
 
+[`packages/anki_collection_sqlite`](packages/anki_collection_sqlite/README.md)
+adds the concrete SQLite connection adapter for that open/create API. It uses
+the `sqlite3` package across native targets and provides an experimental,
+IndexedDB-backed Web driver behind a separate entry point. Web persistence is
+not validated as crash durable; the host must supply a validated driver when
+durable Web collections are required. Anki-specific SQL functions and the
+`unicase` collation also remain host registrations.
+
 This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).

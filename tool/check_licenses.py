@@ -10,6 +10,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 EXPECTED_IDENTIFIERS = {
+    "AGPL-3.0-or-later",
+    "Apache-2.0",
     "GPL-3.0-or-later",
     "LicenseRef-Unicode-License-V3",
 }
@@ -17,7 +19,13 @@ EXPECTED_IDENTIFIERS = {
 
 def main() -> int:
     errors: list[str] = []
-    dart_roots = (ROOT / "lib", ROOT / "test", ROOT / "apps" / "anki" / "lib", ROOT / "apps" / "anki" / "test")
+    dart_roots = (
+        ROOT / "lib",
+        ROOT / "test",
+        ROOT / "apps" / "anki" / "lib",
+        ROOT / "apps" / "anki" / "test",
+        ROOT / "packages",
+    )
     dart_files = sorted(path for root in dart_roots for path in root.rglob("*.dart"))
     for path in dart_files:
         text = path.read_text(encoding="utf-8")

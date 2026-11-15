@@ -207,6 +207,35 @@ jobs:
       - name: Validate AGPL provenance and source hashes
         working-directory: packages/anki_backend_models
         run: python3 tool/check_package.py
+  anki-backend-storage:
+    name: AGPL Anki SQLite note storage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve storage package dependencies
+        working-directory: packages/anki_backend_storage
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_backend_storage
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze storage package
+        working-directory: packages/anki_backend_storage
+        run: dart analyze lib test tool
+      - name: Test SQLite note mutations
+        working-directory: packages/anki_backend_storage
+        run: dart test
+      - name: Compile and run the web-compatible smoke test
+        working-directory: packages/anki_backend_storage
+        run: |
+          dart compile js tool/web_compile_smoke.dart -o /tmp/anki_backend_storage.js
+          node /tmp/anki_backend_storage.js
+      - name: Validate AGPL provenance and source hashes
+        working-directory: packages/anki_backend_storage
+        run: python3 tool/check_package.py
+
   anki-collection-schema:
     name: AGPL Anki collection schema catalog
     runs-on: ubuntu-latest

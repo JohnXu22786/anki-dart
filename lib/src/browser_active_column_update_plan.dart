@@ -76,3 +76,78 @@ bool _sameOrderedColumns(List<BrowserColumn> left, List<BrowserColumn> right) {
   }
   return true;
 }
+
+/// Host callbacks for the full `updateActiveColumns` boundary.
+///
+/// SharedPreferences, coroutine scheduling, backend access, and StateFlow stay
+/// host-owned. The callbacks make their source order explicit for portable
+/// hosts: read and save the selected mode's columns, schedule an active-mode
+/// update, then set backend keys before publishing the active columns.
+final class BrowserActiveColumnUpdateCallbacks {
+  const BrowserActiveColumnUpdateCallbacks({
+    required this.readPreference,
+    required this.defaultColumnKeys,
+    required this.writePreference,
+    required this.scheduleActiveUpdate,
+    required this.setBackendActiveColumns,
+    required this.publishActiveColumns,
+  });
+
+  final Future<String?> Function(BrowserColumnMode mode) readPreference;
+  final List<String> Function(BrowserColumnMode mode) defaultColumnKeys;
+  final Future<void> Function(BrowserColumnMode mode, String value)
+  writePreference;
+  final void Function(Future<void> Function() update) scheduleActiveUpdate;
+  final Future<void> Function(Iterable<String> keys) setBackendActiveColumns;
+  final void Function(BrowserColumnCollection columns) publishActiveColumns;
+}
+
+/// Applies the portable callback boundary for `CardBrowserViewModel.updateActiveColumns`.
+///
+/// Empty and structurally unchanged requests return before touching preference
+/// callbacks. Accepted requests load and persist the target mode's ordered
+/// columns. When updating the current mode, the scheduled host task awaits the
+/// backend write before publishing; a backend error therefore suppresses the
+/// publication. The host scheduler owns when that task runs and how its error
+/// is delivered.
+Future<bool> updateBrowserActiveColumns({
+  required List<BrowserColumn> currentActiveColumns,
+  required List<BrowserColumn> requestedColumns,
+  required BrowserColumnMode currentMode,
+  required BrowserColumnMode targetMode,
+  required BrowserActiveColumnUpdateCallbacks callbacks,
+}) async {
+  final plan = planBrowserActiveColumnUpdate(
+    currentActiveColumns: currentActiveColumns,
+    requestedColumns: requestedColumns,
+    currentMode: currentMode,
+    targetMode: targetMode,
+  );
+  if (!plan.returnedValue) return false;
+
+  final defaults = callbacks.defaultColumnKeys(targetMode);
+  String? storedValue;
+  try {
+    storedValue = await callbacks.readPreference(targetMode);
+  } on Exception {
+    // BrowserColumnCollection.load logs the failure and falls back to defaults.
+    // Logging stays with the host callback adapter.
+  }
+  final replacement = BrowserColumnCollection.replace(
+    preferenceValue: storedValue,
+    defaultColumnKeys: defaults,
+    newColumns: requestedColumns,
+  );
+  await callbacks.writePreference(targetMode, replacement.preferenceValue);
+
+  if (plan.shouldUpdateActiveFlow) {
+    callbacks.scheduleActiveUpdate(() async {
+      await callbacks.setBackendActiveColumns(
+        replacement.newColumns.backendKeys,
+      );
+      callbacks.publishActiveColumns(replacement.newColumns);
+    });
+  }
+
+  return true;
+}

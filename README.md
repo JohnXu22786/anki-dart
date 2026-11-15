@@ -1933,10 +1933,17 @@ Android lifecycle, StateFlow, localization, and UI.
   removal, focus reset to default deck ID `1`, then the deck name and deleted
   card count notification. The host resolves `decks.getLegacy(did)!!.name`
   first, runs removal undoably, and applies later effects only after success.
-  `deleteSelectedDeck` remains host-side: it reads the selected ID, delegates
-  to `deleteDeck`, and joins that job. Collection access, the source null
-  assertion, undo, coroutine, and Flow behavior stay host-side. Cases are
+  `deleteSelectedDeckPickerDeck` reads the selected ID once before delegating
+  and joining the delete job, preserving Kotlin `Job.join()`'s wait-without-
+  rethrow behavior at the host callback boundary. Collection access, the source
+  null assertion, undo, coroutine, and Flow behavior stay host-side. Cases are
   source-derived; see [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
+- Deck-picker shortcut creation: `createDeckPickerIcon` resolves the exact full
+  name through the host, derives its basename, then emits `ShortcutData` with
+  the original deck ID and full name. The host retains collection lookup, IO
+  scheduling, Flow delivery, and Android shortcut handling. Callback failures
+  stop later effects and propagate unchanged; focused cases are source-derived.
+  See [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).
 - Deck-picker default-child predicate: `onlyHasDefaultDeck` returns true only
   for exactly one child with the default deck ID (`1`); empty and multi-child
   inputs return false. The host supplies child IDs; due-tree construction and
@@ -6111,7 +6118,7 @@ and [NOTICE.md](NOTICE.md).
 
 ## LibAnki Collection helper projections
 
-[`flattenEmptyCardIds()` and `sortClozeOrdinals()`](lib/src/collection_libanki_helpers.dart)
+[`flattenEmptyCardIds()`, `sortClozeOrdinals()`, and `collectionSchemaChanged()`](lib/src/collection_libanki_helpers.dart)
 adapt the pure collection helper steps in AnkiDroid 2.25.3
 `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt` (pinned to
 `d9bf072f814a0c37d30a694192593b31ff2df875`, lines 388, 1530, and
@@ -6125,3 +6132,26 @@ behavior remain host-owned. Focused source-derived cases are in
 `test/collection_libanki_helpers_test.dart`. `Collection.kt` is
 `GPL-3.0-or-later`; although its header separately identifies AGPL browser.py
 code, this adaptation contains none of it. Root `COPYING` remains byte-identical.
+
+## Card Browser column registry and active-column callbacks
+
+`browserColumnRegistryByKey()` adapts the `associateBy { it.key }` projection in
+AnkiDroid 2.25.3 `CardBrowserViewModel.refreshBackendColumns()`: duplicate keys
+replace their value while retaining the first key position. The
+`updateBrowserActiveColumns()` callback boundary preserves the empty/equal-list
+guards, target-mode preference read and write, and active-mode scheduling order.
+Preference exceptions fall back to mode defaults while non-Exception errors
+propagate. The scheduled callback sets backend keys before publishing active
+columns.
+Backend retrieval, localized labels, SharedPreferences, coroutine scheduling,
+and StateFlow stay host-side. Source-derived tests are in
+`test/browser_column_registry_test.dart` and
+`test/browser_active_column_update_callbacks_test.dart`.
+
+## Previewer selected-card ID handoff
+
+`previewerCardIdAtIndex()` maps `PreviewerViewModel`'s selected-card list and
+current index to the ID passed to host card loading. It preserves list order and
+index bounds behavior. `SavedStateHandle`, `IdsFile` IO, collection lookup, and
+card loading remain host-side. The source-derived contract is covered by
+`test/previewer_card_selection_test.dart`.

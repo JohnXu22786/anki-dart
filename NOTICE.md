@@ -1886,6 +1886,19 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   `launchCatchingIO`, lifecycle, Flow delivery, and Android shortcut handling.
   Root `COPYING` remains byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt:215–222,482–498`
+  (`deleteSelectedDeck`, `createIcon`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
+  `SPDX-License-Identifier: GPL-3.0-or-later`; the file header contains no
+  copyright text, and no method-specific authorship is asserted. The selected
+  deck lookup followed by delete-job delegation/join, and the shortcut name
+  lookup followed by basename and payload emission, are adapted in
+  `lib/src/deck_picker_lookup_callbacks.dart`, with focused cases in
+  `test/deck_picker_delete_selected_deck_callbacks_test.dart` and
+  `test/deck_picker_create_icon_callbacks_test.dart`. The host retains actual
+  collection access, coroutine/Job semantics, IO scheduling, Flow delivery,
+  and Android shortcut handling. Root `COPYING` remains byte-identical.
+
 - `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt:908–927`
   (`onAppendSelectedRows` and `onRemoveSelectedRows`; pinned AnkiDroid 2.25.3
   commit `d9bf072f814a0c37d30a694192593b31ff2df875`) declares
@@ -5624,10 +5637,33 @@ incorporated `AGPL-3.0-or-later` `browser.py` code; this adaptation contains no
 browser implementation. The Dart adapter and tests are Copyright © 2026 John
 Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
 
+- `AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`
+  (`refreshBackendColumns` and `updateActiveColumns`; pinned AnkiDroid 2.25.3
+  commit `d9bf072f814a0c37d30a694192593b31ff2df875`) is licensed
+  `GPL-3.0-or-later` and has no separate copyright holder in its header. The
+  portable keyed registry and active-column callback boundary are adapted in
+  `lib/src/browser_column_registry.dart` and
+  `lib/src/browser_active_column_update_plan.dart`, with source-derived tests
+  in `test/browser_column_registry_test.dart` and
+  `test/browser_active_column_update_callbacks_test.dart`. Preference read
+  exceptions retain the source fallback boundary; Backend,
+  SharedPreferences, coroutine, and StateFlow implementations remain
+  host-owned. The Dart adaptation and tests are Copyright © 2026 John Tsui
+  under `GPL-3.0-or-later`; root `COPYING` remains unchanged.
+- `AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt`
+  (`selectedCardIds` and `currentCard`; pinned AnkiDroid 2.25.3 commit
+  `d9bf072f814a0c37d30a694192593b31ff2df875`) is licensed `GPL-3.0-or-later`
+  and has no separate copyright holder in its header. Its selected-ID index
+  handoff is adapted in `lib/src/previewer_card_selection.dart`, with
+  source-derived cases in `test/previewer_card_selection_test.dart`. Android
+  SavedStateHandle/IdsFile and collection-backed card loading remain
+  host-owned. The Dart adaptation and tests are Copyright © 2026 John Tsui
+  under `GPL-3.0-or-later`; root `COPYING` remains unchanged.
+
 ## LibAnki Collection helper projections
 
 `lib/src/collection_libanki_helpers.dart` and
-`test/collection_libanki_helpers_test.dart` adapt `EmptyCardsReport.emptyCids()`
+`test/collection_libanki_helpers_test.dart` adapt `EmptyCardsReport.emptyCids()`,
 the final sort in `Collection.clozeNumbersInNote()`, and the strict comparison in
 `Collection.schemaChanged()` from AnkiDroid 2.25.3
 `libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt:388,1530,1545–1553`,

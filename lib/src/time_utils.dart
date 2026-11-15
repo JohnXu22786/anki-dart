@@ -31,11 +31,13 @@ const TIME_DAY = 24.0 * TIME_HOUR;
 /// Creates the host date from exactly one host-provided millisecond read.
 ///
 /// The host remains responsible for the concrete date type and its time-zone
-/// semantics. The clock is read before date creation, and failures propagate.
+/// semantics. Millisecond callbacks use [BigInt] to retain the full JVM Long
+/// range on JavaScript. The clock is read before date creation; failures
+/// propagate.
 TDate currentDate<TTime, TDate>(
   TTime time, {
-  required int Function(TTime time) intTimeMS,
-  required TDate Function(int milliseconds) createDate,
+  required BigInt Function(TTime time) intTimeMS,
+  required TDate Function(BigInt milliseconds) createDate,
 }) => createDate(intTimeMS(time));
 
 /// Creates a host calendar and sets it to the single date returned by
@@ -47,8 +49,8 @@ TDate currentDate<TTime, TDate>(
 TCalendar calendar<TTime, TDate, TCalendar>(
   TTime time, {
   required TCalendar Function() createCalendar,
-  required int Function(TTime time) intTimeMS,
-  required TDate Function(int milliseconds) createDate,
+  required BigInt Function(TTime time) intTimeMS,
+  required TDate Function(BigInt milliseconds) createDate,
   required void Function(TCalendar calendar, TDate date) setTime,
 }) {
   final cal = createCalendar();
@@ -61,11 +63,13 @@ TCalendar calendar<TTime, TDate, TCalendar>(
 ///
 /// Calendar creation precedes the single millisecond assignment, and the same
 /// calendar is returned. JVM Gregorian calendar and default time-zone behavior
-/// remain host-provided; callback failures propagate unchanged.
+/// remain host-provided; the timestamp crosses the API as [BigInt] so the JVM
+/// Long value stays exact on JavaScript. Callback failures propagate unchanged.
 TCalendar gregorianCalendar<TCalendar>(
-  int timeInMS, {
+  BigInt timeInMS, {
   required TCalendar Function() createGregorianCalendar,
-  required void Function(TCalendar calendar, int milliseconds) setTimeInMillis,
+  required void Function(TCalendar calendar, BigInt milliseconds)
+  setTimeInMillis,
 }) {
   final calendar = createGregorianCalendar();
   setTimeInMillis(calendar, timeInMS);
@@ -97,7 +101,8 @@ int _wrapSignedInt32(int value) =>
 /// Host callbacks provide the JVM formatter, time zone, Gregorian calendar,
 /// Date, and `java.sql.Date.valueOf` behavior. The source reads the clock once,
 /// converts the offset with Kotlin/JVM `Double.toLong()` semantics, and uses
-/// wrapping signed 64-bit arithmetic before assigning the calendar time.
+/// wrapping signed 64-bit arithmetic before assigning the calendar time. All
+/// Long-valued callbacks use [BigInt].
 TSqlDate genToday<TTime, TFormatter, TTimeZone, TCalendar, TDate, TSqlDate>(
   TTime time,
   double utcOffset, {
@@ -105,9 +110,10 @@ TSqlDate genToday<TTime, TFormatter, TTimeZone, TCalendar, TDate, TSqlDate>(
   createSimpleDateFormat,
   required TTimeZone Function(String id) getTimeZone,
   required void Function(TFormatter formatter, TTimeZone timeZone) setTimeZone,
-  required int Function(TTime time) intTimeMS,
+  required BigInt Function(TTime time) intTimeMS,
   required TCalendar Function() createGregorianCalendar,
-  required void Function(TCalendar calendar, int milliseconds) setTimeInMillis,
+  required void Function(TCalendar calendar, BigInt milliseconds)
+  setTimeInMillis,
   required TDate Function(TCalendar calendar) getTime,
   required String Function(TFormatter formatter, TDate date) format,
   required TSqlDate Function(String value) sqlDateValueOf,
@@ -117,11 +123,9 @@ TSqlDate genToday<TTime, TFormatter, TTimeZone, TCalendar, TDate, TSqlDate>(
   setTimeZone(formatter, timeZone);
   final currentTimeMS = intTimeMS(time);
   final offsetMS = _wrapSignedInt64(
-    BigInt.from(_kotlinDoubleToLong(utcOffset)) * BigInt.from(1000),
+    _kotlinDoubleToLong(utcOffset) * BigInt.from(1000),
   );
-  final calendarTimeMS = _wrapSignedInt64(
-    BigInt.from(currentTimeMS) - BigInt.from(offsetMS),
-  );
+  final calendarTimeMS = _wrapSignedInt64(currentTimeMS - offsetMS);
   final calendar = createGregorianCalendar();
   setTimeInMillis(calendar, calendarTimeMS);
   final date = getTime(calendar);
@@ -129,34 +133,35 @@ TSqlDate genToday<TTime, TFormatter, TTimeZone, TCalendar, TDate, TSqlDate>(
   return sqlDateValueOf(formattedDate);
 }
 
-const _longMin = -9223372036854775808;
-const _longMax = 9223372036854775807;
+final _longMin = BigInt.parse('-9223372036854775808');
+final _longMax = BigInt.parse('9223372036854775807');
 const _longMinAsDouble = -9223372036854775808.0;
 const _longMaxExclusiveAsDouble = 9223372036854775808.0;
 
-int _kotlinDoubleToLong(double value) {
-  if (value.isNaN) return 0;
+BigInt _kotlinDoubleToLong(double value) {
+  if (value.isNaN) return BigInt.zero;
   if (value <= _longMinAsDouble) return _longMin;
   if (value >= _longMaxExclusiveAsDouble) return _longMax;
-  return value.toInt();
+  return BigInt.from(value);
 }
 
-int _wrapSignedInt64(BigInt value) {
+BigInt _wrapSignedInt64(BigInt value) {
   final modulus = BigInt.one << 64;
   final unsigned = value % modulus;
   final signed = unsigned >= (BigInt.one << 63) ? unsigned - modulus : unsigned;
-  return signed.toInt();
+  return signed;
 }
 
-/// A test clock that advances by [step] milliseconds after each read.
+/// A test clock backed by an exact signed Long value.
 ///
 /// Values and arithmetic follow the source's signed JVM `Long` wraparound;
-/// [step] is first narrowed to the source's signed 32-bit `Int`. The host
+/// the initial time, return value, and Long additions use [BigInt]. [step] is
+/// first narrowed to the source's signed 32-bit `Int`. The host
 /// supplies the time zone and Gregorian calendar used by [timeStamp], so JVM
 /// calendar normalization, defaults, and failures remain host-side.
 final class MockTime<TTimeZone, TCalendar> {
-  MockTime(int initialMilliseconds, {int step = 0})
-    : _time = _wrapSignedInt64(BigInt.from(initialMilliseconds)),
+  MockTime(BigInt initialMilliseconds, {int step = 0})
+    : _time = _wrapSignedInt64(initialMilliseconds),
       _step = _wrapSignedInt32(step);
 
   /// Creates a clock from date components using the source GMT calendar path.
@@ -181,7 +186,7 @@ final class MockTime<TTimeZone, TCalendar> {
     createGregorianCalendar,
     required void Function(TCalendar calendar, TTimeZone timeZone) setTimeZone,
     required void Function(TCalendar calendar, int milliseconds) setMillisecond,
-    required int Function(TCalendar calendar) getTimeInMillis,
+    required BigInt Function(TCalendar calendar) getTimeInMillis,
   }) : this(
          timeStamp(
            year,
@@ -201,33 +206,29 @@ final class MockTime<TTimeZone, TCalendar> {
        );
 
   final int _step;
-  int _time;
+  BigInt _time;
 
   /// Returns the current milliseconds, then advances by the configured step.
-  int intTimeMS() {
+  BigInt intTimeMS() {
     final currentTime = _time;
-    _time = _wrapSignedInt64(BigInt.from(_time) + BigInt.from(_step));
+    _time = _wrapSignedInt64(_time + BigInt.from(_step));
     return currentTime;
   }
 
   /// Adds [minutes] using the source's nested Long multiplications.
-  void addM(int minutes) {
-    final seconds = _wrapSignedInt64(BigInt.from(minutes) * BigInt.from(60));
-    final milliseconds = _wrapSignedInt64(
-      BigInt.from(seconds) * BigInt.from(1000),
-    );
-    _time = _wrapSignedInt64(BigInt.from(_time) + BigInt.from(milliseconds));
+  void addM(BigInt minutes) {
+    final seconds = _wrapSignedInt64(minutes * BigInt.from(60));
+    final milliseconds = _wrapSignedInt64(seconds * BigInt.from(1000));
+    _time = _wrapSignedInt64(_time + milliseconds);
   }
 
   /// Adds [days] using the source's nested Long multiplications.
-  void addD(int days) {
-    final hours = _wrapSignedInt64(BigInt.from(days) * BigInt.from(24));
-    final minutes = _wrapSignedInt64(BigInt.from(hours) * BigInt.from(60));
-    final seconds = _wrapSignedInt64(BigInt.from(minutes) * BigInt.from(60));
-    final milliseconds = _wrapSignedInt64(
-      BigInt.from(seconds) * BigInt.from(1000),
-    );
-    _time = _wrapSignedInt64(BigInt.from(_time) + BigInt.from(milliseconds));
+  void addD(BigInt days) {
+    final hours = _wrapSignedInt64(days * BigInt.from(24));
+    final minutes = _wrapSignedInt64(hours * BigInt.from(60));
+    final seconds = _wrapSignedInt64(minutes * BigInt.from(60));
+    final milliseconds = _wrapSignedInt64(seconds * BigInt.from(1000));
+    _time = _wrapSignedInt64(_time + milliseconds);
   }
 
   /// Returns a timestamp from a host Gregorian calendar set to GMT.
@@ -235,7 +236,7 @@ final class MockTime<TTimeZone, TCalendar> {
   /// The time zone is resolved before constructing the calendar. That exact
   /// zone object is assigned before the millisecond field is set and the
   /// calendar time is read. Callback failures propagate and skip later calls.
-  static int timeStamp<TTimeZone, TCalendar>(
+  static BigInt timeStamp<TTimeZone, TCalendar>(
     int year,
     int month,
     int date,
@@ -255,7 +256,7 @@ final class MockTime<TTimeZone, TCalendar> {
     createGregorianCalendar,
     required void Function(TCalendar calendar, TTimeZone timeZone) setTimeZone,
     required void Function(TCalendar calendar, int milliseconds) setMillisecond,
-    required int Function(TCalendar calendar) getTimeInMillis,
+    required BigInt Function(TCalendar calendar) getTimeInMillis,
   }) {
     final timeZone = getTimeZone('GMT');
     final calendar = createGregorianCalendar(
@@ -272,12 +273,14 @@ final class MockTime<TTimeZone, TCalendar> {
   }
 }
 
-/// Returns the host-provided current time in whole seconds.
+/// Returns the host-provided current time in whole seconds as an exact [BigInt].
 ///
-/// The host supplies epoch milliseconds. Its clock is read once, then Dart's
-/// integer division preserves the source's signed truncation toward zero.
-int intTime<TTime>(TTime time, {required int Function(TTime time) intTimeMS}) =>
-    intTimeMS(time) ~/ 1000;
+/// The host supplies epoch milliseconds as [BigInt]. Its clock is read once,
+/// then division preserves the source's signed truncation toward zero.
+BigInt intTime<TTime>(
+  TTime time, {
+  required BigInt Function(TTime time) intTimeMS,
+}) => intTimeMS(time) ~/ BigInt.from(1000);
 
 /// Formats [time]'s host-provided current date as `yyyyMMddHHmmss`.
 ///
@@ -299,35 +302,45 @@ String getTimestamp<TTime, TDate, TFormatter>(
 /// Formats the host-projected Kotlin duration using the source's signed Long
 /// division and remainder behavior.
 ///
-/// The host must return Kotlin `Duration.inWholeMilliseconds` and perform the
+/// The host must return Kotlin `Duration.inWholeMilliseconds` as [BigInt] and perform the
 /// source pattern formatting (`String.format`) in its runtime locale. The
 /// conversion and formatter each run once. Negative values and hour wrapping
 /// follow the source, including its quirks.
 String formatAsString<TDuration>(
   TDuration duration, {
-  required int Function(TDuration duration) inWholeMilliseconds,
+  required BigInt Function(TDuration duration) inWholeMilliseconds,
   required String Function(String pattern, List<int> values) format,
 }) {
   final milliseconds = inWholeMilliseconds(duration);
-  final ms = _signedRemainder(milliseconds, 1000);
-  final s = _signedRemainder(milliseconds ~/ 1000, 60);
-  final m = _signedRemainder(milliseconds ~/ (1000 * 60), 60);
-  final h = _signedRemainder(milliseconds ~/ (1000 * 60 * 60), 60);
+  final ms = _signedRemainder(milliseconds, BigInt.from(1000)).toInt();
+  final s = _signedRemainder(
+    milliseconds ~/ BigInt.from(1000),
+    BigInt.from(60),
+  ).toInt();
+  final m = _signedRemainder(
+    milliseconds ~/ BigInt.from(1000 * 60),
+    BigInt.from(60),
+  ).toInt();
+  final h = _signedRemainder(
+    milliseconds ~/ BigInt.from(1000 * 60 * 60),
+    BigInt.from(60),
+  ).toInt();
   if (h > 0) {
     return format('%02d:%02d:%02d.%02d', [h, m, s, ms ~/ 10]);
   }
   return format('%02d:%02d.%02d', [m, s, ms ~/ 10]);
 }
 
-int _signedRemainder(int dividend, int divisor) =>
+BigInt _signedRemainder(BigInt dividend, BigInt divisor) =>
     dividend - (dividend ~/ divisor) * divisor;
 
 /// Returns 4 AM at the start of [time]'s day, as defined by its host calendar.
 ///
 /// The calendar, time zone, DST rules, and Gregorian behavior remain
-/// host-provided. Each host callback runs in the same order as the Kotlin
-/// source and failures stop subsequent operations.
-int getDayStart<TTime, TCalendar>(
+/// host-provided. The returned epoch milliseconds use [BigInt]. Each host
+/// callback runs in the same order as the Kotlin source and failures stop
+/// subsequent operations.
+BigInt getDayStart<TTime, TCalendar>(
   TTime time, {
   required TCalendar Function(TTime time) calendar,
   required int Function(TCalendar calendar) getHourOfDay,
@@ -336,7 +349,7 @@ int getDayStart<TTime, TCalendar>(
   required void Function(TCalendar calendar, int value) setMinute,
   required void Function(TCalendar calendar, int value) setSecond,
   required void Function(TCalendar calendar, int value) setMillisecond,
-  required int Function(TCalendar calendar) getTimeInMillis,
+  required BigInt Function(TCalendar calendar) getTimeInMillis,
 }) {
   final cal = calendar(time);
   if (getHourOfDay(cal) < 4) {

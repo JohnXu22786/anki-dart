@@ -1,5 +1,31 @@
 # anki-dart
 
+## Anki Core collection schema and open/create (Units 4.1–4.3)
+
+[`packages/anki_collection_schema`](packages/anki_collection_schema/README.md)
+PORTED: schema SQL/catalog, version compatibility, and host-neutral
+open/create orchestration. The orchestration preserves source ordering for
+schema creation, optional integrity checks, migrations, and default callbacks
+inside one outer transaction. Host adapters still supply the database,
+metadata/timezone/clock/default-config rules, and migration/default callbacks.
+It does not provide a concrete driver, collection close/checkpoint, WAL
+handling, CRUD, undo, or callback transformations. The package provides the
+platform-neutral schema catalog for Anki Core at commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It exposes the schema 11 creation
+SQL, ordered upgrade definitions through schema 18, the schema 18-to-11
+downgrade order, and the pinned too-old/too-new version rules. Its callbacks name the source-side transformations and preserve their order.
+The Dart package, SQL source, fixtures, and tests are AGPL-3.0-or-later;
+`SOURCE.sha256` pins the exact upstream SQL and Rust files used. See its
+`NOTICE.md` for provenance and `tool/verify_source.py` for verification.
+
+[`packages/anki_collection_sqlite`](packages/anki_collection_sqlite/README.md)
+adds the concrete SQLite connection adapter for that open/create API. It uses
+the `sqlite3` package across native targets and provides an experimental,
+IndexedDB-backed Web driver behind a separate entry point. Web persistence is
+not validated as crash durable; the host must supply a validated driver when
+durable Web collections are required. Anki-specific SQL functions and the
+`unicase` collation also remain host registrations.
+
 This repository is an in-progress Dart port of AnkiDroid. Its source baseline
 is AnkiDroid **2.25.3** (`v2.25.3`); the exact commit and the files compared so
 far are recorded in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md).

@@ -85,19 +85,19 @@ void main() {
 
       expect(
         result['intMin'],
-        const JsonIntegerValue(-2147483648, isLong: false),
+        JsonIntegerValue(BigInt.from(-2147483648), isLong: false),
       );
       expect(
         result['intMax'],
-        const JsonIntegerValue(2147483647, isLong: false),
+        JsonIntegerValue(BigInt.from(2147483647), isLong: false),
       );
       expect(
         result['longMin'],
-        const JsonIntegerValue(-9223372036854775808, isLong: true),
+        JsonIntegerValue(BigInt.parse('-9223372036854775808'), isLong: true),
       );
       expect(
         result['longMax'],
-        const JsonIntegerValue(9223372036854775807, isLong: true),
+        JsonIntegerValue(BigInt.parse('9223372036854775807'), isLong: true),
       );
       expect(result['beyondLong'], 9223372036854775808.0);
       expect(result['fraction'], 1.25);

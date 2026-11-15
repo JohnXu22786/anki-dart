@@ -64,6 +64,12 @@ void main() {
     expect((value('"re:\\btest\\%"') as RegexSearch).pattern, r'\btest\%');
     expect((value(r're:te\"st') as RegexSearch).pattern, 'te"st');
     expect(parse('a"b"(c)'), parse('a b (c)'));
+    final colonBeforeQuote = parse('foo:bar:"baz"');
+    expect(colonBeforeQuote, hasLength(3));
+    expect(colonBeforeQuote[0],
+        const Search(SingleFieldSearch(field: 'foo', text: 'bar:', mode: FieldSearchMode.normal)));
+    expect(colonBeforeQuote[1], const BooleanNode(NodeKind.and));
+    expect(colonBeforeQuote[2], const Search(TextSearch('baz')));
 
     expect(
         value('added:3'), isA<AddedInDays>().having((n) => n.days, 'days', 3));

@@ -25,5 +25,6 @@
   "@editProfile": { "placeholders": { "name": { "type": "String" } } },
   "profileOperationFailed": "Profile could not be saved",
   "profileSwitchFailed": "Profile could not be switched",
+  "profileSwitchBlocked": "Profile switching is unavailable while Anki is busy",
   "close": "Close"
 }

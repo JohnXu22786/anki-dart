@@ -86,5 +86,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileSwitchFailed => 'Profile could not be switched';
 
   @override
+  String get profileSwitchBlocked =>
+      'Profile switching is unavailable while Anki is busy';
+
+  @override
   String get close => 'Close';
 }

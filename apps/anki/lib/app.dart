@@ -6,5 +6,6 @@
 export 'app_config.dart';
 export 'app_router.dart';
 export 'app_services.dart';
+export 'profile_manager.dart';
 export 'l10n/app_localizations.dart';
 export 'startup_shell.dart';

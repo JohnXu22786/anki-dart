@@ -4255,7 +4255,9 @@ John Tsui under GPL-3.0-or-later. Root `COPYING` remains byte-identical.
 ## Flutter profile onboarding and navigation
 
 `apps/anki/lib/startup_shell.dart` implements shared first-run onboarding and
-profile-list interactions; `apps/anki/lib/app_services.dart` defines the
+profile-list interactions; `apps/anki/lib/profile_manager.dart` keeps default
+profile selection, unique ID generation, and ordered switch safety checks in
+Dart; `apps/anki/lib/app_contracts.dart` and `app_services.dart` define the
 injected startup/storage and profile repository boundaries. The UI behavior is
 adapted from AnkiDroid 2.25.3, pinned to
 `d9bf072f814a0c37d30a694192593b31ff2df875`: profile naming and creation from

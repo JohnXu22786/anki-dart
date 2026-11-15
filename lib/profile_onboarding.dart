@@ -10,3 +10,4 @@
 export 'src/profile_id.dart';
 export 'src/profile_item.dart';
 export 'src/profile_name.dart';
+export 'src/profile_switch_guard.dart';

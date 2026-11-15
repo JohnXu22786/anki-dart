@@ -22,6 +22,7 @@ void main() {
           services: AppServices(
             startup: _Startup(firstRun: true, events: events),
             profiles: profiles,
+            generateProfileId: () => ProfileId('p1'),
           ),
         ),
       );
@@ -301,12 +302,23 @@ final class _Profiles implements ProfileRepository {
   }
 
   @override
-  Future<void> create(ProfileName name) async {
+  Future<void> create(
+    ProfileId id,
+    ProfileName name, {
+    bool isActive = false,
+  }) async {
     if (failNextCreate) {
       failNextCreate = false;
       throw StateError('profile create failed');
     }
-    items.add(ProfileItem(id: ProfileId('p1'), name: name.value));
+    final item = ProfileItem(id: id, name: name.value);
+    final index = items.indexWhere((profile) => profile.id == id);
+    if (index < 0) {
+      items.add(item);
+    } else {
+      items[index] = item;
+    }
+    if (isActive) active = item;
   }
 
   @override
@@ -321,11 +333,15 @@ final class _Profiles implements ProfileRepository {
   }
 
   @override
-  Future<void> switchTo(ProfileId id) async {
+  Future<void> persistActiveProfile(ProfileId id) async {
     if (failNextSwitch) {
       failNextSwitch = false;
       throw StateError('profile switch failed');
     }
     active = items.singleWhere((item) => item.id == id);
   }
+
+  @override
+  Iterable<Future<ProfileSwitchBlockReason?> Function()>
+  get profileSwitchChecks => const [];
 }

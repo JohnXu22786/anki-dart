@@ -35,7 +35,7 @@ final class AppRouter extends StatelessWidget {
         config: config,
         services:
             services ??
-            const AppServices(startup: unconfigured, profiles: unconfigured),
+            AppServices(startup: unconfigured, profiles: unconfigured),
       ),
     );
   }

@@ -229,6 +229,12 @@ abstract class AppLocalizations {
   /// **'Profile could not be switched'**
   String get profileSwitchFailed;
 
+  /// No description provided for @profileSwitchBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile switching is unavailable while Anki is busy'**
+  String get profileSwitchBlocked;
+
   /// No description provided for @close.
   ///
   /// In en, this message translates to:

@@ -11,11 +11,12 @@ Windows, macOS, and Linux. The root `anki_dart` package remains headless pure
 Dart; `apps/anki` depends on it through a local path dependency.
 
 `AppServices` injects the storage/startup and profile repository boundaries.
-Platform adapters that persist storage decisions, initialize the backend, load
-profiles, and perform profile switches are not implemented yet. Until an
-adapter is supplied, the default app explains the setup requirement and
-surfaces the missing storage adapter when setup is attempted; it does not
-create fake persistent state.
+The shared Dart profile manager chooses the default profile, generates unique
+IDs, and runs ordered profile-switch safety checks. Platform adapters still
+need to persist storage decisions, initialize the backend, store profile data,
+and write the active profile selection. Until those adapters are supplied, the
+default app explains the setup requirement and surfaces the missing storage
+adapter when setup is attempted; it does not create fake persistent state.
 
 The profile flow follows AnkiDroid 2.25.3 at pinned commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. See the root

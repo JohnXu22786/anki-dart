@@ -5693,8 +5693,9 @@ The Dart code and tests are Copyright © 2026 John Tsui under
 
 ## Flutter profile onboarding and navigation
 
-`apps/anki/lib/startup_shell.dart`, `apps/anki/lib/l10n/app_en.arb`, and
-`apps/anki/test/app_test.dart` adapt shared profile onboarding and profile-list
+`apps/anki/lib/startup_shell.dart`, `apps/anki/lib/profile_manager.dart`,
+`apps/anki/lib/l10n/app_en.arb`, and `apps/anki/test/app_test.dart` adapt shared
+profile onboarding and profile-list
 behavior from AnkiDroid 2.25.3 at
 `d9bf072f814a0c37d30a694192593b31ff2df875`. Source references are
 `ProfileManager.kt`, `ProfileName.kt`, `SwitchProfilesScreen.kt`,

@@ -53,7 +53,8 @@ final class _StartupShellState extends State<StartupShell> {
 
     if (!firstRun) {
       try {
-        _snapshot = await widget.services.profiles.load();
+        _snapshot = await widget.services.profileManager
+            .initializeActiveProfile();
       } on Object {
         if (!mounted) return;
         setState(() {
@@ -89,7 +90,8 @@ final class _StartupShellState extends State<StartupShell> {
     setState(() => _firstRun = false);
 
     try {
-      final snapshot = await widget.services.profiles.load();
+      final snapshot = await widget.services.profileManager
+          .initializeActiveProfile();
       if (!mounted) return;
       setState(() {
         _snapshot = snapshot;
@@ -105,7 +107,10 @@ final class _StartupShellState extends State<StartupShell> {
   }
 
   Future<void> _refreshProfiles() async {
-    final snapshot = await widget.services.profiles.load();
+    final snapshot = await widget.services.profileManager.load();
+    if (snapshot.active == null) {
+      throw StateError('Profile load returned no active profile.');
+    }
     if (mounted) setState(() => _snapshot = snapshot);
   }
 
@@ -162,6 +167,24 @@ final class _StartupShellState extends State<StartupShell> {
 
     final snapshot = _snapshot;
     if (snapshot == null) return const SizedBox.shrink();
+    final active = snapshot.active;
+    if (active == null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(strings.profileLoadFailed),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: _initialize,
+                child: Text(strings.tryAgain),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     if (_showProfiles) {
       return _profileManager(snapshot, strings);
     }
@@ -171,7 +194,7 @@ final class _StartupShellState extends State<StartupShell> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(strings.activeProfile(snapshot.active.name)),
+            Text(strings.activeProfile(active.name)),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: () => setState(() => _showProfiles = true),
@@ -260,7 +283,7 @@ final class _StartupShellState extends State<StartupShell> {
                   ),
                 ),
                 title: Text(profile.name),
-                selected: profile.id == snapshot.active.id,
+                selected: profile.id == snapshot.active?.id,
                 onTap: () => _switchProfile(profile.id),
                 trailing: IconButton(
                   key: Key('rename-${profile.id.value}'),
@@ -275,7 +298,14 @@ final class _StartupShellState extends State<StartupShell> {
 
   Future<void> _switchProfile(ProfileId id) async {
     try {
-      await widget.services.profiles.switchTo(id);
+      final result = await widget.services.profileManager.switchActiveProfile(
+        id,
+      );
+      if (!mounted) return;
+      if (result is ProfileSwitchGuardBlocked) {
+        _showError(AppLocalizations.of(context)!.profileSwitchBlocked);
+        return;
+      }
     } on Object {
       if (mounted) {
         _showError(AppLocalizations.of(context)!.profileSwitchFailed);
@@ -283,7 +313,10 @@ final class _StartupShellState extends State<StartupShell> {
       return;
     }
     try {
-      final snapshot = await widget.services.profiles.load();
+      final snapshot = await widget.services.profileManager.load();
+      if (snapshot.active == null) {
+        throw StateError('Profile load returned no active profile.');
+      }
       if (mounted) setState(() => _snapshot = snapshot);
     } on Object {
       _showProfileLoadError();
@@ -303,9 +336,9 @@ final class _StartupShellState extends State<StartupShell> {
     if (result == null || !mounted) return;
     try {
       if (profile == null) {
-        await widget.services.profiles.create(result);
+        await widget.services.profileManager.createNewProfile(result);
       } else {
-        await widget.services.profiles.rename(profile.id, result);
+        await widget.services.profileManager.renameProfile(profile.id, result);
       }
     } on Object {
       if (mounted) _showError(strings.profileOperationFailed);

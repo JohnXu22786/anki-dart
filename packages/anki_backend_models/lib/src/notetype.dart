@@ -31,10 +31,10 @@ class NotetypeId {
 
 /// Stored Anki note type values and their official backend configuration.
 ///
-/// The upstream default constructor fills CSS and LaTeX assets that are outside
-/// this conversion slice. When an incoming protobuf omits `config`, this model
-/// uses the generated protocol message's default config, as the service
-/// conversion does.
+/// [ankiDefault], [defaultConfig] and [clozeConfig] reproduce Anki Core's
+/// default CSS and LaTeX assets. When [fromProto] receives a protobuf with no
+/// `config`, it uses the generated protocol message's default config, matching
+/// the service conversion behavior.
 class Notetype {
   Notetype({
     NotetypeId? id,
@@ -57,6 +57,59 @@ class Notetype {
   final List<NoteField> fields;
   final List<CardTemplate> templates;
   final proto.Notetype_Config config;
+
+  /// The stored defaults created by Anki Core's `Notetype::default()`.
+  factory Notetype.ankiDefault() => Notetype(config: defaultConfig());
+
+  /// Build the exact default configuration from Anki Core's pinned CSS and
+  /// LaTeX assets.
+  static proto.Notetype_Config defaultConfig() => proto.Notetype_Config(
+        css: defaultCss,
+        latexPre: defaultLatexHeader,
+        latexPost: defaultLatexFooter,
+      );
+
+  /// Build the exact default configuration used for cloze note types.
+  static proto.Notetype_Config clozeConfig() => proto.Notetype_Config(
+        kind: proto.Notetype_Config_Kind.KIND_CLOZE,
+        css: '$defaultCss$defaultClozeCss',
+        latexPre: defaultLatexHeader,
+        latexPost: defaultLatexFooter,
+      );
+
+  static const defaultCss = '.card {\n'
+      '    font-family: arial;\n'
+      '    font-size: 20px;\n'
+      '    line-height: 1.5;\n'
+      '    text-align: center;\n'
+      '    color: black;\n'
+      '    background-color: white;\n'
+      '}\n';
+
+  static const defaultClozeCss = '.cloze {\n'
+      '    font-weight: bold;\n'
+      '    color: blue;\n'
+      '}\n'
+      '.nightMode .cloze {\n'
+      '    color: lightblue;\n'
+      '}\n';
+
+  static const defaultLatexHeader = r'\documentclass[12pt]{article}'
+      '\n'
+      r'\special{papersize=3in,5in}'
+      '\n'
+      r'\usepackage[utf8]{inputenc}'
+      '\n'
+      r'\usepackage{amssymb,amsmath}'
+      '\n'
+      r'\pagestyle{empty}'
+      '\n'
+      r'\setlength{\parindent}{0in}'
+      '\n'
+      r'\begin{document}'
+      '\n';
+
+  static const defaultLatexFooter = r'\end{document}';
 
   factory Notetype.fromProto(proto.Notetype value) => Notetype(
         id: NotetypeId(value.id),

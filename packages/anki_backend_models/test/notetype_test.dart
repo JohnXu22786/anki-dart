@@ -108,7 +108,6 @@ void main() {
       )..fixName();
       expect(nonWhitespaceControls.name, '\u001cName\u001c');
     });
-
     test('default and cloze configurations match pinned upstream assets', () {
       final defaults = Notetype.ankiDefault();
       expect(defaults.id.value, Int64.ZERO);

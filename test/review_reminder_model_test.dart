@@ -31,7 +31,7 @@ void main() {
       final reminder = ReviewReminder.createReviewReminder(
         id: id,
         time: ReviewReminderTime(hour: 8, minute: 5),
-        latestNotifTime: 1735732800123,
+        latestNotifTime: BigInt.from(1735732800123),
       );
 
       expect(reminder.id, id);
@@ -39,7 +39,7 @@ void main() {
       expect(reminder.cardTriggerThreshold.threshold, 0);
       expect(reminder.scope, const GlobalReminderScope());
       expect(reminder.enabled, isTrue);
-      expect(reminder.latestNotifTime, 1735732800123);
+      expect(reminder.latestNotifTime, BigInt.from(1735732800123));
       expect(reminder.profileID, isEmpty);
       expect(reminder.onlyNotifyIfNoReviews, isFalse);
       expect(reminder.time.toString(), 'ReviewReminderTime(hour=8, minute=5)');
@@ -51,9 +51,9 @@ void main() {
         id: ReviewReminderId(27),
         time: ReviewReminderTime(hour: 8, minute: 5),
         cardTriggerThreshold: ReviewReminderCardTriggerThreshold(4),
-        scope: const DeckSpecificReminderScope(42),
+        scope: DeckSpecificReminderScope(BigInt.from(42)),
         enabled: false,
-        latestNotifTime: 1735732800123,
+        latestNotifTime: BigInt.from(1735732800123),
         profileID: 'profile',
         onlyNotifyIfNoReviews: true,
       );
@@ -61,9 +61,9 @@ void main() {
         id: ReviewReminderId(27),
         time: ReviewReminderTime(hour: 8, minute: 5),
         cardTriggerThreshold: ReviewReminderCardTriggerThreshold(4),
-        scope: const DeckSpecificReminderScope(42),
+        scope: DeckSpecificReminderScope(BigInt.from(42)),
         enabled: false,
-        latestNotifTime: 1735732800123,
+        latestNotifTime: BigInt.from(1735732800123),
         profileID: 'profile',
         onlyNotifyIfNoReviews: true,
       );
@@ -137,7 +137,7 @@ void main() {
           cardTriggerThreshold: reminder.cardTriggerThreshold,
           scope: reminder.scope,
           enabled: reminder.enabled,
-          latestNotifTime: 1735732800124,
+          latestNotifTime: BigInt.from(1735732800124),
           profileID: reminder.profileID,
           onlyNotifyIfNoReviews: reminder.onlyNotifyIfNoReviews,
         ),
@@ -172,23 +172,23 @@ void main() {
         id: ReviewReminderId(27),
         time: ReviewReminderTime(hour: 8, minute: 5),
         cardTriggerThreshold: ReviewReminderCardTriggerThreshold(4),
-        scope: const DeckSpecificReminderScope(42),
+        scope: DeckSpecificReminderScope(BigInt.from(42)),
         enabled: false,
-        latestNotifTime: 100,
+        latestNotifTime: BigInt.from(100),
         profileID: 'profile',
         onlyNotifyIfNoReviews: true,
       );
 
-      reminder.updateLatestNotifTime(currentTimestamp: 200);
+      reminder.updateLatestNotifTime(currentTimestamp: BigInt.from(200));
 
-      expect(reminder.latestNotifTime, 200);
+      expect(reminder.latestNotifTime, BigInt.from(200));
       expect(reminder.id, ReviewReminderId(27));
       expect(reminder.time, ReviewReminderTime(hour: 8, minute: 5));
       expect(
         reminder.cardTriggerThreshold,
         ReviewReminderCardTriggerThreshold(4),
       );
-      expect(reminder.scope, const DeckSpecificReminderScope(42));
+      expect(reminder.scope, DeckSpecificReminderScope(BigInt.from(42)));
       expect(reminder.enabled, isFalse);
       expect(reminder.profileID, 'profile');
       expect(reminder.onlyNotifyIfNoReviews, isTrue);
@@ -198,7 +198,7 @@ void main() {
       final reminder = ReviewReminder.createReviewReminder(
         id: ReviewReminderId(27),
         time: ReviewReminderTime(hour: 8, minute: 5),
-        latestNotifTime: 100,
+        latestNotifTime: BigInt.from(100),
       );
 
       expect(identical(reminder.migrate(), reminder), isTrue);

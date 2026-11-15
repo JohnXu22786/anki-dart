@@ -1,5 +1,35 @@
 # AnkiDroid source baseline
 
+## Anki Core search SQL subset
+
+`packages/anki_search_sql` consumes the typed AST from
+`packages/anki_search_parser` and adapts the bounded boolean, ID, flag, and
+whole-collection SQL subset from Anki Core's `rslib/src/search/sqlwriter.rs`
+and `rslib/src/search/parser.rs`, pinned to
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The package implements source table
+selection and the card/note result SELECT shapes, preserving card/note ID list
+spellings and safe 64-bit notetype ID formatting. Unsupported AST variants
+throw; text and tag matching, regex/glob operations, sorting, browser tables,
+database execution, and UI remain unported. Exact source hashes and license
+attribution are in `packages/anki_search_sql/SOURCE.sha256` and
+`packages/anki_search_sql/NOTICE.md`. The package and tests are Copyright ©
+2026 John Tsui under AGPL-3.0-or-later. Root `COPYING` remains unchanged.
+
+## Anki Core collection schema catalog (Unit 4.1)
+
+[`packages/anki_collection_schema`](packages/anki_collection_schema/README.md)
+PORTED: schema SQL/catalog and version compatibility. PARTIAL: ordered migration
+callback contract only; the callbacks are not implemented here. Remaining
+collection storage work includes SQLite execution and transactions, database
+open/close, CRUD, and the data transformations. The package provides the
+platform-neutral schema catalog for Anki Core at commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It exposes the schema 11 creation
+SQL, ordered upgrade definitions through schema 18, the schema 18-to-11
+downgrade order, and the pinned too-old/too-new version rules. Its callbacks name the source-side transformations and preserve their order.
+The Dart package, SQL source, fixtures, and tests are AGPL-3.0-or-later;
+`SOURCE.sha256` pins the exact upstream SQL and Rust files used. See its
+`NOTICE.md` for provenance and `tool/verify_source.py` for verification.
+
 ## LibAnki Collection raw backend forwarding
 
 [`collection_remaining_raw.dart`](lib/src/collection_remaining_raw.dart) and its
@@ -4252,6 +4282,51 @@ AGPL browser.py source. This unit copies only the three GPL helper contracts abo
 and no browser.py implementation. The Dart code and tests are Copyright © 2026
 John Tsui under GPL-3.0-or-later. Root `COPYING` remains byte-identical.
 
+## Flutter profile onboarding and navigation
+
+`apps/anki/lib/startup_shell.dart` implements shared first-run onboarding and
+profile-list interactions; `apps/anki/lib/profile_manager.dart` keeps default
+profile selection, unique ID generation, and ordered switch safety checks in
+Dart; `apps/anki/lib/app_contracts.dart` and `app_services.dart` define the
+injected startup/storage and profile repository boundaries. The UI behavior is
+adapted from AnkiDroid 2.25.3, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`: profile naming and creation from
+`AnkiDroid/src/main/java/com/ichi2/anki/multiprofile/ProfileManager.kt`, name
+validation from `multiprofile/ProfileName.kt`, profile-list and edit affordance
+from `preferences/profiles/SwitchProfilesScreen.kt`, the add-name dialog from
+`preferences/profiles/AddProfileDialog.kt`, and startup/storage setup contracts
+from `startup/SetupStorage.kt`, `BackendSetup.kt`, `StoragePolicy.kt`, and
+`StartupGuards.kt`. The pinned ProfileManager creates a `Default` profile when
+none is registered and persists profile creation and rename through its
+registry. Host storage selection, backend initialization, profile persistence,
+and lifecycle-safe switching are represented by the Dart interfaces and are
+deferred to platform adapters; no OS-specific behavior or persistence is
+invented here. The app adds a shared first-run entry screen because the Flutter
+app previously had only a neutral shell. No upstream images, assets, or
+translated strings are copied. The referenced AnkiDroid Kotlin files declare
+`GPL-3.0-or-later`; the Flutter adaptation and widget tests are Copyright ©
+2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` is unchanged.
+
+## Flutter Deck Picker and filtered-deck UI
+
+`apps/anki/lib/deck_picker_screen.dart` and its widget tests adapt the
+cross-platform Deck Picker and filtered-deck options surface from AnkiDroid
+2.25.3, pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`. The shared Dart
+`DeckNode`, `DeckFilters`, and `DisplayDeckNode.filterAndFlattenDisplay()`
+contracts supply hierarchy, search, flattening, and counts. `DeckPickerRepository`
+is the typed injected collection/navigation boundary; the screen does not
+persist collection data or perform scheduler operations. The filtered-deck
+form is seeded from host-projected `FilteredDeckOptions`, including card-order
+labels and backend order enum numbers, and edited values are passed as a typed request so
+the host can use its existing options and operation plans. Source menu ordering and conditional
+action visibility follow `DeckPickerFloatingActionMenu.kt`,
+`DeckPickerContextMenu.kt`, and `DeckPickerMenuContentProvider.kt`. The complete
+screen/flow contract mapping and remaining adapter requirements are recorded in
+[`docs/DECK_PICKER_UI_GAP_REPORT.md`](docs/DECK_PICKER_UI_GAP_REPORT.md).
+The Flutter surface, newly authored English ARB resources, and tests are
+Copyright © 2026 John Tsui under `GPL-3.0-or-later`; upstream source attribution
+is retained here and in `NOTICE.md`. Root `COPYING` remains unchanged.
+
 
 ## Note persistence derived fields
 
@@ -4268,14 +4343,18 @@ space. Source hashes and attribution are recorded in the model package
 `SOURCE.sha256` and `NOTICE.md`. Focused tests are in
 `packages/anki_backend_models/test/note_prepare_test.dart`.
 
-
 ## Note field presence and template-card eligibility
 
 `fieldIsEmpty()` and `Note.nonEmptyFields()` in
-`packages/anki_backend_models` port Anki Core's field whitespace/empty
-`br`/`div` predicate and ordered Note-to-Notetype field pairing from
+`packages/anki_backend_models` port Anki Core's ASCII whitespace and empty
+`br`/`div` tag predicate and ordered Note-to-Notetype field pairing from
 `rslib/src/template.rs` and `rslib/src/notes/mod.rs` at pinned commit
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The mapping ignores values with
-no matching Notetype field and returns distinct names, as the source set does.
-Focused tests are in `packages/anki_backend_models/test/note_empty_fields_test.dart`;
-source hashes and AGPL attribution are recorded in the model package notice.
+no matching Notetype field and returns distinct names, matching the source set.
+The ordered field-name pairing also corresponds to AnkiDroid 2.25.3's
+`NotetypeJson.nonEmptyFields()` in
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`; classification uses Core's
+`field_is_empty()` predicate. Focused tests are in
+`packages/anki_backend_models/test/note_empty_fields_test.dart`; the Core source
+hash and AGPL attribution are recorded in the model package.

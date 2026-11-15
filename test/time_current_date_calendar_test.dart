@@ -37,11 +37,11 @@ void main() {
           events.add('clock');
           clockReads++;
           expect(identical(actualTime, time), isTrue);
-          return 1_723_456_789_123;
+          return BigInt.from(1_723_456_789_123);
         },
         createDate: (milliseconds) {
           events.add('date');
-          expect(milliseconds, 1_723_456_789_123);
+          expect(milliseconds, BigInt.from(1_723_456_789_123));
           return date;
         },
       );
@@ -78,7 +78,7 @@ void main() {
           Object(),
           intTimeMS: (_) {
             clockReads++;
-            return 123;
+            return BigInt.from(123);
           },
           createDate: (_) => throw error,
         ),
@@ -108,11 +108,11 @@ void main() {
             events.add('clock');
             clockReads++;
             expect(identical(actualTime, time), isTrue);
-            return 1_723_456_789_123;
+            return BigInt.from(1_723_456_789_123);
           },
           createDate: (milliseconds) {
             events.add('date');
-            expect(milliseconds, 1_723_456_789_123);
+            expect(milliseconds, BigInt.from(1_723_456_789_123));
             return date;
           },
           setTime: (actualCalendar, actualDate) {
@@ -138,7 +138,7 @@ void main() {
           createCalendar: () => throw error,
           intTimeMS: (_) {
             clockReads++;
-            return 123;
+            return BigInt.from(123);
           },
           createDate: (_) => Object(),
           setTime: (_, _) {},
@@ -161,7 +161,7 @@ void main() {
           },
           intTimeMS: (_) {
             events.add('clock');
-            return 123;
+            return BigInt.from(123);
           },
           createDate: (_) {
             events.add('date');
@@ -187,7 +187,7 @@ void main() {
           },
           intTimeMS: (_) {
             events.add('clock');
-            return 123;
+            return BigInt.from(123);
           },
           createDate: (_) {
             events.add('date');

@@ -10,7 +10,8 @@ are listed in `SOURCE.sha256`. The upstream files are Copyright Ankitects Pty Lt
 
 The Dart compiler and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. The compiler accepts the shared AST from
-`anki_search_parser`, supports name matching for decks, notetypes and card templates,
+`anki_search_parser`, supports name matching for decks, deck ID searches with
+host-supplied child expansions, notetypes and card templates,
 tag predicates in normal, regex, and no-combining modes, state predicates
 using Core's `CardType` and `CardQueue` numeric values, day predicates using
 Core's previous-day cutoffs, rated searches and rated/reschedule properties

@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 COMMIT = "e64c6b1aee3e8d668fb8bbe084beada8e070d985"
 SOURCES = {
     "rslib/src/search/sqlwriter.rs": "dd3614803244132a7379202dcdfe28e20973186d2bba28dd86faf4e1c424d4ec",
+    "rslib/src/storage/deck/mod.rs": "f55e715844e364b530b292d3a7e7dfddcad4abe9a81b778f788e1224932edc0d",
+    "rslib/src/storage/mod.rs": "f86526b51f16e48049951c203aae3e95e700981b3246180409e6c9c7b3096a5a",
     "rslib/src/search/parser.rs": "2b671bedbf3219dda8190d0a126aa78807a77ecd8c72ebc008ffb40d28e1a6b6",
     "rslib/src/timestamp.rs": "31929938c48febe39f445fa61e8aa0d134e0c93b6bdec5aad8250f5f931720b5",
     "rslib/src/card/mod.rs": "cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9",

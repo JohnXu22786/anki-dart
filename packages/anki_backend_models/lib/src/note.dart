@@ -3,8 +3,10 @@ import 'package:anki_backend_protocol/anki/notes.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
 
 import 'field_checksum.dart';
+import 'field_is_empty.dart';
 import 'ids.dart';
 import 'base91.dart';
+import 'note_field.dart';
 import 'notetype.dart';
 import 'note_field_normalization.dart';
 import 'note_text.dart';
@@ -53,6 +55,20 @@ class Note {
   List<String> get fields => List<String>.unmodifiable(_fields);
   String? get sortField => _sortField;
   int? get checksum => _checksum;
+
+  /// Returns the names of note fields containing content.
+  ///
+  /// Whitespace and empty `br`/`div` tags are ignored, matching the behavior
+  /// used when Anki decides whether a template produces a card.
+  Set<String> nonEmptyFields(List<NoteField> notetypeFields) {
+    final result = <String>{};
+    for (var index = 0; index < _fields.length; index++) {
+      if (index < notetypeFields.length && !fieldIsEmpty(_fields[index])) {
+        result.add(notetypeFields[index].name);
+      }
+    }
+    return result;
+  }
 
   /// Replace one field and clear derived values, as Anki Core does.
   void setField(int index, String text) {

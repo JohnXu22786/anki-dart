@@ -2753,10 +2753,14 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   <perceptualchaos2@gmail.com>, and is marked GPL-3.0-or-later. Its source
   audio-button and video-element string projections for already-resolved media
   references are adapted in `lib/src/card_media_markup.dart`. The host supplies
-  the audio/video kind, play side/index, video URI, and HTML-escaped filename;
-  reference parsing/replacement, media-type and file resolution, playback, and
-  WebView integration remain host-side. `libanki/Sound.kt` contains separately
-  AGPL-incorporated parser code and is not adapted by this module.
+  the play side/index, video URI, and HTML-escaped filename. Its extension-based
+  audio/video classification is adapted in `lib/src/card_media_tag_type.dart`
+  from host-supplied extension sets and lazy file/thumbnail callbacks. The host
+  retains reference parsing/replacement, filesystem/codec lookup, path
+  resolution, playback, and WebView integration. A positive video-thumbnail
+  result selects video, a negative result for an existing mixed-format file
+  selects audio, and a missing/unknown result selects video. `libanki/Sound.kt` contains
+  separately AGPL-incorporated parser code and is not adapted by these modules.
 - `AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/TypeAnswerModifiers.kt`
   declares `GPL-3.0-or-later`. Its source-prefix parsing and four-field value
   semantics are adapted in `lib/src/type_answer_modifiers.dart`; field lookup,
@@ -3786,6 +3790,16 @@ The Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
   `test/reviewer_show_answer_effects_test.dart`. The host retains deferred and
   coroutine execution, scheduler/deck/config reads, media playback, timer
   operation, StateFlow/lifecycle, and UI.
+
+- The same pinned `ReviewerViewModel.kt:665–679` source's `onEditedTags()`
+  callback sequence is adapted in
+  `lib/src/reviewer_edited_tags_operation.dart`, with source-derived cases in
+  `test/reviewer_edited_tags_operation_test.dart`. The adapter preserves the
+  equality early return, ordered card/note/tag reads, tag-string write, and
+  subsequent undoable update request. The host retains Collection, Note,
+  mutation, undo, logging, and coroutine behavior. The upstream file declares
+  `GPL-3.0-or-later` and names no separate copyright holder; Dart changes are
+  Copyright © 2026 John Tsui and carry the same license.
 
 The host-callback projection in
 `lib/src/card_template_fragment_get_current_card_template_index.dart` and its

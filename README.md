@@ -2537,15 +2537,22 @@ Android lifecycle, StateFlow, localization, and UI.
   WebView integration remain outside.
 - Card content wrapper: `wrapCardContentInQaDiv` returns the exact source
   `<div id="qa">` prefix, unchanged content, and `</div>` suffix. It does not
-  escape or normalize input. Android-side filtering, media-reference resolution,
-  bold rewriting, rendering, and orchestration remain with the host.
+  escape or normalize input. Android-side filtering, media-reference parsing
+  and path resolution, bold rewriting, rendering, and orchestration remain with
+  the host; audio/video classification is modeled by `cardMediaTagType` below.
 - Resolved card media markup: `cardAudioPlayButtonMarkup` returns AnkiDroid's
   exact SVG play-button fragment for host-resolved audio/TTS references and
   returns an empty string when the audio-button option is off.
   `cardVideoTagMarkup` returns the exact video element using a host-supplied
   URI and HTML-escaped filename. The host still parses media references,
-  classifies tags, resolves paths and filenames, expands the card content, and
-  handles Android playback and WebView integration.
+  resolves paths and filenames, expands the card content, and handles Android
+  playback and WebView integration. `cardMediaTagType` models the source's
+  extension and host-supplied file/thumbnail decision: video-only extensions
+  bypass file checks, mixed audio/video extensions check file existence before
+  thumbnail presence, an absent video thumbnail means audio-only, and a present
+  or unknown thumbnail means video. Unknown extensions default to audio. The
+  host supplies extension sets and performs filesystem/codec lookup. The
+  AGPL-incorporating `libanki/Sound.kt` AV-reference parser remains host-side.
 - Previewer flags: `PreviewerFlag` preserves the source codes 0–7, and
   `PreviewerFlag.fromCode()` resolves those codes strictly; an unknown code
   throws Dart `StateError`, corresponding to Kotlin `first` in
@@ -2824,9 +2831,13 @@ Android lifecycle, StateFlow, localization, and UI.
   elements, and whitespace. The pinned `onEditedTags` implementation is at
   `ReviewerViewModel.kt:665–679`, called from `ReviewerFragment.kt:670`; no
   direct pinned `ReviewerViewModelTest` assertion was found, so focused Dart
-  cases are source-derived. Current-card/note/collection lookup,
-  `note.setTagsFromStr`, undoable `updateNote`, logging, and coroutine delivery
-  remain host-side. Card Browser and Previewer mark-tag paths are separate.
+  cases are source-derived. Card Browser and Previewer mark-tag paths are
+  separate.
+  `executeReviewerEditedTags()` also preserves the source callback sequence:
+  resolve the current card and note, read ordered tags, skip mutation on exact
+  list equality, write the joined selected tags, then request the undoable note
+  update. Callback failures propagate and stop later work; collection, tag
+  mutation, and undo storage remain host-owned.
 - Reviewer answer-button next-time lookup:
   `projectReviewerAnswerButtonsNextTimeUpdate()` awaits the host preference
   callback first, skips the queue callback when hidden, then awaits the queue
@@ -3092,8 +3103,9 @@ Browser selected-card lookup, collection flag writes and card-state-changed
 event execution (the ordered plan is modeled), mark-state lookup, bulk tag and
 suspend writes/undo (bulk-mark and bulk-suspend target decisions are modeled),
 and note editing, Android card-template asset loading,
-card template rendering and media-reference resolution/playback (resolved
-audio-button and video-tag markup fragments are modeled), card/note-dependent
+card template rendering, media-reference parsing/path resolution and playback
+(resolved audio-button and video-tag markup fragments plus the audio/video tag
+classification decision are modeled), card/note-dependent
 TypeAnswer field and note-value lookup
 (the field/result projection over supplied values is modeled), rendered-question/
 Card.ord extraction and cloze-content invocation (pure cloze-index derivation

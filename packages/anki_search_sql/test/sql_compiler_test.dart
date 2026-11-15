@@ -1061,6 +1061,126 @@ void main() {
     expect(normalized.arguments, ['Basic', r'(?i)\bCafe\b']);
   });
 
+  test('duplicate search uses ordered host results and Core SQL shape', () {
+    final notetypeId = BigInt.from(9);
+    const queryText = '<b>same</b>';
+    final context = SearchSqlDuplicatesContext([
+      SearchSqlDuplicateMatch(
+        notetypeId: notetypeId,
+        queryText: queryText,
+        noteIds: [BigInt.parse('9007199254740993'), BigInt.from(-4)],
+      ),
+      SearchSqlDuplicateMatch(
+        notetypeId: BigInt.from(10),
+        queryText: queryText,
+        noteIds: [BigInt.from(100)],
+      ),
+    ]);
+    final notes = compileSearchSql(
+      GroupNode([Search(Duplicates(notetypeId: Int64(9), text: queryText))]),
+      resultType: SearchResultType.notes,
+      duplicatesContext: context,
+    );
+    expect(
+      notes.sql,
+      'select n.id from notes n where (n.id in '
+      '(9007199254740993,-4))',
+    );
+    expect(notes.arguments, isEmpty);
+    expect(notes.requiredTable, RequiredTable.notes);
+
+    final cards = compileSearchSql(
+      GroupNode([Search(Duplicates(notetypeId: Int64(9), text: queryText))]),
+      duplicatesContext: context,
+    );
+    expect(
+      cards.sql,
+      'select c.id from cards c, notes n where c.nid=n.id and '
+      '(n.id in (9007199254740993,-4))',
+    );
+    expect(cards.requiredTable, RequiredTable.cardsAndNotes);
+  });
+
+  test('duplicate contexts preserve host results with NFC on and off', () {
+    const rawQueryText = 'Cafe\u0301';
+    final notetypeId = BigInt.from(9);
+    final query = GroupNode([
+      Search(Duplicates(notetypeId: Int64(9), text: rawQueryText)),
+    ]);
+    final withoutNormalization = compileSearchSql(
+      query,
+      resultType: SearchResultType.notes,
+      normalizeNoteText: false,
+      duplicatesContext: SearchSqlDuplicatesContext([
+        SearchSqlDuplicateMatch(
+          notetypeId: notetypeId,
+          queryText: rawQueryText,
+          noteIds: [BigInt.from(11)],
+        ),
+      ]),
+    );
+    final withNormalization = compileSearchSql(
+      query,
+      resultType: SearchResultType.notes,
+      normalizeNoteText: true,
+      duplicatesContext: SearchSqlDuplicatesContext([
+        SearchSqlDuplicateMatch(
+          notetypeId: notetypeId,
+          queryText: 'Caf\u00e9',
+          noteIds: [BigInt.from(99)],
+        ),
+        SearchSqlDuplicateMatch(
+          notetypeId: notetypeId,
+          queryText: rawQueryText,
+          noteIds: [BigInt.from(22), BigInt.from(23)],
+        ),
+      ]),
+    );
+
+    // The host applies the requested NFC setting before resolving its IDs.
+    // The SQL compiler still identifies each result by the exact raw AST key
+    // and forwards that host result without rewriting it.
+    expect(withoutNormalization.sql, endsWith('(n.id in (11))'));
+    expect(withNormalization.sql, endsWith('(n.id in (22,23))'));
+  });
+
+  test(
+    'duplicate search requires a context and preserves Core empty lists',
+    () {
+      final node = GroupNode([
+        Search(Duplicates(notetypeId: Int64(9), text: 'missing')),
+      ]);
+      expect(
+        () => compileSearchSql(node, resultType: SearchResultType.notes),
+        throwsArgumentError,
+      );
+      final empty = compileSearchSql(
+        node,
+        resultType: SearchResultType.notes,
+        duplicatesContext: const SearchSqlDuplicatesContext([]),
+      );
+      expect(empty.sql, 'select n.id from notes n where (n.id in ())');
+      expect(empty.arguments, isEmpty);
+
+      final composed = compileSearchSql(
+        GroupNode([
+          Search(const Notetype('Basic')),
+          BooleanNode(NodeKind.and),
+          Search(Duplicates(notetypeId: Int64(9), text: 'missing')),
+        ]),
+        resultType: SearchResultType.notes,
+        duplicatesContext: const SearchSqlDuplicatesContext([]),
+      );
+      expect(
+        composed.sql,
+        'select n.id from notes n where '
+        '(n.mid in (select id from notetypes where name = ?) and '
+        'n.id in ())',
+      );
+      expect(composed.arguments, ['Basic']);
+    },
+  );
+
   test('tag special values and escaped wildcards match Core semantics', () {
     for (final tag in ['none', '*']) {
       final compiled = compileSearchSql(

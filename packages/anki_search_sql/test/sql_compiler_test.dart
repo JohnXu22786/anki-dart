@@ -328,6 +328,123 @@ void main() {
     },
   );
 
+  test('preset names resolve only by exact config-name spelling', () {
+    const composed = 'Café';
+    const decomposed = 'Cafe\u0301';
+    final resolved = compileSearchSql(
+      GroupNode([Search(Preset(composed))]),
+      deckIdsByPreset: {
+        composed: [BigInt.from(12)],
+        'café': [BigInt.from(13)],
+        decomposed: [BigInt.from(14)],
+      },
+    );
+    expect(
+      resolved.sql,
+      'select c.id from cards c where '
+      '((c.did in (12) or c.odid in (12)))',
+    );
+    expect(resolved.arguments, isEmpty);
+    expect(resolved.requiredTable, RequiredTable.cards);
+
+    for (final missingName in ['Café ', 'café', 'Cafe\u0301']) {
+      final missing = compileSearchSql(
+        GroupNode([Search(Preset(missingName))]),
+        deckIdsByPreset: {
+          composed: [BigInt.from(12)],
+        },
+      );
+      expect(missing.sql, 'select c.id from cards c where (false)');
+      expect(missing.arguments, isEmpty);
+    }
+  });
+
+  test(
+    'preset SQL repeats exact ordered IDs for current and original decks',
+    () {
+      const presetName = 'Study';
+      final ids = [
+        BigInt.parse('-9223372036854775808'),
+        BigInt.from(9),
+        BigInt.parse('9223372036854775807'),
+      ];
+      final compiled = compileSearchSql(
+        GroupNode([Search(const Preset(presetName))]),
+        deckIdsByPreset: {presetName: ids},
+      );
+      const list = '-9223372036854775808,9,9223372036854775807';
+      expect(
+        compiled.sql,
+        'select c.id from cards c where '
+        '((c.did in ($list) or c.odid in ($list)))',
+      );
+      expect(compiled.arguments, isEmpty);
+
+      final empty = compileSearchSql(
+        GroupNode([Search(const Preset(presetName))]),
+        deckIdsByPreset: {presetName: []},
+      );
+      expect(
+        empty.sql,
+        'select c.id from cards c where '
+        '((c.did in () or c.odid in ()))',
+      );
+      expect(empty.sql, isNot(contains('false')));
+      expect(empty.arguments, isEmpty);
+    },
+  );
+
+  test(
+    'preset predicates compose and retain cards and notes result shapes',
+    () {
+      final cards = compileSearchSql(
+        GroupNode([
+          Search(const Preset('Study')),
+          BooleanNode(NodeKind.and),
+          Search(Deck('Parent')),
+          BooleanNode(NodeKind.and),
+          Search(DeckIdsWithoutChildren('7')),
+          BooleanNode(NodeKind.and),
+          Search(State(StateKind.review)),
+          BooleanNode(NodeKind.and),
+          Search(const Tag(tag: 'math', mode: FieldSearchMode.normal)),
+          BooleanNode(NodeKind.and),
+          Search(const Property(operator: '>=', kind: StabilityProperty(1.2))),
+        ]),
+        deckIdsByPreset: {
+          'Study': [BigInt.parse('9007199254740993')],
+        },
+      );
+      expect(cards.requiredTable, RequiredTable.cardsAndNotes);
+      expect(cards.sql, contains('c.did in (9007199254740993)'));
+      expect(cards.sql, contains('c.odid in (9007199254740993)'));
+      expect(cards.sql, contains('c.did in (7)'));
+      expect(cards.sql, contains('c.type in (2, 3)'));
+      expect(
+        cards.sql,
+        contains('extract_fsrs_variable(c.data, \'s\') >= 1.2'),
+      );
+      expect(cards.arguments, ['(?i)^Parent(\$|\x1f)', r'(?i).* math(::| ).*']);
+
+      final notes = compileSearchSql(
+        GroupNode([Search(const Preset('Study'))]),
+        resultType: SearchResultType.notes,
+        deckIdsByPreset: {
+          'Study': [BigInt.from(4), BigInt.from(5)],
+        },
+      );
+      expect(
+        notes.sql,
+        startsWith(
+          'select distinct n.id from cards c, notes n where c.nid=n.id and ',
+        ),
+      );
+      expect(notes.sql, endsWith('((c.did in (4,5) or c.odid in (4,5)))'));
+      expect(notes.requiredTable, RequiredTable.cardsAndNotes);
+      expect(notes.arguments, isEmpty);
+    },
+  );
+
   test('glob names emit anchored regexes with Core wildcard escaping', () {
     final notetype = compileSearchSql(
       GroupNode([Search(Notetype('Cafe\u0301*\\_*'))]),

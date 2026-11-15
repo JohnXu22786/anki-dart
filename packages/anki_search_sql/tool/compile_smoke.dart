@@ -61,6 +61,23 @@ void main() {
           '(c.did in (9223372036854775807,-9223372036854775808))') {
     throw StateError('Deck ID JavaScript precision smoke test failed');
   }
+  final presetQuery = compileSearchSql(
+    GroupNode([Search(const Preset('Study'))]),
+    deckIdsByPreset: {
+      'Study': [
+        BigInt.parse('9007199254740993'),
+        BigInt.parse('-9223372036854775808'),
+      ],
+    },
+  );
+  if (presetQuery.sql !=
+      'select c.id from cards c where '
+          '((c.did in (9007199254740993,-9223372036854775808) or '
+          'c.odid in (9007199254740993,-9223372036854775808)))') {
+    throw StateError(
+      'Deck preset JavaScript precision smoke test failed: ${presetQuery.sql}',
+    );
+  }
   final dueQuery = compileSearchSql(
     GroupNode([Search(State(StateKind.due))]),
     timing: SearchSqlTiming(

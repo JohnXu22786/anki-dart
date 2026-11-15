@@ -38,12 +38,19 @@ abstract final class BrowserSearchHistoryJsonCodec {
 
   /// Encodes [entries] with the source's compact JSON field names and order.
   static String encode(Iterable<BrowserSearchHistoryEntry> entries) =>
-      jsonEncode(entries.map(_encodeEntry).toList(growable: false));
+      '[${entries.map(_encodeEntry).join(',')}]';
 
   /// Decodes a history string, returning an empty list if any entry is invalid.
   static List<BrowserSearchHistoryEntry> decode(String value) {
     try {
-      final decoded = jsonDecode(value);
+      final original = jsonDecode(value);
+      final reservedStrings = <String>{};
+      _collectJsonStrings(original, reservedStrings);
+      final numericTokens = _quoteJsonNumbers(value, reservedStrings);
+      final decoded = jsonDecode(
+        numericTokens.json,
+        reviver: (key, value) => numericTokens.values[value] ?? value,
+      );
       if (decoded is! List) return const [];
       return List<BrowserSearchHistoryEntry>.unmodifiable(
         decoded.map(_decodeEntry),
@@ -53,26 +60,26 @@ abstract final class BrowserSearchHistoryJsonCodec {
     }
   }
 
-  static Map<String, Object?> _encodeEntry(BrowserSearchHistoryEntry entry) {
-    final encoded = <String, Object?>{'q': entry.query};
+  static String _encodeEntry(BrowserSearchHistoryEntry entry) {
+    final encoded = StringBuffer('{"q":${jsonEncode(entry.query)}');
     if (entry.deckIds.isNotEmpty) {
-      encoded['did'] = entry.deckIds.map(_requireLong).toList(growable: false);
+      encoded.write(',"did":[${entry.deckIds.map(_requireLong).join(',')}]');
     }
     if (entry.flags.isNotEmpty) {
-      encoded['f'] = entry.flags.map(_requireFlagCode).toList(growable: false);
+      encoded.write(',"f":[${entry.flags.map(_requireFlagCode).join(',')}]');
     }
-    if (entry.tags.isNotEmpty) encoded['t'] = entry.tags;
+    if (entry.tags.isNotEmpty) encoded.write(',"t":${jsonEncode(entry.tags)}');
     if (entry.noteTypeIds.isNotEmpty) {
-      encoded['ntid'] = entry.noteTypeIds
-          .map(_requireLong)
-          .toList(growable: false);
+      encoded.write(
+        ',"ntid":[${entry.noteTypeIds.map(_requireLong).join(',')}]',
+      );
     }
     if (entry.cardStateCodes.isNotEmpty) {
-      encoded['s'] = entry.cardStateCodes
-          .map(_requireCardStateCode)
-          .toList(growable: false);
+      encoded.write(
+        ',"s":[${entry.cardStateCodes.map(_requireCardStateCode).join(',')}]',
+      );
     }
-    return encoded;
+    return '${encoded.toString()}}';
   }
 
   static BrowserSearchHistoryEntry _decodeEntry(Object? value) {
@@ -109,11 +116,16 @@ abstract final class BrowserSearchHistoryJsonCodec {
     return value.map(readValue).toList(growable: false);
   }
 
-  static int _readLong(Object? value) {
-    if (value is! int || !_isSignedLong(value)) {
+  static Object _readLong(Object? value) {
+    final integer = _asBigInt(value);
+    if (integer == null || !_isSignedLong(integer)) {
       throw const FormatException('Expected a signed 64-bit integer.');
     }
-    return value;
+    final nativeInteger = int.tryParse(integer.toString());
+    if (nativeInteger != null && BigInt.from(nativeInteger) == integer) {
+      return nativeInteger;
+    }
+    return integer;
   }
 
   static int _readFlagCode(Object? value) {
@@ -133,10 +145,13 @@ abstract final class BrowserSearchHistoryJsonCodec {
   }
 
   static int _readInt32(Object? value) {
-    if (value is! int || value < -0x80000000 || value > 0x7fffffff) {
+    final integer = _asBigInt(value);
+    if (integer == null ||
+        integer < BigInt.from(-0x80000000) ||
+        integer > BigInt.from(0x7fffffff)) {
       throw const FormatException('Expected a signed 32-bit integer.');
     }
-    return value;
+    return integer.toInt();
   }
 
   static String _readString(Object? value) {
@@ -144,11 +159,12 @@ abstract final class BrowserSearchHistoryJsonCodec {
     return value;
   }
 
-  static int _requireLong(int value) {
-    if (!_isSignedLong(value)) {
+  static String _requireLong(Object value) {
+    final integer = _asBigInt(value);
+    if (integer == null || !_isSignedLong(integer)) {
       throw ArgumentError.value(value, 'value', 'Must fit a signed 64-bit ID.');
     }
-    return value;
+    return integer.toString();
   }
 
   static int _requireFlagCode(int value) {
@@ -165,8 +181,92 @@ abstract final class BrowserSearchHistoryJsonCodec {
     return value;
   }
 
-  static bool _isSignedLong(int value) {
-    final integer = BigInt.from(value);
-    return integer >= _minimumLong && integer <= _maximumLong;
+  static bool _isSignedLong(BigInt value) =>
+      value >= _minimumLong && value <= _maximumLong;
+
+  static BigInt? _asBigInt(Object? value) => switch (value) {
+    _JsonNumberLiteral(:final literal) => BigInt.tryParse(literal),
+    BigInt integer => integer,
+    int integer => BigInt.from(integer),
+    _ => null,
+  };
+
+  static _QuotedJsonNumbers _quoteJsonNumbers(
+    String json,
+    Set<String> reservedStrings,
+  ) {
+    var prefix = '\u0000anki-dart-number-';
+    while (json.contains(prefix) ||
+        reservedStrings.any((value) => value.contains(prefix))) {
+      prefix = '$prefix-';
+    }
+    final output = StringBuffer();
+    final values = <String, _JsonNumberLiteral>{};
+    var index = 0;
+    var numberIndex = 0;
+    while (index < json.length) {
+      final character = json[index];
+      if (character == '"') {
+        final start = index++;
+        while (index < json.length) {
+          if (json[index] == '\\') {
+            index += 2;
+          } else if (json[index++] == '"') {
+            break;
+          }
+        }
+        output.write(json.substring(start, index));
+        continue;
+      }
+      if (character == '-' || _isAsciiDigit(character)) {
+        final match = _jsonNumber.matchAsPrefix(json, index);
+        if (match == null) throw const FormatException('Invalid JSON number.');
+        final literal = match.group(0)!;
+        final marker = '$prefix${numberIndex++}';
+        values[marker] = _JsonNumberLiteral(literal);
+        output.write(jsonEncode(marker));
+        index = match.end;
+        continue;
+      }
+      output.write(character);
+      index++;
+    }
+    return _QuotedJsonNumbers(output.toString(), values);
   }
+}
+
+void _collectJsonStrings(Object? value, Set<String> strings) {
+  switch (value) {
+    case String string:
+      strings.add(string);
+    case List<dynamic> list:
+      for (final child in list) {
+        _collectJsonStrings(child, strings);
+      }
+    case Map<dynamic, dynamic> map:
+      for (final entry in map.entries) {
+        _collectJsonStrings(entry.key, strings);
+        _collectJsonStrings(entry.value, strings);
+      }
+  }
+}
+
+final RegExp _jsonNumber = RegExp(
+  r'-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?',
+);
+
+bool _isAsciiDigit(String value) =>
+    value.codeUnitAt(0) >= 0x30 && value.codeUnitAt(0) <= 0x39;
+
+final class _JsonNumberLiteral {
+  const _JsonNumberLiteral(this.literal);
+
+  final String literal;
+}
+
+final class _QuotedJsonNumbers {
+  const _QuotedJsonNumbers(this.json, this.values);
+
+  final String json;
+  final Map<String, _JsonNumberLiteral> values;
 }

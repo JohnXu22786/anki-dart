@@ -30,7 +30,7 @@ ReviewReminder reminder(int id, {bool enabled = true}) =>
     ReviewReminder.createReviewReminder(
       id: ReviewReminderId(id),
       time: ReviewReminderTime(hour: 8, minute: 0),
-      latestNotifTime: 0,
+      latestNotifTime: BigInt.from(0),
       enabled: enabled,
     );
 
@@ -52,7 +52,7 @@ void main() {
           id: ReviewReminderId(22),
           time: ReviewReminderTime(hour: 14, minute: 16),
           cardTriggerThreshold: ReviewReminderCardTriggerThreshold(1),
-          latestNotifTime: 1771193761002,
+          latestNotifTime: BigInt.from(1771193761002),
         ),
       );
       expect(group.serializeToString(), rawJson);
@@ -66,9 +66,9 @@ void main() {
             id: ReviewReminderId(7),
             time: ReviewReminderTime(hour: 9, minute: 30),
             cardTriggerThreshold: ReviewReminderCardTriggerThreshold(12),
-            scope: const DeckSpecificReminderScope(-42),
+            scope: DeckSpecificReminderScope(BigInt.from(-42)),
             enabled: false,
-            latestNotifTime: 1234,
+            latestNotifTime: BigInt.from(1234),
             profileID: 'profile-a',
             onlyNotifyIfNoReviews: true,
           ),
@@ -84,6 +84,77 @@ void main() {
 
       expect(group.serializeToString(), expectedJson);
       expect(ReviewReminderGroup.fromJsonString(expectedJson), group);
+    });
+
+    test(
+      'preserves Long timestamp and deck IDs beyond JavaScript safe integers',
+      () {
+        const rawJson =
+            '{"7":{"id":7,"time":{"hour":1,"minute":2},'
+            '"cardTriggerThreshold":0,"scope":{"type":"com.ichi2.anki.'
+            'reviewreminders.ReviewReminderScope.DeckSpecific",'
+            '"did":9223372036854775807},"enabled":true,'
+            '"latestNotifTime":9007199254740993,"profileID":"",'
+            '"onlyNotifyIfNoReviews":false}}';
+
+        final group = ReviewReminderGroup.fromJsonString(rawJson);
+        final reminder = group[ReviewReminderId(7)]!;
+        expect(
+          (reminder.scope as DeckSpecificReminderScope).deckId,
+          BigInt.parse('9223372036854775807'),
+        );
+        expect(reminder.latestNotifTime, BigInt.parse('9007199254740993'));
+        expect(group.serializeToString(), rawJson);
+
+        final minimumJson = rawJson
+            .replaceFirst('9223372036854775807', '-9223372036854775808')
+            .replaceFirst('9007199254740993', '9007199254740994');
+        final minimumRoundTrip = ReviewReminderGroup.fromJsonString(
+          minimumJson,
+        );
+        expect(
+          (minimumRoundTrip[ReviewReminderId(7)]!.scope
+                  as DeckSpecificReminderScope)
+              .deckId,
+          BigInt.parse('-9223372036854775808'),
+        );
+        expect(
+          minimumRoundTrip[ReviewReminderId(7)]!.latestNotifTime,
+          BigInt.parse('9007199254740994'),
+        );
+        expect(minimumRoundTrip.serializeToString(), minimumJson);
+
+        expect(
+          () => ReviewReminderGroup.fromJsonString(
+            rawJson.replaceFirst('9007199254740993', '9223372036854775808'),
+          ),
+          throwsFormatException,
+        );
+      },
+    );
+
+    test('rejects out-of-range Long fields during JSON serialization', () {
+      final tooLarge = BigInt.parse('9223372036854775808');
+      final timestampReminder = ReviewReminder.createReviewReminder(
+        id: ReviewReminderId(1),
+        time: ReviewReminderTime(hour: 1, minute: 2),
+        latestNotifTime: tooLarge,
+      );
+      final timestampGroup = ReviewReminderGroup.fromPairs([
+        MapEntry(timestampReminder.id, timestampReminder),
+      ]);
+      expect(timestampGroup.serializeToString, throwsArgumentError);
+
+      final deckReminder = ReviewReminder.createReviewReminder(
+        id: ReviewReminderId(2),
+        time: ReviewReminderTime(hour: 1, minute: 2),
+        latestNotifTime: BigInt.zero,
+        scope: DeckSpecificReminderScope(tooLarge),
+      );
+      final deckGroup = ReviewReminderGroup.fromPairs([
+        MapEntry(deckReminder.id, deckReminder),
+      ]);
+      expect(deckGroup.serializeToString, throwsArgumentError);
     });
 
     test('malformed and wrongly typed JSON fails during decoding', () {

@@ -26,23 +26,26 @@ import 'package:test/test.dart';
 void main() {
   group('wholeAndFraction', () {
     test('truncates finite values toward zero and keeps signed remainders', () {
-      expect(wholeAndFraction(12.75), (whole: 12, fraction: 0.75));
-      expect(wholeAndFraction(-12.75), (whole: -12, fraction: -0.75));
-      expect(wholeAndFraction(-0.0), (whole: 0, fraction: -0.0));
+      expect(wholeAndFraction(12.75), (whole: BigInt.from(12), fraction: 0.75));
+      expect(wholeAndFraction(-12.75), (
+        whole: BigInt.from(-12),
+        fraction: -0.75,
+      ));
+      expect(wholeAndFraction(-0.0), (whole: BigInt.zero, fraction: -0.0));
       expect(1 / wholeAndFraction(-0.0).fraction, double.negativeInfinity);
     });
 
     test('maps NaN and infinities with Kotlin Long conversion behavior', () {
       final nan = wholeAndFraction(double.nan);
-      expect(nan.whole, 0);
+      expect(nan.whole, BigInt.zero);
       expect(nan.fraction.isNaN, isTrue);
 
       expect(wholeAndFraction(double.infinity), (
-        whole: 9223372036854775807,
+        whole: BigInt.parse('9223372036854775807'),
         fraction: double.infinity,
       ));
       expect(wholeAndFraction(double.negativeInfinity), (
-        whole: -9223372036854775808,
+        whole: BigInt.parse('-9223372036854775808'),
         fraction: double.negativeInfinity,
       ));
     });
@@ -54,22 +57,29 @@ void main() {
         const negativeBound = -9223372036854775808.0;
 
         expect(wholeAndFraction(positiveBound), (
-          whole: 9223372036854775807,
+          whole: BigInt.parse('9223372036854775807'),
           fraction: 0.0,
         ));
         expect(wholeAndFraction(negativeBound), (
-          whole: -9223372036854775808,
+          whole: BigInt.parse('-9223372036854775808'),
           fraction: 0.0,
         ));
         expect(wholeAndFraction(positiveBound + 2048.0), (
-          whole: 9223372036854775807,
+          whole: BigInt.parse('9223372036854775807'),
           fraction: 2048.0,
         ));
         expect(wholeAndFraction(negativeBound - 2048.0), (
-          whole: -9223372036854775808,
+          whole: BigInt.parse('-9223372036854775808'),
           fraction: -2048.0,
         ));
       },
     );
+
+    test('retains every representable integral double as an exact BigInt', () {
+      expect(
+        wholeAndFraction(9007199254740994.0).whole,
+        BigInt.parse('9007199254740994'),
+      );
+    });
   });
 }

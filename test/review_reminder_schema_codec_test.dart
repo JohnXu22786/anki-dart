@@ -93,7 +93,7 @@ void main() {
       );
       expect(
         decoded[ReviewReminderId(9)]?.scope,
-        const DeckSpecificReminderScope(9223372036854775807),
+        DeckSpecificReminderScope(BigInt.parse('9223372036854775807')),
       );
       expect(ReviewReminderSchemaV2MapCodec.encode(decoded), rawJson);
     });

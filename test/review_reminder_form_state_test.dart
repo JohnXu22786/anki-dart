@@ -26,8 +26,8 @@ import 'package:test/test.dart';
 
 void main() {
   group('Review reminder form state', () {
-    const allDecksId = -1;
-    const defaultDeckId = 1;
+    final allDecksId = BigInt.from(-1);
+    final defaultDeckId = BigInt.from(1);
     final now = ReviewReminderTime(hour: 9, minute: 30);
 
     test(
@@ -57,10 +57,10 @@ void main() {
 
         final deck = ReviewReminderFormState.add(
           currentTime: now,
-          scope: const DeckSpecificReminderScope(42),
+          scope: DeckSpecificReminderScope(BigInt.from(42)),
           allDecksId: allDecksId,
         );
-        expect(deck.deckSelected, 42);
+        expect(deck.deckSelected, BigInt.from(42));
         expect(
           deck
               .outputStateAsReminder(
@@ -69,7 +69,7 @@ void main() {
                 defaultDeckId: defaultDeckId,
               )
               .scope,
-          const DeckSpecificReminderScope(42),
+          DeckSpecificReminderScope(BigInt.from(42)),
         );
       },
     );
@@ -97,7 +97,7 @@ void main() {
       final existing = ReviewReminderProjection(
         time: ReviewReminderTime(hour: 6, minute: 15),
         cardTriggerThreshold: 4,
-        scope: DeckSpecificReminderScope(73),
+        scope: DeckSpecificReminderScope(BigInt.from(73)),
         enabled: false,
         onlyNotifyIfNoReviews: true,
       );
@@ -107,7 +107,7 @@ void main() {
       );
 
       expect(state.time, existing.time);
-      expect(state.deckSelected, 73);
+      expect(state.deckSelected, BigInt.from(73));
       expect(state.cardTriggerThreshold, 4);
       expect(state.onlyNotifyIfNoReviews, isTrue);
       expect(state.advancedSettingsOpen, isFalse);
@@ -127,14 +127,14 @@ void main() {
       () {
         final state = ReviewReminderFormState.add(
           currentTime: now,
-          scope: const DeckSpecificReminderScope(4),
+          scope: DeckSpecificReminderScope(BigInt.from(4)),
           allDecksId: allDecksId,
         );
         state.setTime(ReviewReminderTime(hour: 22, minute: 7));
-        state.setDeckSelected(55);
+        state.setDeckSelected(BigInt.from(55));
         state.setCardTriggerThreshold(-2);
         expect(state.time, ReviewReminderTime(hour: 22, minute: 7));
-        expect(state.deckSelected, 55);
+        expect(state.deckSelected, BigInt.from(55));
         expect(state.cardTriggerThreshold, -2);
         state.onlyNotifyIfNoReviews = null;
         state.toggleOnlyNotifyIfNoReviews();
@@ -151,7 +151,7 @@ void main() {
                 defaultDeckId: defaultDeckId,
               )
               .scope,
-          const DeckSpecificReminderScope(55),
+          DeckSpecificReminderScope(BigInt.from(55)),
         );
         state.cardTriggerThreshold = -2;
         expect(
@@ -185,7 +185,7 @@ void main() {
         );
         expect(output.time, ReviewReminderTime(hour: 17, minute: 2));
         expect(output.cardTriggerThreshold, 1);
-        expect(output.scope, const DeckSpecificReminderScope(defaultDeckId));
+        expect(output.scope, DeckSpecificReminderScope(defaultDeckId));
         expect(output.enabled, isTrue);
         expect(output.onlyNotifyIfNoReviews, isFalse);
 
@@ -193,7 +193,7 @@ void main() {
           () =>
               ReviewReminderFormState.add(
                   currentTime: now,
-                  scope: const DeckSpecificReminderScope(4),
+                  scope: DeckSpecificReminderScope(BigInt.from(4)),
                   allDecksId: allDecksId,
                 )
                 ..cardTriggerThreshold = -2

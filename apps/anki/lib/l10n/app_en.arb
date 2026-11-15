@@ -1,0 +1,148 @@
+{
+  "@@locale": "en",
+  "welcomeTitle": "Welcome to Anki",
+  "welcomeBody": "Set up storage to create your first profile and begin using Anki.",
+  "setupAnki": "Set up Anki",
+  "tryAgain": "Try again",
+  "storageSetupFailed": "Storage setup failed",
+  "startupCheckFailed": "Startup setup status could not be checked",
+  "profileLoadFailed": "Profiles could not be loaded",
+  "homeTitle": "Anki",
+  "activeProfile": "Active profile: {name}",
+  "@activeProfile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profiles": "Profiles",
+  "switchProfileTitle": "Switch profile",
+  "addProfile": "Add profile",
+  "profileName": "Profile name",
+  "profileNameEmptyError": "Profile name can’t be empty",
+  "profileNameTooLongError": "Profile name must be {limit} characters or fewer",
+  "@profileNameTooLongError": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "add": "Add",
+  "save": "Save",
+  "cancel": "Cancel",
+  "rename": "Rename",
+  "editProfile": "Edit profile {name}",
+  "@editProfile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileOperationFailed": "Profile could not be saved",
+  "profileSwitchFailed": "Profile could not be switched",
+  "profileSwitchBlocked": "Profile switching is unavailable while Anki is busy",
+  "close": "Close",
+  "deckPickerTitle": "Decks",
+  "openDecks": "Open decks",
+  "searchDecks": "Search decks",
+  "clearSearch": "Clear search",
+  "closeSearch": "Close search",
+  "refreshDecks": "Refresh decks",
+  "loadingDecks": "Loading decks…",
+  "decksUnavailable": "Decks are unavailable until a collection service is connected.",
+  "deckLoadFailed": "Decks could not be loaded",
+  "noDecks": "No decks yet",
+  "noDeckMatches": "No decks match this search",
+  "study": "Study",
+  "studyDeck": "Study {name}",
+  "@studyDeck": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deckCounts": "{newCount} new • {learningCount} learning • {reviewCount} due",
+  "@deckCounts": {
+    "placeholders": {
+      "newCount": {
+        "type": "int"
+      },
+      "learningCount": {
+        "type": "int"
+      },
+      "reviewCount": {
+        "type": "int"
+      }
+    }
+  },
+  "newCards": "New",
+  "learningCards": "Learning",
+  "reviewCards": "Due",
+  "deckActions": "More actions for {name}",
+  "@deckActions": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "addSharedDeck": "Add shared deck",
+  "createDeck": "Create deck",
+  "createFilteredDeck": "Create filtered deck",
+  "create": "Create",
+  "deckName": "Deck name",
+  "deckActionFailed": "Deck action could not be completed",
+  "filteredDeckOptions": "Filtered deck options",
+  "filter": "Filter",
+  "search": "Search",
+  "limitTo": "Limit to",
+  "cardsSelectedBy": "Cards selected by",
+  "orderAdded": "Order added",
+  "orderDue": "Order due",
+  "orderRandom": "Random order",
+  "enableSecondFilter": "Enable second filter",
+  "secondSearch": "Second search",
+  "secondLimit": "Second limit",
+  "options": "Options",
+  "rescheduleCards": "Reschedule cards based on answers",
+  "delayAgain": "Delay for again (seconds)",
+  "delayHard": "Delay for hard (seconds)",
+  "delayGood": "Delay for good (seconds)",
+  "createEvenIfEmpty": "Create this deck even if empty",
+  "build": "Build",
+  "filteredDeckBuildFailed": "Filtered deck could not be built",
+  "addCard": "Add card",
+  "browseCards": "Browse cards",
+  "rebuildFilteredDeck": "Rebuild filtered deck",
+  "emptyFilteredDeck": "Empty filtered deck",
+  "renameDeck": "Rename deck",
+  "createSubdeck": "Create subdeck",
+  "deckOptions": "Deck options",
+  "customStudy": "Custom study",
+  "exportDeck": "Export deck",
+  "unbury": "Unbury cards",
+  "createShortcut": "Create shortcut",
+  "editDeckDescription": "Edit deck description",
+  "scheduleReminders": "Schedule review reminders",
+  "deleteDeck": "Delete deck",
+  "expandDeck": "Expand {name}",
+  "@expandDeck": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseDeck": "Collapse {name}",
+  "@collapseDeck": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

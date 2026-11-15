@@ -5,8 +5,8 @@ import 'package:fixnum/fixnum.dart';
 import 'field_checksum.dart';
 import 'field_is_empty.dart';
 import 'ids.dart';
-import 'base91.dart';
 import 'note_field.dart';
+import 'base91.dart';
 import 'notetype.dart';
 import 'note_field_normalization.dart';
 import 'note_text.dart';
@@ -56,10 +56,11 @@ class Note {
   String? get sortField => _sortField;
   int? get checksum => _checksum;
 
-  /// Returns the names of note fields containing content.
+  /// Returns names of nonempty note fields using their Notetype ordinals.
   ///
-  /// Whitespace and empty `br`/`div` tags are ignored, matching the behavior
-  /// used when Anki decides whether a template produces a card.
+  /// A value is nonempty when it contains more than Core's empty-field
+  /// whitespace and `br`/`div` tags. Extra note values without a Notetype
+  /// field are ignored.
   Set<String> nonEmptyFields(List<NoteField> notetypeFields) {
     final result = <String>{};
     for (var index = 0; index < _fields.length; index++) {
@@ -107,6 +108,7 @@ class Note {
       );
     }
 
+    _markDirty();
     for (var index = 0; index < _fields.length; index++) {
       _fields[index] = normalizeNoteField(
         _fields[index],
@@ -115,13 +117,15 @@ class Note {
     }
 
     final field1NoHtml = stripHtmlPreservingMediaFilenames(_fields.first);
+    final checksum = fieldChecksum(field1NoHtml);
     final sortFieldIndex = notetype.config.sortFieldIdx;
-    _sortField = sortFieldIndex == 0
+    final sortField = sortFieldIndex == 0
         ? field1NoHtml
         : stripHtmlPreservingMediaFilenames(
             sortFieldIndex < _fields.length ? _fields[sortFieldIndex] : '',
           );
-    _checksum = fieldChecksum(field1NoHtml);
+    _sortField = sortField;
+    _checksum = checksum;
   }
 
   factory Note.fromProto(proto.Note value) => Note(

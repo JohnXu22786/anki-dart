@@ -6,6 +6,7 @@
 import 'package:anki_dart/profile_onboarding.dart';
 
 import 'app_contracts.dart';
+import 'deck_picker_screen.dart';
 import 'profile_manager.dart';
 
 export 'app_contracts.dart';
@@ -18,14 +19,17 @@ final class AppServices {
   AppServices({
     required this.startup,
     required this.profiles,
+    DeckPickerRepository? deckPicker,
     ProfileId Function()? generateProfileId,
-  }) : profileManager = ProfileManager(
+  }) : deckPicker = deckPicker ?? const UnavailableDeckPickerRepository(),
+       profileManager = ProfileManager(
          profiles,
          generateProfileId: generateProfileId,
        );
 
   final StartupService startup;
   final ProfileRepository profiles;
+  final DeckPickerRepository deckPicker;
   final ProfileManager profileManager;
 }
 

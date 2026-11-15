@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import 'app_config.dart';
 import 'app_services.dart';
+import 'deck_picker_screen.dart';
 import 'l10n/app_localizations.dart';
 
 /// First-run setup, the active-profile home, and the shared profile manager.
@@ -27,6 +28,7 @@ final class _StartupShellState extends State<StartupShell> {
   String? _error;
   ProfileSnapshot? _snapshot;
   bool _showProfiles = false;
+  bool _showDeckPicker = false;
 
   @override
   void initState() {
@@ -128,10 +130,12 @@ final class _StartupShellState extends State<StartupShell> {
   @override
   Widget build(BuildContext context) {
     return PopScope<Object?>(
-      canPop: !_showProfiles,
+      canPop: !_showProfiles && !_showDeckPicker,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop && _showProfiles) {
           setState(() => _showProfiles = false);
+        } else if (!didPop && _showDeckPicker) {
+          setState(() => _showDeckPicker = false);
         }
       },
       child: _buildContent(context),
@@ -188,20 +192,39 @@ final class _StartupShellState extends State<StartupShell> {
     if (_showProfiles) {
       return _profileManager(snapshot, strings);
     }
+    if (_showDeckPicker) {
+      return DeckPickerScreen(
+        repository: widget.services.deckPicker,
+        onClose: () => setState(() => _showDeckPicker = false),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: Text(widget.config.appName)),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(strings.activeProfile(active.name)),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => setState(() => _showProfiles = true),
-              icon: const Icon(Icons.switch_account),
-              label: Text(strings.profiles),
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(strings.activeProfile(active.name)),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () => setState(() => _showDeckPicker = true),
+                    icon: const Icon(Icons.style),
+                    label: Text(strings.openDecks),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.icon(
+                    onPressed: () => setState(() => _showProfiles = true),
+                    icon: const Icon(Icons.switch_account),
+                    label: Text(strings.profiles),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );

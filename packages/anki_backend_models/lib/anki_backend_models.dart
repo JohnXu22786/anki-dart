@@ -15,3 +15,4 @@ export 'src/base91.dart';
 export 'src/stock_notetype.dart';
 export 'src/revlog.dart';
 export 'src/field_checksum.dart';
+export 'src/note_field_normalization.dart';

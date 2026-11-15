@@ -6115,3 +6115,26 @@ forwarding boundaries and copies no browser implementation. The Dart adapter
 and tests are Copyright © 2026 John Tsui under the same license. Root `COPYING`
 remains byte-identical. See [the pinned upstream mapping](ANKIDROID_UPSTREAM.md)
 and [NOTICE.md](NOTICE.md).
+
+## Card Browser column registry and active-column callbacks
+
+`browserColumnRegistryByKey()` adapts the `associateBy { it.key }` projection in
+AnkiDroid 2.25.3 `CardBrowserViewModel.refreshBackendColumns()`: duplicate keys
+replace their value while retaining the first key position. The
+`updateBrowserActiveColumns()` callback boundary preserves the empty/equal-list
+guards, target-mode preference read and write, and active-mode scheduling order.
+Preference exceptions fall back to mode defaults while non-Exception errors
+propagate. The scheduled callback sets backend keys before publishing active
+columns.
+Backend retrieval, localized labels, SharedPreferences, coroutine scheduling,
+and StateFlow stay host-side. Source-derived tests are in
+`test/browser_column_registry_test.dart` and
+`test/browser_active_column_update_callbacks_test.dart`.
+
+## Previewer selected-card ID handoff
+
+`previewerCardIdAtIndex()` maps `PreviewerViewModel`'s selected-card list and
+current index to the ID passed to host card loading. It preserves list order and
+index bounds behavior. `SavedStateHandle`, `IdsFile` IO, collection lookup, and
+card loading remain host-side. The source-derived contract is covered by
+`test/previewer_card_selection_test.dart`.

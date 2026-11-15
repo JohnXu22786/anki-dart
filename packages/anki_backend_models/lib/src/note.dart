@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_protocol/anki/notes.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
 

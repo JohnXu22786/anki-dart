@@ -59,8 +59,16 @@ def main() -> int:
 
     for path in sorted((ROOT / "lib").rglob("*.dart")):
         text = path.read_text(encoding="utf-8")
+        if not text.startswith("// SPDX-License-Identifier: AGPL-3.0-or-later\n"):
+            errors.append(f"{path.relative_to(ROOT)}: AGPL SPDX header is missing")
         if "import 'dart:io'" in text or 'import "dart:io"' in text:
             errors.append(f"{path.relative_to(ROOT)}: VM-only dart:io import is forbidden")
+    for directory in ("test", "tool"):
+        for path in sorted((ROOT / directory).rglob("*.dart")):
+            if not path.read_text(encoding="utf-8").startswith(
+                "// SPDX-License-Identifier: AGPL-3.0-or-later\n"
+            ):
+                errors.append(f"{path.relative_to(ROOT)}: AGPL SPDX header is missing")
     if not (ROOT / "lib" / "anki_backend_models.dart").is_file():
         errors.append("lib/anki_backend_models.dart: public model export is missing")
 

@@ -122,6 +122,35 @@ final class SearchSqlTextContext {
   final List<BigInt> clozeNotetypeIds;
 }
 
+/// A field record from one host-provided notetype snapshot.
+final class SearchSqlField {
+  const SearchSqlField({required this.name, this.ordinal});
+
+  final String name;
+  final int? ordinal;
+}
+
+/// Notetype field metadata used to resolve source field-name globs in Dart.
+final class SearchSqlNotetypeFields {
+  const SearchSqlNotetypeFields({
+    required this.notetypeId,
+    required this.fields,
+  });
+
+  final BigInt notetypeId;
+  final List<SearchSqlField> fields;
+}
+
+/// Source snapshot used to resolve `SingleFieldSearch` field names.
+///
+/// The host supplies notetype and field names/ordinals; the compiler applies
+/// Core's exact Unicode equality, glob escaping, and field-range rules.
+final class SearchSqlFieldContext {
+  const SearchSqlFieldContext(this.notetypes);
+
+  final List<SearchSqlNotetypeFields> notetypes;
+}
+
 final class UnsupportedSearchSqlNodeException extends UnsupportedError {
   UnsupportedSearchSqlNodeException(Object node)
     : super('Search SQL subset does not support ${node.runtimeType}.');
@@ -151,6 +180,8 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// [textSearchContext] provides collection settings and notetype search-field
 /// visibility for unqualified text predicates. When omitted, accent folding
 /// is disabled and all note fields are searched.
+/// [fieldSearchContext] supplies ordered notetype fields for Dart to resolve
+/// field-qualified query names and Anki globs.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
@@ -162,6 +193,7 @@ CompiledSearchSql compileSearchSql(
   RegexFieldsByNotetype? regexFieldsByNotetype,
   bool normalizeNoteText = false,
   SearchSqlTextContext? textSearchContext,
+  SearchSqlFieldContext? fieldSearchContext,
 }) {
   final itemTable = switch (resultType) {
     SearchResultType.cards => RequiredTable.cards,
@@ -194,7 +226,7 @@ CompiledSearchSql compileSearchSql(
   final arguments = <String>[];
   return CompiledSearchSql(
     sql:
-        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext)}',
+        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext, fieldSearchContext)}',
     arguments: arguments,
     requiredTable: table,
   );
@@ -223,6 +255,7 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   NotetypeIdSearch() ||
   Notetype() ||
   RegexSearch() ||
+  SingleFieldSearch() ||
   TextSearch() ||
   NoCombining() ||
   StripClozes() ||
@@ -258,13 +291,14 @@ String _writeNode(
   RegexFieldsByNotetype? regexFieldsByNotetype,
   bool normalizeNoteText,
   SearchSqlTextContext? textSearchContext,
+  SearchSqlFieldContext? fieldSearchContext,
 ) => switch (node) {
   BooleanNode(kind: NodeKind.and) => ' and ',
   BooleanNode(kind: NodeKind.or) => ' or ',
   NegatedNode(:final node) =>
-    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext)}',
+    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext, fieldSearchContext)}',
   GroupNode(:final nodes) =>
-    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext)).join()})',
+    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren, deckIdsByPreset, regexFieldsByNotetype, normalizeNoteText, textSearchContext, fieldSearchContext)).join()})',
   Search(value: final search) => _writeSearch(
     search,
     noteIdColumn,
@@ -276,6 +310,7 @@ String _writeNode(
     regexFieldsByNotetype,
     normalizeNoteText,
     textSearchContext,
+    fieldSearchContext,
   ),
 };
 
@@ -290,6 +325,7 @@ String _writeSearch(
   RegexFieldsByNotetype? regexFieldsByNotetype,
   bool normalizeNoteText,
   SearchSqlTextContext? textSearchContext,
+  SearchSqlFieldContext? fieldSearchContext,
 ) => switch (node) {
   CardIds(:final ids) => 'c.id in (${_validateIdList(ids)})',
   NoteIds(:final ids) => '$noteIdColumn in (${_validateIdList(ids)})',
@@ -302,6 +338,15 @@ String _writeSearch(
   NotetypeIdSearch(:final id) => 'n.mid = $id',
   Notetype(:final name) => _writeNotetype(name, arguments),
   Tag(:final tag, :final mode) => _writeTag(tag, mode, arguments),
+  SingleFieldSearch(:final field, :final text, :final mode) =>
+    _writeSingleFieldSearch(
+      field,
+      text,
+      mode,
+      arguments,
+      fieldSearchContext,
+      normalizeNoteText,
+    ),
   RegexSearch(:final pattern) => _writeRegex(
     pattern,
     arguments,
@@ -955,6 +1000,130 @@ String _writeUnqualified(
         }).join(' or ')})';
 
   return '$clozeClause$searchClause';
+}
+
+String _writeSingleFieldSearch(
+  String rawFieldName,
+  String rawText,
+  FieldSearchMode mode,
+  List<String> arguments,
+  SearchSqlFieldContext? context,
+  bool normalizeNoteText,
+) {
+  final fieldName = unorm.nfc(rawFieldName);
+  final text = normalizeNoteText ? unorm.nfc(rawText) : rawText;
+  const allFields = {'*', '_*', '*_'};
+  if (allFields.contains(fieldName)) {
+    if (mode == FieldSearchMode.regex) {
+      arguments.add('(?i)$text');
+    } else {
+      arguments.add('(?is)^${_toRegex(text)}\$');
+    }
+    return 'regexp_fields(?${arguments.length}, n.flds)';
+  }
+  if (context == null) {
+    throw ArgumentError(
+      'SingleFieldSearch requires explicit SearchSqlFieldContext values.',
+    );
+  }
+
+  final matches =
+      <
+        ({
+          SearchSqlNotetypeFields notetype,
+          List<int> indices,
+          List<SearchableFieldRange> ranges,
+        })
+      >[];
+  final matchIsGlob = _isGlob(fieldName);
+  final matchPattern = matchIsGlob
+      ? RegExp('^${_toRegex(fieldName)}\$', caseSensitive: false, unicode: true)
+      : null;
+  final exactName = matchIsGlob ? null : _toText(fieldName);
+  final exactNamePattern = exactName == null
+      ? null
+      : RegExp(
+          '^${RegExp.escape(exactName)}\$',
+          caseSensitive: false,
+          unicode: true,
+        );
+  final matchNonEmpty = const {'*', '_*', '*_'}.contains(text);
+  for (final notetype in context.notetypes) {
+    final indices = <int>[];
+    for (final field in notetype.fields) {
+      final fieldMatches = matchPattern != null
+          ? matchPattern.hasMatch(field.name)
+          : exactNamePattern!.hasMatch(field.name);
+      if (fieldMatches) indices.add(field.ordinal ?? 0);
+    }
+    if (indices.isEmpty) continue;
+    final ranges = mode == FieldSearchMode.regex
+        ? const <SearchableFieldRange>[]
+        : _collectFieldRanges(indices, join: !matchNonEmpty);
+    matches.add((notetype: notetype, indices: indices, ranges: ranges));
+  }
+  matches.sort(
+    (left, right) =>
+        left.notetype.notetypeId.compareTo(right.notetype.notetypeId),
+  );
+  if (matches.isEmpty) return 'false';
+
+  if (mode == FieldSearchMode.regex) {
+    arguments.add('(?i)$text');
+    final argumentIndex = arguments.length;
+    final clauses = matches.map((match) {
+      final indices = match.indices.join(', ');
+      return '(n.mid = ${match.notetype.notetypeId} and '
+          'regexp_fields(?$argumentIndex, n.flds, $indices))';
+    });
+    return '(${clauses.join(' or ')})';
+  }
+
+  var patternText = _toSql(text);
+  final noCombining = mode == FieldSearchMode.noCombining;
+  if (noCombining) patternText = _withoutCombining(patternText);
+  arguments.add(patternText);
+  final argumentIndex = arguments.length;
+  final fieldsExpression = noCombining
+      ? 'coalesce(process_text(n.flds, 1), n.flds)'
+      : 'n.flds';
+  final fieldIndexText = "' || ?$argumentIndex || '";
+  final clauses = matches.map((match) {
+    final fieldClauses = match.ranges.map((range) {
+      final segments = List<String>.generate(match.notetype.fields.length, (
+        index,
+      ) {
+        if (index == range.start) return fieldIndexText;
+        if (range.start < index && index < range.end) return '';
+        return '%';
+      }).join('\u001f');
+      return "$fieldsExpression like '$segments' escape '\\'";
+    });
+    return '(n.mid = ${match.notetype.notetypeId} and '
+        '(${fieldClauses.join(' or ')}))';
+  });
+  return '(${clauses.join(' or ')})';
+}
+
+List<SearchableFieldRange> _collectFieldRanges(
+  List<int> indices, {
+  required bool join,
+}) {
+  if (indices.isEmpty) return const [];
+  final ranges = <SearchableFieldRange>[];
+  var start = indices.first;
+  var end = start + 1;
+  for (final index in indices.skip(1)) {
+    if (join && index == end) {
+      end++;
+    } else {
+      ranges.add(SearchableFieldRange(start, end));
+      start = index;
+      end = index + 1;
+    }
+  }
+  ranges.add(SearchableFieldRange(start, end));
+  return ranges;
 }
 
 const _noCombiningReplacements = <String, String>{

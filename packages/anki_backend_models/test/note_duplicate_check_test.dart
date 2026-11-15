@@ -83,5 +83,39 @@ void main() {
         throwsA(same(error)),
       );
     });
+
+    test('does not query storage for an empty first field', () {
+      var queried = false;
+
+      expect(
+        isDuplicateNoteField(
+          note: note,
+          firstFieldWithoutHtml: ' \t\n',
+          loadFieldsByChecksum: (_, __) {
+            queried = true;
+            return [];
+          },
+        ),
+        isFalse,
+      );
+      expect(queried, isFalse);
+    });
+
+    test('does not query storage when the note has no first field', () {
+      var queried = false;
+
+      expect(
+        isDuplicateNoteField(
+          note: Note(id: Int64(5), notetypeId: Int64(7), fields: []),
+          firstFieldWithoutHtml: 'test',
+          loadFieldsByChecksum: (_, __) {
+            queried = true;
+            return [];
+          },
+        ),
+        isFalse,
+      );
+      expect(queried, isFalse);
+    });
   });
 }

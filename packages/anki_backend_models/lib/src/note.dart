@@ -18,11 +18,11 @@ class Note {
     List<String> fields = const [],
     String? sortField,
     int? checksum,
-  }) : usn = usn.toSigned(32),
-       tags = List<String>.of(tags),
-       _fields = List<String>.of(fields),
-       _sortField = sortField,
-       _checksum = checksum?.toUnsigned(32);
+  })  : usn = usn.toSigned(32),
+        tags = List<String>.of(tags),
+        _fields = List<String>.of(fields),
+        _sortField = sortField,
+        _checksum = checksum?.toUnsigned(32);
 
   final NoteId id;
   final String guid;
@@ -72,22 +72,22 @@ class Note {
   }
 
   factory Note.fromProto(proto.Note value) => Note(
-    id: value.id,
-    guid: value.guid,
-    notetypeId: value.notetypeId,
-    mtimeSecs: Int64(value.mtimeSecs),
-    usn: value.usn,
-    tags: value.tags,
-    fields: value.fields,
-  );
+        id: value.id,
+        guid: value.guid,
+        notetypeId: value.notetypeId,
+        mtimeSecs: Int64(value.mtimeSecs),
+        usn: value.usn,
+        tags: value.tags,
+        fields: value.fields,
+      );
 
   proto.Note toProto() => proto.Note(
-    id: id,
-    guid: guid,
-    notetypeId: notetypeId,
-    mtimeSecs: mtimeSecs.toUnsigned(32).toInt(),
-    usn: usn,
-    tags: tags,
-    fields: _fields,
-  );
+        id: id,
+        guid: guid,
+        notetypeId: notetypeId,
+        mtimeSecs: mtimeSecs.toUnsigned(32).toInt(),
+        usn: usn,
+        tags: tags,
+        fields: _fields,
+      );
 }

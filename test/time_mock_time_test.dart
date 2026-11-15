@@ -27,35 +27,35 @@ import 'package:test/test.dart';
 void main() {
   group('MockTime', () {
     test('returns the current value before applying the Int32 step', () {
-      final time = MockTime(41, step: 7);
+      final time = MockTime(BigInt.from(41), step: 7);
 
-      expect(time.intTimeMS(), 41);
-      expect(time.intTimeMS(), 48);
-      expect(time.intTimeMS(), 55);
+      expect(time.intTimeMS(), BigInt.from(41));
+      expect(time.intTimeMS(), BigInt.from(48));
+      expect(time.intTimeMS(), BigInt.from(55));
     });
 
     test('wraps the step from signed Int32 to signed Int64', () {
-      final time = MockTime(0, step: 0x80000000);
+      final time = MockTime(BigInt.zero, step: 0x80000000);
 
-      expect(time.intTimeMS(), 0);
-      expect(time.intTimeMS(), -0x80000000);
+      expect(time.intTimeMS(), BigInt.zero);
+      expect(time.intTimeMS(), BigInt.from(-0x80000000));
     });
 
     test('addM and addD update milliseconds with signed Int64 wrapping', () {
-      final time = MockTime(1000);
+      final time = MockTime(BigInt.from(1000));
 
-      time.addM(2);
-      expect(time.intTimeMS(), 121000);
-      time.addD(-1);
-      expect(time.intTimeMS(), -86_279_000);
+      time.addM(BigInt.from(2));
+      expect(time.intTimeMS(), BigInt.from(121000));
+      time.addD(BigInt.from(-1));
+      expect(time.intTimeMS(), BigInt.from(-86_279_000));
 
-      final wrapping = MockTime(0x7fffffffffffffff);
-      wrapping.addM(1);
-      expect(wrapping.intTimeMS(), -9223372036854715809);
+      final wrapping = MockTime(BigInt.parse('9223372036854775807'));
+      wrapping.addM(BigInt.from(1));
+      expect(wrapping.intTimeMS(), BigInt.parse('-9223372036854715809'));
 
-      final wrappingDays = MockTime(0x7fffffffffffffff);
-      wrappingDays.addD(1);
-      expect(wrappingDays.intTimeMS(), -9223372036768375809);
+      final wrappingDays = MockTime(BigInt.parse('9223372036854775807'));
+      wrappingDays.addD(BigInt.from(1));
+      expect(wrappingDays.intTimeMS(), BigInt.parse('-9223372036768375809'));
     });
 
     test(
@@ -98,11 +98,11 @@ void main() {
           getTimeInMillis: (actualCalendar) {
             events.add('getTimeInMillis');
             expect(identical(actualCalendar, calendar), isTrue);
-            return 1596783600000;
+            return BigInt.from(1596783600000);
           },
         );
 
-        expect(result, 1596783600000);
+        expect(result, BigInt.from(1596783600000));
         expect(events, [
           'getTimeZone',
           'createGregorianCalendar',
@@ -128,11 +128,11 @@ void main() {
           createGregorianCalendar: (_, _, _, _, _, _) => Object(),
           setTimeZone: (_, _) {},
           setMillisecond: (_, _) {},
-          getTimeInMillis: (_) => 1596783600000,
+          getTimeInMillis: (_) => BigInt.from(1596783600000),
         );
 
-        expect(time.intTimeMS(), 1596783600000);
-        expect(time.intTimeMS(), 1596783600003);
+        expect(time.intTimeMS(), BigInt.from(1596783600000));
+        expect(time.intTimeMS(), BigInt.from(1596783600003));
       },
     );
 
@@ -172,7 +172,7 @@ void main() {
             setMillisecond: (_, _) => record('setMillisecond'),
             getTimeInMillis: (_) {
               record('getTimeInMillis');
-              return 0;
+              return BigInt.zero;
             },
           ),
           throwsA(same(failure)),

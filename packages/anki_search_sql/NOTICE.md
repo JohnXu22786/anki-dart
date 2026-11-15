@@ -8,7 +8,7 @@ are listed in `SOURCE.sha256`. The upstream files are Copyright Ankitects Pty Lt
 
 The Dart compiler and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. The compiler accepts the shared AST from
-`anki_search_parser`, supports name matching for notetypes and card templates,
-uses no platform-specific database package, and does not implement other text
-matching or search execution. The repository root `COPYING` file remains
-unchanged.
+`anki_search_parser`, supports name matching for notetypes and card templates
+and tag predicates in normal, regex, and no-combining modes, uses no
+platform-specific database package, and does not implement field text matching
+or search execution. The repository root `COPYING` file remains unchanged.

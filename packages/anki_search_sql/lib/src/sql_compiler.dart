@@ -41,11 +41,11 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 ///
 /// This is an incremental compiler, not complete search execution. Its current
 /// subset contains boolean structure, card/note/notetype ID predicates,
-/// notetype names, card template ordinals and names, deck IDs without children,
-/// flags, and whole-collection queries. Other AST variants throw
-/// [UnsupportedSearchSqlNodeException]. ID-list nodes must use comma-separated
-/// decimal digits accepted by the shared parser; their exact spelling is
-/// preserved.
+/// notetype names, card template ordinals and names, tag predicates, deck IDs
+/// without children, flags, and whole-collection queries. Other AST variants
+/// throw [UnsupportedSearchSqlNodeException]. ID-list nodes must use
+/// comma-separated decimal digits accepted by the shared parser; their exact
+/// spelling is preserved.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
@@ -99,7 +99,7 @@ RequiredTable _requiredTableForNode(Node node) => switch (node) {
 
 RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   CardIds() || DeckIdsWithoutChildren() || Flag() => RequiredTable.cards,
-  NotetypeIdSearch() || Notetype() => RequiredTable.notes,
+  NotetypeIdSearch() || Notetype() || Tag() => RequiredTable.notes,
   CardTemplate() => RequiredTable.cardsAndNotes,
   NoteIds() || WholeCollection() => RequiredTable.cardsOrNotes,
   _ => throw UnsupportedSearchSqlNodeException(node),
@@ -128,6 +128,7 @@ String _writeSearch(
   NoteIds(:final ids) => '$noteIdColumn in (${_validateIdList(ids)})',
   NotetypeIdSearch(:final id) => 'n.mid = $id',
   Notetype(:final name) => _writeNotetype(name, arguments),
+  Tag(:final tag, :final mode) => _writeTag(tag, mode, arguments),
   CardTemplate(kind: final kind) => _writeTemplate(kind, arguments),
   DeckIdsWithoutChildren(:final ids) =>
     '(c.did in (${_validateIdList(ids)}) or (c.odid != 0 and '
@@ -163,19 +164,80 @@ String _writeTemplateName(String name, List<String> arguments) {
   return '(n.mid,c.ord) in (select ntid,ord from templates where name = ?)';
 }
 
+String _writeTag(String tag, FieldSearchMode mode, List<String> arguments) {
+  final normalized = unorm.nfc(tag);
+  if (mode == FieldSearchMode.regex) {
+    arguments.add('(?i)$normalized');
+    return 'regexp_tags(?${arguments.length}, n.tags)';
+  }
+  if (normalized == 'none') return "n.tags = ''";
+  if (normalized == '*') return 'true';
+  if (normalized.contains(' ')) return 'false';
+
+  final text = switch (mode) {
+    FieldSearchMode.normal => normalized,
+    FieldSearchMode.noCombining => _withoutCombining(normalized),
+    FieldSearchMode.regex => throw StateError('Regex tags handled above.'),
+  };
+  final regex = _toRegex(text, wildcard: r'\S');
+  arguments.add('(?i).* $regex(::| ).*');
+  return mode == FieldSearchMode.normal
+      ? 'n.tags regexp ?'
+      : 'coalesce(process_text(n.tags, 1), n.tags) regexp ?';
+}
+
+const _noCombiningReplacements = <String, String>{
+  '€': 'E',
+  'Æ': 'AE',
+  'Ð': 'D',
+  'Ø': 'O',
+  'Þ': 'TH',
+  'ß': 's',
+  'æ': 'ae',
+  'ð': 'd',
+  'ø': 'o',
+  'þ': 'th',
+  'Đ': 'D',
+  'đ': 'd',
+  'Ħ': 'H',
+  'ħ': 'h',
+  'ı': 'i',
+  'ĸ': 'k',
+  'Ł': 'L',
+  'ł': 'l',
+  'Ŋ': 'N',
+  'ŋ': 'n',
+  'Œ': 'OE',
+  'œ': 'oe',
+  'Ŧ': 'T',
+  'ŧ': 't',
+  'Ə': 'E',
+  'ǝ': 'e',
+  'ɑ': 'a',
+};
+final RegExp _combiningMarkPattern = RegExp(r'\p{M}', unicode: true);
+
+String _withoutCombining(String text) =>
+    unorm.nfkd(text).replaceAll(_combiningMarkPattern, '').replaceAllMapped(
+      RegExp('[${_noCombiningReplacements.keys.join()}]'),
+      (match) {
+        return _noCombiningReplacements[match[0]]!;
+      },
+    );
+
 final RegExp _globPattern = RegExp(r'(?:^|[^\\])(?:\\\\)*[*_]');
 final RegExp _regexCharacterPattern = RegExp(r'\\?.', unicode: true);
 
 bool _isGlob(String text) => _globPattern.hasMatch(text);
 
-String _toRegex(String text) =>
+String _toRegex(String text, {String wildcard = '.'}) =>
     text.replaceAllMapped(_regexCharacterPattern, (match) {
       final character = match[0]!;
       return switch (character) {
         r'\\' || r'\*' => character,
         r'\_' => '_',
-        '*' => '.*',
-        '_' => '.',
+        '*' => '$wildcard*',
+        '_' => wildcard,
         _ => RegExp.escape(character),
       };
     });

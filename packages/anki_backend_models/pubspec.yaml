@@ -10,6 +10,7 @@ environment:
 dependencies:
   anki_backend_protocol:
     path: ../anki_backend_protocol
+  crypto: ^3.0.7
   fixnum: ^1.1.0
   protobuf: 3.1.0
   unorm_dart: 0.3.3

@@ -8,4 +8,7 @@ void main() {
   if (card.id.toInt() + note.id.toInt() != 3) {
     throw StateError('model package JS smoke compilation failed');
   }
+  if (fieldChecksum('test') != 2840236005) {
+    throw StateError('unsigned SHA-1 checksum differs on JavaScript');
+  }
 }

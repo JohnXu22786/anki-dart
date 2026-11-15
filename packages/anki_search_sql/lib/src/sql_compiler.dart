@@ -32,6 +32,24 @@ final class CompiledSearchSql {
   final RequiredTable requiredTable;
 }
 
+/// Timing values needed to compile a `state:due` predicate deterministically.
+///
+/// Values use the same units and ranges as pinned Anki Core: [daysElapsed] is
+/// the collection day number, [now] is Unix seconds, and [learnAheadSecs] is
+/// the configured learning cutoff in seconds. The state SQL predicate does not
+/// use Core's `next_day_at` value.
+final class SearchSqlTiming {
+  SearchSqlTiming({
+    required this.daysElapsed,
+    required this.now,
+    required this.learnAheadSecs,
+  });
+
+  final int daysElapsed;
+  final BigInt now;
+  final int learnAheadSecs;
+}
+
 final class UnsupportedSearchSqlNodeException extends UnsupportedError {
   UnsupportedSearchSqlNodeException(Object node)
     : super('Search SQL subset does not support ${node.runtimeType}.');
@@ -42,14 +60,16 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// This is an incremental compiler, not complete search execution. Its current
 /// subset contains boolean structure, card/note/notetype ID predicates,
 /// notetype names, card template ordinals and names, tag predicates, deck IDs
-/// without children, flags, and whole-collection queries. Other AST variants
-/// throw [UnsupportedSearchSqlNodeException]. ID-list nodes must use
-/// comma-separated decimal digits accepted by the shared parser; their exact
-/// spelling is preserved.
+/// without children, flags, state predicates, and whole-collection queries.
+/// Other AST variants throw [UnsupportedSearchSqlNodeException]. Due state
+/// predicates require explicit [SearchSqlTiming] values. ID-list nodes must
+/// use comma-separated decimal digits accepted by the shared parser; their
+/// exact spelling is preserved.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
   RequiredTable requiredTables = RequiredTable.cardsOrNotes,
+  SearchSqlTiming? timing,
 }) {
   final itemTable = switch (resultType) {
     SearchResultType.cards => RequiredTable.cards,
@@ -81,7 +101,7 @@ CompiledSearchSql compileSearchSql(
 
   final arguments = <String>[];
   return CompiledSearchSql(
-    sql: '$select${_writeNode(node, noteIdColumn, arguments)}',
+    sql: '$select${_writeNode(node, noteIdColumn, arguments, timing)}',
     arguments: arguments,
     requiredTable: table,
   );
@@ -98,7 +118,10 @@ RequiredTable _requiredTableForNode(Node node) => switch (node) {
 };
 
 RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
-  CardIds() || DeckIdsWithoutChildren() || Flag() => RequiredTable.cards,
+  CardIds() ||
+  DeckIdsWithoutChildren() ||
+  Flag() ||
+  State() => RequiredTable.cards,
   NotetypeIdSearch() || Notetype() || Tag() => RequiredTable.notes,
   CardTemplate() => RequiredTable.cardsAndNotes,
   NoteIds() || WholeCollection() => RequiredTable.cardsOrNotes,
@@ -109,20 +132,27 @@ String _writeNode(
   Node node,
   String noteIdColumn,
   List<String> arguments,
+  SearchSqlTiming? timing,
 ) => switch (node) {
   BooleanNode(kind: NodeKind.and) => ' and ',
   BooleanNode(kind: NodeKind.or) => ' or ',
   NegatedNode(:final node) =>
-    'not ${_writeNode(node, noteIdColumn, arguments)}',
+    'not ${_writeNode(node, noteIdColumn, arguments, timing)}',
   GroupNode(:final nodes) =>
-    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments)).join()})',
-  Search(value: final search) => _writeSearch(search, noteIdColumn, arguments),
+    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing)).join()})',
+  Search(value: final search) => _writeSearch(
+    search,
+    noteIdColumn,
+    arguments,
+    timing,
+  ),
 };
 
 String _writeSearch(
   SearchNode node,
   String noteIdColumn,
   List<String> arguments,
+  SearchSqlTiming? timing,
 ) => switch (node) {
   CardIds(:final ids) => 'c.id in (${_validateIdList(ids)})',
   NoteIds(:final ids) => '$noteIdColumn in (${_validateIdList(ids)})',
@@ -134,9 +164,51 @@ String _writeSearch(
     '(c.did in (${_validateIdList(ids)}) or (c.odid != 0 and '
         'c.odid in (${_validateIdList(ids)})))',
   Flag(:final value) => '(c.flags & 7) == ${_validateFlag(value)}',
+  State(:final kind) => _writeState(kind, timing),
   WholeCollection() => 'true',
   _ => throw UnsupportedSearchSqlNodeException(node),
 };
+
+String _writeState(StateKind kind, SearchSqlTiming? timing) => switch (kind) {
+  StateKind.newCard => 'c.type = 0',
+  StateKind.review => 'c.type in (2, 3)',
+  StateKind.learning => 'c.type in (1, 3)',
+  StateKind.buried => 'c.queue in (-2,-3)',
+  StateKind.userBuried => 'c.queue = -3',
+  StateKind.schedBuried => 'c.queue = -2',
+  StateKind.suspended => 'c.queue = -1',
+  StateKind.due => _writeDueState(_requireTiming(timing)),
+};
+
+String _writeDueState(SearchSqlTiming timing) {
+  const maxU32 = 0xffffffff;
+  final minI64 = BigInt.parse('-9223372036854775808');
+  final maxI64 = BigInt.parse('9223372036854775807');
+  if (timing.daysElapsed < 0 || timing.daysElapsed > maxU32) {
+    throw RangeError.range(timing.daysElapsed, 0, maxU32, 'daysElapsed');
+  }
+  if (timing.learnAheadSecs < 0 || timing.learnAheadSecs > maxU32) {
+    throw RangeError.range(timing.learnAheadSecs, 0, maxU32, 'learnAheadSecs');
+  }
+  if (timing.now < minI64 || timing.now > maxI64) {
+    throw RangeError('now must be a signed 64-bit Unix timestamp in seconds.');
+  }
+  final cutoff = timing.now + BigInt.from(timing.learnAheadSecs);
+  if (cutoff > maxI64) {
+    throw RangeError('now + learnAheadSecs exceeds the signed 64-bit range.');
+  }
+
+  return '((c.queue in (2,3) and c.due <= ${timing.daysElapsed}) or '
+      '(c.queue in (1,4) and c.due <= '
+      '$cutoff))';
+}
+
+SearchSqlTiming _requireTiming(SearchSqlTiming? timing) {
+  if (timing == null) {
+    throw ArgumentError('state:due requires explicit SearchSqlTiming values.');
+  }
+  return timing;
+}
 
 String _writeNotetype(String name, List<String> arguments) {
   final normalized = unorm.nfc(name);

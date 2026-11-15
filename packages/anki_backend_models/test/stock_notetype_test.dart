@@ -15,8 +15,15 @@ void main() {
     addReverseField: 'Add Reverse',
     textField: 'Text',
     backExtraField: 'Back Extra',
+    commentsField: 'Comments',
     cardOne: 'Card 1',
     cardTwo: 'Card 2',
+    imageOcclusion: 'Image Occlusion',
+    occlusionsField: 'Occlusions',
+    imageField: 'Image',
+    headerField: 'Header',
+    toggleMasks: 'Toggle Masks',
+    errorLoadingImageOcclusion: 'Error loading Image Occlusion',
   );
 
   BigInt Function() ids() {
@@ -104,5 +111,51 @@ void main() {
     expect(value.templates.single.config.qFormat, '{{cloze:Text}}');
     expect(value.templates.single.config.aFormat,
         '{{cloze:Text}}<br>\n{{Back Extra}}');
+  });
+
+  test('Image Occlusion factory matches pinned fields, HTML and CSS', () {
+    final value =
+        StockNotetypeFactory.imageOcclusion(names: names, randomU64: ids());
+    expect(value.name, 'Image Occlusion');
+    expect(value.config.kind, proto.Notetype_Config_Kind.KIND_CLOZE);
+    expect(
+      value.config.originalStockKind,
+      proto.StockNotetype_OriginalStockKind.ORIGINAL_STOCK_KIND_IMAGE_OCCLUSION,
+    );
+    expect(value.config.css, StockNotetypeFactory.imageOcclusionCss);
+    expect(value.fields.map((field) => field.name), [
+      'Occlusions',
+      'Image',
+      'Header',
+      'Back Extra',
+      'Comments',
+    ]);
+    expect(value.fields.map((field) => field.config.tag), [0, 1, 2, 3, 4]);
+    expect(
+      value.fields.map((field) => field.config.preventDeletion),
+      [true, true, true, true, false],
+    );
+    expect(value.templates.single.name, 'Image Occlusion');
+    expect(
+        value.templates.single.config.qFormat,
+        '{{#Header}}<div>{{Header}}</div>{{/Header}}\n'
+        '<div style="display: none">{{cloze:Occlusions}}</div>\n'
+        '<div id="err"></div>\n'
+        '<div id="image-occlusion-container">\n'
+        '    {{Image}}\n'
+        '    <canvas id="image-occlusion-canvas"></canvas>\n'
+        '</div>\n'
+        '<script>\n'
+        'try {\n'
+        '    anki.imageOcclusion.setup();\n'
+        '} catch (exc) {\n'
+        '    document.getElementById("err").innerHTML = `Error loading Image Occlusion<br><br>\${exc}`;\n'
+        '}\n'
+        '</script>\n');
+    expect(
+        value.templates.single.config.aFormat,
+        '${value.templates.single.config.qFormat}\n'
+        '<div><button id="toggle">Toggle Masks</button></div>\n'
+        '{{#Back Extra}}<div>{{Back Extra}}</div>{{/Back Extra}}\n');
   });
 }

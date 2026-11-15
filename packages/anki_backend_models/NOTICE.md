@@ -26,8 +26,9 @@ source so results remain deterministic and platform neutral:
 `Notetype.clozeConfig()` include the pinned default CSS and LaTeX header/footer
 assets recorded in `SOURCE.sha256`. `StockNotetypeFactory` implements Anki
 Core's localized Basic, Basic (type answer), Basic (and reversed), Basic
-(optional reversed), and Cloze note types, while accepting translated names
-from its caller. Image Occlusion and bundled stock-name translation catalogs
-remain outside this slice. Deck and DeckConfig models cover stored values and protobuf
-conversion. Anki Core's DeckConfig defaults are provided explicitly. This
-package does not change the root `COPYING` file.
+(optional reversed), Cloze, and Image Occlusion note types, while accepting
+translated names from its caller. Image Occlusion collection operations and
+bundled stock-name translation catalogs remain outside this slice. Deck and
+DeckConfig models cover stored values and protobuf conversion. Anki Core's
+DeckConfig defaults are provided explicitly. This package does not change the
+root `COPYING` file.

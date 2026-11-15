@@ -24,8 +24,15 @@ class StockNotetypeNames {
     required this.addReverseField,
     required this.textField,
     required this.backExtraField,
+    required this.commentsField,
     required this.cardOne,
     required this.cardTwo,
+    required this.imageOcclusion,
+    required this.occlusionsField,
+    required this.imageField,
+    required this.headerField,
+    required this.toggleMasks,
+    required this.errorLoadingImageOcclusion,
   });
 
   final String basic;
@@ -38,8 +45,15 @@ class StockNotetypeNames {
   final String addReverseField;
   final String textField;
   final String backExtraField;
+  final String commentsField;
   final String cardOne;
   final String cardTwo;
+  final String imageOcclusion;
+  final String occlusionsField;
+  final String imageField;
+  final String headerField;
+  final String toggleMasks;
+  final String errorLoadingImageOcclusion;
 }
 
 /// Builds the stock notetypes defined in Anki Core's `notetype/stock.rs`.
@@ -160,6 +174,115 @@ class StockNotetypeFactory {
             proto.StockNotetype_OriginalStockKind.ORIGINAL_STOCK_KIND_CLOZE,
     );
   }
+
+  /// Build the official Image Occlusion note type value.
+  ///
+  /// This creates the stock fields, HTML templates and CSS only. Collection
+  /// operations that add or validate the notetype remain backend behavior.
+  static Notetype imageOcclusion({
+    required StockNotetypeNames names,
+    required BigInt Function() randomU64,
+  }) {
+    final fields = [
+      _imageOcclusionField(
+        names.occlusionsField,
+        proto.ImageOcclusionField.IMAGE_OCCLUSION_FIELD_OCCLUSIONS,
+        randomU64,
+        preventDeletion: true,
+      ),
+      _imageOcclusionField(
+        names.imageField,
+        proto.ImageOcclusionField.IMAGE_OCCLUSION_FIELD_IMAGE,
+        randomU64,
+        preventDeletion: true,
+      ),
+      _imageOcclusionField(
+        names.headerField,
+        proto.ImageOcclusionField.IMAGE_OCCLUSION_FIELD_HEADER,
+        randomU64,
+        preventDeletion: true,
+      ),
+      _imageOcclusionField(
+        names.backExtraField,
+        proto.ImageOcclusionField.IMAGE_OCCLUSION_FIELD_BACK_EXTRA,
+        randomU64,
+        preventDeletion: true,
+      ),
+      _imageOcclusionField(
+        names.commentsField,
+        proto.ImageOcclusionField.IMAGE_OCCLUSION_FIELD_COMMENTS,
+        randomU64,
+      ),
+    ];
+    final qfmt = _imageOcclusionQuestion(names);
+    final afmt = '$qfmt'
+        '\n'
+        '<div><button id="toggle">${names.toggleMasks}</button></div>\n'
+        '{{#${names.backExtraField}}}<div>{{${names.backExtraField}}}</div>{{/${names.backExtraField}}}\n';
+    final config = Notetype.clozeConfig()
+      ..css = imageOcclusionCss
+      ..originalStockKind = proto
+          .StockNotetype_OriginalStockKind.ORIGINAL_STOCK_KIND_IMAGE_OCCLUSION;
+    return Notetype(
+      name: names.imageOcclusion,
+      fields: fields,
+      templates: [
+        CardTemplate.newTemplate(
+          names.imageOcclusion,
+          qfmt,
+          afmt,
+          randomU64: randomU64,
+        ),
+      ],
+      config: config,
+    );
+  }
+
+  static NoteField _imageOcclusionField(
+    String name,
+    proto.ImageOcclusionField tag,
+    BigInt Function() randomU64, {
+    bool preventDeletion = false,
+  }) {
+    final field = NoteField.newField(name, randomU64: randomU64);
+    field.config
+      ..tag = tag.value
+      ..preventDeletion = preventDeletion;
+    return field;
+  }
+
+  static String _imageOcclusionQuestion(StockNotetypeNames names) =>
+      '{{#${names.headerField}}}<div>{{${names.headerField}}}</div>{{/${names.headerField}}}\n'
+      '<div style="display: none">{{cloze:${names.occlusionsField}}}</div>\n'
+      '<div id="err"></div>\n'
+      '<div id="image-occlusion-container">\n'
+      '    {{${names.imageField}}}\n'
+      '    <canvas id="image-occlusion-canvas"></canvas>\n'
+      '</div>\n'
+      '<script>\n'
+      'try {\n'
+      '    anki.imageOcclusion.setup();\n'
+      '} catch (exc) {\n'
+      '    document.getElementById("err").innerHTML = `${names.errorLoadingImageOcclusion}<br><br>\${exc}`;\n'
+      '}\n'
+      '</script>\n';
+
+  static const imageOcclusionCss = '#image-occlusion-canvas {\n'
+      '    --inactive-shape-color: #ffeba2;\n'
+      '    --active-shape-color: #ff8e8e;\n'
+      '    --inactive-shape-border: 1px #212121;\n'
+      '    --active-shape-border: 1px #212121;\n'
+      '    --highlight-shape-color: #ff8e8e00;\n'
+      '    --highlight-shape-border: 1px #ff8e8e;\n'
+      '}\n'
+      '\n'
+      '.card {\n'
+      '    font-family: arial;\n'
+      '    font-size: 20px;\n'
+      '    text-align: center;\n'
+      '    color: black;\n'
+      '    background-color: white;\n'
+      '}\n';
 
   static Notetype _normal({
     required String name,

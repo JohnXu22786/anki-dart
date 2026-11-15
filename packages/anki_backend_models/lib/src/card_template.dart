@@ -6,6 +6,8 @@ import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
 import 'package:anki_backend_protocol/anki/generic.pb.dart' as generic;
 import 'package:fixnum/fixnum.dart';
 
+import 'base91.dart';
+
 /// A card template's ordinal, modification values and official config.
 class CardTemplate {
   CardTemplate({
@@ -23,6 +25,23 @@ class CardTemplate {
   final int usn;
   final String name;
   final proto.Notetype_Template_Config config;
+
+  /// Create a template with the defaults from Anki Core's
+  /// `CardTemplate::new()`.
+  factory CardTemplate.newTemplate(
+    String name,
+    String questionFormat,
+    String answerFormat, {
+    required BigInt Function() randomU64,
+  }) =>
+      CardTemplate(
+        name: name,
+        config: proto.Notetype_Template_Config(
+          qFormat: questionFormat,
+          aFormat: answerFormat,
+          id: int64FromRandomU64(randomU64()),
+        ),
+      );
 
   factory CardTemplate.fromProto(proto.Notetype_Template value) => CardTemplate(
         ord: value.hasOrd() ? value.ord.val : null,

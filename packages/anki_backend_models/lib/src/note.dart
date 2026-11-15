@@ -3,6 +3,8 @@ import 'package:anki_backend_protocol/anki/notes.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
 
 import 'ids.dart';
+import 'base91.dart';
+import 'notetype.dart';
 
 /// An Anki note's stored identity, fields and tags.
 class Note {
@@ -31,6 +33,19 @@ class Note {
   final List<String> _fields;
   String? _sortField;
   int? _checksum;
+
+  /// Create a new note with the same empty state and random base91 GUID as
+  /// Anki Core's `Note::new()`.
+  factory Note.newNote(
+    Notetype notetype, {
+    required BigInt Function() randomU64,
+  }) {
+    return Note(
+      guid: base91U64(randomU64()),
+      notetypeId: notetype.id.value,
+      fields: List<String>.filled(notetype.fields.length, ''),
+    );
+  }
 
   List<String> get fields => List<String>.unmodifiable(_fields);
   String? get sortField => _sortField;

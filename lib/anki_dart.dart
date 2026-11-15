@@ -77,6 +77,7 @@ export 'src/card_user_flag.dart';
 export 'src/card_type_name.dart';
 export 'src/chip_checked_background.dart';
 export 'src/collection_get_card_or_null.dart';
+export 'src/collection_libanki_helpers.dart';
 export 'src/collection_complete_tag_raw.dart';
 export 'src/collection_remaining_raw.dart';
 export 'src/collection_sync_preferences.dart';

@@ -4342,3 +4342,19 @@ retains media `src`/`data` filenames, decodes HTML references and maps NBSP to
 space. Source hashes and attribution are recorded in the model package
 `SOURCE.sha256` and `NOTICE.md`. Focused tests are in
 `packages/anki_backend_models/test/note_prepare_test.dart`.
+
+## Note field presence and template-card eligibility
+
+`fieldIsEmpty()` and `Note.nonEmptyFields()` in
+`packages/anki_backend_models` port Anki Core's ASCII whitespace and empty
+`br`/`div` tag predicate and ordered Note-to-Notetype field pairing from
+`rslib/src/template.rs` and `rslib/src/notes/mod.rs` at pinned commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The mapping ignores values with
+no matching Notetype field and returns distinct names, matching the source set.
+The ordered field-name pairing also corresponds to AnkiDroid 2.25.3's
+`NotetypeJson.nonEmptyFields()` in
+`libanki/src/main/java/com/ichi2/anki/libanki/NotetypeJson.kt`, pinned to
+`d9bf072f814a0c37d30a694192593b31ff2df875`; classification uses Core's
+`field_is_empty()` predicate. Focused tests are in
+`packages/anki_backend_models/test/note_empty_fields_test.dart`; the Core source
+hash and AGPL attribution are recorded in the model package.

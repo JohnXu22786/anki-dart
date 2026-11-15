@@ -3,7 +3,9 @@ import 'package:anki_backend_protocol/anki/notes.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
 
 import 'field_checksum.dart';
+import 'field_is_empty.dart';
 import 'ids.dart';
+import 'note_field.dart';
 import 'base91.dart';
 import 'notetype.dart';
 import 'note_field_normalization.dart';
@@ -53,6 +55,21 @@ class Note {
   List<String> get fields => List<String>.unmodifiable(_fields);
   String? get sortField => _sortField;
   int? get checksum => _checksum;
+
+  /// Returns names of nonempty note fields using their Notetype ordinals.
+  ///
+  /// A value is nonempty when it contains more than Core's empty-field
+  /// whitespace and `br`/`div` tags. Extra note values without a Notetype
+  /// field are ignored.
+  Set<String> nonEmptyFields(List<NoteField> notetypeFields) {
+    final result = <String>{};
+    for (var index = 0; index < _fields.length; index++) {
+      if (index < notetypeFields.length && !fieldIsEmpty(_fields[index])) {
+        result.add(notetypeFields[index].name);
+      }
+    }
+    return result;
+  }
 
   /// Replace one field and clear derived values, as Anki Core does.
   void setField(int index, String text) {

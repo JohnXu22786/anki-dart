@@ -3,7 +3,9 @@
 This package ports Anki Core Card and Note domain values, protobuf conversions,
 field checksum, field normalization, Note::fix_field_count, note preparation,
 and HTML/media-aware field text behavior from `rslib/src/card/mod.rs`,
-`rslib/src/card/service.rs`, and `rslib/src/notes/mod.rs` and `rslib/src/text.rs`; Notetype, NoteField
+`rslib/src/card/service.rs`, `rslib/src/notes/mod.rs`, and `rslib/src/text.rs`;
+field emptiness and Note field-presence behavior from `rslib/src/template.rs` and
+`rslib/src/notes/mod.rs`; Notetype, NoteField
 and CardTemplate values, conversions, and default configuration assets from
 `rslib/src/notetype/mod.rs`, `rslib/src/notetype/service.rs`,
 `rslib/src/notetype/fields.rs`, `rslib/src/notetype/templates.rs`,
@@ -52,4 +54,6 @@ HTML named-entity table in `lib/src/html_entities.dart` is adapted from
 `htmlescape` 0.3.1 by Viktor Dahl, licensed under Apache-2.0, MIT, or MPL-2.0;
 the package includes the Apache-2.0 license text. Its source digest is recorded
 in `THIRD_PARTY_SOURCE.sha256`. This package does not change the root `COPYING`
-file.
+file. The field-empty predicate matches Anki Core's ASCII whitespace and empty
+`br`/`div` tag syntax; `Note.nonEmptyFields()` pairs values to Notetype fields in
+source order and returns a set of names, omitting values with no matching field.

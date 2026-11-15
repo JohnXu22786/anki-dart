@@ -17,6 +17,7 @@ void main() {
     const text =
         'The {{c1::moon::🌛}} {{c2::orbits::this hint has "::" in it}} the {{c3::🌏}}.';
     expect(processSearchText(text, 2), 'The moon orbits the 🌏.');
+    expect(processSearchText('{{c١::arabic digit}}', 2), 'arabic digit');
     expect(
       processSearchText('before\n{{c1,2::line\nvalue::hint}} after', 2),
       'before\nline\nvalue after',

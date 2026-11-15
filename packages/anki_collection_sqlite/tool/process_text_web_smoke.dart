@@ -14,4 +14,7 @@ void main() {
   if (bigIntFlags != 'Uber cafe') {
     throw StateError('Web BigInt process_text flags returned: $bigIntFlags');
   }
+  if (processSearchText('{{c١::arabic digit}}', 2) != 'arabic digit') {
+    throw StateError('Web process_text did not strip Unicode cloze digits');
+  }
 }

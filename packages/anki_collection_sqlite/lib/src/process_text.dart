@@ -4,7 +4,11 @@ import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
 const _stripClozesFlag = 1 << 1;
 const _noCombiningFlag = 1;
-final _clozePattern = RegExp(r'\{\{c[\d,]+::(.*?)(::.*?)?\}\}', dotAll: true);
+final _clozePattern = RegExp(
+  r'\{\{c[\p{Nd},]+::(.*?)(::.*?)?\}\}',
+  dotAll: true,
+  unicode: true,
+);
 final _combiningMarks = RegExp(r'\p{M}', unicode: true);
 
 const _noCombiningReplacements = <String, String>{

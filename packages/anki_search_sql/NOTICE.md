@@ -20,6 +20,8 @@ tag predicates in normal, regex, and no-combining modes, unqualified regex
 searches with host-supplied field visibility and optional NFC normalization,
 unqualified text, no-combining, and cloze-stripped searches with host-supplied
 field ranges, accent configuration, and cloze notetype IDs,
+word-boundary searches using Core wildcard-to-regex conversion and accent
+handling,
 field-qualified searches in normal, regex, and no-combining modes using host
 notetype field snapshots and Core-compatible field matching,
 state predicates using Core's `CardType` and `CardQueue` numeric values, day

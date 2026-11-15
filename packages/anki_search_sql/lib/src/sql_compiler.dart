@@ -255,6 +255,7 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   NotetypeIdSearch() ||
   Notetype() ||
   RegexSearch() ||
+  WordBoundary() ||
   SingleFieldSearch() ||
   TextSearch() ||
   NoCombining() ||
@@ -351,6 +352,13 @@ String _writeSearch(
     pattern,
     arguments,
     regexFieldsByNotetype,
+    normalizeNoteText,
+  ),
+  WordBoundary(:final text) => _writeWordBoundary(
+    text,
+    arguments,
+    regexFieldsByNotetype,
+    textSearchContext?.ignoreAccentsInSearch ?? false,
     normalizeNoteText,
   ),
   TextSearch(:final text) => _writeUnqualified(
@@ -925,25 +933,48 @@ String _writeRegex(
   String pattern,
   List<String> arguments,
   RegexFieldsByNotetype? fieldsByNotetype,
-  bool normalizeNoteText,
-) {
-  final regex = normalizeNoteText ? unorm.nfc(pattern) : pattern;
+  bool normalizeNoteText, {
+  bool noCombining = false,
+}) {
+  var regex = normalizeNoteText ? unorm.nfc(pattern) : pattern;
+  if (noCombining) regex = _withoutCombining(regex);
   arguments.add('(?i)$regex');
   final argumentIndex = arguments.length;
+  final fieldsExpression = noCombining
+      ? 'coalesce(process_text(n.flds, 1), n.flds)'
+      : 'n.flds';
   final contexts = fieldsByNotetype?.contexts;
   if (contexts == null) {
-    return 'n.flds regexp ?$argumentIndex';
+    return '$fieldsExpression regexp ?$argumentIndex';
   }
 
   final clauses = contexts.map((context) {
     final fieldClause =
         context.includedFieldIndices.length == context.totalFieldsInNote
-        ? 'n.flds regexp ?$argumentIndex'
-        : 'regexp_fields(?$argumentIndex, n.flds, '
+        ? '$fieldsExpression regexp ?$argumentIndex'
+        : 'regexp_fields(?$argumentIndex, $fieldsExpression, '
               '${context.includedFieldIndices.join(',')})';
     return '(n.mid = ${context.notetypeId} and $fieldClause)';
   });
   return '(${clauses.join(' or ')})';
+}
+
+String _writeWordBoundary(
+  String text,
+  List<String> arguments,
+  RegexFieldsByNotetype? fieldsByNotetype,
+  bool noCombining,
+  bool normalizeNoteText,
+) {
+  final normalized = normalizeNoteText ? unorm.nfc(text) : text;
+  final regex = r'\b' + _toRegex(normalized) + r'\b';
+  return _writeRegex(
+    regex,
+    arguments,
+    fieldsByNotetype,
+    false,
+    noCombining: noCombining,
+  );
 }
 
 String _writeUnqualified(

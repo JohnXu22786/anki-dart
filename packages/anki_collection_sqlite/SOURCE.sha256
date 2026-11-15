@@ -8,3 +8,4 @@ aacbb588af4cf902eeb54d15cecc37a35b410441d67839f48929fea9fd515a89  rslib/src/stor
 e875a63c641393c0a6904872bd55ebe164a4eceff8aa07686ca246fe6d54de23  rslib/src/storage/note/mod.rs
 50b1fba1332e814aa24bcd2b0f56d834de6a3bebb8f48c9c00cd5d979c6133a5  rslib/src/storage/note/get.sql
 9b00b18974bf53fe01a7d3e3cfcaa93507ee208e1198d0bc8358476f939ec5a4  rslib/src/storage/note/get_without_fields.sql
+877e18ef2ddcc497a91fca0c2a84d2f22658f09582d8c7f2ba1f03ca2d4ba73c  rslib/src/storage/sqlite.rs

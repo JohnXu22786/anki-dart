@@ -18,6 +18,34 @@ class SchedTimingToday {
   final int nextDayAt;
 }
 
+/// Returns the current scheduler due day after applying a signed day offset.
+///
+/// This follows Anki Core's `((days_elapsed as i32) + delta).max(0) as u32`
+/// conversion: elapsed days are first reinterpreted as signed 32-bit, then
+/// the signed delta is added with 32-bit wrapping and the result is floored at
+/// zero.
+int currentDueDay({required int daysElapsed, required int delta}) {
+  if (daysElapsed < 0 || daysElapsed > 0xffffffff) {
+    throw ArgumentError.value(daysElapsed, 'daysElapsed', 'expected a u32');
+  }
+  if (delta < -0x80000000 || delta > 0x7fffffff) {
+    throw ArgumentError.value(delta, 'delta', 'expected an i32');
+  }
+  final elapsedSigned = daysElapsed.toSigned(32);
+  return (elapsedSigned + delta).toSigned(32).clamp(0, 0xffffffff).toInt();
+}
+
+/// Returns whether [due] is a seconds-based Unix timestamp.
+///
+/// Anki Core identifies these values with the strict threshold `due >
+/// 1_000_000_000`; the argument is an i32 in the source API.
+bool isUnixEpochTimestamp(int due) {
+  if (due < -0x80000000 || due > 0x7fffffff) {
+    throw ArgumentError.value(due, 'due', 'expected an i32');
+  }
+  return due > 1_000_000_000;
+}
+
 /// Computes today's scheduler timing using fixed offsets supplied by the host.
 ///
 /// Offsets are whole minutes west of UTC (for example, UTC-6 is `360`, and

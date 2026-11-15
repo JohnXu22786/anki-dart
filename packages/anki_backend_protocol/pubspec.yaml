@@ -1,0 +1,14 @@
+name: anki_backend_protocol
+description: Generated Dart protobuf types for the pinned Anki backend protocol.
+version: 0.1.0
+publish_to: none
+license: AGPL-3.0-or-later
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  protobuf: 3.1.0
+
+dev_dependencies:
+  test: 1.25.8

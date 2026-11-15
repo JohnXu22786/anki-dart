@@ -24,13 +24,58 @@ jobs:
       - name: Resolve dependencies
         run: dart pub get
       - name: Check Dart formatting
-        run: dart format --output=none --set-exit-if-changed .
+        run: dart format --output=none --set-exit-if-changed lib test
       - name: Analyze
         run: dart analyze lib test
       - name: Run tests
         run: dart test
       - name: Validate licenses and COPYING
         run: python3 tool/check_licenses.py
+
+  anki-backend-protocol:
+    name: AGPL Anki protobuf package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - uses: arduino/setup-protoc@v3
+        with:
+          version: 29.3
+      - name: Resolve protocol package dependencies
+        working-directory: packages/anki_backend_protocol
+        run: dart pub get
+      - name: Check generated protocol output
+        run: |
+          packages/anki_backend_protocol/tool/generate.sh
+          git diff --exit-code -- packages/anki_backend_protocol/lib
+          untracked=$(git ls-files --others --exclude-standard -- packages/anki_backend_protocol/lib)
+          if [[ -n "$untracked" ]]; then
+            echo "Generated protocol output includes untracked files:" >&2
+            echo "$untracked" >&2
+            exit 1
+          fi
+      - name: Check formatting
+        working-directory: packages/anki_backend_protocol
+        run: dart format --output=none --set-exit-if-changed lib/anki_backend_protocol.dart test tool
+      - name: Analyze protocol package
+        working-directory: packages/anki_backend_protocol
+        run: dart analyze lib test tool
+      - name: Test wire compatibility
+        working-directory: packages/anki_backend_protocol
+        run: dart test
+      - name: Compile for the web-compatible Dart target
+        working-directory: packages/anki_backend_protocol
+        run: dart compile js tool/compile_smoke.dart -o /tmp/anki_backend_protocol.js
+      - name: Test SPDX normalization and checks
+        working-directory: packages/anki_backend_protocol
+        run: python3 -m unittest discover -s test -p 'test_*.py' -v
+      - name: Validate source license and generated files
+        working-directory: packages/anki_backend_protocol
+        run: python3 tool/check_package.py
 
   flutter-test:
     name: Flutter app tests

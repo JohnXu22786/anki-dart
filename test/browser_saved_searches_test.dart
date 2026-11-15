@@ -26,29 +26,33 @@ import 'package:test/test.dart';
 void main() {
   group('Card Browser saved searches', () {
     test('orders names case-sensitively and looks them up exactly', () {
-      final saved = BrowserSavedSearchesModel(configValues: {
-        'a': 'lowercase',
-        'Z': 'capital z',
-        'A': 'capital a',
-      });
+      final saved = BrowserSavedSearchesModel(
+        configValues: {'a': 'lowercase', 'Z': 'capital z', 'A': 'capital a'},
+      );
 
       expect(saved.searches.map((search) => search.name), ['A', 'Z', 'a']);
-      expect(saved.byName('A'),
-          const BrowserSavedSearch(name: 'A', query: 'capital a'));
-      expect(saved.byName('a'),
-          const BrowserSavedSearch(name: 'a', query: 'lowercase'));
+      expect(
+        saved.byName('A'),
+        const BrowserSavedSearch(name: 'A', query: 'capital a'),
+      );
+      expect(
+        saved.byName('a'),
+        const BrowserSavedSearch(name: 'a', query: 'lowercase'),
+      );
       expect(saved.byName('z'), isNull);
     });
 
     test('rejects a duplicate exact name without overwriting its query', () {
       final saved = BrowserSavedSearchesModel(configValues: {'a': 'original'});
 
-      final result =
-          saved.add(const BrowserSavedSearch(name: 'a', query: 'replacement'));
+      final result = saved.add(
+        const BrowserSavedSearch(name: 'a', query: 'replacement'),
+      );
 
       expect(result.$1, isFalse);
-      expect(
-          result.$2, [const BrowserSavedSearch(name: 'a', query: 'original')]);
+      expect(result.$2, [
+        const BrowserSavedSearch(name: 'a', query: 'original'),
+      ]);
       expect(saved.configValues, {'a': 'original'});
     });
 
@@ -57,7 +61,9 @@ void main() {
 
       final trimmed = saved.add(
         const BrowserSavedSearch(
-            name: 'trimmed', query: '\u00a0\t query \u00a0\t'),
+          name: 'trimmed',
+          query: '\u00a0\t query \u00a0\t',
+        ),
       );
       final preserved = saved.add(
         const BrowserSavedSearch(name: 'next-line', query: '\u0085query\u0085'),
@@ -70,24 +76,27 @@ void main() {
     });
 
     test(
-        'removes an exact match and leaves values unchanged for a missing name',
-        () {
-      final saved =
-          BrowserSavedSearchesModel(configValues: {'a': 'A', 'b': 'B'});
+      'removes an exact match and leaves values unchanged for a missing name',
+      () {
+        final saved = BrowserSavedSearchesModel(
+          configValues: {'a': 'A', 'b': 'B'},
+        );
 
-      final found = saved.removeByName('a');
-      final missing = saved.removeByName('not found');
+        final found = saved.removeByName('a');
+        final missing = saved.removeByName('not found');
 
-      expect(found.$1, isTrue);
-      expect(found.$2, [const BrowserSavedSearch(name: 'b', query: 'B')]);
-      expect(missing.$1, isFalse);
-      expect(missing.$2, found.$2);
-      expect(saved.configValues, {'b': 'B'});
-    });
+        expect(found.$1, isTrue);
+        expect(found.$2, [const BrowserSavedSearch(name: 'b', query: 'B')]);
+        expect(missing.$1, isFalse);
+        expect(missing.$2, found.$2);
+        expect(saved.configValues, {'b': 'B'});
+      },
+    );
 
     test('clear removes all saved-search values', () {
-      final saved =
-          BrowserSavedSearchesModel(configValues: {'a': 'A', 'b': 'B'});
+      final saved = BrowserSavedSearchesModel(
+        configValues: {'a': 'A', 'b': 'B'},
+      );
 
       saved.clear();
 
@@ -103,13 +112,10 @@ void main() {
       ]);
 
       expect(config, {'same': 'last', 'other': 'other query'});
-      expect(
-        browserSavedSearchesFromConfigMap(config),
-        [
-          const BrowserSavedSearch(name: 'other', query: 'other query'),
-          const BrowserSavedSearch(name: 'same', query: 'last'),
-        ],
-      );
+      expect(browserSavedSearchesFromConfigMap(config), [
+        const BrowserSavedSearch(name: 'other', query: 'other query'),
+        const BrowserSavedSearch(name: 'same', query: 'last'),
+      ]);
     });
   });
 }

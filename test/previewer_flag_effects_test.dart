@@ -26,23 +26,26 @@ import 'package:test/test.dart';
 void main() {
   group('PreviewerFlag', () {
     test('retains all AnkiDroid flag codes in source enum order', () {
-      expect(
-        PreviewerFlag.values.map((flag) => flag.code),
-        [0, 1, 2, 3, 4, 5, 6, 7],
-      );
-      expect(
-        PreviewerFlag.values,
-        [
-          PreviewerFlag.none,
-          PreviewerFlag.red,
-          PreviewerFlag.orange,
-          PreviewerFlag.green,
-          PreviewerFlag.blue,
-          PreviewerFlag.pink,
-          PreviewerFlag.turquoise,
-          PreviewerFlag.purple,
-        ],
-      );
+      expect(PreviewerFlag.values.map((flag) => flag.code), [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+      ]);
+      expect(PreviewerFlag.values, [
+        PreviewerFlag.none,
+        PreviewerFlag.red,
+        PreviewerFlag.orange,
+        PreviewerFlag.green,
+        PreviewerFlag.blue,
+        PreviewerFlag.pink,
+        PreviewerFlag.turquoise,
+        PreviewerFlag.purple,
+      ]);
     });
 
     test('fromCode resolves every source flag code', () {
@@ -89,23 +92,29 @@ void main() {
       _expectOrderedWriteAndPublish(effects, cardId, PreviewerFlag.green);
     });
 
-    test('NONE follows the same enum equality rule and still plans a write',
-        () {
-      const cardId = 9;
-      final sameNone = previewerToggleFlagEffects(
-        cardId: cardId,
-        currentFlag: PreviewerFlag.none,
-        requestedFlag: PreviewerFlag.none,
-      );
-      final requestedNone = previewerToggleFlagEffects(
-        cardId: cardId,
-        currentFlag: PreviewerFlag.blue,
-        requestedFlag: PreviewerFlag.none,
-      );
+    test(
+      'NONE follows the same enum equality rule and still plans a write',
+      () {
+        const cardId = 9;
+        final sameNone = previewerToggleFlagEffects(
+          cardId: cardId,
+          currentFlag: PreviewerFlag.none,
+          requestedFlag: PreviewerFlag.none,
+        );
+        final requestedNone = previewerToggleFlagEffects(
+          cardId: cardId,
+          currentFlag: PreviewerFlag.blue,
+          requestedFlag: PreviewerFlag.none,
+        );
 
-      _expectOrderedWriteAndPublish(sameNone, cardId, PreviewerFlag.none);
-      _expectOrderedWriteAndPublish(requestedNone, cardId, PreviewerFlag.none);
-    });
+        _expectOrderedWriteAndPublish(sameNone, cardId, PreviewerFlag.none);
+        _expectOrderedWriteAndPublish(
+          requestedNone,
+          cardId,
+          PreviewerFlag.none,
+        );
+      },
+    );
   });
 }
 
@@ -115,10 +124,10 @@ void _expectOrderedWriteAndPublish(
   PreviewerFlag flag,
 ) {
   expect(effects, hasLength(2));
-  expect(
-    effects.map((effect) => effect.runtimeType),
-    [PreviewerSetUserFlagForCardsEffect, PreviewerPublishFlagOnSuccessEffect],
-  );
+  expect(effects.map((effect) => effect.runtimeType), [
+    PreviewerSetUserFlagForCardsEffect,
+    PreviewerPublishFlagOnSuccessEffect,
+  ]);
   final write = effects[0] as PreviewerSetUserFlagForCardsEffect;
   expect(write.cardIds, [cardId]);
   expect(write.flag, flag);

@@ -38,12 +38,15 @@ void main() {
       );
 
       expect(
-          rendered,
-          const RenderedCard(
-            '<head>bar</head>script<script>baz<body>foo<content>',
-          ));
+        rendered,
+        const RenderedCard(
+          '<head>bar</head>script<script>baz<body>foo<content>',
+        ),
+      );
       expect(
-          rendered.html, '<head>bar</head>script<script>baz<body>foo<content>');
+        rendered.html,
+        '<head>bar</head>script<script>baz<body>foo<content>',
+      );
     });
 
     test('renders long replacement content without truncation', () {
@@ -65,12 +68,9 @@ void main() {
       const repeatedMarkers =
           'P::style::s::style::x::script::j::script::y::class::c::class::z::content::h::content::t';
 
-      final rendered = CardTemplate(repeatedMarkers).render(
-        content: 'C',
-        style: 'S',
-        script: 'J',
-        cardClass: 'K',
-      );
+      final rendered = CardTemplate(
+        repeatedMarkers,
+      ).render(content: 'C', style: 'S', script: 'J', cardClass: 'K');
 
       expect(
         rendered.html,

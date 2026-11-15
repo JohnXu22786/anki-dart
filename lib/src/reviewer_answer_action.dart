@@ -33,11 +33,11 @@ enum AnswerButtons {
 
   /// Returns the command dispatched for this rating in AnkiDroid.
   ViewerCommand toViewerCommand() => switch (this) {
-        AnswerButtons.again => ViewerCommand.ANSWER_AGAIN,
-        AnswerButtons.hard => ViewerCommand.ANSWER_HARD,
-        AnswerButtons.good => ViewerCommand.ANSWER_GOOD,
-        AnswerButtons.easy => ViewerCommand.ANSWER_EASY,
-      };
+    AnswerButtons.again => ViewerCommand.ANSWER_AGAIN,
+    AnswerButtons.hard => ViewerCommand.ANSWER_HARD,
+    AnswerButtons.good => ViewerCommand.ANSWER_GOOD,
+    AnswerButtons.easy => ViewerCommand.ANSWER_EASY,
+  };
 }
 
 /// AnkiDroid's answer action stored in deck configuration.
@@ -59,16 +59,16 @@ enum AutomaticAnswerAction {
 
   /// Decodes a source config integer, defaulting unknown values to burying.
   static AutomaticAnswerAction fromConfigValue(int value) => values.firstWhere(
-        (action) => action.configValue == value,
-        orElse: () => AutomaticAnswerAction.buryCard,
-      );
+    (action) => action.configValue == value,
+    orElse: () => AutomaticAnswerAction.buryCard,
+  );
 
   /// The command for this action, or null for the reminder outcome.
   ViewerCommand? get viewerCommand => switch (this) {
-        AutomaticAnswerAction.buryCard => ViewerCommand.BURY_CARD,
-        AutomaticAnswerAction.answerAgain => ViewerCommand.ANSWER_AGAIN,
-        AutomaticAnswerAction.answerGood => ViewerCommand.ANSWER_GOOD,
-        AutomaticAnswerAction.answerHard => ViewerCommand.ANSWER_HARD,
-        AutomaticAnswerAction.showReminder => null,
-      };
+    AutomaticAnswerAction.buryCard => ViewerCommand.BURY_CARD,
+    AutomaticAnswerAction.answerAgain => ViewerCommand.ANSWER_AGAIN,
+    AutomaticAnswerAction.answerGood => ViewerCommand.ANSWER_GOOD,
+    AutomaticAnswerAction.answerHard => ViewerCommand.ANSWER_HARD,
+    AutomaticAnswerAction.showReminder => null,
+  };
 }

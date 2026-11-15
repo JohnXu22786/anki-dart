@@ -66,20 +66,19 @@ ReviewerBindingValue _resolveOne(
 
 void main() {
   group('ReviewerDefaultBindings', () {
-    test('defines every command and retains the source empty-default branch',
-        () {
-      expect(
-        ReviewerDefaultBindings.byCommand.keys.toSet(),
-        ViewerCommand.values.toSet(),
-      );
+    test(
+      'defines every command and retains the source empty-default branch',
+      () {
+        expect(
+          ReviewerDefaultBindings.byCommand.keys.toSet(),
+          ViewerCommand.values.toSet(),
+        );
 
-      final emptyDefaults = ReviewerDefaultBindings.byCommand.entries
-          .where((entry) => entry.value.isEmpty)
-          .map((entry) => entry.key)
-          .toSet();
-      expect(
-        emptyDefaults,
-        {
+        final emptyDefaults = ReviewerDefaultBindings.byCommand.entries
+            .where((entry) => entry.value.isEmpty)
+            .map((entry) => entry.key)
+            .toSet();
+        expect(emptyDefaults, {
           ViewerCommand.SHOW_ANSWER,
           ViewerCommand.DELETE,
           ViewerCommand.EXIT,
@@ -102,45 +101,50 @@ void main() {
           ViewerCommand.USER_ACTION_7,
           ViewerCommand.USER_ACTION_8,
           ViewerCommand.USER_ACTION_9,
-        },
-      );
-      for (final command in emptyDefaults) {
-        expect(
-          ReviewerDefaultBindings.resolve(
-            command,
-            androidKeyCodes: _hostKeyCodes,
-          ),
-          isEmpty,
-        );
-      }
-    });
+        });
+        for (final command in emptyDefaults) {
+          expect(
+            ReviewerDefaultBindings.resolve(
+              command,
+              androidKeyCodes: _hostKeyCodes,
+            ),
+            isEmpty,
+          );
+        }
+      },
+    );
 
-    test('preserves answer-rating key names, order, and answer-side metadata',
-        () {
-      const expected = <ViewerCommand, List<int>>{
-        ViewerCommand.ANSWER_AGAIN: [1001, 8, 145],
-        ViewerCommand.ANSWER_HARD: [1002, 9, 146],
-        ViewerCommand.ANSWER_GOOD: [1003, 10, 147, 23, 62, 66, 160],
-        ViewerCommand.ANSWER_EASY: [1004, 11, 148],
-      };
-      for (final entry in expected.entries) {
-        final bindings = ReviewerDefaultBindings.resolve(
-          entry.key,
-          androidKeyCodes: _hostKeyCodes,
-        );
-        expect(
-          bindings.map(
-              (binding) => (binding.binding as ReviewerKeyCodeBinding).keyCode),
-          entry.value,
-          reason: entry.key.name,
-        );
-        expect(
-          bindings.every((binding) => binding.side == ReviewerCardSide.answer),
-          isTrue,
-          reason: entry.key.name,
-        );
-      }
-    });
+    test(
+      'preserves answer-rating key names, order, and answer-side metadata',
+      () {
+        const expected = <ViewerCommand, List<int>>{
+          ViewerCommand.ANSWER_AGAIN: [1001, 8, 145],
+          ViewerCommand.ANSWER_HARD: [1002, 9, 146],
+          ViewerCommand.ANSWER_GOOD: [1003, 10, 147, 23, 62, 66, 160],
+          ViewerCommand.ANSWER_EASY: [1004, 11, 148],
+        };
+        for (final entry in expected.entries) {
+          final bindings = ReviewerDefaultBindings.resolve(
+            entry.key,
+            androidKeyCodes: _hostKeyCodes,
+          );
+          expect(
+            bindings.map(
+              (binding) => (binding.binding as ReviewerKeyCodeBinding).keyCode,
+            ),
+            entry.value,
+            reason: entry.key.name,
+          );
+          expect(
+            bindings.every(
+              (binding) => binding.side == ReviewerCardSide.answer,
+            ),
+            isTrue,
+            reason: entry.key.name,
+          );
+        }
+      },
+    );
 
     test('keeps Unicode defaults and their app-defined shift matching', () {
       for (final entry in {
@@ -158,14 +162,12 @@ void main() {
         );
         expect(binding.side, ReviewerCardSide.both);
         expect(
-          (binding.binding as ReviewerUnicodeCharacterBinding)
-              .modifierKeys
+          (binding.binding as ReviewerUnicodeCharacterBinding).modifierKeys
               .shiftMatches(true),
           isTrue,
         );
         expect(
-          (binding.binding as ReviewerUnicodeCharacterBinding)
-              .modifierKeys
+          (binding.binding as ReviewerUnicodeCharacterBinding).modifierKeys
               .shiftMatches(false),
           isTrue,
         );
@@ -246,7 +248,8 @@ void main() {
       );
       expect(
         playMedia.map(
-            (binding) => (binding.binding as ReviewerKeyCodeBinding).keyCode),
+          (binding) => (binding.binding as ReviewerKeyCodeBinding).keyCode,
+        ),
         [46, 135],
       );
 
@@ -266,15 +269,18 @@ void main() {
         );
         expect(
           bindings.map(
-              (binding) => (binding.binding as ReviewerKeyCodeBinding).keyCode),
+            (binding) => (binding.binding as ReviewerKeyCodeBinding).keyCode,
+          ),
           entry.value,
           reason: entry.key.name,
         );
         expect(
-          bindings.every((binding) =>
-              binding.side == ReviewerCardSide.both &&
-              (binding.binding as ReviewerKeyCodeBinding).modifierKeys ==
-                  ReviewerModifierKeys.control),
+          bindings.every(
+            (binding) =>
+                binding.side == ReviewerCardSide.both &&
+                (binding.binding as ReviewerKeyCodeBinding).modifierKeys ==
+                    ReviewerModifierKeys.control,
+          ),
           isTrue,
           reason: entry.key.name,
         );
@@ -292,7 +298,8 @@ void main() {
       );
       expect(
         bindings.map(
-            (binding) => (binding.binding as ReviewerKeyCodeBinding).keyCode),
+          (binding) => (binding.binding as ReviewerKeyCodeBinding).keyCode,
+        ),
         [1001, 8, 8],
       );
     });
@@ -318,18 +325,14 @@ void main() {
 
       expect(
         allBindings,
-        contains(
-          ReviewerBindingValue.forUnicodeCharacter('@'.codeUnitAt(0)),
+        contains(ReviewerBindingValue.forUnicodeCharacter('@'.codeUnitAt(0))),
+      );
+      expect(allBindings, contains(ReviewerBindingValue.forKeyCode(8)));
+      expect(
+        allBindings,
+        isNot(
+          contains(ReviewerBindingValue.forUnicodeCharacter('l'.codeUnitAt(0))),
         ),
-      );
-      expect(
-        allBindings,
-        contains(ReviewerBindingValue.forKeyCode(8)),
-      );
-      expect(
-        allBindings,
-        isNot(contains(
-            ReviewerBindingValue.forUnicodeCharacter('l'.codeUnitAt(0)))),
       );
       expect(
         allBindings,

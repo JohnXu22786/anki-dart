@@ -36,9 +36,9 @@ final class ReviewTimeboxTracker {
     required int Function() intTimeSeconds,
     required int Function() timeboxSeconds,
     required int Function() numberOfAnswersRecorded,
-  })  : _intTimeSeconds = intTimeSeconds,
-        _timeboxSeconds = timeboxSeconds,
-        _numberOfAnswersRecorded = numberOfAnswersRecorded;
+  }) : _intTimeSeconds = intTimeSeconds,
+       _timeboxSeconds = timeboxSeconds,
+       _numberOfAnswersRecorded = numberOfAnswersRecorded;
 
   final int Function() _intTimeSeconds;
   final int Function() _timeboxSeconds;

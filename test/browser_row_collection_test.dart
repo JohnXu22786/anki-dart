@@ -77,32 +77,33 @@ void main() {
   });
 
   group('BrowserRowCollection', () {
-    test('replaceWith and reset mutate the supplied list and retain aliasing',
-        () {
-      final backing = [const BrowserRowId(10)];
-      final rows = BrowserRowCollection(BrowserColumnMode.cards, backing);
+    test(
+      'replaceWith and reset mutate the supplied list and retain aliasing',
+      () {
+        final backing = [const BrowserRowId(10)];
+        final rows = BrowserRowCollection(BrowserColumnMode.cards, backing);
 
-      rows.replaceWith(BrowserColumnMode.notes, [
-        const BrowserRowId(20),
-        const BrowserRowId(30),
-      ]);
-      expect(rows.mode, BrowserColumnMode.notes);
-      expect(backing, [const BrowserRowId(20), const BrowserRowId(30)]);
-      expect(rows, [const BrowserRowId(20), const BrowserRowId(30)]);
+        rows.replaceWith(BrowserColumnMode.notes, [
+          const BrowserRowId(20),
+          const BrowserRowId(30),
+        ]);
+        expect(rows.mode, BrowserColumnMode.notes);
+        expect(backing, [const BrowserRowId(20), const BrowserRowId(30)]);
+        expect(rows, [const BrowserRowId(20), const BrowserRowId(30)]);
 
-      backing.add(const BrowserRowId(40));
-      expect(rows.last, const BrowserRowId(40));
+        backing.add(const BrowserRowId(40));
+        expect(rows.last, const BrowserRowId(40));
 
-      rows.reset();
-      expect(rows.mode, BrowserColumnMode.notes);
-      expect(backing, isEmpty);
-    });
+        rows.reset();
+        expect(rows.mode, BrowserColumnMode.notes);
+        expect(backing, isEmpty);
+      },
+    );
 
     test('replaceWith preserves source behavior when given its own list', () {
-      final rows = BrowserRowCollection(
-        BrowserColumnMode.cards,
-        [const BrowserRowId(10)],
-      );
+      final rows = BrowserRowCollection(BrowserColumnMode.cards, [
+        const BrowserRowId(10),
+      ]);
 
       rows.replaceWith(BrowserColumnMode.notes, rows);
 
@@ -133,38 +134,41 @@ void main() {
     });
 
     test(
-        'queryCardIds expands notes sequentially and preserves order/duplicates',
-        () async {
-      final rows = BrowserRowCollection(BrowserColumnMode.notes, [
-        const BrowserRowId(10),
-        const BrowserRowId(20),
-        const BrowserRowId(10),
-      ]);
-      final calls = <String>[];
+      'queryCardIds expands notes sequentially and preserves order/duplicates',
+      () async {
+        final rows = BrowserRowCollection(BrowserColumnMode.notes, [
+          const BrowserRowId(10),
+          const BrowserRowId(20),
+          const BrowserRowId(10),
+        ]);
+        final calls = <String>[];
 
-      final cardIds = await rows.queryCardIds(cardIdsOfNote: (noteId) async {
-        calls.add('start $noteId');
-        await Future<void>.delayed(Duration.zero);
-        calls.add('end $noteId');
-        return noteId == 10 ? [101, 102] : [201, 101];
-      });
+        final cardIds = await rows.queryCardIds(
+          cardIdsOfNote: (noteId) async {
+            calls.add('start $noteId');
+            await Future<void>.delayed(Duration.zero);
+            calls.add('end $noteId');
+            return noteId == 10 ? [101, 102] : [201, 101];
+          },
+        );
 
-      expect(calls, [
-        'start 10',
-        'end 10',
-        'start 20',
-        'end 20',
-        'start 10',
-        'end 10',
-      ]);
-      expect(cardIds, [101, 102, 201, 101, 101, 102]);
+        expect(calls, [
+          'start 10',
+          'end 10',
+          'start 20',
+          'end 20',
+          'start 10',
+          'end 10',
+        ]);
+        expect(cardIds, [101, 102, 201, 101, 101, 102]);
 
-      final cards = BrowserRowCollection(BrowserColumnMode.cards, [
-        const BrowserRowId(101),
-        const BrowserRowId(102),
-      ]);
-      expect(await cards.queryCardIds(), [101, 102]);
-    });
+        final cards = BrowserRowCollection(BrowserColumnMode.cards, [
+          const BrowserRowId(101),
+          const BrowserRowId(102),
+        ]);
+        expect(await cards.queryCardIds(), [101, 102]);
+      },
+    );
 
     test('empty Notes rows do not require a card lookup', () async {
       final rows = BrowserRowCollection(BrowserColumnMode.notes, []);
@@ -173,126 +177,145 @@ void main() {
       expect(await rows.queryOneCardIdPerRow(), isEmpty);
     });
 
-    test('queryCardIds keeps note IDs captured before awaiting lookups',
-        () async {
-      final rows = BrowserRowCollection(BrowserColumnMode.notes, [
-        const BrowserRowId(10),
-        const BrowserRowId(20),
-      ]);
-      final firstLookup = Completer<List<int>>();
-      final firstLookupStarted = Completer<void>();
-      final lookedUp = <int>[];
+    test(
+      'queryCardIds keeps note IDs captured before awaiting lookups',
+      () async {
+        final rows = BrowserRowCollection(BrowserColumnMode.notes, [
+          const BrowserRowId(10),
+          const BrowserRowId(20),
+        ]);
+        final firstLookup = Completer<List<int>>();
+        final firstLookupStarted = Completer<void>();
+        final lookedUp = <int>[];
 
-      final pending = rows.queryCardIds(cardIdsOfNote: (noteId) {
-        lookedUp.add(noteId);
-        if (noteId == 10) {
-          firstLookupStarted.complete();
-          return firstLookup.future;
-        }
-        return [noteId * 10];
-      });
-      await firstLookupStarted.future;
-      rows.replaceWith(BrowserColumnMode.notes, [const BrowserRowId(99)]);
-      firstLookup.complete([101]);
+        final pending = rows.queryCardIds(
+          cardIdsOfNote: (noteId) {
+            lookedUp.add(noteId);
+            if (noteId == 10) {
+              firstLookupStarted.complete();
+              return firstLookup.future;
+            }
+            return [noteId * 10];
+          },
+        );
+        await firstLookupStarted.future;
+        rows.replaceWith(BrowserColumnMode.notes, [const BrowserRowId(99)]);
+        firstLookup.complete([101]);
 
-      expect(await pending, [101, 200]);
-      expect(lookedUp, [10, 20]);
-    });
+        expect(await pending, [101, 200]);
+        expect(lookedUp, [10, 20]);
+      },
+    );
 
-    test('queryOneCardIdPerRow picks the first note card and fails if empty',
-        () async {
-      final rows = BrowserRowCollection(BrowserColumnMode.notes, [
-        const BrowserRowId(10),
-        const BrowserRowId(20),
-      ]);
-      expect(
-        await rows.queryOneCardIdPerRow(
-          cardIdsOfNote: (noteId) => noteId == 10 ? [101, 102] : [201],
-        ),
-        [101, 201],
-      );
-      await expectLater(
-        rows.queryOneCardIdPerRow(cardIdsOfNote: (_) => <int>[]),
-        throwsStateError,
-      );
+    test(
+      'queryOneCardIdPerRow picks the first note card and fails if empty',
+      () async {
+        final rows = BrowserRowCollection(BrowserColumnMode.notes, [
+          const BrowserRowId(10),
+          const BrowserRowId(20),
+        ]);
+        expect(
+          await rows.queryOneCardIdPerRow(
+            cardIdsOfNote: (noteId) => noteId == 10 ? [101, 102] : [201],
+          ),
+          [101, 201],
+        );
+        await expectLater(
+          rows.queryOneCardIdPerRow(cardIdsOfNote: (_) => <int>[]),
+          throwsStateError,
+        );
 
-      final cards = BrowserRowCollection(BrowserColumnMode.cards, [
-        const BrowserRowId(101),
-      ]);
-      expect(await cards.queryOneCardIdPerRow(), [101]);
-    });
+        final cards = BrowserRowCollection(BrowserColumnMode.cards, [
+          const BrowserRowId(101),
+        ]);
+        expect(await cards.queryOneCardIdPerRow(), [101]);
+      },
+    );
 
-    test('queryOneCardIdPerRow keeps note IDs captured before awaiting',
-        () async {
-      final rows = BrowserRowCollection(BrowserColumnMode.notes, [
-        const BrowserRowId(10),
-        const BrowserRowId(20),
-      ]);
-      final firstLookup = Completer<List<int>>();
-      final firstLookupStarted = Completer<void>();
-      final lookedUp = <int>[];
+    test(
+      'queryOneCardIdPerRow keeps note IDs captured before awaiting',
+      () async {
+        final rows = BrowserRowCollection(BrowserColumnMode.notes, [
+          const BrowserRowId(10),
+          const BrowserRowId(20),
+        ]);
+        final firstLookup = Completer<List<int>>();
+        final firstLookupStarted = Completer<void>();
+        final lookedUp = <int>[];
 
-      final pending = rows.queryOneCardIdPerRow(cardIdsOfNote: (noteId) {
-        lookedUp.add(noteId);
-        if (noteId == 10) {
-          firstLookupStarted.complete();
-          return firstLookup.future;
-        }
-        return [noteId * 10];
-      });
-      await firstLookupStarted.future;
-      rows.reset();
-      firstLookup.complete([101]);
+        final pending = rows.queryOneCardIdPerRow(
+          cardIdsOfNote: (noteId) {
+            lookedUp.add(noteId);
+            if (noteId == 10) {
+              firstLookupStarted.complete();
+              return firstLookup.future;
+            }
+            return [noteId * 10];
+          },
+        );
+        await firstLookupStarted.future;
+        rows.reset();
+        firstLookup.complete([101]);
 
-      expect(await pending, [101, 200]);
-      expect(lookedUp, [10, 20]);
-    });
+        expect(await pending, [101, 200]);
+        expect(lookedUp, [10, 20]);
+      },
+    );
 
-    test('queryCardIdsAt selects one card row or expands one note row',
-        () async {
-      final cards = BrowserRowCollection(BrowserColumnMode.cards, [
-        const BrowserRowId(101),
-        const BrowserRowId(102),
-      ]);
-      expect(await cards.queryCardIdsAt(1), [102]);
+    test(
+      'queryCardIdsAt selects one card row or expands one note row',
+      () async {
+        final cards = BrowserRowCollection(BrowserColumnMode.cards, [
+          const BrowserRowId(101),
+          const BrowserRowId(102),
+        ]);
+        expect(await cards.queryCardIdsAt(1), [102]);
 
-      final notes = BrowserRowCollection(BrowserColumnMode.notes, [
-        const BrowserRowId(10),
-        const BrowserRowId(20),
-      ]);
-      final queried = <int>[];
-      expect(
-        await notes.queryCardIdsAt(1, cardIdsOfNote: (noteId) {
-          queried.add(noteId);
-          return [201, 202];
-        }),
-        [201, 202],
-      );
-      expect(queried, [20]);
-    });
+        final notes = BrowserRowCollection(BrowserColumnMode.notes, [
+          const BrowserRowId(10),
+          const BrowserRowId(20),
+        ]);
+        final queried = <int>[];
+        expect(
+          await notes.queryCardIdsAt(
+            1,
+            cardIdsOfNote: (noteId) {
+              queried.add(noteId);
+              return [201, 202];
+            },
+          ),
+          [201, 202],
+        );
+        expect(queried, [20]);
+      },
+    );
 
-    test('browserCardIdAtPosition returns the first query result unchanged',
-        () async {
-      final queriedPositions = <int>[];
+    test(
+      'browserCardIdAtPosition returns the first query result unchanged',
+      () async {
+        final queriedPositions = <int>[];
 
-      final cardId = await browserCardIdAtPosition(
-        index: 7,
-        queryCardIdsAt: (index) {
-          queriedPositions.add(index);
-          return [301, 302];
-        },
-      );
+        final cardId = await browserCardIdAtPosition(
+          index: 7,
+          queryCardIdsAt: (index) {
+            queriedPositions.add(index);
+            return [301, 302];
+          },
+        );
 
-      expect(cardId, 301);
-      expect(queriedPositions, [7]);
-    });
+        expect(cardId, 301);
+        expect(queriedPositions, [7]);
+      },
+    );
 
-    test('browserCardIdAtPosition preserves first failure on empty results',
-        () async {
-      await expectLater(
-        browserCardIdAtPosition(index: 0, queryCardIdsAt: (_) => []),
-        throwsStateError,
-      );
-    });
+    test(
+      'browserCardIdAtPosition preserves first failure on empty results',
+      () async {
+        await expectLater(
+          browserCardIdAtPosition(index: 0, queryCardIdsAt: (_) => []),
+          throwsStateError,
+        );
+      },
+    );
   });
 }

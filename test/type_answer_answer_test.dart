@@ -39,10 +39,7 @@ void main() {
 
     test('inserts dollar signs and backslashes literally', () {
       const comparison = r'<code>$! \saved\path</code>';
-      expect(
-        filterTypeAnswerAnswer('[[type:Back]]', comparison),
-        comparison,
-      );
+      expect(filterTypeAnswerAnswer('[[type:Back]]', comparison), comparison);
     });
 
     test('empty comparison removes markers and empty answer stays empty', () {
@@ -53,24 +50,34 @@ void main() {
       expect(filterTypeAnswerAnswer('', '<code>anything</code>'), '');
     });
 
-    test('leaves empty, malformed, case-mismatched, and line markers intact',
-        () {
-      for (final text in [
-        '',
-        'before [[type:]] after',
-        'before [[type:Back after',
-        '[[TYPE:Back]]',
-        for (final lineTerminator in ['\n', '\r', '\u0085', '\u2028', '\u2029'])
-          'before [[type:Back${lineTerminator}after]]',
-      ]) {
-        expect(filterTypeAnswerAnswer(text, '<code>value</code>'), text);
-      }
-    });
+    test(
+      'leaves empty, malformed, case-mismatched, and line markers intact',
+      () {
+        for (final text in [
+          '',
+          'before [[type:]] after',
+          'before [[type:Back after',
+          '[[TYPE:Back]]',
+          for (final lineTerminator in [
+            '\n',
+            '\r',
+            '\u0085',
+            '\u2028',
+            '\u2029',
+          ])
+            'before [[type:Back${lineTerminator}after]]',
+        ]) {
+          expect(filterTypeAnswerAnswer(text, '<code>value</code>'), text);
+        }
+      },
+    );
 
     test('lazy payload ends at the first close and keeps subsequent text', () {
       expect(
         filterTypeAnswerAnswer(
-            'before [[type:Back]] after]] end', '<code>x</code>'),
+          'before [[type:Back]] after]] end',
+          '<code>x</code>',
+        ),
         'before <code>x</code> after]] end',
       );
     });

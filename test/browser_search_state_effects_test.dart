@@ -43,10 +43,10 @@ void main() {
 
       final effects = browserSyncStateEffects(request);
 
-      expect(
-        effects.map((effect) => effect.runtimeType),
-        [BrowserFilterUpdateEffect, BrowserSearchSubmittedEffect],
-      );
+      expect(effects.map((effect) => effect.runtimeType), [
+        BrowserFilterUpdateEffect,
+        BrowserSearchSubmittedEffect,
+      ]);
       final filterEffect = effects[0] as BrowserFilterUpdateEffect;
       expect(filterEffect.update, isA<BrowserFilterUpdateSystem>());
       expect(identical(filterEffect.update.state, filters), isTrue);
@@ -97,23 +97,22 @@ void main() {
 
       final effects = browserResetSearchStateEffects(request);
 
-      expect(
-        effects.map((effect) => effect.runtimeType),
-        [
-          BrowserAdvancedSearchModeEffect,
-          BrowserBasicSearchTextEffect,
-          BrowserAdvancedSearchTextEffect,
-          BrowserFilterUpdateEffect,
-          BrowserSearchScreenOpenEffect,
-          BrowserSavedStateKeyRemovalEffect,
-          BrowserSavedStateKeyRemovalEffect,
-          BrowserSavedStateKeyRemovalEffect,
-        ],
-      );
+      expect(effects.map((effect) => effect.runtimeType), [
+        BrowserAdvancedSearchModeEffect,
+        BrowserBasicSearchTextEffect,
+        BrowserAdvancedSearchTextEffect,
+        BrowserFilterUpdateEffect,
+        BrowserSearchScreenOpenEffect,
+        BrowserSavedStateKeyRemovalEffect,
+        BrowserSavedStateKeyRemovalEffect,
+        BrowserSavedStateKeyRemovalEffect,
+      ]);
       expect((effects[0] as BrowserAdvancedSearchModeEffect).enabled, isFalse);
       expect((effects[1] as BrowserBasicSearchTextEffect).text, request.query);
       expect(
-          (effects[2] as BrowserAdvancedSearchTextEffect).text, request.query);
+        (effects[2] as BrowserAdvancedSearchTextEffect).text,
+        request.query,
+      );
       final filterEffect = effects[3] as BrowserFilterUpdateEffect;
       expect(filterEffect.update, isA<BrowserFilterUpdateSystem>());
       expect(identical(filterEffect.update.state, filters), isTrue);
@@ -141,14 +140,11 @@ void main() {
           .map((effect) => effect.key)
           .toList();
 
-      expect(
-        removedKeys,
-        [
-          browserAdvancedSearchStateKey,
-          browserBasicSearchTextStateKey,
-          browserAdvancedSearchTextStateKey,
-        ],
-      );
+      expect(removedKeys, [
+        browserAdvancedSearchStateKey,
+        browserBasicSearchTextStateKey,
+        browserAdvancedSearchTextStateKey,
+      ]);
       expect(removedKeys, isNot(contains('historyExpanded')));
     });
 
@@ -177,14 +173,11 @@ void main() {
           textState: textState,
         );
 
-        expect(
-          effects.map((effect) => effect.runtimeType),
-          [
-            BrowserFilterUpdateEffect,
-            BrowserBasicSearchTextEffect,
-            BrowserSearchScreenOpenEffect,
-          ],
-        );
+        expect(effects.map((effect) => effect.runtimeType), [
+          BrowserFilterUpdateEffect,
+          BrowserBasicSearchTextEffect,
+          BrowserSearchScreenOpenEffect,
+        ]);
         final update = (effects[0] as BrowserFilterUpdateEffect).update;
         expect(update, isA<BrowserFilterUpdateUser>());
         expect(identical(update.state, filters), isFalse);
@@ -202,8 +195,10 @@ void main() {
         );
         expect((effects[2] as BrowserSearchScreenOpenEffect).isOpen, isFalse);
 
-        final after =
-            effects.fold(textState, browserSearchTextStateAfterEffect);
+        final after = effects.fold(
+          textState,
+          browserSearchTextStateAfterEffect,
+        );
         expect(after.basicText, '  sample query \r end  ');
         expect(after.advancedText, 'keep advanced');
         expect(
@@ -230,20 +225,19 @@ void main() {
           textState: textState,
         );
 
-        expect(
-          effects.map((effect) => effect.runtimeType),
-          [
-            BrowserFilterUpdateEffect,
-            BrowserAdvancedSearchTextEffect,
-            BrowserSearchScreenOpenEffect,
-          ],
-        );
+        expect(effects.map((effect) => effect.runtimeType), [
+          BrowserFilterUpdateEffect,
+          BrowserAdvancedSearchTextEffect,
+          BrowserSearchScreenOpenEffect,
+        ]);
         expect(
           (effects[1] as BrowserAdvancedSearchTextEffect).text,
           'type: cloze',
         );
-        final after =
-            effects.fold(textState, browserSearchTextStateAfterEffect);
+        final after = effects.fold(
+          textState,
+          browserSearchTextStateAfterEffect,
+        );
         expect(after.basicText, 'keep basic');
         expect(after.advancedText, 'type: cloze');
         expect((effects.last as BrowserSearchScreenOpenEffect).isOpen, isFalse);

@@ -63,15 +63,12 @@ void main() {
         noteTypeMap: noteTypeMap,
       );
 
-      expect(
-        effects.map((effect) => effect.runtimeType),
-        [
-          BrowserFilterUpdateEffect,
-          BrowserBasicSearchTextEffect,
-          BrowserFilterUpdateEffect,
-          BrowserSearchScreenOpenEffect,
-        ],
-      );
+      expect(effects.map((effect) => effect.runtimeType), [
+        BrowserFilterUpdateEffect,
+        BrowserBasicSearchTextEffect,
+        BrowserFilterUpdateEffect,
+        BrowserSearchScreenOpenEffect,
+      ]);
 
       final textFilterUpdate = (effects[0] as BrowserFilterUpdateEffect).update;
       expect(textFilterUpdate, isA<BrowserFilterUpdateUser>());

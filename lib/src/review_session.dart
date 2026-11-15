@@ -146,7 +146,7 @@ abstract interface class ReviewScheduler<TSchedulingSnapshot> {
   /// replace its scheduling snapshot. An adapter without a pending hook can
   /// return its current queue state immediately.
   Future<ReviewQueueState<TSchedulingSnapshot>?>
-      waitForCurrentCardStateMutation();
+  waitForCurrentCardStateMutation();
 
   /// Applies [rating] to [state] using the backend's scheduling rules.
   Future<void> answerCard(
@@ -189,7 +189,8 @@ class ReviewSession<TSchedulingSnapshot> {
   /// The visible card side while a new queue state loads or a timebox pauses,
   /// or `null` if there is no displayed card.
   String? get visibleContent {
-    final showingLastDisplayed = _current == null &&
+    final showingLastDisplayed =
+        _current == null &&
         (_phase == ReviewSessionPhase.loading ||
             _phase == ReviewSessionPhase.timeboxReached);
     final card = showingLastDisplayed ? _lastDisplayedCard : _current?.card;
@@ -206,37 +207,37 @@ class ReviewSession<TSchedulingSnapshot> {
 
   /// Loads the first scheduler-selected card. Repeated starts are ignored.
   Future<void> start() => _serialize(() async {
-        if (_phase != ReviewSessionPhase.idle) return;
-        _phase = ReviewSessionPhase.loading;
-        await _loadCurrentQueueState();
-      });
+    if (_phase != ReviewSessionPhase.idle) return;
+    _phase = ReviewSessionPhase.loading;
+    await _loadCurrentQueueState();
+  });
 
   /// Shows the answer once the question is active; repeated calls are ignored.
   /// A non-null queue state returned by the mutation hook becomes current
   /// before the answer side is exposed, matching the source's next-time refresh.
   /// If the hook returns no state, the selected card remains current.
   Future<void> showAnswer() => _serialize(() async {
-        if (_phase != ReviewSessionPhase.question) return;
-        final stateAfterMutation =
-            await scheduler.waitForCurrentCardStateMutation();
-        if (stateAfterMutation != null) _current = stateAfterMutation;
-        _phase = ReviewSessionPhase.answer;
-        _lastDisplayedSide = ReviewSessionPhase.answer;
-      });
+    if (_phase != ReviewSessionPhase.question) return;
+    final stateAfterMutation = await scheduler
+        .waitForCurrentCardStateMutation();
+    if (stateAfterMutation != null) _current = stateAfterMutation;
+    _phase = ReviewSessionPhase.answer;
+    _lastDisplayedSide = ReviewSessionPhase.answer;
+  });
 
   /// Retries a queue read that failed while the session was loading.
   Future<void> retryCurrentQueueState() => _serialize(() async {
-        if (_phase != ReviewSessionPhase.loading) return;
-        await _loadCurrentQueueState();
-      });
+    if (_phase != ReviewSessionPhase.loading) return;
+    await _loadCurrentQueueState();
+  });
 
   /// Reloads the queue after the caller continues from a timebox event.
   Future<void> continueAfterTimebox() => _serialize(() async {
-        if (_phase != ReviewSessionPhase.timeboxReached) return;
-        _phase = ReviewSessionPhase.loading;
-        _timeboxReached = null;
-        await _loadCurrentQueueState();
-      });
+    if (_phase != ReviewSessionPhase.timeboxReached) return;
+    _phase = ReviewSessionPhase.loading;
+    _timeboxReached = null;
+    await _loadCurrentQueueState();
+  });
 
   /// Sends a rating to the scheduler, then loads the next queue item.
   ///
@@ -244,23 +245,23 @@ class ReviewSession<TSchedulingSnapshot> {
   /// answer side has not been shown. If the backend rejects the answer, the
   /// current card and side remain available.
   Future<void> answerCard(ReviewRating rating) => _serialize(() async {
-        final state = _current;
-        if (state == null ||
-            _phase == ReviewSessionPhase.idle ||
-            _phase == ReviewSessionPhase.loading ||
-            _phase == ReviewSessionPhase.finished) {
-          return;
-        }
+    final state = _current;
+    if (state == null ||
+        _phase == ReviewSessionPhase.idle ||
+        _phase == ReviewSessionPhase.loading ||
+        _phase == ReviewSessionPhase.finished) {
+      return;
+    }
 
-        final currentState = await scheduler.waitForCurrentCardStateMutation();
-        if (currentState == null) return;
-        _current = currentState;
-        await scheduler.answerCard(currentState, rating);
-        _current = null;
-        _timeboxReached = null;
-        _phase = ReviewSessionPhase.loading;
-        await _loadCurrentQueueState();
-      });
+    final currentState = await scheduler.waitForCurrentCardStateMutation();
+    if (currentState == null) return;
+    _current = currentState;
+    await scheduler.answerCard(currentState, rating);
+    _current = null;
+    _timeboxReached = null;
+    _phase = ReviewSessionPhase.loading;
+    await _loadCurrentQueueState();
+  });
 
   Future<void> _loadCurrentQueueState() async {
     final next = await scheduler.currentQueueState();

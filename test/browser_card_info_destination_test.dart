@@ -30,10 +30,7 @@ void main() {
     });
 
     test('an invalid first card ID does not fall through to a later row', () {
-      expect(
-        browserCardInfoDestination(selectedCardIds: [null, 42]),
-        isNull,
-      );
+      expect(browserCardInfoDestination(selectedCardIds: [null, 42]), isNull);
     });
 
     test('the first card ID passes through with the browser entry point', () {

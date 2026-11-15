@@ -63,8 +63,12 @@ void main() {
 
     test('emits each nondefault scale independently', () {
       expect(
-        appendCardAppearanceCss('',
-            fontScale: 1.3, cardZoom: 100, imageZoom: 100),
+        appendCardAppearanceCss(
+          '',
+          fontScale: 1.3,
+          cardZoom: 100,
+          imageZoom: 100,
+        ),
         'html { zoom: 1.3 }\n',
       );
       expect(
@@ -72,8 +76,12 @@ void main() {
         'body { zoom: 0.8 }\n',
       );
       expect(
-        appendCardAppearanceCss('',
-            fontScale: 1, cardZoom: 100, imageZoom: 120),
+        appendCardAppearanceCss(
+          '',
+          fontScale: 1,
+          cardZoom: 100,
+          imageZoom: 120,
+        ),
         'img { zoom: 1.2 }\n',
       );
     });
@@ -109,11 +117,7 @@ void main() {
   group('composeCardAppearanceStyle', () {
     test('uses the exact custom font CSS when zoom values are default', () {
       expect(
-        composeCardAppearanceStyle(
-          fontScale: 1,
-          cardZoom: 100,
-          imageZoom: 100,
-        ),
+        composeCardAppearanceStyle(fontScale: 1, cardZoom: 100, imageZoom: 100),
         "BODY {font-family: 'OpenSans';font-weight: normal;"
         'font-style: normal;font-stretch: normal;}',
       );
@@ -139,7 +143,8 @@ void main() {
 
   group('fixCardAppearanceBoldStyle', () {
     test('replaces every exact source substring and leaves near matches', () {
-      const input = 'a{font-weight:600;}b{font-weight:600;}c{font-weight: 600;}'
+      const input =
+          'a{font-weight:600;}b{font-weight:600;}c{font-weight: 600;}'
           'd{FONT-WEIGHT:600;}e{font-weight:600 }';
 
       expect(
@@ -151,41 +156,31 @@ void main() {
   });
 
   group('cardAppearanceCssClasses', () {
-    test('preserves theme suffixes and centering order for each projection',
-        () {
-      final cases = <(CardAppearanceThemeProjection, String)>[
-        (CardAppearanceThemeProjection.dayOther, ''),
-        (
-          CardAppearanceThemeProjection.dayPlain,
-          ' ankidroid_plain_mode',
-        ),
-        (
-          CardAppearanceThemeProjection.nightOther,
-          ' night_mode nightMode',
-        ),
-        (
-          CardAppearanceThemeProjection.nightDark,
-          ' night_mode nightMode ankidroid_dark_mode',
-        ),
-      ];
+    test(
+      'preserves theme suffixes and centering order for each projection',
+      () {
+        final cases = <(CardAppearanceThemeProjection, String)>[
+          (CardAppearanceThemeProjection.dayOther, ''),
+          (CardAppearanceThemeProjection.dayPlain, ' ankidroid_plain_mode'),
+          (CardAppearanceThemeProjection.nightOther, ' night_mode nightMode'),
+          (
+            CardAppearanceThemeProjection.nightDark,
+            ' night_mode nightMode ankidroid_dark_mode',
+          ),
+        ];
 
-      for (final (theme, expectedSuffix) in cases) {
-        expect(
-          cardAppearanceCssClasses(
-            theme: theme,
-            centerVertically: false,
-          ),
-          expectedSuffix,
-        );
-        expect(
-          cardAppearanceCssClasses(
-            theme: theme,
-            centerVertically: true,
-          ),
-          ' vertically_centered$expectedSuffix',
-        );
-      }
-    });
+        for (final (theme, expectedSuffix) in cases) {
+          expect(
+            cardAppearanceCssClasses(theme: theme, centerVertically: false),
+            expectedSuffix,
+          );
+          expect(
+            cardAppearanceCssClasses(theme: theme, centerVertically: true),
+            ' vertically_centered$expectedSuffix',
+          );
+        }
+      },
+    );
   });
 
   group('cardAppearanceClassName', () {
@@ -200,16 +195,18 @@ void main() {
       );
     });
 
-    test('concatenates ordinals directly and does not append MathJax state',
-        () {
-      expect(
-        cardAppearanceClassName(
-          0,
-          theme: CardAppearanceThemeProjection.dayOther,
-          centerVertically: false,
-        ),
-        'card card0',
-      );
-    });
+    test(
+      'concatenates ordinals directly and does not append MathJax state',
+      () {
+        expect(
+          cardAppearanceClassName(
+            0,
+            theme: CardAppearanceThemeProjection.dayOther,
+            centerVertically: false,
+          ),
+          'card card0',
+        );
+      },
+    );
   });
 }

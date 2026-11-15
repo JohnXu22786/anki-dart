@@ -53,10 +53,8 @@ sealed class PreviewerFlagEffect {
 
 /// Writes [flag] to the single supplied current card.
 final class PreviewerSetUserFlagForCardsEffect extends PreviewerFlagEffect {
-  PreviewerSetUserFlagForCardsEffect({
-    required int cardId,
-    required this.flag,
-  }) : cardIds = List<int>.unmodifiable([cardId]);
+  PreviewerSetUserFlagForCardsEffect({required int cardId, required this.flag})
+    : cardIds = List<int>.unmodifiable([cardId]);
 
   final List<int> cardIds;
   final PreviewerFlag flag;
@@ -81,11 +79,10 @@ final class PreviewerPublishFlagOnSuccessEffect extends PreviewerFlagEffect {
 List<PreviewerFlagEffect> previewerSetFlagEffects({
   required int cardId,
   required PreviewerFlag flag,
-}) =>
-    List.unmodifiable([
-      PreviewerSetUserFlagForCardsEffect(cardId: cardId, flag: flag),
-      PreviewerPublishFlagOnSuccessEffect(flag),
-    ]);
+}) => List.unmodifiable([
+  PreviewerSetUserFlagForCardsEffect(cardId: cardId, flag: flag),
+  PreviewerPublishFlagOnSuccessEffect(flag),
+]);
 
 /// Projects `PreviewerViewModel.toggleFlag()` and its delegated set operation.
 ///
@@ -96,8 +93,7 @@ List<PreviewerFlagEffect> previewerToggleFlagEffects({
   required int cardId,
   required PreviewerFlag currentFlag,
   required PreviewerFlag requestedFlag,
-}) =>
-    previewerSetFlagEffects(
-      cardId: cardId,
-      flag: currentFlag == requestedFlag ? PreviewerFlag.none : requestedFlag,
-    );
+}) => previewerSetFlagEffects(
+  cardId: cardId,
+  flag: currentFlag == requestedFlag ? PreviewerFlag.none : requestedFlag,
+);

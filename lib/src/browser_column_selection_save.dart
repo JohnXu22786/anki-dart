@@ -23,10 +23,7 @@
 import 'browser_column_collection.dart';
 
 /// The host-facing effects emitted by the column-selection save handler.
-enum BrowserColumnSelectionSaveEffect {
-  dismissDialog,
-  showNoColumnsMessage,
-}
+enum BrowserColumnSelectionSaveEffect { dismissDialog, showNoColumnsMessage }
 
 /// The inputs the host passes to `updateActiveColumns` after the pre-effects.
 final class BrowserColumnSelectionSaveRequest {
@@ -61,19 +58,22 @@ final class BrowserColumnSelectionSavePlan {
     required List<BrowserColumn> initialSelectedColumns,
     required List<BrowserColumn> selectedColumns,
     required BrowserColumnMode mode,
-  })  : initialSelectedColumns =
-            List<BrowserColumn>.unmodifiable(initialSelectedColumns),
-        selectedColumns = List<BrowserColumn>.unmodifiable(selectedColumns),
-        updateRequest = BrowserColumnSelectionSaveRequest(
-          columns: selectedColumns,
-          mode: mode,
-        ),
-        hasUnsavedChanges =
-            !_sameOrderedColumns(initialSelectedColumns, selectedColumns),
-        effectsBeforeUpdate =
-            _sameOrderedColumns(initialSelectedColumns, selectedColumns)
-                ? const [BrowserColumnSelectionSaveEffect.dismissDialog]
-                : const [];
+  }) : initialSelectedColumns = List<BrowserColumn>.unmodifiable(
+         initialSelectedColumns,
+       ),
+       selectedColumns = List<BrowserColumn>.unmodifiable(selectedColumns),
+       updateRequest = BrowserColumnSelectionSaveRequest(
+         columns: selectedColumns,
+         mode: mode,
+       ),
+       hasUnsavedChanges = !_sameOrderedColumns(
+         initialSelectedColumns,
+         selectedColumns,
+       ),
+       effectsBeforeUpdate =
+           _sameOrderedColumns(initialSelectedColumns, selectedColumns)
+           ? const [BrowserColumnSelectionSaveEffect.dismissDialog]
+           : const [];
 
   final List<BrowserColumn> initialSelectedColumns;
   final List<BrowserColumn> selectedColumns;
@@ -103,12 +103,11 @@ BrowserColumnSelectionSavePlan planBrowserColumnSelectionSave({
   required List<BrowserColumn> initialSelectedColumns,
   required List<BrowserColumn> selectedColumns,
   required BrowserColumnMode mode,
-}) =>
-    BrowserColumnSelectionSavePlan(
-      initialSelectedColumns: initialSelectedColumns,
-      selectedColumns: selectedColumns,
-      mode: mode,
-    );
+}) => BrowserColumnSelectionSavePlan(
+  initialSelectedColumns: initialSelectedColumns,
+  selectedColumns: selectedColumns,
+  mode: mode,
+);
 
 bool _sameOrderedColumns(List<BrowserColumn> left, List<BrowserColumn> right) {
   if (left.length != right.length) return false;

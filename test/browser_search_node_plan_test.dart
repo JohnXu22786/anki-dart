@@ -111,14 +111,16 @@ void main() {
       expect(root.joiner, BrowserSearchJoiner.and);
       expect(root.children, hasLength(6));
       expect(
-          (root.children[0] as BrowserSearchTextTermPlan).text, 'queryString');
+        (root.children[0] as BrowserSearchTextTermPlan).text,
+        'queryString',
+      );
 
       final decks = root.children[1] as BrowserSearchGroupPlan;
       expect(decks.joiner, BrowserSearchJoiner.or);
       expect(
-          decks.children
-              .map((node) => (node as BrowserSearchDeckTermPlan).name),
-          ['Default', 'Other']);
+        decks.children.map((node) => (node as BrowserSearchDeckTermPlan).name),
+        ['Default', 'Other'],
+      );
 
       final flags = root.children[2] as BrowserSearchGroupPlan;
       expect(flags.joiner, BrowserSearchJoiner.or);
@@ -130,22 +132,25 @@ void main() {
       final tags = root.children[3] as BrowserSearchGroupPlan;
       expect(tags.joiner, BrowserSearchJoiner.or);
       expect(
-          tags.children.map((node) => (node as BrowserSearchTagTermPlan).tag),
-          ['Hello::World', 'tag']);
+        tags.children.map((node) => (node as BrowserSearchTagTermPlan).tag),
+        ['Hello::World', 'tag'],
+      );
 
       final noteTypes = root.children[4] as BrowserSearchGroupPlan;
       expect(noteTypes.joiner, BrowserSearchJoiner.or);
       expect(
-        noteTypes.children
-            .map((node) => (node as BrowserSearchNoteTypeTermPlan).name),
+        noteTypes.children.map(
+          (node) => (node as BrowserSearchNoteTypeTermPlan).name,
+        ),
         ['Basic', 'Cloze'],
       );
 
       final cardStates = root.children[5] as BrowserSearchGroupPlan;
       expect(cardStates.joiner, BrowserSearchJoiner.or);
       expect(
-        cardStates.children
-            .map((node) => (node as BrowserSearchCardStateTermPlan).value),
+        cardStates.children.map(
+          (node) => (node as BrowserSearchCardStateTermPlan).value,
+        ),
         [
           BrowserSearchCardStateValue.newCard,
           BrowserSearchCardStateValue.learning,
@@ -168,8 +173,9 @@ void main() {
       final root = plan as BrowserSearchGroupPlan;
       expect(root.joiner, BrowserSearchJoiner.or);
       expect(
-          root.children.map((node) => (node as BrowserSearchTagTermPlan).tag),
-          ['one', 'two']);
+        root.children.map((node) => (node as BrowserSearchTagTermPlan).tag),
+        ['one', 'two'],
+      );
     });
 
     test('maps every persisted code to its explicit semantic search value', () {
@@ -200,8 +206,9 @@ void main() {
         ],
       );
       expect(
-        cardStates.children
-            .map((node) => (node as BrowserSearchCardStateTermPlan).value),
+        cardStates.children.map(
+          (node) => (node as BrowserSearchCardStateTermPlan).value,
+        ),
         [
           BrowserSearchCardStateValue.newCard,
           BrowserSearchCardStateValue.learning,

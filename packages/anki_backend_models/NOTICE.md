@@ -18,9 +18,11 @@ General Public License, version 3 or later. `SOURCE.sha256` records digests of
 the exact upstream source files.
 
 The package's Dart implementation is distributed under the same AGPL-3.0-or-
-later license. Constructors that depend on randomness or assets are not
-included: `Note.new()` creates a base91 GUID, `NoteField.new()` and
-`CardTemplate.new()` create random config IDs, and Notetype default
-construction includes CSS and LaTeX assets. Deck and DeckConfig models cover
-stored values and protobuf conversion. Anki Core's DeckConfig defaults are
-provided explicitly. This package does not change the root `COPYING` file.
+later license. Random-value constructors are implemented with an injected
+unsigned 64-bit source so their results remain deterministic and platform
+neutral: `Note.newNote()` encodes a base91 GUID, while `NoteField.newField()`
+and `CardTemplate.newTemplate()` assign the upstream random config IDs.
+Notetype default construction, including its CSS and LaTeX assets, is not yet
+included. Deck and DeckConfig models cover stored values and protobuf
+conversion. Anki Core's DeckConfig defaults are provided explicitly. This
+package does not change the root `COPYING` file.

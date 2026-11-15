@@ -86,6 +86,16 @@ void main() {
       );
       expect(type.clozeFields, {0});
     });
+
+    test('finds cloze references under conditionals and uses first field match',
+        () {
+      final type = notetype(
+        cloze: true,
+        fields: ['Text', 'text'],
+        question: '{{#Front}}{{cloze:TEXT}}{{/Front}}',
+      );
+      expect(type.clozeFields, {0});
+    });
   });
 
   group('noteFieldsCheck', () {

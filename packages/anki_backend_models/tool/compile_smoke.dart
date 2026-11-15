@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_models/anki_backend_models.dart';
+import 'package:anki_backend_protocol/anki/notes.pbenum.dart' as notes;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
 

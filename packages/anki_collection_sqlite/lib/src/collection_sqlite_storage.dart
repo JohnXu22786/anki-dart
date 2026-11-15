@@ -128,6 +128,7 @@ final class CollectionSqliteStorage
         lapses = ?, left = ?, odue = ?, odid = ?, flags = ?, data = ?
       WHERE id = ?
     ''', _cardValues(card)..add(_toSqlInt64(card.id)));
+    await _flushIfAutocommit();
   }
 
   /// Inserts [card], allocating a new row ID if the current time ID is taken.
@@ -148,12 +149,20 @@ final class CollectionSqliteStorage
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       )
     ''');
+    late final CardId id;
     try {
       statement.execute([now, ...values]);
-      return Int64(_database.lastInsertRowId);
+      id = _readInt64(
+        _database
+            .select('SELECT id FROM cards WHERE rowid = last_insert_rowid()')
+            .single
+            .columnAt(0),
+      );
     } finally {
       statement.close();
     }
+    await _flushIfAutocommit();
+    return id;
   }
 
   /// Inserts [card] only when its ID is unused, returning whether a row was
@@ -167,12 +176,15 @@ final class CollectionSqliteStorage
         lapses, left, odue, odid, flags, data
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''');
+    late final bool inserted;
     try {
       statement.execute([_toSqlInt64(card.id), ...values]);
-      return _database.updatedRows == 1;
+      inserted = _database.updatedRows == 1;
     } finally {
       statement.close();
     }
+    await _flushIfAutocommit();
+    return inserted;
   }
 
   /// Inserts or replaces [card] using its provided ID, as used by sync/undo.
@@ -186,11 +198,13 @@ final class CollectionSqliteStorage
     ''',
       [_toSqlInt64(card.id), ..._cardValues(card)],
     );
+    await _flushIfAutocommit();
   }
 
   /// Removes [id]. Deleting a missing row succeeds without a result.
   Future<void> removeCard(CardId id) async {
     _database.execute('DELETE FROM cards WHERE id = ?', [_toSqlInt64(id)]);
+    await _flushIfAutocommit();
   }
 
   List<Object?> _cardValues(Card card) => [
@@ -366,6 +380,10 @@ final class CollectionSqliteStorage
 
   Future<void> _flush() async {
     await Future<void>.sync(() => _driver.flush?.call());
+  }
+
+  Future<void> _flushIfAutocommit() async {
+    if (_database.autocommit) await _flush();
   }
 
   /// Flushes the WAL into the database and truncates it.

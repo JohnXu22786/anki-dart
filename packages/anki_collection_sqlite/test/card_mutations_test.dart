@@ -145,6 +145,30 @@ void main() {
     },
   );
 
+  test('add resolves a collision with the source timestamp ID', () async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    const maxExistingId = 8000000000000000000;
+    database.execute('''
+      WITH RECURSIVE ids(id) AS (
+        SELECT ${now - 60000}
+        UNION ALL SELECT id + 1 FROM ids WHERE id < ${now + 60000}
+      )
+      INSERT INTO cards
+      SELECT id, 12, 13, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '{}'
+      FROM ids
+    ''');
+    database.execute('''
+      INSERT INTO cards VALUES (
+        $maxExistingId, 12, 13, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '{}'
+      )
+    ''');
+
+    final assignedId = await storage.addCard(_card(noteId: 60));
+
+    expect(assignedId, Int64(maxExistingId + 1));
+    expect((await storage.getCard(assignedId))!.mtimeSecs, Int64(1));
+  });
+
   test('add-if-unique reports ignored primary-key collisions', () async {
     await storage.executeBatch("INSERT INTO cards VALUES ${_values(71)}");
     final duplicate = _card(id: 71, noteId: 999, templateIdx: 8);
@@ -158,6 +182,54 @@ void main() {
     );
     expect((await storage.getCard(Int64(72)))!.noteId, Int64(13));
   });
+
+  test(
+    'card writes flush in autocommit and defer inside transactions',
+    () async {
+      var flushes = 0;
+      final persistentStorage = await CollectionSqliteStorage.open(
+        driver: CollectionSqliteDriver(
+          openDatabase: (_) => sqlite3.openInMemory(),
+          flush: () => flushes++,
+        ),
+        location: ':memory:',
+      );
+      try {
+        await persistentStorage.executeBatch('''
+        CREATE TABLE cards (
+          id INTEGER PRIMARY KEY, nid INTEGER NOT NULL, did INTEGER NOT NULL,
+          ord INTEGER NOT NULL, mod INTEGER NOT NULL, usn INTEGER NOT NULL,
+          type INTEGER NOT NULL, queue INTEGER NOT NULL, due INTEGER NOT NULL,
+          ivl INTEGER NOT NULL, factor INTEGER NOT NULL, reps INTEGER NOT NULL,
+          lapses INTEGER NOT NULL, left INTEGER NOT NULL, odue INTEGER NOT NULL,
+          odid INTEGER NOT NULL, flags INTEGER NOT NULL, data TEXT NOT NULL
+        );
+      ''');
+        var expectedFlushes = 2; // open and table creation
+        expect(flushes, expectedFlushes);
+
+        final addedId = await persistentStorage.addCard(_card());
+        expect(flushes, ++expectedFlushes);
+        expect(await persistentStorage.addCardIfUnique(_card(id: 501)), isTrue);
+        expect(flushes, ++expectedFlushes);
+        await persistentStorage.addOrUpdateCard(_card(id: 502));
+        expect(flushes, ++expectedFlushes);
+        await persistentStorage.updateCard(_card(id: 502, noteId: 20));
+        expect(flushes, ++expectedFlushes);
+        await persistentStorage.removeCard(addedId);
+        expect(flushes, ++expectedFlushes);
+
+        await persistentStorage.beginExclusive();
+        await persistentStorage.updateCard(_card(id: 502, noteId: 21));
+        await persistentStorage.removeCard(Int64(501));
+        expect(flushes, expectedFlushes);
+        await persistentStorage.commit();
+        expect(flushes, ++expectedFlushes);
+      } finally {
+        await persistentStorage.close();
+      }
+    },
+  );
 
   test(
     'remove is harmless for missing rows and failures respect transactions',

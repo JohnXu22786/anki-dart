@@ -39,6 +39,19 @@ void main() {
       );
       expect(after.daysElapsed, 2);
       expect(after.nextDayAt, _stamp(2019, 1, 4, 4));
+
+      // Chrono uses proleptic Gregorian year 1; it must not be shifted to
+      // 1901 by platform date constructors.
+      const yearOneEpoch = -62135596800;
+      final ancient = schedTimingTodayV2New(
+        creationSecs: yearOneEpoch + 2 * 3600,
+        creationUtcOffsetMinutesWest: 0,
+        currentSecs: yearOneEpoch + 86400 + 4 * 3600,
+        currentUtcOffsetMinutesWest: 0,
+        rolloverHour: 4,
+      );
+      expect(ancient.daysElapsed, 1);
+      expect(ancient.nextDayAt, yearOneEpoch + 2 * 86400 + 4 * 3600);
     });
 
     test('clips elapsed days and uses each supplied fixed offset', () {

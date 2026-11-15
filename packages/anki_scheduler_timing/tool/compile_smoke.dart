@@ -25,4 +25,16 @@ void main() {
       'next rollover at the source timestamp limit is incorrect',
     );
   }
+  const yearOneEpoch = -62135596800;
+  final ancient = schedTimingTodayV2New(
+    creationSecs: yearOneEpoch + 2 * 3600,
+    creationUtcOffsetMinutesWest: 0,
+    currentSecs: yearOneEpoch + 86400 + 4 * 3600,
+    currentUtcOffsetMinutesWest: 0,
+    rolloverHour: 4,
+  );
+  if (ancient.daysElapsed != 1 ||
+      ancient.nextDayAt != yearOneEpoch + 2 * 86400 + 4 * 3600) {
+    throw StateError('year 1 Gregorian rollover is incorrect');
+  }
 }

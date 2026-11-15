@@ -1,1 +1,3 @@
 2b671bedbf3219dda8190d0a126aa78807a77ecd8c72ebc008ffb40d28e1a6b6  rslib/src/search/parser.rs
+82cbfd2d92746da726ebffc3fe63749c620b428292ce32220dfd09ff6662d195  rslib/src/search/writer.rs
+2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762  rslib/src/text.rs

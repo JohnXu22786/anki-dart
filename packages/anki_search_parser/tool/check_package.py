@@ -8,15 +8,18 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = "rslib/src/search/parser.rs"
-SOURCE_HASH = "2b671bedbf3219dda8190d0a126aa78807a77ecd8c72ebc008ffb40d28e1a6b6"
+SOURCES = {
+    "rslib/src/search/parser.rs": "2b671bedbf3219dda8190d0a126aa78807a77ecd8c72ebc008ffb40d28e1a6b6",
+    "rslib/src/search/writer.rs": "82cbfd2d92746da726ebffc3fe63749c620b428292ce32220dfd09ff6662d195",
+    "rslib/src/text.rs": "2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762",
+}
 COMMIT = "e64c6b1aee3e8d668fb8bbe084beada8e070d985"
 
 
 def main() -> int:
     errors = []
     manifest = ROOT / "SOURCE.sha256"
-    expected = f"{SOURCE_HASH}  {SOURCE}\n"
+    expected = "".join(f"{digest}  {path}\n" for path, digest in SOURCES.items())
     if not manifest.is_file() or manifest.read_text(encoding="utf-8") != expected:
         errors.append("SOURCE.sha256: pinned parser source digest is incorrect")
     notice = (ROOT / "NOTICE.md").read_text(encoding="utf-8")
@@ -40,7 +43,7 @@ def main() -> int:
         print("Search parser package validation failed:", file=sys.stderr)
         print("\n".join(f"- {e}" for e in errors), file=sys.stderr)
         return 1
-    print(f"Validated AGPL metadata and pinned Anki Core parser source hash {SOURCE_HASH}.")
+    print("Validated AGPL metadata and pinned Anki Core parser/writer source hashes.")
     return 0
 
 

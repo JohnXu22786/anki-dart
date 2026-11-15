@@ -11,4 +11,16 @@ void main() {
   if (unicodeId.ids != '١') {
     throw StateError('Unicode ID parser JavaScript smoke test failed');
   }
+  if (normalizeSearch('1 and 2 or 3') != '1 2 OR 3') {
+    throw StateError(
+        'Search writer JavaScript normalization smoke test failed');
+  }
+  if (deckSearch(r'a*b_c\d') != r'deck:a\*b\_c\\d') {
+    throw StateError('Search writer JavaScript escaping smoke test failed');
+  }
+  if (writeNode(
+          const Search(Property(operator: '=', kind: EaseProperty(0.1)))) !=
+      'prop:ease=0.1') {
+    throw StateError('Search writer JavaScript f32 smoke test failed');
+  }
 }

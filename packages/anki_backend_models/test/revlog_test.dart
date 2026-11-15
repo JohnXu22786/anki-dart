@@ -40,38 +40,60 @@ void main() {
       expect(entry.toProto(), protoValue);
     });
 
+    test('normalizes direct values to the source integer widths', () {
+      final entry = RevlogEntry(
+        usn: 0x80000001,
+        buttonChosen: 0x104,
+        interval: 0x80000001,
+        lastInterval: 0x100000002,
+        easeFactor: 0x100000001,
+        takenMillis: 0x100000003,
+      );
+      expect(entry.usn, -0x7fffffff);
+      expect(entry.buttonChosen, 4);
+      expect(entry.interval, -0x7fffffff);
+      expect(entry.lastInterval, 2);
+      expect(entry.easeFactor, 1);
+      expect(entry.takenMillis, 3);
+      final proto = entry.toProto();
+      expect(proto.usn, entry.usn);
+      expect(proto.buttonChosen, entry.buttonChosen);
+      expect(proto.interval, entry.interval);
+      expect(proto.lastInterval, entry.lastInterval);
+      expect(proto.easeFactor, entry.easeFactor);
+      expect(proto.takenMillis, entry.takenMillis);
+    });
+
     test('converts day and second intervals with i32 saturation', () {
-      expect(const RevlogEntry(interval: 2).intervalSecs, 172800);
-      expect(const RevlogEntry(interval: -90).intervalSecs, 90);
-      expect(const RevlogEntry(interval: 0x7fffffff).intervalSecs, 0x7fffffff);
-      expect(const RevlogEntry(interval: -0x80000000).intervalSecs, 0x7fffffff);
-      expect(const RevlogEntry(lastInterval: -45).lastIntervalSecs, 45);
+      expect(RevlogEntry(interval: 2).intervalSecs, 172800);
+      expect(RevlogEntry(interval: -90).intervalSecs, 90);
+      expect(RevlogEntry(interval: 0x7fffffff).intervalSecs, 0x7fffffff);
+      expect(RevlogEntry(interval: -0x80000000).intervalSecs, 0x7fffffff);
+      expect(RevlogEntry(lastInterval: -45).lastIntervalSecs, 45);
     });
 
     test('identifies resets, cramming, ratings, and scheduling effects', () {
+      expect(RevlogEntry(reviewKind: RevlogReviewKind.manual).isReset, true);
       expect(
-          const RevlogEntry(reviewKind: RevlogReviewKind.manual).isReset, true);
-      expect(
-        const RevlogEntry(
+        RevlogEntry(
           reviewKind: RevlogReviewKind.manual,
           easeFactor: 1000,
         ).isReset,
         false,
       );
       expect(
-        const RevlogEntry(reviewKind: RevlogReviewKind.filtered).isCramming,
+        RevlogEntry(reviewKind: RevlogReviewKind.filtered).isCramming,
         true,
       );
       expect(
-        const RevlogEntry(
+        RevlogEntry(
           reviewKind: RevlogReviewKind.filtered,
           buttonChosen: 3,
         ).hasRatingAndAffectsScheduling,
         false,
       );
-      expect(const RevlogEntry(buttonChosen: 1).hasRatingAndAffectsScheduling,
-          true);
-      expect(const RevlogEntry(buttonChosen: 0).hasRating, false);
+      expect(RevlogEntry(buttonChosen: 1).hasRatingAndAffectsScheduling, true);
+      expect(RevlogEntry(buttonChosen: 0).hasRating, false);
     });
   });
 }

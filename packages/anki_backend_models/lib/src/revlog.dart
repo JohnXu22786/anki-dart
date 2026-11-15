@@ -54,17 +54,22 @@ enum RevlogReviewKind {
 
 /// A persisted review history entry and its scheduling/statistics helpers.
 class RevlogEntry {
-  const RevlogEntry({
+  RevlogEntry({
     this.id = const RevlogId(Int64.ZERO),
     this.cardId = Int64.ZERO,
-    this.usn = 0,
-    this.buttonChosen = 0,
-    this.interval = 0,
-    this.lastInterval = 0,
-    this.easeFactor = 0,
-    this.takenMillis = 0,
+    int usn = 0,
+    int buttonChosen = 0,
+    int interval = 0,
+    int lastInterval = 0,
+    int easeFactor = 0,
+    int takenMillis = 0,
     this.reviewKind = RevlogReviewKind.learning,
-  });
+  })  : usn = usn.toSigned(32),
+        buttonChosen = buttonChosen.toUnsigned(8),
+        interval = interval.toSigned(32),
+        lastInterval = lastInterval.toSigned(32),
+        easeFactor = easeFactor.toUnsigned(32),
+        takenMillis = takenMillis.toUnsigned(32);
 
   final RevlogId id;
   final CardId cardId;

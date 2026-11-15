@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import 'dart:convert';
-
 import 'package:sqlite3/common.dart';
 
 import 'lossless_json.dart';
@@ -27,19 +25,17 @@ void registerCardDataFunctions(CommonDatabase database) {
 int? extractOriginalPosition(Object? cardData) {
   if (cardData is! String) return null;
   if (!_cardDataObjectParses(cardData)) return null;
-  final value = cardDataField(cardData, 'pos', 0);
-  return switch (value) {
-    int() when value >= 0 && value <= 0xffffffff => value,
-    BigInt() when value >= BigInt.zero && value <= BigInt.from(0xffffffff) =>
-      value.toInt(),
-    _ => null,
-  };
+  final value = losslessJsonInteger(cardDataField(cardData, 'pos', 0));
+  return value != null &&
+          value >= BigInt.zero &&
+          value <= BigInt.from(0xffffffff)
+      ? value.toInt()
+      : null;
 }
 
 bool _cardDataObjectParses(String cardData) {
   try {
-    validateLosslessJson(cardData);
-    final decoded = jsonDecode(cardData);
+    final decoded = parseLosslessCardData(cardData);
     if (decoded is Map<String, Object?>) {
       return !decoded.containsKey('cd') || decoded['cd'] is String;
     }
@@ -80,8 +76,7 @@ Object? extractCustomData(Object? cardData, Object? key) {
 /// Reads a compact `CardData` field from JSON object or sequence storage.
 Object? cardDataField(String cardData, String key, int sequenceIndex) {
   try {
-    validateLosslessJson(cardData);
-    final decoded = jsonDecode(cardData);
+    final decoded = parseLosslessCardData(cardData);
     if (decoded is Map<String, Object?>) {
       if (decoded.containsKey('cd') && decoded['cd'] is! String) return null;
       return decoded[key];

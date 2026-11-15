@@ -27,6 +27,7 @@ void main() {
   test('returns null for absent, malformed, or non-text inputs', () {
     expect(extractFsrsVariable('{"s":"0.5"}', 's'), isNull);
     expect(extractFsrsVariable('{"s":null}', 's'), isNull);
+    expect(extractFsrsVariable('{"s":1,"s":2}', 's'), isNull);
     expect(extractFsrsVariable('{"s":1e100}', 's')!.isInfinite, isTrue);
     expect(extractFsrsVariable('{"s":0.5,"cd":42}', 's'), isNull);
     expect(extractFsrsVariable('{bad json', 's'), isNull);

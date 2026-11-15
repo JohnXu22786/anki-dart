@@ -29,7 +29,7 @@ double? extractFsrsVariable(Object? cardData, Object? key) {
 
 Object? _losslessCardDataField(String source, String key, int sequenceIndex) {
   try {
-    final decoded = parseLosslessJson(source);
+    final decoded = parseLosslessCardData(source);
     if (decoded is Map<String, Object?>) {
       if (decoded.containsKey('cd') && decoded['cd'] is! String) return null;
       return decoded[key];

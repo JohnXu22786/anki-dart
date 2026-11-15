@@ -5,10 +5,9 @@ import 'dart:typed_data';
 /// Parses JSON while retaining integer literals that JavaScript numbers round.
 Object? parseLosslessJson(String source) => _Parser(source).parse();
 
-/// Validates a full JSON document with serde_json-compatible number bounds.
-void validateLosslessJson(String source) {
-  parseLosslessJson(source);
-}
+/// Parses a CardData value and rejects duplicate known struct fields.
+Object? parseLosslessCardData(String source) =>
+    _Parser(source, rejectCardDataDuplicates: true).parse();
 
 /// Reads a JSON integer without passing through JavaScript's double precision.
 BigInt? losslessJsonInteger(Object? value) {
@@ -155,14 +154,17 @@ double _roundIntegerToFloat32(BigInt value) {
   )..setUint32(0, bits, Endian.big)).getFloat32(0, Endian.big);
 }
 
+const _cardDataFields = {'pos', 's', 'd', 'dr', 'decay', 'lrt', 'cd'};
+
 final class _Parser {
-  _Parser(this.source);
+  _Parser(this.source, {this.rejectCardDataDuplicates = false});
 
   final String source;
+  final bool rejectCardDataDuplicates;
   int index = 0;
 
   Object? parse() {
-    final value = _parseValue();
+    final value = _parseValue(atRoot: rejectCardDataDuplicates);
     _skipWhitespace();
     if (index != source.length) {
       throw FormatException('Unexpected trailing JSON text', source, index);
@@ -170,14 +172,14 @@ final class _Parser {
     return value;
   }
 
-  Object? _parseValue() {
+  Object? _parseValue({bool atRoot = false}) {
     _skipWhitespace();
     if (index >= source.length) {
       throw FormatException('Expected JSON value', source, index);
     }
     final character = source[index];
     if (character == '"') return _parseString();
-    if (character == '{') return _parseObject();
+    if (character == '{') return _parseObject(rejectKnownDuplicates: atRoot);
     if (character == '[') return _parseArray();
     if (character == 't') return _parseLiteral('true', true);
     if (character == 'f') return _parseLiteral('false', false);
@@ -189,7 +191,7 @@ final class _Parser {
     throw FormatException('Invalid JSON value', source, index);
   }
 
-  Map<String, Object?> _parseObject() {
+  Map<String, Object?> _parseObject({bool rejectKnownDuplicates = false}) {
     index++;
     final result = <String, Object?>{};
     _skipWhitespace();
@@ -203,6 +205,11 @@ final class _Parser {
       _skipWhitespace();
       if (!_consume(':'))
         throw FormatException('Expected colon', source, index);
+      if (rejectKnownDuplicates &&
+          _cardDataFields.contains(key) &&
+          result.containsKey(key)) {
+        throw FormatException('Duplicate CardData field', source, index);
+      }
       result[key] = _parseValue();
       _skipWhitespace();
       if (_consume('}')) return result;

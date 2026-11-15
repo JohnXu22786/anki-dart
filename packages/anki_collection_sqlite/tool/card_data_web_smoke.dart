@@ -12,6 +12,9 @@ void main() {
   if (extractOriginalPosition('{"pos":42,"s":1e999}') != null) {
     throw StateError('Web position ignored an invalid unrelated number');
   }
+  if (extractOriginalPosition('{"pos":1,"pos":2}') != null) {
+    throw StateError('Web position accepted a duplicate CardData field');
+  }
   if (extractCustomData('{"cd":"{\\"z\\":1,\\"a\\":2}"}', 'a') != '2') {
     throw StateError('Web card-data custom JSON lookup failed');
   }
@@ -28,5 +31,8 @@ void main() {
   if (extractFsrsVariable('{"s":18014401730707455}', 's') !=
       18014400656965632.0) {
     throw StateError('Web FSRS integer did not round directly to Core f32');
+  }
+  if (extractFsrsVariable('{"s":1,"s":2}', 's') != null) {
+    throw StateError('Web FSRS accepted a duplicate CardData field');
   }
 }

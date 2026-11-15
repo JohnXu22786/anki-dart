@@ -36,6 +36,13 @@ void main() {
         'a&b😀',
       );
       expect(stripHtmlPreservingMediaFilenames('a&nbsp;b'), 'a b');
+      expect(stripHtmlPreservingMediaFilenames('A &amp B'), 'A &amp B');
+      expect(
+        stripHtmlPreservingMediaFilenames('&amp; &unknown;'),
+        '&amp; &unknown;',
+      );
+      expect(stripHtmlPreservingMediaFilenames('&#x41; &#65;'), 'A A');
+      expect(stripHtmlPreservingMediaFilenames('&#X41;'), '&#X41;');
     });
 
     test('matches source behavior for media tags with quoted attributes', () {

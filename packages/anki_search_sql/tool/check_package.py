@@ -11,6 +11,7 @@ COMMIT = "e64c6b1aee3e8d668fb8bbe084beada8e070d985"
 SOURCES = {
     "rslib/src/search/sqlwriter.rs": "dd3614803244132a7379202dcdfe28e20973186d2bba28dd86faf4e1c424d4ec",
     "rslib/src/search/parser.rs": "2b671bedbf3219dda8190d0a126aa78807a77ecd8c72ebc008ffb40d28e1a6b6",
+    "rslib/src/text.rs": "2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762",
 }
 
 

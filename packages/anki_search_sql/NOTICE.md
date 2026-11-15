@@ -23,6 +23,8 @@ field ranges, accent configuration, and cloze notetype IDs,
 word-boundary searches using Core wildcard-to-regex conversion and accent
 handling,
 duplicate-search SQL using ordered host-resolved note IDs,
+browser column keys/default directions and Core card/note sort SQL with
+temporary order-table preparation,
 field-qualified searches in normal, regex, and no-combining modes using host
 notetype field snapshots and Core-compatible field matching,
 state predicates using Core's `CardType` and `CardQueue` numeric values, day

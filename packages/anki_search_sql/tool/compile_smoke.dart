@@ -101,6 +101,25 @@ void main() {
           '(n.id in (9007199254740993,9223372036854775807))') {
     throw StateError('Duplicate search JavaScript precision smoke test failed');
   }
+  final sortedQuery = compileSearchSqlWithSort(
+    GroupNode([Search(WholeCollection())]),
+    timing: SearchSqlTiming(
+      daysElapsed: 42,
+      now: BigInt.parse('9223372036854775807'),
+      learnAheadSecs: 30,
+      nextDayAt: BigInt.parse('9007199254740993'),
+    ),
+    sortOrder: const SearchSqlSortOrder.builtin(
+      SearchSqlSortColumn.retrievability,
+    ),
+  );
+  if (!sortedQuery.search.sql.contains(
+    'extract_fsrs_retrievability(c.data, case when c.odue !=0 then '
+    'c.odue else c.due end, c.ivl, 42, 9007199254740993, '
+    '9223372036854775807) asc',
+  )) {
+    throw StateError('Search sort JavaScript precision smoke test failed');
+  }
   final textQuery = compileSearchSql(
     GroupNode([Search(const TextSearch('front*back'))]),
     resultType: SearchResultType.notes,

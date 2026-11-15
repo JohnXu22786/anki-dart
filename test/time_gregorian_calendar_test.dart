@@ -31,7 +31,7 @@ void main() {
         final calendar = Object();
         final events = <String>[];
         final result = gregorianCalendar(
-          -1234567890123,
+          BigInt.from(-1234567890123),
           createGregorianCalendar: () {
             events.add('create');
             return calendar;
@@ -39,7 +39,7 @@ void main() {
           setTimeInMillis: (actualCalendar, milliseconds) {
             events.add('setTimeInMillis');
             expect(identical(actualCalendar, calendar), isTrue);
-            expect(milliseconds, -1234567890123);
+            expect(milliseconds, BigInt.from(-1234567890123));
           },
         );
 
@@ -54,7 +54,7 @@ void main() {
 
       expect(
         () => gregorianCalendar(
-          42,
+          BigInt.from(42),
           createGregorianCalendar: () => throw failure,
           setTimeInMillis: (_, _) => assignments++,
         ),
@@ -71,7 +71,7 @@ void main() {
 
       expect(
         () => gregorianCalendar(
-          42,
+          BigInt.from(42),
           createGregorianCalendar: () {
             creations++;
             return calendar;
@@ -79,7 +79,7 @@ void main() {
           setTimeInMillis: (actualCalendar, milliseconds) {
             assignments++;
             expect(identical(actualCalendar, calendar), isTrue);
-            expect(milliseconds, 42);
+            expect(milliseconds, BigInt.from(42));
             throw failure;
           },
         ),

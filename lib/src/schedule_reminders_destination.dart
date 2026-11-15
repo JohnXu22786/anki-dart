@@ -28,8 +28,8 @@ import 'review_reminder_form_state.dart';
 class ScheduleRemindersDestination {
   const ScheduleRemindersDestination(this.deckId);
 
-  /// The supplied deck ID, retained unchanged for host routing.
-  final int deckId;
+  /// The exact signed-Long deck ID, retained unchanged for host routing.
+  final BigInt deckId;
 
   /// Delegates reminder Intent construction to the host with a deck-specific
   /// scope created for this projection call.

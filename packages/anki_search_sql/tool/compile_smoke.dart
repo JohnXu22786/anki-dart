@@ -88,4 +88,26 @@ void main() {
       customDataQuery.arguments.join('|') != "x';--|n") {
     throw StateError('Custom-data JavaScript SQL smoke test failed');
   }
+  final dueProperty = compileSearchSql(
+    GroupNode(parse('prop:due<=-2')),
+    timing: SearchSqlTiming(
+      daysElapsed: 42,
+      now: BigInt.zero,
+      learnAheadSecs: 0,
+      nextDayAt: BigInt.from(1700000000),
+    ),
+  );
+  if (dueProperty.sql !=
+      'select c.id from cards c where (((c.queue in (2,3) and '
+          '(case when c.odue != 0 then c.odue else c.due end) <= 40) or '
+          '(c.queue in (1,4) and (((case when c.odue != 0 then c.odue else c.due end) '
+          '- 1700000000) / 86400) <= -2)))') {
+    throw StateError('Due property JavaScript SQL smoke test failed');
+  }
+  final easeProperty = compileSearchSql(
+    GroupNode(parse('prop:ease=1.0009999999')),
+  );
+  if (easeProperty.sql != 'select c.id from cards c where (factor = 1001)') {
+    throw StateError('Ease property float32 JavaScript smoke test failed');
+  }
 }

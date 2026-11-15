@@ -14,6 +14,12 @@ Rated searches and `prop:rated`/`prop:resched` comparisons use Core's revlog
 subqueries, day cutoffs, operators, and ease filters. They require explicit
 `SearchSqlTiming.nextDayAt`; cutoff arithmetic and emitted millisecond values
 are checked against signed 64-bit bounds.
+Basic `prop:due`, `prop:pos`, `prop:ivl`, `prop:reps`, `prop:lapses`, and
+`prop:ease` comparisons use Core's card columns, queue/type codes, original-due
+fallback, operators, and float32-to-u32 ease conversion. Due properties
+require explicit `SearchSqlTiming.daysElapsed` and `nextDayAt`; no collection
+or clock values are read implicitly. These card predicates use cards for card
+results and join cards to notes with distinct note IDs for note results.
 Unsupported AST nodes throw explicitly.
 ID-list AST values follow the shared parser's comma-separated decimal-digit
 grammar, and their exact spelling is preserved without numeric conversion.
@@ -28,7 +34,7 @@ cards table, and the host must register `extract_custom_data()`. Tag predicates 
 preserve Core's `none`, `*`, space, wildcard, case-insensitive regex, and
 no-combining `process_text` SQL behavior. Regex function registration remains
 the host's responsibility. State predicates require the cards table. A
-`state:due`, `rated:`, and rated property predicates also require explicit
+`state:due`, `rated:`, rated properties, and due properties also require explicit
 `SearchSqlTiming` values when
 calling `compileSearchSql`: `daysElapsed` is the collection day number,
 `now` is a `BigInt` containing Unix seconds, and `learnAheadSecs` is the

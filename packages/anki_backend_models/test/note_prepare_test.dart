@@ -98,6 +98,32 @@ void main() {
       expect(note.fields.first, 'é');
     });
 
+    test('requires one stored field when the notetype declares none', () {
+      final notetypeWithoutFields = _notetype(fieldCount: 0);
+      final emptyNote = Note(notetypeId: Int64(7), fields: []);
+      expect(
+        () => emptyNote.prepareForUpdate(
+          notetypeWithoutFields,
+          normalizeText: false,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'note has 0 fields, expected 1',
+          ),
+        ),
+      );
+
+      final singleFieldNote = Note(notetypeId: Int64(7), fields: ['front']);
+      singleFieldNote.prepareForUpdate(
+        notetypeWithoutFields,
+        normalizeText: false,
+      );
+      expect(singleFieldNote.fields, ['front']);
+      expect(singleFieldNote.sortField, 'front');
+    });
+
     test('rejects a different notetype and the wrong number of fields', () {
       final differentNotetype = Note(notetypeId: Int64(8), fields: ['a', 'b']);
       expect(

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'dart:typed_data';
 
+import 'package:fixnum/fixnum.dart';
 import 'package:anki_search_parser/anki_search_parser.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
@@ -68,7 +69,7 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// This is an incremental compiler, not complete search execution. Its current
 /// subset contains boolean structure, card/note/notetype ID predicates,
 /// notetype names, card template ordinals and names, tag predicates, deck names and IDs
-/// without children, flags, state and day predicates, scalar, rated and FSRS
+/// with or without children, flags, state and day predicates, scalar, rated and FSRS
 /// properties, custom-data predicates, and whole-collection queries. Other
 /// AST variants throw [UnsupportedSearchSqlNodeException]. Due state
 /// predicates require explicit [SearchSqlTiming] values; day predicates and
@@ -76,12 +77,15 @@ final class UnsupportedSearchSqlNodeException extends UnsupportedError {
 /// nodes must use comma-separated decimal digits accepted by the shared
 /// parser; their exact spelling is preserved. [currentDeckName], when supplied,
 /// is the current deck's native name with path components separated by U+001F.
+/// [deckIdsWithChildren] supplies resolved deck ID expansions from the host;
+/// an absent key means the deck could not be resolved.
 CompiledSearchSql compileSearchSql(
   Node node, {
   SearchResultType resultType = SearchResultType.cards,
   RequiredTable requiredTables = RequiredTable.cardsOrNotes,
   SearchSqlTiming? timing,
   String? currentDeckName,
+  Map<BigInt, List<BigInt>> deckIdsWithChildren = const {},
 }) {
   final itemTable = switch (resultType) {
     SearchResultType.cards => RequiredTable.cards,
@@ -114,7 +118,7 @@ CompiledSearchSql compileSearchSql(
   final arguments = <String>[];
   return CompiledSearchSql(
     sql:
-        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName)}',
+        '$select${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren)}',
     arguments: arguments,
     requiredTable: table,
   );
@@ -134,6 +138,7 @@ RequiredTable _requiredTableForSearch(SearchNode node) => switch (node) {
   CardIds() ||
   Deck() ||
   DeckIdsWithoutChildren() ||
+  DeckIdWithChildren() ||
   Flag() ||
   State() ||
   AddedInDays() ||
@@ -167,19 +172,21 @@ String _writeNode(
   List<String> arguments,
   SearchSqlTiming? timing,
   String? currentDeckName,
+  Map<BigInt, List<BigInt>> deckIdsWithChildren,
 ) => switch (node) {
   BooleanNode(kind: NodeKind.and) => ' and ',
   BooleanNode(kind: NodeKind.or) => ' or ',
   NegatedNode(:final node) =>
-    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName)}',
+    'not ${_writeNode(node, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren)}',
   GroupNode(:final nodes) =>
-    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName)).join()})',
+    '(${nodes.map((child) => _writeNode(child, noteIdColumn, arguments, timing, currentDeckName, deckIdsWithChildren)).join()})',
   Search(value: final search) => _writeSearch(
     search,
     noteIdColumn,
     arguments,
     timing,
     currentDeckName,
+    deckIdsWithChildren,
   ),
 };
 
@@ -189,10 +196,15 @@ String _writeSearch(
   List<String> arguments,
   SearchSqlTiming? timing,
   String? currentDeckName,
+  Map<BigInt, List<BigInt>> deckIdsWithChildren,
 ) => switch (node) {
   CardIds(:final ids) => 'c.id in (${_validateIdList(ids)})',
   NoteIds(:final ids) => '$noteIdColumn in (${_validateIdList(ids)})',
   Deck(:final name) => _writeDeck(name, arguments, currentDeckName),
+  DeckIdWithChildren(:final id) => _writeDeckIdWithChildren(
+    id,
+    deckIdsWithChildren,
+  ),
   NotetypeIdSearch(:final id) => 'n.mid = $id',
   Notetype(:final name) => _writeNotetype(name, arguments),
   Tag(:final tag, :final mode) => _writeTag(tag, mode, arguments),
@@ -648,6 +660,15 @@ String _writeDeck(
   return '(c.did in (select id from decks where name regexp ?$argumentIndex) '
       'or (c.odid != 0 and c.odid in '
       '(select id from decks where name regexp ?$argumentIndex)))';
+}
+
+String _writeDeckIdWithChildren(
+  Int64 id,
+  Map<BigInt, List<BigInt>> deckIdsWithChildren,
+) {
+  // Parsing the decimal string avoids precision loss in JavaScript's number type.
+  final ids = deckIdsWithChildren[BigInt.parse(id.toString())];
+  return ids == null ? 'false' : 'c.did in (${ids.join(',')})';
 }
 
 String _nativeDeckName(String name) => name

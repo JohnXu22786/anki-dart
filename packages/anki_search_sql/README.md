@@ -4,7 +4,7 @@ This AGPL-3.0-or-later package compiles a bounded subset of the typed AST from
 `anki_search_parser` to source-compatible Anki SQL. It supports boolean
 operators, groups, negation, card and note IDs, notetype IDs and names, card
 template ordinals and names, tag predicates in normal, regex, and no-combining
-modes, deck IDs without children, card flags, all card state predicates,
+modes, deck IDs with and without children, card flags, all card state predicates,
 added/edited/introduced day predicates, and whole-collection queries. It
 preserves source table selection and card/note SELECT shapes. Named deck
 searches match the deck and its descendants by normalized native path, and
@@ -13,6 +13,10 @@ also match the original deck of cards in filtered decks. `deck:*` and
 optional native current-deck name through `currentDeckName`, defaulting to
 `Default` when the caller has no current deck record. Supply the native current
 deck path with U+001F between components; wildcard characters in it are literal.
+`DeckIdWithChildren` accepts a `deckIdsWithChildren` map resolved by the host,
+keyed by exact signed 64-bit deck IDs represented as `BigInt`. Each mapped list
+is emitted in order in `c.did in (...)`; an absent key emits `false`. This
+compiler does not query deck storage or match filtered cards by original deck.
 Named deck searches use Core's
 case-insensitive Anki wildcard regex semantics and component normalization.
 Custom-data

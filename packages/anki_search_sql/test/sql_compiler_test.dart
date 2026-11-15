@@ -254,6 +254,80 @@ void main() {
     ]);
   });
 
+  test('deck IDs with children use explicit ordered host expansions', () {
+    final rootId = Int64.parseInt('9223372036854775807');
+    final rootKey = BigInt.parse(rootId.toString());
+    final compiled = compileSearchSql(
+      GroupNode([Search(DeckIdWithChildren(rootId))]),
+      deckIdsWithChildren: {
+        rootKey: [
+          BigInt.parse('9223372036854775807'),
+          BigInt.from(8),
+          BigInt.from(-9),
+        ],
+      },
+    );
+
+    expect(
+      compiled.sql,
+      'select c.id from cards c where (c.did in '
+      '(9223372036854775807,8,-9))',
+    );
+    expect(compiled.arguments, isEmpty);
+    expect(compiled.requiredTable, RequiredTable.cards);
+
+    final missing = compileSearchSql(
+      GroupNode([Search(DeckIdWithChildren(Int64(42)))]),
+    );
+    expect(missing.sql, 'select c.id from cards c where (false)');
+
+    final empty = compileSearchSql(
+      GroupNode([Search(DeckIdWithChildren(Int64(42)))]),
+      deckIdsWithChildren: {BigInt.from(42): []},
+    );
+    expect(empty.sql, 'select c.id from cards c where (c.did in ())');
+    expect(empty.arguments, isEmpty);
+    expect(empty.sql, isNot(contains('odid')));
+  });
+
+  test(
+    'deck IDs with children compose with boolean searches and note results',
+    () {
+      final deckId = Int64(17);
+      final expansions = {
+        BigInt.from(17): [BigInt.from(17), BigInt.from(19)],
+      };
+      final cards = compileSearchSql(
+        GroupNode([
+          Search(DeckIdWithChildren(deckId)),
+          BooleanNode(NodeKind.and),
+          Search(DeckIdsWithoutChildren('7')),
+          BooleanNode(NodeKind.or),
+          NegatedNode(Search(State(StateKind.review))),
+        ]),
+        deckIdsWithChildren: expansions,
+      );
+      expect(cards.requiredTable, RequiredTable.cards);
+      expect(cards.arguments, isEmpty);
+      expect(cards.sql, contains('c.did in (17,19)'));
+      expect(cards.sql, contains('c.did in (7)'));
+      expect(cards.sql, contains('not c.type in (2, 3)'));
+
+      final notes = compileSearchSql(
+        GroupNode([Search(DeckIdWithChildren(deckId))]),
+        resultType: SearchResultType.notes,
+        deckIdsWithChildren: expansions,
+      );
+      expect(
+        notes.sql,
+        startsWith('select distinct n.id from cards c, notes n'),
+      );
+      expect(notes.sql, contains('c.nid=n.id and (c.did in (17,19))'));
+      expect(notes.requiredTable, RequiredTable.cardsAndNotes);
+      expect(notes.arguments, isEmpty);
+    },
+  );
+
   test('glob names emit anchored regexes with Core wildcard escaping', () {
     final notetype = compileSearchSql(
       GroupNode([Search(Notetype('Cafe\u0301*\\_*'))]),

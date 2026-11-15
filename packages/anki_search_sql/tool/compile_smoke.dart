@@ -46,6 +46,21 @@ void main() {
   if (fallbackDeckQuery.arguments.single != '(?i)^Default(\$|\x1f)') {
     throw StateError('Default deck JavaScript SQL smoke test failed');
   }
+  final largeDeckId = Int64.parseInt('9223372036854775807');
+  final largeDeckQuery = compileSearchSql(
+    GroupNode([Search(DeckIdWithChildren(largeDeckId))]),
+    deckIdsWithChildren: {
+      BigInt.parse(largeDeckId.toString()): [
+        BigInt.parse('9223372036854775807'),
+        BigInt.parse('-9223372036854775808'),
+      ],
+    },
+  );
+  if (largeDeckQuery.sql !=
+      'select c.id from cards c where '
+          '(c.did in (9223372036854775807,-9223372036854775808))') {
+    throw StateError('Deck ID JavaScript precision smoke test failed');
+  }
   final dueQuery = compileSearchSql(
     GroupNode([Search(State(StateKind.due))]),
     timing: SearchSqlTiming(

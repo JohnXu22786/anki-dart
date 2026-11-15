@@ -37,10 +37,14 @@ final class BrowserSearchHistoryEntry {
   });
 
   final String query;
-  final List<int> deckIds;
+
+  /// IDs may be `BigInt` when a JavaScript host cannot represent them as `int`.
+  final List<Object> deckIds;
   final List<int> flags;
   final List<String> tags;
-  final List<int> noteTypeIds;
+
+  /// IDs may be `BigInt` when a JavaScript host cannot represent them as `int`.
+  final List<Object> noteTypeIds;
   final List<int> cardStateCodes;
 
   /// Whether this is the default search (blank query and no selected filters).

@@ -10,6 +10,7 @@ void main() {
       expect(extractOriginalPosition('{"pos":0}'), 0);
       expect(extractOriginalPosition('{"pos":42}'), 42);
       expect(extractOriginalPosition('{"pos":4294967295}'), 4294967295);
+      expect(extractOriginalPosition('{"pos":42,"cd":5}'), isNull);
       expect(extractOriginalPosition('[42]'), 42);
       expect(extractOriginalPosition('{"pos":-1}'), isNull);
       expect(extractOriginalPosition('{"pos":4294967296}'), isNull);
@@ -33,6 +34,22 @@ void main() {
     expect(extractCustomData(cardData, 's'), 'text');
     expect(extractCustomData(cardData, 'o'), '{"a":2,"z":1}');
     expect(extractCustomData(cardData, 'a'), '[1,{"x":2,"y":1}]');
+    expect(
+      extractCustomData('{"cd":"{\\"n\\":9007199254740993}"}', 'n'),
+      '9007199254740993',
+    );
+    expect(extractCustomData('{"cd":"{\\"n\\":1e6}"}', 'n'), '1000000.0');
+    expect(extractCustomData('{"cd":"{\\"n\\":1e16}"}', 'n'), '1e+16');
+    expect(extractCustomData('{"cd":"{\\"n\\":1e-6}"}', 'n'), '1e-6');
+    expect(extractCustomData('{"cd":"{\\"n\\":1e-5}"}', 'n'), '0.00001');
+    expect(extractCustomData('{"cd":"{\\"n\\":1e999}"}', 'n'), isNull);
+    expect(
+      extractCustomData(
+        '{"cd":"{\\"nested\\":{\\"𐀀\\":2,\\"\\":1}}"}',
+        'nested',
+      ),
+      '{"":1,"𐀀":2}',
+    );
     expect(extractCustomData(cardData, 'missing'), isNull);
     expect(extractCustomData('{bad json', 'r'), isNull);
     expect(extractCustomData('{"cd":""}', 'r'), isNull);

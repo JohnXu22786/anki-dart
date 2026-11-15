@@ -11,4 +11,8 @@ void main() {
   if (extractCustomData('{"cd":"{\\"z\\":1,\\"a\\":2}"}', 'a') != '2') {
     throw StateError('Web card-data custom JSON lookup failed');
   }
+  if (extractCustomData('{"cd":"{\\"n\\":9007199254740993}"}', 'n') !=
+      '9007199254740993') {
+    throw StateError('Web custom JSON integer lost precision beyond 2^53');
+  }
 }

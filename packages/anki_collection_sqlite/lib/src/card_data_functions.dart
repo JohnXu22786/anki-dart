@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:sqlite3/common.dart';
 
+import 'lossless_json.dart';
+
 /// Installs Core's card-data extraction functions on a shared SQLite host.
 void registerCardDataFunctions(CommonDatabase database) {
   database.createFunction(
@@ -24,6 +26,7 @@ void registerCardDataFunctions(CommonDatabase database) {
 /// Extracts compact card-data `pos`, returning null for Core's default value.
 int? extractOriginalPosition(Object? cardData) {
   if (cardData is! String) return null;
+  if (!_cardDataObjectParses(cardData)) return null;
   final value = _cardDataField(cardData, 'pos', 0);
   return switch (value) {
     int() when value >= 0 && value <= 0xffffffff => value,
@@ -31,6 +34,21 @@ int? extractOriginalPosition(Object? cardData) {
       value.toInt(),
     _ => null,
   };
+}
+
+bool _cardDataObjectParses(String cardData) {
+  try {
+    final decoded = jsonDecode(cardData);
+    if (decoded is Map<String, Object?>) {
+      return !decoded.containsKey('cd') || decoded['cd'] is String;
+    }
+    if (decoded is List<Object?>) {
+      return decoded.length <= 6 || decoded[6] is String;
+    }
+    return false;
+  } on FormatException {
+    return false;
+  }
 }
 
 /// Extracts a value from the compact card-data `cd` JSON object.
@@ -42,7 +60,7 @@ Object? extractCustomData(Object? cardData, Object? key) {
   }
   final Object? customData;
   try {
-    customData = jsonDecode(serializedCustomData);
+    customData = parseLosslessJson(serializedCustomData);
   } on FormatException {
     return null;
   }
@@ -50,7 +68,12 @@ Object? extractCustomData(Object? cardData, Object? key) {
     return null;
   }
   final value = customData[key];
-  return value is String ? value : jsonEncode(_sortJsonObjectKeys(value));
+  if (value is String) return value;
+  try {
+    return encodeLosslessJson(value);
+  } on FormatException {
+    return null;
+  }
 }
 
 Object? _cardDataField(String cardData, String key, int sequenceIndex) {
@@ -64,17 +87,4 @@ Object? _cardDataField(String cardData, String key, int sequenceIndex) {
   } on FormatException {
     return null;
   }
-}
-
-Object? _sortJsonObjectKeys(Object? value) {
-  if (value is Map<String, Object?>) {
-    final keys = value.keys.toList()..sort();
-    return <String, Object?>{
-      for (final key in keys) key: _sortJsonObjectKeys(value[key]),
-    };
-  }
-  if (value is List<Object?>) {
-    return value.map(_sortJsonObjectKeys).toList();
-  }
-  return value;
 }

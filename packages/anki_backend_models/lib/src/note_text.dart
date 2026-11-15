@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import 'package:html/parser.dart' show parseFragment;
+import 'html_entity_decoder.dart';
 
 final _htmlTags = RegExp(
   r'<!--.*?-->|<style.*?>.*?</style>|<script.*?>.*?</script>|<.*?>',
@@ -27,10 +27,5 @@ String stripHtmlPreservingMediaFilenames(String html) {
     return match.group(0)!;
   });
   final withoutMarkup = withMediaNames.replaceAll(_htmlTags, '');
-  const sentinel = '\uE000';
-  final decoded = (parseFragment('$withoutMarkup$sentinel').text ?? '')
-      .replaceAll('\u00a0', ' ');
-  return decoded.endsWith(sentinel)
-      ? decoded.substring(0, decoded.length - sentinel.length)
-      : decoded;
+  return decodeAnkiHtmlEntities(withoutMarkup);
 }

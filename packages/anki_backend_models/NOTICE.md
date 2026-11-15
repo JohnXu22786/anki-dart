@@ -44,6 +44,9 @@ matching the generated table embedded by pinned `unicase 2.6.0`, from
 `UNICODE_CASEFOLD.sha256` and the data is covered by the repository's Unicode
 License V3 text at `LICENSES/Unicode-License-V3.txt`. Deck and DeckConfig models
 include stored values, conversions, and pinned defaults. Media metadata and
-collection configuration values are also included. The `html` Dart package is
-used under its MIT license for HTML character-reference decoding. This package
-does not change the root `COPYING` file.
+collection configuration values are also included. The HTML named-entity table
+in `lib/src/html_entities.dart` is adapted from `htmlescape` 0.3.1 by Viktor
+Dahl, licensed under Apache-2.0, MIT, or MPL-2.0; the package includes the
+Apache-2.0 license text. Its source digest is recorded in
+`THIRD_PARTY_SOURCE.sha256`. This package does not change the root `COPYING`
+file.

@@ -7,6 +7,7 @@ import 'package:anki_backend_protocol/anki/generic.pb.dart' as generic;
 import 'package:fixnum/fixnum.dart';
 
 import 'base91.dart';
+import 'card.dart' show InvalidModelValue;
 
 /// A card template's ordinal, modification values and official config.
 class CardTemplate {
@@ -23,7 +24,7 @@ class CardTemplate {
   final int? ord;
   final Int64 mtimeSecs;
   final int usn;
-  final String name;
+  String name;
   final proto.Notetype_Template_Config config;
 
   /// Create a template with the defaults from Anki Core's
@@ -51,6 +52,16 @@ class CardTemplate {
         config:
             value.hasConfig() ? value.config : proto.Notetype_Template_Config(),
       );
+
+  /// Remove invalid quote characters using the pinned Anki Core rules.
+  void fixName() {
+    if (name.isEmpty) throw const InvalidModelValue('Empty template name');
+    final cleaned = name.replaceAll('"', '');
+    if (cleaned.isEmpty) {
+      throw const InvalidModelValue('Template name contains only quotes');
+    }
+    if (name.length != cleaned.length) name = cleaned;
+  }
 
   proto.Notetype_Template toProto() => proto.Notetype_Template(
         ord: ord == null ? null : generic.UInt32(val: ord!),

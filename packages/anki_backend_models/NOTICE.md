@@ -6,8 +6,8 @@ conversions from `rslib/src/card/mod.rs`, `rslib/src/card/service.rs`, and
 conversions, and default configuration assets from `rslib/src/notetype/mod.rs`,
 `rslib/src/notetype/service.rs`, `rslib/src/notetype/fields.rs`,
 `rslib/src/notetype/templates.rs`, `rslib/src/notetype/styling.css`,
-`rslib/src/notetype/cloze_styling.css`, `rslib/src/notetype/header.tex`, and
-`rslib/src/notetype/service.rs`, `rslib/src/notetype/stock.rs`,
+`rslib/src/notetype/cloze_styling.css`, `rslib/src/notetype/header.tex`,
+`rslib/src/notetype/stock.rs`,
 `rslib/src/image_occlusion/notetype.rs`, and
 `rslib/src/image_occlusion/notetype.css`; Deck and DeckConfig values and conversions
 from `rslib/src/decks/mod.rs`, `rslib/src/decks/name.rs`,
@@ -33,7 +33,13 @@ assets recorded in `SOURCE.sha256`. `StockNotetypeFactory` implements Anki
 Core's Basic, Basic (type answer), Basic (and reversed), Basic (optional
 reversed), Cloze, and Image Occlusion note types, while accepting translated
 names from its caller. Image Occlusion collection operations and bundled
-stock-name translation catalogs remain outside this slice. Deck and DeckConfig
+stock-name translation catalogs remain outside this slice. Field and template
+name cleanup, NFC normalization, and duplicate-name suffixing follow the
+pinned notetype sources. Name uniqueness uses full Unicode 12.1.0 case folding,
+matching the generated table embedded by pinned `unicase 2.6.0`, from
+`Unicode 12.1.0 CaseFolding.txt`; its digest is recorded in
+`UNICODE_CASEFOLD.sha256` and the data is covered by the repository's Unicode
+License V3 text at `LICENSES/Unicode-License-V3.txt`. Deck and DeckConfig
 models include stored values, conversions, and pinned defaults. Media metadata
 and collection configuration values are also included. This package does not
 change the root `COPYING` file.

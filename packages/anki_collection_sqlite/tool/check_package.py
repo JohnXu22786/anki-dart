@@ -11,6 +11,7 @@ SOURCE_HASHES = {
     "rslib/src/storage/sqlite.rs": "877e18ef2ddcc497a91fca0c2a84d2f22658f09582d8c7f2ba1f03ca2d4ba73c",
     "rslib/src/text.rs": "2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762",
     "rslib/src/cloze.rs": "478a35d1248be262ed2d0941202ac8f201c7eb0a5c57b7198d3ace03898fd1c5",
+    "rslib/src/storage/card/data.rs": "aacbb588af4cf902eeb54d15cecc37a35b410441d67839f48929fea9fd515a89",
 }
 
 

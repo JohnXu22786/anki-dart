@@ -37,4 +37,18 @@ void main() {
       ancient.nextDayAt != yearOneEpoch + 2 * 86400 + 4 * 3600) {
     throw StateError('year 1 Gregorian rollover is incorrect');
   }
+
+  final legacy = schedTimingTodayV1(creationSecs: -86400, currentSecs: 0);
+  if (legacy.daysElapsed != 1 || legacy.nextDayAt != 86400) {
+    throw StateError('legacy v1 elapsed-day calculation is incorrect');
+  }
+  final dispatched = schedTimingToday(
+    creationSecs: 1533564000,
+    currentSecs: 1584491078,
+    currentUtcOffsetMinutesWest: -600,
+    rolloverHour: 0,
+  );
+  if (dispatched.daysElapsed != 589 || dispatched.nextDayAt != 1584540000) {
+    throw StateError('legacy scheduler dispatch is incorrect');
+  }
 }

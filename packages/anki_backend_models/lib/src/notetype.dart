@@ -58,6 +58,59 @@ class Notetype {
   final List<CardTemplate> templates;
   final proto.Notetype_Config config;
 
+  /// The stored defaults created by Anki Core's `Notetype::default()`.
+  factory Notetype.ankiDefault() => Notetype(config: defaultConfig());
+
+  /// Build the exact default configuration from Anki Core's pinned CSS and
+  /// LaTeX assets.
+  static proto.Notetype_Config defaultConfig() => proto.Notetype_Config(
+        css: defaultCss,
+        latexPre: defaultLatexHeader,
+        latexPost: defaultLatexFooter,
+      );
+
+  /// Build the exact default configuration used for cloze note types.
+  static proto.Notetype_Config clozeConfig() => proto.Notetype_Config(
+        kind: proto.Notetype_Config_Kind.KIND_CLOZE,
+        css: '$defaultCss$defaultClozeCss',
+        latexPre: defaultLatexHeader,
+        latexPost: defaultLatexFooter,
+      );
+
+  static const defaultCss = '.card {\n'
+      '    font-family: arial;\n'
+      '    font-size: 20px;\n'
+      '    line-height: 1.5;\n'
+      '    text-align: center;\n'
+      '    color: black;\n'
+      '    background-color: white;\n'
+      '}\n';
+
+  static const defaultClozeCss = '.cloze {\n'
+      '    font-weight: bold;\n'
+      '    color: blue;\n'
+      '}\n'
+      '.nightMode .cloze {\n'
+      '    color: lightblue;\n'
+      '}\n';
+
+  static const defaultLatexHeader = r'\documentclass[12pt]{article}'
+      '\n'
+      r'\special{papersize=3in,5in}'
+      '\n'
+      r'\usepackage[utf8]{inputenc}'
+      '\n'
+      r'\usepackage{amssymb,amsmath}'
+      '\n'
+      r'\pagestyle{empty}'
+      '\n'
+      r'\setlength{\parindent}{0in}'
+      '\n'
+      r'\begin{document}'
+      '\n';
+
+  static const defaultLatexFooter = r'\end{document}';
+
   factory Notetype.fromProto(proto.Notetype value) => Notetype(
         id: NotetypeId(value.id),
         name: value.name,

@@ -10,7 +10,7 @@ import 'base91.dart';
 /// A note field's ordinal, name and official backend configuration.
 class NoteField {
   NoteField({int? ord, this.name = '', required this.config})
-    : ord = ord?.toUnsigned(32);
+      : ord = ord?.toUnsigned(32);
 
   final int? ord;
   final String name;
@@ -20,24 +20,26 @@ class NoteField {
   factory NoteField.newField(
     String name, {
     required BigInt Function() randomU64,
-  }) => NoteField(
-    name: name,
-    config: proto.Notetype_Field_Config(
-      id: int64FromRandomU64(randomU64()),
-      fontName: 'Arial',
-      fontSize: 20,
-    ),
-  );
+  }) =>
+      NoteField(
+        name: name,
+        config: proto.Notetype_Field_Config(
+          id: int64FromRandomU64(randomU64()),
+          fontName: 'Arial',
+          fontSize: 20,
+        ),
+      );
 
   factory NoteField.fromProto(proto.Notetype_Field value) => NoteField(
-    ord: value.hasOrd() ? value.ord.val : null,
-    name: value.name,
-    config: value.hasConfig() ? value.config : proto.Notetype_Field_Config(),
-  );
+        ord: value.hasOrd() ? value.ord.val : null,
+        name: value.name,
+        config:
+            value.hasConfig() ? value.config : proto.Notetype_Field_Config(),
+      );
 
   proto.Notetype_Field toProto() => proto.Notetype_Field(
-    ord: ord == null ? null : generic.UInt32(val: ord!),
-    name: name,
-    config: config,
-  );
+        ord: ord == null ? null : generic.UInt32(val: ord!),
+        name: name,
+        config: config,
+      );
 }

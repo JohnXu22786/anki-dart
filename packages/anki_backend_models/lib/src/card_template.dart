@@ -16,9 +16,9 @@ class CardTemplate {
     int usn = 0,
     this.name = '',
     required this.config,
-  }) : ord = ord?.toUnsigned(32),
-       mtimeSecs = mtimeSecs ?? Int64.ZERO,
-       usn = usn.toSigned(32);
+  })  : ord = ord?.toUnsigned(32),
+        mtimeSecs = mtimeSecs ?? Int64.ZERO,
+        usn = usn.toSigned(32);
 
   final int? ord;
   final Int64 mtimeSecs;
@@ -33,28 +33,30 @@ class CardTemplate {
     String questionFormat,
     String answerFormat, {
     required BigInt Function() randomU64,
-  }) => CardTemplate(
-    name: name,
-    config: proto.Notetype_Template_Config(
-      qFormat: questionFormat,
-      aFormat: answerFormat,
-      id: int64FromRandomU64(randomU64()),
-    ),
-  );
+  }) =>
+      CardTemplate(
+        name: name,
+        config: proto.Notetype_Template_Config(
+          qFormat: questionFormat,
+          aFormat: answerFormat,
+          id: int64FromRandomU64(randomU64()),
+        ),
+      );
 
   factory CardTemplate.fromProto(proto.Notetype_Template value) => CardTemplate(
-    ord: value.hasOrd() ? value.ord.val : null,
-    mtimeSecs: value.mtimeSecs,
-    usn: value.usn,
-    name: value.name,
-    config: value.hasConfig() ? value.config : proto.Notetype_Template_Config(),
-  );
+        ord: value.hasOrd() ? value.ord.val : null,
+        mtimeSecs: value.mtimeSecs,
+        usn: value.usn,
+        name: value.name,
+        config:
+            value.hasConfig() ? value.config : proto.Notetype_Template_Config(),
+      );
 
   proto.Notetype_Template toProto() => proto.Notetype_Template(
-    ord: ord == null ? null : generic.UInt32(val: ord!),
-    mtimeSecs: mtimeSecs,
-    usn: usn,
-    name: name,
-    config: config,
-  );
+        ord: ord == null ? null : generic.UInt32(val: ord!),
+        mtimeSecs: mtimeSecs,
+        usn: usn,
+        name: name,
+        config: config,
+      );
 }

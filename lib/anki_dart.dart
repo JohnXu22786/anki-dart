@@ -302,6 +302,7 @@ export 'src/shared_decks_download_state.dart';
 export 'src/custom_study_card_state.dart';
 export 'src/filtered_deck_options.dart';
 export 'src/reviewer_edited_tags_directive.dart';
+export 'src/reviewer_edited_tags_operation.dart';
 export 'src/reviewer_edit_tags_directive.dart';
 export 'src/reviewer_user_action_script.dart';
 export 'src/reviewer_hint_expression.dart';

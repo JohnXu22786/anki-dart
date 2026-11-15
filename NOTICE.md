@@ -3791,6 +3791,16 @@ The Dart adaptation and focused tests are Copyright © 2026 John Tsui and marked
   coroutine execution, scheduler/deck/config reads, media playback, timer
   operation, StateFlow/lifecycle, and UI.
 
+- The same pinned `ReviewerViewModel.kt:665–679` source's `onEditedTags()`
+  callback sequence is adapted in
+  `lib/src/reviewer_edited_tags_operation.dart`, with source-derived cases in
+  `test/reviewer_edited_tags_operation_test.dart`. The adapter preserves the
+  equality early return, ordered card/note/tag reads, tag-string write, and
+  subsequent undoable update request. The host retains Collection, Note,
+  mutation, undo, logging, and coroutine behavior. The upstream file declares
+  `GPL-3.0-or-later` and names no separate copyright holder; Dart changes are
+  Copyright © 2026 John Tsui and carry the same license.
+
 The host-callback projection in
 `lib/src/card_template_fragment_get_current_card_template_index.dart` and its
 focused cases in

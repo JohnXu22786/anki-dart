@@ -311,6 +311,6 @@ void main() {
       r'(?i).* Cafe\S*(::| ).*',
       r'(?i)^math::.*$',
     ]);
-    expect(compiled.requiredTable, RequiredTable.cardsAndNotes);
+    expect(compiled.requiredTable, RequiredTable.notes);
   });
 }

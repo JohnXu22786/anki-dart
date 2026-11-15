@@ -6,7 +6,16 @@ operators, groups, negation, card and note IDs, notetype IDs and names, card
 template ordinals and names, tag predicates in normal, regex, and no-combining
 modes, deck IDs without children, card flags, all card state predicates,
 added/edited/introduced day predicates, and whole-collection queries. It
-preserves source table selection and card/note SELECT shapes. Custom-data
+preserves source table selection and card/note SELECT shapes. Named deck
+searches match the deck and its descendants by normalized native path, and
+also match the original deck of cards in filtered decks. `deck:*` and
+`deck:filtered` use Core's special predicates; `deck:current` accepts an
+optional native current-deck name through `currentDeckName`, defaulting to
+`Default` when the caller has no current deck record. Supply the native current
+deck path with U+001F between components; wildcard characters in it are literal.
+Named deck searches use Core's
+case-insensitive Anki wildcard regex semantics and component normalization.
+Custom-data
 existence and string/number property comparisons use Core's
 `extract_custom_data(c.data, ?)` expressions; keys and string values remain
 bound arguments, while numeric values use Core-compatible float32 spelling.

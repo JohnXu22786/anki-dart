@@ -49,21 +49,21 @@ bool libankiNoteEquals(
   Object self,
   Object? other, {
   required bool Function(Object self, Object other) sameRuntimeClass,
-  required int Function(Object note) noteId,
+  required BigInt Function(Object note) noteId,
 }) {
   if (identical(self, other)) return true;
   if (other == null || !sameRuntimeClass(self, other)) return false;
   return noteId(self) == noteId(other);
 }
 
-/// Returns the signed JVM 32-bit result of Note's signed-Long hash fold.
-int libankiNoteHashCode(int id) {
-  final unsignedLong = id & 0xffffffffffffffff;
-  final folded = (unsignedLong ^ (unsignedLong >>> 32)) & 0xffffffff;
-  return _signedInt32(folded);
-}
-
-int _signedInt32(int value) {
-  final unsigned = value & 0xffffffff;
-  return unsigned >= 0x80000000 ? unsigned - 0x100000000 : unsigned;
+/// Returns the signed JVM 32-bit hash of a signed-Long ID supplied as [BigInt].
+///
+/// The public parameter uses [BigInt] so IDs above JavaScript's safe integer
+/// limit retain all bits before the source's 32-bit fold.
+int libankiNoteHashCode(BigInt id) {
+  final mask64 = BigInt.parse('18446744073709551615');
+  final mask32 = BigInt.from(0xffffffff);
+  final unsignedLong = id & mask64;
+  final folded = (unsignedLong ^ (unsignedLong >> 32)) & mask32;
+  return folded.toSigned(32).toInt();
 }

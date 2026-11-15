@@ -396,7 +396,9 @@ cases in `test/whole_and_fraction_test.dart` adapt
 2.25.3 commit `d9bf072f814a0c37d30a694192593b31ff2df875`. The source computes
 `whole = this.toLong()`, then `fraction = this - whole`, and returns
 `Pair(whole, fraction)`; the Dart named record preserves these fields and this
-operation order. The conversion truncates finite in-range values toward zero,
+operation order. Its `whole` field is `BigInt` rather than `int`, preserving the
+full JVM Long on JavaScript and the Dart VM. The conversion truncates finite
+in-range values toward zero,
 maps NaN to zero, and saturates infinities and out-of-range values to signed
 64-bit Long bounds. The subtraction then uses binary64 arithmetic, including
 the conversion of the saturated Long back to double. The focused tests exercise
@@ -406,6 +408,32 @@ extension was found in the pinned checkout. The upstream source declares
 `GPL-3.0-or-later` and Copyright © 2026 Shaan Narendran
 <shaannaren06@gmail.com>; the Dart adaptation and test are Copyright © 2026
 John Tsui and marked `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## Signed Long parity on JavaScript
+
+The selected helpers preserve Kotlin/JVM signed `Long` behavior while exposing
+`BigInt` at Dart API boundaries wherever the full value range is required.
+`lib/src/time_utils.dart` adapts `common/src/main/java/com/ichi2/anki/common/time/TimeUtils.kt`,
+`Time.kt`, `MockTime.kt`, and the direct time tests. Clock values, calendar
+milliseconds, duration milliseconds, `MockTime` state/Long additions, and whole
+seconds returned by `intTime()` use `BigInt`; arithmetic wraps at 64 bits and
+division truncates toward zero. `ReviewReminder` timestamps and deck IDs in
+`lib/src/review_reminder.dart`, `review_reminder_form_state.dart`,
+`review_reminder_schema_migration.dart`, and `schedule_reminders_destination.dart`
+are also `BigInt`. The `ReviewReminderGroup` codecs preserve signed Long tokens
+before `jsonDecode` can round them, emit exact decimal JSON number tokens, and
+reject values outside Long bounds. Tests in `test/time_*_test.dart`,
+`test/gen_today_test.dart`, `test/int_time_test.dart`, and the reminder codec
+tests cover signed bounds, values above 2^53, wraparound, round trips, and
+overflow rejection; `test/web_int64_smoke.dart` asserts exact outputs under
+Node after JavaScript compilation. DateTime conversion is supported only within
+the runtime DateTime range and throws `RangeError` outside that range.
+`lib/src/note_object_methods.dart` also accepts `BigInt` IDs for Long equality
+and the JVM 32-bit hash fold. These BigInt-facing signatures are a public API
+change needed for exact web values. Upstream sources use the AnkiDroid 2.25.3
+baseline commit `d9bf072f814a0c37d30a694192593b31ff2df875`; source attribution
+and license details are recorded in `NOTICE.md`. Root `COPYING` remains
+byte-identical.
 
 This repository is a partial, modified Dart port of AnkiDroid 2.25.3. The
 upstream source baseline is commit
@@ -942,6 +970,8 @@ and `RuntimeException` construction. The adapters preserve the source's
 reference-identity, null, and exact-class short-circuits; compare IDs only after
 a same-class result; wrap only `CloneNotSupportedException` from shallow clone
 with its exact cause; and fold the signed Long ID into the signed JVM Int hash.
+The ID callbacks and hash helper use `BigInt` to preserve all Long bits on
+JavaScript.
 The pinned `NoteTest.kt` directly tests only `ClozeUtils.getNextClozeIndex`;
 it has no direct clone, equals, or hashCode assertions. Focused Dart tests in
 `test/note_object_methods_test.dart` are source-derived. `Note.kt` credits

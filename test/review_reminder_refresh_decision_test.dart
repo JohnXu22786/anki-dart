@@ -31,19 +31,21 @@ void main() {
     final checkTime = DateTime(2026, 10, 31, 10);
     final schedule = ReviewReminderTime(hour: 9, minute: 0);
 
-    ReviewReminder makeReminder({required int id, required int latestTime}) =>
-        ReviewReminder.createReviewReminder(
-          id: ReviewReminderId(id),
-          time: schedule,
-          latestNotifTime: latestTime,
-          enabled: false,
-          profileID: 'profile',
-        );
+    ReviewReminder makeReminder({
+      required int id,
+      required BigInt latestTime,
+    }) => ReviewReminder.createReviewReminder(
+      id: ReviewReminderId(id),
+      time: schedule,
+      latestNotifTime: latestTime,
+      enabled: false,
+      profileID: 'profile',
+    );
 
     test(
       'missing reminder returns null and leaves other entries unchanged',
       () {
-        final existing = makeReminder(id: 1, latestTime: 123);
+        final existing = makeReminder(id: 1, latestTime: BigInt.from(123));
         final group = ReviewReminderGroup.fromPairs([
           MapEntry(existing.id, existing),
         ]);
@@ -52,12 +54,12 @@ void main() {
           reminders: group,
           id: ReviewReminderId(2),
           checkTime: checkTime,
-          updatedAtEpochMilliseconds: 456,
+          updatedAtEpochMilliseconds: BigInt.from(456),
         );
 
         expect(result, isNull);
         expect(group[existing.id], same(existing));
-        expect(existing.latestNotifTime, 123);
+        expect(existing.latestNotifTime, BigInt.from(123));
       },
     );
 
@@ -66,7 +68,9 @@ void main() {
       () {
         final reminder = makeReminder(
           id: 1,
-          latestTime: DateTime(2026, 10, 31, 9).millisecondsSinceEpoch,
+          latestTime: BigInt.from(
+            DateTime(2026, 10, 31, 9).millisecondsSinceEpoch,
+          ),
         );
         final group = ReviewReminderGroup.fromPairs([
           MapEntry(reminder.id, reminder),
@@ -76,14 +80,14 @@ void main() {
           reminders: group,
           id: reminder.id,
           checkTime: checkTime,
-          updatedAtEpochMilliseconds: 456,
+          updatedAtEpochMilliseconds: BigInt.from(456),
         );
 
         expect(result, isNull);
         expect(group[reminder.id], same(reminder));
         expect(
           reminder.latestNotifTime,
-          DateTime(2026, 10, 31, 9).millisecondsSinceEpoch,
+          BigInt.from(DateTime(2026, 10, 31, 9).millisecondsSinceEpoch),
         );
         expect(reminder.enabled, isFalse);
         expect(reminder.profileID, 'profile');
@@ -93,14 +97,16 @@ void main() {
     test(
       'refresh uses separate update timestamp and returns same stored object',
       () {
-        final oldLatestTime = DateTime(2026, 10, 30, 9).millisecondsSinceEpoch;
+        final oldLatestTime = BigInt.from(
+          DateTime(2026, 10, 30, 9).millisecondsSinceEpoch,
+        );
         final reminder = makeReminder(id: 1, latestTime: oldLatestTime);
-        final unrelated = makeReminder(id: 2, latestTime: 789);
+        final unrelated = makeReminder(id: 2, latestTime: BigInt.from(789));
         final group = ReviewReminderGroup.fromPairs([
           MapEntry(reminder.id, reminder),
           MapEntry(unrelated.id, unrelated),
         ]);
-        const updatedAt = 9876543210123;
+        final updatedAt = BigInt.from(9876543210123);
 
         final result = refreshReviewReminderNotification(
           reminders: group,
@@ -117,7 +123,31 @@ void main() {
         expect(reminder.enabled, isFalse);
         expect(reminder.profileID, 'profile');
         expect(group[unrelated.id], same(unrelated));
-        expect(unrelated.latestNotifTime, 789);
+        expect(unrelated.latestNotifTime, BigInt.from(789));
+      },
+    );
+
+    test(
+      'DateTime adapter rejects signed Long timestamps outside its range',
+      () {
+        final reminder = makeReminder(
+          id: 1,
+          latestTime: BigInt.parse('9223372036854775807'),
+        );
+        final group = ReviewReminderGroup.fromPairs([
+          MapEntry(reminder.id, reminder),
+        ]);
+
+        expect(
+          () => refreshReviewReminderNotification(
+            reminders: group,
+            id: reminder.id,
+            checkTime: checkTime,
+            updatedAtEpochMilliseconds: BigInt.zero,
+          ),
+          throwsRangeError,
+        );
+        expect(reminder.latestNotifTime, BigInt.parse('9223372036854775807'));
       },
     );
   });

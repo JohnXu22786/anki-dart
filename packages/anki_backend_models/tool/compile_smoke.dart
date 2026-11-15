@@ -11,4 +11,8 @@ void main() {
   if (fieldChecksum('test') != 2840236005) {
     throw StateError('unsigned SHA-1 checksum differs on JavaScript');
   }
+  final fields = fixNoteFieldCount(['front', 'back', 'extra'], 2);
+  if (fields.length != 2 || fields[1] != 'back; extra') {
+    throw StateError('field-count migration differs on JavaScript');
+  }
 }

@@ -139,7 +139,7 @@ final class ReviewReminderSchemaV2 {
   /// neither operation.
   ReviewReminderCurrentProjection migrate({
     required ReviewReminderId id,
-    required int latestNotifTime,
+    required BigInt latestNotifTime,
   }) => ReviewReminderCurrentProjection(
     id: id,
     time: time,
@@ -195,7 +195,7 @@ final class ReviewReminderCurrentProjection {
   final ReviewReminderCardTriggerThreshold cardTriggerThreshold;
   final ReviewReminderScope scope;
   final bool enabled;
-  final int latestNotifTime;
+  final BigInt latestNotifTime;
   final String profileID;
   final bool onlyNotifyIfNoReviews;
 }
@@ -210,7 +210,7 @@ Map<ReviewReminderId, ReviewReminder> migrateReviewReminderSchemas(
   required ReviewReminderSchemaVersion fromVersion,
   required ReviewReminderSchemaVersion toVersion,
   required ReviewReminderId Function() allocateId,
-  required int Function() currentEpochMilliseconds,
+  required BigInt Function() currentEpochMilliseconds,
 }) {
   if (fromVersion.value < 1 ||
       fromVersion.value > toVersion.value ||

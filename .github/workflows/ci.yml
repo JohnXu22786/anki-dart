@@ -29,6 +29,10 @@ jobs:
         run: dart analyze lib test
       - name: Run tests
         run: dart test
+      - name: Compile and run portable helper smoke test on JavaScript
+        run: |
+          dart compile js tool/web_compat_smoke.dart -o /tmp/anki_dart_web_compat.js
+          node /tmp/anki_dart_web_compat.js
       - name: Validate licenses and COPYING
         run: python3 tool/check_licenses.py
 
@@ -202,4 +206,117 @@ jobs:
         run: dart compile js tool/compile_smoke.dart -o /tmp/anki_backend_models.js
       - name: Validate AGPL provenance and source hashes
         working-directory: packages/anki_backend_models
+        run: python3 tool/check_package.py
+  anki-collection-schema:
+    name: AGPL Anki collection schema catalog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve schema package dependencies
+        working-directory: packages/anki_collection_schema
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_collection_schema
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze schema package
+        working-directory: packages/anki_collection_schema
+        run: dart analyze lib test tool
+      - name: Test schema catalog and source fixtures
+        working-directory: packages/anki_collection_schema
+        run: dart test
+      - name: Compile web-compatible smoke target
+        working-directory: packages/anki_collection_schema
+        run: dart compile js tool/compile_smoke.dart -o /tmp/anki_collection_schema.js
+      - name: Validate AGPL source hashes and package metadata
+        working-directory: packages/anki_collection_schema
+        run: python3 tool/check_package.py
+  anki-collection-sqlite:
+    name: AGPL Anki collection SQLite adapter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve SQLite adapter dependencies
+        working-directory: packages/anki_collection_sqlite
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_collection_sqlite
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze SQLite adapter
+        working-directory: packages/anki_collection_sqlite
+        run: dart analyze lib test tool
+      - name: Test real SQLite storage adapter
+        working-directory: packages/anki_collection_sqlite
+        run: dart test
+      - name: Compile native SQLite driver smoke target
+        working-directory: packages/anki_collection_sqlite
+        run: dart compile exe tool/native_compile_smoke.dart -o /tmp/anki_collection_sqlite
+      - name: Compile web and IndexedDB driver smoke target
+        working-directory: packages/anki_collection_sqlite
+        run: dart compile js tool/web_compile_smoke.dart -o /tmp/anki_collection_sqlite.js
+      - name: Validate AGPL metadata and Dart SPDX headers
+        working-directory: packages/anki_collection_sqlite
+        run: python3 tool/check_package.py
+
+  anki-search-parser:
+    name: AGPL Anki search query parser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve parser package dependencies
+        working-directory: packages/anki_search_parser
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_search_parser
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze parser package
+        working-directory: packages/anki_search_parser
+        run: dart analyze lib test tool
+      - name: Test parser grammar and error fixtures
+        working-directory: packages/anki_search_parser
+        run: dart test
+      - name: Compile and run JavaScript parser smoke test
+        working-directory: packages/anki_search_parser
+        run: |
+          dart compile js tool/compile_smoke.dart -o /tmp/anki_search_parser.js
+          node /tmp/anki_search_parser.js
+      - name: Validate AGPL provenance and source hash
+        working-directory: packages/anki_search_parser
+        run: python3 tool/check_package.py
+
+  anki-search-sql:
+    name: AGPL Anki search SQL subset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.7
+      - name: Resolve SQL package dependencies
+        working-directory: packages/anki_search_sql
+        run: dart pub get
+      - name: Check formatting
+        working-directory: packages/anki_search_sql
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze SQL package
+        working-directory: packages/anki_search_sql
+        run: dart analyze lib test tool
+      - name: Test source-compatible SQL fixtures
+        working-directory: packages/anki_search_sql
+        run: dart test
+      - name: Compile and run JavaScript SQL smoke test
+        working-directory: packages/anki_search_sql
+        run: |
+          dart compile js tool/compile_smoke.dart -o /tmp/anki_search_sql.js
+          node /tmp/anki_search_sql.js
+      - name: Validate AGPL provenance and source hash
+        working-directory: packages/anki_search_sql
         run: python3 tool/check_package.py

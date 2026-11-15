@@ -22,9 +22,17 @@ void main() {
     expect(() => fixNoteFieldCount(['a', 'b'], -1), throwsArgumentError);
   });
 
-  test('does not mutate its input when the count already matches', () {
-    final fields = ['front', 'back'];
-    expect(fixNoteFieldCount(fields, 2), fields);
-    expect(fields, ['front', 'back']);
+  test('does not mutate its input when padding, merging, or unchanged', () {
+    final matchingFields = ['front', 'back'];
+    expect(fixNoteFieldCount(matchingFields, 2), matchingFields);
+    expect(matchingFields, ['front', 'back']);
+
+    final shortFields = ['front'];
+    expect(fixNoteFieldCount(shortFields, 2), ['front', '']);
+    expect(shortFields, ['front']);
+
+    final longFields = ['front', 'back', 'extra'];
+    expect(fixNoteFieldCount(longFields, 2), ['front', 'back; extra']);
+    expect(longFields, ['front', 'back', 'extra']);
   });
 }

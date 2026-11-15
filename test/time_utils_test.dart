@@ -112,7 +112,7 @@ void main() {
         final calls = <(String, List<int>)>[];
         final resultZero = formatAsString(
           Object(),
-          inWholeMilliseconds: (_) => 0,
+          inWholeMilliseconds: (_) => BigInt.zero,
           format: (pattern, values) {
             calls.add((pattern, values));
             return 'zero';
@@ -120,7 +120,7 @@ void main() {
         );
         final resultPositive = formatAsString(
           Object(),
-          inWholeMilliseconds: (_) => 90_500,
+          inWholeMilliseconds: (_) => BigInt.from(90_500),
           format: (pattern, values) {
             calls.add((pattern, values));
             return 'positive';
@@ -128,7 +128,7 @@ void main() {
         );
         final resultHourly = formatAsString(
           Object(),
-          inWholeMilliseconds: (_) => 3_784_500,
+          inWholeMilliseconds: (_) => BigInt.from(3_784_500),
           format: (pattern, values) {
             calls.add((pattern, values));
             return 'hourly';
@@ -159,7 +159,7 @@ void main() {
           Object(),
           inWholeMilliseconds: (_) {
             projections++;
-            return 0;
+            return BigInt.zero;
           },
           format: (_, _) => throw error,
         ),
@@ -193,7 +193,7 @@ void main() {
         final calls = <(String, List<int>)>[];
         formatAsString(
           Object(),
-          inWholeMilliseconds: (_) => -3_723_457,
+          inWholeMilliseconds: (_) => BigInt.from(-3_723_457),
           format: (pattern, values) {
             calls.add((pattern, values));
             return 'negative';
@@ -202,7 +202,7 @@ void main() {
         formatAsString(
           Object(),
           inWholeMilliseconds: (_) =>
-              61 * 60 * 60 * 1000 + 2 * 60 * 1000 + 3400,
+              BigInt.from(61 * 60 * 60 * 1000 + 2 * 60 * 1000 + 3400),
           format: (pattern, values) {
             calls.add((pattern, values));
             return 'wrapped';
@@ -254,11 +254,11 @@ void main() {
         getTimeInMillis: (actualCalendar) {
           events.add('timeInMillis');
           expect(identical(actualCalendar, calendar), isTrue);
-          return 123;
+          return BigInt.from(123);
         },
       );
 
-      expect(result, 123);
+      expect(result, BigInt.from(123));
       expect(events, [
         'calendar',
         'getHourOfDay',
@@ -283,7 +283,7 @@ void main() {
           setMinute: (_, _) {},
           setSecond: (_, _) {},
           setMillisecond: (_, _) {},
-          getTimeInMillis: (_) => 0,
+          getTimeInMillis: (_) => BigInt.zero,
         );
         expect(additions, 0);
       }
@@ -311,11 +311,11 @@ void main() {
         setMillisecond: (_, value) => events.add('millisecond:$value'),
         getTimeInMillis: (_) {
           events.add('timeInMillis');
-          return 1609387200000;
+          return BigInt.from(1609387200000);
         },
       );
 
-      expect(result, 1609387200000);
+      expect(result, BigInt.from(1609387200000));
       expect(events, [
         'calendar',
         'hour',
@@ -349,7 +349,7 @@ void main() {
           setMillisecond: (_, _) => events.add('setMillisecond'),
           getTimeInMillis: (_) {
             events.add('timeInMillis');
-            return 0;
+            return BigInt.zero;
           },
         ),
         throwsA(same(error)),

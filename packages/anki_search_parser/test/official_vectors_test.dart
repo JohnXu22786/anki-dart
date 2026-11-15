@@ -251,6 +251,11 @@ void main() {
     expect(value('card:65536'), isA<CardTemplate>());
     expect(((value('card:65536') as CardTemplate).kind as TemplateName).value,
         '65536');
+    expect(((value('card:0x10') as CardTemplate).kind as TemplateName).value,
+        '0x10');
+    expectError('mid:0x10', SearchErrorCode.invalidWholeNumber);
+    expectError('prop:due=0x10', SearchErrorCode.invalidWholeNumber);
+    expectError('rated:1:0x2', SearchErrorCode.invalidAnswerButton);
     expect((value('prop:ease=0.1') as Property).kind, isA<EaseProperty>());
   });
 

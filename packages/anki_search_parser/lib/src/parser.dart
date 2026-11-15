@@ -283,7 +283,7 @@ final class _Parser {
   }
 
   TemplateKind _template(String value) {
-    final n = int.tryParse(value);
+    final n = int.tryParse(value, radix: 10);
     if (n != null && !value.startsWith('-') && n >= 0 && n <= 65535)
       return TemplateOrdinal((n < 1 ? 1 : n) - 1);
     return TemplateName(_unescape(value));
@@ -368,7 +368,7 @@ final class _Parser {
   }
 
   int _int32(String num, String context) {
-    final n = int.tryParse(num);
+    final n = int.tryParse(num, radix: 10);
     if (n == null || n < -0x80000000 || n > 0x7fffffff)
       fail(SearchErrorCode.invalidWholeNumber,
           context: context, provided: num, remainingInput: context);
@@ -376,7 +376,7 @@ final class _Parser {
   }
 
   int _negativeInt32(String num, String context) {
-    final n = int.tryParse(num);
+    final n = int.tryParse(num, radix: 10);
     if (n == null || n < -0x80000000 || n > 0 || n > 0x7fffffff)
       fail(SearchErrorCode.invalidNegativeWholeNumber,
           context: context, provided: num, remainingInput: context);
@@ -392,7 +392,7 @@ final class _Parser {
   }
 
   BigInt _bigInt(String value, String context) {
-    final n = BigInt.tryParse(value);
+    final n = BigInt.tryParse(value, radix: 10);
     if (n == null ||
         n < -(BigInt.one << 63) ||
         n > (BigInt.one << 63) - BigInt.one)
@@ -425,7 +425,7 @@ final class _Parser {
 
   RatingKind _answer(String? value, String context) {
     if (value == null) return const AnyAnswerButton();
-    final n = int.tryParse(value);
+    final n = int.tryParse(value, radix: 10);
     if (n == null || n < 1 || n > 4)
       fail(SearchErrorCode.invalidAnswerButton,
           context: context, provided: value, remainingInput: context);

@@ -5,6 +5,7 @@ import 'package:fixnum/fixnum.dart';
 import 'field_checksum.dart';
 import 'field_is_empty.dart';
 import 'ids.dart';
+import 'note_field.dart';
 import 'base91.dart';
 import 'notetype.dart';
 import 'note_field_normalization.dart';

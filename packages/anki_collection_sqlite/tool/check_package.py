@@ -9,6 +9,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASHES = {
     "rslib/src/storage/sqlite.rs": "877e18ef2ddcc497a91fca0c2a84d2f22658f09582d8c7f2ba1f03ca2d4ba73c",
+    "rslib/src/text.rs": "2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762",
+    "rslib/src/cloze.rs": "478a35d1248be262ed2d0941202ac8f201c7eb0a5c57b7198d3ace03898fd1c5",
 }
 
 
@@ -29,8 +31,9 @@ def main() -> int:
             errors.append(f"SOURCE.sha256: invalid entry {line!r}")
             continue
         manifest[match.group(2)] = match.group(1)
-    if manifest.get("rslib/src/storage/sqlite.rs") != SOURCE_HASHES["rslib/src/storage/sqlite.rs"]:
-        errors.append("SOURCE.sha256: Core SQLite source hash differs from the pinned source")
+    for source, digest in SOURCE_HASHES.items():
+        if manifest.get(source) != digest:
+            errors.append(f"SOURCE.sha256: Core source hash differs from the pinned source: {source}")
 
     for directory in ("lib", "test", "tool"):
         for path in sorted((ROOT / directory).rglob("*.dart")):
@@ -47,7 +50,7 @@ def main() -> int:
         print("Collection SQLite package validation failed:", file=sys.stderr)
         print("\n".join(f"- {error}" for error in errors), file=sys.stderr)
         return 1
-    print("Validated AGPL metadata, pinned Core SQLite source hash, and Dart SPDX headers.")
+    print("Validated AGPL metadata, pinned Core source hashes, and Dart SPDX headers.")
     return 0
 
 

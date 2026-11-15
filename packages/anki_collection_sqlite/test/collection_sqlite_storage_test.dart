@@ -86,6 +86,12 @@ void main() {
         'third',
       );
       expect(
+        await database.queryString(
+          "SELECT process_text('Über {{c1::café::hint}}', 3)",
+        ),
+        'Uber cafe',
+      );
+      expect(
         await database.queryString("SELECT field_at_index('only', 65535)"),
         '',
       );
@@ -112,6 +118,12 @@ void main() {
           "SELECT field_at_index('first' || char(31) || 'second', 1)",
         ),
         'second',
+      );
+      expect(
+        await reopened.queryString(
+          "SELECT process_text('Über {{c1::café::hint}}', 3)",
+        ),
+        'Uber cafe',
       );
       await reopened.close();
     },

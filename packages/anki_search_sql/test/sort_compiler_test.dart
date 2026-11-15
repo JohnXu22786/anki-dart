@@ -293,4 +293,32 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('Core day count must fit unsigned 32-bit timing', () {
+    for (final invalidDays in [-1, 0x100000000]) {
+      final timing = SearchSqlTiming(
+        daysElapsed: invalidDays,
+        now: BigInt.from(1700000000),
+        learnAheadSecs: 30,
+        nextDayAt: BigInt.from(1700003600),
+      );
+      expect(
+        () => compileSearchSqlWithSort(
+          GroupNode([Search(WholeCollection())]),
+          timing: timing,
+          sortOrder: const SearchSqlSortOrder.builtin(SearchSqlSortColumn.due),
+        ),
+        throwsRangeError,
+      );
+      expect(
+        () => compileSearchSqlWithSort(
+          GroupNode([Search(WholeCollection())]),
+          resultType: SearchResultType.notes,
+          timing: timing,
+          sortOrder: const SearchSqlSortOrder.builtin(SearchSqlSortColumn.due),
+        ),
+        throwsRangeError,
+      );
+    }
+  });
 }

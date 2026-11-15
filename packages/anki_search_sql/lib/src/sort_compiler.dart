@@ -303,6 +303,13 @@ SearchSqlTiming _requireTiming(
   if (timing == null || (nextDay && timing.nextDayAt == null)) {
     throw ArgumentError('This sort column requires explicit SearchSqlTiming.');
   }
+  if (timing.daysElapsed < 0 || timing.daysElapsed > 0xffffffff) {
+    throw RangeError.value(
+      timing.daysElapsed,
+      'daysElapsed',
+      'must fit Core u32',
+    );
+  }
   return timing;
 }
 

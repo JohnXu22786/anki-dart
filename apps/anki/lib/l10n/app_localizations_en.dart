@@ -29,6 +29,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String get storageSetupFailed => 'Storage setup failed';
 
   @override
+  String get collectionOpenFailed => 'Collection could not be opened';
+
+  @override
+  String get collectionDefaultDeck => 'Default';
+
+  @override
+  String get collectionBasic => 'Basic';
+
+  @override
+  String get collectionBasicTyping => 'Basic (type answer)';
+
+  @override
+  String get collectionBasicReversed => 'Basic (and reversed card)';
+
+  @override
+  String get collectionBasicOptionalReversed =>
+      'Basic (optional reversed card)';
+
+  @override
+  String get collectionCloze => 'Cloze';
+
+  @override
+  String get collectionFront => 'Front';
+
+  @override
+  String get collectionBack => 'Back';
+
+  @override
+  String get collectionAddReverse => 'Add Reverse';
+
+  @override
+  String get collectionText => 'Text';
+
+  @override
+  String get collectionBackExtra => 'Back Extra';
+
+  @override
+  String get collectionComments => 'Comments';
+
+  @override
+  String get collectionCardOne => 'Card 1';
+
+  @override
+  String get collectionCardTwo => 'Card 2';
+
+  @override
+  String get collectionImageOcclusion => 'Image Occlusion';
+
+  @override
+  String get collectionOcclusions => 'Occlusions';
+
+  @override
+  String get collectionImage => 'Image';
+
+  @override
+  String get collectionHeader => 'Header';
+
+  @override
+  String get collectionToggleMasks => 'Toggle Masks';
+
+  @override
+  String get collectionImageOcclusionError => 'Error loading Image Occlusion';
+
+  @override
   String get startupCheckFailed => 'Startup setup status could not be checked';
 
   @override

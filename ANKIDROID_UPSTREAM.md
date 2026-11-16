@@ -4298,14 +4298,38 @@ from `preferences/profiles/SwitchProfilesScreen.kt`, the add-name dialog from
 from `startup/SetupStorage.kt`, `BackendSetup.kt`, `StoragePolicy.kt`, and
 `StartupGuards.kt`. The pinned ProfileManager creates a `Default` profile when
 none is registered and persists profile creation and rename through its
-registry. Host storage selection, backend initialization, profile persistence,
-and lifecycle-safe switching are represented by the Dart interfaces and are
-deferred to platform adapters; no OS-specific behavior or persistence is
-invented here. The app adds a shared first-run entry screen because the Flutter
-app previously had only a neutral shell. No upstream images, assets, or
-translated strings are copied. The referenced AnkiDroid Kotlin files declare
+registry. The initial profile port established injected host boundaries; Unit
+14 now integrates profile-scoped collection open/create and lifecycle-safe
+switching through those boundaries, as mapped below. The app adds a shared
+first-run entry screen because the Flutter app previously had only a neutral
+shell. No upstream images, assets, or translated strings are copied. The
+referenced AnkiDroid Kotlin files declare
 `GPL-3.0-or-later`; the Flutter adaptation and widget tests are Copyright ©
 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` is unchanged.
+
+## Flutter active-profile collection lifecycle (Unit 14)
+
+`apps/anki/lib/startup_shell.dart` opens or creates the persisted active
+profile's collection during startup and after onboarding. A successful profile
+switch closes and flushes the previous collection before profile selection is
+persisted, then opens the target profile's collection. Collection schema
+creation, version checks, and the ordered migration/default callbacks are
+delegated to `anki_collection_schema` and `anki_collection_sqlite`; failed
+opens remain retryable, and the app does not replace collection files. The
+default names are localized through
+`apps/anki/lib/app_collection_callbacks.dart`.
+
+This lifecycle follows AnkiDroid 2.25.3 at
+`d9bf072f814a0c37d30a694192593b31ff2df875`: `DeckPickerViewModel.kt:537–566`
+performs startup checks before first deck refresh, while `AnkiActivity.kt:394–430`
+loads the collection off the UI thread and routes failures to the collection
+load error path. The Core open/create order follows
+`rslib/src/storage/sqlite.rs:53–90,478–550` at
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`; stock note-type ordering follows
+`rslib/src/notetype/stock.rs:21–49`. Exact source hashes are recorded in
+[`apps/anki/ANKIDROID_SOURCE.sha256`](apps/anki/ANKIDROID_SOURCE.sha256). No
+upstream source code or strings are copied. The Deck Picker repository and
+scheduler/backend remain unimplemented.
 
 ## Flutter Deck Picker and filtered-deck UI
 

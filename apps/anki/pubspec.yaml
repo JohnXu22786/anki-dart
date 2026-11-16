@@ -12,6 +12,8 @@ dependencies:
     path: ../..
   anki_collection_sqlite:
     path: ../../packages/anki_collection_sqlite
+  anki_backend_models:
+    path: ../../packages/anki_backend_models
   flutter:
     sdk: flutter
   flutter_localizations:

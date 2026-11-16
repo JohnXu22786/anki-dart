@@ -21,6 +21,12 @@ The collection connection registers Core's deterministic
 `field_at_index(flds, index)`, `process_text(text, flags)`, variadic
 `fnvhash(i64...)`, card-data and FSRS extractors, and the `regexp`,
 `regexp_fields`, and `regexp_tags` SQLite functions from `rslib/src/storage/sqlite.rs`.
+The FSRS retrievability calculation also follows the pinned `fsrs` 5.2.0 crate
+from `Cargo.lock` (crates.io checksum
+`cab5f80c16d1d07e492a6828478ecb9f379f142ba6f19fa3b7955edd180ddc2e`). Its
+BSD-3-Clause license and Open Spaced Repetition copyright notice are retained
+in `LICENSES/fsrs-5.2.0-BSD-3-Clause.txt`; the source license SHA-256 is recorded
+in `SOURCE.sha256`.
 `process_text` adapts `without_combining` and `strip_clozes` from
 `rslib/src/text.rs` and `rslib/src/cloze.rs`; `fnvhash` follows the pinned
 `fnv` 1.0.7 hasher. Regex Unicode simple case-folding data is generated from
@@ -30,8 +36,10 @@ available under Apache-2.0 or MIT; the generated table retains those notices
 in its SPDX header. Unicode property aliases are generated from that crate's
 `src/unicode_tables/property_names.rs` and `property_values.rs` tables; their
 source SHA-256 digests are recorded in `SOURCE.sha256` and the generated table
-has the same license notice. Other Core SQLite functions and collations remain outside
-this adapter until their own source-derived units are completed.
+has the same license notice. The `unicase` collation reuses the Unicode 12.1.0
+case-fold data from `anki_backend_models`, generated from the pinned `unicase`
+2.6.0 dependency. This adapter now covers the SQLite functions and collation
+registered by pinned Core's collection opener.
 
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently

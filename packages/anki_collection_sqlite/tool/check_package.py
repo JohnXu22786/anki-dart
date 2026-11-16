@@ -14,6 +14,7 @@ SOURCE_HASHES = {
     "rslib/src/cloze.rs": "478a35d1248be262ed2d0941202ac8f201c7eb0a5c57b7198d3ace03898fd1c5",
     "rslib/src/storage/card/data.rs": "aacbb588af4cf902eeb54d15cecc37a35b410441d67839f48929fea9fd515a89",
     "Cargo.lock": "0974d73d25e2c835fe7efe336bd727f9095ea73029fd4ca6a3ee7d1cfc6042aa",
+    "fsrs-5.2.0/LICENSE": "2604c7d519c6a579a7e24f09b218460b12d0d27da2eb0aa3fee09d5891511fa1",
     "regex-syntax-0.8.6/src/unicode_tables/case_folding_simple.rs": "7622c7f7f03ac0dc2f2bcd51c81a217d64de0cc912f62f1add5f676603a02456",
     "regex-syntax-0.8.6/src/unicode_tables/property_values.rs": "ef9131ce0a575c7327ec6d466aafd8b7c25600d80c232b5a4110bbf0a5a59136",
     "regex-syntax-0.8.6/src/unicode_tables/property_names.rs": "8c93985d1bcb01735667a3c4cb92f7e260d267326bde9d7f048bc77cd7e07855",
@@ -31,11 +32,14 @@ def main() -> int:
     license_text = (ROOT / "LICENSE").read_text(encoding="utf-8")
     if "GNU AFFERO GENERAL PUBLIC LICENSE" not in license_text or "Version 3" not in license_text:
         errors.append("LICENSE: complete GNU AGPL version 3 text is missing")
+    fsrs_license = (ROOT / "LICENSES/fsrs-5.2.0-BSD-3-Clause.txt").read_bytes()
+    if hashlib.sha256(fsrs_license).hexdigest() != SOURCE_HASHES["fsrs-5.2.0/LICENSE"]:
+        errors.append("fsrs BSD-3-Clause license differs from its pinned crate source")
 
     manifest = {}
     for line in (ROOT / "SOURCE.sha256").read_text(encoding="utf-8").splitlines():
         match = re.fullmatch(
-            r"([0-9a-f]{64})  (rslib/src/[a-z0-9_/.]+\.(?:sql|rs)|Cargo\.lock|regex-syntax-[a-z0-9_.]+/src/[a-z0-9_/.]+\.rs|lib/src/[a-z0-9_/.]+\.dart)",
+            r"([0-9a-f]{64})  (rslib/src/[a-z0-9_/.]+\.(?:sql|rs)|Cargo\.lock|fsrs-[0-9.]+/LICENSE|regex-syntax-[a-z0-9_.]+/src/[a-z0-9_/.]+\.rs|lib/src/[a-z0-9_/.]+\.dart)",
             line,
         )
         if not match:

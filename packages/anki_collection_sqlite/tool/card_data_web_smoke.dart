@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_collection_sqlite/src/card_data_functions.dart';
 import 'package:anki_collection_sqlite/src/fsrs_variable_function.dart';
+import 'package:anki_collection_sqlite/src/fsrs_retrievability_functions.dart';
 import 'package:anki_collection_sqlite/src/regex_functions.dart';
+import 'package:anki_collection_sqlite/src/unicase_collation.dart';
 
 void main() {
   if (!coreRegexHasMatch(r'(?i)needle', 'hay NEEDLE')) {
@@ -92,5 +94,54 @@ void main() {
   }
   if (extractFsrsVariable('{"s":1,"s":2}', 's') != null) {
     throw StateError('Web FSRS accepted a duplicate CardData field');
+  }
+  final retrievability = extractFsrsRetrievability(
+    '{"s":10,"d":5,"lrt":1000}',
+    100,
+    10,
+    110,
+    0,
+    87400,
+  );
+  if (retrievability == null || (retrievability - 0.98847395).abs() > 1e-7) {
+    throw StateError('Web FSRS retrievability differs from Core f32 output');
+  }
+  final sequenceRetrievability = extractFsrsRetrievability(
+    '[null,10,5,null,null,1000,""]',
+    100,
+    10,
+    110,
+    0,
+    87400,
+  );
+  if (sequenceRetrievability == null ||
+      (sequenceRetrievability - 0.98847395).abs() > 1e-7) {
+    throw StateError('Web FSRS sequence CardData field mapping failed');
+  }
+  final sequenceRelative = extractFsrsRelativeRetrievability(
+    '[null,10,5,0.9,null,1000,""]',
+    100,
+    10,
+    110,
+    0,
+    87400,
+  );
+  if (sequenceRelative == null || (sequenceRelative + 0.1).abs() > 1e-6) {
+    throw StateError('Web relative FSRS sequence CardData mapping failed');
+  }
+  if (extractFsrsRetrievability(
+        '{"s":10,"d":5,"lrt":0}',
+        100,
+        10,
+        110,
+        0,
+        BigInt.parse('4294967296'),
+      ) !=
+      1.0) {
+    throw StateError('Web FSRS time conversion lost u32 wrapping semantics');
+  }
+  if (compareUniCase('Straße', 'STRASSE') != 0 ||
+      compareUniCase('𐀀', '\ue000') <= 0) {
+    throw StateError('Web unicase folding or Unicode ordering failed');
   }
 }

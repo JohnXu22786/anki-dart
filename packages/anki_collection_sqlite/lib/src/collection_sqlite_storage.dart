@@ -12,9 +12,11 @@ import 'package:sqlite3/common.dart';
 
 import 'card_data_functions.dart';
 import 'fnvhash.dart';
+import 'fsrs_retrievability_functions.dart';
 import 'fsrs_variable_function.dart';
 import 'process_text.dart';
 import 'regex_functions.dart';
+import 'unicase_collation.dart';
 
 const _preparedStatementCacheCapacity = 50;
 
@@ -47,9 +49,9 @@ final class CollectionSqliteOptions {
   /// Registers additional source-specific SQL functions and collations before
   /// the collection schema is inspected. `field_at_index`, `process_text`,
   /// `fnvhash`, `extract_original_position`, `extract_custom_data`, and
-  /// `extract_fsrs_variable`, `regexp`, `regexp_fields`, and `regexp_tags` are
-  /// installed by default; remaining Core functions and `unicase` are
-  /// host-provided.
+  /// `extract_fsrs_variable`, both FSRS retrievability functions, `regexp`,
+  /// `regexp_fields`, `regexp_tags`, and `unicase` are installed by default;
+  /// remaining Core functions are host-provided.
   final FutureOr<void> Function(CommonDatabase database)? configureConnection;
 }
 
@@ -59,8 +61,8 @@ final class CollectionSqliteOptions {
 /// exclusive locking, 4096-byte pages, a 40 MiB page cache, the source's
 /// legacy-file-format setting, WAL, and a bounded cache for the hot exclusive
 /// transaction statements. Core's `field_at_index`, `process_text`,
-/// `fnvhash`, card-data, FSRS, and regex extraction functions are installed on every
-/// connection; other functions and collations are not.
+/// `fnvhash`, card-data, FSRS, and regex extraction functions and `unicase`
+/// collation are installed on every connection; other functions are not.
 final class CollectionSqliteStorage
     implements CollectionOpenDatabase, CollectionSchemaMigrationDatabase {
   CollectionSqliteStorage._(this._database, this._driver);
@@ -87,7 +89,9 @@ final class CollectionSqliteStorage
       registerFnvHashFunction(database);
       registerCardDataFunctions(database);
       registerFsrsVariableFunction(database);
+      registerFsrsRetrievabilityFunctions(database);
       registerRegexFunctions(database);
+      registerUnicaseCollation(database);
       database.execute('pragma busy_timeout = 0');
       database.execute('pragma locking_mode = exclusive');
       database.execute('pragma page_size = 4096');

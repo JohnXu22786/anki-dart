@@ -45,6 +45,20 @@ void main() {
       Int64.parseInt('9007199254740995')) {
     throw StateError('missing deck ID lost 64-bit precision on the web');
   }
+
+  final configDb = _DeckConfigDatabase();
+  final configStorage = DeckConfigStorage(configDb);
+  final configId = Int64.parseInt('9007199254740993');
+  configStorage.addOrUpdateDeckConfigWithExistingId(
+    DeckConfig(
+      id: configId,
+      name: 'web config',
+      inner: DeckConfig.defaults().inner,
+    ),
+  );
+  if (configDb.parameters.first != BigInt.parse('9007199254740993')) {
+    throw StateError('deck config ID lost 64-bit precision on the web');
+  }
 }
 
 Notetype _notetype() =>
@@ -97,6 +111,21 @@ final class _DeckDatabase implements DeckStorageDatabase {
       {'id': BigInt.parse('9007199254740993')},
     ];
   }
+
+  @override
+  int execute(String sql, [List<Object?> parameters = const []]) {
+    this.parameters = parameters;
+    return 1;
+  }
+}
+
+final class _DeckConfigDatabase implements DeckConfigStorageDatabase {
+  List<Object?> parameters = [];
+
+  @override
+  List<Map<String, Object?>> select(String sql,
+          [List<Object?> parameters = const []]) =>
+      const [];
 
   @override
   int execute(String sql, [List<Object?> parameters = const []]) {

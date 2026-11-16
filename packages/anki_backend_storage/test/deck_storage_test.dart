@@ -41,6 +41,7 @@ CREATE TABLE decks (
 
   test('normal and filtered decks round-trip protobuf columns', () {
     final normal = storage.addDeck(_normalDeck('parent :: child'));
+    expect(normal.name, 'parent::child');
     final filtered = Deck(
       id: Int64(20),
       name: 'Filtered',

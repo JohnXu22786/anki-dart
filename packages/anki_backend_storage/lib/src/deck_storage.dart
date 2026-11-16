@@ -128,29 +128,22 @@ VALUES (?, ?, ?, ?, ?, ?)''',
       _blob(row['kind'], 'kind'),
     );
     final common = proto.Deck_Common.fromBuffer(_blob(row['common'], 'common'));
-    final protoDeck = proto.Deck(
+    final kind = switch (kindContainer.whichKind()) {
+      proto.Deck_KindContainer_Kind.normal =>
+        NormalDeckKind(kindContainer.normal),
+      proto.Deck_KindContainer_Kind.filtered =>
+        FilteredDeckKind(kindContainer.filtered),
+      proto.Deck_KindContainer_Kind.notSet =>
+        throw StateError('invalid deck kind: $id'),
+    };
+    return Deck(
       id: id,
       name: _humanName(_string(row['name'], 'name')),
       mtimeSecs: _int64(row['mtime_secs'], 'mtime_secs'),
       usn: _int32(row['usn'], 'usn'),
       common: common,
-      normal: switch (kindContainer.whichKind()) {
-        proto.Deck_KindContainer_Kind.normal => kindContainer.normal,
-        proto.Deck_KindContainer_Kind.filtered ||
-        proto.Deck_KindContainer_Kind.notSet =>
-          null,
-      },
-      filtered: switch (kindContainer.whichKind()) {
-        proto.Deck_KindContainer_Kind.filtered => kindContainer.filtered,
-        proto.Deck_KindContainer_Kind.normal ||
-        proto.Deck_KindContainer_Kind.notSet =>
-          null,
-      },
+      kind: kind,
     );
-    if (kindContainer.whichKind() == proto.Deck_KindContainer_Kind.notSet) {
-      throw StateError('invalid deck kind: $id');
-    }
-    return Deck.fromProto(protoDeck);
   }
 
   static String _nativeName(String humanName) =>
@@ -161,7 +154,7 @@ VALUES (?, ?, ?, ?, ?, ?)''',
 
   static Deck _withId(Deck deck, Int64 id) => Deck(
         id: id,
-        name: deck.name,
+        name: normalizeDeckName(deck.name),
         mtimeSecs: deck.mtimeSecs,
         usn: deck.usn,
         common: deck.common,

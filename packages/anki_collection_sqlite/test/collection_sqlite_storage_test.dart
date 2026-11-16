@@ -191,59 +191,61 @@ void main() {
     },
   );
 
-  test(
-    'deck storage persists rows through the collection connection',
-    () async {
-      final database = await CollectionSqliteStorage.open(
-        driver: _nativeDriver,
-        location: path,
-        options: _schemaOptions,
-      );
-      await openOrCreateCollection(
-        database,
-        _Callbacks(database),
-        serverMode: true,
-      );
+  test('deck storage persists rows through the collection connection', () async {
+    final database = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+      options: _schemaOptions,
+    );
+    await openOrCreateCollection(
+      database,
+      _Callbacks(database),
+      serverMode: true,
+    );
 
-      final added = database.decks.addDeck(
-        Deck(
-          name: 'Parent :: Child',
-          mtimeSecs: Int64(123),
-          usn: 4,
-          common: proto.Deck_Common(studyCollapsed: true),
-          kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(7))),
-        ),
-      );
+    final added = database.decks.addDeck(
+      Deck(
+        name: 'Parent :: Child',
+        mtimeSecs: Int64(123),
+        usn: 4,
+        common: proto.Deck_Common(studyCollapsed: true),
+        kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(7))),
+      ),
+    );
 
-      expect(added.id, isNot(Int64.ZERO));
-      expect(database.decks.getDeck(added.id)!.name, 'Parent::Child');
-      expect(database.decks.getDeckByName('parent\x1fchild')!.id, added.id);
-      expect(database.decks.getDeckId('parent\x1fchild'), added.id);
-      expect(
-        database.decks.getDeck(added.id)!.toProto().normal.configId,
-        Int64(7),
-      );
-      expect(
-        database.decks.getAllDeckNames(),
-        contains((added.id, 'Parent::Child')),
-      );
-      database.decks.removeDeck(added.id);
-      expect(database.decks.getDeck(added.id), isNull);
+    expect(added.id, isNot(Int64.ZERO));
+    expect(database.decks.getDeck(added.id)!.name, 'Parent::Child');
+    expect(database.decks.getDeckByName('parent\x1fchild')!.id, added.id);
+    expect(database.decks.getDeckId('parent\x1fchild'), added.id);
+    expect(
+      database.decks.getDeck(added.id)!.toProto().normal.configId,
+      Int64(7),
+    );
+    expect(
+      database.decks.getAllDeckNames(),
+      contains((added.id, 'Parent::Child')),
+    );
+    database.decks.db.execute(
+      "UPDATE decks SET name = '  Parent' || char(31) || 'Child  ' WHERE id = ?",
+      [added.id.toInt()],
+    );
+    expect(database.decks.getDeck(added.id)!.name, '  Parent::Child  ');
+    database.decks.removeDeck(added.id);
+    expect(database.decks.getDeck(added.id), isNull);
 
-      final largeId = Int64.parseInt('9007199254740993');
-      database.decks.addOrUpdateDeckWithExistingId(
-        Deck(
-          id: largeId,
-          name: 'Large ID',
-          mtimeSecs: Int64(456),
-          usn: 5,
-          kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(7))),
-        ),
-      );
-      expect(database.decks.getDeck(largeId)!.id, largeId);
-      await database.close();
-    },
-  );
+    final largeId = Int64.parseInt('9007199254740993');
+    database.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: largeId,
+        name: 'Large ID',
+        mtimeSecs: Int64(456),
+        usn: 5,
+        kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(7))),
+      ),
+    );
+    expect(database.decks.getDeck(largeId)!.id, largeId);
+    await database.close();
+  });
 
   test('upgrades supported schema 14 fixture using the real database', () async {
     final database = await CollectionSqliteStorage.open(

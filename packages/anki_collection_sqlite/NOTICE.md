@@ -27,7 +27,10 @@ The collection connection registers Core's deterministic
 `regex-syntax` 0.8.6's `src/unicode_tables/case_folding_simple.rs` (Unicode
 16.0.0; source SHA-256 is recorded in `SOURCE.sha256`). That crate's source is
 available under Apache-2.0 or MIT; the generated table retains those notices
-in its SPDX header. Other Core SQLite functions and collations remain outside
+in its SPDX header. Unicode property aliases are generated from that crate's
+`src/unicode_tables/property_names.rs` and `property_values.rs` tables; their
+source SHA-256 digests are recorded in `SOURCE.sha256` and the generated table
+has the same license notice. Other Core SQLite functions and collations remain outside
 this adapter until their own source-derived units are completed.
 
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed

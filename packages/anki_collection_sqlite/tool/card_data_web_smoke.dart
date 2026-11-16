@@ -33,6 +33,34 @@ void main() {
       !coreRegexHasMatch(r'[\p{Greek}--[α]]+', 'β')) {
     throw StateError('Web Core regex Unicode and set syntax failed');
   }
+  if (!coreRegexHasMatch(r'(?i)[α]', 'Α') ||
+      !coreRegexHasMatch(r'(?i)\p{Lu}', 'a') ||
+      coreRegexHasMatch(r'(?i)\p{Lu}', '漢') ||
+      !coreRegexHasMatch(r'\p{XID_Start}+', 'abc') ||
+      !coreRegexHasMatch(r'(?-u:\w+)', 'abc') ||
+      coreRegexHasMatch(r'(?x)[a b]', ' ') ||
+      !coreRegexHasMatch(r'[a-g~~b-h]', 'h') ||
+      coreRegexHasMatch(r'[\W&&a]', 'a') ||
+      coreRegexHasMatch(r'[\W&&\p{Greek}]', 'α') ||
+      coreRegexHasMatch(r'\w', '²') ||
+      !coreRegexHasMatch(r'\w', 'Ⅷ') ||
+      !coreRegexHasMatch(r'\w', '٣') ||
+      !coreRegexHasMatch(r'\p{gc=Lu}', 'A') ||
+      !coreRegexHasMatch(r'\p{sc=Grek}', 'α') ||
+      !coreRegexHasMatch(r'\p{digit}', '7') ||
+      !coreRegexHasMatch(r'\p{greek}', 'α') ||
+      !coreRegexHasMatch(r'\p{Alpha}', 'α') ||
+      !coreRegexHasMatch(r'(?-u:[\S])', '\u00a0') ||
+      !coreRegexHasMatch(r'[a[b]]', 'b') ||
+      !coreRegexHasMatch(r'[\\W]', r'\') ||
+      !coreRegexHasMatch(r'\x41', 'A') ||
+      !coreRegexHasMatch(r'[\x41]', 'A') ||
+      coreRegexHasMatch(r'(?mR)$foo', 'x\r\nfoo') ||
+      !coreRegexHasMatch(r'\(?i:foo\)', 'i:foo)') ||
+      !coreRegexHasMatch(r'[\x{1F600}]', '😀') ||
+      !coreRegexHasMatch(r'\a', '\x07')) {
+    throw StateError('Web Core regex escaped and mode syntax failed');
+  }
   if (extractOriginalPosition('{"pos":4294967295}') != 4294967295) {
     throw StateError('Web card-data position lost unsigned 32-bit value');
   }

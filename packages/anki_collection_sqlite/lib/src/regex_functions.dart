@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:sqlite3/common.dart';
 
 import 'unicode_case_folding.dart';
+import 'unicode_property_aliases.dart';
 
 /// Installs Core's regex-backed collection SQLite functions.
 void registerRegexFunctions(CommonDatabase database) {
@@ -102,6 +103,8 @@ RegExp _compileCoreRegex(String source) {
 const _rustWordClassContents =
     r'\p{Alphabetic}\p{Mark}\p{Nd}\p{Pc}\u200c\u200d';
 const _rustWordClass = '[$_rustWordClassContents]';
+const _rustAsciiWordClassContents = 'A-Za-z0-9_';
+const _rustAsciiWordClass = '[$_rustAsciiWordClassContents]';
 
 String _translateRustPerlClasses(String pattern) {
   final output = StringBuffer();
@@ -206,10 +209,13 @@ String _translateRustRegexSyntax(String pattern) {
   ) {
     final kind = match.group(1)!;
     final property = match.group(2)!;
-    if (_ecmaPropertyNames.contains(property) || property.contains('=')) {
+    if (property.contains('=')) {
+      return '\\' + kind + '{' + _canonicalizePropertyAlias(property) + '}';
+    }
+    if (_ecmaPropertyNames.contains(property)) {
       return '\\' + kind + '{' + property + '}';
     }
-    return '\\' + kind + '{Script=' + property + '}';
+    return '\\' + kind + '{' + _canonicalizeBareProperty(property) + '}';
   });
   translated = translated.replaceAllMapped(RegExp(r'\\([pP])([LMNPSZC])'), (
     match,
@@ -222,15 +228,62 @@ String _translateRustRegexSyntax(String pattern) {
   return translated;
 }
 
+String _canonicalizePropertyAlias(String property) {
+  final equals = property.indexOf('=');
+  final propertyName = property.substring(0, equals);
+  final propertyValue = property.substring(equals + 1);
+  final normalizedName = propertyName.toLowerCase().replaceAll(
+    RegExp(r'[^a-z0-9]'),
+    '',
+  );
+  final prefix = switch (normalizedName) {
+    'gc' || 'generalcategory' => 'gc',
+    'sc' || 'script' => 'sc',
+    'scx' || 'scriptextensions' => 'scx',
+    _ => null,
+  };
+  if (prefix == null) return property;
+  final normalizedValue = propertyValue.toLowerCase().replaceAll(
+    RegExp(r'[^a-z0-9]'),
+    '',
+  );
+  final canonicalValue =
+      rustUnicodePropertyValueAliases['$prefix:$normalizedValue'];
+  if (canonicalValue == null) return property;
+  final canonicalName = switch (prefix) {
+    'gc' => 'General_Category',
+    'sc' => 'Script',
+    _ => 'Script_Extensions',
+  };
+  return '$canonicalName=$canonicalValue';
+}
+
+String _canonicalizeBareProperty(String property) {
+  final normalized = property.toLowerCase().replaceAll(
+    RegExp(r'[^a-z0-9]'),
+    '',
+  );
+  final propertyAlias = rustUnicodePropertyValueAliases['prop:$normalized'];
+  if (propertyAlias != null && _ecmaPropertyNames.contains(propertyAlias)) {
+    return propertyAlias;
+  }
+  final category = rustUnicodePropertyValueAliases['gc:$normalized'];
+  if (category != null) return category;
+  final script = rustUnicodePropertyValueAliases['sc:$normalized'];
+  if (script != null) return 'Script=$script';
+  return 'Script=$property';
+}
+
 String _translateInlineCaseFlags(String pattern) {
   final output = StringBuffer();
-  final groupFlags = <(bool, bool, bool, bool, bool, bool)>[];
+  final groupFlags = <(bool, bool, bool, bool, bool, bool, bool)>[];
   var caseInsensitive = false;
   var multiLine = false;
   var dotAll = false;
   var crlf = false;
   var ungreedy = false;
   var extended = false;
+  var unicode = true;
   var inComment = false;
   var inCharacterClass = false;
   var escaped = false;
@@ -238,6 +291,11 @@ String _translateInlineCaseFlags(String pattern) {
     final character = pattern[index];
     if (inComment) {
       if (character == '\n') inComment = false;
+      continue;
+    }
+    if (escaped && character == '(') {
+      output.write(r'\(');
+      escaped = false;
       continue;
     }
     if (!inCharacterClass && character == '(') {
@@ -256,6 +314,7 @@ String _translateInlineCaseFlags(String pattern) {
             crlf,
             ungreedy,
             extended,
+            unicode,
           ));
           output.write(pattern.substring(index, nameEnd + 1));
           index = nameEnd;
@@ -263,7 +322,7 @@ String _translateInlineCaseFlags(String pattern) {
         }
       }
       final inlineFlags = RegExp(
-        r'^\(\?(-?[imsURx]+)(?:-([imsURx]+))?([:)])',
+        r'^\(\?(-?[imsURxu]+)(?:-([imsURxu]+))?([:)])',
       ).firstMatch(pattern.substring(index));
       if (inlineFlags != null) {
         final specification = inlineFlags.group(1)!;
@@ -284,6 +343,7 @@ String _translateInlineCaseFlags(String pattern) {
             crlf,
             ungreedy,
             extended,
+            unicode,
           ));
         }
         for (final flag in {...enabled, ...disabled}) {
@@ -301,6 +361,8 @@ String _translateInlineCaseFlags(String pattern) {
               ungreedy = isEnabled;
             case 'x':
               extended = isEnabled;
+            case 'u':
+              unicode = isEnabled;
           }
         }
         if (scoped) output.write('(?:');
@@ -311,13 +373,22 @@ String _translateInlineCaseFlags(String pattern) {
     if (escaped) {
       if ((character == 'p' || character == 'P') &&
           index + 1 < pattern.length) {
+        if (!unicode) {
+          throw FormatException(
+            'Unicode property requires Core Unicode mode',
+            pattern,
+          );
+        }
         final end = pattern[index + 1] == '{'
             ? pattern.indexOf('}', index + 2)
             : RegExp(r'[A-Za-z]').hasMatch(pattern[index + 1])
             ? index + 1
             : -1;
         if (end >= 0) {
-          output.write(pattern.substring(index - 1, end + 1));
+          final escape = pattern.substring(index - 1, end + 1);
+          output.write(
+            caseInsensitive ? _foldUnicodePropertyEscape(escape) : escape,
+          );
           index = end;
           escaped = false;
           continue;
@@ -332,10 +403,42 @@ String _translateInlineCaseFlags(String pattern) {
           continue;
         }
       }
+      if (!unicode && !inCharacterClass) {
+        switch (character) {
+          case 'd':
+            output.write('[0-9]');
+          case 'D':
+            output.write('[^0-9]');
+          case 's':
+            output.write(r'[\t\n\v\f\r ]');
+          case 'S':
+            output.write(r'[^\t\n\v\f\r ]');
+          case 'w':
+            output.write(_rustAsciiWordClass);
+          case 'W':
+            output.write('(?!(?:$_rustAsciiWordClass))[\\s\\S]');
+          case 'b':
+            output.write(
+              '(?:(?<=$_rustAsciiWordClass)(?!$_rustAsciiWordClass)|'
+              '(?<!$_rustAsciiWordClass)(?=$_rustAsciiWordClass))',
+            );
+          case 'B':
+            output.write(
+              '(?:(?<=$_rustAsciiWordClass)(?=$_rustAsciiWordClass)|'
+              '(?<!$_rustAsciiWordClass)(?!$_rustAsciiWordClass))',
+            );
+          default:
+            output
+              ..write(r'\')
+              ..write(character);
+        }
+        escaped = false;
+        continue;
+      }
       if (character == 'x' && index + 1 < pattern.length) {
         final hexEnd = pattern[index + 1] == '{'
             ? pattern.indexOf('}', index + 2)
-            : index + 2;
+            : index + 3;
         if (hexEnd > index) {
           final digits = pattern.substring(
             pattern[index + 1] == '{' ? index + 2 : index + 1,
@@ -362,6 +465,11 @@ String _translateInlineCaseFlags(String pattern) {
           }
         }
       }
+      if (character == 'a') {
+        output.write(r'\x07');
+        escaped = false;
+        continue;
+      }
       output
         ..write(r'\')
         ..write(character);
@@ -375,13 +483,19 @@ String _translateInlineCaseFlags(String pattern) {
     if (character == '[' && !inCharacterClass) {
       final end = _characterClassEnd(pattern, index);
       if (end != null) {
-        final contents = pattern.substring(index + 1, end);
-        output
-          ..write('[')
-          ..write(
-            caseInsensitive ? _caseFoldCharacterClass(contents) : contents,
-          )
-          ..write(']');
+        final rawContents = pattern.substring(index + 1, end);
+        final contents = extended
+            ? _stripExtendedClassWhitespace(rawContents)
+            : rawContents;
+        final modeContents = unicode
+            ? contents
+            : _translateAsciiPerlClassesInClass(contents);
+        final foldedContents = caseInsensitive
+            ? _caseFoldCharacterClass(modeContents)
+            : modeContents;
+        output.write(
+          _translateCharacterClass(foldedContents, pattern, unicode: unicode),
+        );
         index = end;
         continue;
       }
@@ -396,17 +510,27 @@ String _translateInlineCaseFlags(String pattern) {
         crlf,
         ungreedy,
         extended,
+        unicode,
       ));
     }
     if (character == ')' && !inCharacterClass && groupFlags.isNotEmpty) {
-      final (previousI, previousM, previousS, previousR, previousU, previousX) =
-          groupFlags.removeLast();
+      final (
+        previousI,
+        previousM,
+        previousS,
+        previousR,
+        previousU,
+        previousX,
+        previousUnicode,
+      ) = groupFlags
+          .removeLast();
       caseInsensitive = previousI;
       multiLine = previousM;
       dotAll = previousS;
       crlf = previousR;
       ungreedy = previousU;
       extended = previousX;
+      unicode = previousUnicode;
     }
     if (extended && character == '#') {
       inComment = true;
@@ -451,9 +575,7 @@ String _translateInlineCaseFlags(String pattern) {
     } else if (!inCharacterClass && character == r'$') {
       output.write(
         multiLine
-            ? (crlf
-                  ? r'(?:(?![\s\S])|(?=\r\n)|(?<=\n))'
-                  : r'(?:(?![\s\S])|(?=\n))')
+            ? (crlf ? r'(?:(?![\s\S])|(?=\r\n))' : r'(?:(?![\s\S])|(?=\n))')
             : r'(?![\s\S])',
       );
     } else if (!inCharacterClass && character == '.' && dotAll) {
@@ -483,6 +605,42 @@ String _translateInlineCaseFlags(String pattern) {
   return output.toString();
 }
 
+String _stripExtendedClassWhitespace(String contents) {
+  final output = StringBuffer();
+  var escaped = false;
+  var comment = false;
+  for (final character in contents.split('')) {
+    if (comment) {
+      if (character == '\n') comment = false;
+      continue;
+    }
+    if (escaped) {
+      output
+        ..write(r'\')
+        ..write(character);
+      escaped = false;
+    } else if (character == r'\') {
+      escaped = true;
+    } else if (character == '#') {
+      comment = true;
+    } else if (!RegExp(r'\s').hasMatch(character)) {
+      output.write(character);
+    }
+  }
+  if (escaped) output.write(r'\');
+  return output.toString();
+}
+
+String _translateAsciiPerlClassesInClass(String contents) =>
+    contents.replaceAllMapped(RegExp(r'\\([dsw])'), (match) {
+      return switch (match.group(1)) {
+        'd' => '0-9',
+        's' => r'\t\n\v\f\r ',
+        'w' => _rustAsciiWordClassContents,
+        _ => match.group(0)!,
+      };
+    });
+
 String _caseFoldClass(int codePoint) {
   final members = rustUnicodeSimpleCaseFoldByCodePoint[codePoint];
   if (members == null) return String.fromCharCode(codePoint);
@@ -499,19 +657,21 @@ String _escapeClassCodePoint(int codePoint) {
 }
 
 String _caseFoldCharacterClass(String contents) {
-  final output = StringBuffer(contents);
-  for (var index = 0; index < contents.length;) {
-    final start = _readClassCodePoint(contents, index);
+  final foldedProperties = _foldUnicodeProperties(contents);
+  final output = StringBuffer(foldedProperties);
+  for (var index = 0; index < foldedProperties.length;) {
+    final start = _readClassCodePoint(foldedProperties, index);
     if (start == null) {
-      index = _skipClassEscape(contents, index);
+      index = _skipClassEscape(foldedProperties, index);
       continue;
     }
     if (start.codePoint == 0x2d) {
       index = start.end;
       continue;
     }
-    if (start.end < contents.length && contents[start.end] == '-') {
-      final end = _readClassCodePoint(contents, start.end + 1);
+    if (start.end < foldedProperties.length &&
+        foldedProperties[start.end] == '-') {
+      final end = _readClassCodePoint(foldedProperties, start.end + 1);
       if (end != null && start.codePoint <= end.codePoint) {
         for (final group in rustUnicodeSimpleCaseFoldGroups) {
           if (group.any(
@@ -540,6 +700,42 @@ String _caseFoldCharacterClass(String contents) {
   return output.toString();
 }
 
+String _foldUnicodePropertyEscape(String escape) => escape
+    .replaceAllMapped(RegExp(r'\\([pP])\{([^}]+)\}'), (match) {
+      final property = match.group(2)!;
+      return '\\${match.group(1)}{${_foldUnicodePropertyName(property)}}';
+    })
+    .replaceAllMapped(RegExp(r'\\([pP])([A-Z])'), (match) {
+      return '\\${match.group(1)}{${_foldUnicodePropertyName(match.group(2)!)}}';
+    });
+
+String _foldUnicodeProperties(String pattern) => pattern.replaceAllMapped(
+  RegExp(r'\\([pP])\{([^}]+)\}'),
+  (match) {
+    return '\\${match.group(1)}{${_foldUnicodePropertyName(match.group(2)!)}}';
+  },
+);
+
+String _foldUnicodePropertyName(String property) {
+  final equals = property.indexOf('=');
+  final value = equals < 0 ? property : property.substring(equals + 1);
+  final letterCategories = {
+    'Lu',
+    'Ll',
+    'Lt',
+    'LC',
+    'Uppercase_Letter',
+    'Lowercase_Letter',
+    'Titlecase_Letter',
+    'Cased_Letter',
+  };
+  if (letterCategories.contains(value)) {
+    return equals < 0 ? 'LC' : '${property.substring(0, equals)}=LC';
+  }
+  if (value == 'Uppercase' || value == 'Lowercase') return 'Cased';
+  return property;
+}
+
 ({int codePoint, int end})? _readClassCodePoint(String source, int start) {
   if (start >= source.length) return null;
   if (source[start] == r'\') {
@@ -548,7 +744,7 @@ String _caseFoldCharacterClass(String contents) {
     if (escaped == 'x' && start + 2 < source.length) {
       final end = source[start + 2] == '{'
           ? source.indexOf('}', start + 3)
-          : start + 3;
+          : start + 4;
       if (end > start) {
         final digits = source.substring(
           source[start + 2] == '{' ? start + 3 : start + 2,
@@ -602,6 +798,38 @@ const _ecmaPropertyNames = {
   'Uppercase',
   'ID_Start',
   'ID_Continue',
+  'XID_Start',
+  'XID_Continue',
+  'ASCII_Hex_Digit',
+  'Bidi_Control',
+  'Bidi_Mirrored',
+  'Case_Ignorable',
+  'Cased',
+  'Changes_When_Casefolded',
+  'Changes_When_Casemapped',
+  'Changes_When_Lowercased',
+  'Changes_When_Titlecased',
+  'Changes_When_Uppercased',
+  'Dash',
+  'Default_Ignorable_Code_Point',
+  'Deprecated',
+  'Diacritic',
+  'Extender',
+  'Grapheme_Base',
+  'Grapheme_Extend',
+  'Hex_Digit',
+  'Join_Control',
+  'Math',
+  'Noncharacter_Code_Point',
+  'Pattern_Syntax',
+  'Pattern_White_Space',
+  'Quotation_Mark',
+  'Regional_Indicator',
+  'Sentence_Terminal',
+  'Soft_Dotted',
+  'Terminal_Punctuation',
+  'Unified_Ideograph',
+  'Variation_Selector',
   'Emoji',
   'Emoji_Presentation',
   'Emoji_Modifier',
@@ -707,37 +935,136 @@ int? _characterClassEnd(String pattern, int start) {
   return null;
 }
 
-String _translateCharacterClass(String contents, String source) {
+String _translateCharacterClass(
+  String contents,
+  String source, {
+  bool unicode = true,
+}) {
   final (terms, operators) = _splitCharacterClassOperators(contents);
   if (operators.isNotEmpty) {
-    final output = StringBuffer();
-    output.write('(?=${_classTermExpression(terms.first, source)})');
+    var expression = _classTermExpression(terms.first, source, unicode);
     for (var index = 0; index < operators.length; index++) {
-      final expression = _classTermExpression(terms[index + 1], source);
-      output.write(
-        operators[index] == '&&' ? '(?=$expression)' : '(?!$expression)',
-      );
+      final next = _classTermExpression(terms[index + 1], source, unicode);
+      expression = switch (operators[index]) {
+        '&&' => '(?=$expression)(?=$next)[\\s\\S]',
+        '--' => '(?=$expression)(?!$next)[\\s\\S]',
+        '~~' =>
+          '(?:(?=$expression)(?!$next)|(?=$next)(?!$expression))'
+              r'[\s\S]',
+        _ => throw StateError('unknown Rust character-class operator'),
+      };
     }
-    output.write(r'[\s\S]');
-    return output.toString();
-  }
-  final hasNonWord = RegExp(r'\\W').hasMatch(contents);
-  if (!hasNonWord) {
-    final negated = contents.startsWith('^');
-    final body = negated ? contents.substring(1) : contents;
-    final translated = _translateClassAtoms(body);
-    return negated ? '[^$translated]' : '[$translated]';
+    return expression;
   }
   final negated = contents.startsWith('^');
   final body = negated ? contents.substring(1) : contents;
-  final ordinary = body.replaceAll(r'\W', '');
-  final ordinaryClass = ordinary.isEmpty
+  final nestedUnion = _translateNestedClassUnion(body, source, unicode);
+  if (nestedUnion != null) {
+    return negated ? '(?!$nestedUnion)[\\s\\S]' : nestedUnion;
+  }
+  final complementEscapes = _findClassComplementEscapes(body, unicode);
+  if (complementEscapes.isEmpty) {
+    final translated = _translateClassAtoms(body, unicode);
+    return negated ? '[^$translated]' : '[$translated]';
+  }
+  final ordinary = StringBuffer();
+  var ordinaryStart = 0;
+  for (final (_, start, end) in complementEscapes) {
+    ordinary.write(body.substring(ordinaryStart, start));
+    ordinaryStart = end;
+  }
+  ordinary.write(body.substring(ordinaryStart));
+  final ordinaryValue = ordinary.toString();
+  final ordinaryClass = ordinaryValue.isEmpty
       ? null
-      : '[${_translateClassAtoms(ordinary)}]';
-  final nonWord = '(?!$_rustWordClass)[\\s\\S]';
-  final union = ordinaryClass == null ? nonWord : '(?:$ordinaryClass|$nonWord)';
+      : '[${_translateClassAtoms(ordinaryValue, unicode)}]';
+  final complements = complementEscapes.map((match) {
+    final escape = match.$1;
+    return switch (escape) {
+      r'\W' => '(?!${unicode ? _rustWordClass : _rustAsciiWordClass})[\\s\\S]',
+      r'\D' => '(?![0-9])[\\s\\S]',
+      r'\S' => '(?![\\t\\n\\v\\f\\r ])[\\s\\S]',
+      _ => throw StateError('unknown complemented class escape'),
+    };
+  }).toList();
+  final alternatives = [
+    if (ordinaryClass != null) ordinaryClass,
+    ...complements,
+  ];
+  final union = alternatives.length == 1
+      ? alternatives.single
+      : '(?:${alternatives.join('|')})';
   if (!negated) return union;
   return '(?!$union)[\\s\\S]';
+}
+
+List<(String, int, int)> _findClassComplementEscapes(
+  String contents,
+  bool unicode,
+) {
+  final results = <(String, int, int)>[];
+  for (var index = 0; index + 1 < contents.length; index++) {
+    if (contents[index] != r'\') continue;
+    final escape = contents[index + 1];
+    if ((unicode && escape == 'W') ||
+        (!unicode && RegExp(r'[DSW]').hasMatch(escape))) {
+      results.add(('\\$escape', index, index + 2));
+    }
+    index++;
+  }
+  return results;
+}
+
+String? _translateNestedClassUnion(
+  String contents,
+  String source,
+  bool unicode,
+) {
+  final alternatives = <String>[];
+  final ordinary = StringBuffer();
+  var escaped = false;
+  for (var index = 0; index < contents.length; index++) {
+    final character = contents[index];
+    if (escaped) {
+      ordinary
+        ..write(r'\')
+        ..write(character);
+      escaped = false;
+      continue;
+    }
+    if (character == r'\') {
+      escaped = true;
+      continue;
+    }
+    if (character == '[') {
+      final end = _characterClassEnd(contents, index);
+      if (end == null) return null;
+      if (ordinary.length > 0) {
+        alternatives.add(
+          '[${_translateClassAtoms(ordinary.toString(), unicode)}]',
+        );
+        ordinary.clear();
+      }
+      alternatives.add(
+        _translateCharacterClass(
+          contents.substring(index + 1, end),
+          source,
+          unicode: unicode,
+        ),
+      );
+      index = end;
+      continue;
+    }
+    ordinary.write(character);
+  }
+  if (escaped) ordinary.write(r'\');
+  if (alternatives.isEmpty) return null;
+  if (ordinary.length > 0) {
+    alternatives.add('[${_translateClassAtoms(ordinary.toString(), unicode)}]');
+  }
+  return alternatives.length == 1
+      ? alternatives.single
+      : '(?:${alternatives.join('|')})';
 }
 
 (List<String>, List<String>) _splitCharacterClassOperators(String contents) {
@@ -760,7 +1087,7 @@ String _translateCharacterClass(String contents, String source) {
     if (character == ']') nested--;
     if (nested == 0 && index + 1 < contents.length) {
       final pair = contents.substring(index, index + 2);
-      if (pair == '&&' || pair == '--') {
+      if (pair == '&&' || pair == '--' || pair == '~~') {
         terms.add(contents.substring(start, index));
         operators.add(pair);
         index++;
@@ -773,14 +1100,18 @@ String _translateCharacterClass(String contents, String source) {
   return (terms, operators);
 }
 
-String _classTermExpression(String term, String source) {
+String _classTermExpression(String term, String source, bool unicode) {
   if (term.startsWith('[') && term.endsWith(']')) {
-    return _translateCharacterClass(term.substring(1, term.length - 1), source);
+    return _translateCharacterClass(
+      term.substring(1, term.length - 1),
+      source,
+      unicode: unicode,
+    );
   }
-  return '[${_translateClassAtoms(term)}]';
+  return _translateCharacterClass(term, source, unicode: unicode);
 }
 
-String _translateClassAtoms(String contents) {
+String _translateClassAtoms(String contents, bool unicode) {
   final output = StringBuffer();
   var escaped = false;
   for (var index = 0; index < contents.length; index++) {
@@ -794,11 +1125,13 @@ String _translateClassAtoms(String contents) {
         case 's':
           output.write(r'\p{White_Space}');
         case 'S':
-          output.write(r'\P{White_Space}');
+          output.write(unicode ? r'\P{White_Space}' : r'\t\n\v\f\r ');
         case 'w':
           output.write(_rustWordClassContents);
         case 'W':
           output.write(r'\P{Alphabetic}\P{Mark}\P{Nd}\P{Pc}\u200c\u200d');
+        case 'a':
+          output.write(r'\x07');
         case 'x':
           final token = _readClassCodePoint(contents, index - 1);
           if (token == null) {

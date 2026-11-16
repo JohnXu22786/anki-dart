@@ -57,3 +57,5 @@ in `THIRD_PARTY_SOURCE.sha256`. This package does not change the root `COPYING`
 file. The field-empty predicate matches Anki Core's ASCII whitespace and empty
 `br`/`div` tag syntax; `Note.nonEmptyFields()` pairs values to Notetype fields in
 source order and returns a set of names, omitting values with no matching field.
+
+The `Tag` value model follows `rslib/src/tags/mod.rs` at the pinned Anki Core commit; its SHA-256 is recorded in `SOURCE.sha256`.

@@ -59,6 +59,17 @@ void main() {
   if (configDb.parameters.first != BigInt.parse('9007199254740993')) {
     throw StateError('deck config ID lost 64-bit precision on the web');
   }
+
+  final tagDb = _TagDatabase();
+  final tagStorage = TagStorage(tagDb);
+  tagStorage.registerTag(Tag(name: 'Web', usn: -1, expanded: true));
+  if (tagDb.parameters.length != 3 ||
+      tagDb.parameters[0] != 'Web' ||
+      tagDb.parameters[1] != -1 ||
+      tagDb.parameters[2] != false ||
+      tagStorage.tagsPendingSync(-1).single != 'Web') {
+    throw StateError('tag storage changed Core row or pending-sync behavior');
+  }
 }
 
 Notetype _notetype() =>
@@ -126,6 +137,25 @@ final class _DeckConfigDatabase implements DeckConfigStorageDatabase {
   List<Map<String, Object?>> select(String sql,
           [List<Object?> parameters = const []]) =>
       const [];
+
+  @override
+  int execute(String sql, [List<Object?> parameters = const []]) {
+    this.parameters = parameters;
+    return 1;
+  }
+}
+
+final class _TagDatabase implements TagStorageDatabase {
+  List<Object?> parameters = [];
+
+  @override
+  List<Map<String, Object?>> select(
+    String sql, [
+    List<Object?> parameters = const [],
+  ]) =>
+      [
+        {'tag': 'Web'},
+      ];
 
   @override
   int execute(String sql, [List<Object?> parameters = const []]) {

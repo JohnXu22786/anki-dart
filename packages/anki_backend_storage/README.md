@@ -10,8 +10,10 @@ mutations, including protobuf `common` and tagged `kind` columns, native
 `\x1f`-separated names, current-time ID allocation with collision fallback,
 upserts, hierarchy reads, and missing-deck detection. `DeckConfigStorage`
 ports deck configuration row reads, mutations, protobuf encoding, and
-Core-compatible read-time numeric validation. Name uniqueness, service-level
-configuration policy, and collection transaction policy remain separate.
+Core-compatible read-time numeric validation. `TagStorage` ports tag row reads,
+updates, expanded state, and pending-sync USN selection. Tag parsing and
+service-level tree/rename policy, configuration policy, and collection
+transaction policy remain separate.
 `CollectionSqliteStorage` adapts both row stores to its native or
 Web-compatible common database connection.
 

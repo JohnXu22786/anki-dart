@@ -363,6 +363,37 @@ void main() {
     await database.close();
   });
 
+  test('tag storage uses schema unicase matching and sync state', () async {
+    final database = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+      options: _schemaOptions,
+    );
+    await openOrCreateCollection(
+      database,
+      _Callbacks(database),
+      serverMode: true,
+    );
+    await database.executeBatch('''
+DROP TABLE tags;
+CREATE TABLE tags (
+  tag text NOT NULL PRIMARY KEY COLLATE unicase,
+  usn integer NOT NULL,
+  collapsed boolean NOT NULL,
+  config blob NULL
+) without rowid;''');
+    database.tags.registerTag(Tag(name: 'TagName', usn: -1, expanded: true));
+
+    expect(
+      database.tags.getTag('TAGNAME'),
+      Tag(name: 'TagName', usn: -1, expanded: true),
+    );
+    expect(database.tags.preferredTagCase('tagname'), 'TagName');
+    expect(database.tags.expandedTags(), ['TagName']);
+    expect(database.tags.tagsPendingSync(-1), ['TagName']);
+    await database.close();
+  });
+
   test('upgrades supported schema 14 fixture using the real database', () async {
     final database = await CollectionSqliteStorage.open(
       driver: _nativeDriver,

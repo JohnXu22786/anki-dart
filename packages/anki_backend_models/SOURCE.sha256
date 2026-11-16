@@ -27,3 +27,4 @@ bd65f462a7af8a3dfa1cb3c622fc6324d0e8ddca6535f6b20b1e3908efb3895e  rslib/src/stat
 e875a63c641393c0a6904872bd55ebe164a4eceff8aa07686ca246fe6d54de23  rslib/src/storage/note/mod.rs
 478a35d1248be262ed2d0941202ac8f201c7eb0a5c57b7198d3ace03898fd1c5  rslib/src/cloze.rs
 cbd4cb07075d51d7854c94bccf0b00a47f5b7f5b8ac5be1246f7ddcf003799f6  proto/anki/notes.proto
+de82a2b8d9fe292039a3adf1335f916368ddb6e63639a59d1a4e0a490dc2a26f  rslib/src/tags/mod.rs

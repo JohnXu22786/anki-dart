@@ -9,14 +9,27 @@ import 'app_contracts.dart';
 
 /// Shared profile rules and event ordering over an injected persistence host.
 final class ProfileManager {
-  ProfileManager(this._repository, {ProfileId Function()? generateProfileId})
-    : _generateProfileId = generateProfileId ?? ProfileId.generate;
+  ProfileManager(
+    this._repository, {
+    ProfileId Function()? generateProfileId,
+    Future<void> Function(
+      ProfileId profileId,
+      Future<void> Function() persistSelection,
+    )?
+    profileSwitch,
+  }) : _generateProfileId = generateProfileId ?? ProfileId.generate,
+       // Keep the public API named `profileSwitch` while storing the hook
+       // privately.
+       // ignore: prefer_initializing_formals
+       _profileSwitch = profileSwitch;
 
   static const defaultProfileName = 'Default';
   static const maxIdGenerationAttempts = 10;
 
   final ProfileRepository _repository;
   final ProfileId Function() _generateProfileId;
+  final Future<void> Function(ProfileId, Future<void> Function())?
+  _profileSwitch;
 
   /// Loads the active profile, creating and activating Default when none exists.
   Future<ProfileSnapshot> initializeActiveProfile() async {
@@ -64,7 +77,16 @@ final class ProfileManager {
   }) => invokeProfileSwitchGuard(
     targetProfileId: id,
     checks: _repository.profileSwitchChecks,
-    switchActiveProfile: _repository.persistActiveProfile,
+    switchActiveProfile: (target) async {
+      Future<void> persistSelection() =>
+          _repository.persistActiveProfile(target);
+      final profileSwitch = _profileSwitch;
+      if (profileSwitch == null) {
+        await persistSelection();
+      } else {
+        await profileSwitch(target, persistSelection);
+      }
+    },
     skipReasons: skipReasons,
   );
 

@@ -5,6 +5,7 @@
 
 export 'app_config.dart';
 export 'card_browser_screen.dart';
+export 'collection_runtime.dart';
 export 'app_router.dart';
 export 'app_services.dart';
 export 'deck_picker_screen.dart';

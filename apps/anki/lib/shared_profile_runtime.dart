@@ -10,6 +10,7 @@ import 'package:anki_dart/profile_onboarding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_services.dart';
+import 'collection_runtime.dart';
 
 /// Minimal string storage boundary for the shared startup/profile runtime.
 ///
@@ -201,7 +202,11 @@ Future<AppServices> createDefaultAppServices() async {
   final runtime = SharedProfileRuntime(
     SharedPreferencesKeyValueStore(SharedPreferencesAsync()),
   );
-  return AppServices(startup: runtime, profiles: runtime);
+  return AppServices(
+    startup: runtime,
+    profiles: runtime,
+    collections: await createPlatformCollectionRuntime(),
+  );
 }
 
 final class _StoredProfile {

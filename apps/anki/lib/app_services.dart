@@ -6,6 +6,7 @@
 import 'package:anki_dart/profile_onboarding.dart';
 
 import 'app_contracts.dart';
+import 'collection_runtime.dart';
 import 'deck_picker_screen.dart';
 import 'profile_manager.dart';
 
@@ -19,19 +20,32 @@ final class AppServices {
   AppServices({
     required this.startup,
     required this.profiles,
+    CollectionRuntime? collections,
     DeckPickerRepository? deckPicker,
     ProfileId Function()? generateProfileId,
-  }) : deckPicker = deckPicker ?? const UnavailableDeckPickerRepository(),
+  }) : collections = collections ?? _unconfiguredCollections,
+       deckPicker = deckPicker ?? const UnavailableDeckPickerRepository(),
        profileManager = ProfileManager(
          profiles,
          generateProfileId: generateProfileId,
+         profileSwitch: collections?.switchProfile,
        );
 
   final StartupService startup;
   final ProfileRepository profiles;
+  final CollectionRuntime collections;
   final DeckPickerRepository deckPicker;
   final ProfileManager profileManager;
 }
+
+final _unconfiguredCollections = CollectionRuntime(
+  locationForProfile: (_) => Future.error(
+    UnsupportedError('Collection storage adapter is not configured.'),
+  ),
+  createDriver: () => Future.error(
+    UnsupportedError('Collection storage adapter is not configured.'),
+  ),
+);
 
 /// Default host boundary until platform storage and backend adapters are wired.
 final class UnconfiguredAppServices

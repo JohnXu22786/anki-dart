@@ -128,9 +128,42 @@ CREATE TABLE decks (
       Int64(2001),
       Int64(2003),
     });
+    final unnormalizedParent = _normalDeck('Parent ', id: parent.id);
+    expect(
+      storage.childDecks(unnormalizedParent).map((deck) => deck.name),
+      storage.childDecks(parent).map((deck) => deck.name),
+    );
+    expect(
+      storage.deckIdWithChildren(unnormalizedParent).toSet(),
+      storage.deckIdWithChildren(parent).toSet(),
+    );
     expect(
       () => storage.deckWithChildren(Int64(9999)),
       throwsA(isA<StateError>()),
+    );
+  });
+
+  test('hierarchy reads retain a stored native parent name', () {
+    final parent = storage.addDeck(_normalDeck('Stored'));
+    storage.addOrUpdateDeckWithExistingId(
+      _normalDeck('Stored::Child', id: Int64(55)),
+    );
+    database.execute("UPDATE decks SET name = 'Stored  ' WHERE id = ?", [
+      parent.id.toInt(),
+    ]);
+    database.execute(
+      "UPDATE decks SET name = 'Stored  ' || char(31) || 'Child' WHERE id = ?",
+      [55],
+    );
+
+    final loadedParent = storage.getDeck(parent.id)!;
+    expect(
+      storage.childDecks(loadedParent).single.name,
+      'Stored  ::Child',
+    );
+    expect(
+      storage.deckWithChildren(parent.id).map((deck) => deck.name).toSet(),
+      {'Stored  ', 'Stored  ::Child'},
     );
   });
 

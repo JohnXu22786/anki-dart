@@ -21,6 +21,7 @@ class DeckStorage {
 
   final DeckStorageDatabase db;
   final int Function() _nowMillis;
+  final Expando<String> _storedNativeNames = Expando<String>();
 
   /// Returns a deck by ID, or null when no row exists.
   Deck? getDeck(Int64 id) {
@@ -171,6 +172,7 @@ VALUES (?, ?, ?, ?, ?, ?)''',
       _blob(row['kind'], 'kind'),
     );
     final common = proto.Deck_Common.fromBuffer(_blob(row['common'], 'common'));
+    final nativeName = _string(row['name'], 'name');
     final kind = switch (kindContainer.whichKind()) {
       proto.Deck_KindContainer_Kind.normal => NormalDeckKind(
           kindContainer.normal,
@@ -182,21 +184,23 @@ VALUES (?, ?, ?, ?, ?, ?)''',
           'invalid deck kind: $id',
         ),
     };
-    return Deck(
+    final deck = Deck(
       id: id,
-      name: _humanName(_string(row['name'], 'name')),
+      name: _humanName(nativeName),
       mtimeSecs: _int64(row['mtime_secs'], 'mtime_secs'),
       usn: _int32(row['usn'], 'usn'),
       common: common,
       kind: kind,
     );
+    _storedNativeNames[deck] = nativeName;
+    return deck;
   }
 
   static String _nativeName(String humanName) =>
       normalizeDeckName(humanName).replaceAll('::', '\x1f');
 
-  static (String, String) _childNameRange(Deck parent) {
-    final nativeName = parent.name.replaceAll('::', '\x1f');
+  (String, String) _childNameRange(Deck parent) {
+    final nativeName = _storedNativeNames[parent] ?? _nativeName(parent.name);
     return ('$nativeName\x1f', '$nativeName\x20');
   }
 

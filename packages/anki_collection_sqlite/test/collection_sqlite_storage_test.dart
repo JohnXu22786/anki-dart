@@ -2,10 +2,12 @@
 // Copyright (C) 2026 John Tsui
 
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as config_proto;
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as proto;
+import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as notetype_proto;
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:fixnum/fixnum.dart';
@@ -62,6 +64,204 @@ void main() {
     expect(await reopened.queryInt('select count(*) from col'), 1);
     await reopened.close();
   });
+
+  test('source callbacks create localized defaults and reopen unchanged', () async {
+    final database = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+      options: _schemaOptions,
+    );
+    var random = BigInt.zero;
+    final migrations = _Callbacks(database);
+    final callbacks = CollectionSqliteInitializationCallbacks(
+      storage: database,
+      text: _InitialText(),
+      migrations: migrations,
+      localMinutesWest: (_) => -480,
+      randomU64: () {
+        final value = random;
+        random += BigInt.one;
+        return value;
+      },
+      clock: () => DateTime.utc(2026, 5, 9, 12),
+    );
+
+    final result = await openOrCreateCollection(
+      database,
+      callbacks,
+      serverMode: false,
+    );
+
+    expect(result.created, isTrue);
+    expect(await database.queryInt('select ver from col'), 18);
+    expect(
+      await database.queryInt('select crt from col'),
+      DateTime.utc(2026, 5, 8, 20).millisecondsSinceEpoch ~/ 1000,
+    );
+    expect(
+      await database.queryInt('select scm from col'),
+      DateTime.utc(2026, 5, 9, 12).millisecondsSinceEpoch,
+    );
+    final config = jsonDecode(
+      await database.queryString('select conf from col'),
+    );
+    expect(config['activeDecks'], [1]);
+    expect(config['creationOffset'], -480);
+    expect(await database.queryString('select name from decks'), 'Default');
+    expect(await database.queryInt('select id from deck_config'), 1);
+    expect(
+      await database.queryString('select name from deck_config'),
+      'Default',
+    );
+    expect(
+      await database.queryString('select hex(config) from deck_config'),
+      DeckConfig.defaults().inner
+          .writeToBuffer()
+          .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+          .join()
+          .toUpperCase(),
+    );
+    expect(await database.queryInt('select count(*) from notetypes'), 6);
+    expect(
+      await database.queryString(
+        "select group_concat(name, '|') from (select name from notetypes order by id)",
+      ),
+      'Basic|Basic (and reversed card)|Basic (optional reversed card)|Basic (type answer)|Cloze|Image Occlusion',
+    );
+    final basicConfig = notetype_proto.Notetype_Config.fromBuffer(
+      _decodeHex(
+        await database.queryString(
+          "select hex(config) from notetypes where name = 'Basic'",
+        ),
+      ),
+    );
+    expect(
+      basicConfig.reqs.single.kind,
+      notetype_proto.Notetype_Config_CardRequirement_Kind.KIND_ANY,
+    );
+    expect(basicConfig.reqs.single.fieldOrds, [0]);
+    final optionalConfig = notetype_proto.Notetype_Config.fromBuffer(
+      _decodeHex(
+        await database.queryString(
+          "select hex(config) from notetypes where name = 'Basic (optional reversed card)'",
+        ),
+      ),
+    );
+    expect(optionalConfig.reqs.map((req) => req.kind), [
+      notetype_proto.Notetype_Config_CardRequirement_Kind.KIND_ANY,
+      notetype_proto.Notetype_Config_CardRequirement_Kind.KIND_ALL,
+    ]);
+    expect(optionalConfig.reqs[1].fieldOrds, [1, 2]);
+    final stockRequirements = <String, List<String>>{
+      'Basic': ['1:0'],
+      'Basic (and reversed card)': ['1:0', '1:1'],
+      'Basic (optional reversed card)': ['1:0', '2:1,2'],
+      'Basic (type answer)': ['1:0,1'],
+      'Cloze': ['1:0'],
+      'Image Occlusion': ['1:0,1,2'],
+    };
+    for (final entry in stockRequirements.entries) {
+      final stockConfig = notetype_proto.Notetype_Config.fromBuffer(
+        _decodeHex(
+          await database.queryString(
+            "select hex(config) from notetypes where name = '${entry.key}'",
+          ),
+        ),
+      );
+      expect(
+        stockConfig.reqs
+            .map((req) => '${req.kind.value}:${req.fieldOrds.join(',')}')
+            .toList(),
+        entry.value,
+        reason: entry.key,
+      );
+    }
+    expect(
+      await database.queryInt('select count(*) from fields'),
+      greaterThan(6),
+    );
+    expect(
+      await database.queryInt('select count(*) from templates'),
+      greaterThan(6),
+    );
+    expect(await database.queryString('select key from config'), 'curModel');
+    expect(
+      await database.queryInt(
+        'select cast(val as text) = cast((select id from notetypes order by id limit 1) as text) from config',
+      ),
+      1,
+    );
+
+    await database.close();
+    final reopened = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+      options: _schemaOptions,
+    );
+    final reopenedResult = await openOrCreateCollection(
+      reopened,
+      callbacks,
+      serverMode: false,
+    );
+    expect(reopenedResult.created, isFalse);
+    expect(await reopened.queryInt('select count(*) from notetypes'), 6);
+    await reopened.close();
+  });
+
+  test(
+    'server creation omits the timezone offset and callback failure rolls back',
+    () async {
+      final database = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+        options: _schemaOptions,
+      );
+      final callbacks = CollectionSqliteInitializationCallbacks(
+        storage: database,
+        text: _InitialText(),
+        migrations: _Callbacks(database),
+        localMinutesWest: (_) => 300,
+        randomU64: () => BigInt.one,
+        clock: () => DateTime.utc(2026, 5, 9, 12),
+      );
+      await openOrCreateCollection(database, callbacks, serverMode: true);
+      final config = jsonDecode(
+        await database.queryString('select conf from col'),
+      );
+      expect(config['creationOffset'], isNull);
+      await database.close();
+
+      final failingPath = '$path.failure';
+      final failingDatabase = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: failingPath,
+        options: _schemaOptions,
+      );
+      final failingCallbacks = CollectionSqliteInitializationCallbacks(
+        storage: failingDatabase,
+        text: _InitialText(),
+        migrations: _Callbacks(failingDatabase),
+        localMinutesWest: (_) => 300,
+        randomU64: () => throw StateError('random source failed'),
+        clock: () => DateTime.utc(2026, 5, 9, 12),
+      );
+      await expectLater(
+        openOrCreateCollection(
+          failingDatabase,
+          failingCallbacks,
+          serverMode: true,
+        ),
+        throwsA(isA<StateError>()),
+      );
+      expect(
+        await failingDatabase.queryInt(
+          "select count(*) from sqlite_master where type = 'table' and name = 'col'",
+        ),
+        0,
+      );
+      await failingDatabase.close();
+    },
+  );
 
   test('exposes revlog row storage through an opened collection', () async {
     final database = await CollectionSqliteStorage.open(
@@ -834,3 +1034,36 @@ final class _Callbacks implements CollectionOpenCallbacks {
     if (name == failureName) throw failure!;
   }
 }
+
+final class _InitialText implements CollectionInitialTextProvider {
+  @override
+  String get defaultDeckName => 'Default';
+
+  @override
+  StockNotetypeNames get stockNotetypeNames => const StockNotetypeNames(
+    basic: 'Basic',
+    basicTyping: 'Basic (type answer)',
+    basicReversed: 'Basic (and reversed card)',
+    basicOptionalReversed: 'Basic (optional reversed card)',
+    cloze: 'Cloze',
+    frontField: 'Front',
+    backField: 'Back',
+    addReverseField: 'Add Reverse',
+    textField: 'Text',
+    backExtraField: 'Back Extra',
+    commentsField: 'Comments',
+    cardOne: 'Card 1',
+    cardTwo: 'Card 2',
+    imageOcclusion: 'Image Occlusion',
+    occlusionsField: 'Occlusions',
+    imageField: 'Image',
+    headerField: 'Header',
+    toggleMasks: 'Toggle Masks',
+    errorLoadingImageOcclusion: 'Error loading Image Occlusion',
+  );
+}
+
+List<int> _decodeHex(String value) => [
+  for (var index = 0; index < value.length; index += 2)
+    int.parse(value.substring(index, index + 2), radix: 16),
+];

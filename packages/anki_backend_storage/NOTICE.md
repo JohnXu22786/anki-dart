@@ -24,3 +24,9 @@ Tag row reads and mutations follow `rslib/src/storage/tag/mod.rs` and its SQL
 templates; `Tag` values come from `rslib/src/tags/mod.rs`, and pending-sync
 USN clauses follow `rslib/src/storage/sync.rs`. Schema-17 tags table shape and
 pinned source digests are recorded in `SOURCE.sha256`.
+
+Revlog row reads, inserts, collision allocation, searched-card queries, export
+filtering, sync-USN clearing, and invalid-property repair follow
+`rslib/src/storage/revlog/mod.rs` and its SQL templates. The revlog table shape
+is from `rslib/src/storage/schema11.sql`; all pinned source digests are recorded
+in `SOURCE.sha256`.

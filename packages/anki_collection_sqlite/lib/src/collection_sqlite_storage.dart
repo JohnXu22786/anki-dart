@@ -80,6 +80,9 @@ final class CollectionSqliteStorage
   late final TagStorage _tagStorage = TagStorage(
     _DeckStorageDatabase(_database),
   );
+  late final RevlogStorage _revlogStorage = RevlogStorage(
+    _DeckStorageDatabase(_database),
+  );
   bool _connectionClosed = false;
   bool _closed = false;
 
@@ -91,6 +94,9 @@ final class CollectionSqliteStorage
 
   /// Returns source-compatible collection tag row operations.
   TagStorage get tags => _tagStorage;
+
+  /// Returns source-compatible review log row operations on this collection.
+  RevlogStorage get revlog => _revlogStorage;
 
   /// Opens [location] through the chosen [driver] and applies collection
   /// connection pragmas before returning the database adapter.
@@ -470,17 +476,21 @@ final class _DeckStorageDatabase
     implements
         DeckStorageDatabase,
         DeckConfigStorageDatabase,
-        TagStorageDatabase {
+        TagStorageDatabase,
+        RevlogStorageDatabase {
   const _DeckStorageDatabase(this.database);
 
   final CommonDatabase database;
+
+  @override
+  Int64 get lastInsertRowId => Int64(database.lastInsertRowId);
 
   @override
   List<Map<String, Object?>> select(
     String sql, [
     List<Object?> parameters = const [],
   ]) {
-    final rows = database.select(sql, parameters);
+    final rows = database.select(sql, _sqliteParameters(parameters));
     final names = rows.columnNames;
     return rows
         .map(
@@ -494,9 +504,13 @@ final class _DeckStorageDatabase
 
   @override
   int execute(String sql, [List<Object?> parameters = const []]) {
-    database.execute(sql, parameters);
+    database.execute(sql, _sqliteParameters(parameters));
     return database.updatedRows;
   }
+
+  static List<Object?> _sqliteParameters(List<Object?> parameters) => parameters
+      .map((value) => value is Int64 ? value.toString() : value)
+      .toList(growable: false);
 }
 
 void _registerCoreFieldIndexFunction(CommonDatabase database) {

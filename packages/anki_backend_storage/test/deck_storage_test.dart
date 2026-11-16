@@ -49,9 +49,11 @@ CREATE TABLE decks (
       usn: 5,
       common: proto.Deck_Common(millisecondsStudied: 456),
       kind: FilteredDeckKind(
-        proto.Deck_Filtered(searchTerms: [
-          proto.Deck_Filtered_SearchTerm(search: 'deck:Filtered'),
-        ]),
+        proto.Deck_Filtered(
+          searchTerms: [
+            proto.Deck_Filtered_SearchTerm(search: 'deck:Filtered'),
+          ],
+        ),
       ),
     );
     storage.addOrUpdateDeckWithExistingId(filtered);
@@ -65,13 +67,15 @@ CREATE TABLE decks (
 
     final decodedFiltered = storage.getDeck(Int64(20))!;
     expect(decodedFiltered.name, 'Filtered');
-    expect(decodedFiltered.toProto().filtered.searchTerms.single.search,
-        'deck:Filtered');
-    expect(decodedFiltered.common.millisecondsStudied, 456);
     expect(
-      storage.getAllDeckNames(),
-      [(Int64(20), 'Filtered'), (Int64(1000), 'parent::child')],
+      decodedFiltered.toProto().filtered.searchTerms.single.search,
+      'deck:Filtered',
     );
+    expect(decodedFiltered.common.millisecondsStudied, 456);
+    expect(storage.getAllDeckNames(), [
+      (Int64(20), 'Filtered'),
+      (Int64(1000), 'parent::child'),
+    ]);
   });
 
   test('ID allocation uses current milliseconds and then max plus one', () {
@@ -80,6 +84,100 @@ CREATE TABLE decks (
 
     final next = storage.addDeck(_normalDeck('Second'));
     expect(next.id, Int64(1001));
+  });
+
+  test('hierarchy reads select descendants by Core name range', () {
+    final parent = storage.addDeck(_normalDeck('Parent'));
+    final childId = Int64.parseInt('9007199254740993');
+    storage.addOrUpdateDeckWithExistingId(
+      _normalDeck('Parent::Child', id: childId),
+    );
+    storage.addOrUpdateDeckWithExistingId(
+      _normalDeck('Parent::Child::Grandchild', id: Int64(2000)),
+    );
+    storage.addOrUpdateDeckWithExistingId(
+      _normalDeck('Parent::Sibling', id: Int64(2001)),
+    );
+    storage.addOrUpdateDeckWithExistingId(
+      _normalDeck('Parent::Missing::Leaf', id: Int64(2003)),
+    );
+    storage.addOrUpdateDeckWithExistingId(
+      _normalDeck('Parentish::Outside', id: Int64(2002)),
+    );
+
+    expect(storage.childDecks(parent).map((deck) => deck.name), [
+      'Parent::Child',
+      'Parent::Child::Grandchild',
+      'Parent::Missing::Leaf',
+      'Parent::Sibling',
+    ]);
+    expect(
+      storage.deckWithChildren(parent.id).map((deck) => deck.name).toSet(),
+      {
+        'Parent',
+        'Parent::Child',
+        'Parent::Child::Grandchild',
+        'Parent::Missing::Leaf',
+        'Parent::Sibling',
+      },
+    );
+    expect(storage.deckIdWithChildren(parent).toSet(), {
+      parent.id,
+      childId,
+      Int64(2000),
+      Int64(2001),
+      Int64(2003),
+    });
+    final unnormalizedParent = _normalDeck('Parent ', id: parent.id);
+    expect(
+      storage.childDecks(unnormalizedParent).map((deck) => deck.name),
+      storage.childDecks(parent).map((deck) => deck.name),
+    );
+    expect(
+      storage.deckIdWithChildren(unnormalizedParent).toSet(),
+      storage.deckIdWithChildren(parent).toSet(),
+    );
+    expect(
+      () => storage.deckWithChildren(Int64(9999)),
+      throwsA(isA<StateError>()),
+    );
+  });
+
+  test('hierarchy reads retain a stored native parent name', () {
+    final parent = storage.addDeck(_normalDeck('Stored'));
+    storage.addOrUpdateDeckWithExistingId(
+      _normalDeck('Stored::Child', id: Int64(55)),
+    );
+    database.execute("UPDATE decks SET name = 'Stored  ' WHERE id = ?", [
+      parent.id.toInt(),
+    ]);
+    database.execute(
+      "UPDATE decks SET name = 'Stored  ' || char(31) || 'Child' WHERE id = ?",
+      [55],
+    );
+
+    final loadedParent = storage.getDeck(parent.id)!;
+    expect(
+      storage.childDecks(loadedParent).single.name,
+      'Stored  ::Child',
+    );
+    expect(
+      storage.deckWithChildren(parent.id).map((deck) => deck.name).toSet(),
+      {'Stored  ', 'Stored  ::Child'},
+    );
+  });
+
+  test('missing deck IDs are distinct IDs used by cards only', () {
+    database.execute('CREATE TABLE cards (did INTEGER NOT NULL)');
+    storage.addOrUpdateDeckWithExistingId(_normalDeck('Present', id: Int64(4)));
+    database.execute('INSERT INTO cards VALUES (?), (?), (?), (?)', [
+      4,
+      90,
+      91,
+      90,
+    ]);
+
+    expect(storage.missingDeckIds().toSet(), {Int64(90), Int64(91)});
   });
 
   test('upsert keeps the supplied ID and update requires an existing row', () {
@@ -112,17 +210,14 @@ CREATE TABLE decks (
   });
 
   test('invalid stored kind reports the source deck ID', () {
-    database.execute(
-      'INSERT INTO decks VALUES (?, ?, ?, ?, ?, ?)',
-      [
-        33,
-        'Bad',
-        0,
-        0,
-        proto.Deck_Common().writeToBuffer(),
-        <int>[],
-      ],
-    );
+    database.execute('INSERT INTO decks VALUES (?, ?, ?, ?, ?, ?)', [
+      33,
+      'Bad',
+      0,
+      0,
+      proto.Deck_Common().writeToBuffer(),
+      <int>[],
+    ]);
     expect(
       () => storage.getDeck(Int64(33)),
       throwsA(
@@ -156,8 +251,10 @@ final class _DeckDb implements DeckStorageDatabase {
   final Database database;
 
   @override
-  List<Map<String, Object?>> select(String sql,
-      [List<Object?> parameters = const []]) {
+  List<Map<String, Object?>> select(
+    String sql, [
+    List<Object?> parameters = const [],
+  ]) {
     final rows = database.select(sql, parameters);
     final names = rows.columnNames;
     return rows

@@ -9,9 +9,10 @@ or a Web-compatible SQLite implementation.
 mutations, including protobuf `common` and tagged `kind` columns, native
 `\x1f`-separated names, current-time ID allocation with collision fallback,
 upserts, and update errors for missing rows. Deck hierarchy, name uniqueness,
-DeckConfig persistence, and collection transaction policy remain separate
-operations. `CollectionSqliteStorage.decks` adapts the Deck operations to its
-native or Web-compatible common database connection.
+descendant and missing-deck reads. Name uniqueness, DeckConfig persistence,
+and collection transaction policy remain separate operations.
+`CollectionSqliteStorage.decks` adapts the Deck operations to its native or
+Web-compatible common database connection.
 
 Run `python3 tool/check_package.py` to verify pinned source hashes and package
 license metadata.

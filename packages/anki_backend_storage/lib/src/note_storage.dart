@@ -70,10 +70,7 @@ class NoteStorage {
     db.prepareCached('delete from notes where id = ?').execute([noteId]);
   }
 
-  List<Object?> _noteParameters(
-    Note note, {
-    bool includeId = true,
-  }) {
+  List<Object?> _noteParameters(Note note, {bool includeId = true}) {
     if (note.sortField == null || note.checksum == null) {
       throw StateError('note must be prepared before it can be stored');
     }

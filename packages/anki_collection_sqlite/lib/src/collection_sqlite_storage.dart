@@ -71,11 +71,14 @@ final class CollectionSqliteStorage
   final CommonDatabase _database;
   final CollectionSqliteDriver _driver;
   final Map<String, CommonPreparedStatement> _statementCache = {};
+  late final DeckStorage _deckStorage = DeckStorage(
+    _DeckStorageDatabase(_database),
+  );
   bool _connectionClosed = false;
   bool _closed = false;
 
   /// Returns source-compatible Deck row operations on this collection.
-  DeckStorage get decks => DeckStorage(_DeckStorageDatabase(_database));
+  DeckStorage get decks => _deckStorage;
 
   /// Opens [location] through the chosen [driver] and applies collection
   /// connection pragmas before returning the database adapter.

@@ -36,6 +36,15 @@ void main() {
       deckDb.parameters.first != BigInt.parse('9007199254740993')) {
     throw StateError('deck ID lost 64-bit precision on the web target');
   }
+  final hierarchyIds = deckStorage.deckIdWithChildren(storedDeck);
+  if (deckDb.queryParameters.first != BigInt.parse('9007199254740993') ||
+      hierarchyIds.last != Int64.parseInt('9007199254740994')) {
+    throw StateError('deck hierarchy IDs lost 64-bit precision on the web');
+  }
+  if (deckStorage.missingDeckIds().single !=
+      Int64.parseInt('9007199254740995')) {
+    throw StateError('missing deck ID lost 64-bit precision on the web');
+  }
 }
 
 Notetype _notetype() =>
@@ -65,13 +74,29 @@ class _Statement implements NoteStorageStatement {
 
 final class _DeckDatabase implements DeckStorageDatabase {
   List<Object?> parameters = [];
+  List<Object?> queryParameters = [];
 
   @override
-  List<Map<String, Object?>> select(String sql,
-          [List<Object?> parameters = const []]) =>
-      [
+  List<Map<String, Object?>> select(
+    String sql, [
+    List<Object?> parameters = const [],
+  ]) {
+    queryParameters = parameters;
+    if (sql.startsWith('SELECT id FROM decks WHERE id = ? OR')) {
+      return [
         {'id': BigInt.parse('9007199254740993')},
+        {'id': BigInt.parse('9007199254740994')},
       ];
+    }
+    if (sql.startsWith('SELECT DISTINCT did')) {
+      return [
+        {'did': BigInt.parse('9007199254740995')},
+      ];
+    }
+    return [
+      {'id': BigInt.parse('9007199254740993')},
+    ];
+  }
 
   @override
   int execute(String sql, [List<Object?> parameters = const []]) {

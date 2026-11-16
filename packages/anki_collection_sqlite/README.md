@@ -84,8 +84,9 @@ does not retain those statements. Set `androidTempStore` on Android to use
 memory for temporary tables. The adapter implements Core's `field_at_index`,
 `process_text`, `fnvhash`, all CardData/FSRS extraction scalar functions,
 `regexp`, `regexp_fields`, and `regexp_tags`, and the `unicase` collation.
-The `decks` property exposes portable Deck row operations on the opened
-collection connection through `anki_backend_storage`.
+The `decks` and `revlog` properties expose portable deck and review-log row
+operations on the opened collection connection through
+`anki_backend_storage`.
 Collection note mutations, undo/redo, media indexing, backup/restore,
 synchronization, and encryption remain outside this package's current scope.
 

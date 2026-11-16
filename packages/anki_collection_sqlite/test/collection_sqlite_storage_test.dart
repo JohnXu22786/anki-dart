@@ -63,6 +63,40 @@ void main() {
     await reopened.close();
   });
 
+  test('exposes revlog row storage through an opened collection', () async {
+    final database = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+      options: _schemaOptions,
+    );
+    await openOrCreateCollection(
+      database,
+      _Callbacks(database),
+      serverMode: true,
+    );
+    final entry = RevlogEntry(
+      id: RevlogId(Int64.parseInt('9007199254740993')),
+      cardId: Int64.parseInt('9007199254740995'),
+      usn: -1,
+      buttonChosen: 3,
+      interval: -60,
+      lastInterval: 30,
+      easeFactor: 2500,
+      takenMillis: 1200,
+      reviewKind: RevlogReviewKind.review,
+    );
+
+    expect(database.revlog.addRevlogEntry(entry), entry.id);
+    final loaded = database.revlog.getRevlogEntry(entry.id)!;
+    expect(loaded.id, entry.id);
+    expect(loaded.cardId, entry.cardId);
+    expect(loaded.interval, -60);
+    expect(loaded.reviewKind, RevlogReviewKind.review);
+    database.revlog.removeRevlogEntry(entry.id);
+    expect(database.revlog.getRevlogEntry(entry.id), isNull);
+    await database.close();
+  });
+
   test(
     'registers Core field_at_index semantics on each collection connection',
     () async {

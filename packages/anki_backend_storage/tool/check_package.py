@@ -35,6 +35,11 @@ EXPECTED = {
     "rslib/src/storage/tag/add.sql": "ddd4c467955ff4f18a39d00da02cce4b2b90ce4b9d70defa7dd187e00a2c60cb",
     "rslib/src/storage/tag/update.sql": "d5ef93d76b251d571a8b915e0ae56a8b5af4de10634fe79dfa5f9d9f07aae258",
     "rslib/src/storage/sync.rs": "30545c8a4afe89452a454c5b9d91e37a65d4c838fc92596ff41d30301180dc70",
+    "rslib/src/storage/revlog/mod.rs": "df60cf36cf4328939d67c467015c67ad1a564c69369e70f212e40485b25c4f22",
+    "rslib/src/storage/revlog/get.sql": "2eb279e429df394461840030f14d4ebfafa77e0e5495d02ed31f54fd7c2b2585",
+    "rslib/src/storage/revlog/add.sql": "38f0917145b2afd05aa2afe6b188dcc8392a520bcad843665e6369427908f809",
+    "rslib/src/storage/revlog/fix_props.sql": "3bb638e6c02e93d0828699472be3e90d86ad654e60a6a89b8a650aae2f2ac602",
+    "rslib/src/storage/schema11.sql": "e88e234221969efba452a83de8c415b1a7b7cffc93dc8f15e7de410749845d4f",
     "rslib/src/storage/upgrades/schema17_upgrade.sql": "1b19ef470568138987a6790d32d2a2e3b03cd5f6321a54ec3387239fd37da67a",
     "rslib/src/deckconfig/mod.rs": "1b85b99ae9188b5f8d2ccb6a23930bc636f86c1a775a564cd24d1017fcebcfac",
     "rslib/src/storage/deckconfig/mod.rs": "74d1d0e0be58d68a6ebe0ae95acfd221f74cbc5ec80e4f391147e2047f6c5459",
@@ -54,7 +59,7 @@ def main() -> int:
     if source_file.is_file():
         for line in source_file.read_text(encoding="utf-8").splitlines():
             match = re.fullmatch(
-                r"([0-9a-f]{64})  (rslib/src/(?:decks/(?:name|service)\.rs|deckconfig/mod\.rs|(?:storage/sync\.rs|storage/(?:note|deck|deckconfig|tag)/[a-z_-]+\.(?:rs|sql))|storage/upgrades/schema(?:14|15|17)_upgrade\.sql))",
+                r"([0-9a-f]{64})  (rslib/src/(?:decks/(?:name|service)\.rs|deckconfig/mod\.rs|(?:storage/sync\.rs|storage/(?:note|deck|deckconfig|tag)/[a-z_-]+\.(?:rs|sql)|storage/revlog/(?:mod\.rs|get\.sql|add\.sql|fix_props\.sql)|storage/schema11\.sql)|storage/upgrades/schema(?:14|15|17)_upgrade\.sql))",
                 line,
             )
             if match is None:
@@ -91,7 +96,7 @@ def main() -> int:
         print("Storage package validation failed:", file=sys.stderr)
         print("\n".join(f"- {error}" for error in errors), file=sys.stderr)
         return 1
-    print("Validated pinned Core note/deck sources, AGPL metadata, SPDX tags, and platform-neutral imports.")
+    print("Validated pinned Core note/deck/revlog sources, AGPL metadata, SPDX tags, and platform-neutral imports.")
     return 0
 
 

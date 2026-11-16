@@ -5,3 +5,4 @@ export 'src/note_storage.dart';
 export 'src/deck_storage.dart';
 export 'src/deck_config_storage.dart';
 export 'src/tag_storage.dart';
+export 'src/revlog_storage.dart';

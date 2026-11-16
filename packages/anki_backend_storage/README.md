@@ -13,9 +13,11 @@ ports deck configuration row reads, mutations, protobuf encoding, and
 Core-compatible read-time numeric validation. `TagStorage` ports tag row reads,
 updates, expanded state, and pending-sync USN selection. Tag parsing and
 service-level tree/rename policy, configuration policy, and collection
-transaction policy remain separate.
-`CollectionSqliteStorage` adapts both row stores to its native or
-Web-compatible common database connection.
+transaction policy remain separate. `RevlogStorage` ports revlog row insertion,
+collision allocation, reads and search-result queries, export filtering,
+pending-USN clearing, and invalid-property repair. `CollectionSqliteStorage`
+adapts these row stores to its native or Web-compatible common database
+connection.
 
 Run `python3 tool/check_package.py` to verify pinned source hashes and package
 license metadata.

@@ -60,6 +60,25 @@ void main() {
     throw StateError('deck config ID lost 64-bit precision on the web');
   }
 
+  final revlogDb = _RevlogDatabase();
+  final revlog = RevlogStorage(revlogDb);
+  final revlogId = Int64.parseInt('9007199254740993');
+  final cardId = Int64.parseInt('9007199254740995');
+  revlog.addRevlogEntry(RevlogEntry(
+    id: RevlogId(revlogId),
+    cardId: cardId,
+    reviewKind: RevlogReviewKind.review,
+  ));
+  if (revlogDb.writeParameters[1] != revlogId ||
+      revlogDb.writeParameters[2] != cardId ||
+      revlogDb.lastInsertRowId != Int64.parseInt('9007199254740997')) {
+    throw StateError('revlog IDs lost 64-bit precision on the web target');
+  }
+  revlog.getAllRevlogEntries(TimestampSecs.parseInt('9007199254740'));
+  if (revlogDb.queryParameters.single != Int64.parseInt('9007199254740000')) {
+    throw StateError('revlog cutoff lost 64-bit precision on the web target');
+  }
+
   final tagDb = _TagDatabase();
   final tagStorage = TagStorage(tagDb);
   tagStorage.registerTag(Tag(name: 'Web', usn: -1, expanded: true));
@@ -160,6 +179,27 @@ final class _TagDatabase implements TagStorageDatabase {
   @override
   int execute(String sql, [List<Object?> parameters = const []]) {
     this.parameters = parameters;
+    return 1;
+  }
+}
+
+final class _RevlogDatabase implements RevlogStorageDatabase {
+  List<Object?> writeParameters = [];
+  List<Object?> queryParameters = [];
+
+  @override
+  Int64 lastInsertRowId = Int64.parseInt('9007199254740997');
+
+  @override
+  List<Map<String, Object?>> select(String sql,
+      [List<Object?> parameters = const []]) {
+    queryParameters = parameters;
+    return const [];
+  }
+
+  @override
+  int execute(String sql, [List<Object?> parameters = const []]) {
+    writeParameters = parameters;
     return 1;
   }
 }

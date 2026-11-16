@@ -4,6 +4,7 @@
 import 'dart:io';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
+import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as config_proto;
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as proto;
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
@@ -325,6 +326,40 @@ void main() {
           .toSet(),
       {'Parent  ', 'Parent  ::Child'},
     );
+    await database.close();
+  });
+
+  test('deck config storage uses the collection connection', () async {
+    final database = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+      options: _schemaOptions,
+    );
+    await openOrCreateCollection(
+      database,
+      _Callbacks(database),
+      serverMode: true,
+    );
+    final id = Int64.parseInt('9007199254740993');
+    final config = DeckConfig(
+      id: id,
+      name: 'Custom',
+      mtimeSecs: Int64(123),
+      usn: -2,
+      inner: config_proto.DeckConfig_Config(newPerDay: 45, initialEase: 2.4),
+    );
+
+    database.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+
+    final loaded = database.deckConfigs.getDeckConfig(id)!;
+    expect(loaded.name, 'Custom');
+    expect(loaded.mtimeSecs, Int64(123));
+    expect(loaded.usn, -2);
+    expect(loaded.inner.newPerDay, 45);
+    expect(loaded.inner.initialEase, closeTo(2.4, 0.000001));
+    expect(database.deckConfigs.getDeckConfigIdByName('Custom'), id);
+    expect(database.deckConfigs.getDeckConfigIdByName('custom'), id);
+    expect(database.deckConfigs.getDeckConfigMap().keys, contains(id));
     await database.close();
   });
 

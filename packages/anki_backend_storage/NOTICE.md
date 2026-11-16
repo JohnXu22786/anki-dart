@@ -14,3 +14,8 @@ table layouts are retained; no schema migration is made.
 Copyright: Ankitects Pty Ltd and contributors. Source is licensed under the
 GNU Affero General Public License, version 3 or later. The Dart package and
 tests retain that license and identify their source through `SOURCE.sha256`.
+
+Deck configuration row reads, mutations, and SQL are adapted from
+`rslib/src/storage/deckconfig/mod.rs` and its SQL templates. Read-time bounds
+repair follows `rslib/src/deckconfig/mod.rs`; schema-14 upgrade SQL records the
+persisted table shape. All pinned source hashes are listed in `SOURCE.sha256`.

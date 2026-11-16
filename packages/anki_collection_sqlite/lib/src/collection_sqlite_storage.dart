@@ -74,11 +74,17 @@ final class CollectionSqliteStorage
   late final DeckStorage _deckStorage = DeckStorage(
     _DeckStorageDatabase(_database),
   );
+  late final DeckConfigStorage _deckConfigStorage = DeckConfigStorage(
+    _DeckStorageDatabase(_database),
+  );
   bool _connectionClosed = false;
   bool _closed = false;
 
   /// Returns source-compatible Deck row operations on this collection.
   DeckStorage get decks => _deckStorage;
+
+  /// Returns source-compatible deck configuration row operations.
+  DeckConfigStorage get deckConfigs => _deckConfigStorage;
 
   /// Opens [location] through the chosen [driver] and applies collection
   /// connection pragmas before returning the database adapter.
@@ -454,7 +460,8 @@ final class CollectionSqliteStorage
   }
 }
 
-final class _DeckStorageDatabase implements DeckStorageDatabase {
+final class _DeckStorageDatabase
+    implements DeckStorageDatabase, DeckConfigStorageDatabase {
   const _DeckStorageDatabase(this.database);
 
   final CommonDatabase database;

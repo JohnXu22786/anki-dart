@@ -22,6 +22,22 @@ EXPECTED = {
     "rslib/src/storage/note/update.sql": "7a4ff39a4232e4643d67721b0cf4965e59d6d8da6bd93294a6ae121b37215561",
     "rslib/src/storage/note/add_if_unique.sql": "4ddddc9324b5ff5801a786f7c1a11461345510e63789048928fbda186fe7022c",
     "rslib/src/storage/note/add_or_update.sql": "dcc75fd0e5b19849056108253dce2cb4bd52dd14cac3ae99c709bbc127209b96",
+    "rslib/src/deckconfig/mod.rs": "1b85b99ae9188b5f8d2ccb6a23930bc636f86c1a775a564cd24d1017fcebcfac",
+    "rslib/src/storage/deckconfig/mod.rs": "74d1d0e0be58d68a6ebe0ae95acfd221f74cbc5ec80e4f391147e2047f6c5459",
+    "rslib/src/storage/deckconfig/get.sql": "63340173b2583598487f61ca7d8ab5e4d8a46ecbb95a6a2ada197c7891aad927",
+    "rslib/src/storage/deckconfig/add.sql": "2e383ccbb53305fa115006737e63046333f5e5d6ec1a439514e85582c39eeff2",
+    "rslib/src/storage/deckconfig/add_if_unique.sql": "99e6865d364033aee37afda20dcc05b8de3b7802feeb8a9dea7971148e443fd5",
+    "rslib/src/storage/deckconfig/update.sql": "e7b161c89e665b7fbde8ea8e0be36b317fa6c8e84d8c441edd55d4baea5f28f9",
+    "rslib/src/storage/deckconfig/add_or_update.sql": "8d3fff11b7152e3acb29684895f68c947f04893035d871e46d43e9a0a035519a",
+    "rslib/src/storage/upgrades/schema14_upgrade.sql": "072d867fd25bb35880d60f787798743385aa4fac783f59cb7ecb4f43ce5ebcb2",
+    "rslib/src/deckconfig/mod.rs": "1b85b99ae9188b5f8d2ccb6a23930bc636f86c1a775a564cd24d1017fcebcfac",
+    "rslib/src/storage/deckconfig/mod.rs": "74d1d0e0be58d68a6ebe0ae95acfd221f74cbc5ec80e4f391147e2047f6c5459",
+    "rslib/src/storage/deckconfig/get.sql": "63340173b2583598487f61ca7d8ab5e4d8a46ecbb95a6a2ada197c7891aad927",
+    "rslib/src/storage/deckconfig/add.sql": "2e383ccbb53305fa115006737e63046333f5e5d6ec1a439514e85582c39eeff2",
+    "rslib/src/storage/deckconfig/add_if_unique.sql": "99e6865d364033aee37afda20dcc05b8de3b7802feeb8a9dea7971148e443fd5",
+    "rslib/src/storage/deckconfig/update.sql": "e7b161c89e665b7fbde8ea8e0be36b317fa6c8e84d8c441edd55d4baea5f28f9",
+    "rslib/src/storage/deckconfig/add_or_update.sql": "8d3fff11b7152e3acb29684895f68c947f04893035d871e46d43e9a0a035519a",
+    "rslib/src/storage/upgrades/schema14_upgrade.sql": "072d867fd25bb35880d60f787798743385aa4fac783f59cb7ecb4f43ce5ebcb2",
 }
 
 
@@ -32,7 +48,7 @@ def main() -> int:
     if source_file.is_file():
         for line in source_file.read_text(encoding="utf-8").splitlines():
             match = re.fullmatch(
-                r"([0-9a-f]{64})  (rslib/src/(?:decks/(?:name|service)\.rs|storage/(?:note|deck)/[a-z_-]+\.(?:rs|sql)|storage/upgrades/schema15_upgrade\.sql))",
+                r"([0-9a-f]{64})  (rslib/src/(?:decks/(?:name|service)\.rs|deckconfig/mod\.rs|storage/(?:note|deck|deckconfig)/[a-z_-]+\.(?:rs|sql)|storage/upgrades/schema(?:14|15)_upgrade\.sql))",
                 line,
             )
             if match is None:

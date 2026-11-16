@@ -8,10 +8,11 @@ or a Web-compatible SQLite implementation.
 `NoteStorage` ports note-row mutations. `DeckStorage` ports deck row reads and
 mutations, including protobuf `common` and tagged `kind` columns, native
 `\x1f`-separated names, current-time ID allocation with collision fallback,
-upserts, and update errors for missing rows. Deck hierarchy, name uniqueness,
-descendant and missing-deck reads. Name uniqueness, DeckConfig persistence,
-and collection transaction policy remain separate operations.
-`CollectionSqliteStorage.decks` adapts the Deck operations to its native or
+upserts, hierarchy reads, and missing-deck detection. `DeckConfigStorage`
+ports deck configuration row reads, mutations, protobuf encoding, and
+Core-compatible read-time numeric validation. Name uniqueness, service-level
+configuration policy, and collection transaction policy remain separate.
+`CollectionSqliteStorage` adapts both row stores to its native or
 Web-compatible common database connection.
 
 Run `python3 tool/check_package.py` to verify pinned source hashes and package

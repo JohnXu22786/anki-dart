@@ -39,6 +39,13 @@ class DeckStorage {
   List<Deck> getAllDecks() =>
       db.select(_getDeckSql).map(_deckFromRow).toList(growable: false);
 
+  /// Returns decks ordered by their stored native name, matching Core's deck
+  /// tree input query (`get_all_deck_names`).
+  List<Deck> getAllDecksInNameOrder() => db
+      .select('$_getDeckSql ORDER BY name')
+      .map(_deckFromRow)
+      .toList(growable: false);
+
   /// Returns deck IDs and human-readable names ordered by SQLite name order.
   List<(Int64, String)> getAllDeckNames() => db
       .select('SELECT id, name FROM decks ORDER BY name')

@@ -9,6 +9,21 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASHES = {
+    "rslib/src/decks/tree.rs": "0ab80ff9af9ebe7e9c06e6901e358f526ea938c2c315189c9528267c8c510b93",
+    "rslib/src/decks/limits.rs": "d8de3c382f4f4e130699dd18bbc46b6a93664fc97ef8d45448479b4fb165af27",
+    "rslib/src/decks/counts.rs": "6f2072a10af7c063eb98ebccca40395ee58ffd287d74061ab381645c4d36a01d",
+    "rslib/src/storage/deck/mod.rs": "f55e715844e364b530b292d3a7e7dfddcad4abe9a81b778f788e1224932edc0d",
+    "rslib/src/storage/deck/due_counts.sql": "31a67aed11f26fba9ed321f2b70486a70d83136dc5ffe887e3412da6c4492537",
+    "rslib/src/scheduler/mod.rs": "0c147a58a2de9dd4e1f1dc199d0cf89b0e3d1e690bb70182d0ca91fd7e8fc0c1",
+    "rslib/src/scheduler/bury_and_suspend.rs": "6e155f0368de174f8e57ac773e8ddd3846605982b7e2b3cf0c89a69ee15dbeb9",
+    "rslib/src/scheduler/filtered/card.rs": "6aca7e9b55088f43d981eaafa8a02c5de538cf3c7e1c13640e3565de6ee4fd13",
+    "rslib/src/config/mod.rs": "4d288b43ebfb365e083f2fcf352e6c6a87b973c0e8fea8aedcef872db8bd03eb",
+    "rslib/src/decks/current.rs": "2b1f5b862986d2d34bd2e83d25ee970f4da6dc4cead2f71d9823744e88756051",
+    "rslib/src/decks/mod.rs": "dc5a90c3465b7216b6ad1e42a0c44a2d18a99beea777023adcb63cb4abdf38d4",
+    "rslib/src/decks/addupdate.rs": "724f8c20a37b54e05890be486d949fa932dd4aabaa0b9edd70ee9ad49c891fc2",
+    "rslib/src/decks/name.rs": "0a4e33f5a92d2c479c4cbd59664b0de30a50a41453dbe131fc9c809f5afc5f4d",
+    "rslib/src/storage/config/mod.rs": "c69e1b376b9b6a5bbc1fc8fd8b4634806897524ceb9b34727dd2adec80a5bbeb",
+    "rslib/src/storage/config/add.sql": "3f7fb181b2e08b1e254e6b07df5438e4dc6a1b8d7a0d8dee4ebb2f134f25a81d",
     "rslib/src/storage/sqlite.rs": "877e18ef2ddcc497a91fca0c2a84d2f22658f09582d8c7f2ba1f03ca2d4ba73c",
     "rslib/src/text.rs": "2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762",
     "rslib/src/cloze.rs": "478a35d1248be262ed2d0941202ac8f201c7eb0a5c57b7198d3ace03898fd1c5",

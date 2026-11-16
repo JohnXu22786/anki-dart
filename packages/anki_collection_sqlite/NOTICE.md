@@ -41,6 +41,16 @@ case-fold data from `anki_backend_models`, generated from the pinned `unicase`
 2.6.0 dependency. This adapter now covers the SQLite functions and collation
 registered by pinned Core's collection opener.
 
+`buildCoreDeckTree()` adapts `rslib/src/decks/tree.rs`,
+`rslib/src/decks/limits.rs`, `rslib/src/decks/counts.rs`, and the due-count
+query in `rslib/src/storage/deck/{mod.rs,due_counts.sql}`. It preserves
+source-ordered hierarchy construction, the 99-level cap, malformed missing
+parent handling, collapsed/filtered flags, default-deck hiding, and V3 daily
+limit aggregation. Exact source SHA-256 values are recorded in `SOURCE.sha256`;
+`deckTreeForNow()` resolves source timing-version, creation-offset, rollover,
+learning-cutoff, deck-config-limit, and day-rollover unbury behavior from the
+collection and platform clock.
+
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently
 licensed `sqlite3` package (MIT). See this package's `LICENSE` file for the

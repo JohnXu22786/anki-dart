@@ -2,6 +2,7 @@ name: anki_app
 description: Flutter application for the Anki Dart workspace.
 publish_to: none
 version: 0.1.0+1
+license: AGPL-3.0-or-later
 
 environment:
   sdk: ^3.13.7
@@ -14,6 +15,9 @@ dependencies:
     path: ../../packages/anki_collection_sqlite
   anki_backend_models:
     path: ../../packages/anki_backend_models
+  anki_backend_protocol:
+    path: ../../packages/anki_backend_protocol
+  fixnum: ^1.1.0
   flutter:
     sdk: flutter
   flutter_localizations:

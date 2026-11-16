@@ -4417,3 +4417,21 @@ progress, while `item_card_browser.xml:8–44` defines selectable rows and colum
 cells. This is a source-derived UI adaptation, not a port of Android lifecycle
 or resources. The Flutter code and tests are GPL-3.0-or-later. No upstream
 assets or strings are copied, and root `COPYING` remains unchanged.
+
+## Deck Picker collection tree and due-count projection
+
+`buildCoreDeckTree()` and `CollectionSqliteStorage.deckTree()` in
+`packages/anki_collection_sqlite` adapt pinned Anki Core's
+`rslib/src/decks/tree.rs`, `rslib/src/decks/limits.rs`,
+`rslib/src/decks/counts.rs`, and `rslib/src/storage/deck/{mod.rs,due_counts.sql}`
+at `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The adapter builds the ordered
+hierarchy with Core's nesting cap and malformed-name traversal, projects
+collapsed/filtered flags, hides an empty default deck only when appropriate,
+queries new/review/intraday/interday queues at scheduler-resolved timing
+cutoffs, and applies deck plus optional parent limits. `deckTreeForNow()` also
+resolves v1/v2 timing, creation offset, rollover hour, learning cutoff, and
+day-rollover unbury from collection config and the platform clock. The source
+hashes are pinned in `packages/anki_collection_sqlite/SOURCE.sha256` and checked
+by the package validator. App navigation and remaining deck actions are still
+application integration work. The package remains AGPL-3.0-or-later; no
+Kotlin/Android resources or strings are copied.

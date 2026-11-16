@@ -482,6 +482,191 @@ void main() {
     await database.close();
   });
 
+  test('deckTree queries scheduler queues and projects Core limits', () async {
+    final database = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+      options: _schemaOptions,
+    );
+    await openOrCreateCollection(
+      database,
+      _Callbacks(database),
+      serverMode: true,
+    );
+    final config = database.deckConfigs.addDeckConfig(
+      DeckConfig(name: 'Default', inner: DeckConfig.defaults().inner),
+    );
+    final deck = database.decks.addDeck(
+      Deck(
+        name: 'Default',
+        kind: NormalDeckKind(proto.Deck_Normal(configId: config.id)),
+      ),
+    );
+    await database.addCard(
+      Card.newCard(noteId: Int64(101), templateIdx: 0, deckId: deck.id, due: 0),
+    );
+    await database.addCard(
+      Card(
+        noteId: Int64(102),
+        deckId: deck.id,
+        queue: CardQueue.review,
+        ctype: CardType.review,
+        due: 1,
+      ),
+    );
+    await database.addCard(
+      Card(
+        noteId: Int64(103),
+        deckId: deck.id,
+        queue: CardQueue.learn,
+        ctype: CardType.learn,
+        due: 1999,
+      ),
+    );
+    await database.addCard(
+      Card(
+        noteId: Int64(104),
+        deckId: deck.id,
+        queue: CardQueue.dayLearn,
+        ctype: CardType.relearn,
+        due: 1,
+      ),
+    );
+
+    final tree = await database.deckTree(daysElapsed: 1, learnCutoff: 2000);
+    final defaultDeck = tree.children.single;
+    expect(defaultDeck.deckId, deck.id);
+    expect(defaultDeck.newCount, 1);
+    expect(defaultDeck.reviewCount, 1);
+    expect(defaultDeck.learnCount, 2);
+    expect(defaultDeck.intradayLearning, 1);
+    expect(defaultDeck.interdayLearningUncapped, 1);
+    expect(defaultDeck.totalInDeck, 4);
+    expect(defaultDeck.totalIncludingChildren, 4);
+    await database.close();
+  });
+
+  test(
+    'deckTreeForNow restores buried cards after the due day rolls over',
+    () async {
+      final database = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+        options: _schemaOptions,
+      );
+      await openOrCreateCollection(
+        database,
+        _Callbacks(database),
+        serverMode: true,
+      );
+      database.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        DeckConfig(
+          id: Int64.ONE,
+          name: 'Default',
+          inner: DeckConfig.defaults().inner,
+        ),
+      );
+      final deck = database.decks.addDeck(
+        Deck(
+          name: 'Default',
+          kind: NormalDeckKind(proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final cardId = await database.addCard(
+        Card(
+          noteId: Int64(201),
+          deckId: deck.id,
+          queue: CardQueue.schedBuried,
+          due: 0,
+        ),
+      );
+      final creationSecs = await database.queryInt('SELECT crt FROM col');
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 10 * Duration.secondsPerDay) * 1000,
+        isUtc: true,
+      );
+
+      final tree = await database.deckTreeForNow(now: now);
+
+      expect((await database.getCard(cardId))!.queue, CardQueue.newCard);
+      expect(tree.children.single.newCount, 1);
+      expect(
+        int.parse(
+          await database.queryString(
+            "SELECT CAST(val AS TEXT) FROM config WHERE key = 'lastUnburied'",
+          ),
+        ),
+        greaterThan(0),
+      );
+      expect(
+        await database.queryInt(
+          "SELECT usn FROM config WHERE key = 'lastUnburied'",
+        ),
+        -1,
+      );
+      await database.close();
+    },
+  );
+
+  test(
+    'deck picker storage creates, selects, collapses, and checks descendants',
+    () async {
+      final database = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+        options: _schemaOptions,
+      );
+      await openOrCreateCollection(
+        database,
+        _Callbacks(database),
+        serverMode: true,
+      );
+      database.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        DeckConfig(
+          id: Int64.ONE,
+          name: 'Default',
+          inner: DeckConfig.defaults().inner,
+        ),
+      );
+      database.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64.ONE,
+          name: 'Default',
+          kind: NormalDeckKind(proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+
+      final deck = await database.getOrCreateNormalDeck('Languages::Spanish');
+      expect(database.decks.getDeckId('Languages'), isNotNull);
+      expect(deck.name, 'Languages::Spanish');
+      expect(
+        (await database.getOrCreateNormalDeck('Languages::Spanish')).id,
+        deck.id,
+      );
+      await database.selectDeck(deck.id);
+      expect(database.currentDeckId, deck.id);
+      expect(
+        await database.queryInt("SELECT usn FROM config WHERE key = 'curDeck'"),
+        -1,
+      );
+      await database.setDeckCollapsed(deck.id, collapsed: true);
+      expect(database.decks.getDeck(deck.id)!.common.studyCollapsed, isTrue);
+      expect(database.decks.getDeck(deck.id)!.usn, -1);
+      await database.addCard(
+        Card(
+          noteId: Int64(301),
+          deckId: deck.id,
+          queue: CardQueue.userBuried,
+          ctype: CardType.newCard,
+        ),
+      );
+      final parent = database.decks.getDeckByName('Languages')!;
+      expect(database.deckHasBuriedCards(parent.id), isTrue);
+      expect(database.deckHasBuriedCards(deck.id), isTrue);
+      await database.close();
+    },
+  );
+
   test('deck hierarchy reads use the schema unicase name collation', () async {
     final database = await CollectionSqliteStorage.open(
       driver: _nativeDriver,

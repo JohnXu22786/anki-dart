@@ -1271,3 +1271,30 @@ cases are in `test/reviewer_edited_tags_operation_test.dart`. The source file
 declares `GPL-3.0-or-later` and names no separate copyright holder. The Dart
 adaptation and tests are Copyright © 2026 John Tsui under the same license;
 root `COPYING` remains byte-identical.
+
+## Flutter profile startup and persistent profile runtime
+
+`apps/anki/lib/shared_profile_runtime.dart` supplies the shared startup and
+profile repository used by `apps/anki/lib/main.dart` on Android, iOS, macOS,
+Linux, Windows, and Web. It persists onboarding completion, ordered profile
+IDs and names, and the active profile ID in one versioned JSON record through
+the Flutter `shared_preferences` plugin. Invalid or unsupported persisted
+records raise an error; they are not interpreted as a fresh installation.
+The deterministic key-value fake and focused persistence cases are in
+`apps/anki/test/shared_profile_runtime_test.dart`.
+
+The behavior boundary follows AnkiDroid 2.25.3, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`: `ProfileManager.kt` governs
+creating and activating the default profile and unique profile IDs;
+`ProfileName.kt` supplies validated display names;
+`SetupStorage.kt`, `BackendSetup.kt`, and `StoragePolicy.kt` inform first-run
+setup; and `StartupGuards.kt` informs the ordered profile-switch checks exposed
+by `ProfileRepository`. Shared preferences is the cross-platform Flutter
+storage choice and is not copied from AnkiDroid. Collection storage, backend
+initialization, and profile-specific collection files remain outside this
+runtime. The referenced AnkiDroid source files declare `GPL-3.0-or-later`; no
+upstream assets or translated resource strings are copied. The Dart code and
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING`
+remains unchanged. The shared_preferences plugin and its platform packages
+are Copyright © 2013 The Flutter Authors and distributed under the BSD 3-Clause
+License.

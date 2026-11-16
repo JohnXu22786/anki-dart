@@ -18,11 +18,13 @@ filtered-deck building to the injected `DeckPickerRepository`. The default
 repository shows a localized unavailable state until a platform/backend
 adapter is connected.
 The shared Dart profile manager chooses the default profile, generates unique
-IDs, and runs ordered profile-switch safety checks. Platform adapters still
-need to persist storage decisions, initialize the backend, store profile data,
-and write the active profile selection. Until those adapters are supplied, the
-default app explains the setup requirement and surfaces the missing storage
-adapter when setup is attempted; it does not create fake persistent state.
+IDs, and runs ordered profile-switch safety checks. The default app services
+persist onboarding completion, ordered profile records, and active-profile
+selection through `shared_preferences` on Android, iOS, macOS, Linux, Windows,
+and Web. Corrupt state and storage failures are surfaced instead of being
+treated as a fresh install. Collection storage and backend startup remain
+outside this profile-runtime unit; the Deck Picker continues to use its
+injected repository boundary.
 
 The profile flow follows AnkiDroid 2.25.3 at pinned commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. See the root

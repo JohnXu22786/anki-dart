@@ -5,6 +5,10 @@
 
 import 'package:flutter/widgets.dart';
 
-import 'app_router.dart';
+import 'app.dart';
 
-void main() => runApp(const AppRouter());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final services = await createDefaultAppServices();
+  runApp(AppRouter(services: services));
+}

@@ -79,6 +79,10 @@ final class CardBrowserScreen extends StatefulWidget {
 enum _BrowserLoadState { loading, loaded, searching, failed }
 
 final class _CardBrowserScreenState extends State<CardBrowserScreen> {
+  static const _wideLeadingWidth = 52.0;
+  static const _wideColumnWidth = 180.0;
+  static const _widePrimaryColumnWidth = 320.0;
+
   final _searchController = TextEditingController();
   final LinkedHashSet<BrowserRowId> _selectedRows = LinkedHashSet();
   CardBrowserSnapshot? _snapshot;
@@ -97,7 +101,14 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   @override
   void didUpdateWidget(covariant CardBrowserScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) _load();
+    if (oldWidget.controller != widget.controller) {
+      _searchController.clear();
+      _selectedRows.clear();
+      _isMultiSelect = false;
+      _lastSelectedRowId = null;
+      _runAction(() => widget.controller.updateSelection(const []));
+      _load();
+    }
   }
 
   @override
@@ -250,12 +261,18 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   }
 
   void _runBulkAction(CardBrowserBulkAction action) {
-    _runAction(
-      () => widget.controller.performBulkAction(
+    _runAction(() async {
+      await widget.controller.performBulkAction(
         action,
         List.unmodifiable(_selectedRows),
-      ),
-    );
+      );
+      if (!mounted) return;
+      if (action == CardBrowserBulkAction.delete) {
+        _lastSelectedRowId = null;
+        _publishSelection(const [], false);
+      }
+      await _search(_searchController.text);
+    });
   }
 
   Future<void> _runAction(Future<void> Function() action) async {
@@ -421,65 +438,86 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             isWide ? 'browser-layout-wide' : 'browser-layout-narrow',
           ),
           child: isWide
-              ? _buildWideTable(snapshot)
+              ? _buildWideTable(snapshot, constraints.maxWidth)
               : _buildNarrowRows(snapshot),
         );
       },
     );
   }
 
-  Widget _buildWideTable(CardBrowserSnapshot snapshot) {
+  Widget _buildWideTable(CardBrowserSnapshot snapshot, double viewportWidth) {
     final s = AppLocalizations.of(context)!;
-    return Column(
-      children: [
-        _buildWideRow(
-          leading: const SizedBox(width: 52),
-          columns: snapshot.columns,
-          isHeader: true,
-          sortType: snapshot.sortType,
-        ),
-        const Divider(height: 1),
-        Expanded(
-          child: ListView.separated(
-            itemCount: snapshot.rows.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final row = snapshot.rows[index];
-              final selected = _selectedRows.contains(row.id);
-              return Semantics(
-                key: ValueKey('browser-row-${row.id.value}'),
-                container: true,
-                button: true,
-                selected: selected,
-                label: _rowLabel(row, snapshot.columns),
-                child: InkWell(
-                  onTap: () => _activateRow(row.id),
-                  onLongPress: () => _handleLongPress(row.id),
-                  onSecondaryTap: () => _handleRightClick(row.id),
-                  child: _buildWideRow(
-                    leading: SizedBox(
-                      width: 52,
-                      child: _isMultiSelect
-                          ? Checkbox(
-                              value: selected,
-                              onChanged: (_) => _toggleRow(row.id),
-                              semanticLabel: s.browserSelectRow(_rowTitle(row)),
-                            )
-                          : const Icon(Icons.drag_indicator, size: 18),
+    final requiredWidth =
+        _wideLeadingWidth +
+        snapshot.columns.fold<double>(
+          0,
+          (width, column) => width + _wideColumnWidthFor(column),
+        );
+    return SingleChildScrollView(
+      key: const ValueKey('browser-wide-horizontal-scroll'),
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: requiredWidth > viewportWidth ? requiredWidth : viewportWidth,
+        child: Column(
+          children: [
+            _buildWideRow(
+              leading: const SizedBox(width: _wideLeadingWidth),
+              columns: snapshot.columns,
+              isHeader: true,
+              sortType: snapshot.sortType,
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.separated(
+                itemCount: snapshot.rows.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final row = snapshot.rows[index];
+                  final selected = _selectedRows.contains(row.id);
+                  return Semantics(
+                    key: ValueKey('browser-row-${row.id.value}'),
+                    container: true,
+                    button: true,
+                    selected: selected,
+                    label: _rowLabel(row, snapshot.columns),
+                    child: InkWell(
+                      onTap: () => _activateRow(row.id),
+                      onLongPress: () => _handleLongPress(row.id),
+                      onSecondaryTap: () => _handleRightClick(row.id),
+                      child: _buildWideRow(
+                        leading: SizedBox(
+                          width: _wideLeadingWidth,
+                          child: _isMultiSelect
+                              ? Checkbox(
+                                  value: selected,
+                                  onChanged: (_) => _toggleRow(row.id),
+                                  semanticLabel: s.browserSelectRow(
+                                    _rowTitle(row),
+                                  ),
+                                )
+                              : const Icon(Icons.drag_indicator, size: 18),
+                        ),
+                        columns: snapshot.columns,
+                        row: row,
+                        isHeader: false,
+                        sortType: snapshot.sortType,
+                      ),
                     ),
-                    columns: snapshot.columns,
-                    row: row,
-                    isHeader: false,
-                    sortType: snapshot.sortType,
-                  ),
-                ),
-              );
-            },
-          ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
+
+  double _wideColumnWidthFor(CardBrowserColumn column) =>
+      column.type == BrowserColumn.question ||
+          column.type == BrowserColumn.answer
+      ? _widePrimaryColumnWidth
+      : _wideColumnWidth;
 
   Widget _buildWideRow({
     required Widget leading,
@@ -491,12 +529,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     children: [
       leading,
       for (final column in columns)
-        Expanded(
-          flex:
-              column.type == BrowserColumn.question ||
-                  column.type == BrowserColumn.answer
-              ? 3
-              : 2,
+        SizedBox(
+          width: _wideColumnWidthFor(column),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             child: isHeader

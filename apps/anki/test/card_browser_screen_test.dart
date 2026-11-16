@@ -156,6 +156,87 @@ void main() {
     expect(controller.bulkActions.single.$2, [const BrowserRowId(41)]);
   });
 
+  testWidgets('bulk delete refreshes rows and clears successful selection', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample())
+      ..searchResult = CardBrowserSnapshot(
+        columns: _sample().columns,
+        rows: [
+          CardBrowserRow(
+            id: const BrowserRowId(42),
+            cells: {'noteTags': 'chemistry', 'question': 'What is an atom?'},
+          ),
+        ],
+      );
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-delete')));
+    await tester.pumpAndSettle();
+
+    expect(controller.bulkActions.single.$1, CardBrowserBulkAction.delete);
+    expect(controller.bulkActions.single.$2, [const BrowserRowId(41)]);
+    expect(controller.queries, ['']);
+    expect(find.byKey(const ValueKey('browser-row-41')), findsNothing);
+    expect(find.byKey(const ValueKey('browser-row-42')), findsOneWidget);
+    expect(controller.selectedRows, isEmpty);
+    expect(find.byKey(const ValueKey('browser-preview')), findsNothing);
+  });
+
+  testWidgets('controller replacement clears selection before new actions', (
+    tester,
+  ) async {
+    final previousController = _Controller(_sample());
+    const size = Size(1000, 800);
+    await tester.pumpWidget(_app(previousController, size));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('browser-search')),
+      'is:due',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    expect(previousController.selectedRows, [const BrowserRowId(41)]);
+
+    final currentController = _Controller(
+      CardBrowserSnapshot(
+        columns: _sample().columns,
+        rows: [
+          CardBrowserRow(
+            id: const BrowserRowId(99),
+            cells: {'noteTags': 'recent', 'question': 'Newest result'},
+          ),
+        ],
+      ),
+    );
+    await tester.pumpWidget(_app(currentController, size));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('browser-search')))
+          .controller
+          ?.text,
+      isEmpty,
+    );
+    expect(currentController.selectionUpdates, [<BrowserRowId>[]]);
+    expect(find.byKey(const ValueKey('browser-preview')), findsNothing);
+
+    await tester.longPress(find.byKey(const ValueKey('browser-row-99')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-delete')));
+    await tester.pumpAndSettle();
+    expect(currentController.bulkActions.single.$2, [const BrowserRowId(99)]);
+  });
+
   testWidgets('wide and narrow layouts fit the available viewport', (
     tester,
   ) async {
@@ -174,6 +255,47 @@ void main() {
       );
     }
     await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('wide tables keep many columns readable with horizontal scroll', (
+    tester,
+  ) async {
+    const size = Size(1200, 800);
+    final columns = BrowserColumn.values
+        .map((type) => CardBrowserColumn(type: type, label: type.key))
+        .toList();
+    await tester.pumpWidget(
+      _app(
+        _Controller(
+          CardBrowserSnapshot(
+            columns: columns,
+            rows: [
+              CardBrowserRow(
+                id: const BrowserRowId(1),
+                cells: {
+                  for (final type in BrowserColumn.values) type.key: type.key,
+                },
+              ),
+            ],
+          ),
+        ),
+        size,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final lastHeading = find.byKey(
+      const ValueKey('browser-heading-originalPosition'),
+    );
+    expect(tester.getTopLeft(lastHeading).dx, greaterThan(size.width));
+
+    final horizontalScroll = find.byKey(
+      const ValueKey('browser-wide-horizontal-scroll'),
+    );
+    await tester.drag(horizontalScroll, const Offset(-3000, 0));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(lastHeading).dx, lessThan(size.width));
+    expect(tester.takeException(), isNull);
   });
 }
 
@@ -223,6 +345,7 @@ final class _Controller implements CardBrowserController {
   final openedColumnOptions = <BrowserColumn>[];
   int manageColumnsCount = 0;
   final selectedRows = <BrowserRowId>[];
+  final selectionUpdates = <List<BrowserRowId>>[];
   final previewed = <BrowserRowId>[];
   final edited = <BrowserRowId>[];
   final bulkActions = <(CardBrowserBulkAction, List<BrowserRowId>)>[];
@@ -271,6 +394,7 @@ final class _Controller implements CardBrowserController {
 
   @override
   Future<void> updateSelection(List<BrowserRowId> rows) async {
+    selectionUpdates.add(List.of(rows));
     selectedRows
       ..clear()
       ..addAll(rows);

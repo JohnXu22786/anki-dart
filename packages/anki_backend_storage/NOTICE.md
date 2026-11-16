@@ -19,3 +19,8 @@ Deck configuration row reads, mutations, and SQL are adapted from
 `rslib/src/storage/deckconfig/mod.rs` and its SQL templates. Read-time bounds
 repair follows `rslib/src/deckconfig/mod.rs`; schema-14 upgrade SQL records the
 persisted table shape. All pinned source hashes are listed in `SOURCE.sha256`.
+
+Tag row reads and mutations follow `rslib/src/storage/tag/mod.rs` and its SQL
+templates; `Tag` values come from `rslib/src/tags/mod.rs`, and pending-sync
+USN clauses follow `rslib/src/storage/sync.rs`. Schema-17 tags table shape and
+pinned source digests are recorded in `SOURCE.sha256`.

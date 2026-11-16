@@ -22,3 +22,4 @@ export 'src/note_field_count.dart';
 export 'src/note_text.dart';
 export 'src/note_duplicate_check.dart';
 export 'src/note_cloze_check.dart';
+export 'src/tag.dart';

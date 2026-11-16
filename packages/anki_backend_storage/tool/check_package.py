@@ -30,6 +30,12 @@ EXPECTED = {
     "rslib/src/storage/deckconfig/update.sql": "e7b161c89e665b7fbde8ea8e0be36b317fa6c8e84d8c441edd55d4baea5f28f9",
     "rslib/src/storage/deckconfig/add_or_update.sql": "8d3fff11b7152e3acb29684895f68c947f04893035d871e46d43e9a0a035519a",
     "rslib/src/storage/upgrades/schema14_upgrade.sql": "072d867fd25bb35880d60f787798743385aa4fac783f59cb7ecb4f43ce5ebcb2",
+    "rslib/src/storage/tag/mod.rs": "183e4143c2c09dcf6396db2a460d211052d0ab9417408c8a74e6a3b856cf68a2",
+    "rslib/src/storage/tag/get.sql": "7460060429acf2ce35b889996084c1f453f5820950fd4fb29050ae7235f5a170",
+    "rslib/src/storage/tag/add.sql": "ddd4c467955ff4f18a39d00da02cce4b2b90ce4b9d70defa7dd187e00a2c60cb",
+    "rslib/src/storage/tag/update.sql": "d5ef93d76b251d571a8b915e0ae56a8b5af4de10634fe79dfa5f9d9f07aae258",
+    "rslib/src/storage/sync.rs": "30545c8a4afe89452a454c5b9d91e37a65d4c838fc92596ff41d30301180dc70",
+    "rslib/src/storage/upgrades/schema17_upgrade.sql": "1b19ef470568138987a6790d32d2a2e3b03cd5f6321a54ec3387239fd37da67a",
     "rslib/src/deckconfig/mod.rs": "1b85b99ae9188b5f8d2ccb6a23930bc636f86c1a775a564cd24d1017fcebcfac",
     "rslib/src/storage/deckconfig/mod.rs": "74d1d0e0be58d68a6ebe0ae95acfd221f74cbc5ec80e4f391147e2047f6c5459",
     "rslib/src/storage/deckconfig/get.sql": "63340173b2583598487f61ca7d8ab5e4d8a46ecbb95a6a2ada197c7891aad927",
@@ -48,7 +54,7 @@ def main() -> int:
     if source_file.is_file():
         for line in source_file.read_text(encoding="utf-8").splitlines():
             match = re.fullmatch(
-                r"([0-9a-f]{64})  (rslib/src/(?:decks/(?:name|service)\.rs|deckconfig/mod\.rs|storage/(?:note|deck|deckconfig)/[a-z_-]+\.(?:rs|sql)|storage/upgrades/schema(?:14|15)_upgrade\.sql))",
+                r"([0-9a-f]{64})  (rslib/src/(?:decks/(?:name|service)\.rs|deckconfig/mod\.rs|(?:storage/sync\.rs|storage/(?:note|deck|deckconfig|tag)/[a-z_-]+\.(?:rs|sql))|storage/upgrades/schema(?:14|15|17)_upgrade\.sql))",
                 line,
             )
             if match is None:

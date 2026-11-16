@@ -64,17 +64,14 @@ driver; the adapter does not silently mask driver-specific unsupported WAL or
 maintenance behavior.
 
 Before schema inspection, `CollectionSqliteOptions.configureConnection` can
-register host-owned functions and collations. Anki Core's SQLite configuration
-uses `field_at_index`, `regexp`, `regexp_fields`, `regexp_tags`, `process_text`,
-`fnvhash`, several `extract_*` functions, and the Unicode-aware `unicase`
-collation. This package implements `field_at_index`, `process_text`, `fnvhash`,
-`extract_original_position`, `extract_custom_data`, `extract_fsrs_variable`,
-`regexp`, `regexp_fields`, and `regexp_tags`; the Core lock resolves Rust regex
-1.11.2. It does not implement
-the remaining functions or collation. A
-host must register the applicable implementations before opening collections
-that depend on them; the default schema-11-to-18 migration path creates
-`unicase` indexes and therefore requires that registration.
+register additional host-owned functions and collations. Anki Core's current
+SQLite configuration includes `field_at_index`, `regexp`, `regexp_fields`,
+`regexp_tags`, `process_text`, `fnvhash`, the CardData and FSRS extractors, and
+the Unicode-aware `unicase` collation. This package installs all of those on
+every opened connection, including both FSRS retrievability functions and
+`unicase` before schema inspection. The regex adapter follows locked Rust regex
+1.11.2 behavior. A host can use the callback for extra app-specific SQL
+functions.
 
 The adapter applies the source connection settings: zero busy timeout,
 exclusive locking, 4096-byte page size, a 40 MiB SQLite page cache, the source
@@ -85,8 +82,9 @@ uses through its cached-prepare API. Schema probes, integrity checks, rollback,
 and SQL batches use direct query/execute APIs in the source too, so the adapter
 does not retain those statements. Set `androidTempStore` on Android to use
 memory for temporary tables. The adapter implements Core's `field_at_index`,
-`process_text`, `fnvhash`, `extract_original_position`, `extract_custom_data`, `extract_fsrs_variable`, `regexp`, `regexp_fields`, and
-`regexp_tags` scalar functions; other Anki scalar functions and collations, note mutations, undo/redo, media indexing, backup/restore,
+`process_text`, `fnvhash`, all CardData/FSRS extraction scalar functions,
+`regexp`, `regexp_fields`, and `regexp_tags`, and the `unicase` collation.
+Collection note mutations, undo/redo, media indexing, backup/restore,
 synchronization, and encryption remain outside this package's current scope.
 
 `sqlite3` publishes native bindings for Android, iOS, Windows, macOS, and

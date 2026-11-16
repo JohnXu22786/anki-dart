@@ -20,6 +20,7 @@ BigInt? losslessJsonInteger(Object? value) {
 /// Converts a parsed JSON number to `f32` using its original numeric lexeme.
 double? losslessJsonFloat32(Object? value) {
   if (value is _RawNumber) return value.asFloat32();
+  if (value is BigInt) return _roundIntegerToFloat32(value);
   if (value is num) {
     final data = ByteData(4)..setFloat32(0, value.toDouble());
     return data.getFloat32(0);

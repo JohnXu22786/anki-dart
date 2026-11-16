@@ -30,8 +30,10 @@ available under Apache-2.0 or MIT; the generated table retains those notices
 in its SPDX header. Unicode property aliases are generated from that crate's
 `src/unicode_tables/property_names.rs` and `property_values.rs` tables; their
 source SHA-256 digests are recorded in `SOURCE.sha256` and the generated table
-has the same license notice. Other Core SQLite functions and collations remain outside
-this adapter until their own source-derived units are completed.
+has the same license notice. The `unicase` collation reuses the Unicode 12.1.0
+case-fold data from `anki_backend_models`, generated from the pinned `unicase`
+2.6.0 dependency. This adapter now covers the SQLite functions and collation
+registered by pinned Core's collection opener.
 
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently

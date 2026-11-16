@@ -116,6 +116,7 @@ void main() {
       expected[match!.group(2)!] = match.group(1)!;
     }
     expect(expected.keys, containsAll(collectionSchemaSqlSourcePaths));
+    expect(expected.keys, containsAll(collectionSchemaCallbackSourcePaths));
 
     final sqlByPath = collectionSchemaSqlByPath;
     expect(sqlByPath['rslib/src/storage/schema11.sql'], collectionSchema11Sql);

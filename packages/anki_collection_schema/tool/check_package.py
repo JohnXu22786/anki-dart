@@ -20,6 +20,7 @@ SOURCE_HASHES = {
     "rslib/src/storage/upgrades/mod.rs": "b92e128df1944eb589654fca225b604fb3cab5e8157e1a80cd9e3f3063c45aa7",
     "rslib/src/storage/sqlite.rs": "877e18ef2ddcc497a91fca0c2a84d2f22658f09582d8c7f2ba1f03ca2d4ba73c",
     "rslib/src/storage/deckconfig/mod.rs": "74d1d0e0be58d68a6ebe0ae95acfd221f74cbc5ec80e4f391147e2047f6c5459",
+    "rslib/src/deckconfig/schema11.rs": "4d62c791120c06813a206837475fb877a57107e918f07594c4d59a391f5534c9",
     "rslib/src/storage/deck/mod.rs": "f55e715844e364b530b292d3a7e7dfddcad4abe9a81b778f788e1224932edc0d",
     "rslib/src/storage/notetype/mod.rs": "28aa0d31a150f00b04d38e301d472e0982dc40a572db751d9f1551d6ee5c16e0",
     "rslib/src/storage/config/mod.rs": "c69e1b376b9b6a5bbc1fc8fd8b4634806897524ceb9b34727dd2adec80a5bbeb",
@@ -36,6 +37,8 @@ SOURCE_HASHES = {
     "rslib/src/storage/config/add.sql": "3f7fb181b2e08b1e254e6b07df5438e4dc6a1b8d7a0d8dee4ebb2f134f25a81d",
     "rslib/src/config/mod.rs": "4d288b43ebfb365e083f2fcf352e6c6a87b973c0e8fea8aedcef872db8bd03eb",
     "rslib/src/template.rs": "59e5d111308ffd61a818704ffda53922e3600ed435e4b220ce32adbecdf460e3",
+    "rslib/src/storage/card/mod.rs": "423e00d89092a4f1ab8e03923bfa8db455748043276c7bd647e2704bfcf7da95",
+    "rslib/src/storage/card/fix_low_ease.sql": "94e899ecbfe47f771c3b2a3bcb040a3f59511d056eab3d986b8a8079dce99755",
 }
 
 

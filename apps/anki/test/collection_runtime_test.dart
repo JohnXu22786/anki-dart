@@ -47,11 +47,14 @@ void main() {
     var failCloseFlush = false;
     var retryFlushCount = 0;
     final retryError = StateError('close flush failed');
-    final retryDatabase = sqlite3.openInMemory();
+    var retryOpenCount = 0;
     final retryRuntime = CollectionRuntime(
       locationForProfile: (_) async => 'retry.anki2',
       createDriver: () async => CollectionSqliteDriver(
-        openDatabase: (_) => retryDatabase,
+        openDatabase: (_) {
+          retryOpenCount++;
+          return sqlite3.openInMemory();
+        },
         flush: () {
           retryFlushCount++;
           if (failCloseFlush) throw retryError;
@@ -63,10 +66,13 @@ void main() {
     await expectLater(retryRuntime.close(), throwsA(same(retryError)));
     expect(retryRuntime.storage, same(retryStorage));
     failCloseFlush = false;
+    final reopenedStorage = await retryRuntime.open(firstProfile);
+    expect(reopenedStorage, isNot(same(retryStorage)));
+    expect(retryOpenCount, 2);
+    expect(retryRuntime.storage, same(reopenedStorage));
     await retryRuntime.close();
     expect(retryRuntime.storage, isNull);
-    expect(retryFlushCount, 3);
-    expect(() => retryDatabase.select('SELECT 1'), throwsA(anything));
+    expect(retryFlushCount, 5);
 
     final allowOpen = Completer<void>();
     final openingDatabase = sqlite3.openInMemory();

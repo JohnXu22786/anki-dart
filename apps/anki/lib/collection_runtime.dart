@@ -31,6 +31,7 @@ final class CollectionRuntime {
   ProfileId? _selectedProfile;
   ProfileId? _openProfile;
   CollectionSqliteStorage? _storage;
+  bool _closeNeedsRetry = false;
   Future<void> _operationQueue = Future<void>.value();
 
   /// The open SQLite adapter, for collection repositories and services.
@@ -44,7 +45,11 @@ final class CollectionRuntime {
         if (_selectedProfile != null && _selectedProfile != profileId) {
           throw StateError('Collection profile is not the active profile.');
         }
-        if (_openProfile == profileId && _storage != null) return _storage!;
+        if (_openProfile == profileId &&
+            _storage != null &&
+            !_closeNeedsRetry) {
+          return _storage!;
+        }
         await _closeActive();
         final location = await _locationForProfile(profileId);
         final driver = await _createDriver();
@@ -68,7 +73,8 @@ final class CollectionRuntime {
     ProfileId targetProfileId,
     Future<void> Function() persistSelection,
   ) => _serializeOperation(() async {
-    if (_openProfile != null && _openProfile != targetProfileId) {
+    if (_openProfile != null &&
+        (_openProfile != targetProfileId || _closeNeedsRetry)) {
       await _closeActive();
     }
     await persistSelection();
@@ -87,9 +93,15 @@ final class CollectionRuntime {
   Future<void> _closeActive() async {
     final storage = _storage;
     if (storage == null) return;
-    await storage.close();
+    try {
+      await storage.close();
+    } catch (_) {
+      _closeNeedsRetry = true;
+      rethrow;
+    }
     _storage = null;
     _openProfile = null;
+    _closeNeedsRetry = false;
   }
 }
 

@@ -38,9 +38,10 @@ IndexedDB-backed virtual file system. The stable location is derived from the
 profile ID, not its editable display name. Closing or switching profiles
 flushes and closes the prior connection without deleting its database. The
 Web IndexedDB driver is experimental and does not guarantee crash durability.
-This runtime establishes only the storage and connection boundary; collection
-schema open/create callbacks and a deck repository are owned by the following
-unit, so this app is not yet ready for end-to-end collection use.
+This runtime establishes the file and connection boundary but does not yet
+call the collection package's open/create callbacks or connect a real Deck
+Picker repository. Those app integration steps remain for the following unit,
+so this app is not yet ready for end-to-end collection use.
 
 The Web SQLite binary is the `sqlite3.wasm` release artifact matching the
 locked `sqlite3` 3.9.1 package. Its SHA-256 and the bundled MIT license copy

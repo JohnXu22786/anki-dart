@@ -594,6 +594,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Collapse {name}'**
   String collapseDeck(String name);
+
+  /// No description provided for @cardBrowserTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get cardBrowserTitle;
+
+  /// No description provided for @browserSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search cards'**
+  String get browserSearchHint;
+
+  /// No description provided for @browserNoCards.
+  ///
+  /// In en, this message translates to:
+  /// **'No cards found'**
+  String get browserNoCards;
+
+  /// No description provided for @browserLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load cards'**
+  String get browserLoadFailed;
+
+  /// No description provided for @browserActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The browser action could not be completed'**
+  String get browserActionFailed;
+
+  /// No description provided for @browserPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview selected'**
+  String get browserPreview;
+
+  /// No description provided for @browserEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit selected'**
+  String get browserEdit;
+
+  /// No description provided for @browserBulkActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions for selected cards'**
+  String get browserBulkActions;
+
+  /// No description provided for @browserSuspend.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspend'**
+  String get browserSuspend;
+
+  /// No description provided for @browserBury.
+  ///
+  /// In en, this message translates to:
+  /// **'Bury'**
+  String get browserBury;
+
+  /// No description provided for @browserDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get browserDelete;
+
+  /// No description provided for @browserSelectRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Select {name}'**
+  String browserSelectRow(String name);
+
+  /// No description provided for @browserLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading cards…'**
+  String get browserLoading;
+
+  /// No description provided for @browserSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort cards'**
+  String get browserSort;
+
+  /// No description provided for @browserSortNoOrdering.
+  ///
+  /// In en, this message translates to:
+  /// **'No sorting'**
+  String get browserSortNoOrdering;
 }
 
 class _AppLocalizationsDelegate

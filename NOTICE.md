@@ -5757,3 +5757,16 @@ Copyright Ankitects Pty Ltd and contributors under GNU AGPL version 3 or later;
 their SHA-256 hashes are recorded in `packages/anki_search_sql/SOURCE.sha256`.
 The Dart package and tests are Copyright © 2026 John Tsui under
 AGPL-3.0-or-later. Root `COPYING` remains byte-identical.
+
+## Cross-platform Card Browser Flutter surface
+
+`apps/anki/lib/card_browser_screen.dart` and its widget tests adapt the shared
+Card Browser interaction surface from AnkiDroid 2.25.3 at pinned commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`: `CardBrowserFragment.kt`,
+`CardBrowserViewModel.kt`, `BrowserMultiColumnAdapter.kt`,
+`fragment_card_browser.xml`, and `item_card_browser.xml`. The source files declare
+`GPL-3.0-or-later`. The Flutter implementation is Copyright © 2026 John Tsui
+and licensed under `GPL-3.0-or-later`. This adaptation copies no Android
+resources, assets, or strings; collection/search execution and navigation
+remain in an injected host controller. Root `COPYING` is unchanged. See
+[ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) for behavior and source locations.

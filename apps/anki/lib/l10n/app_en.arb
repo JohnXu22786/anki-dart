@@ -144,5 +144,27 @@
         "type": "String"
       }
     }
-  }
+  },
+  "cardBrowserTitle": "Browse",
+  "browserSearchHint": "Search cards",
+  "browserNoCards": "No cards found",
+  "browserLoadFailed": "Could not load cards",
+  "browserActionFailed": "The browser action could not be completed",
+  "browserPreview": "Preview selected",
+  "browserEdit": "Edit selected",
+  "browserBulkActions": "Actions for selected cards",
+  "browserSuspend": "Suspend",
+  "browserBury": "Bury",
+  "browserDelete": "Delete",
+  "browserSelectRow": "Select {name}",
+  "@browserSelectRow": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "browserLoading": "Loading cards…",
+  "browserSort": "Sort cards",
+  "browserSortNoOrdering": "No sorting"
 }

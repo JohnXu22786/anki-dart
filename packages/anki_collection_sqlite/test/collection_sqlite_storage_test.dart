@@ -304,6 +304,27 @@ void main() {
           .toSet(),
       {'Parent', 'parent::Child', 'PARENT::Child::Grandchild'},
     );
+
+    database.decks.db.execute(
+      "UPDATE decks SET name = 'Parent  ' WHERE id = ?",
+      [BigInt.parse(parent.id.toString())],
+    );
+    database.decks.db.execute(
+      "UPDATE decks SET name = 'Parent  ' || char(31) || 'Child' WHERE id = ?",
+      [BigInt.parse(childId.toString())],
+    );
+    final storedParent = database.decks.getDeck(parent.id)!;
+    expect(
+      database.decks.childDecks(storedParent).single.name,
+      'Parent  ::Child',
+    );
+    expect(
+      database.decks
+          .deckWithChildren(parent.id)
+          .map((deck) => deck.name)
+          .toSet(),
+      {'Parent  ', 'Parent  ::Child'},
+    );
     await database.close();
   });
 

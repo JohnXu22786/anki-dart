@@ -86,7 +86,7 @@ class DeckConfigStorage {
 
   /// Inserts or replaces [config] with its existing ID, as used by sync/undo.
   void addOrUpdateDeckConfigWithExistingId(DeckConfig config) {
-    if (config.id == Int64.ZERO) throw StateError('deck config with id 0');
+    if (config.id == Int64.ZERO) throw StateError('deck with id 0');
     db.execute(_addOrUpdateDeckConfigSql, [
       _sqlInt64(config.id),
       config.name,

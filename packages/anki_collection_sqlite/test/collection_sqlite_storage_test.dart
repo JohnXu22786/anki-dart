@@ -358,6 +358,7 @@ void main() {
     expect(loaded.inner.newPerDay, 45);
     expect(loaded.inner.initialEase, closeTo(2.4, 0.000001));
     expect(database.deckConfigs.getDeckConfigIdByName('Custom'), id);
+    expect(database.deckConfigs.getDeckConfigIdByName('custom'), id);
     expect(database.deckConfigs.getDeckConfigMap().keys, contains(id));
     await database.close();
   });

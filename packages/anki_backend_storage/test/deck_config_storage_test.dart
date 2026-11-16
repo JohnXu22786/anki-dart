@@ -25,7 +25,7 @@ void main() {
     sqlite.execute('''
 CREATE TABLE deck_config (
   id INTEGER PRIMARY KEY NOT NULL,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL COLLATE NOCASE,
   mtime_secs INTEGER NOT NULL,
   usn INTEGER NOT NULL,
   config BLOB NOT NULL
@@ -61,7 +61,7 @@ CREATE TABLE deck_config (
     expect(decoded.inner.fsrsParams6[0], closeTo(0.2, 0.000001));
     expect(decoded.inner.fsrsParams6[1], 0.5);
     expect(storage.getDeckConfigIdByName('Custom'), id);
-    expect(storage.getDeckConfigIdByName('custom'), isNull);
+    expect(storage.getDeckConfigIdByName('custom'), id);
     expect(storage.getDeckConfig(Int64(8)), isNull);
     final configMap = storage.getDeckConfigMap();
     expect(configMap.keys, [id]);

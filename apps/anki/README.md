@@ -22,26 +22,33 @@ IDs, and runs ordered profile-switch safety checks. The default app services
 persist onboarding completion, ordered profile records, and active-profile
 selection through `shared_preferences` on Android, iOS, macOS, Linux, Windows,
 and Web. Corrupt state and storage failures are surfaced instead of being
-treated as a fresh install. Collection storage and backend startup remain
-outside this profile-runtime unit; the Deck Picker continues to use its
-injected repository boundary.
+treated as a fresh install. Startup opens or creates the active profile's
+collection, applies schema migrations and first-create defaults, and exposes a
+retry when opening fails. Profile switching flushes and closes the old
+collection before persisting the target, then opens the target collection.
+Corrupt or incompatible collection files are surfaced without deleting them.
+The Deck Picker still uses its injected repository boundary and remains
+unavailable until a real repository is connected.
 
 The profile flow follows AnkiDroid 2.25.3 at pinned commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. See the root
 [`ANKIDROID_UPSTREAM.md`](../../ANKIDROID_UPSTREAM.md) and
 [`NOTICE.md`](../../NOTICE.md) for source and license provenance.
 
-`AppServices.collections` owns one profile-scoped
+`AppServices.collections` owns one initialized, profile-scoped
 `CollectionSqliteStorage` connection. Native platforms use the app support
 directory and bundled SQLite; Web uses the `sqlite3.wasm` asset and an
 IndexedDB-backed virtual file system. The stable location is derived from the
 profile ID, not its editable display name. Closing or switching profiles
 flushes and closes the prior connection without deleting its database. The
 Web IndexedDB driver is experimental and does not guarantee crash durability.
-This runtime establishes the file and connection boundary but does not yet
-call the collection package's open/create callbacks or connect a real Deck
-Picker repository. Those app integration steps remain for the following unit,
-so this app is not yet ready for end-to-end collection use.
+Collection schema opening and first-create callbacks follow Anki Core's
+pinned `rslib/src/storage/sqlite.rs`; the app supplies localized default names
+and timezone/ID callbacks to the schema and SQLite packages. The source file
+hashes and exact AnkiDroid/Core references are in
+[`ANKIDROID_SOURCE.sha256`](ANKIDROID_SOURCE.sha256) and the root
+[`ANKIDROID_UPSTREAM.md`](../../ANKIDROID_UPSTREAM.md). A real Deck Picker
+repository, scheduler, and backend remain separate work.
 
 The Web SQLite binary is the `sqlite3.wasm` release artifact matching the
 locked `sqlite3` 3.9.1 package. Its SHA-256 and the bundled MIT license copy
@@ -64,6 +71,14 @@ To run the shell, use `flutter run -d <device>` with a device reported by
 `flutter devices`. For example, `flutter run -d chrome` runs the Flutter shell
 on web; it does not make the existing root Dart package's platform-dependent
 helpers web-compatible.
+
+To exercise the Web collection lifecycle in a real browser, build and serve the
+Web app, then run `node tool/web_lifecycle_smoke.cjs` from `apps/anki`. The
+script requires Node.js, Playwright, and Chromium; set
+`CHROMIUM_EXECUTABLE_PATH` when Chromium is not installed at Playwright’s
+default path, or `ANKI_WEB_BASE_URL` to use another local server URL. It covers
+first-run creation, profile switch (which flushes and closes the previous
+collection), and reopening the selected profile after reload.
 
 Build commands are `flutter build apk --debug`, `flutter build web`,
 `flutter build linux --debug`, `flutter build windows --debug`,

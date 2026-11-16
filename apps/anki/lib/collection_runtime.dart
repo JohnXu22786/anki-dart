@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+// The public callback names intentionally differ from their private fields.
+// ignore_for_file: prefer_initializing_formals
+
 import 'dart:convert';
 
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
@@ -25,10 +28,7 @@ final class CollectionRuntime {
     required Future<String> Function(ProfileId) locationForProfile,
     required Future<CollectionSqliteDriver> Function() createDriver,
     CollectionOptionsForProfile? optionsForProfile,
-  }) :
-       // ignore: prefer_initializing_formals
-       _locationForProfile = locationForProfile,
-       // ignore: prefer_initializing_formals
+  }) : _locationForProfile = locationForProfile,
        _createDriver = createDriver,
        _optionsForProfile = optionsForProfile ?? _defaultOptions;
 
@@ -38,38 +38,39 @@ final class CollectionRuntime {
   ProfileId? _selectedProfile;
   ProfileId? _openProfile;
   CollectionSqliteStorage? _storage;
+  bool _initialized = false;
   bool _closeNeedsRetry = false;
   Future<void> _operationQueue = Future<void>.value();
 
   /// The open SQLite adapter, for collection repositories and services.
   CollectionSqliteStorage? get storage => _storage;
 
+  /// Whether the active profile's schema and first-create callbacks completed.
+  bool get isInitialized => _initialized;
+
   /// Opens the collection belonging to [profileId], reusing the current
   /// connection when it is already open for that profile. Once a profile has
   /// been selected, other profiles must be selected through AppServices first.
   Future<CollectionSqliteStorage> open(ProfileId profileId) =>
-      _serializeOperation(() async {
-        if (_selectedProfile != null && _selectedProfile != profileId) {
-          throw StateError('Collection profile is not the active profile.');
-        }
-        if (_openProfile == profileId &&
-            _storage != null &&
-            !_closeNeedsRetry) {
-          return _storage!;
-        }
-        await _closeActive();
-        final location = await _locationForProfile(profileId);
-        final driver = await _createDriver();
-        final storage = await CollectionSqliteStorage.open(
-          driver: driver,
-          location: location,
-          options: _optionsForProfile(profileId),
-        );
-        _selectedProfile ??= profileId;
-        _openProfile = profileId;
-        _storage = storage;
-        return storage;
-      });
+      _serializeOperation(() => _open(profileId));
+
+  /// Opens the profile collection and creates or migrates its schema in one
+  /// transaction before startup treats the collection as ready.
+  Future<CollectionOpenResult> openOrCreate(
+    ProfileId profileId, {
+    required CollectionOpenCallbacks Function(CollectionSqliteStorage storage)
+    callbacks,
+  }) => _serializeOperation(() async {
+    _initialized = false;
+    final storage = await _open(profileId);
+    final result = await openOrCreateCollection(
+      storage,
+      callbacks(storage),
+      serverMode: false,
+    );
+    _initialized = true;
+    return result;
+  });
 
   /// Flushes and closes the active collection connection, preserving its file.
   Future<void> close() => _serializeOperation(_closeActive);
@@ -97,6 +98,27 @@ final class CollectionRuntime {
     return result;
   }
 
+  Future<CollectionSqliteStorage> _open(ProfileId profileId) async {
+    if (_selectedProfile != null && _selectedProfile != profileId) {
+      throw StateError('Collection profile is not the active profile.');
+    }
+    if (_openProfile == profileId && _storage != null && !_closeNeedsRetry) {
+      return _storage!;
+    }
+    await _closeActive();
+    final location = await _locationForProfile(profileId);
+    final driver = await _createDriver();
+    final storage = await CollectionSqliteStorage.open(
+      driver: driver,
+      location: location,
+      options: _optionsForProfile(profileId),
+    );
+    _selectedProfile ??= profileId;
+    _openProfile = profileId;
+    _storage = storage;
+    return storage;
+  }
+
   Future<void> _closeActive() async {
     final storage = _storage;
     if (storage == null) return;
@@ -108,6 +130,7 @@ final class CollectionRuntime {
     }
     _storage = null;
     _openProfile = null;
+    _initialized = false;
     _closeNeedsRetry = false;
   }
 }

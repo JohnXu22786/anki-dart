@@ -7,6 +7,7 @@ import 'package:anki_dart/profile_onboarding.dart';
 import 'package:flutter/material.dart';
 
 import 'app_config.dart';
+import 'app_collection_callbacks.dart';
 import 'app_services.dart';
 import 'deck_picker_screen.dart';
 import 'l10n/app_localizations.dart';
@@ -65,6 +66,16 @@ final class _StartupShellState extends State<StartupShell> {
         });
         return;
       }
+      try {
+        await _openActiveCollection(_snapshot!);
+      } on Object {
+        if (!mounted) return;
+        setState(() {
+          _error = AppLocalizations.of(context)!.collectionOpenFailed;
+          _loading = false;
+        });
+        return;
+      }
     }
     if (!mounted) return;
     setState(() {
@@ -91,9 +102,19 @@ final class _StartupShellState extends State<StartupShell> {
     if (!mounted) return;
     setState(() => _firstRun = false);
 
+    late final ProfileSnapshot snapshot;
     try {
-      final snapshot = await widget.services.profileManager
-          .initializeActiveProfile();
+      snapshot = await widget.services.profileManager.initializeActiveProfile();
+    } on Object {
+      if (!mounted) return;
+      setState(() {
+        _error = AppLocalizations.of(context)!.profileLoadFailed;
+        _loading = false;
+      });
+      return;
+    }
+    try {
+      await _openActiveCollection(snapshot);
       if (!mounted) return;
       setState(() {
         _snapshot = snapshot;
@@ -102,7 +123,7 @@ final class _StartupShellState extends State<StartupShell> {
     } on Object {
       if (!mounted) return;
       setState(() {
-        _error = AppLocalizations.of(context)!.profileLoadFailed;
+        _error = AppLocalizations.of(context)!.collectionOpenFailed;
         _loading = false;
       });
     }
@@ -114,6 +135,19 @@ final class _StartupShellState extends State<StartupShell> {
       throw StateError('Profile load returned no active profile.');
     }
     if (mounted) setState(() => _snapshot = snapshot);
+  }
+
+  Future<void> _openActiveCollection(ProfileSnapshot snapshot) async {
+    if (!widget.services.collectionRuntimeConfigured) return;
+    final active = snapshot.active;
+    if (active == null) {
+      throw StateError('Profile load returned no active profile.');
+    }
+    final strings = AppLocalizations.of(context)!;
+    await widget.services.collections.openOrCreate(
+      active.id,
+      callbacks: (storage) => appCollectionOpenCallbacks(storage, strings),
+    );
   }
 
   void _showProfileLoadError() {
@@ -335,15 +369,27 @@ final class _StartupShellState extends State<StartupShell> {
       }
       return;
     }
+    late final ProfileSnapshot snapshot;
     try {
-      final snapshot = await widget.services.profileManager.load();
+      snapshot = await widget.services.profileManager.load();
       if (snapshot.active == null) {
         throw StateError('Profile load returned no active profile.');
       }
-      if (mounted) setState(() => _snapshot = snapshot);
     } on Object {
       _showProfileLoadError();
+      return;
     }
+    try {
+      await _openActiveCollection(snapshot);
+    } on Object {
+      if (!mounted) return;
+      setState(() {
+        _error = AppLocalizations.of(context)!.collectionOpenFailed;
+        _loading = false;
+      });
+      return;
+    }
+    if (mounted) setState(() => _snapshot = snapshot);
   }
 
   Future<void> _editName({ProfileItem? profile}) async {

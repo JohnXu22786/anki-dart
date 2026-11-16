@@ -23,7 +23,8 @@ final class AppServices {
     CollectionRuntime? collections,
     DeckPickerRepository? deckPicker,
     ProfileId Function()? generateProfileId,
-  }) : collections = collections ?? _unconfiguredCollections,
+  }) : collectionRuntimeConfigured = collections != null,
+       collections = collections ?? _unconfiguredCollections,
        deckPicker = deckPicker ?? const UnavailableDeckPickerRepository(),
        profileManager = ProfileManager(
          profiles,
@@ -33,6 +34,7 @@ final class AppServices {
 
   final StartupService startup;
   final ProfileRepository profiles;
+  final bool collectionRuntimeConfigured;
   final CollectionRuntime collections;
   final DeckPickerRepository deckPicker;
   final ProfileManager profileManager;

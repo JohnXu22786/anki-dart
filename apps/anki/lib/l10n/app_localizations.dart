@@ -127,6 +127,132 @@ abstract class AppLocalizations {
   /// **'Storage setup failed'**
   String get storageSetupFailed;
 
+  /// No description provided for @collectionOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection could not be opened'**
+  String get collectionOpenFailed;
+
+  /// No description provided for @collectionDefaultDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get collectionDefaultDeck;
+
+  /// No description provided for @collectionBasic.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic'**
+  String get collectionBasic;
+
+  /// No description provided for @collectionBasicTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic (type answer)'**
+  String get collectionBasicTyping;
+
+  /// No description provided for @collectionBasicReversed.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic (and reversed card)'**
+  String get collectionBasicReversed;
+
+  /// No description provided for @collectionBasicOptionalReversed.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic (optional reversed card)'**
+  String get collectionBasicOptionalReversed;
+
+  /// No description provided for @collectionCloze.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloze'**
+  String get collectionCloze;
+
+  /// No description provided for @collectionFront.
+  ///
+  /// In en, this message translates to:
+  /// **'Front'**
+  String get collectionFront;
+
+  /// No description provided for @collectionBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get collectionBack;
+
+  /// No description provided for @collectionAddReverse.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Reverse'**
+  String get collectionAddReverse;
+
+  /// No description provided for @collectionText.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get collectionText;
+
+  /// No description provided for @collectionBackExtra.
+  ///
+  /// In en, this message translates to:
+  /// **'Back Extra'**
+  String get collectionBackExtra;
+
+  /// No description provided for @collectionComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get collectionComments;
+
+  /// No description provided for @collectionCardOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Card 1'**
+  String get collectionCardOne;
+
+  /// No description provided for @collectionCardTwo.
+  ///
+  /// In en, this message translates to:
+  /// **'Card 2'**
+  String get collectionCardTwo;
+
+  /// No description provided for @collectionImageOcclusion.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Occlusion'**
+  String get collectionImageOcclusion;
+
+  /// No description provided for @collectionOcclusions.
+  ///
+  /// In en, this message translates to:
+  /// **'Occlusions'**
+  String get collectionOcclusions;
+
+  /// No description provided for @collectionImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get collectionImage;
+
+  /// No description provided for @collectionHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Header'**
+  String get collectionHeader;
+
+  /// No description provided for @collectionToggleMasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Masks'**
+  String get collectionToggleMasks;
+
+  /// No description provided for @collectionImageOcclusionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading Image Occlusion'**
+  String get collectionImageOcclusionError;
+
   /// No description provided for @startupCheckFailed.
   ///
   /// In en, this message translates to:

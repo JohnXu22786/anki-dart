@@ -1,0 +1,7 @@
+# AnkiDroid 2.25.3, d9bf072f814a0c37d30a694192593b31ff2df875
+0e9b6dfb8f1421941ffd7204fbbf548e7532a0859e6ec143e567f66381538ad1  AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt
+34ec591dc74b05223754fc6b18f6bc0dd140e479c4752069a8d761f13acce7ef  AnkiDroid/src/main/java/com/ichi2/anki/AnkiActivity.kt
+
+# Anki Core, e64c6b1aee3e8d668fb8bbe084beada8e070d985
+877e18ef2ddcc497a91fca0c2a84d2f22658f09582d8c7f2ba1f03ca2d4ba73c  rslib/src/storage/sqlite.rs
+a2f5175e8dcff92c01bfc09ed30f0e085253b8de01be6769019e505f5704ae15  rslib/src/notetype/stock.rs

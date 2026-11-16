@@ -110,6 +110,17 @@ void main() {
         1,
       );
       expect(
+        await database.queryInt("SELECT regexp('needle', 'hay needle')"),
+        1,
+      );
+      expect(
+        await database.queryInt(
+          r"SELECT regexp_fields('^c$', 'a' || char(31) || 'b' || char(31) || 'c', 2)",
+        ),
+        1,
+      );
+      expect(await database.queryInt(r"SELECT regexp_tags('^b$', 'a  b')"), 1);
+      expect(
         await database.queryInt('SELECT fnvhash(1, 2)'),
         8581494755304202342,
       );
@@ -163,6 +174,10 @@ void main() {
         await reopened.queryInt(
           "SELECT extract_fsrs_variable('{\"s\":1.25}', 's') = 1.25",
         ),
+        1,
+      );
+      expect(
+        await reopened.queryInt("SELECT regexp('needle', 'hay needle')"),
         1,
       );
       expect(

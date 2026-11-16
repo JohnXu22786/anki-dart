@@ -1,8 +1,38 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_collection_sqlite/src/card_data_functions.dart';
 import 'package:anki_collection_sqlite/src/fsrs_variable_function.dart';
+import 'package:anki_collection_sqlite/src/regex_functions.dart';
 
 void main() {
+  if (!coreRegexHasMatch(r'(?i)needle', 'hay NEEDLE')) {
+    throw StateError('Web Core regex case-insensitive prefix failed');
+  }
+  if (!coreRegexHasMatch(r'(?is)^a.b$', 'a\nb')) {
+    throw StateError('Web Core regex dot-all prefix failed');
+  }
+  if (!coreRegexHasMatch(r'\d+\b', '١٢٣')) {
+    throw StateError('Web Core regex Unicode decimal class failed');
+  }
+  if (!coreRegexHasMatch(r'(?i)a+(?-i)b+', 'AAAbbb') ||
+      coreRegexHasMatch(r'(?i)a+(?-i)b+', 'AAABBB')) {
+    throw StateError('Web Core regex inline case flags failed');
+  }
+  if (!coreRegexHasMatch(r'\b{start}\p{Greek}+', ' αβ') ||
+      !coreRegexHasMatch(r'[\W]+', '☃')) {
+    throw StateError(
+      'Web Core regex Unicode boundary/class translation failed',
+    );
+  }
+  if (!coreRegexHasMatch(r'(?m)^foo$', 'x\nfoo\ny') ||
+      !coreRegexHasMatch(r'(?s)a.b', 'a\nb')) {
+    throw StateError('Web Core regex line/dot flag translation failed');
+  }
+  if (!coreRegexHasMatch(r'(?i)Σ', 'ς') ||
+      !coreRegexHasMatch(r'(?x)a b', 'ab') ||
+      !coreRegexHasMatch(r'\P{Greek}+', 'abc') ||
+      !coreRegexHasMatch(r'[\p{Greek}--[α]]+', 'β')) {
+    throw StateError('Web Core regex Unicode and set syntax failed');
+  }
   if (extractOriginalPosition('{"pos":4294967295}') != 4294967295) {
     throw StateError('Web card-data position lost unsigned 32-bit value');
   }

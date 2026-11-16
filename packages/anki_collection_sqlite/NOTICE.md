@@ -19,11 +19,15 @@ the separately licensed `anki_collection_schema` package.
 
 The collection connection registers Core's deterministic
 `field_at_index(flds, index)`, `process_text(text, flags)`, variadic
-`fnvhash(i64...)`, `extract_original_position`, `extract_custom_data`, and
-`extract_fsrs_variable` SQLite functions from `rslib/src/storage/sqlite.rs`.
+`fnvhash(i64...)`, card-data and FSRS extractors, and the `regexp`,
+`regexp_fields`, and `regexp_tags` SQLite functions from `rslib/src/storage/sqlite.rs`.
 `process_text` adapts `without_combining` and `strip_clozes` from
 `rslib/src/text.rs` and `rslib/src/cloze.rs`; `fnvhash` follows the pinned
-`fnv` 1.0.7 hasher. Other Core SQLite functions and collations remain outside
+`fnv` 1.0.7 hasher. Regex Unicode simple case-folding data is generated from
+`regex-syntax` 0.8.6's `src/unicode_tables/case_folding_simple.rs` (Unicode
+16.0.0; source SHA-256 is recorded in `SOURCE.sha256`). That crate's source is
+available under Apache-2.0 or MIT; the generated table retains those notices
+in its SPDX header. Other Core SQLite functions and collations remain outside
 this adapter until their own source-derived units are completed.
 
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed

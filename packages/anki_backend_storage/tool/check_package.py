@@ -8,6 +8,14 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED = {
+    "rslib/src/decks/name.rs": "0a4e33f5a92d2c479c4cbd59664b0de30a50a41453dbe131fc9c809f5afc5f4d",
+    "rslib/src/decks/service.rs": "87c0df5a0a7f1307a55f46daac235868a994e96e9a7ae34f7322bb6c3d11bed5",
+    "rslib/src/storage/deck/mod.rs": "f55e715844e364b530b292d3a7e7dfddcad4abe9a81b778f788e1224932edc0d",
+    "rslib/src/storage/upgrades/schema15_upgrade.sql": "6fc6137df51b6d279b69d4bc887954d137bbc2ca36cb16fc3a9ae195ca1b4a36",
+    "rslib/src/storage/deck/alloc_id.sql": "3883ebb3b5f2f41ad468840eb45482f6a3cd12f01d9037db4cbb274a69a16975",
+    "rslib/src/storage/deck/add_or_update_deck.sql": "99eb307f9fbdb2bd25ccf72f4fc652c687c3730fd60b84a4b18991e70527b2fa",
+    "rslib/src/storage/deck/get_deck.sql": "4fcc0d8fd80c456a7b39834fc9fa011913b2c6f73e96d4b1ee421936098f8f49",
+    "rslib/src/storage/deck/update_deck.sql": "26e03ab1a09d6103a96e3c53b3d7efa63ed5aad0ec62e0f00b92a95917b70a5b",
     "rslib/src/storage/note/mod.rs": "e875a63c641393c0a6904872bd55ebe164a4eceff8aa07686ca246fe6d54de23",
     "rslib/src/storage/note/add.sql": "ff00ce1fa18a610726b5af77103feaef9a5dc36c27f4b8b515643b96c21af2a4",
     "rslib/src/storage/note/update.sql": "7a4ff39a4232e4643d67721b0cf4965e59d6d8da6bd93294a6ae121b37215561",
@@ -22,7 +30,10 @@ def main() -> int:
     recorded = {}
     if source_file.is_file():
         for line in source_file.read_text(encoding="utf-8").splitlines():
-            match = re.fullmatch(r"([0-9a-f]{64})  (rslib/src/storage/note/[a-z_]+\.(?:rs|sql))", line)
+            match = re.fullmatch(
+                r"([0-9a-f]{64})  (rslib/src/(?:decks/(?:name|service)\.rs|storage/(?:note|deck)/[a-z_]+\.(?:rs|sql)|storage/upgrades/schema15_upgrade\.sql))",
+                line,
+            )
             if match is None:
                 errors.append(f"SOURCE.sha256: invalid entry {line!r}")
             else:
@@ -57,7 +68,7 @@ def main() -> int:
         print("Storage package validation failed:", file=sys.stderr)
         print("\n".join(f"- {error}" for error in errors), file=sys.stderr)
         return 1
-    print("Validated note storage source hashes, AGPL metadata, SPDX tags, and platform-neutral imports.")
+    print("Validated pinned Core note/deck sources, AGPL metadata, SPDX tags, and platform-neutral imports.")
     return 0
 
 

@@ -2,3 +2,4 @@
 library anki_backend_storage;
 
 export 'src/note_storage.dart';
+export 'src/deck_storage.dart';

@@ -27,6 +27,15 @@ void main() {
   if (added.id != db.lastInsertRowId) {
     throw StateError('generated row ID was not retained');
   }
+
+  final deckDb = _DeckDatabase();
+  final deckStorage = DeckStorage(deckDb, nowMillis: () => 1);
+  final deck = Deck.newNormal();
+  final storedDeck = deckStorage.addDeck(deck);
+  if (storedDeck.id != Int64.parseInt('9007199254740993') ||
+      deckDb.parameters.first != BigInt.parse('9007199254740993')) {
+    throw StateError('deck ID lost 64-bit precision on the web target');
+  }
 }
 
 Notetype _notetype() =>
@@ -50,6 +59,23 @@ class _Statement implements NoteStorageStatement {
   @override
   int execute(List<Object?> parameters) {
     db.parameters = parameters;
+    return 1;
+  }
+}
+
+final class _DeckDatabase implements DeckStorageDatabase {
+  List<Object?> parameters = [];
+
+  @override
+  List<Map<String, Object?>> select(String sql,
+          [List<Object?> parameters = const []]) =>
+      [
+        {'id': BigInt.parse('9007199254740993')},
+      ];
+
+  @override
+  int execute(String sql, [List<Object?> parameters = const []]) {
+    this.parameters = parameters;
     return 1;
   }
 }

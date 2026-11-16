@@ -28,6 +28,9 @@ String _humanDeckName(String value) => value.split('::').map((component) {
       return trimmed.isEmpty ? 'blank' : trimmed;
     }).join('::');
 
+/// Normalizes a human-readable deck name using Anki Core's component rules.
+String normalizeDeckName(String value) => _humanDeckName(value);
+
 bool _isRustDeckWhitespaceOrColon(int rune) =>
     rune == 0x3a ||
     (rune >= 0x9 && rune <= 0xd) ||
@@ -84,7 +87,7 @@ class Deck {
 
   factory Deck.fromProto(proto.Deck value) => Deck(
         id: value.id,
-        name: _humanDeckName(value.name),
+        name: normalizeDeckName(value.name),
         mtimeSecs: value.mtimeSecs,
         usn: value.usn,
         common: value.hasCommon() ? value.common : null,

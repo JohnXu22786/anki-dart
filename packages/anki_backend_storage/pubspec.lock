@@ -25,7 +25,7 @@ packages:
     source: path
     version: "0.1.0"
   anki_backend_protocol:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../anki_backend_protocol"
       relative: true

@@ -19,11 +19,18 @@ import 'collection_runtime_platform_stub.dart'
 /// move or replace its existing collection. Profile selection and connection
 /// lifecycle remain serialized through this runtime.
 final class CollectionRuntime {
+  // Spell out public API names separately from the private implementation
+  // fields, so call sites can see the accepted parameter names directly.
   CollectionRuntime({
-    required this._locationForProfile,
-    required this._createDriver,
+    required Future<String> Function(ProfileId) locationForProfile,
+    required Future<CollectionSqliteDriver> Function() createDriver,
     CollectionOptionsForProfile? optionsForProfile,
-  }) : _optionsForProfile = optionsForProfile ?? _defaultOptions;
+  }) :
+       // ignore: prefer_initializing_formals
+       _locationForProfile = locationForProfile,
+       // ignore: prefer_initializing_formals
+       _createDriver = createDriver,
+       _optionsForProfile = optionsForProfile ?? _defaultOptions;
 
   final Future<String> Function(ProfileId) _locationForProfile;
   final Future<CollectionSqliteDriver> Function() _createDriver;

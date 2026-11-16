@@ -31,6 +31,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  anki_backend_storage:
+    dependency: "direct main"
+    description:
+      path: "../anki_backend_storage"
+      relative: true
+    source: path
+    version: "0.1.0"
   anki_collection_schema:
     dependency: "direct main"
     description:

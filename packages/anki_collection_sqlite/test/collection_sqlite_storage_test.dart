@@ -3,8 +3,11 @@
 
 import 'dart:io';
 
+import 'package:anki_backend_models/anki_backend_models.dart';
+import 'package:anki_backend_protocol/anki/decks.pb.dart' as proto;
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
@@ -185,6 +188,60 @@ void main() {
         8581494755304202342,
       );
       await reopened.close();
+    },
+  );
+
+  test(
+    'deck storage persists rows through the collection connection',
+    () async {
+      final database = await CollectionSqliteStorage.open(
+        driver: _nativeDriver,
+        location: path,
+        options: _schemaOptions,
+      );
+      await openOrCreateCollection(
+        database,
+        _Callbacks(database),
+        serverMode: true,
+      );
+
+      final added = database.decks.addDeck(
+        Deck(
+          name: 'Parent :: Child',
+          mtimeSecs: Int64(123),
+          usn: 4,
+          common: proto.Deck_Common(studyCollapsed: true),
+          kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(7))),
+        ),
+      );
+
+      expect(added.id, isNot(Int64.ZERO));
+      expect(database.decks.getDeck(added.id)!.name, 'Parent::Child');
+      expect(database.decks.getDeckByName('parent\x1fchild')!.id, added.id);
+      expect(database.decks.getDeckId('parent\x1fchild'), added.id);
+      expect(
+        database.decks.getDeck(added.id)!.toProto().normal.configId,
+        Int64(7),
+      );
+      expect(
+        database.decks.getAllDeckNames(),
+        contains((added.id, 'Parent::Child')),
+      );
+      database.decks.removeDeck(added.id);
+      expect(database.decks.getDeck(added.id), isNull);
+
+      final largeId = Int64.parseInt('9007199254740993');
+      database.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: largeId,
+          name: 'Large ID',
+          mtimeSecs: Int64(456),
+          usn: 5,
+          kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(7))),
+        ),
+      );
+      expect(database.decks.getDeck(largeId)!.id, largeId);
+      await database.close();
     },
   );
 

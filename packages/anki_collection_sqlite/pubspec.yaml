@@ -10,6 +10,8 @@ environment:
 dependencies:
   anki_backend_models:
     path: ../anki_backend_models
+  anki_backend_storage:
+    path: ../anki_backend_storage
   anki_collection_schema:
     path: ../anki_collection_schema
   anki_search_sql:

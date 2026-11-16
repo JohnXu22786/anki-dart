@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
+import 'package:anki_backend_storage/anki_backend_storage.dart';
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:sqlite3/common.dart';
@@ -72,6 +73,9 @@ final class CollectionSqliteStorage
   final Map<String, CommonPreparedStatement> _statementCache = {};
   bool _connectionClosed = false;
   bool _closed = false;
+
+  /// Returns source-compatible Deck row operations on this collection.
+  DeckStorage get decks => DeckStorage(_DeckStorageDatabase(_database));
 
   /// Opens [location] through the chosen [driver] and applies collection
   /// connection pragmas before returning the database adapter.
@@ -444,6 +448,35 @@ final class CollectionSqliteStorage
       _statementCache[sql] = statement;
     }
     statement.execute();
+  }
+}
+
+final class _DeckStorageDatabase implements DeckStorageDatabase {
+  const _DeckStorageDatabase(this.database);
+
+  final CommonDatabase database;
+
+  @override
+  List<Map<String, Object?>> select(
+    String sql, [
+    List<Object?> parameters = const [],
+  ]) {
+    final rows = database.select(sql, parameters);
+    final names = rows.columnNames;
+    return rows
+        .map(
+          (row) => {
+            for (var index = 0; index < names.length; index++)
+              names[index]: row.columnAt(index),
+          },
+        )
+        .toList(growable: false);
+  }
+
+  @override
+  int execute(String sql, [List<Object?> parameters = const []]) {
+    database.execute(sql, parameters);
+    return database.updatedRows;
   }
 }
 

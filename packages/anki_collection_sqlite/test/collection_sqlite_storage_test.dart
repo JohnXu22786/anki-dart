@@ -104,6 +104,12 @@ void main() {
         'true',
       );
       expect(
+        await database.queryInt(
+          "SELECT extract_fsrs_variable('{\"s\":1.25}', 's') = 1.25",
+        ),
+        1,
+      );
+      expect(
         await database.queryInt('SELECT fnvhash(1, 2)'),
         8581494755304202342,
       );
@@ -152,6 +158,12 @@ void main() {
           "SELECT extract_custom_data('{\"cd\":\"{\\\"x\\\":true}\"}', 'x')",
         ),
         'true',
+      );
+      expect(
+        await reopened.queryInt(
+          "SELECT extract_fsrs_variable('{\"s\":1.25}', 's') = 1.25",
+        ),
+        1,
       );
       expect(
         await reopened.queryInt('SELECT fnvhash(1, 2)'),

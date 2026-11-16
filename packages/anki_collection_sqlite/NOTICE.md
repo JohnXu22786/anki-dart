@@ -18,8 +18,9 @@ against the repository's AnkiDroid 2.25.3 baseline at commit
 the separately licensed `anki_collection_schema` package.
 
 The collection connection registers Core's deterministic
-`field_at_index(flds, index)`, `process_text(text, flags)`, and variadic
-`fnvhash(i64...)` SQLite functions from `rslib/src/storage/sqlite.rs`.
+`field_at_index(flds, index)`, `process_text(text, flags)`, variadic
+`fnvhash(i64...)`, `extract_original_position`, `extract_custom_data`, and
+`extract_fsrs_variable` SQLite functions from `rslib/src/storage/sqlite.rs`.
 `process_text` adapts `without_combining` and `strip_clozes` from
 `rslib/src/text.rs` and `rslib/src/cloze.rs`; `fnvhash` follows the pinned
 `fnv` 1.0.7 hasher. Other Core SQLite functions and collations remain outside

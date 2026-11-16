@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import 'dart:convert';
+
 import 'package:anki_collection_sqlite/src/card_data_functions.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
@@ -12,6 +14,7 @@ void main() {
       expect(extractOriginalPosition('{"pos":4294967295}'), 4294967295);
       expect(extractOriginalPosition('{"pos":42,"cd":5}'), isNull);
       expect(extractOriginalPosition('{"pos":42,"s":1e999}'), isNull);
+      expect(extractOriginalPosition('{"pos":1,"pos":2}'), isNull);
       expect(extractOriginalPosition('[42]'), 42);
       expect(extractOriginalPosition('{"pos":-1}'), isNull);
       expect(extractOriginalPosition('{"pos":4294967296}'), isNull);
@@ -53,6 +56,14 @@ void main() {
       '{"":1,"𐀀":2}',
     );
     expect(extractCustomData('{"pos":1e999,"cd":"{\"x\":1}"}', 'x'), isNull);
+    final repeatedCustomKey = jsonEncode({'cd': '{"x":1,"x":2}'});
+    expect(extractCustomData(repeatedCustomKey, 'x'), '2');
+    final firstCustomData = jsonEncode('{"x":1}');
+    final secondCustomData = jsonEncode('{"x":2}');
+    expect(
+      extractCustomData('{"cd":$firstCustomData,"cd":$secondCustomData}', 'x'),
+      isNull,
+    );
     expect(extractCustomData(cardData, 'missing'), isNull);
     expect(extractCustomData('{bad json', 'r'), isNull);
     expect(extractCustomData('{"cd":""}', 'r'), isNull);

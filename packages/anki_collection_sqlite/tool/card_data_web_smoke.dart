@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_collection_sqlite/src/card_data_functions.dart';
+import 'package:anki_collection_sqlite/src/fsrs_variable_function.dart';
 
 void main() {
   if (extractOriginalPosition('{"pos":4294967295}') != 4294967295) {
@@ -11,6 +12,9 @@ void main() {
   if (extractOriginalPosition('{"pos":42,"s":1e999}') != null) {
     throw StateError('Web position ignored an invalid unrelated number');
   }
+  if (extractOriginalPosition('{"pos":1,"pos":2}') != null) {
+    throw StateError('Web position accepted a duplicate CardData field');
+  }
   if (extractCustomData('{"cd":"{\\"z\\":1,\\"a\\":2}"}', 'a') != '2') {
     throw StateError('Web card-data custom JSON lookup failed');
   }
@@ -20,5 +24,15 @@ void main() {
   }
   if (extractCustomData('{"pos":1e999,"cd":"{\\"x\\":1}"}', 'x') != null) {
     throw StateError('Web CardData accepted an out-of-range unrelated number');
+  }
+  if (extractFsrsVariable('{"s":0.9}', 's') != 0.8999999761581421) {
+    throw StateError('Web FSRS value did not retain Core f32 precision');
+  }
+  if (extractFsrsVariable('{"s":18014401730707455}', 's') !=
+      18014400656965632.0) {
+    throw StateError('Web FSRS integer did not round directly to Core f32');
+  }
+  if (extractFsrsVariable('{"s":1,"s":2}', 's') != null) {
+    throw StateError('Web FSRS accepted a duplicate CardData field');
   }
 }

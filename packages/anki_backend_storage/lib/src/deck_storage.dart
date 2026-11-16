@@ -41,10 +41,12 @@ class DeckStorage {
   /// Returns deck IDs and human-readable names ordered by SQLite name order.
   List<(Int64, String)> getAllDeckNames() => db
       .select('SELECT id, name FROM decks ORDER BY name')
-      .map((row) => (
-            _int64(row['id'], 'id'),
-            _string(row['name'], 'name').replaceAll('\x1f', '::'),
-          ))
+      .map(
+        (row) => (
+          _int64(row['id'], 'id'),
+          _string(row['name'], 'name').replaceAll('\x1f', '::'),
+        ),
+      )
       .toList(growable: false);
 
   /// Returns the ID for a native, `\x1f`-separated name, if present.
@@ -52,6 +54,52 @@ class DeckStorage {
     final rows = db.select('SELECT id FROM decks WHERE name = ?', [nativeName]);
     return rows.isEmpty ? null : _int64(rows.single['id'], 'id');
   }
+
+  /// Returns all descendants of [parent] in Core's name order.
+  List<Deck> childDecks(Deck parent) {
+    final (start, end) = _childNameRange(parent);
+    return db
+        .select('$_getDeckSql WHERE name >= ? AND name < ? ORDER BY name', [
+          start,
+          end,
+        ])
+        .map(_deckFromRow)
+        .toList(growable: false);
+  }
+
+  /// Returns [id] followed by its descendants, matching Core's query order.
+  ///
+  /// A missing deck is an error because Core first loads the parent row with
+  /// its not-found conversion before issuing the descendant query.
+  List<Deck> deckWithChildren(Int64 id) {
+    final deck = getDeck(id);
+    if (deck == null) throw StateError('deck not found: $id');
+    final (start, end) = _childNameRange(deck);
+    final descendants = db.select('$_getDeckSql WHERE name > ? AND name < ?',
+        [start, end]).map(_deckFromRow);
+    return [deck, ...descendants];
+  }
+
+  /// Returns [parent]'s ID and all descendant IDs in SQLite's natural order.
+  List<Int64> deckIdWithChildren(Deck parent) {
+    final (start, end) = _childNameRange(parent);
+    return db
+        .select(
+          'SELECT id FROM decks WHERE id = ? OR (name >= ? AND name < ?)',
+          [_sqlInt64(parent.id), start, end],
+        )
+        .map((row) => _int64(row['id'], 'id'))
+        .toList(growable: false);
+  }
+
+  /// Returns distinct card deck IDs that have no corresponding deck row.
+  List<Int64> missingDeckIds() => db
+      .select('''
+SELECT DISTINCT did
+FROM cards
+WHERE did NOT IN (SELECT id FROM decks)''')
+      .map((row) => _int64(row['did'], 'did'))
+      .toList(growable: false);
 
   /// Inserts a deck and returns a copy containing its allocated ID.
   ///
@@ -74,13 +122,10 @@ class DeckStorage {
   /// Updates a stored deck. A missing row is an error, matching Core.
   void updateDeck(Deck deck) {
     _requireNonzeroId(deck);
-    final changed = db.execute(
-      '''
+    final changed = db.execute('''
 UPDATE decks
 SET name = ?, mtime_secs = ?, usn = ?, common = ?, kind = ?
-WHERE id = ?''',
-      _deckParameters(deck)..add(_sqlInt64(deck.id)),
-    );
+WHERE id = ?''', _deckParameters(deck)..add(_sqlInt64(deck.id)));
     if (changed == 0) {
       throw StateError('update_deck() called with non-existent deck');
     }
@@ -104,9 +149,7 @@ VALUES (?, ?, ?, ?, ?, ?)''',
 
   List<Object?> _deckParameters(Deck deck) {
     final kind = switch (deck.kind) {
-      NormalDeckKind(:final value) => proto.Deck_KindContainer(
-          normal: value,
-        ),
+      NormalDeckKind(:final value) => proto.Deck_KindContainer(normal: value),
       FilteredDeckKind(:final value) => proto.Deck_KindContainer(
           filtered: value,
         ),
@@ -129,12 +172,15 @@ VALUES (?, ?, ?, ?, ?, ?)''',
     );
     final common = proto.Deck_Common.fromBuffer(_blob(row['common'], 'common'));
     final kind = switch (kindContainer.whichKind()) {
-      proto.Deck_KindContainer_Kind.normal =>
-        NormalDeckKind(kindContainer.normal),
-      proto.Deck_KindContainer_Kind.filtered =>
-        FilteredDeckKind(kindContainer.filtered),
-      proto.Deck_KindContainer_Kind.notSet =>
-        throw StateError('invalid deck kind: $id'),
+      proto.Deck_KindContainer_Kind.normal => NormalDeckKind(
+          kindContainer.normal,
+        ),
+      proto.Deck_KindContainer_Kind.filtered => FilteredDeckKind(
+          kindContainer.filtered,
+        ),
+      proto.Deck_KindContainer_Kind.notSet => throw StateError(
+          'invalid deck kind: $id',
+        ),
     };
     return Deck(
       id: id,
@@ -148,6 +194,11 @@ VALUES (?, ?, ?, ?, ?, ?)''',
 
   static String _nativeName(String humanName) =>
       normalizeDeckName(humanName).replaceAll('::', '\x1f');
+
+  static (String, String) _childNameRange(Deck parent) {
+    final nativeName = parent.name.replaceAll('::', '\x1f');
+    return ('$nativeName\x1f', '$nativeName\x20');
+  }
 
   static String _humanName(String nativeName) =>
       nativeName.replaceAll('\x1f', '::');

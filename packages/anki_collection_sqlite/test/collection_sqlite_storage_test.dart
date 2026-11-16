@@ -247,6 +247,66 @@ void main() {
     await database.close();
   });
 
+  test('deck hierarchy reads use the schema unicase name collation', () async {
+    final database = await CollectionSqliteStorage.open(
+      driver: _nativeDriver,
+      location: path,
+      options: _schemaOptions,
+    );
+    await openOrCreateCollection(
+      database,
+      _Callbacks(database),
+      serverMode: true,
+    );
+
+    final parent = database.decks.addDeck(
+      Deck(
+        name: 'Parent',
+        kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(1))),
+      ),
+    );
+    final childId = Int64.parseInt('9007199254740993');
+    database.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: childId,
+        name: 'parent::Child',
+        kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(1))),
+      ),
+    );
+    database.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: Int64.parseInt('9007199254740994'),
+        name: 'PARENT::Child::Grandchild',
+        kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(1))),
+      ),
+    );
+    database.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: Int64.parseInt('9007199254740995'),
+        name: 'Parentish::Outside',
+        kind: NormalDeckKind(proto.Deck_Normal(configId: Int64(1))),
+      ),
+    );
+
+    expect(database.decks.childDecks(parent).map((deck) => deck.name), [
+      'parent::Child',
+      'PARENT::Child::Grandchild',
+    ]);
+    expect(database.decks.deckIdWithChildren(parent).toSet(), {
+      parent.id,
+      childId,
+      Int64.parseInt('9007199254740994'),
+    });
+    expect(
+      database.decks
+          .deckWithChildren(parent.id)
+          .map((deck) => deck.name)
+          .toSet(),
+      {'Parent', 'parent::Child', 'PARENT::Child::Grandchild'},
+    );
+    await database.close();
+  });
+
   test('upgrades supported schema 14 fixture using the real database', () async {
     final database = await CollectionSqliteStorage.open(
       driver: _nativeDriver,

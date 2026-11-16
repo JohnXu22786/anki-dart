@@ -58,10 +58,7 @@ CREATE TABLE notes (
     expect(row['flds'], 'after');
     expect(row['sfld'], 'after');
     expect(row['csum'], replacement.checksum);
-    expect(
-      () => storage.updateNote(_note()),
-      throwsStateError,
-    );
+    expect(() => storage.updateNote(_note()), throwsStateError);
   });
 
   test('add assigns a generated 64-bit ID and joins fields and tags', () {
@@ -82,29 +79,38 @@ CREATE TABLE notes (
     expect(collidingNote.id, Int64(5000000001));
   });
 
-  test('add-if-unique ignores duplicate IDs and propagates trigger failures',
-      () {
-    final note = _note(id: 12);
-    expect(storage.addNoteIfUnique(note), isTrue);
-    expect(storage.addNoteIfUnique(_note(id: 12, field: 'duplicate')), isFalse);
-    expect(sqlite.select('SELECT guid FROM notes WHERE id = 12').single['guid'],
-        note.guid);
+  test(
+    'add-if-unique ignores duplicate IDs and propagates trigger failures',
+    () {
+      final note = _note(id: 12);
+      expect(storage.addNoteIfUnique(note), isTrue);
+      expect(
+        storage.addNoteIfUnique(_note(id: 12, field: 'duplicate')),
+        isFalse,
+      );
+      expect(
+        sqlite.select('SELECT guid FROM notes WHERE id = 12').single['guid'],
+        note.guid,
+      );
 
-    sqlite.execute('''CREATE TRIGGER fail_note_insert BEFORE INSERT ON notes
+      sqlite.execute('''CREATE TRIGGER fail_note_insert BEFORE INSERT ON notes
       WHEN NEW.id = 13 BEGIN SELECT RAISE(ABORT, 'rejected'); END''');
-    expect(
-      () => storage.addNoteIfUnique(_note(id: 13)),
-      throwsA(isA<SqliteException>()),
-    );
-  });
+      expect(
+        () => storage.addNoteIfUnique(_note(id: 13)),
+        throwsA(isA<SqliteException>()),
+      );
+    },
+  );
 
   test('add-or-update uses replace semantics while preserving the note ID', () {
     storage.addOrUpdateNote(_note(id: 31, field: 'old'));
     storage.addOrUpdateNote(_note(id: 31, field: 'new'));
 
     expect(sqlite.select('SELECT count(*) AS n FROM notes').single['n'], 1);
-    expect(sqlite.select('SELECT flds FROM notes WHERE id = 31').single['flds'],
-        'new');
+    expect(
+      sqlite.select('SELECT flds FROM notes WHERE id = 31').single['flds'],
+      'new',
+    );
   });
 
   test('remove of a missing ID succeeds and cached statements are reused', () {
@@ -166,13 +172,11 @@ class _SqliteAdapter implements NoteStorageDatabase {
   Int64 get lastInsertRowId => Int64(db.lastInsertRowId);
 
   @override
-  NoteStorageStatement prepareCached(String sql) => _statements.putIfAbsent(
-        sql,
-        () {
-          prepareCount++;
-          return _SqliteStatement(db, db.prepare(sql));
-        },
-      );
+  NoteStorageStatement prepareCached(String sql) =>
+      _statements.putIfAbsent(sql, () {
+        prepareCount++;
+        return _SqliteStatement(db, db.prepare(sql));
+      });
 }
 
 class _SqliteStatement implements NoteStorageStatement {

@@ -23,13 +23,13 @@ ordered upgrades, and default callbacks in one exclusive transaction. Existing
 schema 18 collections are a no-op. The open/create runner reuses the migration
 catalog without opening a nested transaction.
 
-The host supplies the database adapter and callbacks. In particular, metadata
-initialization supplies the source-compatible clock, version 1 creation date,
-local timezone offset, and schema 11 default-config serialization. Named
-migration callbacks and default deck/config/note-type creation remain host
-responsibilities. This package does not configure WAL, provide a concrete
-driver, implement collection CRUD, close/checkpoint a collection, or provide
-undo or a complete collection engine.
+The host supplies the database adapter and callbacks. The SQLite package
+provides source-compatible first-create callbacks for collection metadata, the
+default deck and deck config, and six stock note types. The host supplies the
+localized text, migration callbacks, clock/timezone, and random identifier
+sources. This package does not configure WAL, provide a concrete driver,
+implement collection CRUD, close/checkpoint a collection, or provide undo or a
+complete collection engine.
 
 To verify the source hashes against the pinned Anki Core checkout:
 

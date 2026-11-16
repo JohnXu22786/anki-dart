@@ -7,6 +7,8 @@ import 'dart:typed_data';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_storage/anki_backend_storage.dart';
+import 'package:anki_backend_protocol/anki/decks.pb.dart' as protoDeck;
+import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as protoNotetype;
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:sqlite3/common.dart';
@@ -327,6 +329,156 @@ final class CollectionSqliteStorage
   Future<void> executeBatch(String sql) async {
     _database.execute(sql);
     if (_database.autocommit) await _flush();
+  }
+
+  /// Writes the source schema-11 collection metadata for a newly-created file.
+  Future<void> initializeMetadata({
+    required bool serverMode,
+    required DateTime now,
+    required int Function(DateTime timestamp) localMinutesWest,
+  }) async {
+    final creation = _v1CreationDate(now, localMinutesWest(now));
+    final creationDate = DateTime.fromMillisecondsSinceEpoch(
+      creation * 1000,
+      isUtc: true,
+    ).toLocal();
+    final creationOffset = serverMode ? null : localMinutesWest(creationDate);
+    final config = <String, Object?>{
+      'activeDecks': [1],
+      'curDeck': 1,
+      'newSpread': 0,
+      'collapseTime': 1200,
+      'timeLim': 0,
+      'estTimes': true,
+      'dueCounts': true,
+      'curModel': null,
+      'nextPos': 1,
+      'sortType': 'noteFld',
+      'sortBackwards': false,
+      'addToCur': true,
+      'dayLearnFirst': false,
+      'schedVer': 2,
+      'creationOffset': creationOffset,
+      'sched2021': true,
+    };
+    _database.execute('UPDATE col SET crt = ?, scm = ?, ver = ?, conf = ?', [
+      creation,
+      now.millisecondsSinceEpoch,
+      collectionSchemaStartingVersion,
+      jsonEncode(config),
+    ]);
+    await _flushIfAutocommit();
+  }
+
+  /// Adds the pinned Core default deck configuration with its localized name.
+  Future<void> addInitialDeckConfig(String name) async {
+    final config = DeckConfig(
+      id: Int64.ONE,
+      name: name,
+      inner: DeckConfig.defaults().inner,
+    );
+    _deckConfigStorage.addOrUpdateDeckConfigWithExistingId(config);
+    await _flushIfAutocommit();
+  }
+
+  /// Adds the pinned Core default deck with its localized name.
+  Future<void> addInitialDeck(String name) async {
+    final deck = Deck(
+      id: Int64.ONE,
+      name: name,
+      common: protoDeck.Deck_Common(
+        studyCollapsed: true,
+        browserCollapsed: true,
+      ),
+      kind: NormalDeckKind(protoDeck.Deck_Normal(configId: Int64.ONE)),
+    );
+    _deckStorage.addOrUpdateDeckWithExistingId(deck);
+    await _flushIfAutocommit();
+  }
+
+  /// Persists Core's stock notetypes and sets the first as the current one.
+  Future<void> addInitialStockNoteTypes({
+    required StockNotetypeNames names,
+    required BigInt Function() randomU64,
+    required DateTime now,
+  }) async {
+    final notetypes = [
+      StockNotetypeFactory.basic(names: names, randomU64: randomU64),
+      StockNotetypeFactory.basicAndReversed(names: names, randomU64: randomU64),
+      StockNotetypeFactory.basicOptionalReversed(
+        names: names,
+        randomU64: randomU64,
+      ),
+      StockNotetypeFactory.basicTyping(names: names, randomU64: randomU64),
+      StockNotetypeFactory.cloze(names: names, randomU64: randomU64),
+      StockNotetypeFactory.imageOcclusion(names: names, randomU64: randomU64),
+    ];
+    var firstId = Int64.ZERO;
+    for (final notetype in notetypes) {
+      notetype.normalizeNames();
+      notetype.fixFieldNames();
+      notetype.fixTemplateNames();
+      notetype.ensureNamesUnique();
+      notetype.config.reqs.addAll(_stockTemplateRequirements(notetype));
+      final nowMillis = now.millisecondsSinceEpoch;
+      final id = _readInt64(
+        _database
+            .select(
+              'SELECT CASE WHEN ? IN (SELECT id FROM notetypes) THEN (SELECT max(id) + 1 FROM notetypes) ELSE ? END',
+              [nowMillis, nowMillis],
+            )
+            .single
+            .columnAt(0),
+      );
+      final config = notetype.config;
+      _database.execute(
+        'INSERT INTO notetypes (id, name, mtime_secs, usn, config) VALUES (?, ?, ?, ?, ?)',
+        [
+          _toSqlInt64(id),
+          notetype.name,
+          0,
+          0,
+          Uint8List.fromList(config.writeToBuffer()),
+        ],
+      );
+      for (var index = 0; index < notetype.fields.length; index++) {
+        final field = notetype.fields[index];
+        _database.execute(
+          'INSERT INTO fields (ntid, ord, name, config) VALUES (?, ?, ?, ?)',
+          [
+            _toSqlInt64(id),
+            index,
+            field.name,
+            Uint8List.fromList(field.config.writeToBuffer()),
+          ],
+        );
+      }
+      for (var index = 0; index < notetype.templates.length; index++) {
+        final template = notetype.templates[index];
+        _database.execute(
+          'INSERT INTO templates (ntid, ord, name, mtime_secs, usn, config) VALUES (?, ?, ?, ?, ?, ?)',
+          [
+            _toSqlInt64(id),
+            index,
+            template.name,
+            0,
+            0,
+            Uint8List.fromList(template.config.writeToBuffer()),
+          ],
+        );
+      }
+      if (firstId == Int64.ZERO) firstId = id;
+    }
+    _database.execute(
+      'INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) VALUES (?, ?, ?, ?)',
+      [
+        'curModel',
+        0,
+        now.millisecondsSinceEpoch ~/ 1000,
+        Uint8List.fromList(utf8.encode(firstId.toString())),
+      ],
+    );
+    await _flushIfAutocommit();
   }
 
   @override
@@ -802,4 +954,213 @@ final class _StoredCardData {
   final double? decay;
   final Int64? lastReviewTimeSecs;
   final String customData;
+}
+
+/// Localized values used while creating a new collection.
+abstract interface class CollectionInitialTextProvider {
+  String get defaultDeckName;
+
+  StockNotetypeNames get stockNotetypeNames;
+}
+
+/// Source-compatible initial collection callbacks for [openOrCreateCollection].
+///
+/// Migration transformations remain supplied by the host until their separate
+/// implementation unit is available. The callback uses the same storage
+/// connection and transaction as schema creation.
+final class CollectionSqliteInitializationCallbacks
+    implements CollectionOpenCallbacks {
+  const CollectionSqliteInitializationCallbacks({
+    required this.storage,
+    required this.text,
+    required this.migrations,
+    required this.localMinutesWest,
+    required this.randomU64,
+    this.clock = _now,
+  });
+
+  final CollectionSqliteStorage storage;
+  final CollectionInitialTextProvider text;
+  final CollectionSchemaMigrationCallbacks migrations;
+  final int Function(DateTime timestamp) localMinutesWest;
+  final BigInt Function() randomU64;
+  final DateTime Function() clock;
+
+  @override
+  Future<void> initializeCollectionMetadata({required bool serverMode}) =>
+      storage.initializeMetadata(
+        serverMode: serverMode,
+        now: clock(),
+        localMinutesWest: localMinutesWest,
+      );
+
+  @override
+  Future<void> addDefaultDeckConfig() =>
+      storage.addInitialDeckConfig(text.defaultDeckName);
+
+  @override
+  Future<void> addDefaultDeck() => storage.addInitialDeck(text.defaultDeckName);
+
+  @override
+  Future<void> addStockNoteTypes() => storage.addInitialStockNoteTypes(
+    names: text.stockNotetypeNames,
+    randomU64: randomU64,
+    now: clock(),
+  );
+
+  @override
+  Future<void> run(String name, {bool? serverMode}) =>
+      Future<void>.sync(() => migrations.run(name, serverMode: serverMode));
+}
+
+DateTime _now() => DateTime.now();
+
+int _v1CreationDate(DateTime now, int minutesWest) {
+  final localNowMillis =
+      now.toUtc().millisecondsSinceEpoch -
+      minutesWest * Duration.millisecondsPerMinute;
+  final localNow = DateTime.fromMillisecondsSinceEpoch(
+    localNowMillis,
+    isUtc: true,
+  );
+  final fourAmLocalMillis = DateTime.utc(
+    localNow.year,
+    localNow.month,
+    localNow.day,
+    4,
+  ).millisecondsSinceEpoch;
+  final fourAmUtcMillis =
+      fourAmLocalMillis + minutesWest * Duration.millisecondsPerMinute;
+  final creationMillis = fourAmUtcMillis > now.toUtc().millisecondsSinceEpoch
+      ? fourAmUtcMillis - Duration.millisecondsPerDay
+      : fourAmUtcMillis;
+  return creationMillis ~/ Duration.millisecondsPerSecond;
+}
+
+List<protoNotetype.Notetype_Config_CardRequirement> _stockTemplateRequirements(
+  Notetype notetype,
+) {
+  final fieldOrdinals = <String, int>{
+    for (var index = 0; index < notetype.fields.length; index++)
+      notetype.fields[index].name: index,
+  };
+  return [
+    for (var index = 0; index < notetype.templates.length; index++)
+      _stockTemplateRequirement(
+        index,
+        _parseStockTemplate(notetype.templates[index].config.qFormat),
+        fieldOrdinals,
+      ),
+  ];
+}
+
+protoNotetype.Notetype_Config_CardRequirement _stockTemplateRequirement(
+  int cardOrdinal,
+  List<_StockTemplateNode> nodes,
+  Map<String, int> fieldOrdinals,
+) {
+  final fields = fieldOrdinals.keys.toList(growable: false);
+  final any = <int>{};
+  for (final field in fields) {
+    if (_stockTemplateRenders(nodes, {field})) any.add(fieldOrdinals[field]!);
+  }
+  if (any.isNotEmpty) {
+    return protoNotetype.Notetype_Config_CardRequirement(
+      cardOrd: cardOrdinal,
+      kind: protoNotetype.Notetype_Config_CardRequirement_Kind.KIND_ANY,
+      fieldOrds: any.toList()..sort(),
+    );
+  }
+
+  final all = fieldOrdinals.values.toSet();
+  for (final field in fields) {
+    if (_stockTemplateRenders(
+      nodes,
+      fields.where((item) => item != field).toSet(),
+    )) {
+      all.remove(fieldOrdinals[field]);
+    }
+  }
+  if (all.isNotEmpty && _stockTemplateRenders(nodes, fields.toSet())) {
+    return protoNotetype.Notetype_Config_CardRequirement(
+      cardOrd: cardOrdinal,
+      kind: protoNotetype.Notetype_Config_CardRequirement_Kind.KIND_ALL,
+      fieldOrds: all.toList()..sort(),
+    );
+  }
+  return protoNotetype.Notetype_Config_CardRequirement(
+    cardOrd: cardOrdinal,
+    kind: protoNotetype.Notetype_Config_CardRequirement_Kind.KIND_NONE,
+  );
+}
+
+bool _stockTemplateRenders(List<_StockTemplateNode> nodes, Set<String> fields) {
+  for (final node in nodes) {
+    switch (node) {
+      case _StockTemplateField(:final name):
+        if (fields.contains(name)) return true;
+      case _StockTemplateSection(:final name, :final negated, :final children):
+        if ((negated || fields.contains(name)) &&
+            _stockTemplateRenders(children, fields)) {
+          return true;
+        }
+    }
+  }
+  return false;
+}
+
+List<_StockTemplateNode> _parseStockTemplate(String source) {
+  final roots = <_StockTemplateNode>[];
+  final stack = <List<_StockTemplateNode>>[roots];
+  final sections = <_StockTemplateSection>[];
+  for (final match in RegExp(
+    r'\{\{(.*?)\}\}',
+    dotAll: true,
+  ).allMatches(source)) {
+    final tag = match.group(1)!.trim();
+    if (tag.isEmpty) continue;
+    final marker = tag[0];
+    final body = tag.substring(1).trim();
+    if (marker == '!') continue;
+    if (marker == '# ' || marker == '^ ') continue;
+    if (marker == '#' || marker == '^') {
+      final name = _templateFieldName(body);
+      final section = _StockTemplateSection(name, marker == '^');
+      stack.last.add(section);
+      sections.add(section);
+      stack.add(section.children);
+    } else if (marker == '/') {
+      if (stack.length > 1) {
+        stack.removeLast();
+        sections.removeLast();
+      }
+    } else if (marker == '>') {
+      continue;
+    } else {
+      final name = _templateFieldName(tag);
+      stack.last.add(_StockTemplateField(name));
+    }
+  }
+  return roots;
+}
+
+String _templateFieldName(String value) {
+  final colon = value.lastIndexOf(':');
+  return (colon < 0 ? value : value.substring(colon + 1)).trim();
+}
+
+sealed class _StockTemplateNode {}
+
+final class _StockTemplateField extends _StockTemplateNode {
+  _StockTemplateField(this.name);
+
+  final String name;
+}
+
+final class _StockTemplateSection extends _StockTemplateNode {
+  _StockTemplateSection(this.name, this.negated);
+
+  final String name;
+  final bool negated;
+  final List<_StockTemplateNode> children = [];
 }

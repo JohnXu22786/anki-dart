@@ -4,9 +4,17 @@
 location to `CollectionOpenDatabase`. It opens through the provided driver,
 applies Anki Core's connection pragmas, forwards schema queries and SQL batches
 to SQLite, and closes the connection without deleting the collection. It also
-provides pinned stored card and note reads and card row mutations, using shared
-models from `anki_backend_models`. The schema/open runner and metadata/default
-callbacks remain in `anki_collection_schema`.
+provides pinned stored card and note reads, card row mutations, and
+source-compatible first-create callbacks using shared models from
+`anki_backend_models`.
+
+`CollectionSqliteInitializationCallbacks` supplies initial collection
+metadata, the localized default deck/config, and six stock note types. The
+host provides a typed `CollectionInitialTextProvider`, source-compatible local
+timezone calculation, random 64-bit identifiers, a clock, and its schema
+migration callback implementation. Pass this callback with the same storage
+connection to `openOrCreateCollection`; creation, migrations, and defaults
+then share its exclusive transaction.
 
 `CollectionSqliteSearchExecutor` implements the platform-neutral search-plan
 host on an existing `CommonDatabase` connection. It executes Core's unbound

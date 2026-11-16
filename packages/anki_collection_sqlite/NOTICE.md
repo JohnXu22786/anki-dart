@@ -21,6 +21,12 @@ The collection connection registers Core's deterministic
 `field_at_index(flds, index)`, `process_text(text, flags)`, variadic
 `fnvhash(i64...)`, card-data and FSRS extractors, and the `regexp`,
 `regexp_fields`, and `regexp_tags` SQLite functions from `rslib/src/storage/sqlite.rs`.
+The FSRS retrievability calculation also follows the pinned `fsrs` 5.2.0 crate
+from `Cargo.lock` (crates.io checksum
+`cab5f80c16d1d07e492a6828478ecb9f379f142ba6f19fa3b7955edd180ddc2e`). Its
+BSD-3-Clause license and Open Spaced Repetition copyright notice are retained
+in `LICENSES/fsrs-5.2.0-BSD-3-Clause.txt`; the source license SHA-256 is recorded
+in `SOURCE.sha256`.
 `process_text` adapts `without_combining` and `strip_clozes` from
 `rslib/src/text.rs` and `rslib/src/cloze.rs`; `fnvhash` follows the pinned
 `fnv` 1.0.7 hasher. Regex Unicode simple case-folding data is generated from

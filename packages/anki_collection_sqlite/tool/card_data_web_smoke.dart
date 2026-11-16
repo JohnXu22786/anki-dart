@@ -106,6 +106,29 @@ void main() {
   if (retrievability == null || (retrievability - 0.98847395).abs() > 1e-7) {
     throw StateError('Web FSRS retrievability differs from Core f32 output');
   }
+  final sequenceRetrievability = extractFsrsRetrievability(
+    '[null,10,5,null,null,1000,""]',
+    100,
+    10,
+    110,
+    0,
+    87400,
+  );
+  if (sequenceRetrievability == null ||
+      (sequenceRetrievability - 0.98847395).abs() > 1e-7) {
+    throw StateError('Web FSRS sequence CardData field mapping failed');
+  }
+  final sequenceRelative = extractFsrsRelativeRetrievability(
+    '[null,10,5,0.9,null,1000,""]',
+    100,
+    10,
+    110,
+    0,
+    87400,
+  );
+  if (sequenceRelative == null || (sequenceRelative + 0.1).abs() > 1e-6) {
+    throw StateError('Web relative FSRS sequence CardData mapping failed');
+  }
   if (extractFsrsRetrievability(
         '{"s":10,"d":5,"lrt":0}',
         100,

@@ -227,8 +227,37 @@ final class _FsrsCardData {
     if (raw is! String || raw.isEmpty) return null;
     try {
       final decoded = parseLosslessCardData(raw);
-      if (decoded is! Map<String, Object?> ||
-          (decoded.containsKey('cd') && decoded['cd'] is! String)) {
+      if (decoded is Map<String, Object?> &&
+          decoded.containsKey('cd') &&
+          decoded['cd'] is! String) {
+        return const _FsrsCardData(
+          stability: null,
+          difficulty: null,
+          desiredRetention: null,
+          decay: null,
+          lastReviewTime: null,
+        );
+      }
+      if (decoded is List<Object?>) {
+        if (decoded.length > 7 ||
+            (decoded.length > 6 && decoded[6] is! String)) {
+          return const _FsrsCardData(
+            stability: null,
+            difficulty: null,
+            desiredRetention: null,
+            decay: null,
+            lastReviewTime: null,
+          );
+        }
+        return _FsrsCardData(
+          stability: _cardFloat(_arrayField(decoded, 1)),
+          difficulty: _cardFloat(_arrayField(decoded, 2)),
+          desiredRetention: _cardFloat(_arrayField(decoded, 3)),
+          decay: _cardFloat(_arrayField(decoded, 4)),
+          lastReviewTime: _cardI64(_arrayField(decoded, 5)),
+        );
+      }
+      if (decoded is! Map<String, Object?>) {
         return const _FsrsCardData(
           stability: null,
           difficulty: null,
@@ -259,6 +288,9 @@ final class _FsrsCardData {
 double? _cardFloat(Object? value) {
   return losslessJsonFloat32(value);
 }
+
+Object? _arrayField(List<Object?> values, int index) =>
+    index < values.length ? values[index] : null;
 
 BigInt? _cardI64(Object? value) {
   final integer = losslessJsonInteger(value);

@@ -55,6 +55,36 @@ void main() {
     expect(value, closeTo(-0.10000027, 1e-6));
   });
 
+  test('CardData sequence form maps fields in Core struct order', () {
+    final database = sqlite3.openInMemory();
+    addTearDown(database.close);
+    registerFsrsRetrievabilityFunctions(database);
+
+    final absolute =
+        database.select(
+              'SELECT extract_fsrs_retrievability(?, 100, 10, 110, 0, 87400)',
+              ['[null,10,5,null,null,1000,""]'],
+            ).single[0]
+            as double;
+    expect(absolute, closeTo(0.9884739518, 1e-7));
+
+    final relative =
+        database.select(
+              'SELECT extract_fsrs_relative_retrievability(?, 100, 10, 110, 0, 87400)',
+              ['[null,10,5,0.9,null,1000,""]'],
+            ).single[0]
+            as double;
+    expect(relative, closeTo(-0.1, 1e-6));
+
+    expect(
+      database.select(
+        'SELECT extract_fsrs_retrievability(?, 100, 10, 110, 0, 87400)',
+        ['[null,10,5,0.9,null,1000,42]'],
+      ).single[0],
+      isNull,
+    );
+  });
+
   test('FSRS functions preserve null and malformed-data behavior', () {
     final database = sqlite3.openInMemory();
     addTearDown(database.close);

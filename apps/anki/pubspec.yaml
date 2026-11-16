@@ -10,17 +10,22 @@ dependencies:
   characters: ^1.4.0
   anki_dart:
     path: ../..
+  anki_collection_sqlite:
+    path: ../../packages/anki_collection_sqlite
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.3
+  path: ^1.9.1
+  path_provider: ^2.1.5
   shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: 6.0.0
+  sqlite3: ^3.9.1
 
 flutter:
   uses-material-design: true

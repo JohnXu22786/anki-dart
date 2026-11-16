@@ -509,6 +509,7 @@ final class CollectionSqliteStorage
     if (_closed) return;
     Object? closeError;
     StackTrace? closeStack;
+    var flushFailed = false;
 
     try {
       if (desiredVersion != null) {
@@ -563,10 +564,11 @@ final class CollectionSqliteStorage
     try {
       await _flush();
     } catch (error, stackTrace) {
+      flushFailed = true;
       closeError ??= error;
       closeStack ??= stackTrace;
     }
-    if (_connectionClosed) _closed = true;
+    if (_connectionClosed && !flushFailed) _closed = true;
     if (closeError != null) {
       Error.throwWithStackTrace(closeError, closeStack!);
     }

@@ -3,7 +3,8 @@
 
 import 'upstream_sql.g.dart';
 
-export 'upstream_sql.g.dart' show collectionSchema11Sql;
+export 'upstream_sql.g.dart'
+    show collectionSchema11Sql, collectionSchemaSchema17UpgradeSql;
 
 /// Earliest collection schema this pinned Anki Core version can open.
 const int collectionSchemaMinimumVersion = 11;
@@ -189,6 +190,21 @@ const List<String> collectionSchemaSqlSourcePaths = [
   'rslib/src/storage/upgrades/schema17_upgrade.sql',
   'rslib/src/storage/upgrades/schema18_downgrade.sql',
   'rslib/src/storage/upgrades/schema18_upgrade.sql',
+];
+
+/// Pinned Core sources used to implement the named migration callbacks.
+const List<String> collectionSchemaCallbackSourcePaths = [
+  'rslib/src/storage/upgrades/mod.rs',
+  'rslib/src/storage/deckconfig/mod.rs',
+  'rslib/src/deckconfig/schema11.rs',
+  'rslib/src/storage/tag/mod.rs',
+  'rslib/src/storage/config/mod.rs',
+  'rslib/src/storage/notetype/mod.rs',
+  'rslib/src/notetype/schema11.rs',
+  'rslib/src/storage/deck/mod.rs',
+  'rslib/src/decks/schema11.rs',
+  'rslib/src/storage/card/mod.rs',
+  'rslib/src/storage/card/fix_low_ease.sql',
 ];
 
 /// Upstream SQL files keyed by their source paths, for auditing and tooling.

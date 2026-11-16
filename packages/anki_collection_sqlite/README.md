@@ -9,12 +9,13 @@ source-compatible first-create callbacks using shared models from
 `anki_backend_models`.
 
 `CollectionSqliteInitializationCallbacks` supplies initial collection
-metadata, the localized default deck/config, and six stock note types. The
-host provides a typed `CollectionInitialTextProvider`, source-compatible local
-timezone calculation, random 64-bit identifiers, a clock, and its schema
-migration callback implementation. Pass this callback with the same storage
-connection to `openOrCreateCollection`; creation, migrations, and defaults
-then share its exclusive transaction.
+metadata, the localized default deck/config, and six stock note types.
+`CollectionSqliteMigrationCallbacks` implements the catalogued schema 11 to
+18 and 18 to 11 row/JSON/protobuf transformations on the same storage
+connection. The host provides a typed `CollectionInitialTextProvider`,
+source-compatible local timezone calculation, random 64-bit identifiers, and
+a clock. Pass both callback objects to `openOrCreateCollection`; creation,
+migrations, and defaults then share its exclusive transaction.
 
 `CollectionSqliteSearchExecutor` implements the platform-neutral search-plan
 host on an existing `CommonDatabase` connection. It executes Core's unbound

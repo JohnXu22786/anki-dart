@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_storage/anki_backend_storage.dart';
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as protoDeck;
+import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as protoConfig;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as protoNotetype;
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:fixnum/fixnum.dart';
@@ -20,6 +21,8 @@ import 'fsrs_variable_function.dart';
 import 'process_text.dart';
 import 'regex_functions.dart';
 import 'unicase_collation.dart';
+
+part 'legacy_collection_migrations.dart';
 
 const _preparedStatementCacheCapacity = 50;
 

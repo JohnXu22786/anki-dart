@@ -24,10 +24,12 @@ schema 18 collections are a no-op. The open/create runner reuses the migration
 catalog without opening a nested transaction.
 
 The host supplies the database adapter and callbacks. The SQLite package
-provides source-compatible first-create callbacks for collection metadata, the
-default deck and deck config, and six stock note types. The host supplies the
-localized text, migration callbacks, clock/timezone, and random identifier
-sources. This package does not configure WAL, provide a concrete driver,
+provides source-compatible collection metadata/default callbacks and a
+`CollectionSqliteMigrationCallbacks` implementation for all named
+schema-11-to-18 upgrades and schema-18-to-11 downgrades. The open callback also
+supplies the default deck, deck config, and six stock note types. The host
+supplies localized text, timezone, and random identifier sources. This package
+does not configure WAL, provide a concrete driver,
 implement collection CRUD, close/checkpoint a collection, or provide undo or a
 complete collection engine.
 

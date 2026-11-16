@@ -8,5 +8,6 @@ export 'app_router.dart';
 export 'app_services.dart';
 export 'deck_picker_screen.dart';
 export 'profile_manager.dart';
+export 'shared_profile_runtime.dart';
 export 'l10n/app_localizations.dart';
 export 'startup_shell.dart';

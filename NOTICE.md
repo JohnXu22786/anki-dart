@@ -5698,16 +5698,20 @@ The Dart code and tests are Copyright © 2026 John Tsui under
 ## Flutter profile onboarding and navigation
 
 `apps/anki/lib/startup_shell.dart`, `apps/anki/lib/profile_manager.dart`,
-`apps/anki/lib/l10n/app_en.arb`, and `apps/anki/test/app_test.dart` adapt shared
-profile onboarding and profile-list
+`apps/anki/lib/shared_profile_runtime.dart`, `apps/anki/lib/main.dart`,
+`apps/anki/lib/l10n/app_en.arb`, and the Flutter app tests adapt shared
+profile onboarding and persistent profile-list
 behavior from AnkiDroid 2.25.3 at
 `d9bf072f814a0c37d30a694192593b31ff2df875`. Source references are
 `ProfileManager.kt`, `ProfileName.kt`, `SwitchProfilesScreen.kt`,
 `AddProfileDialog.kt`, `SetupStorage.kt`, `BackendSetup.kt`, `StoragePolicy.kt`,
 and `StartupGuards.kt`; the referenced files declare `GPL-3.0-or-later`. No
-upstream assets or translated resource strings are copied. Host storage,
-backend, and profile repository adapters remain injected and are not included.
-The app code and tests are Copyright © 2026 John Tsui under
+upstream assets or translated resource strings are copied. The shared Dart
+runtime persists onboarding completion and profile records through the
+`shared_preferences` Flutter plugin; its source and platform implementation
+packages are Copyright © 2013 The Flutter Authors and distributed under the
+BSD 3-Clause License. Collection storage and backend startup remain separate
+injected boundaries. The app code and tests are Copyright © 2026 John Tsui under
 `GPL-3.0-or-later`; root `COPYING` remains unchanged. See
 [`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) for the behavior mapping.
 

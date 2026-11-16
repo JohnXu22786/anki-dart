@@ -43,12 +43,15 @@ target because locale-sensitive helpers use `dart:io` platform information.
 
 ## Flutter application foundation
 
-[`apps/anki`](apps/anki/README.md) contains a neutral Flutter startup shell for
-Android, iOS, web, Windows, macOS, and Linux. It depends on this root pure Dart
-package without changing its public API. The Flutter shell is buildable on web,
-but this does not make the existing root package helpers web-compatible or
-implement Anki product behavior. See the app README for pinned SDK versions,
-local commands, platform prerequisites, and CI build coverage.
+[`apps/anki`](apps/anki/README.md) contains a Flutter startup shell and a shared
+profile runtime for Android, iOS, web, Windows, macOS, and Linux. Onboarding
+completion, profile metadata, and active-profile selection persist using the
+cross-platform `shared_preferences` plugin; collection storage and backend
+startup remain separate injected boundaries. The app depends on this root pure
+Dart package without changing its public API. A web build of the Flutter shell
+does not make the existing root package helpers web-compatible or implement
+Anki product behavior. See the app README for pinned SDK versions, local
+commands, platform prerequisites, and CI build coverage.
 
 ## LibAnki Collection raw backend forwarding
 

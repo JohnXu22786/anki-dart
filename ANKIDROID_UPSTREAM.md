@@ -2147,9 +2147,8 @@ history-list/toggle widgets, persistent mode/config lookup and the source's
 AGPL-incorporated default-column constants, backend column labels/tooltips/
 samples/rows, BrowserColumnSelection dialog and RecyclerView click/drag lifecycle and
 notifications (row movement capability, adjacent-swap plans and click-toggle
-planning are modeled), sort UI, Card Browser row-selection widgets and
-StateFlow toggle-state/async refresh delivery, Android preference/config IO,
-and actual backend row sorting, previewer SavedStateHandle/IdsFile IO and
+planning are modeled), Android sort preference/config IO, select-all
+toggle-state/async refresh delivery, and actual backend row sorting, previewer SavedStateHandle/IdsFile IO and
 collection-backed card loading (the selected-ID index handoff is modeled), WebView
 rendering and media, CardAppearance font resource installation and
 font-selection preference integration, theme selection/actual theme CSS and
@@ -4368,3 +4367,29 @@ hash and AGPL attribution are recorded in the model package.
 ## Core Note field validation
 
 `noteFieldsCheck()` and `containsCloze()` in `packages/anki_backend_models/lib/src/note_cloze_check.dart`, together with `Notetype.isCloze` and `Notetype.clozeFields`, port Core's note field validation ordering and cloze-field selection from `rslib/src/notes/mod.rs`, `rslib/src/cloze.rs`, `rslib/src/notetype/mod.rs`, `rslib/src/template.rs`, `rslib/src/text.rs`, and `proto/anki/notes.proto`, pinned to `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The parser follows Core cloze ordinals and template field extraction; the validation API keeps storage operations in typed callbacks while owning field-status precedence in the model package. Focused tests are in `packages/anki_backend_models/test/note_fields_check_test.dart`; source hashes and AGPL attribution are recorded in the package manifests/notices. AnkiDroid 2.25.3's `Note.fieldsCheck()` delegates to its backend at pinned commit `d9bf072f814a0c37d30a694192593b31ff2df875`.
+
+## Cross-platform Card Browser Flutter surface
+
+`apps/anki/lib/card_browser_screen.dart` provides the shared Flutter Card
+Browser screen, using the existing `BrowserColumn`, `BrowserRowId`,
+`BrowserRowSelection`, `toggleBrowserRowSelection()`, and `BrowserSortType`
+contracts. It renders host-projected columns and rows in their supplied order,
+submits query text through the injected `CardBrowserController`, exposes
+loading/searching/empty/failure states, and wires row selection, sort, preview,
+edit, and bulk actions through typed callbacks. Wide layouts use a heading row
+and dynamic columns; narrow layouts show labeled card rows. The controller owns
+query execution, collection IO, sort persistence, and navigation. Widget tests
+are in `apps/anki/test/card_browser_screen_test.dart`.
+
+The source-mapped interactions are from AnkiDroid 2.25.3 at pinned commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`: `CardBrowserFragment.kt:334–368`
+sets up the row adapter, headings, select-all control and progress indicator;
+`:1068–1092` renders dynamic heading labels and opens column options/manage
+columns; `BrowserMultiColumnAdapter.kt:78–124` creates dynamic cells and handles
+row taps and long presses; and `CardBrowserViewModel.kt:682–705` distinguishes
+single-row editing from multi-selection. Sort, preview, and bulk actions use
+typed host callbacks. `fragment_card_browser.xml:21–52` defines headings and
+progress, while `item_card_browser.xml:8–44` defines selectable rows and column
+cells. This is a source-derived UI adaptation, not a port of Android lifecycle
+or resources. The Flutter code and tests are GPL-3.0-or-later. No upstream
+assets or strings are copied, and root `COPYING` remains unchanged.

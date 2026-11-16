@@ -279,4 +279,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String collapseDeck(String name) {
     return 'Collapse $name';
   }
+
+  @override
+  String get cardBrowserTitle => 'Browse';
+
+  @override
+  String get browserSearchHint => 'Search cards';
+
+  @override
+  String get browserNoCards => 'No cards found';
+
+  @override
+  String get browserLoadFailed => 'Could not load cards';
+
+  @override
+  String get browserActionFailed => 'The browser action could not be completed';
+
+  @override
+  String get browserPreview => 'Preview selected';
+
+  @override
+  String get browserEdit => 'Edit selected';
+
+  @override
+  String get browserBulkActions => 'Actions for selected cards';
+
+  @override
+  String get browserSuspend => 'Suspend';
+
+  @override
+  String get browserBury => 'Bury';
+
+  @override
+  String get browserDelete => 'Delete';
+
+  @override
+  String browserSelectRow(String name) {
+    return 'Select $name';
+  }
+
+  @override
+  String get browserLoading => 'Loading cards…';
+
+  @override
+  String get browserSort => 'Sort cards';
+
+  @override
+  String get browserSortNoOrdering => 'No sorting';
 }

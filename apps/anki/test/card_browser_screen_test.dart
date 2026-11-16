@@ -1,0 +1,292 @@
+/*
+ * Copyright (c) 2026 John Tsui <110079544+JohnXu22786@users.noreply.github.com>
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import 'dart:async';
+import 'dart:ui' show Tristate;
+
+import 'package:anki_app/card_browser_screen.dart';
+import 'package:anki_app/l10n/app_localizations.dart';
+import 'package:anki_dart/anki_dart.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets(
+    'renders dynamic columns in order and preserves row selection semantics',
+    (tester) async {
+      final controller = _Controller(_sample());
+      await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('browser-heading-noteTags')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('browser-heading-question')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .getTopLeft(find.byKey(const ValueKey('browser-heading-noteTags')))
+            .dx,
+        lessThan(
+          tester
+              .getTopLeft(
+                find.byKey(const ValueKey('browser-heading-question')),
+              )
+              .dx,
+        ),
+      );
+      expect(find.text('biology'), findsOneWidget);
+
+      await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+      await tester.pumpAndSettle();
+      expect(controller.selectedRows, [const BrowserRowId(41)]);
+      expect(
+        tester
+            .getSemantics(find.byKey(const ValueKey('browser-row-41')))
+            .getSemanticsData()
+            .flagsCollection
+            .isSelected,
+        Tristate.isTrue,
+      );
+    },
+  );
+
+  testWidgets('search exposes searching, empty, and failure states', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample())
+      ..loadError = StateError('initial unavailable')
+      ..searchCompleter = Completer<CardBrowserSnapshot>();
+    await tester.pumpWidget(_app(controller, const Size(500, 800)));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('browser-search')),
+      'is:due',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pump();
+    expect(controller.queries, ['is:due']);
+    expect(
+      find.byKey(const ValueKey('browser-search-progress')),
+      findsOneWidget,
+    );
+    controller.searchCompleter!.complete(
+      CardBrowserSnapshot(columns: [], rows: []),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('No cards found'), findsOneWidget);
+
+    controller.searchError = StateError('unavailable');
+    await tester.enterText(
+      find.byKey(const ValueKey('browser-search')),
+      'bad query',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(find.text('Could not load cards'), findsOneWidget);
+    expect(find.byKey(const ValueKey('browser-search-retry')), findsOneWidget);
+  });
+
+  testWidgets('sort, preview, edit, and bulk actions use injected callbacks', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample());
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('browser-heading-question')));
+    await tester.pumpAndSettle();
+    expect(controller.openedColumnOptions, [BrowserColumn.question]);
+    await tester.longPress(
+      find.byKey(const ValueKey('browser-heading-question')),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.manageColumnsCount, 1);
+    await tester.tap(find.byKey(const ValueKey('browser-sort-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sort cards: Question'));
+    await tester.pumpAndSettle();
+    expect(controller.sortedColumns, [BrowserColumn.question]);
+
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-preview')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-edit')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
+    await tester.pumpAndSettle();
+
+    controller.sortCompleter = Completer<CardBrowserSnapshot>();
+    await tester.tap(find.byKey(const ValueKey('browser-sort-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sort cards: Question'));
+    await tester.pump();
+    controller.searchResult = CardBrowserSnapshot(
+      columns: _sample().columns,
+      rows: [
+        CardBrowserRow(
+          id: const BrowserRowId(99),
+          cells: {'noteTags': 'recent', 'question': 'Newest result'},
+        ),
+      ],
+    );
+    await tester.enterText(find.byKey(const ValueKey('browser-search')), 'new');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('browser-row-99')), findsOneWidget);
+    controller.sortCompleter!.complete(_sample());
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('browser-row-99')), findsOneWidget);
+    expect(find.byKey(const ValueKey('browser-row-41')), findsNothing);
+
+    expect(controller.previewed, [const BrowserRowId(41)]);
+    expect(controller.edited, [const BrowserRowId(41)]);
+    expect(controller.bulkActions, hasLength(1));
+    expect(controller.bulkActions.single.$1, CardBrowserBulkAction.suspend);
+    expect(controller.bulkActions.single.$2, [const BrowserRowId(41)]);
+  });
+
+  testWidgets('wide and narrow layouts fit the available viewport', (
+    tester,
+  ) async {
+    for (final size in [const Size(360, 780), const Size(1200, 800)]) {
+      await tester.binding.setSurfaceSize(size);
+      await tester.pumpWidget(_app(_Controller(_sample()), size));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byKey(
+          ValueKey(
+            size.width < 700 ? 'browser-layout-narrow' : 'browser-layout-wide',
+          ),
+        ),
+        findsOneWidget,
+      );
+    }
+    await tester.binding.setSurfaceSize(null);
+  });
+}
+
+Widget _app(_Controller controller, Size size) => MaterialApp(
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  supportedLocales: AppLocalizations.supportedLocales,
+  home: MediaQuery(
+    data: MediaQueryData(size: size),
+    child: CardBrowserScreen(controller: controller),
+  ),
+);
+
+CardBrowserSnapshot _sample() => CardBrowserSnapshot(
+  columns: [
+    CardBrowserColumn(type: BrowserColumn.tags, label: 'Tags'),
+    CardBrowserColumn(type: BrowserColumn.question, label: 'Question'),
+  ],
+  rows: [
+    CardBrowserRow(
+      id: const BrowserRowId(41),
+      cells: {'noteTags': 'biology', 'question': 'What is a cell?'},
+    ),
+    CardBrowserRow(
+      id: const BrowserRowId(42),
+      cells: {'noteTags': 'chemistry', 'question': 'What is an atom?'},
+    ),
+  ],
+);
+
+final class _Controller implements CardBrowserController {
+  _Controller(this.snapshot);
+
+  CardBrowserSnapshot snapshot;
+  Completer<CardBrowserSnapshot>? searchCompleter;
+  Completer<CardBrowserSnapshot>? sortCompleter;
+  CardBrowserSnapshot? searchResult;
+  Object? searchError;
+  Object? loadError;
+  int loadCalls = 0;
+  final queries = <String>[];
+  final sortedColumns = <BrowserColumn>[];
+  final openedColumnOptions = <BrowserColumn>[];
+  int manageColumnsCount = 0;
+  final selectedRows = <BrowserRowId>[];
+  final previewed = <BrowserRowId>[];
+  final edited = <BrowserRowId>[];
+  final bulkActions = <(CardBrowserBulkAction, List<BrowserRowId>)>[];
+
+  @override
+  Future<CardBrowserSnapshot> load() async {
+    loadCalls++;
+    final error = loadError;
+    if (error != null) {
+      loadError = null;
+      throw error;
+    }
+    return snapshot;
+  }
+
+  @override
+  Future<CardBrowserSnapshot> search(String query) {
+    queries.add(query);
+    final error = searchError;
+    if (error != null) return Future.error(error);
+    return searchCompleter?.future ?? Future.value(searchResult ?? snapshot);
+  }
+
+  @override
+  Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType) async {
+    sortedColumns.add(
+      BrowserColumn.fromColumnKey(
+        (sortType as BrowserSortCollectionOrdering).key,
+      ),
+    );
+    final completer = sortCompleter;
+    if (completer != null) return completer.future;
+    return CardBrowserSnapshot(
+      columns: snapshot.columns,
+      rows: snapshot.rows,
+      sortType: sortType,
+    );
+  }
+
+  @override
+  Future<void> openColumnOptions(BrowserColumn column) async =>
+      openedColumnOptions.add(column);
+
+  @override
+  Future<void> manageColumns() async => manageColumnsCount++;
+
+  @override
+  Future<void> updateSelection(List<BrowserRowId> rows) async {
+    selectedRows
+      ..clear()
+      ..addAll(rows);
+  }
+
+  @override
+  Future<void> preview(BrowserRowId rowId) async => previewed.add(rowId);
+
+  @override
+  Future<void> edit(BrowserRowId rowId) async => edited.add(rowId);
+
+  @override
+  Future<void> performBulkAction(
+    CardBrowserBulkAction action,
+    List<BrowserRowId> rows,
+  ) async {
+    bulkActions.add((action, List.of(rows)));
+  }
+}

@@ -3129,15 +3129,14 @@ SavedStateHandle/StateFlow
 integration for mode, text buffers, and history/saved-search availability,
 Basic/Advanced text widgets, history-list
 and toggle widgets,
-Card Browser row-selection widgets, StateFlow scheduling/async refresh delivery,
-applying row-activation directives,
+Card Browser StateFlow scheduling/async refresh delivery, applying remaining
+row-activation directives,
 collection-backed editor destination lookup, and note-editor/pane command delivery,
 persistent Cards/Notes mode lookup and AGPL-incorporated column defaults,
 collection-backed Card↔Note ID lookups, backend column registry and rows,
 the column-selection dialog and RecyclerView click/drag lifecycle/notifications,
 and active backend column updates (movement capability, adjacent-swap planning,
-and click-toggle planning are modeled); Card Browser sort UI, Android
-preference/synced-config IO, and actual backend row sorting,
+and click-toggle planning are modeled); Android preference/synced-config IO, and actual backend row sorting,
 Previewer SavedStateHandle/card-ID plumbing, collection-backed card loading,
 WebView rendering and media, CardAppearance font resource installation and
 font-selection preferences, theme selection and actual theme CSS,
@@ -6213,3 +6212,16 @@ current index to the ID passed to host card loading. It preserves list order and
 index bounds behavior. `SavedStateHandle`, `IdsFile` IO, collection lookup, and
 card loading remain host-side. The source-derived contract is covered by
 `test/previewer_card_selection_test.dart`.
+
+## Cross-platform Card Browser screen
+
+`apps/anki/lib/card_browser_screen.dart` supplies a responsive Flutter Card
+Browser surface for Android, iOS, web, Windows, macOS, and Linux. The injected
+`CardBrowserController` owns search execution, collection access, sort
+persistence, and navigation. The screen displays dynamic column headings and
+rows, stable row selection and bulk actions, sort affordances, preview/edit
+callbacks, and loading, searching, empty, and failure states. It reuses the
+root `anki_dart` browser column, row selection, and sort contracts. Focused
+widget coverage is in `apps/anki/test/card_browser_screen_test.dart`; source
+mapping and attribution are in [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md)
+and [NOTICE.md](NOTICE.md).

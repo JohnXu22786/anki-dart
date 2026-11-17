@@ -78,6 +78,131 @@ void main() {
   });
 
   test(
+    'saved searches persist in active collection config and reload',
+    () async {
+      final first = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+
+      expect(await first.loadSavedSearches(), isEmpty);
+      final (added, saved) = await first.addSavedSearch(
+        const BrowserSavedSearch(name: 'A', query: '  tag:one \t'),
+      );
+      expect(added, isTrue);
+      expect(saved, [const BrowserSavedSearch(name: 'A', query: 'tag:one')]);
+      expect(runtime.storage!.readCollectionConfig('savedFilters'), {
+        'A': 'tag:one',
+      });
+
+      final reopened = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      expect(await reopened.loadSavedSearches(), [
+        const BrowserSavedSearch(name: 'A', query: 'tag:one'),
+      ]);
+    },
+  );
+
+  test(
+    'saved search names are case-sensitive and duplicate add is a no-op',
+    () async {
+      await runtime.storage!.writeCollectionConfig('savedFilters', {
+        'a': 'lower',
+        'Z': 'last',
+        'A': 'upper',
+      });
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+
+      expect(
+        (await controller.loadSavedSearches()).map((search) => search.name),
+        ['A', 'Z', 'a'],
+      );
+      final (changed, values) = await controller.addSavedSearch(
+        const BrowserSavedSearch(name: 'A', query: 'replacement'),
+      );
+      expect(changed, isFalse);
+      expect(values.first.query, 'upper');
+      expect(runtime.storage!.readCollectionConfig('savedFilters'), {
+        'a': 'lower',
+        'Z': 'last',
+        'A': 'upper',
+      });
+      final (lowerAdded, _) = await controller.addSavedSearch(
+        const BrowserSavedSearch(name: 'aA', query: 'q'),
+      );
+      expect(lowerAdded, isTrue);
+    },
+  );
+
+  test('malformed saved-search config loads empty and missing delete does not write', () async {
+    await runtime.storage!.writeCollectionConfig('savedFilters', ['bad']);
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+
+    expect(await controller.loadSavedSearches(), isEmpty);
+    final (deleted, values) = await controller.deleteSavedSearch('missing');
+    expect(deleted, isFalse);
+    expect(values, isEmpty);
+    expect(runtime.storage!.readCollectionConfig('savedFilters'), ['bad']);
+  });
+
+  test('saved search deletion removes only an exact matching name', () async {
+    await runtime.storage!.writeCollectionConfig('savedFilters', {
+      'A': 'upper',
+      'a': 'lower',
+    });
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+
+    final (deleted, values) = await controller.deleteSavedSearch('A');
+    expect(deleted, isTrue);
+    expect(values, [const BrowserSavedSearch(name: 'a', query: 'lower')]);
+    expect(runtime.storage!.readCollectionConfig('savedFilters'), {
+      'a': 'lower',
+    });
+  });
+
+  test('saved search config write failures propagate unchanged', () async {
+    await runtime.close();
+    final triggerDatabase = sqlite.sqlite3.open(
+      '${directory.path}/collection.anki2',
+    );
+    triggerDatabase.execute('''
+      CREATE TRIGGER reject_saved_filters
+      BEFORE INSERT ON config
+      WHEN NEW.key = 'savedFilters'
+      BEGIN SELECT RAISE(ABORT, 'saved filters rejected'); END
+    ''');
+    triggerDatabase.close();
+    await runtime.openOrCreate(
+      ProfileId.defaultId,
+      callbacks: (storage) =>
+          appCollectionOpenCallbacks(storage, AppLocalizationsEn()),
+    );
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+
+    await expectLater(
+      controller.addSavedSearch(
+        const BrowserSavedSearch(name: 'A', query: 'tag:one'),
+      ),
+      throwsA(isA<sqlite.SqliteException>()),
+    );
+    expect(runtime.storage!.readCollectionConfig('savedFilters'), isNull);
+  });
+
+  test(
     'sort config reloads and is saved before unsupported search fails',
     () async {
       final first = CollectionCardBrowserController(

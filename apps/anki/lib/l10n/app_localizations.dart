@@ -733,6 +733,48 @@ abstract class AppLocalizations {
   /// **'Search cards'**
   String get browserSearchHint;
 
+  /// No description provided for @browserSaveSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Save search'**
+  String get browserSaveSearch;
+
+  /// No description provided for @browserSavedSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved searches'**
+  String get browserSavedSearches;
+
+  /// No description provided for @browserSavedSearchName.
+  ///
+  /// In en, this message translates to:
+  /// **'Search name'**
+  String get browserSavedSearchName;
+
+  /// No description provided for @browserSavedSearchDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'A saved search already has that name'**
+  String get browserSavedSearchDuplicate;
+
+  /// No description provided for @browserNoSavedSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved searches'**
+  String get browserNoSavedSearches;
+
+  /// No description provided for @browserSubmitSavedSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search with this query'**
+  String get browserSubmitSavedSearch;
+
+  /// No description provided for @browserApplySavedSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply query for editing'**
+  String get browserApplySavedSearch;
+
   /// No description provided for @browserNoCards.
   ///
   /// In en, this message translates to:

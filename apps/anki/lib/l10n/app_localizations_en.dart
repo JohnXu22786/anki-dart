@@ -351,6 +351,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browserSearchHint => 'Search cards';
 
   @override
+  String get browserSaveSearch => 'Save search';
+
+  @override
+  String get browserSavedSearches => 'Saved searches';
+
+  @override
+  String get browserSavedSearchName => 'Search name';
+
+  @override
+  String get browserSavedSearchDuplicate =>
+      'A saved search already has that name';
+
+  @override
+  String get browserNoSavedSearches => 'No saved searches';
+
+  @override
+  String get browserSubmitSavedSearch => 'Search with this query';
+
+  @override
+  String get browserApplySavedSearch => 'Apply query for editing';
+
+  @override
   String get browserNoCards => 'No cards found';
 
   @override

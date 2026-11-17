@@ -67,6 +67,196 @@ void main() {
     ]);
   });
 
+  test(
+    'mode defaults to cards and loads the active collection setting',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final defaults = await controller.load();
+
+      expect(defaults.mode, BrowserColumnMode.cards);
+      expect(defaults.columns.map((column) => column.type), [
+        BrowserColumn.sortField,
+        BrowserColumn.cardType,
+        BrowserColumn.due,
+        BrowserColumn.deck,
+      ]);
+
+      await runtime.storage!.writeCollectionConfig(
+        'browserTableShowNotesMode',
+        true,
+      );
+      final notes = await CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      ).load();
+      expect(notes.mode, BrowserColumnMode.notes);
+      expect(notes.columns.map((column) => column.type), [
+        BrowserColumn.sortField,
+        BrowserColumn.noteType,
+        BrowserColumn.cardType,
+        BrowserColumn.tags,
+      ]);
+    },
+  );
+
+  test(
+    'switching mode persists first and a same-value switch is a no-op',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await controller.load();
+      await runtime.storage!.executeBatch('''
+      CREATE TRIGGER reject_same_browser_mode
+      BEFORE INSERT ON config
+      WHEN NEW.key = 'browserTableShowNotesMode'
+      BEGIN SELECT RAISE(ABORT, 'unexpected mode write'); END;
+    ''');
+
+      expect(
+        (await controller.updateMode(BrowserColumnMode.cards)).mode,
+        BrowserColumnMode.cards,
+      );
+      await expectLater(
+        controller.updateMode(BrowserColumnMode.notes),
+        throwsA(isA<Object>()),
+      );
+      expect(
+        runtime.storage!.readCollectionConfig('browserTableShowNotesMode'),
+        isNull,
+      );
+      expect((await controller.search('')).mode, BrowserColumnMode.cards);
+    },
+  );
+
+  test('mode-specific columns and sort keys reload independently', () async {
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    await controller.load();
+    await controller.saveColumns([BrowserColumn.tags, BrowserColumn.deck]);
+    await controller.updateSort(
+      const BrowserSortCollectionOrdering(key: 'deck', reverse: true),
+    );
+    await controller.updateMode(BrowserColumnMode.notes);
+    await controller.saveColumns([
+      BrowserColumn.noteType,
+      BrowserColumn.sortField,
+    ]);
+    await controller.updateSort(
+      const BrowserSortCollectionOrdering(key: 'noteTags', reverse: true),
+    );
+
+    expect(runtime.storage!.readCollectionConfig('sortType'), 'deck');
+    expect(runtime.storage!.readCollectionConfig('sortBackwards'), isTrue);
+    expect(runtime.storage!.readCollectionConfig('noteSortType'), 'noteTags');
+    expect(
+      runtime.storage!.readCollectionConfig('browserNoteSortBackwards'),
+      isTrue,
+    );
+
+    final reopened = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    final notes = await reopened.load();
+    expect(notes.mode, BrowserColumnMode.notes);
+    expect(notes.columns.map((column) => column.type), [
+      BrowserColumn.noteType,
+      BrowserColumn.sortField,
+    ]);
+    expect(
+      notes.sortType,
+      const BrowserSortCollectionOrdering(key: 'noteTags', reverse: true),
+    );
+
+    final cards = await reopened.updateMode(BrowserColumnMode.cards);
+    expect(cards.columns.map((column) => column.type), [
+      BrowserColumn.tags,
+      BrowserColumn.deck,
+    ]);
+    expect(
+      cards.sortType,
+      const BrowserSortCollectionOrdering(key: 'deck', reverse: true),
+    );
+  });
+
+  test(
+    'notes search preserves sorted Note IDs, deck scoping and wide IDs',
+    () async {
+      final noteIds = [
+        BigInt.parse('9007199254740995'),
+        BigInt.parse('9007199254740994'),
+      ];
+      for (var i = 0; i < noteIds.length; i++) {
+        final id = noteIds[i];
+        await runtime.storage!.executeBatch('''
+        INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
+        VALUES ($id, 'guid$i', 1, 0, -1, ' shared ', 'field$i', '${i == 0 ? 'zeta' : 'alpha'}', 0, 0, '');
+        INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+        VALUES (${100 + i}, $id, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+      ''');
+      }
+      await runtime.storage!.executeBatch('''
+      INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+      VALUES (200, ${noteIds[0]}, 2, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+    ''');
+      await runtime.storage!.executeBatch('''
+      INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
+      VALUES (700, 'other-deck', 1, 0, -1, ' shared ', 'outside', 'outside', 0, 0, '');
+      INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+      VALUES (700, 700, 2, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+    ''');
+      await runtime.storage!.writeCollectionConfig(
+        'browserTableShowNotesMode',
+        true,
+      );
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await controller.load();
+      await controller.saveColumns([
+        BrowserColumn.sortField,
+        BrowserColumn.noteType,
+        BrowserColumn.cardType,
+        BrowserColumn.deck,
+        BrowserColumn.tags,
+      ]);
+      final result = await controller.search('tag:shared');
+
+      expect(result.mode, BrowserColumnMode.notes);
+      expect(result.rows.map((row) => row.id.bigValue), [
+        noteIds[1],
+        noteIds[0],
+      ]);
+      expect(result.rows.first.cells['noteFld'], 'alpha');
+      expect(result.rows.first.cells['template'], '1');
+      expect(result.rows.first.cells['deck'], isNotEmpty);
+      expect(
+        result.rows.every((row) => row.cells['noteTags'] == 'shared'),
+        isTrue,
+      );
+      expect(result.rows.first.cells['note'], 'Unavailable');
+      expect(result.rows.last.cells['template'], '2');
+      expect(result.rows.last.cells['deck'], '(2)');
+      expect(
+        result.rows.every((row) => row.id.bigValue != BigInt.from(700)),
+        isTrue,
+      );
+      final cards = await controller.updateMode(BrowserColumnMode.cards);
+      expect(cards.rows.map((row) => row.id.bigValue), [
+        BigInt.from(101),
+        BigInt.from(100),
+      ]);
+    },
+  );
+
   test('empty stored sort key resolves to no ordering', () async {
     await runtime.storage!.writeCollectionConfig('sortType', '');
     await preferences.setBool('anki.browser.noSorting', false);

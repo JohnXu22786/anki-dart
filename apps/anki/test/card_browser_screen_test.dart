@@ -14,6 +14,25 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('mode switch clears selection and publishes the returned mode', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample());
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('browser-mode-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Notes').last);
+    await tester.pumpAndSettle();
+
+    expect(controller.modeChanges, [BrowserColumnMode.notes]);
+    expect(controller.snapshot.mode, BrowserColumnMode.notes);
+    expect(controller.selectionUpdates.last, isEmpty);
+  });
+
   testWidgets(
     'renders dynamic columns in order and preserves row selection semantics',
     (tester) async {
@@ -577,7 +596,8 @@ CardBrowserSnapshot _sample() => CardBrowserSnapshot(
   ],
 );
 
-final class _Controller implements CardBrowserController {
+final class _Controller
+    implements CardBrowserController, CardBrowserModeController {
   _Controller(this.snapshot);
 
   CardBrowserSnapshot snapshot;
@@ -597,6 +617,7 @@ final class _Controller implements CardBrowserController {
   final previewed = <BrowserRowId>[];
   final edited = <BrowserRowId>[];
   final bulkActions = <(CardBrowserBulkAction, List<BrowserRowId>)>[];
+  final modeChanges = <BrowserColumnMode>[];
   List<BrowserSavedSearch> savedSearches = [];
   Object? savedSearchLoadError;
 
@@ -663,6 +684,18 @@ final class _Controller implements CardBrowserController {
       rows: snapshot.rows,
       sortType: sortType,
     );
+  }
+
+  @override
+  Future<CardBrowserSnapshot> updateMode(BrowserColumnMode mode) async {
+    modeChanges.add(mode);
+    snapshot = CardBrowserSnapshot(
+      columns: snapshot.columns,
+      rows: snapshot.rows,
+      sortType: snapshot.sortType,
+      mode: mode,
+    );
+    return snapshot;
   }
 
   @override

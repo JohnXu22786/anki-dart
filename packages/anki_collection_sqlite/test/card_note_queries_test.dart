@@ -203,7 +203,8 @@ void main() {
       await storage.executeBatch('''
       INSERT INTO cards VALUES
         (101, 201, 1, 0, 1, 0, 0, 0, 0, 0, 2500, 0, 0, 0, 0, 0, 0, '{}'),
-        (102, 202, 1, 0, 1, 0, 0, 0, 0, 0, 2500, 0, 0, 0, 0, 0, 0, '{}');
+        (102, 202, 1, 0, 1, 0, 0, 0, 0, 0, 2500, 0, 0, 0, 0, 0, 0, '{}'),
+        (103, 201, 2, 1, 1, 0, 0, 0, 0, 0, 2500, 0, 0, 0, 0, 0, 0, '{}');
       INSERT INTO notes VALUES
         (201, 'guid-201', 1, 1, 0, ' alpha ', 'front\u001fback', 'front', 0),
         (202, 'guid-202', 1, 1, 0, ' beta ', 'other', 'other', 0);
@@ -229,6 +230,20 @@ void main() {
         ['alpha'],
         ['beta'],
       ]);
+
+      final cardsByNote = await storage.cardsOfNotes([
+        Int64(202),
+        Int64(201),
+        Int64(999),
+        Int64(202),
+      ]);
+      expect(cardsByNote.keys, [Int64(202), Int64(201), Int64(999)]);
+      expect(cardsByNote[Int64(202)]!.map((card) => card.id), [Int64(102)]);
+      expect(cardsByNote[Int64(201)]!.map((card) => card.id), [
+        Int64(101),
+        Int64(103),
+      ]);
+      expect(cardsByNote[Int64(999)], isEmpty);
     },
   );
 

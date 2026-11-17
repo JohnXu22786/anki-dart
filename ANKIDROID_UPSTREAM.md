@@ -4460,3 +4460,27 @@ support. Source references: AnkiDroid 2.25.3
 `BrowserConfig.kt`, pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`;
 Anki Core `rslib/src/browser_table.rs` and collection config defaults, pinned to
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985`.
+
+## Card Browser Cards/Notes mode and Notes rows (Unit 20)
+
+The shared Flutter Card Browser reads `browserTableShowNotesMode` from the
+active collection config, defaults to Cards, and persists a changed mode before
+publishing the new snapshot. Cards and Notes mode keep independent columns
+(`activeCols` and `activeNoteCols`) and sort key/direction (`sortType` /
+`sortBackwards` and `noteSortType` / `browserNoteSortBackwards`). Mode changes
+reload that mode's columns and ordering; saved searches remain in the shared
+collection config and continue to search using the active mode.
+
+Notes mode compiles the same supported query against `SearchResultType.notes`,
+including selected-deck scoping, and preserves Core SQL ordering and signed
+64-bit Note IDs. Notes rows project the sort field, tags, card count, and their
+sole deck name or a distinct-deck count. Other fields whose values are not
+available from the current browser-table adapter remain explicitly
+unavailable. Note Editor, preview, and bulk callbacks retain their existing
+unavailable behavior. Source references: AnkiDroid 2.25.3
+`CardsOrNotes.kt`, `BrowserOptionsRepository.kt`, `CardBrowserViewModel.kt`,
+`BrowserRowCollection.kt`, `BrowserColumnCollection.kt`, `CardBrowserColumn.kt`,
+LibAnki `BrowserConfig.kt`, and Core `rslib/src/browser_table.rs`, pinned to the
+same revisions above. The Dart code and English strings are independently
+written and source-derived; no Android resources or source files are copied,
+so root `COPYING`, package notices, and SPDX files need no change.

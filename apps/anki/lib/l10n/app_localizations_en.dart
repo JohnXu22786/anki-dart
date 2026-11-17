@@ -376,6 +376,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browserNoCards => 'No cards found';
 
   @override
+  String get browserNoNotes => 'No notes found';
+
+  @override
+  String get browserMode => 'Browser mode';
+
+  @override
+  String get browserModeCards => 'Cards';
+
+  @override
+  String get browserModeNotes => 'Notes';
+
+  @override
   String get browserLoadFailed => 'Could not load cards';
 
   @override

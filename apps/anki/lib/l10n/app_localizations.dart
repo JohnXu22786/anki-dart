@@ -781,6 +781,30 @@ abstract class AppLocalizations {
   /// **'No cards found'**
   String get browserNoCards;
 
+  /// No description provided for @browserNoNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes found'**
+  String get browserNoNotes;
+
+  /// No description provided for @browserMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser mode'**
+  String get browserMode;
+
+  /// No description provided for @browserModeCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get browserModeCards;
+
+  /// No description provided for @browserModeNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get browserModeNotes;
+
   /// No description provided for @browserLoadFailed.
   ///
   /// In en, this message translates to:

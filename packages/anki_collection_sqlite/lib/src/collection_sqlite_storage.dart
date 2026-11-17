@@ -620,6 +620,34 @@ WHERE queue IN (-2, -3)
       .map(_cardFromRow)
       .toList(growable: false);
 
+  /// Loads cards grouped by requested note IDs using bounded SQLite queries.
+  /// Notes without cards are present with an empty list.
+  Future<Map<NoteId, List<Card>>> cardsOfNotes(Iterable<NoteId> noteIds) async {
+    final requestedIds = noteIds.toSet().toList(growable: false);
+    if (requestedIds.isEmpty) return const {};
+    final grouped = <NoteId, List<Card>>{
+      for (final noteId in requestedIds) noteId: <Card>[],
+    };
+    for (var start = 0; start < requestedIds.length; start += 500) {
+      final chunk = requestedIds.skip(start).take(500).toList(growable: false);
+      final placeholders = List.filled(chunk.length, '?').join(', ');
+      final rows = _database.select(
+        'SELECT id, nid, did, ord, cast(mod AS integer), usn, type, queue, '
+        'due, cast(ivl AS integer), factor, reps, lapses, left, odue, odid, '
+        'flags, data FROM cards WHERE nid IN ($placeholders)',
+        chunk.map(_toSqlInt64).toList(growable: false),
+      );
+      for (final row in rows) {
+        final card = _cardFromRow(row);
+        grouped[card.noteId]!.add(card);
+      }
+    }
+    return Map.unmodifiable({
+      for (final entry in grouped.entries)
+        entry.key: List<Card>.unmodifiable(entry.value),
+    });
+  }
+
   /// Returns card IDs ordered by their template ordinal for [noteId].
   Future<List<CardId>> allCardIdsOfNoteInTemplateOrder(NoteId noteId) async =>
       _database

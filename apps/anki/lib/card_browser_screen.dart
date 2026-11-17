@@ -36,12 +36,14 @@ final class CardBrowserSnapshot {
     required List<CardBrowserColumn> columns,
     required List<CardBrowserRow> rows,
     this.sortType = const BrowserSortNoOrdering(),
+    this.mode = BrowserColumnMode.cards,
   }) : columns = List.unmodifiable(columns),
        rows = List.unmodifiable(rows);
 
   final List<CardBrowserColumn> columns;
   final List<CardBrowserRow> rows;
   final BrowserSortType sortType;
+  final BrowserColumnMode mode;
 }
 
 enum CardBrowserBulkAction { suspend, bury, delete }
@@ -69,6 +71,11 @@ abstract interface class CardBrowserController {
     CardBrowserBulkAction action,
     List<BrowserRowId> selectedRows,
   );
+}
+
+/// Optional mode capability for controllers backed by a collection browser.
+abstract interface class CardBrowserModeController {
+  Future<CardBrowserSnapshot> updateMode(BrowserColumnMode mode);
 }
 
 /// Responsive Card Browser UI shared by Flutter's mobile and desktop targets.
@@ -403,6 +410,30 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     if (id != null) _runAction(() => widget.controller.edit(id));
   }
 
+  Future<void> _setMode(BrowserColumnMode mode) async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserModeController || _snapshot?.mode == mode) {
+      return;
+    }
+    final modeController = controller as CardBrowserModeController;
+    final generation = ++_requestGeneration;
+    try {
+      final snapshot = await modeController.updateMode(mode);
+      if (!mounted || generation != _requestGeneration) return;
+      _selectedRows.clear();
+      _lastSelectedRowId = null;
+      _isMultiSelect = false;
+      setState(() {
+        _snapshot = snapshot;
+        _loadState = _BrowserLoadState.loaded;
+      });
+      await _runAction(() => widget.controller.updateSelection(const []));
+    } catch (error) {
+      if (!mounted || generation != _requestGeneration) return;
+      _showActionError(error);
+    }
+  }
+
   void _runBulkAction(CardBrowserBulkAction action) {
     _runAction(() async {
       await widget.controller.performBulkAction(
@@ -452,6 +483,24 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             onPressed: _manageColumns,
             icon: const Icon(Icons.view_column_outlined),
           ),
+          if (_snapshot != null &&
+              widget.controller is CardBrowserModeController)
+            PopupMenuButton<BrowserColumnMode>(
+              key: const ValueKey('browser-mode-menu'),
+              tooltip: s.browserMode,
+              icon: const Icon(Icons.view_list_outlined),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: BrowserColumnMode.cards,
+                  child: Text(s.browserModeCards),
+                ),
+                PopupMenuItem(
+                  value: BrowserColumnMode.notes,
+                  child: Text(s.browserModeNotes),
+                ),
+              ],
+              onSelected: _setMode,
+            ),
           IconButton(
             key: const ValueKey('browser-save-search'),
             tooltip: s.browserSaveSearch,
@@ -599,7 +648,13 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       return Center(child: Text(s.browserLoading));
     }
     if (snapshot.rows.isEmpty) {
-      return Center(child: Text(s.browserNoCards));
+      return Center(
+        child: Text(
+          snapshot.mode == BrowserColumnMode.cards
+              ? s.browserNoCards
+              : s.browserNoNotes,
+        ),
+      );
     }
 
     return LayoutBuilder(

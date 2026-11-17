@@ -8,6 +8,7 @@ import 'package:anki_dart/profile_onboarding.dart';
 import 'app_contracts.dart';
 import 'collection_runtime.dart';
 import 'deck_picker_screen.dart';
+import 'deck_picker_repository.dart';
 import 'profile_manager.dart';
 
 export 'app_contracts.dart';
@@ -25,7 +26,11 @@ final class AppServices {
     ProfileId Function()? generateProfileId,
   }) : collectionRuntimeConfigured = collections != null,
        collections = collections ?? _unconfiguredCollections,
-       deckPicker = deckPicker ?? const UnavailableDeckPickerRepository(),
+       deckPicker =
+           deckPicker ??
+           (collections == null
+               ? const UnavailableDeckPickerRepository()
+               : CollectionDeckPickerRepository(collections)),
        profileManager = ProfileManager(
          profiles,
          generateProfileId: generateProfileId,

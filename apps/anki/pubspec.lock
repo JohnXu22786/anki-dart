@@ -9,7 +9,7 @@ packages:
     source: path
     version: "0.1.0"
   anki_backend_protocol:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../../packages/anki_backend_protocol"
       relative: true
@@ -40,6 +40,13 @@ packages:
     dependency: "direct main"
     description:
       path: "../.."
+      relative: true
+    source: path
+    version: "0.1.0"
+  anki_scheduler_timing:
+    dependency: transitive
+    description:
+      path: "../../packages/anki_scheduler_timing"
       relative: true
     source: path
     version: "0.1.0"
@@ -146,7 +153,7 @@ packages:
     source: hosted
     version: "7.0.1"
   fixnum:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: fixnum
       sha256: b6dc7065e46c974bc7c5f143080a6764ec7a4be6da1285ececdc37be96de53be

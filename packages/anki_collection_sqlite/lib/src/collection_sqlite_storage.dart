@@ -11,7 +11,9 @@ import 'package:anki_backend_protocol/anki/decks.pb.dart' as protoDeck;
 import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as protoConfig;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as protoNotetype;
 import 'package:anki_collection_schema/anki_collection_schema.dart';
+import 'package:anki_scheduler_timing/anki_scheduler_timing.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:protobuf/protobuf.dart';
 import 'package:sqlite3/common.dart';
 
 import 'card_data_functions.dart';
@@ -21,6 +23,7 @@ import 'fsrs_variable_function.dart';
 import 'process_text.dart';
 import 'regex_functions.dart';
 import 'unicase_collation.dart';
+import 'deck_tree.dart';
 
 part 'legacy_collection_migrations.dart';
 
@@ -158,6 +161,274 @@ final class CollectionSqliteStorage
   @override
   Future<String> queryString(String sql) async =>
       _database.select(sql).first.columnAt(0) as String;
+
+  /// Builds Core's due tree for scheduler-resolved timing and collection
+  /// preferences. [daysElapsed] and [learnCutoff] are the same values Core
+  /// passes to `SqliteStorage::due_counts()` for the requested timestamp.
+  Future<protoDeck.DeckTreeNode> deckTree({
+    required int daysElapsed,
+    required int learnCutoff,
+    bool browser = false,
+    bool newCardsIgnoreReviewLimit = false,
+    bool applyAllParentLimits = false,
+  }) async {
+    _requiredUnsigned(daysElapsed, 32, 'daysElapsed');
+    _requiredUnsigned(learnCutoff, 32, 'learnCutoff');
+    final dueCounts = <Int64, protoDeck.DeckTreeNode>{};
+    final rows = _database.select(
+      '''
+SELECT did,
+  sum(queue = 0) AS new_count,
+  sum(queue = 2 AND due <= ?) AS review_count,
+  sum(queue = 3 AND due <= ?) AS interday_learning,
+  sum((queue = 1 AND due < ?) OR (queue = 4 AND due <= ?)) AS intraday_learning,
+  count(1) AS total_cards
+FROM cards
+GROUP BY did
+''',
+      [daysElapsed, daysElapsed, learnCutoff, learnCutoff],
+    );
+    for (final row in rows) {
+      final id = _readInt64(row['did']);
+      final newCount = _requiredUnsigned(row['new_count'], 32, 'new_count');
+      final reviewCount = _requiredUnsigned(
+        row['review_count'],
+        32,
+        'review_count',
+      );
+      final interday = _requiredUnsigned(
+        row['interday_learning'],
+        32,
+        'interday_learning',
+      );
+      final intraday = _requiredUnsigned(
+        row['intraday_learning'],
+        32,
+        'intraday_learning',
+      );
+      dueCounts[id] = protoDeck.DeckTreeNode(
+        deckId: id,
+        newCount: newCount,
+        reviewCount: reviewCount,
+        learnCount: intraday + interday,
+        intradayLearning: intraday,
+        interdayLearningUncapped: interday,
+        newUncapped: newCount,
+        reviewUncapped: reviewCount,
+        totalInDeck: _requiredUnsigned(row['total_cards'], 32, 'total_cards'),
+      );
+    }
+    final orderedDecks = _deckStorage.getAllDecksInNameOrder();
+    return buildCoreDeckTree(
+      decksInNameOrder: orderedDecks,
+      dueCountsByDeck: dueCounts,
+      deckConfigs: _deckConfigStorage.getDeckConfigMap(),
+      today: daysElapsed,
+      defaultDeckIsEmpty: _database
+          .select('SELECT 1 FROM cards WHERE did = 1 LIMIT 1')
+          .isEmpty,
+      browser: browser,
+      newCardsIgnoreReviewLimit: newCardsIgnoreReviewLimit,
+      applyAllParentLimits: applyAllParentLimits,
+    );
+  }
+
+  /// Builds the current study deck tree using the collection's source
+  /// scheduler settings and the current platform timezone.
+  Future<protoDeck.DeckTreeNode> deckTreeForNow({DateTime? now}) async {
+    final current = now ?? DateTime.now();
+    final currentSecs = current.millisecondsSinceEpoch ~/ 1000;
+    final metadata = _database.select('SELECT crt, conf FROM col').single;
+    final creationSecs = _requiredSigned(metadata['crt'], 64, 'crt');
+    final collectionConfig = _decodeJsonObjectOrEmpty(metadata['conf']);
+    final schedulerVersion =
+        _readConfigInt('schedVer') ??
+        _optionalJsonInt(collectionConfig['schedVer']) ??
+        1;
+    final rollover = schedulerVersion == 2
+        ? (_readConfigInt('rollover') ?? 4).clamp(0, 23)
+        : null;
+    final creationOffset =
+        _readConfigInt('creationOffset') ??
+        _optionalJsonInt(collectionConfig['creationOffset']);
+    final minutesWest = -current.toLocal().timeZoneOffset.inMinutes;
+    final timing = schedTimingToday(
+      creationSecs: creationSecs,
+      currentSecs: currentSecs,
+      creationUtcOffsetMinutesWest: creationOffset,
+      currentUtcOffsetMinutesWest: minutesWest,
+      rolloverHour: rollover,
+    );
+    await _unburyIfDayRolledOver(timing.daysElapsed);
+    final learnAhead = _readConfigInt('collapseTime') ?? 1200;
+    return deckTree(
+      daysElapsed: timing.daysElapsed,
+      learnCutoff: (currentSecs + learnAhead).toUnsigned(32),
+      newCardsIgnoreReviewLimit:
+          _readConfigBool('newCardsIgnoreReviewLimit') ?? false,
+      applyAllParentLimits: _readConfigBool('applyAllParentLimits') ?? false,
+    );
+  }
+
+  /// Returns Core's configured current deck, or its source default ID.
+  Int64 get currentDeckId => _readConfigInt('curDeck') == null
+      ? Int64.ONE
+      : Int64(_readConfigInt('curDeck')!);
+
+  /// Selects [deckId], matching Core's non-undoable current-deck setting.
+  Future<void> selectDeck(Int64 deckId) =>
+      _writeConfigValue('curDeck', deckId.toString());
+
+  /// Persists the reviewer or browser collapsed state of a deck.
+  Future<void> setDeckCollapsed(
+    Int64 deckId, {
+    required bool collapsed,
+    bool browser = false,
+  }) async {
+    final deck = _deckStorage.getDeck(deckId);
+    if (deck == null) throw StateError('deck not found: $deckId');
+    final common = deck.common.deepCopy();
+    if (browser) {
+      common.browserCollapsed = collapsed;
+    } else {
+      common.studyCollapsed = collapsed;
+    }
+    _deckStorage.updateDeck(
+      Deck(
+        id: deck.id,
+        name: deck.name,
+        mtimeSecs: Int64(DateTime.now().millisecondsSinceEpoch ~/ 1000),
+        // Anki Core's client-side Collection.usn() returns -1. The update
+        // path marks modified decks with that value before writing them.
+        usn: -1,
+        common: common,
+        kind: deck.kind,
+      ),
+    );
+    await _flushIfAutocommit();
+  }
+
+  /// Returns whether [deckId] or any of its descendants contains buried cards.
+  bool deckHasBuriedCards(Int64 deckId) {
+    final deck = _deckStorage.getDeck(deckId);
+    if (deck == null) return false;
+    final ids = _deckStorage.deckIdWithChildren(deck);
+    final placeholders = List.filled(ids.length, '?').join(',');
+    return _database
+        .select(
+          'SELECT 1 FROM cards WHERE did IN ($placeholders) AND queue IN (-2, -3) LIMIT 1',
+          ids.map(_toSqlInt64).toList(growable: false),
+        )
+        .isNotEmpty;
+  }
+
+  /// Creates missing normal-deck ancestors and returns the requested deck.
+  Future<Deck> getOrCreateNormalDeck(String name) async {
+    final normalized = normalizeDeckName(name);
+    final components = normalized.split('::');
+    var result = _deckStorage.getDeck(Int64.ONE);
+    for (var count = 1; count <= components.length; count++) {
+      final currentName = components.take(count).join('::');
+      final nativeName = currentName.replaceAll('::', '\x1f');
+      final existingId = _deckStorage.getDeckId(nativeName);
+      if (existingId != null) {
+        result = _deckStorage.getDeck(existingId);
+        continue;
+      }
+      final initial = Deck.newNormal();
+      final added = _deckStorage.addDeck(
+        Deck(name: currentName, common: initial.common, kind: initial.kind),
+      );
+      result = added;
+      await _flushIfAutocommit();
+    }
+    if (result == null) throw StateError('default deck not found');
+    return result;
+  }
+
+  Future<void> _unburyIfDayRolledOver(int today) async {
+    final lastUnburied = _readConfigInt('lastUnburied') ?? 0;
+    if (!(lastUnburied < today || today + 7 < lastUnburied)) return;
+    _database.execute('begin');
+    try {
+      _database.execute('''
+UPDATE cards
+SET queue = CASE
+  WHEN type = 0 THEN 0
+  WHEN type = 2 THEN 2
+  WHEN type IN (1, 3) THEN CASE WHEN due > 1000000000 THEN 1 ELSE 3 END
+  ELSE queue
+END
+WHERE queue IN (-2, -3)
+''');
+      _database.execute(
+        'INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) VALUES (?, -1, ?, ?)',
+        [
+          'lastUnburied',
+          DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          utf8.encode(jsonEncode(today)),
+        ],
+      );
+      _database.execute('commit');
+      await _flush();
+    } catch (error, stackTrace) {
+      try {
+        _database.execute('rollback');
+      } catch (_) {
+        // Preserve the unbury failure.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  int? _readConfigInt(String key) {
+    final rows = _database.select('SELECT val FROM config WHERE key = ?', [
+      key,
+    ]);
+    if (rows.isEmpty) return null;
+    final value = _decodeJsonValue(rows.single['val']);
+    return value is int ? value : null;
+  }
+
+  Future<void> _writeConfigValue(String key, String encodedJson) async {
+    _database.execute(
+      'INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) VALUES (?, -1, ?, ?)',
+      [
+        key,
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        utf8.encode(encodedJson),
+      ],
+    );
+    await _flushIfAutocommit();
+  }
+
+  bool? _readConfigBool(String key) {
+    final rows = _database.select('SELECT val FROM config WHERE key = ?', [
+      key,
+    ]);
+    if (rows.isEmpty) return null;
+    final value = _decodeJsonValue(rows.single['val']);
+    return value is bool ? value : null;
+  }
+
+  static Map<String, Object?> _decodeJsonObjectOrEmpty(Object? value) {
+    if (value == null || value == '') return const {};
+    final decoded = _decodeJsonValue(value);
+    if (decoded is Map<String, Object?>) return decoded;
+    throw const FormatException('Invalid collection config JSON object');
+  }
+
+  static Object? _decodeJsonValue(Object? value) {
+    final text = switch (value) {
+      String string => string,
+      Uint8List bytes => utf8.decode(bytes),
+      List<int> bytes => utf8.decode(bytes),
+      _ => throw FormatException('Invalid JSON config value: $value'),
+    };
+    return jsonDecode(text);
+  }
+
+  static int? _optionalJsonInt(Object? value) => value is int ? value : null;
 
   /// Returns a stored card, or null when no card has [id].
   Future<Card?> getCard(CardId id) async {

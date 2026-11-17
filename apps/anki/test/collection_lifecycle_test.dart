@@ -40,6 +40,19 @@ void main() {
     expect(await firstStorage.queryInt('select ver from col'), 18);
     expect(await firstStorage.queryInt('select count(*) from decks'), 1);
     expect(await firstStorage.queryInt('select count(*) from notetypes'), 6);
+    expect(services.deckPicker, isA<CollectionDeckPickerRepository>());
+    expect((await services.deckPicker.loadDecks()).map((deck) => deck.name), [
+      'Default',
+    ]);
+    await tester.tap(find.text('Open decks'));
+    await tester.pumpAndSettle();
+    expect(find.text('Default'), findsOneWidget);
+    final secondDeck = await firstStorage.getOrCreateNormalDeck('Second');
+    await expectLater(
+      services.deckPicker.study(secondDeck.id.toInt()),
+      throwsUnsupportedError,
+    );
+    expect(services.deckPicker.currentDeckId, 1);
     await services.collections.close();
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -56,7 +69,7 @@ void main() {
       await services.collections.storage!.queryInt(
         'select count(*) from decks',
       ),
-      1,
+      2,
     );
     expect(
       await services.collections.storage!.queryInt(

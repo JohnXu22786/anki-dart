@@ -11,8 +11,9 @@ Its license is reproduced at
 `SOURCE.sha256`.
 
 The application code and profile-scoped runtime are Copyright © 2026 John
-Tsui and distributed under GPL-3.0-or-later. This runtime uses the existing
-`anki_collection_sqlite` package, whose Anki Core source mappings and notices
+Tsui and distributed under AGPL-3.0-or-later, matching the linked Anki
+collection runtime. The complete license text is in `LICENSE`. This runtime
+uses the existing `anki_collection_sqlite` package, whose Anki Core source mappings and notices
 are documented in `../../packages/anki_collection_sqlite/NOTICE.md`.
 
 The app collection lifecycle in `lib/startup_shell.dart` and

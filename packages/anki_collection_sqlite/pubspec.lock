@@ -45,6 +45,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  anki_scheduler_timing:
+    dependency: "direct main"
+    description:
+      path: "../anki_scheduler_timing"
+      relative: true
+    source: path
+    version: "0.1.0"
   anki_search_parser:
     dependency: transitive
     description:

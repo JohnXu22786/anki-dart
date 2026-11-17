@@ -14,9 +14,11 @@ Dart; `apps/anki` depends on it through a local path dependency.
 `AppServices` injects storage/startup, profile, and deck picker repository
 boundaries. The Deck Picker renders host-projected deck trees, counts, and
 filtered-deck options; it delegates selection, study, deck operations, and
-filtered-deck building to the injected `DeckPickerRepository`. The default
-repository shows a localized unavailable state until a platform/backend
-adapter is connected.
+filtered-deck building to the injected `DeckPickerRepository`. Default app
+services connect it to the active SQLite collection for deck hierarchy,
+official due-count projection, selection, collapse, and normal-deck creation.
+Reviewer navigation, filtered-deck operations, and remaining deck actions are
+still being ported and surface explicit unavailable errors.
 The shared Dart profile manager chooses the default profile, generates unique
 IDs, and runs ordered profile-switch safety checks. The default app services
 persist onboarding completion, ordered profile records, and active-profile
@@ -27,8 +29,9 @@ collection, applies schema migrations and first-create defaults, and exposes a
 retry when opening fails. Profile switching flushes and closes the old
 collection before persisting the target, then opens the target collection.
 Corrupt or incompatible collection files are surfaced without deleting them.
-The Deck Picker still uses its injected repository boundary and remains
-unavailable until a real repository is connected.
+The repository reads each profile's open collection at the point of use, so
+profile switching changes the collection seen by the Deck Picker without
+rebuilding the application services.
 
 The profile flow follows AnkiDroid 2.25.3 at pinned commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. See the root

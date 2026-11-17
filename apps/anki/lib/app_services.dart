@@ -83,6 +83,10 @@ final class UnavailableCardBrowserController implements CardBrowserController {
   Future<void> manageColumns() => Future.error(_unavailable);
 
   @override
+  Future<void> saveColumns(List<BrowserColumn> columns) =>
+      Future.error(_unavailable);
+
+  @override
   Future<void> updateSelection(List<BrowserRowId> selectedRows) =>
       Future.error(_unavailable);
 

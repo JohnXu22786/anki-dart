@@ -12,6 +12,8 @@ import 'package:anki_dart/profile_onboarding.dart'
     show ProfileId, ProfileName, ProfileNameValid;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 void main() {
@@ -19,6 +21,8 @@ void main() {
   late _MemoryStore store;
 
   setUp(() async {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
     directory = await Directory.systemTemp.createTemp('anki-collection-app-');
     store = _MemoryStore();
   });

@@ -115,6 +115,128 @@ void main() {
     expect(find.byKey(const ValueKey('browser-search-retry')), findsOneWidget);
   });
 
+  testWidgets('column options cannot remove the last active column', (
+    tester,
+  ) async {
+    final controller = _Controller(
+      CardBrowserSnapshot(
+        columns: const [
+          CardBrowserColumn(type: BrowserColumn.deck, label: 'Deck'),
+        ],
+        rows: [
+          CardBrowserRow(id: const BrowserRowId(5), cells: {'deck': 'Default'}),
+        ],
+      ),
+    );
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-heading-deck')));
+    await tester.pumpAndSettle();
+    final remove = tester.widget<ListTile>(
+      find.ancestor(
+        of: find.text('Remove column'),
+        matching: find.byType(ListTile),
+      ),
+    );
+    expect(remove.enabled, isFalse);
+  });
+
+  testWidgets(
+    'column manager and options stay available on narrow empty results',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final controller = _Controller(
+        CardBrowserSnapshot(
+          columns: const [
+            CardBrowserColumn(type: BrowserColumn.deck, label: 'Deck'),
+          ],
+          rows: const [],
+        ),
+      );
+      await tester.pumpWidget(_app(controller, const Size(360, 800)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('browser-manage-columns')));
+      await tester.pumpAndSettle();
+      expect(find.text('Manage columns'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('browser-column-options-menu')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Deck'));
+      await tester.pumpAndSettle();
+      expect(find.text('Remove column'), findsOneWidget);
+      await tester.tap(find.text('Manage columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(
+        _app(
+          _Controller(
+            CardBrowserSnapshot(
+              columns: const [
+                CardBrowserColumn(type: BrowserColumn.deck, label: 'Deck'),
+              ],
+              rows: [
+                CardBrowserRow(
+                  id: const BrowserRowId(3),
+                  cells: {'deck': 'Default'},
+                ),
+              ],
+            ),
+          ),
+          const Size(360, 800),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('browser-column-options-deck')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Remove column'), findsOneWidget);
+    },
+  );
+
+  testWidgets('manage columns blocks empty and applies edited order', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample());
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(
+      find.byKey(const ValueKey('browser-heading-noteTags')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('browser-column-noteTags')));
+    await tester.tap(find.byKey(const ValueKey('browser-column-question')));
+    await tester.pumpAndSettle();
+    final apply = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Apply'),
+    );
+    expect(apply.onPressed, isNull);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(
+      find.byKey(const ValueKey('browser-heading-noteTags')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Move up').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    expect(controller.savedColumns, [
+      BrowserColumn.question,
+      BrowserColumn.tags,
+    ]);
+  });
+
   testWidgets('sort, preview, edit, and bulk actions use injected callbacks', (
     tester,
   ) async {
@@ -124,12 +246,19 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('browser-heading-question')));
     await tester.pumpAndSettle();
-    expect(controller.openedColumnOptions, [BrowserColumn.question]);
+    expect(find.text('Remove column'), findsOneWidget);
+    await tester.tap(find.text('Remove column'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('browser-heading-question')),
+    );
     await tester.longPress(
       find.byKey(const ValueKey('browser-heading-question')),
     );
     await tester.pumpAndSettle();
-    expect(controller.manageColumnsCount, 1);
+    expect(find.text('Manage columns'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('browser-sort-menu')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sort cards: Question'));
@@ -364,6 +493,7 @@ final class _Controller implements CardBrowserController {
   final queries = <String>[];
   final sortedColumns = <BrowserColumn>[];
   final openedColumnOptions = <BrowserColumn>[];
+  List<BrowserColumn>? savedColumns;
   int manageColumnsCount = 0;
   final selectedRows = <BrowserRowId>[];
   final selectionUpdates = <List<BrowserRowId>>[];
@@ -412,6 +542,11 @@ final class _Controller implements CardBrowserController {
 
   @override
   Future<void> manageColumns() async => manageColumnsCount++;
+
+  @override
+  Future<void> saveColumns(List<BrowserColumn> columns) async {
+    savedColumns = List.of(columns);
+  }
 
   @override
   Future<void> updateSelection(List<BrowserRowId> rows) async {

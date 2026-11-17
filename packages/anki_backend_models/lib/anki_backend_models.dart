@@ -6,6 +6,7 @@ export 'src/note.dart';
 export 'src/notetype.dart';
 export 'src/note_field.dart';
 export 'src/card_template.dart';
+export 'src/browser_card_template_renderer.dart';
 export 'src/ids.dart';
 export 'src/deck.dart';
 export 'src/deck_config.dart';

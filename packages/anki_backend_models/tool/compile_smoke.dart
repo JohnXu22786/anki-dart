@@ -61,4 +61,29 @@ void main() {
       state != notes.NoteFieldsCheckResponse_State.NORMAL) {
     throw StateError('note field validation differs on JavaScript');
   }
+  final rendererType = Notetype(
+    id: NotetypeId(Int64(8)),
+    fields: [
+      NoteField(name: 'field', config: proto.Notetype_Field_Config()),
+    ],
+    templates: [
+      CardTemplate(
+        name: 'Card 1',
+        config: proto.Notetype_Template_Config(
+          qFormatBrowser: '{{hint:field}}',
+          aFormatBrowser: '{{FrontSide}}',
+        ),
+      ),
+    ],
+    config: Notetype.defaultConfig(),
+  );
+  final rendered = const BrowserCardTemplateRenderer().render(
+    note: Note(id: Int64(9), notetypeId: Int64(8), fields: ['foo']),
+    card: Card(id: Int64(10)),
+    notetype: rendererType,
+  );
+  if (!rendered.isAvailable ||
+      !rendered.questionHtml!.contains('hint83fe48607f0f3a66')) {
+    throw StateError('browser template rendering differs on JavaScript');
+  }
 }

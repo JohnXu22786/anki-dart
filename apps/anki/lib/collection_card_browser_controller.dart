@@ -322,6 +322,22 @@ final class CollectionCardBrowserController
     Map<String, models.Deck> decksById,
     models.Notetype notetype,
   ) => switch (column) {
+    BrowserColumn.question => _renderedCardSide(
+      note,
+      card,
+      mode == BrowserColumnMode.cards ? const [] : noteCards,
+      notetype,
+      decksById,
+      answer: false,
+    ),
+    BrowserColumn.answer => _renderedCardSide(
+      note,
+      card,
+      mode == BrowserColumnMode.cards ? const [] : noteCards,
+      notetype,
+      decksById,
+      answer: true,
+    ),
     BrowserColumn.sortField => _sortField(note, notetype),
     BrowserColumn.noteType => notetype.name,
     BrowserColumn.cardType when mode == BrowserColumnMode.cards =>
@@ -333,6 +349,40 @@ final class CollectionCardBrowserController
     BrowserColumn.tags => note.tags.join(' '),
     _ => 'Unavailable',
   };
+
+  String _renderedCardSide(
+    models.Note note,
+    models.Card? selectedCard,
+    List<models.Card> noteCards,
+    models.Notetype notetype,
+    Map<String, models.Deck> decksById, {
+    required bool answer,
+  }) {
+    final card = selectedCard ?? _firstNoteCard(noteCards);
+    if (card == null) return 'Unavailable';
+    final deckId = card.originalDeckId.toInt() == 0
+        ? card.deckId
+        : card.originalDeckId;
+    final sides = const models.BrowserCardTemplateRenderer().render(
+      note: note,
+      card: card,
+      notetype: notetype,
+      deckName: decksById[deckId.toString()]?.name ?? '(Deck)',
+    );
+    if (!sides.isAvailable) return 'Unavailable';
+    final question = sides.questionHtml!;
+    var html = answer ? sides.answerHtml! : question;
+    if (answer && html.startsWith(question)) {
+      html = html.substring(question.length);
+    }
+    return browserHtmlToTextLine(html, preserveMediaFilenames: true);
+  }
+
+  models.Card? _firstNoteCard(List<models.Card> cards) {
+    // Core renders cards[0] from all_cards_of_note(), whose query has no
+    // ORDER BY. Preserve the storage adapter's returned order here too.
+    return cards.isEmpty ? null : cards.first;
+  }
 
   String _sortField(models.Note note, models.Notetype notetype) {
     final index = notetype.config.sortFieldIdx;
@@ -364,6 +414,8 @@ final class CollectionCardBrowserController
 
   String _columnLabel(BrowserColumn column, BrowserColumnMode mode) =>
       switch (column) {
+        BrowserColumn.question => 'Question',
+        BrowserColumn.answer => 'Answer',
         BrowserColumn.sortField => 'Sort field',
         BrowserColumn.deck => 'Deck',
         BrowserColumn.tags => 'Tags',

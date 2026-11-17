@@ -59,3 +59,19 @@ file. The field-empty predicate matches Anki Core's ASCII whitespace and empty
 source order and returns a set of names, omitting values with no matching field.
 
 The `Tag` value model follows `rslib/src/tags/mod.rs` at the pinned Anki Core commit; its SHA-256 is recorded in `SOURCE.sha256`.
+
+
+The platform-neutral browser card-template renderer also follows Anki Core's
+`rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,
+`rslib/src/text.rs`, `rslib/src/browser_table.rs`,
+`rslib/src/notetype/render.rs`, `rslib/src/notetype/templates.rs`,
+`rslib/src/storage/card/mod.rs`, and
+`rslib/src/card_rendering/{mod.rs,parser.rs,writer.rs}` at the same pinned
+Anki Core commit. These files' SHA-256 digests are included in
+`SOURCE.sha256`. Browser template failures and cases not represented by this
+renderer return an explicit unavailable result; the app applies Core's
+`html_to_text_line(..., true)` projection to successful rendered sides.
+Missing selected cloze ordinals and Core-reported template errors are
+represented as unavailable rows because this slice does not port Core's
+localized template-rendering error catalogue. Incomplete handlebars that Core
+tokenizes as literal text are preserved verbatim, matching Core's lexer.

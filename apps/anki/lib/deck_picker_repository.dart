@@ -79,7 +79,6 @@ final class CollectionDeckPickerRepository implements DeckPickerRepository {
 
   @override
   Future<void> study(int deckId) async {
-    await selectDeck(deckId);
     throw UnsupportedError('The Reviewer screen is not implemented yet.');
   }
 

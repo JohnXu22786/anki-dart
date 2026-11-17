@@ -37,6 +37,14 @@ final class BrowserSelectionExportPlan {
   final List<int> ids;
 }
 
+/// BigInt-safe export selection for Web collections with wide card IDs.
+final class BrowserSelectionExportBigIntPlan {
+  BrowserSelectionExportBigIntPlan._(this.type, this.ids);
+
+  final BrowserSelectionExportType type;
+  final List<BigInt> ids;
+}
+
 /// Projects the source selected-row export data, or `null` for no selection.
 ///
 /// [selectedRows] is expected to reflect the source LinkedHashSet iteration
@@ -47,7 +55,7 @@ BrowserSelectionExportPlan? planBrowserSelectionExport({
   required BrowserColumnMode mode,
   required Iterable<BrowserRowId> selectedRows,
 }) {
-  final ids = selectedRows.map((row) => row.value).toList();
+  final ids = selectedRows.map((row) => row.safeIntValue).toList();
   if (ids.isEmpty) return null;
 
   final type = switch (mode) {
@@ -55,4 +63,18 @@ BrowserSelectionExportPlan? planBrowserSelectionExport({
     BrowserColumnMode.notes => BrowserSelectionExportType.notes,
   };
   return BrowserSelectionExportPlan._(type, ids);
+}
+
+/// BigInt-safe form of [planBrowserSelectionExport].
+BrowserSelectionExportBigIntPlan? planBrowserSelectionExportBigInt({
+  required BrowserColumnMode mode,
+  required Iterable<BrowserRowId> selectedRows,
+}) {
+  final ids = selectedRows.map((row) => row.bigValue).toList();
+  if (ids.isEmpty) return null;
+  final type = switch (mode) {
+    BrowserColumnMode.cards => BrowserSelectionExportType.cards,
+    BrowserColumnMode.notes => BrowserSelectionExportType.notes,
+  };
+  return BrowserSelectionExportBigIntPlan._(type, ids);
 }

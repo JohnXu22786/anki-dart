@@ -47,6 +47,19 @@ void main() {
       expect(selected, [const BrowserRowId(90)]);
     });
 
+    test(
+      'BigInt payload preserves IDs beyond JavaScript safe integer range',
+      () {
+        final wideId = BigInt.parse('9007199254740993');
+        final payload = browserSavedSelectionPayloadBigIntIds(
+          pendingSelectionRestore: [BrowserRowId.bigInt(wideId)],
+          selectedRows: const [],
+        );
+
+        expect(payload, [wideId]);
+      },
+    );
+
     test('empty restore snapshots selected rows in order with duplicates', () {
       final selected = [
         const BrowserRowId(8),

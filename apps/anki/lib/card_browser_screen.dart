@@ -475,7 +475,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                   final row = snapshot.rows[index];
                   final selected = _selectedRows.contains(row.id);
                   return Semantics(
-                    key: ValueKey('browser-row-${row.id.value}'),
+                    key: ValueKey('browser-row-${row.id.bigValue}'),
                     container: true,
                     button: true,
                     selected: selected,
@@ -577,7 +577,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       final row = snapshot.rows[index];
       final selected = _selectedRows.contains(row.id);
       return Semantics(
-        key: ValueKey('browser-row-${row.id.value}'),
+        key: ValueKey('browser-row-${row.id.bigValue}'),
         container: true,
         button: true,
         selected: selected,
@@ -647,8 +647,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
 
   String _rowTitle(CardBrowserRow row) {
     final columns = _snapshot?.columns ?? const <CardBrowserColumn>[];
-    if (columns.isEmpty) return row.id.value.toString();
-    return row.cells[columns.first.type.key] ?? row.id.value.toString();
+    if (columns.isEmpty) return row.id.bigValue.toString();
+    return row.cells[columns.first.type.key] ?? row.id.bigValue.toString();
   }
 
   String _rowLabel(CardBrowserRow row, List<CardBrowserColumn> columns) =>

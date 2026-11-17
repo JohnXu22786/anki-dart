@@ -462,6 +462,33 @@ WHERE queue IN (-2, -3)
     return rows.isEmpty ? null : _cardFromRow(rows.first);
   }
 
+  /// Returns stored cards in the requested ID order, omitting missing IDs.
+  ///
+  /// IDs are chunked to stay below conservative SQLite bind-parameter limits.
+  Future<List<Card>> getCardsByIds(Iterable<CardId> ids) async {
+    final orderedIds = ids.toList(growable: false);
+    if (orderedIds.isEmpty) return const [];
+    final cardsById = <String, Card>{};
+    for (var start = 0; start < orderedIds.length; start += 500) {
+      final chunk = orderedIds.skip(start).take(500).toList(growable: false);
+      final placeholders = List.filled(chunk.length, '?').join(', ');
+      final rows = _database.select(
+        'SELECT id, nid, did, ord, cast(mod AS integer), usn, type, queue, '
+        'due, cast(ivl AS integer), factor, reps, lapses, left, odue, odid, '
+        'flags, data FROM cards WHERE id IN ($placeholders)',
+        chunk.map(_toSqlInt64).toList(growable: false),
+      );
+      for (final row in rows) {
+        final card = _cardFromRow(row);
+        cardsById[card.id.toString()] = card;
+      }
+    }
+    return [
+      for (final id in orderedIds)
+        if (cardsById[id.toString()] case final card?) card,
+    ];
+  }
+
   /// Updates all persisted scheduling fields for [card].
   Future<void> updateCard(Card card) async {
     _database.execute('''
@@ -597,6 +624,32 @@ WHERE queue IN (-2, -3)
       [_toSqlInt64(noteId)],
     );
     return rows.isEmpty ? null : _noteFromRow(rows.first);
+  }
+
+  /// Returns stored notes in the requested ID order, omitting missing IDs.
+  ///
+  /// IDs are chunked to stay below conservative SQLite bind-parameter limits.
+  Future<List<Note>> getNotesByIds(Iterable<NoteId> ids) async {
+    final orderedIds = ids.toList(growable: false);
+    if (orderedIds.isEmpty) return const [];
+    final notesById = <String, Note>{};
+    for (var start = 0; start < orderedIds.length; start += 500) {
+      final chunk = orderedIds.skip(start).take(500).toList(growable: false);
+      final placeholders = List.filled(chunk.length, '?').join(', ');
+      final rows = _database.select(
+        'SELECT id, guid, mid, mod, usn, tags, flds, cast(sfld AS text), csum '
+        'FROM notes WHERE id IN ($placeholders)',
+        chunk.map(_toSqlInt64).toList(growable: false),
+      );
+      for (final row in rows) {
+        final note = _noteFromRow(row);
+        notesById[note.id.toString()] = note;
+      }
+    }
+    return [
+      for (final id in orderedIds)
+        if (notesById[id.toString()] case final note?) note,
+    ];
   }
 
   /// Returns a stored note without loading its fields.

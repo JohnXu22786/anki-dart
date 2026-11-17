@@ -13,6 +13,10 @@ dependencies:
     path: ../..
   anki_collection_sqlite:
     path: ../../packages/anki_collection_sqlite
+  anki_search_parser:
+    path: ../../packages/anki_search_parser
+  anki_search_sql:
+    path: ../../packages/anki_search_sql
   anki_backend_models:
     path: ../../packages/anki_backend_models
   anki_backend_protocol:

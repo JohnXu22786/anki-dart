@@ -35,5 +35,17 @@ List<int>? browserSavedSelectionPayloadIds({
       ? pendingSelectionRestore
       : List<BrowserRowId>.of(selectedRows);
   if (selection.isEmpty) return null;
-  return List<int>.unmodifiable(selection.map((row) => row.value));
+  return List<int>.unmodifiable(selection.map((row) => row.safeIntValue));
+}
+
+/// BigInt-safe form of [browserSavedSelectionPayloadIds].
+List<BigInt>? browserSavedSelectionPayloadBigIntIds({
+  required List<BrowserRowId> pendingSelectionRestore,
+  required Iterable<BrowserRowId> selectedRows,
+}) {
+  final selection = pendingSelectionRestore.isNotEmpty
+      ? pendingSelectionRestore
+      : List<BrowserRowId>.of(selectedRows);
+  if (selection.isEmpty) return null;
+  return List<BigInt>.unmodifiable(selection.map((row) => row.bigValue));
 }

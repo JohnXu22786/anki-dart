@@ -32,6 +32,17 @@ void main() {
       );
     });
 
+    test('BigInt plan preserves IDs beyond JavaScript safe range', () {
+      final wideId = BigInt.parse('9007199254740993');
+      final plan = planBrowserSelectionExportBigInt(
+        mode: BrowserColumnMode.cards,
+        selectedRows: [BrowserRowId.bigInt(wideId)],
+      );
+
+      expect(plan?.type, BrowserSelectionExportType.cards);
+      expect(plan?.ids, [wideId]);
+    });
+
     test('uses Cards export kind and returns card IDs in source order', () {
       final plan = planBrowserSelectionExport(
         mode: BrowserColumnMode.cards,

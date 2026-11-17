@@ -31,25 +31,55 @@ import 'browser_column_collection.dart';
 /// how the browser passes IDs to it.
 typedef BrowserNotesOfCards = FutureOr<List<int>> Function(List<int> cardIds);
 
+/// BigInt-safe note lookup for JavaScript and other wide-ID hosts.
+typedef BrowserNotesOfCardsBigInt =
+    FutureOr<List<BigInt>> Function(List<BigInt> cardIds);
+
 /// Resolves all card IDs belonging to one note ID.
 ///
 /// The host supplies the collection-backed lookup.
 typedef BrowserCardIdsOfNote = FutureOr<List<int>> Function(int noteId);
 
+/// BigInt-safe card lookup for JavaScript and other wide-ID hosts.
+typedef BrowserCardIdsOfNoteBigInt =
+    FutureOr<List<BigInt>> Function(BigInt noteId);
+
 /// The numeric ID stored by one Card Browser row.
 ///
 /// Its meaning is determined by the associated [BrowserColumnMode].
 final class BrowserRowId {
-  const BrowserRowId(this.value);
+  const BrowserRowId(int value) : _intValue = value, _bigIntValue = null;
 
-  final int value;
+  const BrowserRowId.bigInt(BigInt value)
+    : _intValue = null,
+      _bigIntValue = value;
+
+  final int? _intValue;
+  final BigInt? _bigIntValue;
+
+  /// Legacy `int` accessor. It throws when the exact ID is not safe on Web.
+  int get value => _intValue ?? _toSafeLegacyInt(_bigIntValue!);
+
+  /// Returns the exact signed 64-bit ID without narrowing on Web.
+  BigInt get bigValue => _bigIntValue ?? BigInt.from(_intValue!);
+
+  /// Returns a legacy Dart `int` only when it is exact on JavaScript too.
+  int get safeIntValue => _toSafeLegacyInt(bigValue);
 
   /// Selects the card or note identity used by a browser row.
   factory BrowserRowId.fromCard({
-    required int cardId,
-    required int noteId,
+    required Object cardId,
+    required Object noteId,
     required BrowserColumnMode mode,
-  }) => BrowserRowId(mode == BrowserColumnMode.cards ? cardId : noteId);
+  }) => switch (mode == BrowserColumnMode.cards ? cardId : noteId) {
+    final BigInt id => BrowserRowId.bigInt(id),
+    final int id => BrowserRowId(id),
+    final Object id => throw ArgumentError.value(
+      id,
+      'id',
+      'Must be int or BigInt',
+    ),
+  };
 
   /// Returns this ID as a card ID, resolving a note to its first card if needed.
   ///
@@ -58,24 +88,51 @@ final class BrowserRowId {
     BrowserColumnMode mode, {
     BrowserCardIdsOfNote? cardIdsOfNote,
   }) async {
-    if (mode == BrowserColumnMode.cards) return value;
+    final id = await toCardIdBigInt(
+      mode,
+      cardIdsOfNote: cardIdsOfNote == null
+          ? null
+          : (noteId) async => [
+              for (final id in await cardIdsOfNote(_toSafeLegacyInt(noteId)))
+                BigInt.from(id),
+            ],
+    );
+    return id == null ? null : _toSafeLegacyInt(id);
+  }
+
+  /// BigInt-safe form of [toCardId], preserving all signed 64-bit values.
+  Future<BigInt?> toCardIdBigInt(
+    BrowserColumnMode mode, {
+    BrowserCardIdsOfNoteBigInt? cardIdsOfNote,
+  }) async {
+    if (mode == BrowserColumnMode.cards) return bigValue;
     final lookup = cardIdsOfNote;
     if (lookup == null) {
       throw StateError('cardIdsOfNote is required in Notes mode');
     }
-    final cardIds = await lookup(value);
+    final cardIds = await lookup(bigValue);
     return cardIds.isEmpty ? null : cardIds.first;
   }
 
   @override
-  String toString() => value.toString();
+  String toString() => bigValue.toString();
 
   @override
   bool operator ==(Object other) =>
-      other is BrowserRowId && other.value == value;
+      other is BrowserRowId && other.bigValue == bigValue;
 
   @override
-  int get hashCode => value.hashCode;
+  int get hashCode => bigValue.hashCode;
+}
+
+int _toSafeLegacyInt(BigInt value) {
+  final safeLimit = BigInt.from(9007199254740991);
+  if (value < -safeLimit || value > safeLimit) {
+    throw RangeError(
+      'Browser row ID $value exceeds JavaScript safe integer range',
+    );
+  }
+  return value.toInt();
 }
 
 /// Returns the first position of [rowId] or `null` when it is not in [rowIds].
@@ -249,7 +306,20 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
 
   /// Returns row note IDs directly in Notes mode, otherwise using [notesOfCards].
   Future<List<int>> queryNoteIds({BrowserNotesOfCards? notesOfCards}) async {
-    final rowIds = _backingRows.map((row) => row.value).toList();
+    final rowIds = _backingRows.map((row) => _legacyValue(row)).toList();
+    if (_mode == BrowserColumnMode.notes) return rowIds;
+    final lookup = notesOfCards;
+    if (lookup == null) {
+      throw StateError('notesOfCards is required in Cards mode');
+    }
+    return await lookup(rowIds);
+  }
+
+  /// BigInt-safe form of [queryNoteIds].
+  Future<List<BigInt>> queryNoteIdsBigInt({
+    BrowserNotesOfCardsBigInt? notesOfCards,
+  }) async {
+    final rowIds = _backingRows.map((row) => row.bigValue).toList();
     if (_mode == BrowserColumnMode.notes) return rowIds;
     final lookup = notesOfCards;
     if (lookup == null) {
@@ -264,15 +334,35 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
   /// later mutation of the aliased row list does not change this query.
   Future<List<int>> queryCardIds({BrowserCardIdsOfNote? cardIdsOfNote}) async {
     if (_mode == BrowserColumnMode.cards) {
-      return _backingRows.map((row) => row.value).toList();
+      return _backingRows.map((row) => _legacyValue(row)).toList();
     }
-    final noteIds = _backingRows.map((row) => row.value).toList();
+    final noteIds = _backingRows.map((row) => _legacyValue(row)).toList();
     if (noteIds.isEmpty) return [];
     final lookup = cardIdsOfNote;
     if (lookup == null) {
       throw StateError('cardIdsOfNote is required in Notes mode');
     }
     final cardIds = <int>[];
+    for (final noteId in noteIds) {
+      cardIds.addAll(await lookup(noteId));
+    }
+    return cardIds;
+  }
+
+  /// BigInt-safe form of [queryCardIds].
+  Future<List<BigInt>> queryCardIdsBigInt({
+    BrowserCardIdsOfNoteBigInt? cardIdsOfNote,
+  }) async {
+    if (_mode == BrowserColumnMode.cards) {
+      return _backingRows.map((row) => row.bigValue).toList();
+    }
+    final noteIds = _backingRows.map((row) => row.bigValue).toList();
+    if (noteIds.isEmpty) return [];
+    final lookup = cardIdsOfNote;
+    if (lookup == null) {
+      throw StateError('cardIdsOfNote is required in Notes mode');
+    }
+    final cardIds = <BigInt>[];
     for (final noteId in noteIds) {
       cardIds.addAll(await lookup(noteId));
     }
@@ -288,9 +378,9 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
     BrowserCardIdsOfNote? cardIdsOfNote,
   }) async {
     if (_mode == BrowserColumnMode.cards) {
-      return _backingRows.map((row) => row.value).toList();
+      return _backingRows.map((row) => _legacyValue(row)).toList();
     }
-    final noteIds = _backingRows.map((row) => row.value).toList();
+    final noteIds = _backingRows.map((row) => _legacyValue(row)).toList();
     if (noteIds.isEmpty) return [];
     final lookup = cardIdsOfNote;
     if (lookup == null) {
@@ -303,12 +393,46 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
     return cardIds;
   }
 
+  /// BigInt-safe form of [queryOneCardIdPerRow].
+  Future<List<BigInt>> queryOneCardIdPerRowBigInt({
+    BrowserCardIdsOfNoteBigInt? cardIdsOfNote,
+  }) async {
+    if (_mode == BrowserColumnMode.cards) {
+      return _backingRows.map((row) => row.bigValue).toList();
+    }
+    final noteIds = _backingRows.map((row) => row.bigValue).toList();
+    if (noteIds.isEmpty) return [];
+    final lookup = cardIdsOfNote;
+    if (lookup == null) {
+      throw StateError('cardIdsOfNote is required in Notes mode');
+    }
+    final cardIds = <BigInt>[];
+    for (final noteId in noteIds) {
+      cardIds.add((await lookup(noteId)).first);
+    }
+    return cardIds;
+  }
+
   /// Resolves only the row at [position] to card IDs.
   Future<List<int>> queryCardIdsAt(
     int position, {
     BrowserCardIdsOfNote? cardIdsOfNote,
   }) async {
-    final rowId = _backingRows[position].value;
+    final rowId = _legacyValue(_backingRows[position]);
+    if (_mode == BrowserColumnMode.cards) return [rowId];
+    final lookup = cardIdsOfNote;
+    if (lookup == null) {
+      throw StateError('cardIdsOfNote is required in Notes mode');
+    }
+    return await lookup(rowId);
+  }
+
+  /// BigInt-safe form of [queryCardIdsAt].
+  Future<List<BigInt>> queryCardIdsAtBigInt(
+    int position, {
+    BrowserCardIdsOfNoteBigInt? cardIdsOfNote,
+  }) async {
+    final rowId = _backingRows[position].bigValue;
     if (_mode == BrowserColumnMode.cards) return [rowId];
     final lookup = cardIdsOfNote;
     if (lookup == null) {
@@ -318,6 +442,8 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
   }
 }
 
+int _legacyValue(BrowserRowId row) => _toSafeLegacyInt(row.bigValue);
+
 /// Returns the first card ID for the row at [index], as the Card Browser does.
 ///
 /// The host supplies the collection lookup through [queryCardIdsAt]. The index
@@ -325,4 +451,10 @@ final class BrowserRowCollection extends ListBase<BrowserRowId> {
 Future<int> browserCardIdAtPosition({
   required int index,
   required FutureOr<List<int>> Function(int index) queryCardIdsAt,
+}) async => (await queryCardIdsAt(index)).first;
+
+/// BigInt-safe form of [browserCardIdAtPosition].
+Future<BigInt> browserCardBigIntIdAtPosition({
+  required int index,
+  required FutureOr<List<BigInt>> Function(int index) queryCardIdsAt,
 }) async => (await queryCardIdsAt(index)).first;

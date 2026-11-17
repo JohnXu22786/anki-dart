@@ -57,6 +57,27 @@ void main() {
     },
   );
 
+  testWidgets('renders BigInt row IDs without JavaScript narrowing', (
+    tester,
+  ) async {
+    final wideId = BigInt.parse('9007199254740993');
+    final controller = _Controller(
+      CardBrowserSnapshot(
+        columns: const [],
+        rows: [
+          CardBrowserRow(id: BrowserRowId.bigInt(wideId), cells: const {}),
+        ],
+      ),
+    );
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('browser-row-9007199254740993')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('search exposes searching, empty, and failure states', (
     tester,
   ) async {

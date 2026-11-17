@@ -11,6 +11,13 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_COMMIT = "e64c6b1aee3e8d668fb8bbe084beada8e070d985"
 UNICODE_CASE_FOLDING = "9c772627c6ee77eea6a17b42927b8ee28ca05dc65d6a511062104baaf3d12294"
 SOURCE_HASHES = {
+    "rslib/src/storage/card/mod.rs": "423e00d89092a4f1ab8e03923bfa8db455748043276c7bd647e2704bfcf7da95",
+    "rslib/src/browser_table.rs": "e5749150fefa0955629c635c2e55b2f934fcb00d3e461c9e8426aa4e77fea573",
+    "rslib/src/card_rendering/mod.rs": "e42521c0a36dc06898cc6d1e472a05051a77a418910d1ef362a67f3d04f7246a",
+    "rslib/src/card_rendering/parser.rs": "b85262f63e71c0d97389913e6163a9a99ef9fc30ba0a7860d724eada490ddcbd",
+    "rslib/src/card_rendering/writer.rs": "cc161fd95826a8fe39eefe83566fbfa1e5d8c685fb84c6b765baf89bc12983e1",
+    "rslib/src/notetype/render.rs": "e5652c4ba780534e33e9d361b61b4124c33939b90a3b884e98ef6521f176bf29",
+    "rslib/src/template_filters.rs": "3b7d392fd119498ea1dcee1d44492884b2d9257808da76c5d037289555b7d8ca",
     "rslib/src/card/mod.rs": "cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9",
     "rslib/src/cloze.rs": "478a35d1248be262ed2d0941202ac8f201c7eb0a5c57b7198d3ace03898fd1c5",
     "rslib/src/card/service.rs": "8ddddbf879e08cb70ea00e9f00ac6c98f9f3988af65c48598a6cbb2fc11558b6",

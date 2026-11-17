@@ -10,6 +10,7 @@ import 'package:anki_app/app_collection_callbacks.dart';
 import 'package:anki_app/collection_card_browser_controller.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_dart/anki_dart.dart';
+import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
@@ -492,4 +493,88 @@ void main() {
       expect(await preferences.getBool('anki.browser.noSorting'), isFalse);
     },
   );
+
+  test('question and answer columns render selected cards and mark invalid templates unavailable', () async {
+    final normalConfig = proto.Notetype_Config(
+      kind: proto.Notetype_Config_Kind.KIND_NORMAL,
+    );
+    final templates = [
+      proto.Notetype_Template_Config(
+        qFormat: '{{#c1}}one {{Front}}{{/c1}}',
+        aFormat: '{{FrontSide}}<hr id=answer>{{Back}}',
+        qFormatBrowser: '{{#c1}}one {{Front}}{{/c1}}',
+        aFormatBrowser: '{{FrontSide}}<hr id=answer>{{Back}}',
+      ),
+      proto.Notetype_Template_Config(
+        qFormat: '{{#c2}}two {{Front}}{{/c2}}',
+        aFormat: '{{FrontSide}}<hr id=answer>{{Back}}',
+        qFormatBrowser: '{{#c2}}two {{Front}}{{/c2}}',
+        aFormatBrowser: '{{FrontSide}}<hr id=answer>{{Back}}',
+      ),
+    ];
+    final invalidTemplate = proto.Notetype_Template_Config(
+      qFormatBrowser: '{{Missing}}',
+      aFormatBrowser: '{{FrontSide}}',
+    );
+    await runtime.storage!.executeBatch('''
+      INSERT INTO notetypes (id, name, mtime_secs, usn, config)
+      VALUES (900, 'Renderer fixture', 0, 0, ${_sqlBlob(normalConfig.writeToBuffer())});
+      INSERT INTO fields (ntid, ord, name, config) VALUES
+        (900, 0, 'Front', X''), (900, 1, 'Back', X'');
+      INSERT INTO templates (ntid, ord, name, mtime_secs, usn, config) VALUES
+        (900, 0, 'Card 1', 0, 0, ${_sqlBlob(templates[0].writeToBuffer())}),
+        (900, 1, 'Card 2', 0, 0, ${_sqlBlob(templates[1].writeToBuffer())});
+      INSERT INTO notetypes (id, name, mtime_secs, usn, config)
+      VALUES (901, 'Invalid renderer fixture', 0, 0, ${_sqlBlob(normalConfig.writeToBuffer())});
+      INSERT INTO fields (ntid, ord, name, config) VALUES
+        (901, 0, 'Front', X''), (901, 1, 'Back', X'');
+      INSERT INTO templates (ntid, ord, name, mtime_secs, usn, config)
+      VALUES (901, 0, 'Card 1', 0, 0, ${_sqlBlob(invalidTemplate.writeToBuffer())});
+      INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
+      VALUES (920, 'renderer-guid', 900, 0, -1, ' unit22 ', 'front' || char(31) || 'back', 'front', 0, 0, '');
+      INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+      VALUES (930, 920, 1, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+      INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+      VALUES (931, 920, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+      INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
+      VALUES (921, 'invalid-renderer-guid', 901, 0, -1, ' broken ', 'front' || char(31) || 'back', 'front', 0, 0, '');
+      INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+      VALUES (940, 921, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+    ''');
+
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    await controller.load();
+    await controller.saveColumns([
+      BrowserColumn.question,
+      BrowserColumn.answer,
+    ]);
+    final cardRows = await controller.search('nid:920');
+    expect(cardRows.columns.map((column) => column.label), [
+      'Question',
+      'Answer',
+    ]);
+    expect(cardRows.rows.map((row) => row.cells['question']), [
+      'one front',
+      'two front',
+    ]);
+    expect(cardRows.rows.map((row) => row.cells['answer']), ['back', 'back']);
+
+    await controller.updateMode(BrowserColumnMode.notes);
+    await controller.saveColumns([
+      BrowserColumn.question,
+      BrowserColumn.answer,
+    ]);
+    final noteRow = (await controller.search('tag:unit22')).rows.single;
+    expect(noteRow.cells['question'], 'two front');
+    expect(noteRow.cells['answer'], 'back');
+    final invalidRow = (await controller.search('tag:broken')).rows.single;
+    expect(invalidRow.cells['question'], 'Unavailable');
+    expect(invalidRow.cells['answer'], 'Unavailable');
+  });
 }
+
+String _sqlBlob(List<int> bytes) =>
+    "X'${bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join()}'";

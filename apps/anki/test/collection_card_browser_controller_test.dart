@@ -4,6 +4,7 @@
  */
 
 import 'package:anki_app/collection_card_browser_controller.dart';
+import 'package:anki_dart/anki_dart.dart';
 import 'package:anki_search_parser/anki_search_parser.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,5 +88,56 @@ void main() {
     expect(queryNodes[1], const BooleanNode(NodeKind.or));
     expect(nodes[1], const BooleanNode(NodeKind.and));
     expect(nodes[2], isA<Search>());
+  });
+
+  test('restored structured filters join the parsed query before the deck', () {
+    final root = collectionCardBrowserSearchNodeForRequest(
+      const BrowserSearchRequest(
+        query: 'tag:a OR tag:b',
+        filters: BrowserSearchFilters(
+          flags: [1, 3],
+          tags: ['biology', 'cell'],
+          cardStateCodes: [0, 4],
+        ),
+      ),
+      Int64(7),
+    ) as GroupNode;
+
+    final selectedDeck =
+        (root.nodes.last as Search).value as DeckIdWithChildren;
+    expect(selectedDeck.id, Int64(7));
+    expect(root.nodes[root.nodes.length - 2], const BooleanNode(NodeKind.and));
+    final requestNode = root.nodes.first as GroupNode;
+    expect(
+      requestNode.nodes.whereType<BooleanNode>().map((node) => node.kind),
+      [NodeKind.and, NodeKind.and, NodeKind.and],
+    );
+    final filterGroups = requestNode.nodes.whereType<GroupNode>().toList();
+    expect(filterGroups, hasLength(4));
+    expect(
+      filterGroups.first.nodes.whereType<BooleanNode>().single.kind,
+      NodeKind.or,
+    );
+    expect(
+      filterGroups[1].nodes
+          .whereType<Search>()
+          .map((search) => (search.value as Flag).value)
+          .toList(),
+      [1, 3],
+    );
+    expect(
+      filterGroups[2].nodes
+          .whereType<Search>()
+          .map((search) => (search.value as Tag).tag)
+          .toList(),
+      ['biology', 'cell'],
+    );
+    expect(
+      filterGroups[3].nodes
+          .whereType<Search>()
+          .map((search) => (search.value as State).kind)
+          .toList(),
+      [StateKind.newCard, StateKind.suspended],
+    );
   });
 }

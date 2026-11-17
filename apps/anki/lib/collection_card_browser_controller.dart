@@ -23,7 +23,12 @@ import 'l10n/app_localizations_en.dart';
 /// supported query subset. Rendering, editing, preview, and bulk operations
 /// remain separate ports until their Core behavior is connected.
 final class CollectionCardBrowserController
-    implements CardBrowserController, CardBrowserModeController {
+    implements
+        CardBrowserController,
+        CardBrowserModeController,
+        CardBrowserSearchRequestController,
+        CardBrowserSearchHistoryController,
+        CardBrowserSearchFilterOptionsController {
   CollectionCardBrowserController(
     this.collections, {
     SharedPreferencesAsync? preferences,
@@ -38,6 +43,7 @@ final class CollectionCardBrowserController
   static const _notesColumnsKey = 'activeNoteCols';
   static const _modeConfigKey = 'browserTableShowNotesMode';
   static const _noSortingKey = 'anki.browser.noSorting';
+  static const _searchHistoryKey = 'anki.browser.searchHistory';
   static const _cardsDefaultColumns = [
     'noteFld',
     'template',
@@ -63,6 +69,8 @@ final class CollectionCardBrowserController
   bool _modeLoaded = false;
   CardBrowserSnapshot? _lastSnapshot;
   String _query = '';
+  BrowserSearchRequest _activeRequest = const BrowserSearchRequest(query: '');
+  Future<void> _historyWriteTail = Future<void>.value();
 
   CollectionSqliteStorage get _storage {
     final storage = collections.storage;
@@ -144,9 +152,125 @@ final class CollectionCardBrowserController
   }
 
   @override
-  Future<CardBrowserSnapshot> search(String query) {
-    _query = query;
-    return _search(query);
+  Future<CardBrowserSnapshot> search(String query) =>
+      searchRequest(BrowserSearchRequest(query: query));
+
+  @override
+  Future<CardBrowserSnapshot> searchRequest(
+    BrowserSearchRequest request,
+  ) async {
+    _query = request.query;
+    _activeRequest = request;
+    await _serializeHistoryChange(() async {
+      final history = BrowserSearchHistoryModel(entries: await _readHistory());
+      final effects = browserSubmitCurrentSearchEffects(
+        request,
+        history: history,
+      );
+      final historyEffect = effects.first as BrowserSearchHistoryLoadingEffect;
+      await _preferences.setString(
+        _searchHistoryKey,
+        BrowserSearchHistoryJsonCodec.encode(historyEffect.history.input),
+      );
+    });
+    return _searchRequest(request);
+  }
+
+  Future<T> _serializeHistoryChange<T>(Future<T> Function() change) {
+    final result = _historyWriteTail.then((_) => change());
+    _historyWriteTail = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return result;
+  }
+
+  @override
+  Future<List<BrowserSearchHistoryEntry>> loadSearchHistory() => _readHistory();
+
+  Future<List<BrowserSearchHistoryEntry>> _readHistory() async {
+    final stored = await _preferences.getString(_searchHistoryKey) ?? '[]';
+    try {
+      return BrowserSearchHistoryJsonCodec.decode(stored);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> _writeHistory(List<BrowserSearchHistoryEntry> entries) async {
+    await _preferences.setString(
+      _searchHistoryKey,
+      BrowserSearchHistoryJsonCodec.encode(entries),
+    );
+  }
+
+  @override
+  Future<void> removeSearchHistoryEntry(BrowserSearchHistoryEntry entry) =>
+      _serializeHistoryChange(() async {
+        final history = BrowserSearchHistoryModel(
+          entries: await _readHistory(),
+        );
+        if (history.removeEntry(entry)) await _writeHistory(history.entries);
+      });
+
+  @override
+  Future<void> clearSearchHistory() =>
+      _serializeHistoryChange(() => _writeHistory(const []));
+
+  @override
+  Future<BrowserSearchRequest> restoreSearchHistoryEntry(
+    BrowserSearchHistoryEntry entry,
+  ) async {
+    final decks = _storage.decks.getAllDecksInNameOrder();
+    final deckNameMap = [
+      for (final deck in decks)
+        BrowserDeckNameId(
+          name: deck.name,
+          id: BigInt.parse(deck.id.toString()),
+        ),
+    ];
+    final notetypeIds = entry.noteTypeIds.map(_toInt64).toSet();
+    final notetypes = await _storage.getNotetypesByIds(
+      notetypeIds.map(models.NotetypeId.new),
+    );
+    final noteTypeMap = [
+      for (final notetype in notetypes)
+        BrowserNoteTypeNameId(
+          name: notetype.name,
+          id: BigInt.parse(notetype.id.toString()),
+        ),
+    ];
+    return BrowserSearchRequest.fromHistoryEntry(
+          entry,
+          deckNameMap: deckNameMap,
+          noteTypeMap: noteTypeMap,
+        ) ??
+        BrowserSearchRequest(query: entry.query);
+  }
+
+  @override
+  Future<CardBrowserSearchFilterOptions> loadSearchFilterOptions() async {
+    final storage = _storage;
+    final decks = storage.decks.getAllDecksInNameOrder();
+    final noteTypeIds = await storage.getAllNotetypeIds();
+    final noteTypes = await storage.getNotetypesByIds(noteTypeIds);
+    return CardBrowserSearchFilterOptions(
+      decks: [
+        for (final deck in decks)
+          BrowserDeckNameId(
+            name: deck.name,
+            id: BigInt.parse(deck.id.toString()),
+          ),
+      ],
+      noteTypes: [
+        for (final noteType in noteTypes)
+          BrowserNoteTypeNameId(
+            name: noteType.name,
+            id: BigInt.parse(noteType.id.toString()),
+          ),
+      ],
+      tags: storage.tags.allTags().map((tag) => tag.name).toList(),
+    );
   }
 
   /// Loads saved searches from this controller's active collection config.
@@ -215,7 +339,15 @@ final class CollectionCardBrowserController
     return _search(_query);
   }
 
-  Future<CardBrowserSnapshot> _search(String query) async {
+  Future<CardBrowserSnapshot> _search(String query) => _searchRequest(
+    query == _activeRequest.query
+        ? _activeRequest
+        : BrowserSearchRequest(query: query),
+  );
+
+  Future<CardBrowserSnapshot> _searchRequest(
+    BrowserSearchRequest request,
+  ) async {
     final mode = _mode;
     final sortType = _sortType;
     final storage = _storage;
@@ -229,7 +361,10 @@ final class CollectionCardBrowserController
             BigInt.parse(childId.toString()),
         ],
     };
-    final root = collectionCardBrowserSearchNode(query, selectedDeckId);
+    final root = collectionCardBrowserSearchNodeForRequest(
+      request,
+      selectedDeckId,
+    );
     final sortOrder = _compileSortOrder(sortType);
     final plan = compileSearchSqlWithSort(
       root,
@@ -589,3 +724,65 @@ Node collectionCardBrowserSearchNode(String query, Int64 selectedDeckId) {
     Search(DeckIdWithChildren(selectedDeckId)),
   ]);
 }
+
+/// Converts the source-derived structured request plan into the shared search
+/// AST, keeping filter joins and selected-deck precedence explicit.
+Node collectionCardBrowserSearchNodeForRequest(
+  BrowserSearchRequest request,
+  Int64 selectedDeckId,
+) {
+  final filters = request.filters;
+  if (filters.decks.isEmpty &&
+      filters.flags.isEmpty &&
+      filters.tags.isEmpty &&
+      filters.noteTypes.isEmpty &&
+      filters.cardStateCodes.isEmpty) {
+    return collectionCardBrowserSearchNode(request.query, selectedDeckId);
+  }
+  final planned = _browserSearchPlanNode(buildBrowserSearchNodePlan(request));
+  if (selectedDeckId == Int64.ZERO) return planned;
+  if (planned is GroupNode && planned.nodes.isEmpty) {
+    return Search(DeckIdWithChildren(selectedDeckId));
+  }
+  return GroupNode([
+    planned,
+    const BooleanNode(NodeKind.and),
+    Search(DeckIdWithChildren(selectedDeckId)),
+  ]);
+}
+
+Node _browserSearchPlanNode(BrowserSearchNodePlan plan) => switch (plan) {
+  BrowserSearchGroupPlan(:final joiner, :final children) => GroupNode([
+    for (var index = 0; index < children.length; index++) ...[
+      if (index > 0)
+        BooleanNode(
+          joiner == BrowserSearchJoiner.and ? NodeKind.and : NodeKind.or,
+        ),
+      _browserSearchPlanNode(children[index]),
+    ],
+  ]),
+  BrowserSearchTextTermPlan(:final text) => GroupNode(
+    text.isEmpty ? const [] : parse(text),
+  ),
+  BrowserSearchDeckTermPlan(:final name) => Search(
+    SearchNodeBuilder.fromDeckName(name),
+  ),
+  BrowserSearchFlagTermPlan(:final value) => Search(Flag(value.index)),
+  BrowserSearchTagTermPlan(:final tag) => Search(
+    SearchNodeBuilder.fromTagName(tag),
+  ),
+  BrowserSearchNoteTypeTermPlan(:final name) => Search(
+    SearchNodeBuilder.fromNotetypeName(name),
+  ),
+  BrowserSearchCardStateTermPlan(:final value) => Search(
+    State(switch (value) {
+      BrowserSearchCardStateValue.newCard => StateKind.newCard,
+      BrowserSearchCardStateValue.learning => StateKind.learning,
+      BrowserSearchCardStateValue.review => StateKind.review,
+      BrowserSearchCardStateValue.buried => StateKind.buried,
+      BrowserSearchCardStateValue.suspended => StateKind.suspended,
+    }),
+  ),
+};
+
+Int64 _toInt64(Object id) => Int64.parseInt(id.toString());

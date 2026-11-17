@@ -197,6 +197,149 @@ void main() {
     expect(controller.queries, ['is:due']);
   });
 
+  testWidgets(
+    'search history restores structured requests and supports edit, removal, expansion, and clear',
+    (tester) async {
+      final controller = _Controller(_sample())
+        ..searchHistory = [
+          for (var index = 0; index < 6; index++)
+            BrowserSearchHistoryEntry(
+              query: 'tag:history$index',
+              tags: index == 0 ? const ['biology'] : const [],
+            ),
+        ];
+      await tester.pumpWidget(_app(controller, const Size(500, 800)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('browser-search')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('browser-history-entry-4')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('browser-history-entry-5')),
+        findsNothing,
+      );
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('browser-history-toggle')),
+      );
+      await tester.tap(find.byKey(const ValueKey('browser-history-toggle')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('browser-history-entry-5')),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('browser-history-edit-0')),
+      );
+      expect(
+        tester
+            .widget<IconButton>(
+              find.byKey(const ValueKey('browser-history-edit-0')),
+            )
+            .onPressed,
+        isNotNull,
+      );
+      await tester.tap(find.byKey(const ValueKey('browser-history-edit-0')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('browser-search')))
+            .controller!
+            .text,
+        'tag:history0',
+      );
+      expect(controller.submittedRequests, isEmpty);
+
+      await tester.tap(find.byKey(const ValueKey('browser-search')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('browser-history-remove-1')));
+      await tester.pumpAndSettle();
+      expect(controller.searchHistory, hasLength(5));
+
+      await tester.tap(find.byKey(const ValueKey('browser-history-entry-0')));
+      await tester.pumpAndSettle();
+      expect(controller.submittedRequests, hasLength(1));
+      expect(controller.submittedRequests.single.query, 'tag:history0');
+      expect(controller.submittedRequests.single.filters.tags, ['biology']);
+
+      await tester.tap(find.byKey(const ValueKey('browser-search')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('browser-history-clear')),
+      );
+      await tester.tap(find.byKey(const ValueKey('browser-history-clear')));
+      await tester.pumpAndSettle();
+      expect(controller.searchHistory, isEmpty);
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('browser-search-filters')),
+      );
+      await tester.tap(find.byKey(const ValueKey('browser-search-filters')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('browser-filter-deck-1')),
+      );
+      await tester.tap(find.byKey(const ValueKey('browser-filter-deck-1')));
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('browser-filter-note-type-2')),
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('browser-filter-note-type-2')),
+      );
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('browser-filter-tag-cell')),
+      );
+      await tester.tap(find.byKey(const ValueKey('browser-filter-tag-cell')));
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('browser-filter-flag-1')),
+      );
+      await tester.tap(find.byKey(const ValueKey('browser-filter-flag-1')));
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('browser-filter-card-state-4')),
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('browser-filter-card-state-4')),
+      );
+      await tester.tap(find.byKey(const ValueKey('browser-filter-apply')));
+      await tester.pumpAndSettle();
+      final filteredRequest = controller.submittedRequests.last;
+      expect(filteredRequest.filters.tags, ['biology', 'cell']);
+      expect(filteredRequest.filters.decks.map((deck) => deck.name), [
+        'Default',
+      ]);
+      expect(
+        filteredRequest.filters.noteTypes.map((noteType) => noteType.name),
+        ['Basic'],
+      );
+      expect(filteredRequest.filters.flags, [1]);
+      expect(filteredRequest.filters.cardStateCodes, [4]);
+    },
+  );
+
+  testWidgets('history rows distinguish structured filter variants', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample())
+      ..searchHistory = [
+        const BrowserSearchHistoryEntry(query: 'tag:biology', tags: ['cell']),
+        const BrowserSearchHistoryEntry(
+          query: 'tag:biology',
+          tags: ['genetics'],
+        ),
+      ];
+    await tester.pumpWidget(_app(controller, const Size(500, 800)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-search')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tags: cell'), findsOneWidget);
+    expect(find.text('Tags: genetics'), findsOneWidget);
+  });
+
   testWidgets('saved-search manager deletes an entry and shows empty state', (
     tester,
   ) async {
@@ -684,7 +827,12 @@ CardBrowserSnapshot _sample() => CardBrowserSnapshot(
 );
 
 final class _Controller
-    implements CardBrowserController, CardBrowserModeController {
+    implements
+        CardBrowserController,
+        CardBrowserModeController,
+        CardBrowserSearchRequestController,
+        CardBrowserSearchHistoryController,
+        CardBrowserSearchFilterOptionsController {
   _Controller(this.snapshot);
 
   CardBrowserSnapshot snapshot;
@@ -707,6 +855,8 @@ final class _Controller
   final modeChanges = <BrowserColumnMode>[];
   List<BrowserSavedSearch> savedSearches = [];
   Object? savedSearchLoadError;
+  List<BrowserSearchHistoryEntry> searchHistory = [];
+  final submittedRequests = <BrowserSearchRequest>[];
 
   @override
   Future<CardBrowserSnapshot> load() async {
@@ -726,6 +876,43 @@ final class _Controller
     if (error != null) return Future.error(error);
     return searchCompleter?.future ?? Future.value(searchResult ?? snapshot);
   }
+
+  @override
+  Future<CardBrowserSnapshot> searchRequest(BrowserSearchRequest request) {
+    submittedRequests.add(request);
+    queries.add(request.query);
+    final error = searchError;
+    if (error != null) return Future.error(error);
+    return searchCompleter?.future ?? Future.value(searchResult ?? snapshot);
+  }
+
+  @override
+  Future<List<BrowserSearchHistoryEntry>> loadSearchHistory() async =>
+      List.of(searchHistory);
+
+  @override
+  Future<BrowserSearchRequest> restoreSearchHistoryEntry(
+    BrowserSearchHistoryEntry entry,
+  ) async => BrowserSearchRequest(
+    query: entry.query,
+    filters: BrowserSearchFilters(tags: entry.tags),
+  );
+
+  @override
+  Future<void> removeSearchHistoryEntry(BrowserSearchHistoryEntry entry) async {
+    searchHistory.remove(entry);
+  }
+
+  @override
+  Future<void> clearSearchHistory() async => searchHistory.clear();
+
+  @override
+  Future<CardBrowserSearchFilterOptions> loadSearchFilterOptions() async =>
+      CardBrowserSearchFilterOptions(
+        decks: [BrowserDeckNameId(name: 'Default', id: BigInt.one)],
+        noteTypes: [BrowserNoteTypeNameId(name: 'Basic', id: BigInt.from(2))],
+        tags: const ['biology', 'cell'],
+      );
 
   @override
   Future<List<BrowserSavedSearch>> loadSavedSearches() async {

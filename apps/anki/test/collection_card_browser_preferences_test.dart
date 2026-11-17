@@ -4,6 +4,7 @@
  */
 
 import 'dart:io' as io;
+import 'dart:async';
 
 import 'package:anki_app/app.dart';
 import 'package:anki_app/app_collection_callbacks.dart';
@@ -66,6 +67,86 @@ void main() {
     expect((await reopened.load()).columns.map((column) => column.type), [
       BrowserColumn.tags,
       BrowserColumn.deck,
+    ]);
+  });
+
+  test(
+    'structured searches persist and restore history across controllers',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await controller.load();
+      final filterOptions = await controller.loadSearchFilterOptions();
+      expect(filterOptions.decks.map((deck) => deck.name), contains('Default'));
+      expect(
+        filterOptions.noteTypes.map((noteType) => noteType.name),
+        containsAll([
+          'Basic',
+          'Basic (and reversed card)',
+          'Basic (optional reversed card)',
+          'Basic (type answer)',
+          'Cloze',
+          'Image Occlusion',
+        ]),
+        reason: 'unused note types remain available as filter choices',
+      );
+      const request = BrowserSearchRequest(
+        query: '  tag:biology  ',
+        filters: BrowserSearchFilters(
+          flags: [1],
+          tags: ['biology'],
+          cardStateCodes: [4],
+        ),
+      );
+      await controller.searchRequest(request);
+
+      final historyEntry = (await controller.loadSearchHistory()).single;
+      expect(historyEntry, request.toHistoryEntry());
+
+      final reopened = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      expect(await reopened.loadSearchHistory(), [historyEntry]);
+      final restored = await reopened.restoreSearchHistoryEntry(historyEntry);
+      expect(restored.query, 'tag:biology');
+      expect(restored.filters.flags, [1]);
+      expect(restored.filters.tags, ['biology']);
+      expect(restored.filters.cardStateCodes, [4]);
+
+      await reopened.removeSearchHistoryEntry(historyEntry);
+      expect(await reopened.loadSearchHistory(), isEmpty);
+      await reopened.searchRequest(request);
+      await reopened.clearSearchHistory();
+      expect(await reopened.loadSearchHistory(), isEmpty);
+    },
+  );
+
+  test('concurrent searches do not lose history entries', () async {
+    final gatedPreferences = _FirstSearchHistoryReadGate();
+    SharedPreferencesAsyncPlatform.instance = gatedPreferences;
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: SharedPreferencesAsync(),
+    );
+    await controller.load();
+
+    final first = controller.searchRequest(
+      const BrowserSearchRequest(query: 'tag:first'),
+    );
+    await gatedPreferences.firstHistoryRead.future;
+    final second = controller.searchRequest(
+      const BrowserSearchRequest(query: 'tag:second'),
+    );
+    await Future<void>.delayed(Duration.zero);
+    gatedPreferences.releaseFirstHistoryRead.complete();
+    await Future.wait([first, second]);
+
+    expect((await controller.loadSearchHistory()).map((entry) => entry.query), [
+      'tag:second',
+      'tag:first',
     ]);
   });
 
@@ -622,3 +703,25 @@ void main() {
 
 String _sqlBlob(List<int> bytes) =>
     "X'${bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join()}'";
+
+final class _FirstSearchHistoryReadGate extends InMemorySharedPreferencesAsync {
+  _FirstSearchHistoryReadGate() : super.empty();
+
+  final firstHistoryRead = Completer<void>();
+  final releaseFirstHistoryRead = Completer<void>();
+  bool _shouldPause = true;
+
+  @override
+  Future<String?> getString(
+    String key,
+    SharedPreferencesOptions options,
+  ) async {
+    final value = await super.getString(key, options);
+    if (key == 'anki.browser.searchHistory' && _shouldPause) {
+      _shouldPause = false;
+      firstHistoryRead.complete();
+      await releaseFirstHistoryRead.future;
+    }
+    return value;
+  }
+}

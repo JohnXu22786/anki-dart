@@ -64,14 +64,38 @@ platform adapters provide storage and presentation.
 - Source pins, licenses, and SHA-256 hashes are recorded in
   `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
 
+## Unit 24 — Search history and structured filters
+
+- Search requests now carry query text and structured tags, flags, and card
+  states together into the active collection search. Structured categories
+  retain their OR grouping, combine with the query and other categories using
+  AND, and remain scoped to the selected deck.
+- Recent searches persist through shared preferences using the source-derived
+  history JSON contract. New non-empty searches move to the front, equal
+  entries are promoted, history is capped at 30 entries, and a blank unfiltered
+  search does not add an entry. History can be edited into the search box,
+  submitted, removed, cleared, expanded beyond five visible items, and restored
+  with deck and note-type IDs resolved against the active collection.
+- Unresolved stored deck or note-type IDs restore the query with empty
+  structured filters, matching the source contract. The filter editor exposes
+  active-collection deck, note-type, and tag choices, plus flags and card
+  states. History rows show stored filter values so searches with the same
+  query and different filters remain distinguishable. Deck and note-type
+  summaries use persisted IDs because the app does not yet render Core's
+  canonical SearchString; filter-only entries are titled “Filtered search”.
+- The shared implementation applies on Android, iOS, Web, Windows, macOS, and
+  Linux. Shared preference storage is provided by `SharedPreferencesAsync`.
+- Source pins and adaptation boundaries are recorded in
+  `ANKIDROID_UPSTREAM.md` and `apps/anki/ANKIDROID_SOURCE.sha256`.
+
 ## Remaining migration work
 
 - Match Android's exact themed row colors and test row metadata in each native
   runtime. The Flutter app currently uses platform-neutral color tints.
 - Implement context-sensitive Card Browser sorting not represented by current
   sort contracts, plus Note Editor navigation, preview, and bulk operations.
-- Implement Note Editor navigation, preview, bulk operations, history, and
-  search filters.
+- Implement Note Editor navigation, preview, and bulk operations. Render the
+  canonical source search string for structured history rows.
 - Migrate and track unresolved upstream Card Browser TODO coverage.
 - Verify each platform's storage and presentation adapters in its native
   runtime; the shared Flutter implementation has no platform-specific browser

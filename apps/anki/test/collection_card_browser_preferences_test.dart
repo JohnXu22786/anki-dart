@@ -67,6 +67,16 @@ void main() {
     ]);
   });
 
+  test('empty stored sort key resolves to no ordering', () async {
+    await runtime.storage!.writeCollectionConfig('sortType', '');
+    await preferences.setBool('anki.browser.noSorting', false);
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    expect((await controller.load()).sortType, isA<BrowserSortNoOrdering>());
+  });
+
   test(
     'sort config reloads and is saved before unsupported search fails',
     () async {

@@ -56,9 +56,9 @@ final class CollectionCardBrowserController implements CardBrowserController {
         'sortBackwards': _storage.readCollectionConfig('sortBackwards'),
       },
       configKeys: _sortKeys,
-      availableColumnKeys: SearchSqlSortColumn.values.map(
-        (column) => column.key,
-      ),
+      availableColumnKeys: SearchSqlSortColumn.values
+          .where((column) => column != SearchSqlSortColumn.custom)
+          .map((column) => column.key),
     );
     return _search(_query);
   }

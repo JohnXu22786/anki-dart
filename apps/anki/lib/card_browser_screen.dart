@@ -304,6 +304,12 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             : BackButton(onPressed: widget.onClose),
         title: Text(s.cardBrowserTitle),
         actions: [
+          IconButton(
+            key: const ValueKey('browser-manage-columns'),
+            tooltip: 'Manage columns',
+            onPressed: _manageColumns,
+            icon: const Icon(Icons.view_column_outlined),
+          ),
           if (snapshot != null && snapshot.columns.isNotEmpty)
             PopupMenuButton<BrowserSortType>(
               key: const ValueKey('browser-sort-menu'),
@@ -584,9 +590,14 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   }
 
   Future<void> _manageColumns() async {
-    final snapshot = _snapshot;
-    if (snapshot == null) return;
-    final selected = snapshot.columns.map((column) => column.type).toList();
+    final selected =
+        _snapshot?.columns.map((column) => column.type).toList() ??
+        [
+          BrowserColumn.sortField,
+          BrowserColumn.cardType,
+          BrowserColumn.due,
+          BrowserColumn.deck,
+        ];
     final result = await showDialog<List<BrowserColumn>>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -765,6 +776,16 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                                         : 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
+                                ),
+                                IconButton(
+                                  key: ValueKey(
+                                    'browser-column-options-${column.type.key}',
+                                  ),
+                                  tooltip: 'Column options: ${column.label}',
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () =>
+                                      _openColumnOptions(column.type),
+                                  icon: const Icon(Icons.more_vert, size: 18),
                                 ),
                               ],
                             ),

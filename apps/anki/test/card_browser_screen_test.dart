@@ -141,6 +141,56 @@ void main() {
     expect(remove.enabled, isFalse);
   });
 
+  testWidgets(
+    'column manager and options stay available on narrow empty results',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final controller = _Controller(
+        CardBrowserSnapshot(
+          columns: const [
+            CardBrowserColumn(type: BrowserColumn.deck, label: 'Deck'),
+          ],
+          rows: const [],
+        ),
+      );
+      await tester.pumpWidget(_app(controller, const Size(360, 800)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('browser-manage-columns')));
+      await tester.pumpAndSettle();
+      expect(find.text('Manage columns'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(
+        _app(
+          _Controller(
+            CardBrowserSnapshot(
+              columns: const [
+                CardBrowserColumn(type: BrowserColumn.deck, label: 'Deck'),
+              ],
+              rows: [
+                CardBrowserRow(
+                  id: const BrowserRowId(3),
+                  cells: {'deck': 'Default'},
+                ),
+              ],
+            ),
+          ),
+          const Size(360, 800),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('browser-column-options-deck')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Remove column'), findsOneWidget);
+    },
+  );
+
   testWidgets('manage columns blocks empty and applies edited order', (
     tester,
   ) async {

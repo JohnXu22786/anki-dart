@@ -4,6 +4,7 @@
  */
 
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:anki_backend_models/anki_backend_models.dart' as models;
 import 'package:anki_dart/anki_dart.dart';
 import 'package:anki_search_parser/anki_search_parser.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
@@ -15,10 +16,11 @@ import 'collection_runtime.dart';
 
 /// Collection-backed Card Browser for the active profile.
 ///
-/// It implements source-compatible card search and SQL sorting for the
-/// supported query subset. Rendering, preferences, editing, preview, and bulk
-/// operations remain separate ports until their Core behavior is connected.
-final class CollectionCardBrowserController implements CardBrowserController {
+/// It implements source-compatible card/note search and SQL sorting for the
+/// supported query subset. Rendering, editing, preview, and bulk operations
+/// remain separate ports until their Core behavior is connected.
+final class CollectionCardBrowserController
+    implements CardBrowserController, CardBrowserModeController {
   CollectionCardBrowserController(
     this.collections, {
     SharedPreferencesAsync? preferences,
@@ -28,14 +30,34 @@ final class CollectionCardBrowserController implements CardBrowserController {
   final SharedPreferencesAsync? _preferencesOverride;
   SharedPreferencesAsync get _preferences =>
       _preferencesOverride ?? SharedPreferencesAsync();
-  static const _activeColumnsKey = 'activeCols';
+  static const _cardsColumnsKey = 'activeCols';
+  static const _notesColumnsKey = 'activeNoteCols';
+  static const _modeConfigKey = 'browserTableShowNotesMode';
   static const _noSortingKey = 'anki.browser.noSorting';
-  static const _defaultColumns = ['noteFld', 'template', 'cardDue', 'deck'];
-  static const _sortKeys = BrowserSortConfigKeys(
+  static const _cardsDefaultColumns = [
+    'noteFld',
+    'template',
+    'cardDue',
+    'deck',
+  ];
+  static const _notesDefaultColumns = [
+    'noteFld',
+    'note',
+    'template',
+    'noteTags',
+  ];
+  static const _cardsSortKeys = BrowserSortConfigKeys(
     columnKey: 'sortType',
     reverseKey: 'sortBackwards',
   );
+  static const _notesSortKeys = BrowserSortConfigKeys(
+    columnKey: 'noteSortType',
+    reverseKey: 'browserNoteSortBackwards',
+  );
   BrowserSortType _sortType = const BrowserSortNoOrdering();
+  BrowserColumnMode _mode = BrowserColumnMode.cards;
+  bool _modeLoaded = false;
+  CardBrowserSnapshot? _lastSnapshot;
   String _query = '';
 
   CollectionSqliteStorage get _storage {
@@ -48,27 +70,73 @@ final class CollectionCardBrowserController implements CardBrowserController {
 
   @override
   Future<CardBrowserSnapshot> load() async {
+    _mode = _readMode();
+    _modeLoaded = true;
+    await _loadSortType();
+    return _search(_query);
+  }
+
+  BrowserColumnMode _readMode() =>
+      _storage.readCollectionConfig(_modeConfigKey) == true
+      ? BrowserColumnMode.notes
+      : BrowserColumnMode.cards;
+
+  Future<void> _loadSortType() async {
     final noSorting = await _preferences.getBool(_noSortingKey) ?? false;
     _sortType = resolveBrowserSortType(
       noSorting: noSorting,
       config: {
-        'sortType': _storage.readCollectionConfig('sortType'),
-        'sortBackwards': _storage.readCollectionConfig('sortBackwards'),
+        _sortKeysFor(_mode).columnKey: _storage.readCollectionConfig(
+          _sortKeysFor(_mode).columnKey,
+        ),
+        _sortKeysFor(_mode).reverseKey: _storage.readCollectionConfig(
+          _sortKeysFor(_mode).reverseKey,
+        ),
       },
-      configKeys: _sortKeys,
+      configKeys: _sortKeysFor(_mode),
       availableColumnKeys: SearchSqlSortColumn.values
           .where((column) => column != SearchSqlSortColumn.custom)
           .map((column) => column.key),
     );
-    return _search(_query);
   }
+
+  BrowserSortConfigKeys _sortKeysFor(BrowserColumnMode mode) =>
+      mode == BrowserColumnMode.cards ? _cardsSortKeys : _notesSortKeys;
+
+  String _columnsKeyFor(BrowserColumnMode mode) =>
+      mode == BrowserColumnMode.cards ? _cardsColumnsKey : _notesColumnsKey;
+
+  List<String> _defaultColumnsFor(BrowserColumnMode mode) =>
+      mode == BrowserColumnMode.cards
+      ? _cardsDefaultColumns
+      : _notesDefaultColumns;
 
   @override
   Future<void> saveColumns(List<BrowserColumn> columns) async {
     await _preferences.setString(
-      _activeColumnsKey,
+      _columnsKeyFor(_mode),
       columns.map((c) => c.key).join('|'),
     );
+  }
+
+  @override
+  Future<CardBrowserSnapshot> updateMode(BrowserColumnMode mode) async {
+    if (!_modeLoaded) {
+      _mode = _readMode();
+      _modeLoaded = true;
+    }
+    if (_mode == mode) {
+      final snapshot = _lastSnapshot;
+      return snapshot ?? _search(_query);
+    }
+
+    await _storage.writeCollectionConfig(
+      _modeConfigKey,
+      mode == BrowserColumnMode.notes,
+    );
+    _mode = mode;
+    await _loadSortType();
+    return _search(_query);
   }
 
   @override
@@ -133,7 +201,7 @@ final class CollectionCardBrowserController implements CardBrowserController {
   Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType) async {
     final plan = buildBrowserSortSavePlan(
       sortType: sortType,
-      configKeys: _sortKeys,
+      configKeys: _sortKeysFor(_mode),
     );
     for (final write in plan.collectionConfigWrites) {
       await _storage.writeCollectionConfig(write.key, write.value);
@@ -144,6 +212,8 @@ final class CollectionCardBrowserController implements CardBrowserController {
   }
 
   Future<CardBrowserSnapshot> _search(String query) async {
+    final mode = _mode;
+    final sortType = _sortType;
     final storage = _storage;
     final selectedDeckId = storage.currentDeckId;
     final decks = storage.decks.getAllDecksInNameOrder();
@@ -155,68 +225,116 @@ final class CollectionCardBrowserController implements CardBrowserController {
         ],
     };
     final root = collectionCardBrowserSearchNode(query, selectedDeckId);
-    final sortOrder = _compileSortOrder(_sortType);
+    final sortOrder = _compileSortOrder(sortType);
     final plan = compileSearchSqlWithSort(
       root,
-      resultType: SearchResultType.cards,
+      resultType: mode == BrowserColumnMode.cards
+          ? SearchResultType.cards
+          : SearchResultType.notes,
       deckIdsWithChildren: deckIdsWithChildren,
       sortOrder: sortOrder,
     );
     final ids = await storage.executeSearchPlan(plan);
-    final cards = await storage.getCardsByIds(
-      ids.map((id) => Int64.parseInt(id.toString())),
-    );
+    final cards = mode == BrowserColumnMode.cards
+        ? await storage.getCardsByIds(
+            ids.map((id) => Int64.parseInt(id.toString())),
+          )
+        : const <models.Card>[];
     final cardsById = {for (final card in cards) card.id.toString(): card};
-    final notes = await storage.getNotesByIds(
-      cards.map((card) => card.noteId).toSet(),
-    );
+    final noteIds = mode == BrowserColumnMode.notes
+        ? ids.map((id) => Int64.parseInt(id.toString()))
+        : cards.map((card) => card.noteId);
+    final notes = await storage.getNotesByIds(noteIds.toSet());
     final notesById = {for (final note in notes) note.id.toString(): note};
     final decksById = {for (final deck in decks) deck.id.toString(): deck};
+    final cardsByNoteId = mode == BrowserColumnMode.notes
+        ? await storage.cardsOfNotes(notes.map((note) => note.id))
+        : const <Int64, List<models.Card>>{};
     final configuredColumns = BrowserColumnCollection.load(
-      preferenceValue: await _preferences.getString(_activeColumnsKey),
-      defaultColumnKeys: _defaultColumns,
+      preferenceValue: await _preferences.getString(_columnsKeyFor(mode)),
+      defaultColumnKeys: _defaultColumnsFor(mode),
     );
     final rows = <CardBrowserRow>[];
     for (final id in ids) {
-      final card = cardsById[id.toString()];
-      if (card == null) throw StateError('Card $id disappeared during search.');
-      final note = notesById[card.noteId.toString()];
-      if (note == null) {
-        throw StateError('Note ${card.noteId} disappeared during search.');
+      final models.Card? card = mode == BrowserColumnMode.cards
+          ? cardsById[id.toString()]
+          : null;
+      if (mode == BrowserColumnMode.cards && card == null) {
+        throw StateError('Card $id disappeared during search.');
       }
-      final deck = decksById[card.deckId.toString()];
+      final noteId = mode == BrowserColumnMode.notes ? id : card!.noteId;
+      final models.Note? note = notesById[noteId.toString()];
+      if (note == null) {
+        throw StateError('Note $noteId disappeared during search.');
+      }
+      final deck = card == null ? null : decksById[card.deckId.toString()];
       rows.add(
         CardBrowserRow(
           id: BrowserRowId.bigInt(id),
           cells: {
             for (final column in configuredColumns.columns)
-              column.key: switch (column) {
-                BrowserColumn.sortField =>
-                  note.sortField ?? note.fields.firstOrNull ?? '',
-                BrowserColumn.deck => deck?.name ?? '',
-                BrowserColumn.tags => note.tags.join(' '),
-                _ => 'Unavailable',
-              },
+              column.key: _columnValue(
+                column,
+                note,
+                deck,
+                mode,
+                cardsByNoteId[note.id] ?? const [],
+                decksById,
+              ),
           },
         ),
       );
     }
-    return CardBrowserSnapshot(
+    final snapshot = CardBrowserSnapshot(
       columns: [
         for (final column in configuredColumns.columns)
-          CardBrowserColumn(type: column, label: _columnLabel(column)),
+          CardBrowserColumn(type: column, label: _columnLabel(column, mode)),
       ],
       rows: rows,
-      sortType: _sortType,
+      sortType: sortType,
+      mode: mode,
     );
+    if (_mode == mode && _sortType == sortType) _lastSnapshot = snapshot;
+    return snapshot;
   }
 
-  String _columnLabel(BrowserColumn column) => switch (column) {
-    BrowserColumn.sortField => 'Sort field',
-    BrowserColumn.deck => 'Deck',
-    BrowserColumn.tags => 'Tags',
-    _ => '${column.key} (unavailable)',
+  String _columnValue(
+    BrowserColumn column,
+    models.Note note,
+    models.Deck? deck,
+    BrowserColumnMode mode,
+    List<models.Card> noteCards,
+    Map<String, models.Deck> decksById,
+  ) => switch (column) {
+    BrowserColumn.sortField => note.sortField ?? note.fields.firstOrNull ?? '',
+    BrowserColumn.deck when mode == BrowserColumnMode.cards => deck?.name ?? '',
+    BrowserColumn.deck => _notesDeckName(noteCards, decksById),
+    BrowserColumn.cardType when mode == BrowserColumnMode.notes =>
+      noteCards.length.toString(),
+    BrowserColumn.tags => note.tags.join(' '),
+    _ => 'Unavailable',
   };
+
+  String _notesDeckName(
+    List<models.Card> cards,
+    Map<String, models.Deck> decksById,
+  ) {
+    final deckIds = cards.map((card) => card.deckId.toString()).toSet();
+    if (deckIds.length > 1) return '(${deckIds.length})';
+    if (deckIds.isEmpty) return '';
+    return decksById[deckIds.first]?.name ?? '';
+  }
+
+  String _columnLabel(BrowserColumn column, BrowserColumnMode mode) =>
+      switch (column) {
+        BrowserColumn.sortField => 'Sort field',
+        BrowserColumn.deck => 'Deck',
+        BrowserColumn.tags => 'Tags',
+        BrowserColumn.cardType when mode == BrowserColumnMode.notes => 'Cards',
+        BrowserColumn.cardType => 'Card type',
+        BrowserColumn.noteType => 'Note type',
+        _ => '${column.key} (unavailable)',
+      };
 
   SearchSqlSortOrder _compileSortOrder(BrowserSortType sortType) =>
       switch (sortType) {

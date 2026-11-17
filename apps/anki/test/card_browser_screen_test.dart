@@ -163,6 +163,17 @@ void main() {
       expect(find.text('Manage columns'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('browser-column-options-menu')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Deck'));
+      await tester.pumpAndSettle();
+      expect(find.text('Remove column'), findsOneWidget);
+      await tester.tap(find.text('Manage columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
 
       await tester.pumpWidget(
         _app(

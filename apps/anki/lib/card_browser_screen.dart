@@ -311,6 +311,17 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             icon: const Icon(Icons.view_column_outlined),
           ),
           if (snapshot != null && snapshot.columns.isNotEmpty)
+            PopupMenuButton<BrowserColumn>(
+              key: const ValueKey('browser-column-options-menu'),
+              tooltip: 'Column options',
+              icon: const Icon(Icons.more_horiz),
+              itemBuilder: (context) => [
+                for (final column in snapshot.columns)
+                  PopupMenuItem(value: column.type, child: Text(column.label)),
+              ],
+              onSelected: _openColumnOptions,
+            ),
+          if (snapshot != null && snapshot.columns.isNotEmpty)
             PopupMenuButton<BrowserSortType>(
               key: const ValueKey('browser-sort-menu'),
               tooltip: s.browserSort,

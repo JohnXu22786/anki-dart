@@ -12,6 +12,7 @@ import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as protoConfig;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as protoNotetype;
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:anki_scheduler_timing/anki_scheduler_timing.dart';
+import 'package:anki_search_sql/anki_search_sql.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:protobuf/protobuf.dart';
 import 'package:sqlite3/common.dart';
@@ -22,6 +23,7 @@ import 'fsrs_retrievability_functions.dart';
 import 'fsrs_variable_function.dart';
 import 'process_text.dart';
 import 'regex_functions.dart';
+import 'search_executor.dart';
 import 'unicase_collation.dart';
 import 'deck_tree.dart';
 
@@ -93,6 +95,11 @@ final class CollectionSqliteStorage
   );
   bool _connectionClosed = false;
   bool _closed = false;
+
+  /// Executes a compiled Core-compatible search and sort plan against this
+  /// collection. Sort preparation and the final ID query share this connection.
+  Future<List<BigInt>> executeSearchPlan(CompiledSearchSqlWithSort plan) =>
+      executeSearchSqlPlan(CollectionSqliteSearchExecutor(_database), plan);
 
   /// Returns source-compatible Deck row operations on this collection.
   DeckStorage get decks => _deckStorage;

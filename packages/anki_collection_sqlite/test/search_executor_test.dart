@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:anki_search_sql/anki_search_sql.dart';
 import 'package:sqlite3/common.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
@@ -35,6 +36,38 @@ void main() {
       );
 
       expect(ids, [BigInt.from(7), BigInt.from(10), BigInt.from(2)]);
+    },
+  );
+
+  test(
+    'storage executes a compiled search plan on its collection connection',
+    () async {
+      final collectionDatabase = sqlite3.openInMemory();
+      final storage = await CollectionSqliteStorage.open(
+        driver: CollectionSqliteDriver(openDatabase: (_) => collectionDatabase),
+        location: 'memory',
+      );
+      collectionDatabase.execute('CREATE TABLE cards (id INTEGER NOT NULL)');
+      collectionDatabase.execute('INSERT INTO cards VALUES (8), (3)');
+
+      final ids = await storage.executeSearchPlan(
+        const CompiledSearchSqlWithSort(
+          search: CompiledSearchSql(
+            sql:
+                'SELECT cards.id FROM cards JOIN sort_order USING (id) '
+                'ORDER BY sort_order.pos',
+            arguments: [],
+            requiredTable: RequiredTable.cards,
+          ),
+          preparationSql: [
+            'CREATE TEMP TABLE sort_order (pos INTEGER, id INTEGER); '
+                'INSERT INTO sort_order VALUES (0, 8), (1, 3);',
+          ],
+        ),
+      );
+
+      expect(ids, [BigInt.from(8), BigInt.from(3)]);
+      await storage.close();
     },
   );
 

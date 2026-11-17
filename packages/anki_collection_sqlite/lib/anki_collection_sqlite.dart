@@ -5,5 +5,8 @@ export 'src/collection_sqlite_storage.dart';
 export 'src/deck_tree.dart' show buildCoreDeckTree;
 export 'src/search_executor.dart';
 
+export 'package:anki_search_sql/anki_search_sql.dart'
+    show CompiledSearchSqlWithSort;
+
 export 'package:anki_collection_schema/anki_collection_schema.dart'
     show CollectionOpenCallbacks, CollectionOpenResult, openOrCreateCollection;

@@ -4484,3 +4484,25 @@ LibAnki `BrowserConfig.kt`, and Core `rslib/src/browser_table.rs`, pinned to the
 same revisions above. The Dart code and English strings are independently
 written and source-derived; no Android resources or source files are copied,
 so root `COPYING`, package notices, and SPDX files need no change.
+
+## Card Browser note type, template, and sort-field values (Unit 21)
+
+The shared collection browser loads note types referenced by its result rows
+in bounded batches, including their fields and templates. The `note` column
+shows the stored note type name. In Cards mode, `template` shows the selected
+card's template name and appends the one-based index for Cloze note types; in
+Notes mode it remains the card count. Cloze cards resolve to their note type's
+first template for every card ordinal, following `Notetype::get_template()`.
+`noteFld` reads the configured
+`sort_field_idx` and applies Core's `html_to_text_line(field, true)` behavior,
+including persistent spacers, TypeAnswer and sound tags, media filenames,
+markup stripping, and entity decoding. Missing note types and malformed
+indexes fail explicitly rather than silently using another field. Other
+unsupported columns retain their unavailable values. Column meanings follow
+AnkiDroid 2.25.3 `CardBrowserColumn.kt`; values follow Anki Core
+`browser_table.rs`, `notetype/mod.rs`, and `text.rs`, pinned by hashes in the
+app source manifest.
+The batch loader follows Core notetype storage SQL and is covered by the
+collection package's source and license manifests. Remaining browser work
+includes Question/Answer rendering, timing/context columns and sorts, and
+editor actions.

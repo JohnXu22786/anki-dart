@@ -17,6 +17,13 @@ against the repository's AnkiDroid 2.25.3 baseline at commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. Schema and migration SQL remain in
 the separately licensed `anki_collection_schema` package.
 
+The batch notetype loader adapts Core's `rslib/src/storage/notetype/mod.rs`,
+`get_notetype.sql`, `get_fields.sql`, and `get_templates.sql` at the same
+revision. Their SHA-256 digests are checked by `tool/check_package.py` and
+recorded in `SOURCE.sha256`. It reuses the shared `anki_backend_models`
+Notetype, NoteField, and CardTemplate values; this package's AGPL license and
+complete `LICENSE` cover the Dart adapter.
+
 The collection connection registers Core's deterministic
 `field_at_index(flds, index)`, `process_text(text, flags)`, variadic
 `fnvhash(i64...)`, card-data and FSRS extractors, and the `regexp`,

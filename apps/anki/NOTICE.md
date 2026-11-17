@@ -28,3 +28,19 @@ Core `rslib/src/storage/sqlite.rs:53–90,478–550` at
 from `rslib/src/notetype/stock.rs:21–49`. SHA-256 values are recorded in
 `ANKIDROID_SOURCE.sha256`; the app supplies localized strings and invokes the
 already-mapped schema/SQLite packages rather than copying upstream source.
+
+The Card Browser note type, card template, and note sort-field projections in
+`lib/collection_card_browser_controller.dart` follow Anki Core
+`rslib/src/browser_table.rs`, `rslib/src/notetype/mod.rs`, and `rslib/src/text.rs` at
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`, and AnkiDroid's column meanings in
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserColumn.kt` at
+`d9bf072f814a0c37d30a694192593b31ff2df875`. These source-derived behaviors
+and source SHA-256 values are recorded in `ANKIDROID_SOURCE.sha256`. The
+shared Dart storage loader is part of the AGPL-3.0-or-later application; the
+full license text remains in `LICENSE` and the repository root `COPYING`.
+
+Sort-field text conversion reuses `anki_backend_models`' HTML field-text
+helper, which includes the htmlescape 0.3.1 entity table. Its attribution,
+license notice, and third-party source hashes are recorded in
+`../../packages/anki_backend_models/NOTICE.md` and
+`../../packages/anki_backend_models/THIRD_PARTY_SOURCE.sha256`.

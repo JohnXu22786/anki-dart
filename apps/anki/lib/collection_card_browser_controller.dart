@@ -246,6 +246,12 @@ final class CollectionCardBrowserController
         : cards.map((card) => card.noteId);
     final notes = await storage.getNotesByIds(noteIds.toSet());
     final notesById = {for (final note in notes) note.id.toString(): note};
+    final notetypes = await storage.getNotetypesByIds(
+      notes.map((note) => models.NotetypeId(note.notetypeId)),
+    );
+    final notetypesById = {
+      for (final notetype in notetypes) notetype.id.toString(): notetype,
+    };
     final decksById = {for (final deck in decks) deck.id.toString(): deck};
     final cardsByNoteId = mode == BrowserColumnMode.notes
         ? await storage.cardsOfNotes(notes.map((note) => note.id))
@@ -267,6 +273,12 @@ final class CollectionCardBrowserController
       if (note == null) {
         throw StateError('Note $noteId disappeared during search.');
       }
+      final notetype = notetypesById[note.notetypeId.toString()];
+      if (notetype == null) {
+        throw StateError(
+          'Notetype ${note.notetypeId} disappeared during search.',
+        );
+      }
       final deck = card == null ? null : decksById[card.deckId.toString()];
       rows.add(
         CardBrowserRow(
@@ -276,10 +288,12 @@ final class CollectionCardBrowserController
               column.key: _columnValue(
                 column,
                 note,
+                card,
                 deck,
                 mode,
                 cardsByNoteId[note.id] ?? const [],
                 decksById,
+                notetype,
               ),
           },
         ),
@@ -301,12 +315,17 @@ final class CollectionCardBrowserController
   String _columnValue(
     BrowserColumn column,
     models.Note note,
+    models.Card? card,
     models.Deck? deck,
     BrowserColumnMode mode,
     List<models.Card> noteCards,
     Map<String, models.Deck> decksById,
+    models.Notetype notetype,
   ) => switch (column) {
-    BrowserColumn.sortField => note.sortField ?? note.fields.firstOrNull ?? '',
+    BrowserColumn.sortField => _sortField(note, notetype),
+    BrowserColumn.noteType => notetype.name,
+    BrowserColumn.cardType when mode == BrowserColumnMode.cards =>
+      _templateName(notetype, card!),
     BrowserColumn.deck when mode == BrowserColumnMode.cards => deck?.name ?? '',
     BrowserColumn.deck => _notesDeckName(noteCards, decksById),
     BrowserColumn.cardType when mode == BrowserColumnMode.notes =>
@@ -314,6 +333,24 @@ final class CollectionCardBrowserController
     BrowserColumn.tags => note.tags.join(' '),
     _ => 'Unavailable',
   };
+
+  String _sortField(models.Note note, models.Notetype notetype) {
+    final index = notetype.config.sortFieldIdx;
+    // Core indexes both arrays directly; invalid stored indexes are malformed
+    // collection data and must fail the row projection rather than guess.
+    final field = note.fields[index];
+    notetype.fields[index];
+    return browserHtmlToTextLine(field, preserveMediaFilenames: true);
+  }
+
+  String _templateName(models.Notetype notetype, models.Card card) {
+    final template = notetype.isCloze
+        ? notetype.templates.first
+        : notetype.templates[card.templateIdx];
+    return notetype.isCloze
+        ? '${template.name} ${card.templateIdx + 1}'
+        : template.name;
+  }
 
   String _notesDeckName(
     List<models.Card> cards,
@@ -379,6 +416,44 @@ final class CollectionCardBrowserController
   ) => Future.error(
     UnsupportedError('Card Browser bulk actions are not implemented.'),
   );
+}
+
+/// Projects note-field HTML with Anki Core's `html_to_text_line(..., true)`
+/// behavior used by the Browser sort-field column.
+String browserHtmlToTextLine(
+  String html, {
+  required bool preserveMediaFilenames,
+}) {
+  var text = html.replaceAll(
+    RegExp(r'<br\s*/?>|<div>|\n', caseSensitive: false),
+    ' ',
+  );
+  if (preserveMediaFilenames) {
+    text = text.replaceAllMapped(
+      RegExp(
+        r'''<\b(?:img|audio|video|object|source)\b(?:[^>]|"[^"]+?"|'[^']+?')+?\b(?:src|data)=(?:"([^"]+?)"[^>]*>|'([^']+?)'[^>]*>|([^ >]+?)(?:\x20[^>]*>|>))''',
+        caseSensitive: false,
+      ),
+      (match) => ' ${match[1] ?? match[2] ?? match[3]} ',
+    );
+  }
+  text = text
+      .replaceAll(RegExp(r'\[\[type:[^\]]+\]\]'), '')
+      .replaceAllMapped(
+        RegExp(r'\[sound:([^\]]+)\]'),
+        (match) => preserveMediaFilenames ? match[1]! : '',
+      )
+      .replaceAll(
+        RegExp(
+          r'<!--.*?-->|<style.*?>.*?</style>|<script.*?>.*?</script>|<.*?>',
+          dotAll: true,
+          caseSensitive: false,
+        ),
+        '',
+      );
+  // The shared field-text helper uses Core's strict htmlescape 0.3.1 decoder.
+  // Markup has already been removed above, so its media stripping is a no-op.
+  return models.stripHtmlPreservingMediaFilenames(text).trim();
 }
 
 /// Combines the user's complete query with the selected-deck constraint.

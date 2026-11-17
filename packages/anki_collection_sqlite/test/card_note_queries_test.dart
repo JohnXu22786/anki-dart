@@ -3,6 +3,7 @@
 
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
@@ -27,6 +28,18 @@ void main() {
       CREATE TABLE notes (
         id INTEGER PRIMARY KEY, guid TEXT, mid INTEGER, mod INTEGER,
         usn INTEGER, tags TEXT, flds TEXT, sfld TEXT, csum INTEGER
+      );
+      CREATE TABLE notetypes (
+        id INTEGER PRIMARY KEY, name TEXT, mtime_secs INTEGER, usn INTEGER,
+        config BLOB
+      );
+      CREATE TABLE fields (
+        ntid INTEGER, ord INTEGER, name TEXT, config BLOB,
+        PRIMARY KEY (ntid, ord)
+      );
+      CREATE TABLE templates (
+        ntid INTEGER, ord INTEGER, name TEXT, mtime_secs INTEGER, usn INTEGER,
+        config BLOB, PRIMARY KEY (ntid, ord)
       );
     ''');
   });
@@ -276,6 +289,52 @@ void main() {
         throwsA(isA<FormatException>()),
       );
       expect((await storage.getNote(Int64(70)))!.checksum, 0);
+    },
+  );
+
+  test(
+    'notetype batch lookup preserves 64-bit IDs and requested order',
+    () async {
+      const id = 9007199254740995;
+      await storage.executeBatch('''
+      INSERT INTO notetypes VALUES (
+        $id, 'Cloze fixture', 123, -1,
+        X'${proto.Notetype_Config(sortFieldIdx: 1).writeToBuffer().map((b) => b.toRadixString(16).padLeft(2, '0')).join()}'
+      );
+      INSERT INTO fields VALUES ($id, 0, 'Front', X'');
+      INSERT INTO fields VALUES ($id, 1, 'Back', X'');
+      INSERT INTO templates VALUES ($id, 0, 'Card 1', 0, -1, X'');
+      INSERT INTO templates VALUES ($id, 1, 'Card 2', 0, -1, X'');
+    ''');
+
+      final result = await storage.getNotetypesByIds([
+        NotetypeId(Int64(id)),
+        NotetypeId(Int64(42)),
+        NotetypeId(Int64(id)),
+      ]);
+
+      expect(result.map((value) => value.id.value), [Int64(id), Int64(id)]);
+      expect(result.first.name, 'Cloze fixture');
+      expect(result.first.config.sortFieldIdx, 1);
+      expect(result.first.fields.map((field) => field.name), ['Front', 'Back']);
+      expect(result.first.templates.map((template) => template.name), [
+        'Card 1',
+        'Card 2',
+      ]);
+      await storage.executeBatch(
+        "UPDATE notetypes SET name = 'Reloaded' WHERE id = $id",
+      );
+      expect(
+        (await storage.getNotetypesByIds([NotetypeId(Int64(id))])).single.name,
+        'Reloaded',
+      );
+      await storage.executeBatch('''
+        INSERT INTO notetypes VALUES (77, 'Malformed', 0, 0, X'0F');
+      ''');
+      await expectLater(
+        storage.getNotetypesByIds([NotetypeId(Int64(77))]),
+        throwsA(isA<Object>()),
+      );
     },
   );
 

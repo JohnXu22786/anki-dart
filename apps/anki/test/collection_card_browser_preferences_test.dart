@@ -193,15 +193,29 @@ void main() {
         BigInt.parse('9007199254740995'),
         BigInt.parse('9007199254740994'),
       ];
+      await runtime.storage!.executeBatch('''
+      INSERT INTO notetypes (id, name, mtime_secs, usn, config)
+      VALUES (1, 'Fixture Basic', 0, 0, X'1001');
+      INSERT INTO fields (ntid, ord, name, config) VALUES
+        (1, 0, 'Front', X''), (1, 1, 'Back', X'');
+      INSERT INTO templates (ntid, ord, name, mtime_secs, usn, config) VALUES
+        (1, 0, 'Card 1', 0, 0, X''), (1, 1, 'Card 2', 0, 0, X'');
+    ''');
       for (var i = 0; i < noteIds.length; i++) {
         final id = noteIds[i];
         await runtime.storage!.executeBatch('''
         INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
         VALUES ($id, 'guid$i', 1, 0, -1, ' shared ', 'field$i', '${i == 0 ? 'zeta' : 'alpha'}', 0, 0, '');
         INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
-        VALUES (${100 + i}, $id, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+        VALUES (${100 + i}, $id, 1, ${i == 0 ? 1 : 0}, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
       ''');
       }
+      await runtime.storage!.executeBatch('''
+      UPDATE notes SET flds = 'front' || char(31) || '<b>back</b> &amp; <img src="sort.png">'
+        WHERE id = ${noteIds[0]};
+      UPDATE notes SET flds = 'front' || char(31) || 'second'
+        WHERE id = ${noteIds[1]};
+    ''');
       await runtime.storage!.executeBatch('''
       INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
       VALUES (200, ${noteIds[0]}, 2, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
@@ -235,14 +249,16 @@ void main() {
         noteIds[1],
         noteIds[0],
       ]);
-      expect(result.rows.first.cells['noteFld'], 'alpha');
+      expect(result.rows.first.cells['noteFld'], 'second');
       expect(result.rows.first.cells['template'], '1');
+      expect(result.rows.first.cells['note'], 'Fixture Basic');
+      expect(result.rows.last.cells['noteFld'], 'back &  sort.png');
       expect(result.rows.first.cells['deck'], isNotEmpty);
       expect(
         result.rows.every((row) => row.cells['noteTags'] == 'shared'),
         isTrue,
       );
-      expect(result.rows.first.cells['note'], 'Unavailable');
+      expect(result.rows.last.cells['note'], 'Fixture Basic');
       expect(result.rows.last.cells['template'], '2');
       expect(result.rows.last.cells['deck'], '(2)');
       expect(
@@ -254,6 +270,60 @@ void main() {
         BigInt.from(101),
         BigInt.from(100),
       ]);
+      await controller.saveColumns([
+        BrowserColumn.noteType,
+        BrowserColumn.cardType,
+      ]);
+      final standardCards = await controller.search('tag:shared');
+      expect(standardCards.rows.map((row) => row.cells['template']).toSet(), {
+        'Card 1',
+        'Card 2',
+      });
+      expect(standardCards.rows.first.cells['note'], 'Fixture Basic');
+      expect(standardCards.columns.map((column) => column.label), [
+        'Note type',
+        'Card type',
+      ]);
+      await runtime.storage!.executeBatch('''
+      INSERT INTO notetypes (id, name, mtime_secs, usn, config)
+      VALUES (2, 'Fixture Cloze', 0, 0, X'0801');
+      INSERT INTO fields (ntid, ord, name, config) VALUES (2, 0, 'Text', X'');
+      INSERT INTO templates (ntid, ord, name, mtime_secs, usn, config) VALUES
+        (2, 0, 'Cloze', 0, 0, X'');
+      INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
+      VALUES (901, 'cloze', 2, 0, 0, '', 'cloze text', 'cloze text', 0, 0, '');
+      INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+      VALUES (901, 901, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+    ''');
+      await controller.saveColumns([
+        BrowserColumn.noteType,
+        BrowserColumn.cardType,
+      ]);
+      final withCloze = await controller.search('');
+      final clozeRow = withCloze.rows.singleWhere(
+        (row) => row.id.bigValue == BigInt.from(901),
+      );
+      expect(clozeRow.cells['note'], 'Fixture Cloze');
+      expect(clozeRow.cells['template'], 'Cloze 2');
+      expect(withCloze.columns.map((column) => column.label), [
+        'Note type',
+        'Card type',
+      ]);
+
+      await runtime.storage!.executeBatch('''
+      INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
+      VALUES (902, 'missing-notetype', 404, 0, 0, '', 'field', 'field', 0, 0, '');
+      INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
+      VALUES (902, 902, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+    ''');
+      await expectLater(controller.search(''), throwsA(isA<StateError>()));
+      await runtime.storage!.executeBatch('''
+      DELETE FROM cards WHERE id = 902;
+      DELETE FROM notes WHERE id = 902;
+      UPDATE notetypes SET config = X'08011001' WHERE id = 2;
+    ''');
+      await controller.saveColumns([BrowserColumn.sortField]);
+      await expectLater(controller.search(''), throwsA(isA<RangeError>()));
     },
   );
 

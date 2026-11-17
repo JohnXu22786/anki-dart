@@ -693,6 +693,84 @@ WHERE queue IN (-2, -3)
     ];
   }
 
+  /// Loads stored note types for [ids], including their fields and templates.
+  /// Each table is read in bounded batches, independent of the number of rows.
+  Future<List<Notetype>> getNotetypesByIds(Iterable<NotetypeId> ids) async {
+    final orderedIds = ids.toList(growable: false);
+    if (orderedIds.isEmpty) return const [];
+    final uniqueIds = orderedIds.toSet().toList(growable: false);
+    final values = <String, Notetype>{};
+    for (var start = 0; start < uniqueIds.length; start += 500) {
+      final chunk = uniqueIds.skip(start).take(500).toList(growable: false);
+      final placeholders = List.filled(chunk.length, '?').join(', ');
+      final rows = _database.select(
+        'SELECT id, name, mtime_secs, usn, config FROM notetypes '
+        'WHERE id IN ($placeholders)',
+        chunk.map((id) => _toSqlInt64(id.value)).toList(growable: false),
+      );
+      for (final row in rows) {
+        final id = _readInt64(row.columnAt(0));
+        final config = protoNotetype.Notetype_Config.fromBuffer(
+          row.columnAt(4) as List<int>,
+        );
+        values[id.toString()] = Notetype(
+          id: NotetypeId(id),
+          name: row.columnAt(1) as String,
+          mtimeSecs: _readInt64(row.columnAt(2)),
+          usn: row.columnAt(3) as int,
+          config: config,
+        );
+      }
+    }
+    if (values.isEmpty) return const [];
+    final foundIds = values.values.map((value) => value.id).toList();
+    for (var start = 0; start < foundIds.length; start += 500) {
+      final chunk = foundIds.skip(start).take(500).toList(growable: false);
+      final placeholders = List.filled(chunk.length, '?').join(', ');
+      final args = chunk.map((id) => _toSqlInt64(id.value)).toList();
+      final fieldRows = _database.select(
+        'SELECT ntid, ord, name, config FROM fields '
+        'WHERE ntid IN ($placeholders) ORDER BY ntid, ord',
+        args,
+      );
+      for (final row in fieldRows) {
+        final notetype = values[_readInt64(row.columnAt(0)).toString()]!;
+        notetype.fields.add(
+          NoteField(
+            ord: row.columnAt(1) as int,
+            name: row.columnAt(2) as String,
+            config: protoNotetype.Notetype_Field_Config.fromBuffer(
+              row.columnAt(3) as List<int>,
+            ),
+          ),
+        );
+      }
+      final templateRows = _database.select(
+        'SELECT ntid, ord, name, mtime_secs, usn, config FROM templates '
+        'WHERE ntid IN ($placeholders) ORDER BY ntid, ord',
+        args,
+      );
+      for (final row in templateRows) {
+        final notetype = values[_readInt64(row.columnAt(0)).toString()]!;
+        notetype.templates.add(
+          CardTemplate(
+            ord: row.columnAt(1) as int,
+            name: row.columnAt(2) as String,
+            mtimeSecs: _readInt64(row.columnAt(3)),
+            usn: row.columnAt(4) as int,
+            config: protoNotetype.Notetype_Template_Config.fromBuffer(
+              row.columnAt(5) as List<int>,
+            ),
+          ),
+        );
+      }
+    }
+    return [
+      for (final id in orderedIds)
+        if (values[id.toString()] case final notetype?) notetype,
+    ];
+  }
+
   /// Returns a stored note without loading its fields.
   Future<Note?> getNoteWithoutFields(NoteId noteId) async {
     final rows = _database.select(

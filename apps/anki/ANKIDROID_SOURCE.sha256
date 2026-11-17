@@ -6,8 +6,22 @@
 877e18ef2ddcc497a91fca0c2a84d2f22658f09582d8c7f2ba1f03ca2d4ba73c  rslib/src/storage/sqlite.rs
 a2f5175e8dcff92c01bfc09ed30f0e085253b8de01be6769019e505f5704ae15  rslib/src/notetype/stock.rs
 e5749150fefa0955629c635c2e55b2f934fcb00d3e461c9e8426aa4e77fea573  rslib/src/browser_table.rs
+43742f0c00cc940be77fa138cefcc832040a3efef62df39d7a25cf8a09170929  ftl/core/errors.ftl
 4f133ddf970d954e80cf3352d5bd91bf73418a1d71eaa1fb863218569d4198cb  rslib/src/notetype/mod.rs
 2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762  rslib/src/text.rs
 
 # AnkiDroid 2.25.3 browser column meanings, d9bf072f814a0c37d30a694192593b31ff2df875
 e8146c9da9753bd43181ed2dcb877030d2e1e5c0973fa7b2b5ced62aa72f2126  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserColumn.kt
+
+# Anki Core Card Browser row projections, e64c6b1aee3e8d668fb8bbe084beada8e070d985
+e5749150fefa0955629c635c2e55b2f934fcb00d3e461c9e8426aa4e77fea573  rslib/src/browser_table.rs
+c60af0020084132ac68583d338263fcff3f8fcccd74956fddc9bbd33218ad7a1  rslib/src/scheduler/timespan.rs
+a9aeea597aa76b57a90bf91124d4245bde91c672f60e56337460a60300795f17  rslib/src/scheduler/timing.rs
+cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9  rslib/src/card/mod.rs
+31929938c48febe39f445fa61e8aa0d134e0c93b6bdec5aad8250f5f931720b5  rslib/src/timestamp.rs
+
+# AnkiDroid 2.25.3 Card Browser row metadata, d9bf072f814a0c37d30a694192593b31ff2df875
+88c5d4506189866ff8d67b55d4693b50d7514e0cd54f11cac10b25985b74b6f4  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt
+e8146c9da9753bd43181ed2dcb877030d2e1e5c0973fa7b2b5ced62aa72f2126  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserColumn.kt
+2b0e8a2e4c88f423ce3c33454fa5bbfec78189da3db081784b2170e7a6518a6c  libanki/src/main/java/com/ichi2/anki/libanki/BrowserConfig.kt
+313a879710daa264d1cb238512dabbed4d5dacfa15f9bafdc6269bbb0bf00d9f  AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserMultiColumnAdapter.kt

@@ -44,7 +44,7 @@ packages:
     source: path
     version: "0.1.0"
   anki_scheduler_timing:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../../packages/anki_scheduler_timing"
       relative: true

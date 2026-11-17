@@ -74,6 +74,7 @@
   "refreshDecks": "Refresh decks",
   "loadingDecks": "Loading decks…",
   "decksUnavailable": "Decks are unavailable until a collection service is connected.",
+  "browserDatabaseCheckRequired": "Please use the Check Database action, then try again.",
   "deckLoadFailed": "Decks could not be loaded",
   "noDecks": "No decks yet",
   "noDeckMatches": "No decks match this search",
@@ -176,6 +177,85 @@
   "browserSubmitSavedSearch": "Search with this query",
   "browserApplySavedSearch": "Apply query for editing",
   "browserNoCards": "No cards found",
+  "browserColumnDue": "Due",
+  "browserColumnEase": "Ease",
+  "browserColumnAverageEase": "Average ease",
+  "browserColumnCardModified": "Card modified",
+  "browserColumnCreated": "Created",
+  "browserColumnNoteModified": "Note modified",
+  "browserColumnInterval": "Interval",
+  "browserColumnAverageInterval": "Average interval",
+  "browserColumnLapses": "Lapses",
+  "browserColumnReviews": "Reviews",
+  "browserColumnFsrsDifficulty": "FSRS difficulty",
+  "browserColumnFsrsRetrievability": "FSRS retrievability",
+  "browserColumnFsrsStability": "FSRS stability",
+  "browserColumnOriginalPosition": "New card position",
+  "browserDueFiltered": "Filtered",
+  "browserNew": "New",
+  "browserDueNew": "New {count}",
+  "@browserDueNew": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "browserLearning": "Learning",
+  "browserTimespanSecond": "1 second",
+  "browserTimespanSeconds": "{amount} seconds",
+  "@browserTimespanSeconds": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "browserTimespanMinute": "1 minute",
+  "browserTimespanMinutes": "{amount} minutes",
+  "@browserTimespanMinutes": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "browserTimespanHour": "1 hour",
+  "browserTimespanHours": "{amount} hours",
+  "@browserTimespanHours": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "browserTimespanDay": "1 day",
+  "browserTimespanDays": "{amount} days",
+  "@browserTimespanDays": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "browserTimespanMonth": "1 month",
+  "browserTimespanMonths": "{amount} months",
+  "@browserTimespanMonths": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "browserTimespanYear": "1 year",
+  "browserTimespanYears": "{amount} years",
+  "@browserTimespanYears": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "browserNoNotes": "No notes found",
   "browserMode": "Browser mode",
   "browserModeCards": "Cards",

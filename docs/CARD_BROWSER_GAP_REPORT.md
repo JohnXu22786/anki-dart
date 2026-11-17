@@ -4,7 +4,7 @@ The Flutter Card Browser is shared across Android, iOS, Web, Windows, macOS,
 and Linux. Collection queries and preference behavior live in shared Dart;
 platform adapters provide storage and presentation.
 
-## Implemented through Unit 21
+## Implemented through Unit 22
 
 - Cards/Notes mode loads and saves through the active collection's
   `browserTableShowNotesMode` config. Cards remains the default.
@@ -19,16 +19,57 @@ platform adapters provide storage and presentation.
   mode shows the card count.
 - The sort-field column reads the configured notetype field index and applies
   Core's `html_to_text_line(..., true)` behavior. Notes rows also render tags
-  and the sole-deck name or distinct-deck count. Unsupported columns stay
-  explicitly unavailable.
+  and the sole-deck name or distinct-deck count.
+- Question and Answer columns render the selected card using Core-compatible
+  templates, field replacement, and text-line conversion.
 - Saved searches work in either mode. Selection and navigation preserve the
   current row identity; unsupported Note Editor, preview, and bulk operations
   continue to report their existing unavailable errors.
 
+## Unit 23 — Core row values and metadata
+
+- Cards mode reads one selected Card; Notes mode reads all cards for the Note.
+  Due selection excludes filtered, new, suspended, and buried cards in Notes
+  mode and applies Core's filtered/new/learning/review labels and negative queue
+  parentheses in Cards mode.
+- Ease and interval retain Core's card-type filtering, integer division, and
+  rounding; lapses and reviews aggregate all row cards. Creation time uses the
+  Note ID's millisecond timestamp, modification columns use persisted seconds,
+  and original position falls back to the due position for new cards.
+- FSRS stability, normalized difficulty, and retrievability use persisted
+  memory state, last review time and card decay, with Core's default decay.
+  Missing memory state remains empty. When inferring an absent last-review
+  time, learning-queue due timestamps take precedence over day-based due
+  interpretation, matching Core's `due_time()` ordering.
+- Row snapshots retain template font, size, per-cell RTL/elision, and
+  color/flag metadata from Core. The pinned AnkiDroid 2.25.3
+  `BrowserMultiColumnAdapter` consumes row color but ignores font, RTL, and
+  elision fields; it uses end truncation for cells. Flutter keeps those metadata
+  values in the shared row model but does not apply them to visible text in this
+  unit, preserving the pinned Android adapter's rendering boundary.
+- A Notes-mode search can return a persisted Note with no Cards (for example,
+  a whole-collection note-only query when no deck is selected). Core's
+  `RowContext::new()` returns `DatabaseCheckRequired` for this row. Flutter
+  preserves it as a typed row error, displays Core's English message in every
+  cell, uses the unknown/default row color, and strikes through and visually
+  unchecks the row. It retains the normal row listeners and does not clear a
+  selected ID from the selection model if that row later becomes an error; this
+  matches the pinned AnkiDroid adapter's existing behavior.
+- Scheduler timing comes from collection creation/rollover settings and the
+  active local timezone through the shared storage adapter. Dates use Core's
+  local `YYYY-MM-DD` and `YYYY-MM-DD @ HH:mm` forms. English timespans use
+  Core's unit selection and rounding boundaries through the app ARB. No other
+  language catalog is currently shipped; non-English plural forms remain a
+  localization follow-up.
+- Source pins, licenses, and SHA-256 hashes are recorded in
+  `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
+
 ## Remaining migration work
 
-- Complete remaining Core browser-table field rendering, including rendered
-  Question/Answer, card timing/context fields, and context-sensitive sorts.
+- Match Android's exact themed row colors and test row metadata in each native
+  runtime. The Flutter app currently uses platform-neutral color tints.
+- Implement context-sensitive Card Browser sorting not represented by current
+  sort contracts, plus Note Editor navigation, preview, and bulk operations.
 - Implement Note Editor navigation, preview, bulk operations, history, and
   search filters.
 - Migrate and track unresolved upstream Card Browser TODO coverage.

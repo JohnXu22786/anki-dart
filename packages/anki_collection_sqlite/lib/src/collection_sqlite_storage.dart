@@ -81,6 +81,7 @@ final class CollectionSqliteStorage
   final CommonDatabase _database;
   final CollectionSqliteDriver _driver;
   final Map<String, CommonPreparedStatement> _statementCache = {};
+  Future<void> _searchQueue = Future<void>.value();
   late final DeckStorage _deckStorage = DeckStorage(
     _DeckStorageDatabase(_database),
   );
@@ -98,8 +99,17 @@ final class CollectionSqliteStorage
 
   /// Executes a compiled Core-compatible search and sort plan against this
   /// collection. Sort preparation and the final ID query share this connection.
-  Future<List<BigInt>> executeSearchPlan(CompiledSearchSqlWithSort plan) =>
-      executeSearchSqlPlan(CollectionSqliteSearchExecutor(_database), plan);
+  Future<List<BigInt>> executeSearchPlan(CompiledSearchSqlWithSort plan) {
+    final result = _searchQueue.then(
+      (_) =>
+          executeSearchSqlPlan(CollectionSqliteSearchExecutor(_database), plan),
+    );
+    _searchQueue = result.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {},
+    );
+    return result;
+  }
 
   /// Returns source-compatible Deck row operations on this collection.
   DeckStorage get decks => _deckStorage;
@@ -788,6 +798,7 @@ WHERE queue IN (-2, -3)
     CollectionSchemaMigrationCallbacks? callbacks,
   }) async {
     if (_closed) return;
+    await _searchQueue;
     Object? closeError;
     StackTrace? closeStack;
     var flushFailed = false;

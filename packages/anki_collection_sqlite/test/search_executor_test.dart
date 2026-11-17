@@ -39,37 +39,50 @@ void main() {
     },
   );
 
-  test(
-    'storage executes a compiled search plan on its collection connection',
-    () async {
-      final collectionDatabase = sqlite3.openInMemory();
-      final storage = await CollectionSqliteStorage.open(
-        driver: CollectionSqliteDriver(openDatabase: (_) => collectionDatabase),
-        location: 'memory',
-      );
-      collectionDatabase.execute('CREATE TABLE cards (id INTEGER NOT NULL)');
-      collectionDatabase.execute('INSERT INTO cards VALUES (8), (3)');
+  test('storage serializes concurrent sort plans on its connection', () async {
+    final collectionDatabase = sqlite3.openInMemory();
+    final storage = await CollectionSqliteStorage.open(
+      driver: CollectionSqliteDriver(openDatabase: (_) => collectionDatabase),
+      location: 'memory',
+    );
+    collectionDatabase.execute('CREATE TABLE cards (id INTEGER NOT NULL)');
+    collectionDatabase.execute('INSERT INTO cards VALUES (8), (3)');
 
-      final ids = await storage.executeSearchPlan(
-        const CompiledSearchSqlWithSort(
-          search: CompiledSearchSql(
-            sql:
-                'SELECT cards.id FROM cards JOIN sort_order USING (id) '
-                'ORDER BY sort_order.pos',
-            arguments: [],
-            requiredTable: RequiredTable.cards,
-          ),
-          preparationSql: [
-            'CREATE TEMP TABLE sort_order (pos INTEGER, id INTEGER); '
-                'INSERT INTO sort_order VALUES (0, 8), (1, 3);',
-          ],
-        ),
-      );
+    const search = CompiledSearchSql(
+      sql:
+          'SELECT cards.id FROM cards JOIN sort_order USING (id) '
+          'ORDER BY sort_order.pos',
+      arguments: [],
+      requiredTable: RequiredTable.cards,
+    );
+    final first = storage.executeSearchPlan(
+      const CompiledSearchSqlWithSort(
+        search: search,
+        preparationSql: [
+          'DROP TABLE IF EXISTS sort_order; '
+              'CREATE TEMP TABLE sort_order (pos INTEGER, id INTEGER); '
+              'INSERT INTO sort_order VALUES (0, 8), (1, 3);',
+        ],
+      ),
+    );
+    final second = storage.executeSearchPlan(
+      const CompiledSearchSqlWithSort(
+        search: search,
+        preparationSql: [
+          'DROP TABLE IF EXISTS sort_order; '
+              'CREATE TEMP TABLE sort_order (pos INTEGER, id INTEGER); '
+              'INSERT INTO sort_order VALUES (0, 3), (1, 8);',
+        ],
+      ),
+    );
+    final results = await Future.wait([first, second]);
 
-      expect(ids, [BigInt.from(8), BigInt.from(3)]);
-      await storage.close();
-    },
-  );
+    expect(results, [
+      [BigInt.from(8), BigInt.from(3)],
+      [BigInt.from(3), BigInt.from(8)],
+    ]);
+    await storage.close();
+  });
 
   test('maps signed 64-bit integer bounds without narrowing', () async {
     final ids = await executor.queryIds(

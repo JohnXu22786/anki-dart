@@ -57,6 +57,77 @@ void main() {
     },
   );
 
+  testWidgets('saved search can be applied without submitting or submitted', (
+    tester,
+  ) async {
+    final controller = _Controller(
+      _sample(),
+    )..savedSearches = [const BrowserSavedSearch(name: 'Due', query: 'is:due')];
+    await tester.pumpWidget(_app(controller, const Size(500, 800)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('browser-saved-searches')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('browser-saved-search-apply-Due')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(controller.queries, isEmpty);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('browser-search')))
+          .controller!
+          .text,
+      'is:due ',
+    );
+
+    await tester.tap(find.byKey(const ValueKey('browser-saved-searches')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('browser-saved-search-submit-Due')),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.queries, ['is:due']);
+  });
+
+  testWidgets('saved-search manager deletes an entry and shows empty state', (
+    tester,
+  ) async {
+    final controller = _Controller(
+      _sample(),
+    )..savedSearches = [const BrowserSavedSearch(name: 'Due', query: 'is:due')];
+    await tester.pumpWidget(_app(controller, const Size(500, 800)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('browser-saved-searches')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('browser-saved-search-delete-Due')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(controller.savedSearches, isEmpty);
+    expect(find.text('No saved searches'), findsOneWidget);
+  });
+
+  testWidgets('saved-search storage failure uses the browser error state', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample())
+      ..savedSearchLoadError = StateError('config unavailable');
+    await tester.pumpWidget(_app(controller, const Size(500, 800)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('browser-saved-searches')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('The browser action could not be completed'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('renders BigInt row IDs without JavaScript narrowing', (
     tester,
   ) async {
@@ -76,6 +147,32 @@ void main() {
       find.byKey(const ValueKey('browser-row-9007199254740993')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('saving a non-empty search stores its query with a name', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample());
+    await tester.pumpWidget(_app(controller, const Size(500, 800)));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('browser-search')),
+      '  tag:biology  ',
+    );
+    await tester.tap(find.byKey(const ValueKey('browser-save-search')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('browser-saved-search-name')),
+      'Biology',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('browser-saved-search-confirm')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(controller.savedSearches, [
+      const BrowserSavedSearch(name: 'Biology', query: 'tag:biology'),
+    ]);
   });
 
   testWidgets('search exposes searching, empty, and failure states', (
@@ -500,6 +597,8 @@ final class _Controller implements CardBrowserController {
   final previewed = <BrowserRowId>[];
   final edited = <BrowserRowId>[];
   final bulkActions = <(CardBrowserBulkAction, List<BrowserRowId>)>[];
+  List<BrowserSavedSearch> savedSearches = [];
+  Object? savedSearchLoadError;
 
   @override
   Future<CardBrowserSnapshot> load() async {
@@ -518,6 +617,36 @@ final class _Controller implements CardBrowserController {
     final error = searchError;
     if (error != null) return Future.error(error);
     return searchCompleter?.future ?? Future.value(searchResult ?? snapshot);
+  }
+
+  @override
+  Future<List<BrowserSavedSearch>> loadSavedSearches() async {
+    final error = savedSearchLoadError;
+    if (error != null) throw error;
+    return List.of(savedSearches);
+  }
+
+  @override
+  Future<(bool, List<BrowserSavedSearch>)> addSavedSearch(
+    BrowserSavedSearch savedSearch,
+  ) async {
+    if (savedSearches.any((saved) => saved.name == savedSearch.name)) {
+      return (false, List.of(savedSearches));
+    }
+    final normalized = savedSearch.normalize();
+    savedSearches = [...savedSearches, normalized]
+      ..sort((left, right) => left.name.compareTo(right.name));
+    return (true, List.of(savedSearches));
+  }
+
+  @override
+  Future<(bool, List<BrowserSavedSearch>)> deleteSavedSearch(
+    String name,
+  ) async {
+    final updated = savedSearches.where((saved) => saved.name != name).toList();
+    if (updated.length == savedSearches.length) return (false, updated);
+    savedSearches = updated;
+    return (true, List.of(savedSearches));
   }
 
   @override

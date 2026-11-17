@@ -3216,8 +3216,11 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   case-sensitive ordering and lookup, duplicate rejection, query normalization,
   and map/list conversion are adapted in `lib/src/browser_saved_searches.dart`.
   `SavedSearches.kt` defines the `Config.savedFilters` extension, while
-  `Config.kt` supplies the generic typed get/set operations it uses. Collection
-  config access and saved-search UI are not included. The outcome mapping from
+  `Config.kt` supplies the generic typed get/set operations it uses. The shared
+  Flutter route reads/writes `savedFilters` through the active collection JSON
+  config and adapts the save-name prompt, list/manage/delete, submit, and
+  apply-for-editing actions from `CardBrowserFragment.kt` and
+  `CardBrowserSearchViewModel.kt`; query execution remains host-side. The outcome mapping from
   `CardBrowserSearchViewModel.kt`'s `addSavedSearch`/`deleteSavedSearch` methods
   and `UserMessage` enum is adapted in `lib/src/browser_saved_search_messages.dart`;
   only message identifiers are returned, while localization, UI and message-flow

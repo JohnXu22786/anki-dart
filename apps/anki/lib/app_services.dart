@@ -5,7 +5,7 @@
 
 import 'package:anki_dart/profile_onboarding.dart';
 import 'package:anki_dart/anki_dart.dart'
-    show BrowserColumn, BrowserRowId, BrowserSortType;
+    show BrowserColumn, BrowserRowId, BrowserSavedSearch, BrowserSortType;
 
 import 'app_contracts.dart';
 import 'card_browser_screen.dart';
@@ -69,6 +69,19 @@ final class UnavailableCardBrowserController implements CardBrowserController {
 
   @override
   Future<CardBrowserSnapshot> search(String query) =>
+      Future.error(_unavailable);
+
+  @override
+  Future<List<BrowserSavedSearch>> loadSavedSearches() =>
+      Future.error(_unavailable);
+
+  @override
+  Future<(bool, List<BrowserSavedSearch>)> addSavedSearch(
+    BrowserSavedSearch savedSearch,
+  ) => Future.error(_unavailable);
+
+  @override
+  Future<(bool, List<BrowserSavedSearch>)> deleteSavedSearch(String name) =>
       Future.error(_unavailable);
 
   @override

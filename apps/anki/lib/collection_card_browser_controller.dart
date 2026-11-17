@@ -77,6 +77,58 @@ final class CollectionCardBrowserController implements CardBrowserController {
     return _search(query);
   }
 
+  /// Loads saved searches from this controller's active collection config.
+  @override
+  Future<List<BrowserSavedSearch>> loadSavedSearches() async {
+    final values = _readSavedSearchConfigValues();
+    return browserSavedSearchesFromConfigMap(values);
+  }
+
+  /// Adds a named search to this collection, trimming the query as AnkiDroid
+  /// does. A duplicate exact name leaves collection config untouched.
+  @override
+  Future<(bool, List<BrowserSavedSearch>)> addSavedSearch(
+    BrowserSavedSearch savedSearch,
+  ) async {
+    final model = BrowserSavedSearchesModel(
+      configValues: _readSavedSearchConfigValues(),
+    );
+    final (changed, values) = model.add(savedSearch);
+    if (!changed) return (false, values);
+    await _storage.writeCollectionConfig(
+      'savedFilters',
+      browserSavedSearchesToConfigMap(values),
+    );
+    return (true, await loadSavedSearches());
+  }
+
+  /// Removes the exact name from this collection's saved searches.
+  @override
+  Future<(bool, List<BrowserSavedSearch>)> deleteSavedSearch(
+    String name,
+  ) async {
+    final model = BrowserSavedSearchesModel(
+      configValues: _readSavedSearchConfigValues(),
+    );
+    final (changed, values) = model.removeByName(name);
+    if (!changed) return (false, values);
+    await _storage.writeCollectionConfig(
+      'savedFilters',
+      browserSavedSearchesToConfigMap(values),
+    );
+    return (true, values);
+  }
+
+  Map<String, String> _readSavedSearchConfigValues() {
+    final raw = _storage.readCollectionConfig('savedFilters');
+    if (raw is! Map) return const {};
+    return {
+      for (final entry in raw.entries)
+        if (entry.key is String && entry.value is String)
+          entry.key as String: entry.value as String,
+    };
+  }
+
   @override
   Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType) async {
     final plan = buildBrowserSortSavePlan(

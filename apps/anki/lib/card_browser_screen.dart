@@ -53,6 +53,11 @@ enum CardBrowserBulkAction { suspend, bury, delete }
 abstract interface class CardBrowserController {
   Future<CardBrowserSnapshot> load();
   Future<CardBrowserSnapshot> search(String query);
+  Future<List<BrowserSavedSearch>> loadSavedSearches();
+  Future<(bool, List<BrowserSavedSearch>)> addSavedSearch(
+    BrowserSavedSearch savedSearch,
+  );
+  Future<(bool, List<BrowserSavedSearch>)> deleteSavedSearch(String name);
   Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType);
   Future<void> openColumnOptions(BrowserColumn column);
   Future<void> manageColumns();
@@ -176,6 +181,143 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       if (!mounted || generation != _requestGeneration) return;
       _showActionError(error);
     }
+  }
+
+  Future<void> _saveSearch() async {
+    final query = browserSaveSearchPromptQuery(_searchController.text);
+    if (query == null) return;
+    final nameController = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.browserSaveSearch),
+        content: TextField(
+          key: const ValueKey('browser-saved-search-name'),
+          controller: nameController,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.browserSavedSearchName,
+          ),
+          onSubmitted: (value) => Navigator.pop(context, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          FilledButton(
+            key: const ValueKey('browser-saved-search-confirm'),
+            onPressed: () => Navigator.pop(context, nameController.text),
+            child: Text(AppLocalizations.of(context)!.save),
+          ),
+        ],
+      ),
+    );
+    await WidgetsBinding.instance.endOfFrame;
+    nameController.dispose();
+    if (!mounted || name == null) return;
+    await _runAction(() async {
+      final (added, _) = await widget.controller.addSavedSearch(
+        BrowserSavedSearch(name: name, query: query),
+      );
+      if (!added && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.browserSavedSearchDuplicate,
+            ),
+          ),
+        );
+      }
+    });
+  }
+
+  Future<void> _showSavedSearches() async {
+    await _runAction(() async {
+      final searches = await widget.controller.loadSavedSearches();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(AppLocalizations.of(dialogContext)!.browserSavedSearches),
+          content: SizedBox(
+            width: 480,
+            child: searches.isEmpty
+                ? Text(
+                    AppLocalizations.of(dialogContext)!.browserNoSavedSearches,
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final search in searches)
+                          ListTile(
+                            key: ValueKey(
+                              'browser-saved-search-${search.name}',
+                            ),
+                            title: Text(search.name),
+                            subtitle: Text(search.query),
+                            trailing: Wrap(
+                              spacing: 4,
+                              children: [
+                                IconButton(
+                                  key: ValueKey(
+                                    'browser-saved-search-submit-${search.name}',
+                                  ),
+                                  tooltip: AppLocalizations.of(dialogContext)!
+                                      .browserSubmitSavedSearch,
+                                  onPressed: () {
+                                    Navigator.pop(dialogContext);
+                                    _searchController.text = search.query;
+                                    _search(search.query);
+                                  },
+                                  icon: const Icon(Icons.search),
+                                ),
+                                IconButton(
+                                  key: ValueKey(
+                                    'browser-saved-search-apply-${search.name}',
+                                  ),
+                                  tooltip: AppLocalizations.of(dialogContext)!
+                                      .browserApplySavedSearch,
+                                  onPressed: () {
+                                    Navigator.pop(dialogContext);
+                                    _searchController.text = '${search.query} ';
+                                  },
+                                  icon: const Icon(Icons.edit_outlined),
+                                ),
+                                IconButton(
+                                  key: ValueKey(
+                                    'browser-saved-search-delete-${search.name}',
+                                  ),
+                                  tooltip: AppLocalizations.of(dialogContext)!
+                                      .browserDelete,
+                                  onPressed: () => _runAction(() async {
+                                    await widget.controller.deleteSavedSearch(
+                                      search.name,
+                                    );
+                                    if (dialogContext.mounted) {
+                                      Navigator.pop(dialogContext);
+                                    }
+                                    await _showSavedSearches();
+                                  }),
+                                  icon: const Icon(Icons.delete_outline),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(AppLocalizations.of(dialogContext)!.close),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   void _toggleRow(BrowserRowId rowId) {
@@ -309,6 +451,18 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             tooltip: 'Manage columns',
             onPressed: _manageColumns,
             icon: const Icon(Icons.view_column_outlined),
+          ),
+          IconButton(
+            key: const ValueKey('browser-save-search'),
+            tooltip: s.browserSaveSearch,
+            onPressed: _saveSearch,
+            icon: const Icon(Icons.bookmark_add_outlined),
+          ),
+          IconButton(
+            key: const ValueKey('browser-saved-searches'),
+            tooltip: s.browserSavedSearches,
+            onPressed: _showSavedSearches,
+            icon: const Icon(Icons.bookmarks_outlined),
           ),
           if (snapshot != null && snapshot.columns.isNotEmpty)
             PopupMenuButton<BrowserColumn>(

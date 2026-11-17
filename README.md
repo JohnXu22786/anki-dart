@@ -2462,8 +2462,11 @@ Android lifecycle, StateFlow, localization, and UI.
   converted strings and Android flow/widget integration remains outside.
   `BrowserSavedSearchesModel` applies exact, case-sensitive
   lookup and duplicate handling, Kotlin-compatible query trimming, and map/list
-  conversion over a host-supplied config map; collection config IO and the
-  saved-search UI remain outside. `browserSavedSearchUserMessageForMutation`
+  conversion. The shared Flutter Card Browser reads and writes the
+  `savedFilters` map through the active collection config, lists and deletes
+  searches, and separates applying a query for editing from submitting it.
+  Saving ignores null or exactly empty current queries and trims query text
+  only when persisting. `browserSavedSearchUserMessageForMutation`
   maps add/delete outcomes to the exact four source message identifiers; the
   host owns localization and message-flow delivery.
   `browserSearchHistoryIsAvailable` checks the supplied history's
@@ -3103,8 +3106,12 @@ Focused orchestration tests are in
 [`test/browser_saved_searches_config_test.dart`](test/browser_saved_searches_config_test.dart).
 `browserSaveSearchPromptQuery` returns no prompt query only for null or exactly
 empty temporary input; every other string is passed through unchanged, including
-whitespace-only text. The host emits the prompt and owns Android UI, saved-search
-mutation, and persistence.
+whitespace-only text. `CardBrowserScreen` prompts for a name and exposes
+collection-backed list, delete, submit, and apply actions through
+`CollectionCardBrowserController`. The controller stores the `savedFilters`
+name/query map in the active collection config, so saved searches follow the
+collection across devices. The source-compatible mapping and limits are in
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md).
 `ReviewNextStateDescriber`
 forwards the opaque scheduling state to the pinned backend's
 `describeNextStates()` API. The session exposes the timebox's elapsed-time limit

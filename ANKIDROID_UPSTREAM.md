@@ -4506,3 +4506,55 @@ The batch loader follows Core notetype storage SQL and is covered by the
 collection package's source and license manifests. Remaining browser work
 includes Question/Answer rendering, timing/context columns and sorts, and
 editor actions.
+
+## Card Browser row values and metadata (Unit 23)
+
+`apps/anki/lib/browser_row_values.dart` follows Anki Core's
+`RowContext::get_cell_text`, due helpers, Notes aggregation, FSRS values,
+`timespan.rs`, `timing.rs`, and `timestamp.rs` at
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. Cards rows project the selected
+Card and Notes rows aggregate `all_cards_of_note()` results. The projector
+preserves due filtering and negative-queue parentheses, averages ease and
+review intervals with the source integer operations, sums lapses/reviews,
+converts the Note ID from milliseconds for creation time, and leaves missing
+FSRS state empty. Retrievability uses persisted last-review time and decay or
+Core's pinned FSRS default. Scheduler day calculations use collection creation,
+rollover, and current local timezone through
+`CollectionSqliteStorage.timingTodayForNow()`.
+When Core infers a missing last-review time, its learning-queue timestamp
+branch takes precedence over day-based due classification; the Dart projection
+preserves that order before applying the interval and saturating elapsed time.
+
+Row snapshots expose the template's browser font and size, marked/flag/buried/
+suspended color, sort-field RTL state, and right/middle elision modes. The
+Flutter carries them in its shared row model but leaves visible font, RTL, and
+elision behavior unchanged. At the pinned revision, AnkiDroid's
+`BrowserMultiColumnAdapter` consumes row color but ignores row font and
+per-cell RTL/elision metadata; cells use end truncation. Its source SHA-256 is
+listed in `apps/anki/ANKIDROID_SOURCE.sha256`. Source column labels
+and English New/Learning/due/timespan strings are stored in the app's English
+ARB. Core's English date strings are reproduced as local `YYYY-MM-DD` and
+`YYYY-MM-DD @ HH:mm`; timespan boundaries and rounding are ported. The app
+currently ships only English. Locale-specific Core date and
+plural catalogs are not yet available, so non-English wording is a known gap.
+
+Notes-mode searches may return notes with no cards when the selected-deck
+constraint does not require a cards join. Core's `RowContext::new()` returns
+`AnkiError::DatabaseCheckRequired` for that row; its English message comes
+from `ftl/core/errors.ftl` (`Please use the Check Database action, then try
+again.`). The pinned AnkiDroid `BrowserMultiColumnAdapter` catches the backend
+exception, puts `localizedMessage` in each cell, uses `Color.UNRECOGNIZED`,
+sets the row's displayed selection state to false, and strikes through cell
+text. It leaves the normal row listeners installed and does not remove the ID
+from `CardBrowserViewModel.selectedRows`; an ID selected before an error still
+contributes to multiselect actions while the row appears unchecked. Flutter
+represents that as `BrowserRowError.databaseCheckRequired`, displays the same
+English message in every cell, uses the default/unknown color, strikes through
+the text, visually unchecks it, retains the row listeners, and preserves any
+existing selection-model entry. The source FTL and adapter hashes are in
+`apps/anki/ANKIDROID_SOURCE.sha256`.
+
+These source files declare GNU AGPL-3.0-or-later (Core) and GPL-3.0-or-later
+(AnkiDroid). The projector is independently implemented and is part of the
+AGPL-3.0-or-later app; no upstream source was copied. Exact source revisions
+and SHA-256 hashes are listed in `apps/anki/ANKIDROID_SOURCE.sha256`.

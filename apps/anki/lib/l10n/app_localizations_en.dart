@@ -182,6 +182,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Decks are unavailable until a collection service is connected.';
 
   @override
+  String get browserDatabaseCheckRequired =>
+      'Please use the Check Database action, then try again.';
+
+  @override
   String get deckLoadFailed => 'Decks could not be loaded';
 
   @override
@@ -374,6 +378,110 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserNoCards => 'No cards found';
+
+  @override
+  String get browserColumnDue => 'Due';
+
+  @override
+  String get browserColumnEase => 'Ease';
+
+  @override
+  String get browserColumnAverageEase => 'Average ease';
+
+  @override
+  String get browserColumnCardModified => 'Card modified';
+
+  @override
+  String get browserColumnCreated => 'Created';
+
+  @override
+  String get browserColumnNoteModified => 'Note modified';
+
+  @override
+  String get browserColumnInterval => 'Interval';
+
+  @override
+  String get browserColumnAverageInterval => 'Average interval';
+
+  @override
+  String get browserColumnLapses => 'Lapses';
+
+  @override
+  String get browserColumnReviews => 'Reviews';
+
+  @override
+  String get browserColumnFsrsDifficulty => 'FSRS difficulty';
+
+  @override
+  String get browserColumnFsrsRetrievability => 'FSRS retrievability';
+
+  @override
+  String get browserColumnFsrsStability => 'FSRS stability';
+
+  @override
+  String get browserColumnOriginalPosition => 'New card position';
+
+  @override
+  String get browserDueFiltered => 'Filtered';
+
+  @override
+  String get browserNew => 'New';
+
+  @override
+  String browserDueNew(int count) {
+    return 'New $count';
+  }
+
+  @override
+  String get browserLearning => 'Learning';
+
+  @override
+  String get browserTimespanSecond => '1 second';
+
+  @override
+  String browserTimespanSeconds(String amount) {
+    return '$amount seconds';
+  }
+
+  @override
+  String get browserTimespanMinute => '1 minute';
+
+  @override
+  String browserTimespanMinutes(String amount) {
+    return '$amount minutes';
+  }
+
+  @override
+  String get browserTimespanHour => '1 hour';
+
+  @override
+  String browserTimespanHours(String amount) {
+    return '$amount hours';
+  }
+
+  @override
+  String get browserTimespanDay => '1 day';
+
+  @override
+  String browserTimespanDays(String amount) {
+    return '$amount days';
+  }
+
+  @override
+  String get browserTimespanMonth => '1 month';
+
+  @override
+  String browserTimespanMonths(String amount) {
+    return '$amount months';
+  }
+
+  @override
+  String get browserTimespanYear => '1 year';
+
+  @override
+  String browserTimespanYears(String amount) {
+    return '$amount years';
+  }
 
   @override
   String get browserNoNotes => 'No notes found';

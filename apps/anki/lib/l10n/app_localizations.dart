@@ -415,6 +415,12 @@ abstract class AppLocalizations {
   /// **'Decks are unavailable until a collection service is connected.'**
   String get decksUnavailable;
 
+  /// No description provided for @browserDatabaseCheckRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please use the Check Database action, then try again.'**
+  String get browserDatabaseCheckRequired;
+
   /// No description provided for @deckLoadFailed.
   ///
   /// In en, this message translates to:
@@ -780,6 +786,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No cards found'**
   String get browserNoCards;
+
+  /// No description provided for @browserColumnDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get browserColumnDue;
+
+  /// No description provided for @browserColumnEase.
+  ///
+  /// In en, this message translates to:
+  /// **'Ease'**
+  String get browserColumnEase;
+
+  /// No description provided for @browserColumnAverageEase.
+  ///
+  /// In en, this message translates to:
+  /// **'Average ease'**
+  String get browserColumnAverageEase;
+
+  /// No description provided for @browserColumnCardModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Card modified'**
+  String get browserColumnCardModified;
+
+  /// No description provided for @browserColumnCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get browserColumnCreated;
+
+  /// No description provided for @browserColumnNoteModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Note modified'**
+  String get browserColumnNoteModified;
+
+  /// No description provided for @browserColumnInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval'**
+  String get browserColumnInterval;
+
+  /// No description provided for @browserColumnAverageInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Average interval'**
+  String get browserColumnAverageInterval;
+
+  /// No description provided for @browserColumnLapses.
+  ///
+  /// In en, this message translates to:
+  /// **'Lapses'**
+  String get browserColumnLapses;
+
+  /// No description provided for @browserColumnReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get browserColumnReviews;
+
+  /// No description provided for @browserColumnFsrsDifficulty.
+  ///
+  /// In en, this message translates to:
+  /// **'FSRS difficulty'**
+  String get browserColumnFsrsDifficulty;
+
+  /// No description provided for @browserColumnFsrsRetrievability.
+  ///
+  /// In en, this message translates to:
+  /// **'FSRS retrievability'**
+  String get browserColumnFsrsRetrievability;
+
+  /// No description provided for @browserColumnFsrsStability.
+  ///
+  /// In en, this message translates to:
+  /// **'FSRS stability'**
+  String get browserColumnFsrsStability;
+
+  /// No description provided for @browserColumnOriginalPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'New card position'**
+  String get browserColumnOriginalPosition;
+
+  /// No description provided for @browserDueFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'Filtered'**
+  String get browserDueFiltered;
+
+  /// No description provided for @browserNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get browserNew;
+
+  /// No description provided for @browserDueNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New {count}'**
+  String browserDueNew(int count);
+
+  /// No description provided for @browserLearning.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning'**
+  String get browserLearning;
+
+  /// No description provided for @browserTimespanSecond.
+  ///
+  /// In en, this message translates to:
+  /// **'1 second'**
+  String get browserTimespanSecond;
+
+  /// No description provided for @browserTimespanSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} seconds'**
+  String browserTimespanSeconds(String amount);
+
+  /// No description provided for @browserTimespanMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'1 minute'**
+  String get browserTimespanMinute;
+
+  /// No description provided for @browserTimespanMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} minutes'**
+  String browserTimespanMinutes(String amount);
+
+  /// No description provided for @browserTimespanHour.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get browserTimespanHour;
+
+  /// No description provided for @browserTimespanHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} hours'**
+  String browserTimespanHours(String amount);
+
+  /// No description provided for @browserTimespanDay.
+  ///
+  /// In en, this message translates to:
+  /// **'1 day'**
+  String get browserTimespanDay;
+
+  /// No description provided for @browserTimespanDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} days'**
+  String browserTimespanDays(String amount);
+
+  /// No description provided for @browserTimespanMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'1 month'**
+  String get browserTimespanMonth;
+
+  /// No description provided for @browserTimespanMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} months'**
+  String browserTimespanMonths(String amount);
+
+  /// No description provided for @browserTimespanYear.
+  ///
+  /// In en, this message translates to:
+  /// **'1 year'**
+  String get browserTimespanYear;
+
+  /// No description provided for @browserTimespanYears.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} years'**
+  String browserTimespanYears(String amount);
 
   /// No description provided for @browserNoNotes.
   ///

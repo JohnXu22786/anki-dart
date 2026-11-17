@@ -14,6 +14,93 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets(
+    'error rows show the source message and unchecked selection state',
+    (tester) async {
+      final controller = _Controller(
+        CardBrowserSnapshot(
+          columns: const [
+            CardBrowserColumn(type: BrowserColumn.tags, label: 'Tags'),
+          ],
+          rows: [
+            CardBrowserRow(
+              id: const BrowserRowId(7),
+              cells: const {
+                'noteTags':
+                    'Please use the Check Database action, then try again.',
+              },
+              color: CardBrowserRowColor.unknown,
+              error: BrowserRowError.databaseCheckRequired,
+            ),
+          ],
+        ),
+      );
+      await tester.pumpWidget(_app(controller, const Size(500, 800)));
+      await tester.pumpAndSettle();
+
+      final message = find.text(
+        'Please use the Check Database action, then try again.',
+      );
+      expect(message, findsOneWidget);
+      expect(
+        tester.widget<Text>(message).style?.decoration,
+        TextDecoration.lineThrough,
+      );
+      final semantics = tester
+          .getSemantics(find.byKey(const ValueKey('browser-row-7')))
+          .getSemanticsData();
+      expect(semantics.flagsCollection.isButton, isTrue);
+      expect(semantics.flagsCollection.isSelected, Tristate.isFalse);
+      await tester.longPress(find.byKey(const ValueKey('browser-row-7')));
+      expect(controller.selectedRows, [const BrowserRowId(7)]);
+      expect(
+        tester
+            .getSemantics(find.byKey(const ValueKey('browser-row-7')))
+            .getSemanticsData()
+            .flagsCollection
+            .isSelected,
+        Tristate.isFalse,
+      );
+      await tester.tap(message);
+      await tester.pumpAndSettle();
+      expect(controller.selectedRows, isEmpty);
+      expect(controller.selectionUpdates.last, isEmpty);
+    },
+  );
+
+  testWidgets('row font, RTL, and elision metadata do not alter cell text', (
+    tester,
+  ) async {
+    final row = CardBrowserRow(
+      id: const BrowserRowId(1),
+      cells: const {'deck': 'Default Deck'},
+      fontName: 'Custom Browser Font',
+      fontSize: 24,
+      rtlCells: const {'deck': true},
+      elideModes: const {'deck': CardBrowserElideMode.middle},
+    );
+    await tester.pumpWidget(
+      _app(
+        _Controller(
+          CardBrowserSnapshot(
+            columns: const [
+              CardBrowserColumn(type: BrowserColumn.deck, label: 'Deck'),
+            ],
+            rows: [row],
+          ),
+        ),
+        const Size(500, 800),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final cell = tester.widget<Text>(find.text('Default Deck'));
+    expect(cell.style, isNull);
+    expect(cell.textDirection, isNull);
+    expect(cell.overflow, TextOverflow.ellipsis);
+    expect(cell.maxLines, isNot(1));
+  });
+
   testWidgets('mode switch clears selection and publishes the returned mode', (
     tester,
   ) async {

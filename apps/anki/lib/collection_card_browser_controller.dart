@@ -11,8 +11,11 @@ import 'package:anki_search_sql/anki_search_sql.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'browser_row_metadata.dart';
 import 'card_browser_screen.dart';
+import 'browser_row_values.dart';
 import 'collection_runtime.dart';
+import 'l10n/app_localizations_en.dart';
 
 /// Collection-backed Card Browser for the active profile.
 ///
@@ -27,6 +30,7 @@ final class CollectionCardBrowserController
   }) : _preferencesOverride = preferences;
 
   final CollectionRuntime collections;
+  final AppLocalizationsEn _l10n = AppLocalizationsEn();
   final SharedPreferencesAsync? _preferencesOverride;
   SharedPreferencesAsync get _preferences =>
       _preferencesOverride ?? SharedPreferencesAsync();
@@ -215,6 +219,7 @@ final class CollectionCardBrowserController
     final mode = _mode;
     final sortType = _sortType;
     final storage = _storage;
+    final timing = storage.timingTodayForNow();
     final selectedDeckId = storage.currentDeckId;
     final decks = storage.decks.getAllDecksInNameOrder();
     final deckIdsWithChildren = <BigInt, List<BigInt>>{
@@ -280,22 +285,57 @@ final class CollectionCardBrowserController
         );
       }
       final deck = card == null ? null : decksById[card.deckId.toString()];
+      final rowCards = mode == BrowserColumnMode.notes
+          ? cardsByNoteId[note.id] ?? const <models.Card>[]
+          : [card!];
+      final rowError = mode == BrowserColumnMode.notes && rowCards.isEmpty
+          ? BrowserRowError.databaseCheckRequired
+          : null;
+      final metadataCard = rowCards.isEmpty ? null : rowCards.first;
+      final metadata = browserRowMetadata(
+        mode: mode,
+        note: note,
+        notetype: notetype,
+        card: metadataCard,
+        columns: configuredColumns.columns,
+      );
+      final rowValues = browserRowValues(
+        cards: rowCards,
+        note: note,
+        mode: mode,
+        timing: timing,
+        l10n: _l10n,
+      );
       rows.add(
         CardBrowserRow(
           id: BrowserRowId.bigInt(id),
-          cells: {
-            for (final column in configuredColumns.columns)
-              column.key: _columnValue(
-                column,
-                note,
-                card,
-                deck,
-                mode,
-                cardsByNoteId[note.id] ?? const [],
-                decksById,
-                notetype,
-              ),
-          },
+          fontName: metadata.fontName,
+          fontSize: metadata.fontSize,
+          color: rowError == null
+              ? metadata.color
+              : CardBrowserRowColor.unknown,
+          error: rowError,
+          rtlCells: metadata.rtlCells,
+          elideModes: metadata.elideModes,
+          cells: rowError != null
+              ? {
+                  for (final column in configuredColumns.columns)
+                    column.key: _rowErrorMessage(rowError),
+                }
+              : {
+                  for (final column in configuredColumns.columns)
+                    column.key: _columnValue(
+                      column,
+                      note,
+                      card,
+                      deck,
+                      mode,
+                      rowCards,
+                      decksById,
+                      notetype,
+                      rowValues,
+                    ),
+                },
         ),
       );
     }
@@ -312,6 +352,10 @@ final class CollectionCardBrowserController
     return snapshot;
   }
 
+  String _rowErrorMessage(BrowserRowError error) => switch (error) {
+    BrowserRowError.databaseCheckRequired => _l10n.browserDatabaseCheckRequired,
+  };
+
   String _columnValue(
     BrowserColumn column,
     models.Note note,
@@ -321,34 +365,40 @@ final class CollectionCardBrowserController
     List<models.Card> noteCards,
     Map<String, models.Deck> decksById,
     models.Notetype notetype,
-  ) => switch (column) {
-    BrowserColumn.question => _renderedCardSide(
-      note,
-      card,
-      mode == BrowserColumnMode.cards ? const [] : noteCards,
-      notetype,
-      decksById,
-      answer: false,
-    ),
-    BrowserColumn.answer => _renderedCardSide(
-      note,
-      card,
-      mode == BrowserColumnMode.cards ? const [] : noteCards,
-      notetype,
-      decksById,
-      answer: true,
-    ),
-    BrowserColumn.sortField => _sortField(note, notetype),
-    BrowserColumn.noteType => notetype.name,
-    BrowserColumn.cardType when mode == BrowserColumnMode.cards =>
-      _templateName(notetype, card!),
-    BrowserColumn.deck when mode == BrowserColumnMode.cards => deck?.name ?? '',
-    BrowserColumn.deck => _notesDeckName(noteCards, decksById),
-    BrowserColumn.cardType when mode == BrowserColumnMode.notes =>
-      noteCards.length.toString(),
-    BrowserColumn.tags => note.tags.join(' '),
-    _ => 'Unavailable',
-  };
+    Map<String, String> rowValues,
+  ) {
+    final projectedValue = rowValues[column.key];
+    if (projectedValue != null) return projectedValue;
+    return switch (column) {
+      BrowserColumn.question => _renderedCardSide(
+        note,
+        card,
+        mode == BrowserColumnMode.cards ? const [] : noteCards,
+        notetype,
+        decksById,
+        answer: false,
+      ),
+      BrowserColumn.answer => _renderedCardSide(
+        note,
+        card,
+        mode == BrowserColumnMode.cards ? const [] : noteCards,
+        notetype,
+        decksById,
+        answer: true,
+      ),
+      BrowserColumn.sortField => _sortField(note, notetype),
+      BrowserColumn.noteType => notetype.name,
+      BrowserColumn.cardType when mode == BrowserColumnMode.cards =>
+        _templateName(notetype, card!),
+      BrowserColumn.deck when mode == BrowserColumnMode.cards =>
+        deck?.name ?? '',
+      BrowserColumn.deck => _notesDeckName(noteCards, decksById),
+      BrowserColumn.cardType when mode == BrowserColumnMode.notes =>
+        noteCards.length.toString(),
+      BrowserColumn.tags => note.tags.join(' '),
+      _ => 'Unavailable',
+    };
+  }
 
   String _renderedCardSide(
     models.Note note,
@@ -422,7 +472,25 @@ final class CollectionCardBrowserController
         BrowserColumn.cardType when mode == BrowserColumnMode.notes => 'Cards',
         BrowserColumn.cardType => 'Card type',
         BrowserColumn.noteType => 'Note type',
-        _ => '${column.key} (unavailable)',
+        BrowserColumn.due => _l10n.browserColumnDue,
+        BrowserColumn.ease =>
+          mode == BrowserColumnMode.notes
+              ? _l10n.browserColumnAverageEase
+              : _l10n.browserColumnEase,
+        BrowserColumn.changed => _l10n.browserColumnCardModified,
+        BrowserColumn.created => _l10n.browserColumnCreated,
+        BrowserColumn.edited => _l10n.browserColumnNoteModified,
+        BrowserColumn.interval =>
+          mode == BrowserColumnMode.notes
+              ? _l10n.browserColumnAverageInterval
+              : _l10n.browserColumnInterval,
+        BrowserColumn.lapses => _l10n.browserColumnLapses,
+        BrowserColumn.reviews => _l10n.browserColumnReviews,
+        BrowserColumn.fsrsDifficulty => _l10n.browserColumnFsrsDifficulty,
+        BrowserColumn.fsrsRetrievability =>
+          _l10n.browserColumnFsrsRetrievability,
+        BrowserColumn.fsrsStability => _l10n.browserColumnFsrsStability,
+        BrowserColumn.originalPosition => _l10n.browserColumnOriginalPosition,
       };
 
   SearchSqlSortOrder _compileSortOrder(BrowserSortType sortType) =>

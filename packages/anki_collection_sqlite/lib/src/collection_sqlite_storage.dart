@@ -270,6 +270,22 @@ GROUP BY did
   /// Builds the current study deck tree using the collection's source
   /// scheduler settings and the current platform timezone.
   Future<protoDeck.DeckTreeNode> deckTreeForNow({DateTime? now}) async {
+    final timing = timingTodayForNow(now: now);
+    await _unburyIfDayRolledOver(timing.daysElapsed);
+    final currentSecs = timing.now;
+    final learnAhead = _readConfigInt('collapseTime') ?? 1200;
+    return deckTree(
+      daysElapsed: timing.daysElapsed,
+      learnCutoff: (currentSecs + learnAhead).toUnsigned(32),
+      newCardsIgnoreReviewLimit:
+          _readConfigBool('newCardsIgnoreReviewLimit') ?? false,
+      applyAllParentLimits: _readConfigBool('applyAllParentLimits') ?? false,
+    );
+  }
+
+  /// Resolves scheduler timing from the collection's creation and rollover
+  /// settings using [now] and the active platform timezone.
+  SchedTimingToday timingTodayForNow({DateTime? now}) {
     final current = now ?? DateTime.now();
     final currentSecs = current.millisecondsSinceEpoch ~/ 1000;
     final metadata = _database.select('SELECT crt, conf FROM col').single;
@@ -293,15 +309,7 @@ GROUP BY did
       currentUtcOffsetMinutesWest: minutesWest,
       rolloverHour: rollover,
     );
-    await _unburyIfDayRolledOver(timing.daysElapsed);
-    final learnAhead = _readConfigInt('collapseTime') ?? 1200;
-    return deckTree(
-      daysElapsed: timing.daysElapsed,
-      learnCutoff: (currentSecs + learnAhead).toUnsigned(32),
-      newCardsIgnoreReviewLimit:
-          _readConfigBool('newCardsIgnoreReviewLimit') ?? false,
-      applyAllParentLimits: _readConfigBool('applyAllParentLimits') ?? false,
-    );
+    return timing;
   }
 
   /// Returns Core's configured current deck, or its source default ID.

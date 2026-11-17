@@ -44,3 +44,19 @@ helper, which includes the htmlescape 0.3.1 entity table. Its attribution,
 license notice, and third-party source hashes are recorded in
 `../../packages/anki_backend_models/NOTICE.md` and
 `../../packages/anki_backend_models/THIRD_PARTY_SOURCE.sha256`.
+
+Card Browser scheduling values and row metadata in
+`lib/browser_row_values.dart` and `lib/collection_card_browser_controller.dart`
+are independently implemented from Anki Core's `rslib/src/browser_table.rs`,
+`rslib/src/scheduler/timespan.rs`, `rslib/src/scheduler/timing.rs`,
+`rslib/src/card/mod.rs`, and `rslib/src/timestamp.rs` at
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`, plus AnkiDroid's
+`CardBrowserViewModel.kt`, `CardBrowserColumn.kt`, LibAnki `BrowserConfig.kt`,
+and `BrowserMultiColumnAdapter.kt` at
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The adapter consumes row color but
+ignores row font, per-cell RTL, and elision metadata. Core source is
+AGPL-3.0-or-later; AnkiDroid source is GPL-3.0-or-later. No upstream code or
+Android resource is copied. The app-level implementation and new English strings remain
+AGPL-3.0-or-later; root `COPYING` is unchanged. Exact source hashes are in
+`ANKIDROID_SOURCE.sha256`. App English timespan resources are sourced from
+Core's English semantics; non-English catalogs are not part of this app yet.

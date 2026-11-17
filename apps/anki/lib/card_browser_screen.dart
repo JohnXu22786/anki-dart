@@ -23,12 +23,47 @@ final class CardBrowserColumn {
 
 /// A row with a stable card or note ID and host-rendered cell text.
 final class CardBrowserRow {
-  CardBrowserRow({required this.id, required Map<String, String> cells})
-    : cells = Map.unmodifiable(cells);
+  CardBrowserRow({
+    required this.id,
+    required Map<String, String> cells,
+    this.fontName = '',
+    this.fontSize = 0,
+    this.color = CardBrowserRowColor.defaultColor,
+    this.error,
+    Map<String, bool> rtlCells = const {},
+    Map<String, CardBrowserElideMode> elideModes = const {},
+  }) : cells = Map.unmodifiable(cells),
+       rtlCells = Map.unmodifiable(rtlCells),
+       elideModes = Map.unmodifiable(elideModes);
 
   final BrowserRowId id;
   final Map<String, String> cells;
+  final String fontName;
+  final int fontSize;
+  final CardBrowserRowColor color;
+  final BrowserRowError? error;
+  final Map<String, bool> rtlCells;
+  final Map<String, CardBrowserElideMode> elideModes;
 }
+
+enum CardBrowserRowColor {
+  defaultColor,
+  unknown,
+  marked,
+  suspended,
+  buried,
+  flagRed,
+  flagOrange,
+  flagGreen,
+  flagBlue,
+  flagPink,
+  flagTurquoise,
+  flagPurple,
+}
+
+enum BrowserRowError { databaseCheckRequired }
+
+enum CardBrowserElideMode { right, middle }
 
 /// The immutable data shown by one completed Card Browser request.
 final class CardBrowserSnapshot {
@@ -700,7 +735,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                 separatorBuilder: (context, index) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final row = snapshot.rows[index];
-                  final selected = _selectedRows.contains(row.id);
+                  final selected =
+                      row.error == null && _selectedRows.contains(row.id);
                   return Semantics(
                     key: ValueKey('browser-row-${row.id.bigValue}'),
                     container: true,
@@ -711,23 +747,26 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                       onTap: () => _activateRow(row.id),
                       onLongPress: () => _handleLongPress(row.id),
                       onSecondaryTap: () => _handleRightClick(row.id),
-                      child: _buildWideRow(
-                        leading: SizedBox(
-                          width: _wideLeadingWidth,
-                          child: _isMultiSelect
-                              ? Checkbox(
-                                  value: selected,
-                                  onChanged: (_) => _toggleRow(row.id),
-                                  semanticLabel: s.browserSelectRow(
-                                    _rowTitle(row),
-                                  ),
-                                )
-                              : const Icon(Icons.drag_indicator, size: 18),
+                      child: Container(
+                        color: _rowBackground(row),
+                        child: _buildWideRow(
+                          leading: SizedBox(
+                            width: _wideLeadingWidth,
+                            child: _isMultiSelect
+                                ? Checkbox(
+                                    value: selected,
+                                    onChanged: (_) => _toggleRow(row.id),
+                                    semanticLabel: s.browserSelectRow(
+                                      _rowTitle(row),
+                                    ),
+                                  )
+                                : const Icon(Icons.drag_indicator, size: 18),
+                          ),
+                          columns: snapshot.columns,
+                          row: row,
+                          isHeader: false,
+                          sortType: snapshot.sortType,
                         ),
-                        columns: snapshot.columns,
-                        row: row,
-                        isHeader: false,
-                        sortType: snapshot.sortType,
                       ),
                     ),
                   );
@@ -764,6 +803,11 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                 ? _buildHeading(column, sortType)
                 : Text(
                     row!.cells[column.type.key] ?? '',
+                    style: row.error == null
+                        ? null
+                        : const TextStyle(
+                            decoration: TextDecoration.lineThrough,
+                          ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -942,7 +986,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     padding: const EdgeInsets.all(8),
     itemBuilder: (context, index) {
       final row = snapshot.rows[index];
-      final selected = _selectedRows.contains(row.id);
+      final selected = row.error == null && _selectedRows.contains(row.id);
       return Semantics(
         key: ValueKey('browser-row-${row.id.bigValue}'),
         container: true,
@@ -950,6 +994,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         selected: selected,
         label: _rowLabel(row, snapshot.columns),
         child: Card(
+          color: _rowBackground(row),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => _activateRow(row.id),
@@ -989,6 +1034,12 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                                 Expanded(
                                   child: Text(
                                     row.cells[column.type.key] ?? '',
+                                    style: row.error == null
+                                        ? null
+                                        : const TextStyle(
+                                            decoration:
+                                                TextDecoration.lineThrough,
+                                          ),
                                     maxLines:
                                         column.type == BrowserColumn.question ||
                                             column.type == BrowserColumn.answer
@@ -1027,6 +1078,21 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     if (columns.isEmpty) return row.id.bigValue.toString();
     return row.cells[columns.first.type.key] ?? row.id.bigValue.toString();
   }
+
+  Color? _rowBackground(CardBrowserRow row) => switch (row.color) {
+    CardBrowserRowColor.unknown => null,
+    CardBrowserRowColor.marked => Colors.yellow.withValues(alpha: 0.14),
+    CardBrowserRowColor.suspended => Colors.grey.withValues(alpha: 0.12),
+    CardBrowserRowColor.buried => Colors.red.withValues(alpha: 0.10),
+    CardBrowserRowColor.flagRed => Colors.red.withValues(alpha: 0.13),
+    CardBrowserRowColor.flagOrange => Colors.orange.withValues(alpha: 0.14),
+    CardBrowserRowColor.flagGreen => Colors.green.withValues(alpha: 0.14),
+    CardBrowserRowColor.flagBlue => Colors.blue.withValues(alpha: 0.13),
+    CardBrowserRowColor.flagPink => Colors.pink.withValues(alpha: 0.13),
+    CardBrowserRowColor.flagTurquoise => Colors.cyan.withValues(alpha: 0.13),
+    CardBrowserRowColor.flagPurple => Colors.purple.withValues(alpha: 0.13),
+    CardBrowserRowColor.defaultColor => null,
+  };
 
   String _rowLabel(CardBrowserRow row, List<CardBrowserColumn> columns) =>
       columns

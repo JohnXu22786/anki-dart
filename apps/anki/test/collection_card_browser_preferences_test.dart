@@ -12,6 +12,7 @@ import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_dart/anki_dart.dart';
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -220,6 +221,7 @@ void main() {
       await runtime.storage!.executeBatch('''
       INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data)
       VALUES (200, ${noteIds[0]}, 2, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '');
+      UPDATE notes SET tags = ' marked shared ' WHERE id = ${noteIds[0]};
     ''');
       await runtime.storage!.executeBatch('''
       INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
@@ -255,22 +257,37 @@ void main() {
       expect(result.rows.first.cells['note'], 'Fixture Basic');
       expect(result.rows.last.cells['noteFld'], 'back &  sort.png');
       expect(result.rows.first.cells['deck'], isNotEmpty);
-      expect(
-        result.rows.every((row) => row.cells['noteTags'] == 'shared'),
-        isTrue,
-      );
+      expect(result.rows.first.cells['noteTags'], 'shared');
+      expect(result.rows.last.cells['noteTags'], 'marked shared');
       expect(result.rows.last.cells['note'], 'Fixture Basic');
       expect(result.rows.last.cells['template'], '2');
       expect(result.rows.last.cells['deck'], '(2)');
+      expect(result.rows.last.color, CardBrowserRowColor.marked);
+      expect(result.rows.last.fontName, '');
+      expect(result.rows.last.fontSize, 0);
+      expect(result.rows.last.rtlCells['noteFld'], isFalse);
+      expect(result.rows.last.elideModes['deck'], CardBrowserElideMode.middle);
+      expect(
+        result.rows.last.elideModes['noteFld'],
+        CardBrowserElideMode.right,
+      );
       expect(
         result.rows.every((row) => row.id.bigValue != BigInt.from(700)),
         isTrue,
       );
+      await runtime.storage!.executeBatch('''
+      UPDATE cards SET flags = 2 WHERE id = 101;
+      UPDATE cards SET queue = -1 WHERE id = 100;
+      UPDATE notes SET tags = ' shared ' WHERE id = ${noteIds[0]};
+    ''');
       final cards = await controller.updateMode(BrowserColumnMode.cards);
       expect(cards.rows.map((row) => row.id.bigValue), [
         BigInt.from(101),
         BigInt.from(100),
       ]);
+      expect(cards.rows.first.color, CardBrowserRowColor.flagOrange);
+      expect(cards.rows.last.color, CardBrowserRowColor.suspended);
+      expect(cards.rows.first.elideModes['deck'], CardBrowserElideMode.middle);
       await controller.saveColumns([
         BrowserColumn.noteType,
         BrowserColumn.cardType,
@@ -573,6 +590,33 @@ void main() {
     final invalidRow = (await controller.search('tag:broken')).rows.single;
     expect(invalidRow.cells['question'], 'Unavailable');
     expect(invalidRow.cells['answer'], 'Unavailable');
+  });
+
+  test('notes search preserves Core database-check error for notes without cards', () async {
+    // Core RowContext::new() rejects Notes-mode rows whose all_cards_of_note()
+    // result is empty with DatabaseCheckRequired. Notes-only SQL searches can
+    // select a persisted note without joining the cards table.
+    await runtime.storage!.executeBatch('''
+      INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data)
+      VALUES (950, 'orphan-note-guid', (SELECT id FROM notetypes LIMIT 1), 0, -1, ' orphan ', 'front', 'front', 0, 0, '');
+    ''');
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    await runtime.storage!.selectDeck(Int64.ZERO);
+    await controller.updateMode(BrowserColumnMode.notes);
+    await controller.saveColumns([BrowserColumn.sortField, BrowserColumn.tags]);
+
+    final row = (await controller.search('tag:orphan')).rows.single;
+
+    expect(row.id.bigValue, BigInt.from(950));
+    expect(row.error, BrowserRowError.databaseCheckRequired);
+    expect(row.color, CardBrowserRowColor.unknown);
+    expect(
+      row.cells.values,
+      everyElement('Please use the Check Database action, then try again.'),
+    );
   });
 }
 

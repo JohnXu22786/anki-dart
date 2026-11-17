@@ -134,9 +134,15 @@ final class UnavailableDeckPickerRepository implements DeckPickerRepository {
 }
 
 final class DeckPickerScreen extends StatefulWidget {
-  const DeckPickerScreen({required this.repository, this.onClose, super.key});
+  const DeckPickerScreen({
+    required this.repository,
+    this.onClose,
+    this.onBrowseCards,
+    super.key,
+  });
   final DeckPickerRepository repository;
   final VoidCallback? onClose;
+  final ValueChanged<int>? onBrowseCards;
   @override
   State<DeckPickerScreen> createState() => _DeckPickerScreenState();
 }
@@ -539,8 +545,32 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       ),
     );
     if (action != null) {
-      await _invoke(() => widget.repository.performAction(action, deck.id));
+      if (action == DeckPickerAction.browseCards &&
+          widget.onBrowseCards != null) {
+        await _browseCards(deck.id);
+      } else {
+        await _invoke(() => widget.repository.performAction(action, deck.id));
+      }
     }
+  }
+
+  Future<void> _browseCards(int deckId) async {
+    setState(() => _showAddActions = false);
+    try {
+      await widget.repository.selectDeck(deckId);
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.deckActionFailed),
+          ),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    _reload();
+    widget.onBrowseCards?.call(deckId);
   }
 
   List<DeckPickerAction> _actionsFor(DeckPickerDeck d) => [

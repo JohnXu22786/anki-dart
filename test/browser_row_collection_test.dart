@@ -74,6 +74,28 @@ void main() {
         isNull,
       );
     });
+
+    test(
+      'BigInt IDs remain exact and legacy int conversion rejects unsafe IDs',
+      () async {
+        final wideId = BigInt.parse('9007199254740993');
+        final id = BrowserRowId.bigInt(wideId);
+
+        expect(id.bigValue, wideId);
+        expect(id, BrowserRowId.bigInt(BigInt.parse('9007199254740993')));
+        expect(await id.toCardIdBigInt(BrowserColumnMode.cards), wideId);
+        await expectLater(
+          id.toCardId(BrowserColumnMode.cards),
+          throwsRangeError,
+        );
+        expect(
+          await BrowserRowCollection(BrowserColumnMode.cards, [
+            id,
+          ]).queryCardIdsBigInt(),
+          [wideId],
+        );
+      },
+    );
   });
 
   group('BrowserRowCollection', () {

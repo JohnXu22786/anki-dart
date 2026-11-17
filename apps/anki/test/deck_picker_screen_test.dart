@@ -655,6 +655,25 @@ void main() {
     expect(repository.actions, [(DeckPickerAction.browseCards, 8)]);
   });
 
+  testWidgets('browsing selects the deck before opening the browser route', (
+    tester,
+  ) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 8, name: 'Biology'),
+    ]);
+    final browsed = <int>[];
+    await tester.pumpWidget(_app(repository, onBrowseCards: browsed.add));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Biology'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Browse cards'));
+    await tester.pumpAndSettle();
+
+    expect(repository.selected, [8]);
+    expect(repository.actions, isEmpty);
+    expect(browsed, [8]);
+  });
+
   testWidgets('narrow viewport golden', (tester) async {
     tester.view.physicalSize = const Size(360, 780);
     tester.view.devicePixelRatio = 1;
@@ -724,14 +743,17 @@ void main() {
   });
 }
 
-Widget _app(DeckPickerRepository repository) => MaterialApp(
+Widget _app(
+  DeckPickerRepository repository, {
+  ValueChanged<int>? onBrowseCards,
+}) => MaterialApp(
   localizationsDelegates: const [
     AppLocalizations.delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalWidgetsLocalizations.delegate,
   ],
   supportedLocales: AppLocalizations.supportedLocales,
-  home: DeckPickerScreen(repository: repository),
+  home: DeckPickerScreen(repository: repository, onBrowseCards: onBrowseCards),
 );
 
 final class _DeckRepository implements DeckPickerRepository {

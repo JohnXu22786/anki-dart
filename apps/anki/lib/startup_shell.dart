@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'app_config.dart';
 import 'app_collection_callbacks.dart';
 import 'app_services.dart';
+import 'card_browser_screen.dart';
 import 'deck_picker_screen.dart';
 import 'l10n/app_localizations.dart';
 
@@ -30,6 +31,7 @@ final class _StartupShellState extends State<StartupShell> {
   ProfileSnapshot? _snapshot;
   bool _showProfiles = false;
   bool _showDeckPicker = false;
+  bool _showCardBrowser = false;
 
   @override
   void initState() {
@@ -168,6 +170,8 @@ final class _StartupShellState extends State<StartupShell> {
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop && _showProfiles) {
           setState(() => _showProfiles = false);
+        } else if (!didPop && _showCardBrowser) {
+          setState(() => _showCardBrowser = false);
         } else if (!didPop && _showDeckPicker) {
           setState(() => _showDeckPicker = false);
         }
@@ -226,10 +230,17 @@ final class _StartupShellState extends State<StartupShell> {
     if (_showProfiles) {
       return _profileManager(snapshot, strings);
     }
+    if (_showCardBrowser) {
+      return CardBrowserScreen(
+        controller: widget.services.cardBrowser,
+        onClose: () => setState(() => _showCardBrowser = false),
+      );
+    }
     if (_showDeckPicker) {
       return DeckPickerScreen(
         repository: widget.services.deckPicker,
         onClose: () => setState(() => _showDeckPicker = false),
+        onBrowseCards: (_) => setState(() => _showCardBrowser = true),
       );
     }
     return Scaffold(

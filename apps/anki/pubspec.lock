@@ -51,14 +51,14 @@ packages:
     source: path
     version: "0.1.0"
   anki_search_parser:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../../packages/anki_search_parser"
       relative: true
     source: path
     version: "0.1.0"
   anki_search_sql:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../../packages/anki_search_sql"
       relative: true

@@ -7,7 +7,9 @@ import 'dart:io';
 
 import 'package:anki_app/app.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
-import 'package:anki_dart/profile_onboarding.dart';
+import 'package:anki_dart/anki_dart.dart' show BrowserSortCollectionOrdering;
+import 'package:anki_dart/profile_onboarding.dart'
+    show ProfileId, ProfileName, ProfileNameValid;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
@@ -77,6 +79,36 @@ void main() {
       ),
       6,
     );
+  });
+
+  testWidgets('Deck Picker browsing opens the shared Card Browser route', (
+    tester,
+  ) async {
+    final services = _services(directory, store);
+    await tester.pumpWidget(AppRouter(services: services));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Set up Anki'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open decks'));
+    await tester.pumpAndSettle();
+    expect((await services.cardBrowser.search('missing')).rows, isEmpty);
+    expect(
+      (await services.cardBrowser.updateSort(
+        const BrowserSortCollectionOrdering(key: 'noteFld', reverse: false),
+      )).rows,
+      isEmpty,
+    );
+    await tester.tap(find.byTooltip('More actions for Default'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Browse cards'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CardBrowserScreen), findsOneWidget);
+    expect(find.text('No cards found'), findsOneWidget);
+    expect(find.byKey(const ValueKey('browser-row-1')), findsNothing);
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+    expect(find.byType(DeckPickerScreen), findsOneWidget);
   });
 
   testWidgets(

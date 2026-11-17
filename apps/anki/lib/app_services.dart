@@ -4,8 +4,12 @@
  */
 
 import 'package:anki_dart/profile_onboarding.dart';
+import 'package:anki_dart/anki_dart.dart'
+    show BrowserColumn, BrowserRowId, BrowserSortType;
 
 import 'app_contracts.dart';
+import 'card_browser_screen.dart';
+import 'collection_card_browser_controller.dart';
 import 'collection_runtime.dart';
 import 'deck_picker_screen.dart';
 import 'deck_picker_repository.dart';
@@ -23,6 +27,7 @@ final class AppServices {
     required this.profiles,
     CollectionRuntime? collections,
     DeckPickerRepository? deckPicker,
+    CardBrowserController? cardBrowser,
     ProfileId Function()? generateProfileId,
   }) : collectionRuntimeConfigured = collections != null,
        collections = collections ?? _unconfiguredCollections,
@@ -31,6 +36,11 @@ final class AppServices {
            (collections == null
                ? const UnavailableDeckPickerRepository()
                : CollectionDeckPickerRepository(collections)),
+       cardBrowser =
+           cardBrowser ??
+           (collections == null
+               ? const UnavailableCardBrowserController()
+               : CollectionCardBrowserController(collections)),
        profileManager = ProfileManager(
          profiles,
          generateProfileId: generateProfileId,
@@ -42,7 +52,51 @@ final class AppServices {
   final bool collectionRuntimeConfigured;
   final CollectionRuntime collections;
   final DeckPickerRepository deckPicker;
+  final CardBrowserController cardBrowser;
   final ProfileManager profileManager;
+}
+
+/// Explicit failure boundary until a collection-backed browser controller is
+/// connected; opening the route never presents placeholder rows.
+final class UnavailableCardBrowserController implements CardBrowserController {
+  const UnavailableCardBrowserController();
+
+  UnsupportedError get _unavailable =>
+      UnsupportedError('Card Browser collection services are not configured.');
+
+  @override
+  Future<CardBrowserSnapshot> load() => Future.error(_unavailable);
+
+  @override
+  Future<CardBrowserSnapshot> search(String query) =>
+      Future.error(_unavailable);
+
+  @override
+  Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType) =>
+      Future.error(_unavailable);
+
+  @override
+  Future<void> openColumnOptions(BrowserColumn column) =>
+      Future.error(_unavailable);
+
+  @override
+  Future<void> manageColumns() => Future.error(_unavailable);
+
+  @override
+  Future<void> updateSelection(List<BrowserRowId> selectedRows) =>
+      Future.error(_unavailable);
+
+  @override
+  Future<void> preview(BrowserRowId rowId) => Future.error(_unavailable);
+
+  @override
+  Future<void> edit(BrowserRowId rowId) => Future.error(_unavailable);
+
+  @override
+  Future<void> performBulkAction(
+    CardBrowserBulkAction action,
+    List<BrowserRowId> selectedRows,
+  ) => Future.error(_unavailable);
 }
 
 final _unconfiguredCollections = CollectionRuntime(

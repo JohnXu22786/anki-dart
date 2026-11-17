@@ -198,6 +198,41 @@ void main() {
   );
 
   test(
+    'bulk card and note readers preserve requested order and duplicates',
+    () async {
+      await storage.executeBatch('''
+      INSERT INTO cards VALUES
+        (101, 201, 1, 0, 1, 0, 0, 0, 0, 0, 2500, 0, 0, 0, 0, 0, 0, '{}'),
+        (102, 202, 1, 0, 1, 0, 0, 0, 0, 0, 2500, 0, 0, 0, 0, 0, 0, '{}');
+      INSERT INTO notes VALUES
+        (201, 'guid-201', 1, 1, 0, ' alpha ', 'front\u001fback', 'front', 0),
+        (202, 'guid-202', 1, 1, 0, ' beta ', 'other', 'other', 0);
+    ''');
+
+      final cards = await storage.getCardsByIds([
+        Int64(102),
+        Int64(999),
+        Int64(101),
+        Int64(102),
+      ]);
+      expect(cards.map((card) => card.id.toInt()), [102, 101, 102]);
+
+      final notes = await storage.getNotesByIds([
+        Int64(202),
+        Int64(999),
+        Int64(201),
+        Int64(202),
+      ]);
+      expect(notes.map((note) => note.id.toInt()), [202, 201, 202]);
+      expect(notes.map((note) => note.tags), [
+        ['beta'],
+        ['alpha'],
+        ['beta'],
+      ]);
+    },
+  );
+
+  test(
     'row conversion rejects invalid stored widths and defaults checksum',
     () async {
       await storage.executeBatch('''

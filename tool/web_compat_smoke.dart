@@ -22,6 +22,9 @@ import '../lib/src/locale_lowercase.dart';
 import '../lib/src/browser_search_history.dart';
 import '../lib/src/browser_search_history_json.dart';
 import '../lib/src/browser_search_request.dart';
+import '../lib/src/browser_column_collection.dart';
+import '../lib/src/browser_row_collection.dart';
+import '../lib/src/browser_selection_export.dart';
 
 void main() {
   final reader = _Reader([
@@ -35,6 +38,19 @@ void main() {
   final id = result['id'] as JsonIntegerValue;
   if (id.value != BigInt.parse('9007199254740993') || !id.isLong) {
     throw StateError('Web target rounded a signed 64-bit JSON integer.');
+  }
+  final wideBrowserId = BigInt.parse('9007199254740993');
+  final rowId = BrowserRowId.bigInt(wideBrowserId);
+  if (rowId.bigValue != wideBrowserId ||
+      rowId.toString() != '9007199254740993') {
+    throw StateError('Web target rounded a Card Browser row ID.');
+  }
+  final exportPlan = planBrowserSelectionExportBigInt(
+    mode: BrowserColumnMode.cards,
+    selectedRows: [rowId],
+  );
+  if (exportPlan?.ids.single != wideBrowserId) {
+    throw StateError('Web target rounded a selected Card Browser row ID.');
   }
   if (localeLowercase('I', 'tr_TR') != 'ı') {
     throw StateError('Explicit Turkic locale behavior changed on web.');

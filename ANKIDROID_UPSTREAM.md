@@ -4435,3 +4435,27 @@ hashes are pinned in `packages/anki_collection_sqlite/SOURCE.sha256` and checked
 by the package validator. App navigation and remaining deck actions are still
 application integration work. The package remains AGPL-3.0-or-later; no
 Kotlin/Android resources or strings are copied.
+
+## Card Browser Cards-mode preferences and columns (Unit 18)
+
+The shared Flutter Card Browser now persists the Cards-mode active column keys
+under `activeCols`, using `BrowserColumnCollection` and AnkiDroid's source
+fallback defaults from `BrowserConfig.kt` and `BrowserDefaults.CARD_COLUMNS`.
+The shared `SharedPreferencesAsync` adapter provides platform-neutral storage.
+The Flutter column manager supports selection, removal, ordering, and cancel or
+apply; each heading also exposes removal and manager options. Sort choice loads
+from collection config keys `sortType` and `sortBackwards`, with the
+`cardBrowserNoSorting` preference stored as `anki.browser.noSorting`. Changes
+write collection config before the no-sorting preference and run the updated
+search after persistence, matching `SortType.save()` ordering. Dynamic selected
+columns use real values only for sort field (`noteFld`), deck (`deck`), and tags
+(`noteTags`); the unsupported declared keys `question`, `answer`, `template`, `cardDue`,
+`cardEase`, `cardMod`, `noteCrt`, `noteMod`, `cardIvl`, `cardLapses`, `note`,
+`cardReps`, `difficulty`, `retrievability`, `stability`, and
+`originalPosition` are shown as unavailable. This is not full browser table
+support. Source references: AnkiDroid 2.25.3
+`BrowserColumnCollection.kt`, `CardBrowserColumn.kt`, `SortType.kt`,
+`SortOrderBottomSheetFragment.kt`, `CardBrowserViewModel.kt`, and LibAnki
+`BrowserConfig.kt`, pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`;
+Anki Core `rslib/src/browser_table.rs` and collection config defaults, pinned to
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`.

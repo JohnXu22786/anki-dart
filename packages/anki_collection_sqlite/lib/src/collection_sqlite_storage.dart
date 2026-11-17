@@ -115,6 +115,19 @@ final class CollectionSqliteStorage
     return result;
   }
 
+  /// Reads a JSON value from the collection config table.
+  Object? readCollectionConfig(String key) {
+    final rows = _database.select('SELECT val FROM config WHERE key = ?', [
+      key,
+    ]);
+    if (rows.isEmpty) return null;
+    return _decodeJsonValue(rows.single['val']);
+  }
+
+  /// Writes one JSON value to the collection config table and flushes it.
+  Future<void> writeCollectionConfig(String key, Object value) =>
+      _writeConfigValue(key, jsonEncode(value));
+
   /// Returns source-compatible Deck row operations on this collection.
   DeckStorage get decks => _deckStorage;
 

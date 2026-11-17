@@ -56,6 +56,7 @@ abstract interface class CardBrowserController {
   Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType);
   Future<void> openColumnOptions(BrowserColumn column);
   Future<void> manageColumns();
+  Future<void> saveColumns(List<BrowserColumn> columns);
   Future<void> updateSelection(List<BrowserRowId> selectedRows);
   Future<void> preview(BrowserRowId rowId);
   Future<void> edit(BrowserRowId rowId);
@@ -545,15 +546,150 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     ],
   );
 
+  Future<void> _openColumnOptions(BrowserColumn column) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              title: Text(column.key),
+              subtitle: const Text('Column options'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.remove_circle_outline),
+              title: const Text('Remove column'),
+              enabled: (_snapshot?.columns.length ?? 0) > 1,
+              onTap: () => Navigator.pop(context, 'remove'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.tune),
+              title: const Text('Manage columns'),
+              onTap: () => Navigator.pop(context, 'manage'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (action == 'manage') return _manageColumns();
+    if (action == 'remove') {
+      final columns =
+          _snapshot?.columns.map((item) => item.type).toList() ?? [];
+      columns.remove(column);
+      await _runAction(() async {
+        await widget.controller.saveColumns(columns);
+        await _load();
+      });
+    }
+  }
+
+  Future<void> _manageColumns() async {
+    final snapshot = _snapshot;
+    if (snapshot == null) return;
+    final selected = snapshot.columns.map((column) => column.type).toList();
+    final result = await showDialog<List<BrowserColumn>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Manage columns'),
+          content: SizedBox(
+            width: 360,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final column in [
+                    ...selected,
+                    ...BrowserColumn.values.where(
+                      (column) => !selected.contains(column),
+                    ),
+                  ])
+                    CheckboxListTile(
+                      key: ValueKey('browser-column-${column.key}'),
+                      dense: true,
+                      value: selected.contains(column),
+                      title: Text(column.key),
+                      onChanged: (checked) => setDialogState(() {
+                        if (checked == true && !selected.contains(column)) {
+                          selected.add(column);
+                        } else {
+                          selected.remove(column);
+                        }
+                      }),
+                      secondary: selected.contains(column)
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Move up',
+                                  onPressed: selected.indexOf(column) <= 0
+                                      ? null
+                                      : () => setDialogState(() {
+                                          final index = selected.indexOf(
+                                            column,
+                                          );
+                                          final value = selected.removeAt(
+                                            index,
+                                          );
+                                          selected.insert(index - 1, value);
+                                        }),
+                                  icon: const Icon(Icons.arrow_upward),
+                                ),
+                                IconButton(
+                                  tooltip: 'Move down',
+                                  onPressed:
+                                      selected.indexOf(column) >=
+                                          selected.length - 1
+                                      ? null
+                                      : () => setDialogState(() {
+                                          final index = selected.indexOf(
+                                            column,
+                                          );
+                                          final value = selected.removeAt(
+                                            index,
+                                          );
+                                          selected.insert(index + 1, value);
+                                        }),
+                                  icon: const Icon(Icons.arrow_downward),
+                                ),
+                              ],
+                            )
+                          : null,
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: selected.isEmpty
+                  ? null
+                  : () => Navigator.pop(context, List.of(selected)),
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (result == null) return;
+    await _runAction(() async {
+      await widget.controller.saveColumns(result);
+      await _load();
+    });
+  }
+
   Widget _buildHeading(CardBrowserColumn column, BrowserSortType sortType) {
     final active =
         sortType is BrowserSortCollectionOrdering &&
         sortType.key == column.type.key;
     return TextButton(
       key: ValueKey('browser-heading-${column.type.key}'),
-      onPressed: () =>
-          _runAction(() => widget.controller.openColumnOptions(column.type)),
-      onLongPress: () => _runAction(widget.controller.manageColumns),
+      onPressed: () => _openColumnOptions(column.type),
+      onLongPress: _manageColumns,
       style: TextButton.styleFrom(alignment: Alignment.centerLeft),
       child: Row(
         mainAxisSize: MainAxisSize.min,

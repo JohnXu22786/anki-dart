@@ -8,6 +8,7 @@ import 'package:anki_dart/anki_dart.dart';
 import 'package:anki_search_parser/anki_search_parser.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'card_browser_screen.dart';
 import 'collection_runtime.dart';
@@ -18,9 +19,20 @@ import 'collection_runtime.dart';
 /// supported query subset. Rendering, preferences, editing, preview, and bulk
 /// operations remain separate ports until their Core behavior is connected.
 final class CollectionCardBrowserController implements CardBrowserController {
-  CollectionCardBrowserController(this.collections);
+  CollectionCardBrowserController(
+    this.collections, {
+    SharedPreferencesAsync? preferences,
+  }) : _preferences = preferences ?? SharedPreferencesAsync();
 
   final CollectionRuntime collections;
+  final SharedPreferencesAsync _preferences;
+  static const _activeColumnsKey = 'activeCols';
+  static const _noSortingKey = 'anki.browser.noSorting';
+  static const _defaultColumns = ['noteFld', 'template', 'cardDue', 'deck'];
+  static const _sortKeys = BrowserSortConfigKeys(
+    columnKey: 'sortType',
+    reverseKey: 'sortBackwards',
+  );
   BrowserSortType _sortType = const BrowserSortNoOrdering();
   String _query = '';
 
@@ -33,7 +45,29 @@ final class CollectionCardBrowserController implements CardBrowserController {
   }
 
   @override
-  Future<CardBrowserSnapshot> load() => _search(_query);
+  Future<CardBrowserSnapshot> load() async {
+    final noSorting = await _preferences.getBool(_noSortingKey) ?? false;
+    _sortType = resolveBrowserSortType(
+      noSorting: noSorting,
+      config: {
+        'sortType': _storage.readCollectionConfig('sortType'),
+        'sortBackwards': _storage.readCollectionConfig('sortBackwards'),
+      },
+      configKeys: _sortKeys,
+      availableColumnKeys: SearchSqlSortColumn.values.map(
+        (column) => column.key,
+      ),
+    );
+    return _search(_query);
+  }
+
+  @override
+  Future<void> saveColumns(List<BrowserColumn> columns) async {
+    await _preferences.setString(
+      _activeColumnsKey,
+      columns.map((c) => c.key).join('|'),
+    );
+  }
 
   @override
   Future<CardBrowserSnapshot> search(String query) {
@@ -42,7 +76,15 @@ final class CollectionCardBrowserController implements CardBrowserController {
   }
 
   @override
-  Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType) {
+  Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType) async {
+    final plan = buildBrowserSortSavePlan(
+      sortType: sortType,
+      configKeys: _sortKeys,
+    );
+    for (final write in plan.collectionConfigWrites) {
+      await _storage.writeCollectionConfig(write.key, write.value);
+    }
+    await _preferences.setBool(_noSortingKey, plan.cardBrowserNoSorting);
     _sortType = sortType;
     return _search(_query);
   }
@@ -76,6 +118,10 @@ final class CollectionCardBrowserController implements CardBrowserController {
     );
     final notesById = {for (final note in notes) note.id.toString(): note};
     final decksById = {for (final deck in decks) deck.id.toString(): deck};
+    final configuredColumns = BrowserColumnCollection.load(
+      preferenceValue: await _preferences.getString(_activeColumnsKey),
+      defaultColumnKeys: _defaultColumns,
+    );
     final rows = <CardBrowserRow>[];
     for (final id in ids) {
       final card = cardsById[id.toString()];
@@ -89,24 +135,34 @@ final class CollectionCardBrowserController implements CardBrowserController {
         CardBrowserRow(
           id: BrowserRowId.bigInt(id),
           cells: {
-            BrowserColumn.sortField.key:
-                note.sortField ?? note.fields.firstOrNull ?? '',
-            BrowserColumn.deck.key: deck?.name ?? '',
-            BrowserColumn.tags.key: note.tags.join(' '),
+            for (final column in configuredColumns.columns)
+              column.key: switch (column) {
+                BrowserColumn.sortField =>
+                  note.sortField ?? note.fields.firstOrNull ?? '',
+                BrowserColumn.deck => deck?.name ?? '',
+                BrowserColumn.tags => note.tags.join(' '),
+                _ => 'Unavailable',
+              },
           },
         ),
       );
     }
     return CardBrowserSnapshot(
-      columns: const [
-        CardBrowserColumn(type: BrowserColumn.sortField, label: 'Sort field'),
-        CardBrowserColumn(type: BrowserColumn.deck, label: 'Deck'),
-        CardBrowserColumn(type: BrowserColumn.tags, label: 'Tags'),
+      columns: [
+        for (final column in configuredColumns.columns)
+          CardBrowserColumn(type: column, label: _columnLabel(column)),
       ],
       rows: rows,
       sortType: _sortType,
     );
   }
+
+  String _columnLabel(BrowserColumn column) => switch (column) {
+    BrowserColumn.sortField => 'Sort field',
+    BrowserColumn.deck => 'Deck',
+    BrowserColumn.tags => 'Tags',
+    _ => '${column.key} (unavailable)',
+  };
 
   SearchSqlSortOrder _compileSortOrder(BrowserSortType sortType) =>
       switch (sortType) {
@@ -128,14 +184,10 @@ final class CollectionCardBrowserController implements CardBrowserController {
   }
 
   @override
-  Future<void> openColumnOptions(BrowserColumn column) => Future.error(
-    UnsupportedError('Card Browser column options are not implemented.'),
-  );
+  Future<void> openColumnOptions(BrowserColumn column) async {}
 
   @override
-  Future<void> manageColumns() => Future.error(
-    UnsupportedError('Card Browser column management is not implemented.'),
-  );
+  Future<void> manageColumns() async {}
 
   @override
   Future<void> updateSelection(List<BrowserRowId> selectedRows) async {}

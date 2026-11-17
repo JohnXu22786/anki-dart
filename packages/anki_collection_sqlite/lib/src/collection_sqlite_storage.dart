@@ -96,10 +96,14 @@ final class CollectionSqliteStorage
   );
   bool _connectionClosed = false;
   bool _closed = false;
+  bool _closing = false;
 
   /// Executes a compiled Core-compatible search and sort plan against this
   /// collection. Sort preparation and the final ID query share this connection.
   Future<List<BigInt>> executeSearchPlan(CompiledSearchSqlWithSort plan) {
+    if (_closing || _connectionClosed || _closed) {
+      return Future.error(StateError('collection storage is closing'));
+    }
     final result = _searchQueue.then(
       (_) =>
           executeSearchSqlPlan(CollectionSqliteSearchExecutor(_database), plan),
@@ -798,6 +802,7 @@ WHERE queue IN (-2, -3)
     CollectionSchemaMigrationCallbacks? callbacks,
   }) async {
     if (_closed) return;
+    _closing = true;
     await _searchQueue;
     Object? closeError;
     StackTrace? closeStack;

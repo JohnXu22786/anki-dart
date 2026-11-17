@@ -84,6 +84,30 @@ void main() {
     await storage.close();
   });
 
+  test('storage rejects searches submitted after close begins', () async {
+    final collectionDatabase = sqlite3.openInMemory();
+    final storage = await CollectionSqliteStorage.open(
+      driver: CollectionSqliteDriver(openDatabase: (_) => collectionDatabase),
+      location: 'memory',
+    );
+    collectionDatabase.execute('CREATE TABLE cards (id INTEGER NOT NULL)');
+    collectionDatabase.execute('INSERT INTO cards VALUES (5)');
+    const plan = CompiledSearchSqlWithSort(
+      search: CompiledSearchSql(
+        sql: 'SELECT id FROM cards',
+        arguments: [],
+        requiredTable: RequiredTable.cards,
+      ),
+      preparationSql: [],
+    );
+
+    final queuedSearch = storage.executeSearchPlan(plan);
+    final closing = storage.close();
+    await expectLater(storage.executeSearchPlan(plan), throwsStateError);
+    expect(await queuedSearch, [BigInt.from(5)]);
+    await closing;
+  });
+
   test('maps signed 64-bit integer bounds without narrowing', () async {
     final ids = await executor.queryIds(
       'SELECT CAST(value AS INTEGER) FROM '

@@ -22,10 +22,12 @@ final class CollectionCardBrowserController implements CardBrowserController {
   CollectionCardBrowserController(
     this.collections, {
     SharedPreferencesAsync? preferences,
-  }) : _preferences = preferences ?? SharedPreferencesAsync();
+  }) : _preferencesOverride = preferences;
 
   final CollectionRuntime collections;
-  final SharedPreferencesAsync _preferences;
+  final SharedPreferencesAsync? _preferencesOverride;
+  SharedPreferencesAsync get _preferences =>
+      _preferencesOverride ?? SharedPreferencesAsync();
   static const _activeColumnsKey = 'activeCols';
   static const _noSortingKey = 'anki.browser.noSorting';
   static const _defaultColumns = ['noteFld', 'template', 'cardDue', 'deck'];

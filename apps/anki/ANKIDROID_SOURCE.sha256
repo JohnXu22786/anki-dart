@@ -36,6 +36,20 @@ bbeae0b2d08ad54473e8696ac6253b95978bca8ca5202b2847753ba2822eb897  AnkiDroid/src/
 05b9d6fd7722dc69490341ea312dcf8a4190e4b62a26f57a9e37bef4927db618  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardState.kt
 70410666e0545af8f051d113f3b3ccdbe99adf0b30e0ca4508eae5daa3ae4373  libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt
 
+# AnkiDroid 2.25.3 canonical Card Browser history display and row callback, d9bf072f814a0c37d30a694192593b31ff2df875
+ab018d78e5542b8b36b639bc1fee7ae48696bc5d8c68e6a4a97bd52279e5e0fc  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModel.kt
+4cb8e4b9f7d21293fe1dd7756ff0b289be0084711d1110235cc8d60556771ff2  AnkiDroid/src/main/java/com/ichi2/anki/browser/SearchHistory.kt
+48ca35bc7d4740197b035ad651273e3b2f054407317eeac8e69d8b11455a054b  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchString.kt
+ac20e877b41b4d8024c848a74ee7a5bddd8768c3ff9e813c34699e9f891b7435  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/StandardSearchFragment.kt
+4f10bc07e79974ca0836d0f1f86624fac7b238db620a9dd80b366a7fdc559408  AnkiDroid/src/main/res/layout/view_search_history_item.xml
+eacd31477a1752a0ae611db4d6650cd797f15f18e93888d38b474b991a815933  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt
+480fa2d94b5d61b530e6e641e4c9653f6a2e868c3a7c72a9e607b2b83856f979  AnkiDroid/src/test/java/com/ichi2/anki/browser/SearchHistoryTest.kt
+edd95d9d5aad6e0e9dc015c5053a1b22f73d0ef683953e67d4cc75984ab48c18  AnkiDroid/src/test/java/com/ichi2/anki/browser/search/CardBrowserSearchViewModelTest.kt
+905d0e86266f58e817a29b2024afcbb05304de339739dc2ca48c946439878032  AnkiDroid/src/test/java/com/ichi2/anki/browser/search/StandardSearchFragmentTest.kt
+7da1839d1a905ff3adbd6cbf469262f3a880c2ea20c2d30ddca8110208714743  AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchFiltersTest.kt
+38e06adb7b81c06e041eb4e826e5ddc310ced5a150053d25370107c2e409d311  AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchRequestTest.kt
+6446d51040859d7e921b89b4f5719d640a5bdcd1fe88b4b86d6255c3c5e65abf  AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchStringTest.kt
+
 # Anki Core search AST and canonical writer, e64c6b1aee3e8d668fb8bbe084beada8e070d985
 2b671bedbf3219dda8190d0a126aa78807a77ecd8c72ebc008ffb40d28e1a6b6  rslib/src/search/parser.rs
 82cbfd2d92746da726ebffc3fe63749c620b428292ce32220dfd09ff6662d195  rslib/src/search/writer.rs

@@ -4,7 +4,7 @@
 location to `CollectionOpenDatabase`. It opens through the provided driver,
 applies Anki Core's connection pragmas, forwards schema queries and SQL batches
 to SQLite, and closes the connection without deleting the collection. It also
-provides pinned stored card and note reads, card row mutations, and
+provides pinned stored card and note reads, card and note row mutations, and
 source-compatible first-create callbacks using shared models from
 `anki_backend_models`.
 
@@ -41,6 +41,17 @@ millisecond timestamp as the proposed row ID, allocating `max(id) + 1` on a
 collision, while persisting the card's supplied `mod` value. These methods do
 not create notes, schedule cards, or add transaction boundaries; callers own
 transactions.
+
+Note mutation methods are `updateNote`, `addNote`, `addNoteIfUnique`,
+`addOrUpdateNote`, and `removeNote`. They delegate to the shared
+`anki_backend_storage.NoteStorage` implementation, preserving its prepared-note
+preconditions, SQL statements, generated timestamp IDs, and mutable note-ID
+assignment. The collection adapter shares its bounded prepared-statement cache
+and flushes after autocommit writes; calls inside caller transactions wait for
+the transaction boundary. Generated row IDs are read through SQLite's result
+path so Web builds retain exact 64-bit values above JavaScript's safe integer
+range. `CollectionSqliteStorage.open` accepts an optional `nowMillis` override
+for deterministic tests; normal callers omit it to use the system clock.
 
 The native entry point uses the bundled SQLite from `sqlite3`:
 
@@ -84,20 +95,19 @@ functions.
 
 The adapter applies the source connection settings: zero busy timeout,
 exclusive locking, 4096-byte page size, a 40 MiB SQLite page cache, the source
-legacy-file-format setting, and WAL. It maintains the source's bounded
-50-entry prepared statement cache for the hot transaction controls
-(`BEGIN EXCLUSIVE` and `COMMIT`), which are the only operations the source
-uses through its cached-prepare API. Schema probes, integrity checks, rollback,
-and SQL batches use direct query/execute APIs in the source too, so the adapter
-does not retain those statements. Set `androidTempStore` on Android to use
-memory for temporary tables. The adapter implements Core's `field_at_index`,
+legacy-file-format setting, and WAL. It maintains a bounded 50-entry prepared
+statement cache for the hot transaction controls (`BEGIN EXCLUSIVE` and
+`COMMIT`) and note mutation statements. Schema probes, integrity checks,
+rollback, and SQL batches use direct query/execute APIs in the source too, so
+the adapter does not retain those statements. Set `androidTempStore` on
+Android to use memory for temporary tables. The adapter implements Core's `field_at_index`,
 `process_text`, `fnvhash`, all CardData/FSRS extraction scalar functions,
 `regexp`, `regexp_fields`, and `regexp_tags`, and the `unicase` collation.
 The `decks` and `revlog` properties expose portable deck and review-log row
 operations on the opened collection connection through
 `anki_backend_storage`.
-Collection note mutations, undo/redo, media indexing, backup/restore,
-synchronization, and encryption remain outside this package's current scope.
+Undo/redo, media indexing, backup/restore, synchronization, and encryption
+remain outside this package's current scope.
 
 `sqlite3` publishes native bindings for Android, iOS, Windows, macOS, and
 Linux. Its WebAssembly target is tested in the package CI with

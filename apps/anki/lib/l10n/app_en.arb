@@ -291,5 +291,16 @@
   },
   "browserLoading": "Loading cards…",
   "browserSort": "Sort cards",
-  "browserSortNoOrdering": "No sorting"
+  "browserSortNoOrdering": "No sorting",
+  "browserSortActiveSection": "Active columns",
+  "browserSortOtherSection": "Other sortable columns",
+  "browserSortUnavailableSection": "Unavailable",
+  "browserSortUseField": "Use Sort Field instead",
+  "browserSortCardsOnly": "Available in Cards mode only",
+  "browserSortTextAscending": "A to Z",
+  "browserSortTextDescending": "Z to A",
+  "browserSortNumericAscending": "Low to high",
+  "browserSortNumericDescending": "High to low",
+  "browserSortDateAscending": "Oldest first",
+  "browserSortDateDescending": "Newest first"
 }

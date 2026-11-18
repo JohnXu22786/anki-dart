@@ -10,12 +10,32 @@ import 'package:anki_app/card_browser_screen.dart';
 import 'package:anki_app/card_browser_preview.dart';
 import 'package:anki_app/card_browser_preview_screen.dart';
 import 'package:anki_app/l10n/app_localizations.dart';
+import 'package:anki_app/note_editor_screen.dart';
 import 'package:anki_dart/anki_dart.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('browser rows open the shared editor and refresh on return', (
+    tester,
+  ) async {
+    final controller = _EditorController(_sample());
+    await tester.pumpWidget(_app(controller, const Size(400, 800)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit note'), findsOneWidget);
+    expect(controller.resolvedRows, [const BrowserRowId(41)]);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Browse'), findsOneWidget);
+    expect(controller.refreshCalls, 1);
+  });
+
   testWidgets(
     'Card Browser preview action opens the collection preview route',
     (tester) async {
@@ -1352,5 +1372,32 @@ final class _PreviewController extends _Controller
       ],
       currentIndex: 0,
     );
+  }
+}
+
+final class _EditorController extends _Controller
+    implements CardBrowserNoteEditorController {
+  _EditorController(super.snapshot);
+
+  final resolvedRows = <BrowserRowId>[];
+  int refreshCalls = 0;
+
+  @override
+  Future<Int64> resolveNoteIdForRow(BrowserRowId rowId) async {
+    resolvedRows.add(rowId);
+    return Int64.parseInt(rowId.bigValue.toString());
+  }
+
+  @override
+  Future<NoteEditorContent> loadNote(Int64 noteId) async =>
+      NoteEditorContent(labels: const ['Front'], values: const ['front']);
+
+  @override
+  Future<void> saveFields(Int64 noteId, List<String> fields) async {}
+
+  @override
+  Future<CardBrowserSnapshot> refresh() async {
+    refreshCalls++;
+    return snapshot;
   }
 }

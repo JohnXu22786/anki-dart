@@ -72,3 +72,13 @@ a137a44186a130b5ee57156aed4a2ce00a143bba07655b3b9274889537c814ee  AnkiDroid/src/
 2b671bedbf3219dda8190d0a126aa78807a77ecd8c72ebc008ffb40d28e1a6b6  rslib/src/search/parser.rs
 82cbfd2d92746da726ebffc3fe63749c620b428292ce32220dfd09ff6662d195  rslib/src/search/writer.rs
 0b5fe9ca6b2113849321620e31b26ba3b1f1c785237f8a7768bdd68ab8e524d2  rslib/src/search/builder.rs
+
+# AnkiDroid 2.25.3 existing-note field editor, d9bf072f814a0c37d30a694192593b31ff2df875
+79e219a087960e6af3d2bfa1996f8c46818cfa1daed908c4175cf41dded901df  AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt
+67e6dec33d05628b7258f2a93fe4673b4d7a3dc81c9c360dba3f9efe6a8e5273  AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt
+88c5d4506189866ff8d67b55d4693b50d7514e0cd54f11cac10b25985b74b6f4  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt
+0a701dc078b6d82c9c6dbd3530c9a2d7be0cd5684a8791b4356556455523ba12  AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt
+
+# Anki Core existing-note update and normalization, e64c6b1aee3e8d668fb8bbe084beada8e070d985
+5df79b58906206a87c5a28a06f886227df74e6a65d061d2cb915d35b34d35893  rslib/src/notes/mod.rs
+a29a3780e53c917b30bfc967d6a1b969929f90e94de2eceb8500031df54ea36e  rslib/src/config/bool.rs

@@ -1298,3 +1298,41 @@ tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`; root `COPYING`
 remains unchanged. The shared_preferences plugin and its platform packages
 are Copyright © 2013 The Flutter Authors and distributed under the BSD 3-Clause
 License.
+
+## Card Browser semantic row theme colors
+
+`apps/anki/lib/card_browser_row_colors.dart` adapts the Card Browser color
+resolution in AnkiDroid 2.25.3's
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserMultiColumnAdapter.kt`,
+pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`. `onBindViewHolder()`
+first applies `focusedRowBackgroundColor` when the row is the focused pane row;
+otherwise it maps the backend row color. Marked, suspended, and buried colors
+come from theme attributes. Flag colors come from `Flag.browserColorRes`, with
+the `values-night` resource variant in dark/black themes. Default and
+unrecognized colors use the theme's `android:colorBackground`. A backend error
+row uses that unrecognized/default background, shows the error, is unchecked,
+and is struck through. Selection itself changes the checkbox only; it does not
+replace the semantic row background. `setColor()` adds pressed and keyboard
+focus feedback on top of the base background.
+
+The shared Flutter resolver preserves these priorities and the exact pinned
+light, dark, black, and e-ink resource values. Brightness selects light or dark
+by default; a host can opt into black or e-ink through
+`CardBrowserPaletteTheme`. Black and e-ink palettes are projections because the
+Flutter app currently has no corresponding theme setting. The resolver accepts
+a focused-row input, but this app has no pane-current row state to pass to it;
+pane focus behavior remains available at the shared mapping boundary. The
+renderer chooses black or white row text for semantic backgrounds to preserve
+at least 4.5:1 contrast while leaving source backgrounds unchanged; focused,
+default, unknown, and error rows use the theme's on-surface text color.
+
+The mapping has focused tests for every semantic value in light and dark modes,
+black/e-ink projections, focused precedence, theme background fallback,
+brightness changes, selection/error rendering, and text contrast. The current
+Flutter renderer has no keyboard-pane focus state, so actual focused-pane
+rendering cannot be exercised until that host state exists. Source hashes for
+the adapter, `Flag.kt`, theme resources, and shared Material colors are recorded
+in `apps/anki/ANKIDROID_SOURCE.sha256`. The Kotlin source declares
+`GPL-3.0-or-later`; the resource values are adapted rather than copied as
+Android resources. The Flutter mapping and tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.

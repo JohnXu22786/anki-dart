@@ -29,6 +29,15 @@ e8146c9da9753bd43181ed2dcb877030d2e1e5c0973fa7b2b5ced62aa72f2126  AnkiDroid/src/
 2b0e8a2e4c88f423ce3c33454fa5bbfec78189da3db081784b2170e7a6518a6c  libanki/src/main/java/com/ichi2/anki/libanki/BrowserConfig.kt
 313a879710daa264d1cb238512dabbed4d5dacfa15f9bafdc6269bbb0bf00d9f  AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserMultiColumnAdapter.kt
 
+# AnkiDroid 2.25.3 Card Browser row theme colors, d9bf072f814a0c37d30a694192593b31ff2df875
+b4f7c6bbe27121a8562316c2d8858be81634e150b9dc32b357c17a444a11e9cb  AnkiDroid/src/main/res/values/colors.xml
+18a4fff89c521cb5984d0ae59f5ddbef5e4c94959d36c774f162928a03abdabc  AnkiDroid/src/main/res/values-night/colors.xml
+333e4388bb55fcc1abe7577041ec48ea15bd6da54537a45f6b3dd16b2d30185b  AnkiDroid/src/main/res/values/theme_light.xml
+c779b0c7ac19f3fca9d8250bcba8d58eca81804cb21f75f1fb803330d3591cc4  AnkiDroid/src/main/res/values/theme_dark.xml
+92a83c33b859cfbe4013ddf865e42174a18f17d624a8bc185e914d146435a493  AnkiDroid/src/main/res/values/theme_black.xml
+aa1d4947ca300fca572b65c6414c3c90edf1af7f56f2b6b141f3e3f964582e14  AnkiDroid/src/main/res/values/theme_eink.xml
+677c5204345dfb254e0c28ca8dd7df32dc3c8aa765456d8d31fb094cf3351374  common/android/src/main/res/values/colors.xml
+
 # AnkiDroid 2.25.3 structured Card Browser search serialization, d9bf072f814a0c37d30a694192593b31ff2df875
 86577baa618d36560beff7db304f3b3ba2deb96ceca25934d6dadc157375a962  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt
 bbeae0b2d08ad54473e8696ac6253b95978bca8ca5202b2847753ba2822eb897  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt

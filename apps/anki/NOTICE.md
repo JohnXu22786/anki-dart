@@ -60,3 +60,14 @@ Android resource is copied. The app-level implementation and new English strings
 AGPL-3.0-or-later; root `COPYING` is unchanged. Exact source hashes are in
 `ANKIDROID_SOURCE.sha256`. App English timespan resources are sourced from
 Core's English semantics; non-English catalogs are not part of this app yet.
+
+The semantic Card Browser row color mapping in `lib/card_browser_row_colors.dart`
+and its tests adapt AnkiDroid 2.25.3 `BrowserMultiColumnAdapter.kt`, `Flag.kt`,
+and its theme/color resources, pinned to `d9bf072f814a0c37d30a694192593b31ff2df875`.
+The resolver preserves source colors and precedence, with contrast-safe row text.
+The focused Flutter app does not currently expose black/e-ink palettes or pane
+focus state; the shared mapping accepts explicit palette and focused-row values.
+Source hashes and the full source/license notice are recorded in
+`ANKIDROID_SOURCE.sha256` and `../../ANKIIDROID_UPSTREAM.md`. The referenced
+Kotlin source is `GPL-3.0-or-later`; the Flutter adaptation and tests are
+Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` is unchanged.

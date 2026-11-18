@@ -4558,3 +4558,50 @@ These source files declare GNU AGPL-3.0-or-later (Core) and GPL-3.0-or-later
 (AnkiDroid). The projector is independently implemented and is part of the
 AGPL-3.0-or-later app; no upstream source was copied. Exact source revisions
 and SHA-256 hashes are listed in `apps/anki/ANKIDROID_SOURCE.sha256`.
+
+## Card Browser search history and filters (Unit 24)
+
+`CollectionCardBrowserController` connects the source-derived
+`BrowserSearchRequest`, `BrowserSearchHistoryModel`,
+`BrowserSearchHistoryJsonCodec`, and history restoration contracts to the
+active collection search. A submitted request is added to recency history and
+stored under the shared preference key `anki.browser.searchHistory` before its
+query runs. Blank unfiltered searches remain absent from history; filtered
+blank searches are retained. History survives controller recreation and
+restores deck and note-type IDs through the active collection's current name/ID
+maps. Missing IDs follow the shared contract and restore the query with empty
+filters.
+
+The collection controller maps `buildBrowserSearchNodePlan()` into the existing
+search parser AST, preserving the source-defined OR groups for each filter
+category, AND composition between query and categories, wildcard escaping for
+deck/tag/note-type terms, and the selected-deck constraint. Card and Notes modes
+execute the same request through the active collection SQL compiler. Sorting,
+mode switches, and bulk-action refreshes retain the current structured request.
+
+The shared `CardBrowserScreen` shows recent history while the search box is
+focused. It uses the source's five-entry collapsed limit and toggle boundary,
+supports query editing without submission, selection and submission, exact
+entry removal, and clearing. Its filter dialog changes decks, tags, flags, and
+card state categories through `browserSetDecksFilter()`,
+`browserSetTagsFilter()`, `browserSetFlagsFilter()`, and
+`browserSetCardStateFilter()` while preserving the query and other filter
+categories. Decks, tags, and note types come from the active collection; note
+type choices include types without notes. History rows display each stored
+filter value so entries with the same query and different filters remain
+distinguishable. Deck and note-type summaries use persisted IDs because the
+app does not yet generate Core's canonical SearchString for display. Focused
+widget and collection tests are in
+`apps/anki/test/card_browser_screen_test.dart`,
+`apps/anki/test/collection_card_browser_controller_test.dart`, and
+`apps/anki/test/collection_card_browser_preferences_test.dart`.
+
+The behavior maps to AnkiDroid 2.25.3 `SearchHistory.kt`,
+`CardBrowserSearchViewModel.kt`, `SearchFilters.kt`, and `SearchRequest.kt` at
+`d9bf072f814a0c37d30a694192593b31ff2df875`; the Dart contracts and source/test
+coverage are listed in the search-history and filter rows above. Android
+SharedPreferences resource lookup, StateFlow scheduling, and Android widgets
+remain host-specific. The filter-history preference key is a stable shared
+Flutter key rather than a copied Android resource. The Dart implementation is
+GPL-3.0-or-later; no upstream code or resources are copied, and root
+`COPYING` remains unchanged.

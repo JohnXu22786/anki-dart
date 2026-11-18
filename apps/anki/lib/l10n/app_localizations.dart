@@ -739,6 +739,84 @@ abstract class AppLocalizations {
   /// **'Search cards'**
   String get browserSearchHint;
 
+  /// No description provided for @browserHistoryAllCards.
+  ///
+  /// In en, this message translates to:
+  /// **'All cards'**
+  String get browserHistoryAllCards;
+
+  /// No description provided for @browserHistoryFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'Filtered search'**
+  String get browserHistoryFiltered;
+
+  /// No description provided for @browserHistoryEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit search'**
+  String get browserHistoryEdit;
+
+  /// No description provided for @browserHistoryRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from history'**
+  String get browserHistoryRemove;
+
+  /// No description provided for @browserHistoryShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get browserHistoryShowMore;
+
+  /// No description provided for @browserHistoryShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get browserHistoryShowLess;
+
+  /// No description provided for @browserHistoryClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear history'**
+  String get browserHistoryClear;
+
+  /// No description provided for @browserFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get browserFilters;
+
+  /// No description provided for @browserFilterDecks.
+  ///
+  /// In en, this message translates to:
+  /// **'Decks'**
+  String get browserFilterDecks;
+
+  /// No description provided for @browserFilterNoteTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Note types'**
+  String get browserFilterNoteTypes;
+
+  /// No description provided for @browserFilterTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get browserFilterTags;
+
+  /// No description provided for @browserFilterFlags.
+  ///
+  /// In en, this message translates to:
+  /// **'Flags'**
+  String get browserFilterFlags;
+
+  /// No description provided for @browserFilterCardStates.
+  ///
+  /// In en, this message translates to:
+  /// **'Card states'**
+  String get browserFilterCardStates;
+
   /// No description provided for @browserSaveSearch.
   ///
   /// In en, this message translates to:

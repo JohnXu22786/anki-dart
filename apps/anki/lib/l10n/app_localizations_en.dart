@@ -355,6 +355,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browserSearchHint => 'Search cards';
 
   @override
+  String get browserHistoryAllCards => 'All cards';
+
+  @override
+  String get browserHistoryFiltered => 'Filtered search';
+
+  @override
+  String get browserHistoryEdit => 'Edit search';
+
+  @override
+  String get browserHistoryRemove => 'Remove from history';
+
+  @override
+  String get browserHistoryShowMore => 'Show more';
+
+  @override
+  String get browserHistoryShowLess => 'Show less';
+
+  @override
+  String get browserHistoryClear => 'Clear history';
+
+  @override
+  String get browserFilters => 'Filters';
+
+  @override
+  String get browserFilterDecks => 'Decks';
+
+  @override
+  String get browserFilterNoteTypes => 'Note types';
+
+  @override
+  String get browserFilterTags => 'Tags';
+
+  @override
+  String get browserFilterFlags => 'Flags';
+
+  @override
+  String get browserFilterCardStates => 'Card states';
+
+  @override
   String get browserSaveSearch => 'Save search';
 
   @override

@@ -113,6 +113,42 @@ abstract interface class CardBrowserModeController {
   Future<CardBrowserSnapshot> updateMode(BrowserColumnMode mode);
 }
 
+/// Optional request capability for controllers that restore structured
+/// history filters separately from the query text.
+abstract interface class CardBrowserSearchRequestController {
+  Future<CardBrowserSnapshot> searchRequest(BrowserSearchRequest request);
+}
+
+/// Optional persistent search-history capability.
+abstract interface class CardBrowserSearchHistoryController {
+  Future<List<BrowserSearchHistoryEntry>> loadSearchHistory();
+  Future<BrowserSearchRequest> restoreSearchHistoryEntry(
+    BrowserSearchHistoryEntry entry,
+  );
+  Future<void> removeSearchHistoryEntry(BrowserSearchHistoryEntry entry);
+  Future<void> clearSearchHistory();
+}
+
+/// Active-collection values that can be selected in the filter editor.
+final class CardBrowserSearchFilterOptions {
+  CardBrowserSearchFilterOptions({
+    required List<BrowserDeckNameId> decks,
+    required List<BrowserNoteTypeNameId> noteTypes,
+    required List<String> tags,
+  }) : decks = List.unmodifiable(decks),
+       noteTypes = List.unmodifiable(noteTypes),
+       tags = List.unmodifiable(tags);
+
+  final List<BrowserDeckNameId> decks;
+  final List<BrowserNoteTypeNameId> noteTypes;
+  final List<String> tags;
+}
+
+/// Optional collection lookup used to populate the structured filter editor.
+abstract interface class CardBrowserSearchFilterOptionsController {
+  Future<CardBrowserSearchFilterOptions> loadSearchFilterOptions();
+}
+
 /// Responsive Card Browser UI shared by Flutter's mobile and desktop targets.
 final class CardBrowserScreen extends StatefulWidget {
   const CardBrowserScreen({required this.controller, this.onClose, super.key});
@@ -132,7 +168,13 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   static const _widePrimaryColumnWidth = 320.0;
 
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
   final LinkedHashSet<BrowserRowId> _selectedRows = LinkedHashSet();
+  final BrowserSearchHistoryDisplayModel _historyDisplay =
+      BrowserSearchHistoryDisplayModel();
+  List<BrowserSearchHistoryEntry> _searchHistory = const [];
+  BrowserSearchFilters _searchFilters = const BrowserSearchFilters();
+  bool _searchFocused = false;
   CardBrowserSnapshot? _snapshot;
   _BrowserLoadState _loadState = _BrowserLoadState.loading;
   int _requestGeneration = 0;
@@ -143,7 +185,14 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   @override
   void initState() {
     super.initState();
+    _searchFocusNode.addListener(_onSearchFocusChanged);
     _load();
+  }
+
+  void _onSearchFocusChanged() {
+    if (!mounted) return;
+    setState(() => _searchFocused = _searchFocusNode.hasFocus);
+    if (_searchFocused) _refreshSearchHistory();
   }
 
   @override
@@ -151,6 +200,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       _searchController.clear();
+      _searchHistory = const [];
+      _searchFilters = const BrowserSearchFilters();
       _selectedRows.clear();
       _isMultiSelect = false;
       _lastSelectedRowId = null;
@@ -162,6 +213,9 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode
+      ..removeListener(_onSearchFocusChanged)
+      ..dispose();
     super.dispose();
   }
 
@@ -178,6 +232,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         _snapshot = snapshot;
         _loadState = _BrowserLoadState.loaded;
       });
+      await _refreshSearchHistory();
     } catch (error) {
       if (!mounted || generation != _requestGeneration) return;
       setState(() {
@@ -188,13 +243,23 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   }
 
   Future<void> _search(String query) async {
+    await _searchRequest(
+      BrowserSearchRequest(query: query, filters: _searchFilters),
+    );
+  }
+
+  Future<void> _searchRequest(BrowserSearchRequest request) async {
     final generation = ++_requestGeneration;
     setState(() {
       _loadState = _BrowserLoadState.searching;
       _failedDuringInitialLoad = false;
     });
     try {
-      final snapshot = await widget.controller.search(query);
+      final searchController = widget.controller;
+      final snapshot = searchController is CardBrowserSearchRequestController
+          ? await (searchController as CardBrowserSearchRequestController)
+                .searchRequest(request)
+          : await searchController.search(request.query);
       if (!mounted || generation != _requestGeneration) return;
       if (_lastSelectedRowId != null &&
           !snapshot.rows.any((row) => row.id == _lastSelectedRowId)) {
@@ -204,12 +269,408 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         _snapshot = snapshot;
         _loadState = _BrowserLoadState.loaded;
       });
+      await _refreshSearchHistory();
     } catch (error) {
       if (!mounted || generation != _requestGeneration) return;
       setState(() {
         _loadState = _BrowserLoadState.failed;
       });
+      await _refreshSearchHistory();
     }
+  }
+
+  Future<void> _refreshSearchHistory() async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserSearchHistoryController) return;
+    try {
+      final entries = await (controller as CardBrowserSearchHistoryController)
+          .loadSearchHistory();
+      if (!mounted || controller != widget.controller) return;
+      setState(() => _searchHistory = entries);
+    } catch (error) {
+      _showActionError(error);
+    }
+  }
+
+  Future<void> _selectSearchHistoryEntry(
+    BrowserSearchHistoryEntry entry, {
+    required bool submit,
+  }) async {
+    final historyController = widget.controller;
+    if (historyController is! CardBrowserSearchHistoryController) return;
+    await _runAction(() async {
+      final request =
+          await (historyController as CardBrowserSearchHistoryController)
+              .restoreSearchHistoryEntry(entry);
+      if (!mounted || historyController != widget.controller) return;
+      setState(() => _searchFilters = request.filters);
+      _searchController.text = request.query.replaceAll('\n', ' ');
+      _searchFocusNode.unfocus();
+      if (submit) await _searchRequest(request);
+    });
+  }
+
+  Future<void> _editSearchFilters() async {
+    final current = _searchFilters;
+    final filterController = widget.controller;
+    if (filterController is! CardBrowserSearchFilterOptionsController) return;
+    late final CardBrowserSearchFilterOptions options;
+    try {
+      options =
+          await (filterController as CardBrowserSearchFilterOptionsController)
+              .loadSearchFilterOptions();
+    } catch (error) {
+      _showActionError(error);
+      return;
+    }
+    if (!mounted || filterController != widget.controller) return;
+    final decksById = <String, BrowserDeckNameId>{
+      for (final deck in options.decks) deck.id.toString(): deck,
+      for (final deck in current.decks) deck.id.toString(): deck,
+    };
+    final noteTypesById = <String, BrowserNoteTypeNameId>{
+      for (final noteType in options.noteTypes)
+        noteType.id.toString(): noteType,
+      for (final noteType in current.noteTypes)
+        noteType.id.toString(): noteType,
+    };
+    final selectedDecks = List<BrowserDeckNameId>.of(current.decks);
+    final selectedNoteTypes = List<BrowserNoteTypeNameId>.of(current.noteTypes);
+    final selectedTags = current.tags.toSet();
+    final selectedFlags = current.flags.toSet();
+    final selectedCardStates = current.cardStateCodes.toSet();
+    final updated = await showDialog<BrowserSearchFilters>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, updateDialog) => AlertDialog(
+          title: Text(AppLocalizations.of(context)!.browserFilters),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppLocalizations.of(context)!.browserFilterDecks),
+                for (final deck in decksById.values)
+                  CheckboxListTile(
+                    dense: true,
+                    key: ValueKey('browser-filter-deck-${deck.id}'),
+                    contentPadding: EdgeInsets.zero,
+                    value: selectedDecks.any(
+                      (selected) =>
+                          selected.id.toString() == deck.id.toString(),
+                    ),
+                    title: Text(deck.name),
+                    onChanged: (value) => updateDialog(() {
+                      selectedDecks.removeWhere(
+                        (selected) => selected.id == deck.id,
+                      );
+                      if (value == true) selectedDecks.add(deck);
+                    }),
+                  ),
+                Text(AppLocalizations.of(context)!.browserFilterNoteTypes),
+                for (final noteType in noteTypesById.values)
+                  CheckboxListTile(
+                    dense: true,
+                    key: ValueKey('browser-filter-note-type-${noteType.id}'),
+                    contentPadding: EdgeInsets.zero,
+                    value: selectedNoteTypes.any(
+                      (selected) =>
+                          selected.id.toString() == noteType.id.toString(),
+                    ),
+                    title: Text(noteType.name),
+                    onChanged: (value) => updateDialog(() {
+                      selectedNoteTypes.removeWhere(
+                        (selected) =>
+                            selected.id.toString() == noteType.id.toString(),
+                      );
+                      if (value == true) selectedNoteTypes.add(noteType);
+                    }),
+                  ),
+                Text(AppLocalizations.of(context)!.browserFilterTags),
+                for (final tag in {...options.tags, ...selectedTags})
+                  CheckboxListTile(
+                    dense: true,
+                    key: ValueKey('browser-filter-tag-$tag'),
+                    contentPadding: EdgeInsets.zero,
+                    value: selectedTags.contains(tag),
+                    title: Text(tag),
+                    onChanged: (value) => updateDialog(() {
+                      if (value == true) {
+                        selectedTags.add(tag);
+                      } else {
+                        selectedTags.remove(tag);
+                      }
+                    }),
+                  ),
+                const SizedBox(height: 12),
+                Text(AppLocalizations.of(context)!.browserFilterFlags),
+                for (final option in const [
+                  (0, 'None'),
+                  (1, 'Red'),
+                  (2, 'Orange'),
+                  (3, 'Green'),
+                  (4, 'Blue'),
+                  (5, 'Pink'),
+                  (6, 'Turquoise'),
+                  (7, 'Purple'),
+                ])
+                  CheckboxListTile(
+                    dense: true,
+                    key: ValueKey('browser-filter-flag-${option.$1}'),
+                    contentPadding: EdgeInsets.zero,
+                    value: selectedFlags.contains(option.$1),
+                    title: Text(option.$2),
+                    onChanged: (value) => updateDialog(() {
+                      if (value == true) {
+                        selectedFlags.add(option.$1);
+                      } else {
+                        selectedFlags.remove(option.$1);
+                      }
+                    }),
+                  ),
+                Text(AppLocalizations.of(context)!.browserFilterCardStates),
+                for (final option in const [
+                  (0, 'New'),
+                  (1, 'Learning'),
+                  (2, 'Review'),
+                  (3, 'Buried'),
+                  (4, 'Suspended'),
+                ])
+                  CheckboxListTile(
+                    dense: true,
+                    key: ValueKey('browser-filter-card-state-${option.$1}'),
+                    contentPadding: EdgeInsets.zero,
+                    value: selectedCardStates.contains(option.$1),
+                    title: Text(option.$2),
+                    onChanged: (value) => updateDialog(() {
+                      if (value == true) {
+                        selectedCardStates.add(option.$1);
+                      } else {
+                        selectedCardStates.remove(option.$1);
+                      }
+                    }),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            FilledButton(
+              key: const ValueKey('browser-filter-apply'),
+              onPressed: () {
+                var filters = current;
+                filters = (browserSetDecksFilter(
+                  currentFilters: filters,
+                  decks: selectedDecks,
+                ) as BrowserFilterUpdateUser).state;
+                filters = BrowserSearchFilters(
+                  decks: filters.decks,
+                  flags: filters.flags,
+                  tags: filters.tags,
+                  noteTypes: selectedNoteTypes,
+                  cardStateCodes: filters.cardStateCodes,
+                );
+                filters = (browserSetTagsFilter(
+                  currentFilters: filters,
+                  tags: selectedTags.toList(),
+                ) as BrowserFilterUpdateUser).state;
+                filters = (browserSetFlagsFilter(
+                  currentFilters: filters,
+                  flags: [
+                    for (var code = 0; code <= 7; code++)
+                      if (selectedFlags.contains(code)) code,
+                  ],
+                ) as BrowserFilterUpdateUser).state;
+                filters = (browserSetCardStateFilter(
+                  currentFilters: filters,
+                  cardStateCodes: [
+                    for (var code = 0; code <= 4; code++)
+                      if (selectedCardStates.contains(code)) code,
+                  ],
+                ) as BrowserFilterUpdateUser).state;
+                Navigator.pop(dialogContext, filters);
+              },
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || updated == null) return;
+    setState(() => _searchFilters = updated);
+    await _searchRequest(
+      BrowserSearchRequest(query: _searchController.text, filters: updated),
+    );
+  }
+
+  Future<void> _removeSearchHistoryEntry(
+    BrowserSearchHistoryEntry entry,
+  ) async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserSearchHistoryController) return;
+    await _runAction(() async {
+      await (controller as CardBrowserSearchHistoryController)
+          .removeSearchHistoryEntry(entry);
+      await _refreshSearchHistory();
+    });
+  }
+
+  Future<void> _clearSearchHistory() async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserSearchHistoryController) return;
+    await _runAction(() async {
+      await (controller as CardBrowserSearchHistoryController)
+          .clearSearchHistory();
+      await _refreshSearchHistory();
+    });
+  }
+
+  String? _searchHistoryFilterSummary(BrowserSearchHistoryEntry entry) {
+    final labels = AppLocalizations.of(context)!;
+    final parts = <String>[];
+    if (entry.deckIds.isNotEmpty) {
+      parts.add(
+        '${labels.browserFilterDecks}: ${entry.deckIds.map((id) => '#$id').join(', ')}',
+      );
+    }
+    if (entry.flags.isNotEmpty) {
+      const names = [
+        'None',
+        'Red',
+        'Orange',
+        'Green',
+        'Blue',
+        'Pink',
+        'Turquoise',
+        'Purple',
+      ];
+      parts.add(
+        '${labels.browserFilterFlags}: ${entry.flags.map((code) => names[code]).join(', ')}',
+      );
+    }
+    if (entry.tags.isNotEmpty) {
+      parts.add('${labels.browserFilterTags}: ${entry.tags.join(', ')}');
+    }
+    if (entry.noteTypeIds.isNotEmpty) {
+      parts.add(
+        '${labels.browserFilterNoteTypes}: ${entry.noteTypeIds.map((id) => '#$id').join(', ')}',
+      );
+    }
+    if (entry.cardStateCodes.isNotEmpty) {
+      const names = ['New', 'Learning', 'Review', 'Buried', 'Suspended'];
+      parts.add(
+        '${labels.browserFilterCardStates}: ${entry.cardStateCodes.map((code) => names[code]).join(', ')}',
+      );
+    }
+    return parts.isEmpty ? null : parts.join(' · ');
+  }
+
+  Widget _buildSearchHistory() {
+    if (!_searchFocused ||
+        widget.controller is! CardBrowserSearchHistoryController ||
+        _searchHistory.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final items = BrowserSearchHistoryLoaded([
+      for (final entry in _searchHistory)
+        (entry: entry, searchString: entry.query.isEmpty ? null : entry.query),
+    ]);
+    final projection = _historyDisplay.project(items);
+    final visibleEntries = projection.items.entryToSearchString;
+    return Card(
+      key: const ValueKey('browser-search-history'),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 240),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var index = 0; index < visibleEntries.length; index++)
+                ListTile(
+                  dense: true,
+                  key: ValueKey('browser-history-entry-$index'),
+                  title: Text(
+                    visibleEntries[index].searchString ??
+                        (visibleEntries[index].entry.isSearchEmpty
+                            ? AppLocalizations.of(context)!
+                                  .browserHistoryAllCards
+                            : AppLocalizations.of(context)!
+                                  .browserHistoryFiltered),
+                  ),
+                  subtitle: switch (_searchHistoryFilterSummary(
+                    visibleEntries[index].entry,
+                  )) {
+                    final String summary => Text(
+                      summary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    _ => null,
+                  },
+                  onTap: () => _selectSearchHistoryEntry(
+                    visibleEntries[index].entry,
+                    submit: true,
+                  ),
+                  trailing: Wrap(
+                    spacing: 0,
+                    children: [
+                      IconButton(
+                        key: ValueKey('browser-history-edit-$index'),
+                        tooltip: AppLocalizations.of(context)!
+                            .browserHistoryEdit,
+                        onPressed: () => _selectSearchHistoryEntry(
+                          visibleEntries[index].entry,
+                          submit: false,
+                        ),
+                        icon: const Icon(Icons.edit_outlined),
+                      ),
+                      IconButton(
+                        key: ValueKey('browser-history-remove-$index'),
+                        tooltip: AppLocalizations.of(context)!
+                            .browserHistoryRemove,
+                        onPressed: () => _removeSearchHistoryEntry(
+                          visibleEntries[index].entry,
+                        ),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+              if (_searchHistory.length > 5 || _searchHistory.isNotEmpty)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (projection.showHistoryToggle)
+                      TextButton(
+                        key: const ValueKey('browser-history-toggle'),
+                        onPressed: () =>
+                            setState(_historyDisplay.toggleHistoryExpanded),
+                        child: Text(
+                          _historyDisplay.isHistoryExpanded
+                              ? AppLocalizations.of(context)!
+                                    .browserHistoryShowLess
+                              : AppLocalizations.of(context)!
+                                    .browserHistoryShowMore,
+                        ),
+                      ),
+                    TextButton(
+                      key: const ValueKey('browser-history-clear'),
+                      onPressed: _clearSearchHistory,
+                      child: Text(
+                        AppLocalizations.of(context)!.browserHistoryClear,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _sort(BrowserSortType next) async {
@@ -633,6 +1094,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             child: TextField(
               key: const ValueKey('browser-search'),
               controller: _searchController,
+              focusNode: _searchFocusNode,
               textInputAction: TextInputAction.search,
               onSubmitted: _search,
               decoration: InputDecoration(
@@ -647,6 +1109,24 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              key: const ValueKey('browser-search-filters'),
+              onPressed: _editSearchFilters,
+              icon: const Icon(Icons.filter_list),
+              label: Text(
+                _searchFilters.tags.isEmpty &&
+                        _searchFilters.decks.isEmpty &&
+                        _searchFilters.noteTypes.isEmpty &&
+                        _searchFilters.flags.isEmpty &&
+                        _searchFilters.cardStateCodes.isEmpty
+                    ? s.browserFilters
+                    : '${s.browserFilters} (${_searchFilters.decks.length + _searchFilters.noteTypes.length + _searchFilters.tags.length + _searchFilters.flags.length + _searchFilters.cardStateCodes.length})',
+              ),
+            ),
+          ),
+          _buildSearchHistory(),
           if (_loadState == _BrowserLoadState.searching ||
               _loadState == _BrowserLoadState.loading)
             const LinearProgressIndicator(

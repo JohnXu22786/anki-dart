@@ -779,6 +779,12 @@ WHERE queue IN (-2, -3)
     ];
   }
 
+  /// Returns the IDs of every stored note type, including types without notes.
+  Future<Set<NotetypeId>> getAllNotetypeIds() async => _database
+      .select('SELECT id FROM notetypes')
+      .map((row) => NotetypeId(_readInt64(row.columnAt(0))))
+      .toSet();
+
   /// Returns a stored note without loading its fields.
   Future<Note?> getNoteWithoutFields(NoteId noteId) async {
     final rows = _database.select(

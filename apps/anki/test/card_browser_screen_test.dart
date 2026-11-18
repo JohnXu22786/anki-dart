@@ -76,10 +76,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester
-            .widgetList<Container>(
-              find.descendant(of: markedRow, matching: find.byType(Container)),
+            .widgetList<Ink>(
+              find.descendant(of: markedRow, matching: find.byType(Ink)),
             )
-            .any((container) => container.color == const Color(0xffd9b2e9)),
+            .any(
+              (ink) =>
+                  (ink.decoration as BoxDecoration).color ==
+                  const Color(0xffd9b2e9),
+            ),
         isTrue,
       );
       expect(
@@ -94,10 +98,14 @@ void main() {
       final errorRow = find.byKey(const ValueKey('browser-row-2'));
       expect(
         tester
-            .widgetList<Container>(
-              find.descendant(of: errorRow, matching: find.byType(Container)),
+            .widgetList<Ink>(
+              find.descendant(of: errorRow, matching: find.byType(Ink)),
             )
-            .any((container) => container.color == const Color(0xffffffff)),
+            .any(
+              (ink) =>
+                  (ink.decoration as BoxDecoration).color ==
+                  const Color(0xffffffff),
+            ),
         isTrue,
       );
       expect(

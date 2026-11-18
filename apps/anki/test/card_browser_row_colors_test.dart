@@ -108,6 +108,7 @@ void main() {
           deleted: true,
         ).toARGB32(),
         0xff000000,
+        reason: 'deleted backend-error rows use the default background',
       );
     },
   );
@@ -156,6 +157,41 @@ void main() {
           _contrast(text, background),
           greaterThanOrEqualTo(4.5),
           reason: '${rowColor.name} with ${theme.brightness} brightness',
+        );
+      }
+    }
+  });
+
+  test('fallback row text contrasts with explicit palette backgrounds', () {
+    const black = CardBrowserPaletteTheme(CardBrowserPalette.black);
+    const eink = CardBrowserPaletteTheme(CardBrowserPalette.eink);
+    final themes = [
+      _theme(Brightness.light, black),
+      _theme(Brightness.dark, eink),
+    ];
+    for (final theme in themes) {
+      for (final row in [
+        (CardBrowserRowColor.defaultColor, false, false),
+        (CardBrowserRowColor.unknown, false, false),
+        (CardBrowserRowColor.marked, true, false),
+        (CardBrowserRowColor.marked, false, true),
+      ]) {
+        final background = resolveCardBrowserRowColor(
+          row.$1,
+          theme,
+          focused: row.$2,
+          deleted: row.$3,
+        );
+        final foreground = resolveCardBrowserRowForegroundColor(
+          row.$1,
+          theme,
+          focused: row.$2,
+          deleted: row.$3,
+        );
+        expect(
+          _contrast(foreground, background),
+          greaterThanOrEqualTo(4.5),
+          reason: '${row.$1.name} with ${theme.brightness} brightness',
         );
       }
     }

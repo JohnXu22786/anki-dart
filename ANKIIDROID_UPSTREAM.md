@@ -1323,8 +1323,10 @@ Flutter app currently has no corresponding theme setting. The resolver accepts
 a focused-row input, but this app has no pane-current row state to pass to it;
 pane focus behavior remains available at the shared mapping boundary. The
 renderer chooses black or white row text for semantic backgrounds to preserve
-at least 4.5:1 contrast while leaving source backgrounds unchanged; focused,
-default, unknown, and error rows use the theme's on-surface text color.
+at least 4.5:1 contrast while leaving source backgrounds unchanged. Focused,
+default, unknown, and error rows prefer the theme's on-surface text color when it
+meets that contrast threshold against the resolved background; otherwise the
+renderer chooses whichever of black or white has higher contrast.
 
 The mapping has focused tests for every semantic value in light and dark modes,
 black/e-ink projections, focused precedence, theme background fallback,

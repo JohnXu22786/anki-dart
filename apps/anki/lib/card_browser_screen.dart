@@ -1256,7 +1256,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                       onTap: () => _activateRow(row.id),
                       onLongPress: () => _handleLongPress(row.id),
                       onSecondaryTap: () => _handleRightClick(row.id),
-                      child: Container(
+                      child: Ink(
                         color: _rowBackground(row, Theme.of(context)),
                         child: _buildWideRow(
                           leading: SizedBox(

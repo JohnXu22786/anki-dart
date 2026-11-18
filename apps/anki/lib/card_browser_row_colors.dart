@@ -121,18 +121,28 @@ Color resolveCardBrowserRowForegroundColor(
   bool focused = false,
   bool deleted = false,
 }) {
-  if (focused ||
-      deleted ||
-      rowColor == CardBrowserRowColor.defaultColor ||
-      rowColor == CardBrowserRowColor.unknown) {
-    return theme.colorScheme.onSurface;
-  }
   final background = resolveCardBrowserRowColor(
     rowColor,
     theme,
     focused: focused,
     deleted: deleted,
   );
+  if (focused ||
+      deleted ||
+      rowColor == CardBrowserRowColor.defaultColor ||
+      rowColor == CardBrowserRowColor.unknown) {
+    return _contrastingForeground(
+      background,
+      preferred: theme.colorScheme.onSurface,
+    );
+  }
+  return _contrastingForeground(background);
+}
+
+Color _contrastingForeground(Color background, {Color? preferred}) {
+  if (preferred != null && _contrast(preferred, background) >= 4.5) {
+    return preferred;
+  }
   final blackContrast = _contrast(Colors.black, background);
   final whiteContrast = _contrast(Colors.white, background);
   return blackContrast >= whiteContrast ? Colors.black : Colors.white;

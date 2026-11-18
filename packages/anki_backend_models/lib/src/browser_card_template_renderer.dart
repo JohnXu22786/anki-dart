@@ -111,6 +111,54 @@ final class BrowserCardTemplateRenderer {
   }
 }
 
+/// Whether a parsed question template can render nonempty content from
+/// [nonemptyFields], matching Core's `ParsedTemplate::renders_with_fields`.
+/// Literal text alone does not make a template render a card.
+bool templateRendersWithFields(
+  String template,
+  Set<String> nonemptyFields,
+) {
+  const alternateDirective = '{{=<% %>=}}';
+  var source = template;
+  var alternate = false;
+  if (template.trimLeft().startsWith(alternateDirective)) {
+    source = template.trimLeft();
+    while (source.startsWith(alternateDirective)) {
+      source = source.substring(alternateDirective.length);
+    }
+    alternate = true;
+  }
+  try {
+    final nodes = _parse(
+      _tokenize(source, alternate ? '<%' : '{{', alternate ? '%>' : '}}'),
+    );
+    return _nodesRenderContent(nodes, nonemptyFields);
+  } on _TemplateFailure {
+    return false;
+  }
+}
+
+bool _nodesRenderContent(List<_Node> nodes, Set<String> nonemptyFields) {
+  for (final node in nodes) {
+    switch (node.kind) {
+      case _NodeKind.text:
+        break;
+      case _NodeKind.replacement:
+        if (nonemptyFields.contains(node.value)) return true;
+        break;
+      case _NodeKind.conditional:
+        final active = nonemptyFields.contains(node.value);
+        final shouldRender = node.negated ? !active : active;
+        if (shouldRender &&
+            _nodesRenderContent(node.children, nonemptyFields)) {
+          return true;
+        }
+        break;
+    }
+  }
+  return false;
+}
+
 String _browserFormat(String browser, String standard) =>
     browser.isEmpty ? standard : browser;
 

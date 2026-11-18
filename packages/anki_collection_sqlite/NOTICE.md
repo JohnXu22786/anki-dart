@@ -62,3 +62,27 @@ The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently
 licensed `sqlite3` package (MIT). See this package's `LICENSE` file for the
 complete AGPL license text. The repository's root `COPYING` file is unchanged.
+
+The `updateExistingNote()` editor operation follows Core's
+`rslib/src/notes/mod.rs`, `rslib/src/notetype/cardgen.rs`,
+`rslib/src/notes/undo.rs`, `rslib/src/tags/register.rs`,
+`rslib/src/config/notetype.rs`, `rslib/src/collection/transact.rs`,
+`rslib/src/collection/timestamps.rs`, and
+`rslib/src/storage/collection_timestamps.rs`, and
+`rslib/src/storage/notetype/existing_cards.sql` at the pinned revision. It
+preserves Core's no-op comparison, NFC preparation setting, tag canonical form,
+last-deck/default fallback, existing-card preservation, per-template target
+deck, new-card due policy, and collection modified timestamp. The minimal
+`StdRng` random-position path is adapted from rand 0.9.4, rand_core 0.9.3, and
+rand_chacha 0.9.0, the versions pinned by Core's `Cargo.lock`; those crates are
+dual-licensed under Apache-2.0 or MIT. Only the seed-expansion, ChaCha12, and
+bounded-u32 sampling algorithms needed by Core's `random_position()` are
+implemented in `src/core_random_position.dart`. Pinned Core source hashes are
+checked by `tool/check_package.py` and recorded in `SOURCE.sha256`.
+
+The operation exposes an old-note and prior `col.mod` snapshot matching
+`UndoableNoteChange::Updated` plus `UndoableCollectionChange::Modified` data,
+along with newly registered tag names matching `UndoableTagChange::Added`.
+There is no generic collection undo/redo journal in this package yet, so the
+application still needs to connect this result to its operation history and
+replay path before presenting end-user undo as complete.

@@ -6,6 +6,21 @@ import 'package:fixnum/fixnum.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('templateRendersWithFields evaluates negated conditionals like Core',
+      () {
+    expect(
+      templateRendersWithFields(
+        '{{^Front}}{{Back}}{{/Front}}',
+        {'Front', 'Back'},
+      ),
+      isFalse,
+    );
+    expect(
+      templateRendersWithFields('{{^Front}}{{Back}}{{/Front}}', {'Back'}),
+      isTrue,
+    );
+  });
+
   test(
       'renders fields, filters, nested conditionals, comments and alternate syntax',
       () {

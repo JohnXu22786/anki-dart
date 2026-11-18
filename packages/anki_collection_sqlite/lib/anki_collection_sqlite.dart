@@ -4,6 +4,7 @@
 export 'src/collection_sqlite_storage.dart';
 export 'src/deck_tree.dart' show buildCoreDeckTree;
 export 'src/search_executor.dart';
+export 'src/note_update.dart';
 
 export 'package:anki_search_sql/anki_search_sql.dart'
     show CompiledSearchSqlWithSort;

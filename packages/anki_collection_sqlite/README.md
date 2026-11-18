@@ -53,6 +53,18 @@ path so Web builds retain exact 64-bit values above JavaScript's safe integer
 range. `CollectionSqliteStorage.open` accepts an optional `nowMillis` override
 for deterministic tests; normal callers omit it to use the system clock.
 
+Editor saves of existing notes should use `updateExistingNote`, which applies
+Core's semantic no-op check, stored notetype and configured NFC preparation,
+tag canonicalization, modified metadata, normal/cloze card generation, and
+collection timestamp update in one savepoint. Its result reports the updated
+note, newly generated cards, and an `UpdatedNoteUndoRecord` containing the old
+note, prior collection modification timestamp, and tag names newly registered
+by the operation. This snapshot matches the note, tag, and collection data
+needed for Core's update undo entries; the package does not yet provide the
+application-level undo/redo stack or its replay wiring.
+Sync/import callers should continue using the low-level `addOrUpdateNote` and
+raw card operations where their replacement semantics are intended.
+
 The native entry point uses the bundled SQLite from `sqlite3`:
 
 ```dart

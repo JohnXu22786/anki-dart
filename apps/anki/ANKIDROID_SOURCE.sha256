@@ -1,4 +1,5 @@
 # AnkiDroid 2.25.3, d9bf072f814a0c37d30a694192593b31ff2df875
+79e219a087960e6af3d2bfa1996f8c46818cfa1daed908c4175cf41dded901df  AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt
 bac8273102ddf438a10566372e2edac21ea11da3094404f049cb058171a13f3a  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SortOrderBottomSheetFragment.kt
 e8146c9da9753bd43181ed2dcb877030d2e1e5c0973fa7b2b5ced62aa72f2126  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserColumn.kt
 88c5d4506189866ff8d67b55d4693b50d7514e0cd54f11cac10b25985b74b6f4  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt

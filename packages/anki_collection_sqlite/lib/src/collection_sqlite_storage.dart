@@ -76,10 +76,11 @@ final class CollectionSqliteOptions {
 /// collation are installed on every connection; other functions are not.
 final class CollectionSqliteStorage
     implements CollectionOpenDatabase, CollectionSchemaMigrationDatabase {
-  CollectionSqliteStorage._(this._database, this._driver);
+  CollectionSqliteStorage._(this._database, this._driver, this._nowMillis);
 
   final CommonDatabase _database;
   final CollectionSqliteDriver _driver;
+  final int Function()? _nowMillis;
   final Map<String, CommonPreparedStatement> _statementCache = {};
   Future<void> _searchQueue = Future<void>.value();
   late final DeckStorage _deckStorage = DeckStorage(
@@ -90,6 +91,10 @@ final class CollectionSqliteStorage
   );
   late final TagStorage _tagStorage = TagStorage(
     _DeckStorageDatabase(_database),
+  );
+  late final NoteStorage _noteStorage = NoteStorage(
+    _CollectionNoteStorageDatabase(this),
+    nowMillis: _nowMillis,
   );
   late final RevlogStorage _revlogStorage = RevlogStorage(
     _DeckStorageDatabase(_database),
@@ -137,15 +142,50 @@ final class CollectionSqliteStorage
   /// Returns source-compatible collection tag row operations.
   TagStorage get tags => _tagStorage;
 
+  /// Updates a note after its derived fields have been prepared.
+  Future<void> updateNote(Note note) async {
+    _noteStorage.updateNote(note);
+    await _flushIfAutocommit();
+  }
+
+  /// Inserts a new note, assigning its generated SQLite row ID to [note].
+  Future<void> addNote(Note note) async {
+    _noteStorage.addNote(note);
+    await _flushIfAutocommit();
+  }
+
+  /// Inserts [note] only when its ID is unused.
+  Future<bool> addNoteIfUnique(Note note) async {
+    final inserted = _noteStorage.addNoteIfUnique(note);
+    await _flushIfAutocommit();
+    return inserted;
+  }
+
+  /// Inserts or replaces the row with [note]'s ID.
+  Future<void> addOrUpdateNote(Note note) async {
+    _noteStorage.addOrUpdateNote(note);
+    await _flushIfAutocommit();
+  }
+
+  /// Removes a note; a missing ID is a successful no-op.
+  Future<void> removeNote(Int64 noteId) async {
+    _noteStorage.removeNote(noteId);
+    await _flushIfAutocommit();
+  }
+
   /// Returns source-compatible review log row operations on this collection.
   RevlogStorage get revlog => _revlogStorage;
 
   /// Opens [location] through the chosen [driver] and applies collection
   /// connection pragmas before returning the database adapter.
+  ///
+  /// [nowMillis] overrides the clock used for generated note row IDs. It is
+  /// intended for deterministic tests; callers should normally omit it.
   static Future<CollectionSqliteStorage> open({
     required CollectionSqliteDriver driver,
     required String location,
     CollectionSqliteOptions options = const CollectionSqliteOptions(),
+    int Function()? nowMillis,
   }) async {
     final database = await Future<CommonDatabase>.sync(
       () => driver.openDatabase(location),
@@ -173,7 +213,7 @@ final class CollectionSqliteStorage
         await Future<void>.sync(() => configureConnection(database));
       }
       await Future<void>.sync(() => driver.flush?.call());
-      return CollectionSqliteStorage._(database, driver);
+      return CollectionSqliteStorage._(database, driver, nowMillis);
     } catch (error, stackTrace) {
       try {
         database.close();
@@ -1096,6 +1136,10 @@ WHERE queue IN (-2, -3)
   }
 
   void _executeCached(String sql) {
+    _prepareCached(sql).execute();
+  }
+
+  CommonPreparedStatement _prepareCached(String sql) {
     var statement = _statementCache[sql];
     if (statement == null) {
       statement = _database.prepare(sql, persistent: true);
@@ -1105,7 +1149,45 @@ WHERE queue IN (-2, -3)
       }
       _statementCache[sql] = statement;
     }
-    statement.execute();
+    return statement;
+  }
+}
+
+final class _CollectionNoteStorageDatabase implements NoteStorageDatabase {
+  const _CollectionNoteStorageDatabase(this.storage);
+
+  final CollectionSqliteStorage storage;
+
+  @override
+  Int64 get lastInsertRowId {
+    // CommonDatabase.lastInsertRowId is a Dart int. On JavaScript targets,
+    // values above 2^53 can lose precision there, while SQLite result columns
+    // preserve them as BigInt. Read the connection value through SQLite itself.
+    final value = storage._database
+        .select('SELECT last_insert_rowid()')
+        .single
+        .columnAt(0);
+    return _readInt64(value);
+  }
+
+  @override
+  NoteStorageStatement prepareCached(String sql) =>
+      _CollectionNoteStorageStatement(storage, storage._prepareCached(sql));
+}
+
+final class _CollectionNoteStorageStatement implements NoteStorageStatement {
+  const _CollectionNoteStorageStatement(this.storage, this.statement);
+
+  final CollectionSqliteStorage storage;
+  final CommonPreparedStatement statement;
+
+  @override
+  int execute(List<Object?> parameters) {
+    statement.execute([
+      for (final parameter in parameters)
+        if (parameter is Int64) _toSqlInt64(parameter) else parameter,
+    ]);
+    return storage._database.updatedRows;
   }
 }
 

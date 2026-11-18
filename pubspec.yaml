@@ -7,6 +7,8 @@ environment:
   sdk: '>=3.11.0 <4.0.0'
 
 dependencies:
+  anki_search_parser:
+    path: packages/anki_search_parser
   crypto: 3.0.7
   unorm_dart: 0.3.3
 

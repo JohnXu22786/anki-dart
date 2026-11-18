@@ -80,9 +80,11 @@ platform adapters provide storage and presentation.
   structured filters, matching the source contract. The filter editor exposes
   active-collection deck, note-type, and tag choices, plus flags and card
   states. History rows show stored filter values so searches with the same
-  query and different filters remain distinguishable. Deck and note-type
-  summaries use persisted IDs because the app does not yet render Core's
-  canonical SearchString; filter-only entries are titled “Filtered search”.
+  query and different filters remain distinguishable. The shared library now
+  provides `browserSearchString()` to project requests to canonical Anki query
+  text. Deck and note-type summaries still use persisted IDs because the app
+  has not wired that projection into history row rendering; filter-only
+  entries are titled “Filtered search”.
 - The shared implementation applies on Android, iOS, Web, Windows, macOS, and
   Linux. Shared preference storage is provided by `SharedPreferencesAsync`.
 - Source pins and adaptation boundaries are recorded in
@@ -94,8 +96,8 @@ platform adapters provide storage and presentation.
   runtime. The Flutter app currently uses platform-neutral color tints.
 - Implement context-sensitive Card Browser sorting not represented by current
   sort contracts, plus Note Editor navigation, preview, and bulk operations.
-- Implement Note Editor navigation, preview, and bulk operations. Render the
-  canonical source search string for structured history rows.
+- Implement Note Editor navigation, preview, and bulk operations. Wire the
+  canonical source search string into structured history row presentation.
 - Migrate and track unresolved upstream Card Browser TODO coverage.
 - Verify each platform's storage and presentation adapters in its native
   runtime; the shared Flutter implementation has no platform-specific browser

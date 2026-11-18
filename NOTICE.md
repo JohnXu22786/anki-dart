@@ -5773,3 +5773,15 @@ and licensed under `GPL-3.0-or-later`. This adaptation copies no Android
 resources, assets, or strings; collection/search execution and navigation
 remain in an injected host controller. Root `COPYING` is unchanged. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) for behavior and source locations.
+
+## Card Browser canonical search-string projection
+
+`lib/src/browser_search_string.dart` adapts structured search-node conversion
+from AnkiDroid 2.25.3 `SearchRequest.kt`, `SearchFilters.kt`, and
+`libanki/Collection.kt` at `d9bf072f814a0c37d30a694192593b31ff2df875`. It uses
+the existing Core-derived Dart search AST and canonical writer; no upstream
+implementation code is copied. The referenced AnkiDroid files declare
+`GPL-3.0-or-later`. The Dart projection and tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`; root `COPYING` is unchanged. Source hashes and
+behavior boundaries are recorded in `apps/anki/ANKIDROID_SOURCE.sha256` and
+`ANKIDROID_UPSTREAM.md`.

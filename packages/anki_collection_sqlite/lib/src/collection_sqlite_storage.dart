@@ -90,6 +90,7 @@ final class CollectionSqliteStorage
   final List<_ExistingNoteUpdateUndoStep> _noteUpdateUndoSteps = [];
   final List<_ExistingNoteUpdateUndoStep> _noteUpdateRedoSteps = [];
   int _noteUpdateUndoCounter = 0;
+  int _noteUpdateHistoryGeneration = 0;
   late final DeckStorage _deckStorage = DeckStorage(
     _DeckStorageDatabase(_database),
   );
@@ -204,6 +205,7 @@ final class CollectionSqliteStorage
       _serializeNoteUpdate(() async {
         _noteUpdateRedoSteps.clear();
         _noteUpdateUndoCounter++;
+        final historyGenerationAtStart = _noteUpdateHistoryGeneration;
         final operationTimeMillis =
             _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
         late final ExistingNoteUpdateResult result;
@@ -232,8 +234,23 @@ final class CollectionSqliteStorage
             nextCardPositionConfigAfter: record.nextCardPositionConfigAfter,
             operationTimestampSecs: operationTimeMillis ~/ 1000,
           );
+          try {
+            await _flushIfAutocommit(preserveNoteUpdateHistory: true);
+          } catch (_) {
+            discardExistingNoteUpdateUndoHistory();
+            rethrow;
+          }
+          if (_noteUpdateHistoryGeneration != historyGenerationAtStart) {
+            return result;
+          }
+          final coalesceTimeSecs =
+              (_nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch) ~/
+              1000;
           if (_noteUpdateUndoSteps.isNotEmpty &&
-              _noteUpdateUndoSteps.last.canCoalesceWith(step)) {
+              _noteUpdateUndoSteps.last.canCoalesceWith(
+                step,
+                coalesceTimeSecs: coalesceTimeSecs,
+              )) {
             _noteUpdateUndoSteps[_noteUpdateUndoSteps.length - 1] =
                 _noteUpdateUndoSteps.last.coalesceAfter(step);
           } else {
@@ -241,13 +258,6 @@ final class CollectionSqliteStorage
             if (_noteUpdateUndoSteps.length > 30) {
               _noteUpdateUndoSteps.removeAt(0);
             }
-          }
-          _noteUpdateRedoSteps.clear();
-          try {
-            await _flushIfAutocommit(preserveNoteUpdateHistory: true);
-          } catch (_) {
-            discardExistingNoteUpdateUndoHistory();
-            rethrow;
           }
         }
         return result;
@@ -264,6 +274,7 @@ final class CollectionSqliteStorage
   /// Invalidates the scoped history after direct substore writes or a caller
   /// transaction that changes collection state outside this adapter.
   void discardExistingNoteUpdateUndoHistory() {
+    _noteUpdateHistoryGeneration++;
     _noteUpdateUndoSteps.clear();
     _noteUpdateRedoSteps.clear();
   }
@@ -2323,9 +2334,12 @@ final class _ExistingNoteUpdateUndoStep {
         nextCardPositionConfigAfter,
       );
 
-  bool canCoalesceWith(_ExistingNoteUpdateUndoStep next) =>
+  bool canCoalesceWith(
+    _ExistingNoteUpdateUndoStep next, {
+    required int coalesceTimeSecs,
+  }) =>
       before.id == next.before.id &&
-      next.operationTimestampSecs - operationTimestampSecs < 60 &&
+      coalesceTimeSecs - operationTimestampSecs < 60 &&
       _containsOnlyNoteAndCollectionChanges &&
       next._containsOnlyNoteAndCollectionChanges;
 

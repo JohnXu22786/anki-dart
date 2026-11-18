@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 John Tsui
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
@@ -17,15 +18,26 @@ void main() {
   late CollectionSqliteStorage storage;
   late Database database;
   late int nowMillis;
+  late int nowMillisReads;
+  late bool advanceClockAtCommit;
+  late Future<void> Function()? flushHook;
 
   setUp(() async {
     nowMillis = 9007199254740993;
+    nowMillisReads = 0;
+    advanceClockAtCommit = false;
+    flushHook = null;
     storage = await CollectionSqliteStorage.open(
       driver: CollectionSqliteDriver(
         openDatabase: (_) => database = sqlite3.openInMemory(),
+        flush: () async => flushHook?.call(),
       ),
       location: ':memory:',
-      nowMillis: () => nowMillis,
+      nowMillis: () {
+        nowMillisReads++;
+        if (advanceClockAtCommit && nowMillisReads == 2) nowMillis += 1_000;
+        return nowMillis;
+      },
     );
     _activeDatabase = database;
     await storage.executeBatch('''
@@ -226,6 +238,31 @@ void main() {
     expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
     expect(storage.tags.getTag('new-first'), isNull);
   });
+
+  test(
+    'coalescing window is checked after the second edit completes',
+    () async {
+      database.execute('''
+      INSERT INTO cards (
+        id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+        lapses, left, odue, odid, flags, data
+      ) VALUES (1, 42, 1, 0, 100, 0, 0, 0, 1, 0, 2500, 0, 0, 0, 0, 0, 0, '')
+    ''');
+      await storage.updateExistingNote(_note(fields: ['first edit', 'back']));
+
+      nowMillis += 59_000;
+      nowMillisReads = 0;
+      advanceClockAtCommit = true;
+      await storage.updateExistingNote(_note(fields: ['second edit', 'back']));
+      advanceClockAtCommit = false;
+
+      await storage.undoLastExistingNoteUpdate();
+      expect((await storage.getNote(Int64(42)))!.fields, [
+        'first edit',
+        'back',
+      ]);
+    },
+  );
 
   test('a new edit after undo clears note-update redo history', () async {
     await storage.updateExistingNote(_note(fields: ['first', 'back']));
@@ -687,6 +724,38 @@ void main() {
 
       expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
       expect((await storage.getNote(Int64(42)))!.fields, ['external edit']);
+    },
+  );
+
+  test(
+    'adapter mutation during update flush prevents stale undo history',
+    () async {
+      final firstFlushStarted = Completer<void>();
+      final releaseFirstFlush = Completer<void>();
+      var flushCount = 0;
+      flushHook = () async {
+        flushCount++;
+        if (flushCount == 1) {
+          firstFlushStarted.complete();
+          await releaseFirstFlush.future;
+        }
+      };
+
+      final update = storage.updateExistingNote(
+        _note(fields: ['note update', 'back']),
+      );
+      await firstFlushStarted.future;
+      final concurrent = _note(fields: ['concurrent change', 'back'])
+        ..prepareForUpdate(_normalNotetype(), normalizeText: true);
+      await storage.updateNote(concurrent);
+      releaseFirstFlush.complete();
+      await update;
+
+      expect((await storage.getNote(Int64(42)))!.fields, [
+        'concurrent change',
+        'back',
+      ]);
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
     },
   );
 

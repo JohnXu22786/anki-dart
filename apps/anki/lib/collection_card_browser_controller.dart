@@ -846,19 +846,11 @@ final class CollectionCardBrowserController
     final storage = _storage;
     final note = await storage.getNote(noteId);
     if (note == null) throw StateError('Note does not exist.');
-    final expectedNotetypeId = models.NotetypeId(note.notetypeId);
-    final notetypes = await storage.getNotetypesByIds([expectedNotetypeId]);
-    final notetype = notetypes.where((type) => type.id == expectedNotetypeId);
-    if (notetype.isEmpty) throw StateError('Note type does not exist.');
     final noteFields = note.fieldsMut();
     noteFields
       ..clear()
       ..addAll(fields);
-    note.prepareForUpdate(
-      notetype.single,
-      normalizeText: storage.readCollectionConfig('normalizeNoteText') != false,
-    );
-    await storage.updateNote(note);
+    await storage.updateExistingNote(note);
   }
 
   @override

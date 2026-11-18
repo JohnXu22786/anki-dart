@@ -440,14 +440,54 @@ void main() {
           query: 'tag:biology',
           tags: ['genetics'],
         ),
+      ]
+      ..historyDisplayItems = [
+        (searchString: 'tag:biology tag:cell', includesStructuredFilters: true),
+        (
+          searchString: 'tag:biology tag:genetics',
+          includesStructuredFilters: true,
+        ),
       ];
     await tester.pumpWidget(_app(controller, const Size(500, 800)));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('browser-search')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Tags: cell'), findsOneWidget);
-    expect(find.text('Tags: genetics'), findsOneWidget);
+    expect(find.text('tag:biology tag:cell'), findsOneWidget);
+    expect(find.text('tag:biology tag:genetics'), findsOneWidget);
+    expect(find.text('Tags: cell'), findsNothing);
+    expect(find.text('Tags: genetics'), findsNothing);
+  });
+
+  testWidgets('history rows use the host canonical display strings', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample())
+      ..searchHistory = [
+        const BrowserSearchHistoryEntry(query: 'tag:query-only'),
+        const BrowserSearchHistoryEntry(query: '', tags: ['cell']),
+      ]
+      ..historyDisplayItems = [
+        (searchString: 'tag:query-only', includesStructuredFilters: false),
+        (searchString: 'tag:cell', includesStructuredFilters: true),
+      ];
+    await tester.pumpWidget(_app(controller, const Size(500, 800)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-search')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('tag:query-only'), findsOneWidget);
+    expect(find.text('tag:cell'), findsOneWidget);
+    expect(find.text('Filtered search'), findsNothing);
+    expect(find.text('Tags: cell'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('browser-history-edit-1')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('browser-history-remove-1')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('saved-search manager deletes an entry and shows empty state', (
@@ -981,6 +1021,7 @@ final class _Controller
         CardBrowserModeController,
         CardBrowserSearchRequestController,
         CardBrowserSearchHistoryController,
+        CardBrowserSearchHistoryDisplayController,
         CardBrowserSearchFilterOptionsController {
   _Controller(this.snapshot);
 
@@ -1005,6 +1046,7 @@ final class _Controller
   List<BrowserSavedSearch> savedSearches = [];
   Object? savedSearchLoadError;
   List<BrowserSearchHistoryEntry> searchHistory = [];
+  List<CardBrowserSearchHistoryDisplayItem> historyDisplayItems = [];
   final submittedRequests = <BrowserSearchRequest>[];
 
   @override
@@ -1038,6 +1080,20 @@ final class _Controller
   @override
   Future<List<BrowserSearchHistoryEntry>> loadSearchHistory() async =>
       List.of(searchHistory);
+
+  @override
+  Future<List<CardBrowserSearchHistoryDisplayItem>>
+  loadSearchHistoryDisplayItems(
+    List<BrowserSearchHistoryEntry> entries,
+  ) async => historyDisplayItems.isEmpty
+      ? [
+          for (final entry in entries)
+            (
+              searchString: entry.query.isEmpty ? null : entry.query,
+              includesStructuredFilters: false,
+            ),
+        ]
+      : List.of(historyDisplayItems);
 
   @override
   Future<BrowserSearchRequest> restoreSearchHistoryEntry(

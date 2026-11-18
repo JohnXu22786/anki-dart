@@ -4,7 +4,7 @@ The Flutter Card Browser is shared across Android, iOS, Web, Windows, macOS,
 and Linux. Collection queries and preference behavior live in shared Dart;
 platform adapters provide storage and presentation.
 
-## Implemented through Unit 24
+## Implemented through Unit 31
 
 - Cards/Notes mode loads and saves through the active collection's
   `browserTableShowNotesMode` config. Cards remains the default.
@@ -79,16 +79,30 @@ platform adapters provide storage and presentation.
 - Unresolved stored deck or note-type IDs restore the query with empty
   structured filters, matching the source contract. The filter editor exposes
   active-collection deck, note-type, and tag choices, plus flags and card
-  states. History rows show stored filter values so searches with the same
-  query and different filters remain distinguishable. The shared library now
-  provides `browserSearchString()` to project requests to canonical Anki query
-  text. Deck and note-type summaries still use persisted IDs because the app
-  has not wired that projection into history row rendering; filter-only
-  entries are titled “Filtered search”.
+  states. History entries retain their stored filter values so searches with
+  the same query and different filters remain distinguishable. Unit 31 wires
+  the shared canonical writer into history row titles.
 - The shared implementation applies on Android, iOS, Web, Windows, macOS, and
   Linux. Shared preference storage is provided by `SharedPreferencesAsync`.
 - Source pins and adaptation boundaries are recorded in
   `ANKIDROID_UPSTREAM.md` and `apps/anki/ANKIDROID_SOURCE.sha256`.
+
+## Unit 31 — canonical search-history display
+
+- The collection-backed history display resolves all stored deck and note-type
+  IDs against the active collection's current name maps once per refresh, then
+  uses shared `browserSearchString()` to produce the full canonical query for
+  each row. This keeps persisted history IDs and identity unchanged while
+  reflecting renamed collection items.
+- Canonical rows show filter-only entries as their actual query and omit the
+  old duplicate ID/filter summaries. Query-only entries use the same canonical
+  writer; malformed queries or unavailable name maps fall back to the exact
+  stored query. Missing deck or note-type IDs retain the shared restore
+  contract and fall back to the raw query; raw filter summaries remain visible
+  only when canonical projection is unavailable.
+- The shared Flutter implementation applies on Android, iOS, Web, Windows,
+  macOS, and Linux. The source pins, hashes, and license boundaries remain in
+  `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
 
 ## Unit 26 — mode-aware sort choices
 
@@ -109,8 +123,6 @@ platform adapters provide storage and presentation.
 - Exercise black/e-ink palette and focused-pane rendering in a host once those
   theme modes and pane-current state are exposed by the Flutter app.
 - Note Editor navigation, preview, and bulk actions remain unimplemented.
-- Structured filter-only history rows still use stored IDs in summaries; wire
-  the canonical source search string into row presentation.
 - Migrate and track unresolved upstream Card Browser TODO coverage.
 - Verify each platform's storage and presentation adapters in its native
   runtime; the shared Flutter implementation has no platform-specific browser

@@ -4616,10 +4616,9 @@ card state categories through `browserSetDecksFilter()`,
 `browserSetCardStateFilter()` while preserving the query and other filter
 categories. Decks, tags, and note types come from the active collection; note
 type choices include types without notes. History rows display each stored
-filter value so entries with the same query and different filters remain
-distinguishable. Deck and note-type summaries use persisted IDs because the
-app does not yet generate Core's canonical SearchString for display. Focused
-widget and collection tests are in
+filter value in the persisted history model so entries with the same query
+and different filters retain distinct identities. Focused widget and
+collection tests are in
 `apps/anki/test/card_browser_screen_test.dart`,
 `apps/anki/test/collection_card_browser_controller_test.dart`, and
 `apps/anki/test/collection_card_browser_preferences_test.dart`.
@@ -4633,6 +4632,30 @@ remain host-specific. The filter-history preference key is a stable shared
 Flutter key rather than a copied Android resource. The Dart implementation is
 GPL-3.0-or-later; no upstream code or resources are copied, and root
 `COPYING` remains unchanged.
+
+## Card Browser canonical search-history display (Unit 31)
+
+The collection-backed history refresh loads the active collection's current
+deck names and the note-type names needed by all displayed entries once, then
+restores each entry with `BrowserSearchRequest.fromHistoryEntry()` and projects
+the result through the shared `browserSearchString()` from Unit 28. The source
+mapping preserves stored filter order and duplicates, resolves IDs using the
+same first-match mapping as request restoration, and uses the current names
+after a rename. Missing IDs keep the source-compatible raw-query fallback;
+query parsing or collection lookup errors also fall back to the stored query.
+When canonical text represents structured filters, the Flutter row omits the
+secondary stored-ID summary. Existing history JSON, equality, recency, edit,
+submit, remove, clear, and expansion behavior is unchanged.
+
+The display maps to AnkiDroid 2.25.3 `CardBrowserSearchViewModel.kt`,
+`SearchRequest.kt`, `SearchFilters.kt`, `SearchHistory.kt`, and `SearchString.kt`
+at `d9bf072f814a0c37d30a694192593b31ff2df875`, plus Anki Core's canonical
+writer at `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The precise source file
+hashes remain recorded in `apps/anki/ANKIDROID_SOURCE.sha256`; Unit 28's
+mapping documents the shared AST and writer projection. The Flutter host
+adapter and tests are AGPL-3.0-or-later, and the shared source-derived query
+projection retains its GPL-3.0-or-later attribution. No upstream code or UI
+resources are copied; root `COPYING` remains unchanged.
 
 ## Card Browser mode-aware sort choices (Unit 26)
 

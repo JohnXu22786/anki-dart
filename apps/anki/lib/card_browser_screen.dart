@@ -117,6 +117,18 @@ abstract interface class CardBrowserSearchHistoryController {
   Future<void> clearSearchHistory();
 }
 
+/// Optional collection projection that resolves and canonicalizes history
+/// entries for display without changing their persisted identity.
+typedef CardBrowserSearchHistoryDisplayItem = ({
+  String? searchString,
+  bool includesStructuredFilters,
+});
+
+abstract interface class CardBrowserSearchHistoryDisplayController {
+  Future<List<CardBrowserSearchHistoryDisplayItem>>
+  loadSearchHistoryDisplayItems(List<BrowserSearchHistoryEntry> entries);
+}
+
 /// Active-collection values that can be selected in the filter editor.
 final class CardBrowserSearchFilterOptions {
   CardBrowserSearchFilterOptions({
@@ -161,6 +173,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   final BrowserSearchHistoryDisplayModel _historyDisplay =
       BrowserSearchHistoryDisplayModel();
   List<BrowserSearchHistoryEntry> _searchHistory = const [];
+  List<CardBrowserSearchHistoryDisplayItem> _searchHistoryDisplayItems =
+      const [];
   BrowserSearchFilters _searchFilters = const BrowserSearchFilters();
   bool _searchFocused = false;
   CardBrowserSnapshot? _snapshot;
@@ -273,8 +287,28 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     try {
       final entries = await (controller as CardBrowserSearchHistoryController)
           .loadSearchHistory();
+      var displayItems = [
+        for (final entry in entries)
+          (
+            searchString: entry.query.isEmpty ? null : entry.query,
+            includesStructuredFilters: false,
+          ),
+      ];
+      if (controller is CardBrowserSearchHistoryDisplayController) {
+        try {
+          final projected =
+              await (controller as CardBrowserSearchHistoryDisplayController)
+                  .loadSearchHistoryDisplayItems(entries);
+          if (projected.length == entries.length) displayItems = projected;
+        } catch (_) {
+          // History remains editable if a display-only projection fails.
+        }
+      }
       if (!mounted || controller != widget.controller) return;
-      setState(() => _searchHistory = entries);
+      setState(() {
+        _searchHistory = entries;
+        _searchHistoryDisplayItems = displayItems;
+      });
     } catch (error) {
       _showActionError(error);
     }
@@ -563,8 +597,11 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       return const SizedBox.shrink();
     }
     final items = BrowserSearchHistoryLoaded([
-      for (final entry in _searchHistory)
-        (entry: entry, searchString: entry.query.isEmpty ? null : entry.query),
+      for (var index = 0; index < _searchHistory.length; index++)
+        (
+          entry: _searchHistory[index],
+          searchString: _searchHistoryDisplayItems[index].searchString,
+        ),
     ]);
     final projection = _historyDisplay.project(items);
     final visibleEntries = projection.items.entryToSearchString;
@@ -589,9 +626,12 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                             : AppLocalizations.of(context)!
                                   .browserHistoryFiltered),
                   ),
-                  subtitle: switch (_searchHistoryFilterSummary(
-                    visibleEntries[index].entry,
-                  )) {
+                  subtitle: switch (_searchHistoryDisplayItems[index]
+                          .includesStructuredFilters
+                      ? null
+                      : _searchHistoryFilterSummary(
+                          visibleEntries[index].entry,
+                        )) {
                     final String summary => Text(
                       summary,
                       maxLines: 2,

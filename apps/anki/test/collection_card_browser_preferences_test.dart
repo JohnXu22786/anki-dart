@@ -20,6 +20,7 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 import 'package:anki_app/l10n/app_localizations_en.dart';
+import 'package:anki_backend_models/anki_backend_models.dart';
 
 void main() {
   late io.Directory directory;
@@ -121,6 +122,142 @@ void main() {
       await reopened.searchRequest(request);
       await reopened.clearSearchHistory();
       expect(await reopened.loadSearchHistory(), isEmpty);
+    },
+  );
+
+  test(
+    'history display resolves current names and preserves filter order',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final storage = runtime.storage!;
+      final originalDeck = storage.decks.getDeck(Int64.ONE)!;
+      final noteTypeId = (await storage.getAllNotetypeIds()).first.value;
+      // These history IDs outlive the names that were current when saved.
+      final entries = <BrowserSearchHistoryEntry>[
+        const BrowserSearchHistoryEntry(query: '  tag:query  '),
+        const BrowserSearchHistoryEntry(query: '  (  '),
+        const BrowserSearchHistoryEntry(query: '  broken OR  ', deckIds: [999]),
+      ];
+      entries.insert(
+        1,
+        BrowserSearchHistoryEntry(
+          query: '',
+          deckIds: [
+            BigInt.parse(originalDeck.id.toString()),
+            BigInt.parse(originalDeck.id.toString()),
+          ],
+          flags: [1, 1, 3],
+          tags: ['cell', 'cell', 'biology'],
+          noteTypeIds: [
+            BigInt.parse(noteTypeId.toString()),
+            BigInt.parse(noteTypeId.toString()),
+          ],
+          cardStateCodes: [0, 0, 4],
+        ),
+      );
+      storage.decks.updateDeck(
+        Deck(
+          id: originalDeck.id,
+          name: 'Renamed Default',
+          mtimeSecs: originalDeck.mtimeSecs,
+          usn: -1,
+          common: originalDeck.common,
+          kind: originalDeck.kind,
+        ),
+      );
+      await storage.executeBatch(
+        "UPDATE notetypes SET name = 'Renamed Basic' WHERE id = $noteTypeId",
+      );
+      final display = await controller.loadSearchHistoryDisplayItems(entries);
+
+      expect(display, hasLength(4));
+      expect(display[0].searchString, 'tag:query');
+      expect(display[0].includesStructuredFilters, isFalse);
+      expect(display[1].searchString, contains('Renamed Default'));
+      expect(display[1].searchString, contains('flag:1'));
+      expect(display[1].searchString, contains('tag:cell'));
+      expect(display[1].searchString, contains('Renamed Basic'));
+      expect(display[1].searchString, contains('is:new'));
+      expect(
+        display[1].searchString!.indexOf('flag:1'),
+        lessThan(display[1].searchString!.indexOf('flag:3')),
+      );
+      expect(
+        display[1].searchString!.indexOf('tag:cell'),
+        lessThan(display[1].searchString!.indexOf('tag:biology')),
+      );
+      expect(display[1].searchString!.split('flag:1').length - 1, 2);
+      expect(display[1].searchString!.split('tag:cell').length - 1, 2);
+      expect(display[1].includesStructuredFilters, isTrue);
+      expect(display[2].searchString, '  (  ');
+      expect(display[2].includesStructuredFilters, isFalse);
+      expect(display[3].searchString, '  broken OR  ');
+      expect(display[3].includesStructuredFilters, isFalse);
+    },
+  );
+
+  test(
+    'history display resolves IDs above JavaScript safe integer exactly',
+    () async {
+      final storage = runtime.storage!;
+      final base = storage.decks.getDeck(Int64.ONE)!;
+      final exactId = Int64.parseInt('9007199254740995');
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: exactId,
+          name: 'Large Exact ID',
+          mtimeSecs: base.mtimeSecs,
+          usn: -1,
+          common: base.common,
+          kind: base.kind,
+        ),
+      );
+      await storage.executeBatch('''
+        INSERT INTO notetypes (id, name, mtime_secs, usn, config)
+        VALUES ($exactId, 'Large Exact Notetype ID', 0, 0, X'')
+      ''');
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final display = await controller.loadSearchHistoryDisplayItems([
+        BrowserSearchHistoryEntry(
+          query: '',
+          deckIds: [BigInt.parse(exactId.toString())],
+          noteTypeIds: [BigInt.parse(exactId.toString())],
+        ),
+      ]);
+
+      expect(display.single.searchString, contains('Large Exact ID'));
+      expect(display.single.searchString, contains('Large Exact Notetype ID'));
+      expect(display.single.includesStructuredFilters, isTrue);
+    },
+  );
+
+  test(
+    'history display falls back to raw query when name lookup fails',
+    () async {
+      final uninitializedRuntime = CollectionRuntime(
+        locationForProfile: (_) async => '${directory.path}/unopened.anki2',
+        createDriver: () async =>
+            CollectionSqliteDriver(openDatabase: sqlite.sqlite3.open),
+      );
+      final controller = CollectionCardBrowserController(
+        uninitializedRuntime,
+        preferences: preferences,
+      );
+      const entry = BrowserSearchHistoryEntry(
+        query: '  raw query  ',
+        tags: ['cell'],
+      );
+
+      final display = await controller.loadSearchHistoryDisplayItems([entry]);
+
+      expect(display.single.searchString, '  raw query  ');
+      expect(display.single.includesStructuredFilters, isFalse);
     },
   );
 

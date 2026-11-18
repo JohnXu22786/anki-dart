@@ -1,28 +1,31 @@
 # Existing note update integration gaps
 
-The shared `CollectionSqliteStorage.updateExistingNote()` operation now
-implements Core-compatible existing-note save behavior and returns an
-`UpdatedNoteUndoRecord` containing the original note plus prior `col.mod`.
-The record also lists tag rows newly registered by the operation, matching
-Core's separate `UndoableTagChange::Added` entries.
-Focused operation and random-position tests cover note no-op detection,
-metadata, configured NFC, tag canonicalization, normal and cloze card
-generation, target-deck selection/fallback, 64-bit card IDs, and rollback.
-Normal card generation parses question templates directly, and calls to this
-operation are serialized per storage instance. The savepoint body contains no
-`await`; it performs synchronous SQLite writes and flushes after release, so
-other low-level storage calls cannot be captured by or rolled back with this
-operation.
+`CollectionSqliteStorage.updateExistingNote()` implements the Core-compatible
+existing-note save and returns an `UpdatedNoteUndoRecord` containing the
+original note, previous collection modification timestamp, and newly registered
+tag names. The storage layer also keeps up to 30 in-memory, note-update-only
+undo steps. Successive edits to the same note coalesce within Core's 60-second
+window when no card, tag, or config rows changed. Undo and redo atomically
+replay the note snapshot, generated cards, added tags, `nextPos` config, and
+`col.mod`. Writes
+through the adapter's async mutation methods clear that scoped history; direct
+substore writes and enclosing transactions must call
+`discardExistingNoteUpdateUndoHistory()`.
 
-Two application integration steps remain:
+The existing-note editor in PR #101 now calls `updateExistingNote()`, so saves
+use the Core behavior for no-op detection, normalized fields, tags, sync
+metadata, and missing normal/Cloze cards. The editor still does not expose the
+note-update history through an undo/redo control.
 
-- Unit33's Note Editor save path must call `updateExistingNote()` instead of
-  writing the note row directly. Until that current-main follow-up is merged,
-  the UI save path can still bypass metadata and card generation.
-- The application has no generic shared collection undo/redo journal or replay
-  API. The returned record contains the Core `Updated` note and collection
-  modification snapshots, but an end-user undo affordance is incomplete until
-  the editor records and replays it through that application history.
+Remaining work:
 
-The Unit34 implementation does not change Unit33 or PR #101. Keep that PR in
-draft until the new operation is integrated and the full end-to-end gates pass.
+- Add the generic collection operation journal Core provides for other undoable
+  changes, including cards, notes, decks, tags, revlogs, config, custom steps,
+  undo/redo merging, and status labels.
+- Wire undo/redo status and actions into the shared app flow and match AnkiDroid
+  menu/Reviewer behavior across all six supported targets.
+- Confirm behavior when an operation is nested in a larger collection
+  transaction; the current adapter scope is a standalone editor save.
+
+This report describes known remaining scope; it does not claim full collection
+undo/redo parity.

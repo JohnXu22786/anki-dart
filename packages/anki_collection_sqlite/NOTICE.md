@@ -83,6 +83,11 @@ checked by `tool/check_package.py` and recorded in `SOURCE.sha256`.
 The operation exposes an old-note and prior `col.mod` snapshot matching
 `UndoableNoteChange::Updated` plus `UndoableCollectionChange::Modified` data,
 along with newly registered tag names matching `UndoableTagChange::Added`.
-There is no generic collection undo/redo journal in this package yet, so the
-application still needs to connect this result to its operation history and
-replay path before presenting end-user undo as complete.
+The package records up to 30 in-memory undo steps and replays their note,
+generated-card, tag, `nextPos` config, and collection-time changes. Successive
+same-note updates coalesce within Core's 60-second window when they only change
+the note and collection-modification rows. Writes through the adapter's async
+mutation methods clear this scoped history; direct substore writes and enclosing
+transactions must call `discardExistingNoteUpdateUndoHistory()`. This is
+not yet a generic journal for other collection operations, and the application
+does not yet present this history through an undo/redo affordance.

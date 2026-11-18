@@ -87,6 +87,9 @@ final class CollectionSqliteStorage
   final Map<String, CommonPreparedStatement> _statementCache = {};
   Future<void> _searchQueue = Future<void>.value();
   Future<void> _existingNoteUpdateQueue = Future<void>.value();
+  final List<_ExistingNoteUpdateUndoStep> _noteUpdateUndoSteps = [];
+  final List<_ExistingNoteUpdateUndoStep> _noteUpdateRedoSteps = [];
+  int _noteUpdateUndoCounter = 0;
   late final DeckStorage _deckStorage = DeckStorage(
     _DeckStorageDatabase(_database),
   );
@@ -133,6 +136,42 @@ final class CollectionSqliteStorage
     return _decodeJsonValue(rows.single['val']);
   }
 
+  ExistingNoteUpdateConfigSnapshot? _readExistingNoteUpdateConfigSnapshot(
+    String key,
+  ) {
+    final rows = _database.select(
+      'SELECT key, usn, mtime_secs, val FROM config WHERE key = ?',
+      [key],
+    );
+    if (rows.isEmpty) return null;
+    final row = rows.single;
+    return ExistingNoteUpdateConfigSnapshot(
+      key: row['key'] as String,
+      usn: (row['usn'] as num).toInt(),
+      mtimeSecs: _readInt64(row['mtime_secs']),
+      value: row['val'] as List<int>,
+    );
+  }
+
+  void _restoreExistingNoteUpdateConfigSnapshot(
+    ExistingNoteUpdateConfigSnapshot? snapshot,
+  ) {
+    if (snapshot == null) {
+      _database.execute('DELETE FROM config WHERE key = ?', ['nextPos']);
+      return;
+    }
+    _database.execute(
+      'INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) '
+      'VALUES (?, ?, ?, ?)',
+      [
+        snapshot.key,
+        snapshot.usn,
+        _toSqlInt64(snapshot.mtimeSecs),
+        snapshot.value,
+      ],
+    );
+  }
+
   /// Writes one JSON value to the collection config table and flushes it.
   Future<void> writeCollectionConfig(String key, Object value) =>
       _writeConfigValue(key, jsonEncode(value));
@@ -158,12 +197,113 @@ final class CollectionSqliteStorage
   /// the stored timestamp on no-op detection, resolves the stored notetype and
   /// normalization setting, and adds any newly required cards in the same
   /// savepoint as the note update. Existing cards are left untouched. The
-  /// returned undo record contains Core's old-note snapshot; a collection-wide
-  /// undo/redo stack is not yet part of this package.
-  Future<ExistingNoteUpdateResult> updateExistingNote(Note edited) {
-    final result = _existingNoteUpdateQueue.then(
-      (_) => _updateExistingNote(edited),
-    );
+  /// returned undo record contains Core's old-note snapshot, and this storage
+  /// retains a bounded history for this operation only. It is not a generic
+  /// collection undo/redo stack.
+  Future<ExistingNoteUpdateResult> updateExistingNote(Note edited) =>
+      _serializeNoteUpdate(() async {
+        _noteUpdateRedoSteps.clear();
+        _noteUpdateUndoCounter++;
+        final operationTimeMillis =
+            _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
+        late final ExistingNoteUpdateResult result;
+        try {
+          result = await _updateExistingNote(
+            edited,
+            operationTimeMillis: operationTimeMillis,
+          );
+        } catch (_) {
+          discardExistingNoteUpdateUndoHistory();
+          rethrow;
+        }
+        if (result.changed) {
+          final record = result.undoRecord!;
+          final afterMillis = _readInt64(
+            _database.select('SELECT mod FROM col').single['mod'],
+          );
+          final step = _ExistingNoteUpdateUndoStep(
+            before: record.oldNote,
+            after: result.note,
+            addedCards: result.addedCards,
+            addedTags: record.addedTags,
+            collectionMtimeBefore: record.collectionMtimeMillis,
+            collectionMtimeAfter: afterMillis,
+            nextCardPositionConfigBefore: record.nextCardPositionConfigBefore,
+            nextCardPositionConfigAfter: record.nextCardPositionConfigAfter,
+            operationTimestampSecs: operationTimeMillis ~/ 1000,
+          );
+          if (_noteUpdateUndoSteps.isNotEmpty &&
+              _noteUpdateUndoSteps.last.canCoalesceWith(step)) {
+            _noteUpdateUndoSteps[_noteUpdateUndoSteps.length - 1] =
+                _noteUpdateUndoSteps.last.coalesceAfter(step);
+          } else {
+            _noteUpdateUndoSteps.add(step);
+            if (_noteUpdateUndoSteps.length > 30) {
+              _noteUpdateUndoSteps.removeAt(0);
+            }
+          }
+          _noteUpdateRedoSteps.clear();
+          try {
+            await _flushIfAutocommit(preserveNoteUpdateHistory: true);
+          } catch (_) {
+            discardExistingNoteUpdateUndoHistory();
+            rethrow;
+          }
+        }
+        return result;
+      });
+
+  /// Status for this storage's existing-note-update history only.
+  ExistingNoteUpdateUndoStatus get existingNoteUpdateUndoStatus =>
+      ExistingNoteUpdateUndoStatus(
+        canUndo: _noteUpdateUndoSteps.isNotEmpty,
+        canRedo: _noteUpdateRedoSteps.isNotEmpty,
+        lastStep: _noteUpdateUndoCounter,
+      );
+
+  /// Invalidates the scoped history after direct substore writes or a caller
+  /// transaction that changes collection state outside this adapter.
+  void discardExistingNoteUpdateUndoHistory() {
+    _noteUpdateUndoSteps.clear();
+    _noteUpdateRedoSteps.clear();
+  }
+
+  /// Reverts the latest successful [updateExistingNote] operation.
+  Future<void> undoLastExistingNoteUpdate() => _serializeNoteUpdate(() async {
+    if (_noteUpdateUndoSteps.isEmpty) {
+      throw StateError('no existing-note update to undo');
+    }
+    _noteUpdateUndoCounter++;
+    final step = _noteUpdateUndoSteps.removeLast();
+    try {
+      _applyExistingNoteUpdateUndoStep(step, undo: true);
+      _noteUpdateRedoSteps.add(step);
+      await _flushIfAutocommit(preserveNoteUpdateHistory: true);
+    } catch (_) {
+      discardExistingNoteUpdateUndoHistory();
+      rethrow;
+    }
+  });
+
+  /// Reapplies the latest undone [updateExistingNote] operation.
+  Future<void> redoLastExistingNoteUpdate() => _serializeNoteUpdate(() async {
+    if (_noteUpdateRedoSteps.isEmpty) {
+      throw StateError('no existing-note update to redo');
+    }
+    _noteUpdateUndoCounter++;
+    final step = _noteUpdateRedoSteps.removeLast();
+    try {
+      _applyExistingNoteUpdateUndoStep(step, undo: false);
+      _noteUpdateUndoSteps.add(step);
+      await _flushIfAutocommit(preserveNoteUpdateHistory: true);
+    } catch (_) {
+      discardExistingNoteUpdateUndoHistory();
+      rethrow;
+    }
+  });
+
+  Future<T> _serializeNoteUpdate<T>(Future<T> Function() operation) {
+    final result = _existingNoteUpdateQueue.then((_) => operation());
     _existingNoteUpdateQueue = result.then<void>(
       (_) {},
       onError: (Object error, StackTrace stackTrace) {},
@@ -171,7 +311,73 @@ final class CollectionSqliteStorage
     return result;
   }
 
-  Future<ExistingNoteUpdateResult> _updateExistingNote(Note edited) async {
+  void _applyExistingNoteUpdateUndoStep(
+    _ExistingNoteUpdateUndoStep step, {
+    required bool undo,
+  }) {
+    if (_closing || _connectionClosed || _closed) {
+      throw StateError('collection storage is closing');
+    }
+    _database.execute('SAVEPOINT core_note_update_undo');
+    try {
+      if (undo) {
+        for (final card in step.addedCards.reversed) {
+          _database.execute('DELETE FROM cards WHERE id = ?', [
+            _toSqlInt64(card.id),
+          ]);
+        }
+        _noteStorage.updateNote(copyNote(step.before));
+        for (final tag in step.addedTags.reversed) {
+          _tagStorage.removeSingleTag(tag);
+        }
+        _restoreExistingNoteUpdateConfigSnapshot(
+          step.nextCardPositionConfigBefore,
+        );
+        _database.execute('UPDATE col SET mod = ?', [
+          _toSqlInt64(step.collectionMtimeBefore),
+        ]);
+      } else {
+        _noteStorage.updateNote(copyNote(step.after));
+        for (final tag in step.addedTags) {
+          _database.execute(
+            'INSERT OR IGNORE INTO tags (tag, usn, collapsed) VALUES (?, -1, 1)',
+            [tag],
+          );
+        }
+        for (final card in step.addedCards) {
+          _database.execute(
+            '''
+INSERT OR REPLACE INTO cards (
+  id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+  lapses, left, odue, odid, flags, data
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+''',
+            [_toSqlInt64(card.id), ..._cardValues(card)],
+          );
+        }
+        _restoreExistingNoteUpdateConfigSnapshot(
+          step.nextCardPositionConfigAfter,
+        );
+        _database.execute('UPDATE col SET mod = ?', [
+          _toSqlInt64(step.collectionMtimeAfter),
+        ]);
+      }
+      _database.execute('RELEASE core_note_update_undo');
+    } catch (error, stackTrace) {
+      try {
+        _database.execute('ROLLBACK TO core_note_update_undo');
+        _database.execute('RELEASE core_note_update_undo');
+      } catch (_) {
+        // Preserve the original failure.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  Future<ExistingNoteUpdateResult> _updateExistingNote(
+    Note edited, {
+    required int operationTimeMillis,
+  }) async {
     if (_closing || _connectionClosed || _closed) {
       throw StateError('collection storage is closing');
     }
@@ -199,11 +405,13 @@ final class CollectionSqliteStorage
     final notetype = notetypes.single;
     final existingCards = await allCardsOfNote(edited.id);
     final normalizeText = _normalizeNoteText;
+    final nextPositionConfigBefore = _readExistingNoteUpdateConfigSnapshot(
+      'nextPos',
+    );
     final collectionMtimeMillis = _readInt64(
       _database.select('SELECT mod FROM col').single['mod'],
     );
-    final modifiedAtMillis =
-        _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
+    final modifiedAtMillis = operationTimeMillis;
 
     // No await occurs inside this savepoint. The update queue prevents stale
     // concurrent editor saves, and synchronous row writes cannot interleave
@@ -259,6 +467,10 @@ final class CollectionSqliteStorage
         undoRecord: UpdatedNoteUndoRecord(
           original,
           collectionMtimeMillis: collectionMtimeMillis,
+          nextCardPositionConfigBefore: nextPositionConfigBefore,
+          nextCardPositionConfigAfter: _readExistingNoteUpdateConfigSnapshot(
+            'nextPos',
+          ),
           addedTags: addedTags,
         ),
       );
@@ -271,7 +483,6 @@ final class CollectionSqliteStorage
       }
       Error.throwWithStackTrace(error, stackTrace);
     }
-    await _flushIfAutocommit();
     return result;
   }
 
@@ -1162,6 +1373,9 @@ WHERE queue IN (-2, -3)
 
   @override
   Future<void> executeBatch(String sql) async {
+    // This escape hatch can mutate any collection table, so it invalidates
+    // note-update history even when the caller's batch later fails.
+    discardExistingNoteUpdateUndoHistory();
     _database.execute(sql);
     if (_database.autocommit) await _flush();
   }
@@ -1418,7 +1632,12 @@ WHERE queue IN (-2, -3)
     await Future<void>.sync(() => _driver.flush?.call());
   }
 
-  Future<void> _flushIfAutocommit() async {
+  Future<void> _flushIfAutocommit({
+    bool preserveNoteUpdateHistory = false,
+  }) async {
+    if (!preserveNoteUpdateHistory) {
+      discardExistingNoteUpdateUndoHistory();
+    }
     if (_database.autocommit) await _flush();
   }
 
@@ -2067,3 +2286,103 @@ bool _sameStrings(List<String> left, List<String> right) {
   }
   return true;
 }
+
+final class _ExistingNoteUpdateUndoStep {
+  _ExistingNoteUpdateUndoStep({
+    required Note before,
+    required Note after,
+    required Iterable<Card> addedCards,
+    required Iterable<String> addedTags,
+    required this.collectionMtimeBefore,
+    required this.collectionMtimeAfter,
+    required this.nextCardPositionConfigBefore,
+    required this.nextCardPositionConfigAfter,
+    required this.operationTimestampSecs,
+  }) : before = copyNote(before),
+       after = copyNote(after),
+       addedCards = List.unmodifiable(
+         addedCards.map((card) => _copyCard(card)),
+       ),
+       addedTags = List.unmodifiable(addedTags);
+
+  final Note before;
+  final Note after;
+  final List<Card> addedCards;
+  final List<String> addedTags;
+  final Int64 collectionMtimeBefore;
+  final Int64 collectionMtimeAfter;
+  final ExistingNoteUpdateConfigSnapshot? nextCardPositionConfigBefore;
+  final ExistingNoteUpdateConfigSnapshot? nextCardPositionConfigAfter;
+  final int operationTimestampSecs;
+
+  bool get _containsOnlyNoteAndCollectionChanges =>
+      addedCards.isEmpty &&
+      addedTags.isEmpty &&
+      _sameExistingNoteUpdateConfigSnapshot(
+        nextCardPositionConfigBefore,
+        nextCardPositionConfigAfter,
+      );
+
+  bool canCoalesceWith(_ExistingNoteUpdateUndoStep next) =>
+      before.id == next.before.id &&
+      next.operationTimestampSecs - operationTimestampSecs < 60 &&
+      _containsOnlyNoteAndCollectionChanges &&
+      next._containsOnlyNoteAndCollectionChanges;
+
+  _ExistingNoteUpdateUndoStep coalesceAfter(_ExistingNoteUpdateUndoStep next) =>
+      _ExistingNoteUpdateUndoStep(
+        before: before,
+        after: next.after,
+        addedCards: [...addedCards, ...next.addedCards],
+        addedTags: [...addedTags, ...next.addedTags],
+        collectionMtimeBefore: collectionMtimeBefore,
+        collectionMtimeAfter: next.collectionMtimeAfter,
+        nextCardPositionConfigBefore: nextCardPositionConfigBefore,
+        nextCardPositionConfigAfter: next.nextCardPositionConfigAfter,
+        operationTimestampSecs: operationTimestampSecs,
+      );
+}
+
+bool _sameExistingNoteUpdateConfigSnapshot(
+  ExistingNoteUpdateConfigSnapshot? left,
+  ExistingNoteUpdateConfigSnapshot? right,
+) {
+  if (identical(left, right)) return true;
+  if (left == null || right == null) return false;
+  if (left.key != right.key ||
+      left.usn != right.usn ||
+      left.mtimeSecs != right.mtimeSecs ||
+      left.value.length != right.value.length) {
+    return false;
+  }
+  for (var index = 0; index < left.value.length; index++) {
+    if (left.value[index] != right.value[index]) return false;
+  }
+  return true;
+}
+
+Card _copyCard(Card card) => Card(
+  id: card.id,
+  noteId: card.noteId,
+  deckId: card.deckId,
+  templateIdx: card.templateIdx,
+  mtimeSecs: card.mtimeSecs,
+  usn: card.usn,
+  ctype: card.ctype,
+  queue: card.queue,
+  due: card.due,
+  interval: card.interval,
+  easeFactorRaw: card.easeFactorRaw,
+  reps: card.reps,
+  lapses: card.lapses,
+  remainingStepsRaw: card.remainingStepsRaw,
+  originalDue: card.originalDue,
+  originalDeckId: card.originalDeckId,
+  flags: card.flags,
+  originalPosition: card.originalPosition,
+  memoryState: card.memoryState,
+  desiredRetention: card.desiredRetention,
+  decay: card.decay,
+  lastReviewTimeSecs: card.lastReviewTimeSecs,
+  customData: card.customData,
+);

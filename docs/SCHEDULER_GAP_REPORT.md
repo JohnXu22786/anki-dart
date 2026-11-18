@@ -20,7 +20,12 @@ operation.
 
 ## Remaining scheduler work
 
-- New-card, learning-card, and existing relearning-card transitions.
+- New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
+  transitions are now exposed by `NewCardState`, `LearningCardState`, and
+  `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
+  graduation intervals, deterministic fuzz, and FSRS next states are supplied
+  explicitly. Source hashes and AGPL attribution are in the package notice and
+  `SOURCE.sha256`.
 - FSRS parameter training, next-state calculation, and memory-state derivation.
 - Queue building, daily counts, load balancing, and collection-backed scheduler
   configuration reads.

@@ -57,6 +57,14 @@ edd95d9d5aad6e0e9dc015c5053a1b22f73d0ef683953e67d4cc75984ab48c18  AnkiDroid/src/
 905d0e86266f58e817a29b2024afcbb05304de339739dc2ca48c946439878032  AnkiDroid/src/test/java/com/ichi2/anki/browser/search/StandardSearchFragmentTest.kt
 7da1839d1a905ff3adbd6cbf469262f3a880c2ea20c2d30ddca8110208714743  AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchFiltersTest.kt
 38e06adb7b81c06e041eb4e826e5ddc310ced5a150053d25370107c2e409d311  AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchRequestTest.kt
+
+# AnkiDroid 2.25.3 Card Browser preview launch and Previewer, d9bf072f814a0c37d30a694192593b31ff2df875
+88c5d4506189866ff8d67b55d4693b50d7514e0cd54f11cac10b25985b74b6f4  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt
+eacd31477a1752a0ae611db4d6650cd797f15f18e93888d38b474b991a815933  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt
+a137a44186a130b5ee57156aed4a2ce00a143bba07655b3b9274889537c814ee  AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerFragment.kt
+4fdc1e3374451f0b0a0cb6b99d0e0c4cbe3804cd931f6c0d84c2ab0f3bf95690  AnkiDroid/src/main/java/com/ichi2/anki/previewer/PreviewerViewModel.kt
+0f8643b9e36868ab46316d77ad3e554d8b44211344f1b7526e2dbf7c25f6aa5c  AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt
+23ceff8665cc7fce20ff057ff8ecd257b06d267a6fccf63e66ddd574b4581ca6  AnkiDroid/src/test/java/com/ichi2/anki/previewer/PreviewerViewModelTest.kt
 6446d51040859d7e921b89b4f5719d640a5bdcd1fe88b4b86d6255c3c5e65abf  AnkiDroid/src/test/java/com/ichi2/anki/browser/search/SearchStringTest.kt
 
 # Anki Core search AST and canonical writer, e64c6b1aee3e8d668fb8bbe084beada8e070d985

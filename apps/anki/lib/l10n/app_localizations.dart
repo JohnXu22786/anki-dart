@@ -1081,10 +1081,58 @@ abstract class AppLocalizations {
   /// **'The browser action could not be completed'**
   String get browserActionFailed;
 
+  /// No description provided for @browserPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Card Preview'**
+  String get browserPreviewTitle;
+
+  /// No description provided for @browserPreviewLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This preview could not be loaded. The card or collection may have changed.'**
+  String get browserPreviewLoadFailed;
+
+  /// No description provided for @browserPreviewRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get browserPreviewRetry;
+
+  /// No description provided for @browserPreviewPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous card'**
+  String get browserPreviewPrevious;
+
+  /// No description provided for @browserPreviewNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next card'**
+  String get browserPreviewNext;
+
+  /// No description provided for @browserPreviewShowAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Show answer'**
+  String get browserPreviewShowAnswer;
+
+  /// No description provided for @browserPreviewBackSideOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show answers only'**
+  String get browserPreviewBackSideOnly;
+
+  /// No description provided for @browserPreviewProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String browserPreviewProgress(int current, int total);
+
   /// No description provided for @browserPreview.
   ///
   /// In en, this message translates to:
-  /// **'Preview selected'**
+  /// **'Preview'**
   String get browserPreview;
 
   /// No description provided for @browserEdit.

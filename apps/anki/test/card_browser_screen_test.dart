@@ -7,6 +7,8 @@ import 'dart:async';
 import 'dart:ui' show Tristate;
 
 import 'package:anki_app/card_browser_screen.dart';
+import 'package:anki_app/card_browser_preview.dart';
+import 'package:anki_app/card_browser_preview_screen.dart';
 import 'package:anki_app/l10n/app_localizations.dart';
 import 'package:anki_dart/anki_dart.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +16,58 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets(
+    'Card Browser preview action opens the collection preview route',
+    (tester) async {
+      final controller = _PreviewController(_sample());
+      await tester.pumpWidget(_app(controller, const Size(800, 800)));
+      await tester.pumpAndSettle();
+
+      await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('browser-preview')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CardBrowserPreviewScreen), findsOneWidget);
+      expect(find.text('Question from active collection'), findsOneWidget);
+      expect(controller.requestedSelection, [const BrowserRowId(41)]);
+    },
+  );
+
+  testWidgets('preview action is available with no selected rows', (
+    tester,
+  ) async {
+    final controller = _PreviewController(_sample());
+    await tester.pumpWidget(_app(controller, const Size(800, 800)));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('browser-preview')), findsOneWidget);
+    expect(find.byTooltip('Preview'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('browser-preview')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CardBrowserPreviewScreen), findsOneWidget);
+    expect(find.text('Question from active collection'), findsOneWidget);
+    expect(controller.requestedSelection, isEmpty);
+  });
+
+  testWidgets('legacy preview action stays hidden with no selection', (
+    tester,
+  ) async {
+    final controller = _Controller(_sample());
+    await tester.pumpWidget(_app(controller, const Size(800, 800)));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('browser-preview')), findsNothing);
+
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('browser-preview')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('browser-preview')));
+    await tester.pumpAndSettle();
+    expect(controller.previewed, [const BrowserRowId(41)]);
+  });
+
   testWidgets('narrow row cards do not tint source row colors', (tester) async {
     tester.view.physicalSize = const Size(400, 800);
     tester.view.devicePixelRatio = 1;
@@ -1080,7 +1134,7 @@ CardBrowserSnapshot _sample() => CardBrowserSnapshot(
   ],
 );
 
-final class _Controller
+class _Controller
     implements
         CardBrowserController,
         CardBrowserModeController,
@@ -1274,5 +1328,29 @@ final class _Controller
     List<BrowserRowId> rows,
   ) async {
     bulkActions.add((action, List.of(rows)));
+  }
+}
+
+final class _PreviewController extends _Controller
+    implements CardBrowserPreviewController {
+  _PreviewController(super.snapshot);
+
+  List<BrowserRowId> requestedSelection = const [];
+
+  @override
+  Future<CardBrowserPreviewSession> loadPreview({
+    required List<BrowserRowId> selectedRows,
+  }) async {
+    requestedSelection = selectedRows;
+    return CardBrowserPreviewSession(
+      cards: [
+        CardBrowserPreviewCard(
+          id: BigInt.from(snapshot.rows.first.id.value),
+          questionHtml: '<p>Question from active collection</p>',
+          answerHtml: '<p>Answer from active collection</p>',
+        ),
+      ],
+      currentIndex: 0,
+    );
   }
 }

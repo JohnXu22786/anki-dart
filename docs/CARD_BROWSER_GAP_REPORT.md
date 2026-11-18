@@ -104,6 +104,32 @@ platform adapters provide storage and presentation.
   macOS, and Linux. The source pins, hashes, and license boundaries remain in
   `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
 
+## Unit 32 — collection-backed Card Browser preview
+
+- The Cards and Notes browser action now opens a shared Flutter preview screen.
+  The collection loader uses the active profile, preserves result order and
+  selected-row order, applies the source's single-row versus multi-row card
+  selection behavior, and keeps IDs exact as `BigInt` through Web payload
+  selection.
+- Question and answer templates are rendered with Core's
+  `BrowserCardTemplateRenderer` and displayed as static HTML through
+  `flutter_html`'s Flutter widget renderer. The screen provides answer flip,
+  previous/next, one-based progress and slider controls, back-side-only mode,
+  keyboard navigation, and accessible control labels. Progress and slider are
+  hidden for one-card results.
+- Empty results, stale IDs, missing cards/notes/templates, renderer failures,
+  and collection read errors surface a localized retry state. The preview
+  loader remains injectable for tests and alternate hosts.
+- The renderer dependency is MIT licensed; its resolved transitive notices
+  are retained in `LICENSES/`. The HTML parser is pinned to 0.15.5 because
+  flutter_html 3.0.0 uses an internal selector API removed in 0.15.7. Static
+  HTML uses the shared Flutter surface on Android, iOS, Web, Windows, macOS,
+  and Linux.
+- Mark/flag/edit actions, reviewer actions, audio playback, and full
+  JavaScript/media parity remain follow-up work. Source hashes, attribution,
+  and source mappings are in `apps/anki/ANKIDROID_SOURCE.sha256`,
+  `ANKIDROID_UPSTREAM.md`, and `NOTICE.md`.
+
 ## Unit 26 — mode-aware sort choices
 
 - The sort chooser groups active sortable columns in active-column order, then
@@ -122,7 +148,9 @@ platform adapters provide storage and presentation.
 
 - Exercise black/e-ink palette and focused-pane rendering in a host once those
   theme modes and pane-current state are exposed by the Flutter app.
-- Note Editor navigation, preview, and bulk actions remain unimplemented.
+- Note Editor navigation and bulk actions remain unimplemented. Preview now
+  covers collection-backed static question/answer content; reviewer actions,
+  audio playback, and full JavaScript/media rendering parity remain open.
 - Migrate and track unresolved upstream Card Browser TODO coverage.
 - Verify each platform's storage and presentation adapters in its native
   runtime; the shared Flutter implementation has no platform-specific browser

@@ -28,6 +28,9 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  flutter_html: ^3.0.0
+  # flutter_html 3.0.0 uses html's internal selector API, removed in 0.15.7.
+  html: 0.15.5
   intl: ^0.20.3
   path: ^1.9.1
   path_provider: ^2.1.5

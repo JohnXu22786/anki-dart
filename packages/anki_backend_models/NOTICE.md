@@ -72,6 +72,14 @@ adaptation follows Anki Core commit
 licensed under AGPL-3.0-or-later. This package and the adaptation retain the
 same license; root `COPYING` is unchanged.
 
+`LearningCardState`, `NewCardState`, and `RelearningCardState` port Core's pure
+Again/Hard/Good/Easy state calculations from
+`rslib/src/scheduler/states/{learning.rs,relearning.rs,new.rs,normal.rs,steps.rs,mod.rs,fuzz.rs,review.rs}`
+at the same pinned commit. Learning step arrays, review intervals, deterministic
+fuzz, and FSRS next intervals/memory are explicit inputs. Queue construction,
+answer persistence, FSRS calculation, and collection mutation remain outside
+this package slice. The source files' hashes are recorded in `SOURCE.sha256`.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

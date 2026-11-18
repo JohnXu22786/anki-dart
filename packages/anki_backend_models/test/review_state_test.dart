@@ -3,6 +3,240 @@ import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('learning card scheduling states', () {
+    test('Again resets to first step, Hard stays, and Good advances', () {
+      final state = LearningCardState(
+        remainingSteps: 1,
+        scheduledSecs: 600,
+        elapsedSecs: 25,
+      ).nextStates(
+        const ReviewSchedulingContext(learningStepsMinutes: [1, 10]),
+      );
+      expect(state.again.learning!.remainingSteps, 2);
+      expect(state.again.learning!.scheduledSecs, 60);
+      expect(state.hard.learning!.remainingSteps, 1);
+      expect(state.hard.learning!.scheduledSecs, 600);
+      expect(state.good.review!.scheduledDays, 1);
+      expect(state.easy.review!.scheduledDays, 4);
+    });
+
+    test('New starts learning and empty steps graduate on Again', () {
+      final stepped = NewCardState(position: 7).nextStates(
+        const ReviewSchedulingContext(learningStepsMinutes: [1, 10]),
+      );
+      expect(stepped.current.newCard!.position, 7);
+      expect(NewCardState(position: -1).position, 0xffffffff);
+      expect(stepped.again.learning!.remainingSteps, 2);
+      final empty = NewCardState().nextStates(const ReviewSchedulingContext());
+      expect(empty.again.review!.scheduledDays, 1);
+    });
+
+    test('FSRS short term Good preserves learning remaining steps', () {
+      final memory = FsrsMemoryState(stability: 1, difficulty: 5);
+      final states = LearningCardState(
+        remainingSteps: 1,
+        scheduledSecs: 60,
+        elapsedSecs: 0,
+      ).nextStates(ReviewSchedulingContext(
+        learningStepsMinutes: const [1],
+        fsrsAllowShortTerm: true,
+        fsrsShortTermWithStepsEnabled: true,
+        fsrsNextStates: FsrsReviewNextStates(
+          again: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+          hard: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+          good: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+          easy: FsrsReviewNextState(interval: 2, memoryState: memory),
+        ),
+      ));
+      expect(states.good.kind, LearningTransitionKind.learning);
+      expect(states.good.learning!.remainingSteps, 1);
+    });
+
+    test('Hard delay uses Core u32 saturation before averaging large steps',
+        () {
+      final states = LearningCardState(
+        remainingSteps: 2,
+        scheduledSecs: 0,
+        elapsedSecs: 0,
+      ).nextStates(const ReviewSchedulingContext(
+        learningStepsMinutes: [1e30, 1e30],
+      ));
+      expect(states.hard.learning!.scheduledSecs, 2147472000);
+      final oneStep = LearningCardState(
+        remainingSteps: 1,
+        scheduledSecs: 0,
+        elapsedSecs: 0,
+      ).nextStates(const ReviewSchedulingContext(
+        learningStepsMinutes: [1e30],
+      ));
+      expect(oneStep.hard.learning!.scheduledSecs, 2147472000);
+    });
+
+    test('Fractional learning minutes use Core Float32 conversion order', () {
+      final states = LearningCardState(
+        remainingSteps: 1,
+        scheduledSecs: 0,
+        elapsedSecs: 0,
+      ).nextStates(const ReviewSchedulingContext(
+        learningStepsMinutes: [1.05, 2],
+      ));
+      expect(states.again.learning!.scheduledSecs, 62);
+    });
+
+    test('Relearning Hard and FSRS graduation preserve elapsed seconds', () {
+      final review = ReviewCardState(scheduledDays: 10);
+      final learning = LearningCardState(
+        remainingSteps: 1,
+        scheduledSecs: 600,
+        elapsedSecs: 47,
+      );
+      final stepped = RelearningCardState(
+        review: review,
+        learning: learning,
+      ).nextStates(const ReviewSchedulingContext(
+        relearningStepsMinutes: [10],
+      ));
+      expect(stepped.hard.learning!.elapsedSecs, 47);
+
+      final memory = FsrsMemoryState(stability: 1, difficulty: 5);
+      final short = RelearningCardState(
+        review: review,
+        learning: learning,
+      ).nextStates(ReviewSchedulingContext(
+        fsrsAllowShortTerm: true,
+        fsrsNextStates: FsrsReviewNextStates(
+          again: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+          hard: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+          good: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+          easy: FsrsReviewNextState(interval: 2, memoryState: memory),
+        ),
+        relearningStepsMinutes: const [],
+      ));
+      expect(short.hard.learning!.elapsedSecs, 47);
+      expect(short.good.learning!.elapsedSecs, 47);
+    });
+
+    test(
+      'Relearning Good preserves review and FSRS short term keeps learning',
+      () {
+        final review = ReviewCardState(scheduledDays: 10, lapses: 3);
+        final ordinary = RelearningCardState(
+          review: review,
+          learning: LearningCardState(
+            remainingSteps: 1,
+            scheduledSecs: 600,
+            elapsedSecs: 12,
+          ),
+        ).nextStates(
+          const ReviewSchedulingContext(relearningStepsMinutes: [10]),
+        );
+        expect(ordinary.good.review!.scheduledDays, 10);
+        expect(ordinary.good.review!.lapses, 3);
+        final memory = FsrsMemoryState(stability: 1, difficulty: 5);
+        final fsrs = FsrsReviewNextStates(
+          again: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+          hard: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+          good: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+          easy: FsrsReviewNextState(interval: 2, memoryState: memory),
+        );
+        final short = RelearningCardState(
+          review: review,
+          learning: LearningCardState(
+            remainingSteps: 1,
+            scheduledSecs: 600,
+            elapsedSecs: 0,
+          ),
+        ).nextStates(
+          ReviewSchedulingContext(
+            fsrsNextStates: fsrs,
+            fsrsAllowShortTerm: true,
+            relearningStepsMinutes: const [],
+          ),
+        );
+        expect(short.good.kind, LearningTransitionKind.relearning);
+        expect(short.good.learning!.scheduledSecs, 17280);
+        expect(short.good.review!.scheduledDays, 1);
+      },
+    );
+
+    test('Relearning preserves Core interval and untouched review fields', () {
+      final review = ReviewCardState(
+        scheduledDays: 10,
+        elapsedDays: 4,
+        lapses: 2,
+      );
+      final emptySteps = RelearningCardState(
+        review: review,
+        learning: LearningCardState(
+          remainingSteps: 0,
+          scheduledSecs: 0,
+          elapsedSecs: 0,
+        ),
+      ).nextStates(const ReviewSchedulingContext(
+        maximumReviewInterval: 1,
+        minimumLapseInterval: 3,
+        lapseMultiplier: 0,
+        fuzzFactor: 0.99,
+      ));
+      expect(emptySteps.good.review!.elapsedDays, 4);
+      expect(emptySteps.again.review!.scheduledDays, 10);
+      expect(emptySteps.easy.review!.scheduledDays, 11);
+
+      final configuredSteps = RelearningCardState(
+        review: review,
+        learning: LearningCardState(
+          remainingSteps: 1,
+          scheduledSecs: 600,
+          elapsedSecs: 0,
+        ),
+      ).nextStates(const ReviewSchedulingContext(
+        relearningStepsMinutes: [10],
+        minimumLapseInterval: 3,
+        lapseMultiplier: 0,
+      ));
+      expect(configuredSteps.again.review!.scheduledDays, 3);
+
+      final memory = FsrsMemoryState(stability: 1, difficulty: 5);
+      final fsrsAgain = RelearningCardState(
+        review: review,
+        learning: LearningCardState(
+          remainingSteps: 1,
+          scheduledSecs: 600,
+          elapsedSecs: 0,
+        ),
+      ).nextStates(ReviewSchedulingContext(
+        relearningStepsMinutes: const [10],
+        fsrsNextStates: FsrsReviewNextStates(
+          again: FsrsReviewNextState(interval: 10.1, memoryState: memory),
+          hard: FsrsReviewNextState(interval: 10, memoryState: memory),
+          good: FsrsReviewNextState(interval: 10, memoryState: memory),
+          easy: FsrsReviewNextState(interval: 11, memoryState: memory),
+        ),
+        fuzzFactor: 0.99,
+      ));
+      expect(fsrsAgain.again.review!.scheduledDays, 10);
+      expect(fsrsAgain.again.review!.elapsedDays, 0);
+
+      final fsrsNoSteps = RelearningCardState(
+        review: review,
+        learning: LearningCardState(
+          remainingSteps: 0,
+          scheduledSecs: 0,
+          elapsedSecs: 0,
+        ),
+      ).nextStates(ReviewSchedulingContext(
+        fsrsNextStates: FsrsReviewNextStates(
+          again: FsrsReviewNextState(interval: 10, memoryState: memory),
+          hard: FsrsReviewNextState(interval: 10, memoryState: memory),
+          good: FsrsReviewNextState(interval: 10, memoryState: memory),
+          easy: FsrsReviewNextState(interval: 11, memoryState: memory),
+        ),
+      ));
+      expect(fsrsNoSteps.hard.review!.elapsedDays, 4);
+      expect(fsrsNoSteps.good.review!.elapsedDays, 4);
+    });
+  });
+
   group('review-card scheduling states', () {
     test('early reviews use elapsed time without days-late bonuses', () {
       final states = ReviewCardState(
@@ -45,27 +279,32 @@ void main() {
       }
     });
 
-    test('FSRS inputs retain order, memory values, and monotonic constraints',
-        () {
-      final memory = FsrsMemoryState(stability: 0.123456789, difficulty: 4.25);
-      final states = ReviewCardState(scheduledDays: 10).nextStates(
-        ReviewSchedulingContext(
-          fsrsNextStates: FsrsReviewNextStates(
-            again: FsrsReviewNextState(interval: 0.2, memoryState: memory),
-            hard: FsrsReviewNextState(interval: 12.4, memoryState: memory),
-            good: FsrsReviewNextState(interval: 12.4, memoryState: memory),
-            easy: FsrsReviewNextState(interval: 12.4, memoryState: memory),
+    test(
+      'FSRS inputs retain order, memory values, and monotonic constraints',
+      () {
+        final memory = FsrsMemoryState(
+          stability: 0.123456789,
+          difficulty: 4.25,
+        );
+        final states = ReviewCardState(scheduledDays: 10).nextStates(
+          ReviewSchedulingContext(
+            fsrsNextStates: FsrsReviewNextStates(
+              again: FsrsReviewNextState(interval: 0.2, memoryState: memory),
+              hard: FsrsReviewNextState(interval: 12.4, memoryState: memory),
+              good: FsrsReviewNextState(interval: 12.4, memoryState: memory),
+              easy: FsrsReviewNextState(interval: 12.4, memoryState: memory),
+            ),
+            fuzzFactor: 0,
           ),
-          fuzzFactor: 0,
-        ),
-      );
+        );
 
-      expect(states.hard.review.scheduledDays, 11);
-      expect(states.good.review.scheduledDays, 12);
-      expect(states.easy.review.scheduledDays, 13);
-      expect(states.hard.review.memoryState!.stability, 0.12345679104328156);
-      expect(states.again.review.memoryState!.difficulty, 4.25);
-    });
+        expect(states.hard.review.scheduledDays, 11);
+        expect(states.good.review.scheduledDays, 12);
+        expect(states.easy.review.scheduledDays, 13);
+        expect(states.hard.review.memoryState!.stability, 0.12345679104328156);
+        expect(states.again.review.memoryState!.difficulty, 4.25);
+      },
+    );
 
     test('Again updates lapse fields and selects configured relearning', () {
       final states = ReviewCardState(
@@ -91,19 +330,23 @@ void main() {
       expect(states.again.learning!.remainingSteps, 3);
     });
 
-    test('interval fuzz honors minimum, maximum, and deterministic endpoints',
-        () {
-      final states = ReviewCardState(scheduledDays: 10, elapsedDays: 14)
-          .nextStates(const ReviewSchedulingContext(
-        fuzzFactor: 0.99,
-        maximumReviewInterval: 20,
-      ));
+    test(
+      'interval fuzz honors minimum, maximum, and deterministic endpoints',
+      () {
+        final states =
+            ReviewCardState(scheduledDays: 10, elapsedDays: 14).nextStates(
+          const ReviewSchedulingContext(
+            fuzzFactor: 0.99,
+            maximumReviewInterval: 20,
+          ),
+        );
 
-      expect(states.hard.review.scheduledDays, lessThanOrEqualTo(20));
-      expect(states.good.review.scheduledDays, lessThanOrEqualTo(20));
-      expect(states.easy.review.scheduledDays, 20);
-      expect(states.hard.review.scheduledDays, greaterThanOrEqualTo(1));
-    });
+        expect(states.hard.review.scheduledDays, lessThanOrEqualTo(20));
+        expect(states.good.review.scheduledDays, lessThanOrEqualTo(20));
+        expect(states.easy.review.scheduledDays, 20);
+        expect(states.hard.review.scheduledDays, greaterThanOrEqualTo(1));
+      },
+    );
 
     test('short-term FSRS failures enter relearning only when enabled', () {
       final fsrs = FsrsReviewNextStates(
@@ -126,19 +369,23 @@ void main() {
       );
       final state = ReviewCardState(scheduledDays: 10);
       final relearning = state
-          .nextStates(ReviewSchedulingContext(
-            fsrsNextStates: fsrs,
-            fsrsAllowShortTerm: true,
-            relearningStepsEmpty: true,
-          ))
+          .nextStates(
+            ReviewSchedulingContext(
+              fsrsNextStates: fsrs,
+              fsrsAllowShortTerm: true,
+              relearningStepsEmpty: true,
+            ),
+          )
           .again;
       final review = state
-          .nextStates(ReviewSchedulingContext(
-            fsrsNextStates: fsrs,
-            fsrsAllowShortTerm: true,
-            fsrsShortTermWithStepsEnabled: false,
-            relearningStepsEmpty: false,
-          ))
+          .nextStates(
+            ReviewSchedulingContext(
+              fsrsNextStates: fsrs,
+              fsrsAllowShortTerm: true,
+              fsrsShortTermWithStepsEnabled: false,
+              relearningStepsEmpty: false,
+            ),
+          )
           .again;
 
       expect(relearning.kind, ReviewScheduleKind.relearning);
@@ -179,33 +426,35 @@ void main() {
       final states = ReviewCardState(
         scheduledDays: 1,
         lapses: 25165824,
-      ).nextStates(const ReviewSchedulingContext(
-        leechThreshold: 16777217,
-      ));
+      ).nextStates(const ReviewSchedulingContext(leechThreshold: 16777217));
 
       expect(states.again.review.lapses, 25165825);
       expect(states.again.review.leeched, isTrue);
     });
 
-    test('u32 elapsed days use Rust signed reinterpretation for early reviews',
-        () {
-      final states = ReviewCardState(
-        scheduledDays: 1,
-        elapsedDays: 0x80000001,
-      ).nextStates(const ReviewSchedulingContext());
+    test(
+      'u32 elapsed days use Rust signed reinterpretation for early reviews',
+      () {
+        final states = ReviewCardState(
+          scheduledDays: 1,
+          elapsedDays: 0x80000001,
+        ).nextStates(const ReviewSchedulingContext());
 
-      expect(states.hard.review.scheduledDays, 36500);
-    });
+        expect(states.hard.review.scheduledDays, 36500);
+      },
+    );
 
     test('days-late subtraction wraps as a signed 32-bit Core value', () {
       final states = ReviewCardState(
         scheduledDays: 0x80000000,
         elapsedDays: 0x7fffffff,
         easeFactor: 1,
-      ).nextStates(const ReviewSchedulingContext(
-        hardMultiplier: 1,
-        maximumReviewInterval: 0xffffffff,
-      ));
+      ).nextStates(
+        const ReviewSchedulingContext(
+          hardMultiplier: 1,
+          maximumReviewInterval: 0xffffffff,
+        ),
+      );
 
       expect(states.good.review.scheduledDays, 0x80000000);
     });

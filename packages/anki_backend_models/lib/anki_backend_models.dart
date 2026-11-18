@@ -2,6 +2,7 @@
 library anki_backend_models;
 
 export 'src/card.dart';
+export 'src/review_state.dart';
 export 'src/note.dart';
 export 'src/notetype.dart';
 export 'src/note_field.dart';

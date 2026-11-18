@@ -1,5 +1,26 @@
 # AnkiDroid source baseline
 
+## Core review-card scheduling states (Unit 25)
+
+`ReviewCardState`, `ReviewSchedulingContext`, and `ReviewCardSchedulingStates`
+in `packages/anki_backend_models` implement the pure review-card state
+transitions from Anki Core `rslib/src/scheduler/states/review.rs`, with fuzz
+selection from `states/fuzz.rs` and caller-provided relearning delays matching
+the relevant `LearningSteps` contract in `states/steps.rs`. The source is pinned
+to Anki Core commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`; exact hashes are
+listed in `packages/anki_backend_models/SOURCE.sha256`. The source is Copyright
+Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later; the
+Dart port keeps that license and root `COPYING` is unchanged.
+
+The caller supplies scheduler multipliers, bounds, fuzz draw, FSRS-provided
+Again/Hard/Good/Easy intervals and memory states, and the relearning delay and
+short-term flags. The shared calculation preserves early versus non-early
+review intervals, f32 math and memory values, interval fuzz and clamping, ease
+and lapse updates, leech thresholds, and review/relearning selection. It does
+not calculate FSRS states, build queues, mutate the collection or revlog, or
+execute review answers. Those remain Core/backend or host-session work; the
+separate Reviewer adapter contract is not altered by this unit.
+
 ## Anki Core search SQL subset
 
 `packages/anki_search_sql` consumes the typed AST from
@@ -2129,22 +2150,26 @@ Not yet ported: the Android app and platform lifecycle integration, Card Browser
 Intent/extras extraction and navigation for the mapped launch-option values,
 Android SharedPreferences IO and current-version persistence (typed fallbacks,
 source-order callback orchestration, URI search extraction, and launch-state
-patches are modeled), search-history Android resource-key lookup, collection-backed
-saved-search config IO and UI, and host deck/note-type lookup. Advanced field-search option metadata, field-node text
-projection, and wildcard placeholder handling are modeled; AdvancedSearchFragment
-and field-selection UI/localization remain host-side. Search-history preference
-callbacks and saved-search config callback orchestration are modeled; the host
-retains Android resource and collection storage access. The
+patches are modeled), and search-history Android resource-key lookup. The shared
+Flutter Card Browser supplies the saved-search config access and UI plus the
+collection deck/note-type lookups used by its search-filter editor; those paths
+are documented in the cross-platform surface and Unit 24 sections below.
+Advanced field-search option metadata, field-node text projection, and wildcard
+placeholder handling are modeled; AdvancedSearchFragment and field-selection
+UI/localization remain host-side. Search-history preference callbacks and
+saved-search config callback orchestration are modeled; Android-specific
+resource lookup and native collection integration remain host-specific. The
 `SearchString` value wrapper is modeled. `Collection.buildSearchString()`,
 `groupSearches()`, and `joinSearches()` wrapper orchestration are modeled, while
 generated SearchNode/separator conversion and Rust backend query construction,
 parsing/validation, and execution remain host-side. Sync/reset callback
 application and flow bindings are modeled; Android storage/resource/UI and
 coroutine integration, including actual StateFlow/SavedStateHandle operations
-and coroutine scheduling, remain host-side. Filter/search-text and
-history/saved-search availability flows,
-SavedStateHandle persistence and removal, Basic/Advanced text widgets, and
-history-list/toggle widgets, persistent mode/config lookup and the source's
+and coroutine scheduling, remain host-side. Native Android filter/search-text
+and history/saved-search availability flows, SavedStateHandle persistence and
+removal, and Basic/Advanced text widgets remain host-specific; shared Flutter
+search-history and filter UI/persistence are described in Unit 24. Persistent
+mode/config lookup and the source's
 AGPL-incorporated default-column constants, backend column labels/tooltips/
 samples/rows, BrowserColumnSelection dialog and RecyclerView click/drag lifecycle and
 notifications (row movement capability, adjacent-swap plans and click-toggle
@@ -4399,12 +4424,15 @@ hash and AGPL attribution are recorded in the model package.
 Browser screen, using the existing `BrowserColumn`, `BrowserRowId`,
 `BrowserRowSelection`, `toggleBrowserRowSelection()`, and `BrowserSortType`
 contracts. It renders host-projected columns and rows in their supplied order,
-submits query text through the injected `CardBrowserController`, exposes
-loading/searching/empty/failure states, and wires row selection, sort, preview,
-edit, and bulk actions through typed callbacks. Wide layouts use a heading row
-and dynamic columns; narrow layouts show labeled card rows. The controller owns
-query execution, collection IO, sort persistence, and navigation. Widget tests
-are in `apps/anki/test/card_browser_screen_test.dart`.
+submits query text and structured search requests through the injected
+`CardBrowserController`, and exposes loading/searching/empty/failure states.
+History restoration/management and the structured-filter editor use the optional
+controller capabilities described in the Unit 24 section. The screen also wires
+row selection, sort, preview, edit, and bulk actions through typed callbacks.
+Wide layouts use a heading row and dynamic columns; narrow layouts show labeled
+card rows. The controller owns history/filter persistence, query execution,
+collection IO, sort persistence, and navigation. Widget tests are in
+`apps/anki/test/card_browser_screen_test.dart`.
 
 The source-mapped interactions are from AnkiDroid 2.25.3 at pinned commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`: `CardBrowserFragment.kt:334–368`

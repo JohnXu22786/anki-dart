@@ -130,9 +130,11 @@ class ReviewTimeboxReached {
 
 /// The queue and answer operations required by the reviewer flow.
 ///
-/// An adapter for the AnkiDroid 2.25.3 backend should implement queue selection
-/// and answer application through the pinned backend API. This package does not
-/// reproduce the Rust scheduler or collection storage.
+/// An adapter for the AnkiDroid 2.25.3 backend supplies queue selection and
+/// answer application through the pinned backend API. The pure review-card
+/// transition calculation is implemented separately in the shared model
+/// package; this session contract continues to forward opaque scheduling
+/// snapshots and does not own collection storage or answer persistence.
 abstract interface class ReviewScheduler<TSchedulingSnapshot> {
   /// Returns the current top card, or `null` when the review queue is empty.
   /// A non-null state's [ReviewQueueState.timeboxReached] pauses presentation.
@@ -148,7 +150,7 @@ abstract interface class ReviewScheduler<TSchedulingSnapshot> {
   Future<ReviewQueueState<TSchedulingSnapshot>?>
   waitForCurrentCardStateMutation();
 
-  /// Applies [rating] to [state] using the backend's scheduling rules.
+  /// Applies [rating] to [state] using the selected scheduling implementation.
   Future<void> answerCard(
     ReviewQueueState<TSchedulingSnapshot> state,
     ReviewRating rating,

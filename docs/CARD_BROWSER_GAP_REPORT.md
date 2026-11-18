@@ -80,26 +80,37 @@ platform adapters provide storage and presentation.
   structured filters, matching the source contract. The filter editor exposes
   active-collection deck, note-type, and tag choices, plus flags and card
   states. History rows show stored filter values so searches with the same
-  query and different filters remain distinguishable. Deck and note-type
-  summaries use persisted IDs because the app does not yet render Core's
-  canonical SearchString; filter-only entries are titled “Filtered search”.
+  query and different filters remain distinguishable. The shared library now
+  provides `browserSearchString()` to project requests to canonical Anki query
+  text. Deck and note-type summaries still use persisted IDs because the app
+  has not wired that projection into history row rendering; filter-only
+  entries are titled “Filtered search”.
 - The shared implementation applies on Android, iOS, Web, Windows, macOS, and
   Linux. Shared preference storage is provided by `SharedPreferencesAsync`.
 - Source pins and adaptation boundaries are recorded in
   `ANKIDROID_UPSTREAM.md` and `apps/anki/ANKIDROID_SOURCE.sha256`.
 
+## Unit 26 — mode-aware sort choices
+
+- The sort chooser groups active sortable columns in active-column order, then
+  hidden sortable and unavailable columns in source order. Choices use the
+  current Cards or Notes mode and include selected-direction explanations and
+  source-specific unavailable reasons. Labels preserve host projections for
+  active columns and use localized column names for hidden columns.
+- Sort validation shares the mode availability mapping with the collection
+  controller and SearchSql compiler. Invalid persisted sort keys fall back to
+  no ordering, unsupported selections are rejected before saving, and
+  timing-based sorts receive collection timing.
+- The source mapping is pinned in `apps/anki/ANKIDROID_SOURCE.sha256`; behavior
+  and license boundaries are recorded in `ANKIDROID_UPSTREAM.md`.
+
 ## Remaining migration work
 
 - Match Android's exact themed row colors and test row metadata in each native
   runtime. The Flutter app currently uses platform-neutral color tints.
-- The shared Card Browser now offers mode-aware sorting choices, including
-  hidden sortable columns and unavailable columns, with persisted-key and
-  compiler availability validation. Android's sectioned sheet presentation,
-  explanatory subtitles, and localized unavailability text remain follow-up
-  UI work.
-- Implement Note Editor navigation, preview, and bulk operations.
-- Implement Note Editor navigation, preview, and bulk operations. Render the
-  canonical source search string for structured history rows.
+- Note Editor navigation, preview, and bulk actions remain unimplemented.
+- Structured filter-only history rows still use stored IDs in summaries; wire
+  the canonical source search string into row presentation.
 - Migrate and track unresolved upstream Card Browser TODO coverage.
 - Verify each platform's storage and presentation adapters in its native
   runtime; the shared Flutter implementation has no platform-specific browser

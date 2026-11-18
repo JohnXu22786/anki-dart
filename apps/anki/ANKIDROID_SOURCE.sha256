@@ -28,3 +28,15 @@ cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9  rslib/src/card
 e8146c9da9753bd43181ed2dcb877030d2e1e5c0973fa7b2b5ced62aa72f2126  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserColumn.kt
 2b0e8a2e4c88f423ce3c33454fa5bbfec78189da3db081784b2170e7a6518a6c  libanki/src/main/java/com/ichi2/anki/libanki/BrowserConfig.kt
 313a879710daa264d1cb238512dabbed4d5dacfa15f9bafdc6269bbb0bf00d9f  AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserMultiColumnAdapter.kt
+
+# AnkiDroid 2.25.3 structured Card Browser search serialization, d9bf072f814a0c37d30a694192593b31ff2df875
+86577baa618d36560beff7db304f3b3ba2deb96ceca25934d6dadc157375a962  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt
+bbeae0b2d08ad54473e8696ac6253b95978bca8ca5202b2847753ba2822eb897  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt
+567bb4317adbf72209354ff6ecf0fc5bfcea43f493098bba01e0364abe6fa7a7  AnkiDroid/src/main/java/com/ichi2/anki/Flag.kt
+05b9d6fd7722dc69490341ea312dcf8a4190e4b62a26f57a9e37bef4927db618  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/CardState.kt
+70410666e0545af8f051d113f3b3ccdbe99adf0b30e0ca4508eae5daa3ae4373  libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt
+
+# Anki Core search AST and canonical writer, e64c6b1aee3e8d668fb8bbe084beada8e070d985
+2b671bedbf3219dda8190d0a126aa78807a77ecd8c72ebc008ffb40d28e1a6b6  rslib/src/search/parser.rs
+82cbfd2d92746da726ebffc3fe63749c620b428292ce32220dfd09ff6662d195  rslib/src/search/writer.rs
+0b5fe9ca6b2113849321620e31b26ba3b1f1c785237f8a7768bdd68ab8e524d2  rslib/src/search/builder.rs

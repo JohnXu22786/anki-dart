@@ -1617,7 +1617,11 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                                   visualDensity: VisualDensity.compact,
                                   onPressed: () =>
                                       _openColumnOptions(column.type),
-                                  icon: const Icon(Icons.more_vert, size: 18),
+                                  icon: Icon(
+                                    Icons.more_vert,
+                                    size: 18,
+                                    color: foreground,
+                                  ),
                                 ),
                               ],
                             ),

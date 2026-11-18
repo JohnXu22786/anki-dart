@@ -46,6 +46,69 @@ void main() {
   });
 
   testWidgets(
+    'narrow row option icons use the contrast-safe color for flag rows',
+    (tester) async {
+      const size = Size(400, 800);
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      const flagColors = [
+        CardBrowserRowColor.flagRed,
+        CardBrowserRowColor.flagOrange,
+        CardBrowserRowColor.flagGreen,
+        CardBrowserRowColor.flagBlue,
+        CardBrowserRowColor.flagPink,
+        CardBrowserRowColor.flagTurquoise,
+        CardBrowserRowColor.flagPurple,
+      ];
+
+      for (final brightness in [Brightness.light, Brightness.dark]) {
+        final rows = [
+          for (var i = 0; i < flagColors.length; i++)
+            CardBrowserRow(
+              id: BrowserRowId(i + 1),
+              cells: {'noteTags': 'flag ${flagColors[i].name}'},
+              color: flagColors[i],
+            ),
+        ];
+        final theme = ThemeData(brightness: brightness);
+        await tester.pumpWidget(
+          _app(
+            _Controller(
+              CardBrowserSnapshot(
+                columns: const [
+                  CardBrowserColumn(type: BrowserColumn.tags, label: 'Tags'),
+                ],
+                rows: rows,
+              ),
+            ),
+            size,
+            theme: theme,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        for (var i = 0; i < flagColors.length; i++) {
+          final row = find.byKey(ValueKey('browser-row-${i + 1}'));
+          final options = tester.widget<IconButton>(
+            find.descendant(of: row, matching: find.byType(IconButton)),
+          );
+          final icon = options.icon as Icon;
+          expect(
+            icon.color,
+            resolveCardBrowserRowForegroundColor(
+              flagColors[i],
+              Theme.of(tester.element(row)),
+            ),
+            reason: '${flagColors[i].name} on $brightness rows',
+          );
+        }
+      }
+    },
+  );
+
+  testWidgets(
     'row colors survive selection and errors use the theme background',
     (tester) async {
       final controller = _Controller(
@@ -984,19 +1047,21 @@ void main() {
   });
 }
 
-Widget _app(_Controller controller, Size size) => MaterialApp(
-  localizationsDelegates: const [
-    AppLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
-  supportedLocales: AppLocalizations.supportedLocales,
-  home: MediaQuery(
-    data: MediaQueryData(size: size),
-    child: CardBrowserScreen(controller: controller),
-  ),
-);
+Widget _app(_Controller controller, Size size, {ThemeData? theme}) =>
+    MaterialApp(
+      theme: theme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: MediaQuery(
+        data: MediaQueryData(size: size),
+        child: CardBrowserScreen(controller: controller),
+      ),
+    );
 
 CardBrowserSnapshot _sample() => CardBrowserSnapshot(
   columns: [

@@ -28,6 +28,7 @@ final class CollectionCardBrowserController
         CardBrowserModeController,
         CardBrowserSearchRequestController,
         CardBrowserSearchHistoryController,
+        CardBrowserSearchHistoryDisplayController,
         CardBrowserSearchFilterOptionsController {
   CollectionCardBrowserController(
     this.collections, {
@@ -187,6 +188,80 @@ final class CollectionCardBrowserController
 
   @override
   Future<List<BrowserSearchHistoryEntry>> loadSearchHistory() => _readHistory();
+
+  @override
+  Future<List<CardBrowserSearchHistoryDisplayItem>>
+  loadSearchHistoryDisplayItems(List<BrowserSearchHistoryEntry> entries) async {
+    if (entries.isEmpty) return const [];
+
+    try {
+      final storage = _storage;
+      final decks = storage.decks.getAllDecksInNameOrder();
+      final deckNameMap = [
+        for (final deck in decks)
+          BrowserDeckNameId(
+            name: deck.name,
+            id: BigInt.parse(deck.id.toString()),
+          ),
+      ];
+      final noteTypeIds = {
+        for (final entry in entries)
+          for (final id in entry.noteTypeIds) _toInt64(id),
+      };
+      final noteTypes = await storage.getNotetypesByIds(
+        noteTypeIds.map(models.NotetypeId.new),
+      );
+      final noteTypeMap = [
+        for (final notetype in noteTypes)
+          BrowserNoteTypeNameId(
+            name: notetype.name,
+            id: BigInt.parse(notetype.id.toString()),
+          ),
+      ];
+
+      return [
+        for (final entry in entries)
+          _historyDisplayItem(
+            entry,
+            deckNameMap: deckNameMap,
+            noteTypeMap: noteTypeMap,
+          ),
+      ];
+    } catch (_) {
+      return [for (final entry in entries) _historyDisplayFallback(entry)];
+    }
+  }
+
+  CardBrowserSearchHistoryDisplayItem _historyDisplayItem(
+    BrowserSearchHistoryEntry entry, {
+    required List<BrowserDeckNameId> deckNameMap,
+    required List<BrowserNoteTypeNameId> noteTypeMap,
+  }) {
+    final request = BrowserSearchRequest.fromHistoryEntry(
+      entry,
+      deckNameMap: deckNameMap,
+      noteTypeMap: noteTypeMap,
+    );
+    if (request == null) return _historyDisplayFallback(entry);
+
+    try {
+      final searchString = browserSearchString(request);
+      return (
+        searchString: searchString.isEmpty ? null : searchString,
+        includesStructuredFilters:
+            request.filters != const BrowserSearchFilters(),
+      );
+    } catch (_) {
+      return _historyDisplayFallback(entry);
+    }
+  }
+
+  CardBrowserSearchHistoryDisplayItem _historyDisplayFallback(
+    BrowserSearchHistoryEntry entry,
+  ) => (
+    searchString: entry.query.isEmpty ? null : entry.query,
+    includesStructuredFilters: false,
+  );
 
   Future<List<BrowserSearchHistoryEntry>> _readHistory() async {
     final stored = await _preferences.getString(_searchHistoryKey) ?? '[]';

@@ -4,7 +4,7 @@ The Flutter Card Browser is shared across Android, iOS, Web, Windows, macOS,
 and Linux. Collection queries and preference behavior live in shared Dart;
 platform adapters provide storage and presentation.
 
-## Implemented through Unit 24
+## Implemented through Unit 31
 
 - Cards/Notes mode loads and saves through the active collection's
   `browserTableShowNotesMode` config. Cards remains the default.
@@ -64,6 +64,23 @@ platform adapters provide storage and presentation.
 - Source pins, licenses, and SHA-256 hashes are recorded in
   `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
 
+## Unit 31 — canonical search-history display
+
+- The collection-backed history display resolves all stored deck and note-type
+  IDs against the active collection's current name maps once per refresh, then
+  uses shared `browserSearchString()` to produce the full canonical query for
+  each row. This keeps persisted history IDs and identity unchanged while
+  reflecting renamed collection items.
+- Canonical rows show filter-only entries as their actual query and omit the
+  old duplicate ID/filter summaries. Query-only entries use the same canonical
+  writer; malformed queries or unavailable name maps fall back to the exact
+  stored query. Missing deck or note-type IDs retain the shared restore
+  contract and fall back to the raw query; raw filter summaries remain visible
+  only when canonical projection is unavailable.
+- The shared Flutter implementation applies on Android, iOS, Web, Windows,
+  macOS, and Linux. The source pins, hashes, and license boundaries remain in
+  `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
+
 ## Unit 24 — Search history and structured filters
 
 - Search requests now carry query text and structured tags, flags, and card
@@ -109,8 +126,6 @@ platform adapters provide storage and presentation.
 - Match Android's exact themed row colors and test row metadata in each native
   runtime. The Flutter app currently uses platform-neutral color tints.
 - Note Editor navigation, preview, and bulk actions remain unimplemented.
-- Structured filter-only history rows still use stored IDs in summaries; wire
-  the canonical source search string into row presentation.
 - Migrate and track unresolved upstream Card Browser TODO coverage.
 - Verify each platform's storage and presentation adapters in its native
   runtime; the shared Flutter implementation has no platform-specific browser

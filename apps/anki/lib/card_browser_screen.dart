@@ -9,6 +9,8 @@ import 'package:anki_dart/anki_dart.dart';
 import 'package:flutter/material.dart';
 
 import 'card_browser_row_colors.dart';
+import 'card_browser_preview.dart';
+import 'card_browser_preview_screen.dart';
 import 'l10n/app_localizations.dart';
 
 export 'card_browser_row_colors.dart';
@@ -925,8 +927,21 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   }
 
   void _previewSelected() {
+    final controller = widget.controller;
+    if (controller is CardBrowserPreviewController) {
+      final selectedRows = List<BrowserRowId>.unmodifiable(_selectedRows);
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => CardBrowserPreviewScreen(
+            controller: () => (controller as CardBrowserPreviewController)
+                .loadPreview(selectedRows: selectedRows),
+          ),
+        ),
+      );
+      return;
+    }
     final id = _selectedRows.firstOrNull;
-    if (id != null) _runAction(() => widget.controller.preview(id));
+    if (id != null) _runAction(() => controller.preview(id));
   }
 
   void _editSelected() {
@@ -1119,13 +1134,16 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
               },
               onSelected: (sortType) => _runAction(() => _sort(sortType)),
             ),
-          if (_selectedRows.isNotEmpty) ...[
+          if (_snapshot?.rows.isNotEmpty == true &&
+              (widget.controller is CardBrowserPreviewController ||
+                  _selectedRows.isNotEmpty))
             IconButton(
               key: const ValueKey('browser-preview'),
               tooltip: s.browserPreview,
               onPressed: _previewSelected,
               icon: const Icon(Icons.visibility_outlined),
             ),
+          if (_selectedRows.isNotEmpty) ...[
             IconButton(
               key: const ValueKey('browser-edit'),
               tooltip: s.browserEdit,

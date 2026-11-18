@@ -5785,3 +5785,25 @@ implementation code is copied. The referenced AnkiDroid files declare
 Tsui under `GPL-3.0-or-later`; root `COPYING` is unchanged. Source hashes and
 behavior boundaries are recorded in `apps/anki/ANKIDROID_SOURCE.sha256` and
 `ANKIDROID_UPSTREAM.md`.
+
+## Cross-platform Card Browser preview
+
+The Card Browser preview flow and tests adapt AnkiDroid 2.25.3 at
+`d9bf072f814a0c37d30a694192593b31ff2df875`, specifically
+`CardBrowserViewModel.kt`, `CardBrowserFragment.kt`, `PreviewerFragment.kt`,
+and `PreviewerViewModel.kt`. These files declare `GPL-3.0-or-later`; no Android
+implementation, resources, or strings are copied. The shared Flutter code and
+tests are Copyright © 2026 John Tsui under `GPL-3.0-or-later`.
+
+Static card HTML uses `flutter_html` 3.0.0, Copyright © 2019–2025 The
+flutter_html developers, under MIT; its license is retained verbatim in
+`LICENSES/flutter_html-MIT.txt`. Transitive packages added by this renderer are
+`html` 0.15.5 and `csslib` 1.0.2, each under BSD 3-Clause, and `list_counter`
+1.0.2 under MIT; their license notices are retained in
+`LICENSES/html-BSD-3-Clause.txt`, `LICENSES/csslib-BSD-3-Clause.txt`, and
+`LICENSES/list_counter-MIT.txt`. The app constrains `html` to 0.15.5 because
+`flutter_html` 3.0.0 calls an internal selector API removed in 0.15.7. The
+widget renderer is a pure Flutter surface across Android, iOS, Web, Windows,
+macOS, and Linux; full JavaScript and media playback parity are not included.
+Root `COPYING` remains unchanged. Source pins and SHA-256 values are recorded
+in `apps/anki/ANKIDROID_SOURCE.sha256`.

@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'browser_row_metadata.dart';
 import 'card_browser_screen.dart';
+import 'card_browser_preview.dart';
 import 'browser_row_values.dart';
 import 'collection_runtime.dart';
 import 'l10n/app_localizations_en.dart';
@@ -29,15 +30,21 @@ final class CollectionCardBrowserController
         CardBrowserSearchRequestController,
         CardBrowserSearchHistoryController,
         CardBrowserSearchHistoryDisplayController,
-        CardBrowserSearchFilterOptionsController {
+        CardBrowserSearchFilterOptionsController,
+        CardBrowserPreviewController {
   CollectionCardBrowserController(
     this.collections, {
     SharedPreferencesAsync? preferences,
-  }) : _preferencesOverride = preferences;
+    CardBrowserPreviewLoader? previewLoader,
+  }) : _preferencesOverride = preferences {
+    _previewLoader =
+        previewLoader ?? CollectionCardBrowserPreviewLoader(collections);
+  }
 
   final CollectionRuntime collections;
   final AppLocalizationsEn _l10n = AppLocalizationsEn();
   final SharedPreferencesAsync? _preferencesOverride;
+  late final CardBrowserPreviewLoader _previewLoader;
   SharedPreferencesAsync get _preferences =>
       _preferencesOverride ?? SharedPreferencesAsync();
   static const _cardsColumnsKey = 'activeCols';
@@ -69,6 +76,7 @@ final class CollectionCardBrowserController
   BrowserColumnMode _mode = BrowserColumnMode.cards;
   bool _modeLoaded = false;
   CardBrowserSnapshot? _lastSnapshot;
+  List<BrowserRowId> _selectedRows = const [];
   String _query = '';
   BrowserSearchRequest _activeRequest = const BrowserSearchRequest(query: '');
   Future<void> _historyWriteTail = Future<void>.value();
@@ -743,11 +751,29 @@ final class CollectionCardBrowserController
   Future<void> manageColumns() async {}
 
   @override
-  Future<void> updateSelection(List<BrowserRowId> selectedRows) async {}
+  Future<void> updateSelection(List<BrowserRowId> selectedRows) async {
+    _selectedRows = List.unmodifiable(selectedRows);
+  }
+
+  @override
+  Future<CardBrowserPreviewSession> loadPreview({
+    required List<BrowserRowId> selectedRows,
+  }) {
+    final snapshot = _lastSnapshot;
+    if (snapshot == null) {
+      return Future.error(StateError('Card Browser results are unavailable.'));
+    }
+    final rows = snapshot.rows.map((row) => row.id).toList(growable: false);
+    return _previewLoader.load(
+      mode: snapshot.mode,
+      rowIds: rows,
+      selectedRows: selectedRows,
+    );
+  }
 
   @override
   Future<void> preview(BrowserRowId rowId) =>
-      Future.error(UnsupportedError('Card preview is not implemented.'));
+      loadPreview(selectedRows: _selectedRows).then((_) {});
 
   @override
   Future<void> edit(BrowserRowId rowId) =>
@@ -760,6 +786,116 @@ final class CollectionCardBrowserController
   ) => Future.error(
     UnsupportedError('Card Browser bulk actions are not implemented.'),
   );
+}
+
+/// Reads and renders the selected browser results from the active collection.
+final class CollectionCardBrowserPreviewLoader
+    implements CardBrowserPreviewLoader {
+  const CollectionCardBrowserPreviewLoader(this.collections);
+
+  final CollectionRuntime collections;
+
+  @override
+  Future<CardBrowserPreviewSession> load({
+    required BrowserColumnMode mode,
+    required List<BrowserRowId> rowIds,
+    required List<BrowserRowId> selectedRows,
+  }) async {
+    final storage = collections.storage;
+    if (!collections.isInitialized || storage == null) {
+      throw StateError('The active profile collection is not open.');
+    }
+    if (rowIds.isEmpty) throw StateError('Card Browser results are empty.');
+
+    final cardsByNoteId = <String, List<models.Card>>{};
+    if (mode == BrowserColumnMode.notes) {
+      final noteIdsToLoad = <BigInt>{
+        for (final row in rowIds) row.bigValue,
+        for (final row in selectedRows) row.bigValue,
+      };
+      final cardsForNotes = await storage.cardsOfNotes(
+        noteIdsToLoad.map((id) => Int64.parseInt(id.toString())),
+      );
+      for (final entry in cardsForNotes.entries) {
+        cardsByNoteId[entry.key.toString()] = entry.value;
+      }
+      if (rowIds.any(
+        (noteId) =>
+            cardsByNoteId[noteId.bigValue.toString()]?.isNotEmpty != true,
+      )) {
+        throw StateError('A Card Browser note no longer has a preview card.');
+      }
+    }
+    final payload = cardBrowserPreviewPayload(
+      mode: mode,
+      rowIds: rowIds,
+      selectedRows: selectedRows,
+      cardsByNoteId: {
+        for (final entry in cardsByNoteId.entries)
+          entry.key: [
+            for (final card in entry.value) BigInt.parse(card.id.toString()),
+          ],
+      },
+    );
+    if (payload.cardIds.isEmpty) {
+      throw StateError('The preview has no cards to show.');
+    }
+    if (payload.currentIndex < 0 ||
+        payload.currentIndex >= payload.cardIds.length) {
+      throw StateError('The selected Card Browser row is no longer available.');
+    }
+
+    final cards = await storage.getCardsByIds(
+      payload.cardIds.map((id) => Int64.parseInt(id.toString())),
+    );
+    if (cards.length != payload.cardIds.length) {
+      throw StateError('A preview card is no longer available.');
+    }
+    final notes = await storage.getNotesByIds(cards.map((card) => card.noteId));
+    final notesById = {for (final note in notes) note.id.toString(): note};
+    final notetypes = await storage.getNotetypesByIds(
+      notes.map((note) => models.NotetypeId(note.notetypeId)),
+    );
+    final notetypesById = {
+      for (final notetype in notetypes) notetype.id.toString(): notetype,
+    };
+    final decks = storage.decks.getAllDecksInNameOrder();
+    final decksById = {for (final deck in decks) deck.id.toString(): deck};
+    final previewCards = <CardBrowserPreviewCard>[];
+    for (final card in cards) {
+      final note = notesById[card.noteId.toString()];
+      if (note == null) {
+        throw StateError('A preview note is no longer available.');
+      }
+      final notetype = notetypesById[note.notetypeId.toString()];
+      if (notetype == null) {
+        throw StateError('A preview card template is no longer available.');
+      }
+      final deckId = card.originalDeckId.toInt() == 0
+          ? card.deckId
+          : card.originalDeckId;
+      final sides = const models.BrowserCardTemplateRenderer().render(
+        note: note,
+        card: card,
+        notetype: notetype,
+        deckName: decksById[deckId.toString()]?.name ?? '(Deck)',
+      );
+      if (!sides.isAvailable) {
+        throw StateError('The card template could not be rendered.');
+      }
+      previewCards.add(
+        CardBrowserPreviewCard(
+          id: BigInt.parse(card.id.toString()),
+          questionHtml: sides.questionHtml!,
+          answerHtml: sides.answerHtml!,
+        ),
+      );
+    }
+    return CardBrowserPreviewSession(
+      cards: previewCards,
+      currentIndex: payload.currentIndex,
+    );
+  }
 }
 
 /// Projects note-field HTML with Anki Core's `html_to_text_line(..., true)`

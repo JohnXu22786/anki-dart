@@ -214,6 +214,20 @@ final class BrowserPreviewPayload {
   final int currentIndex;
 }
 
+/// BigInt-safe form of [BrowserPreviewPayload] for Web hosts.
+///
+/// The launch choice and order match [browserPreviewPayload], while card IDs
+/// remain exact across the JavaScript safe-integer boundary.
+final class BrowserPreviewPayloadBigInt {
+  const BrowserPreviewPayloadBigInt({
+    required this.cardIds,
+    required this.currentIndex,
+  });
+
+  final List<BigInt> cardIds;
+  final int currentIndex;
+}
+
 /// Projects `CardBrowserViewModel.queryPreviewIntentData()`'s payload choice.
 ///
 /// With multiple selected rows the source uses selected card IDs and index 0.
@@ -237,6 +251,22 @@ BrowserPreviewPayload browserPreviewPayload({
     ),
   );
 }
+
+/// BigInt-safe projection of `CardBrowserViewModel.queryPreviewIntentData()`.
+BrowserPreviewPayloadBigInt browserPreviewPayloadBigInt({
+  required List<BrowserRowId> rowIds,
+  required List<BrowserRowId> selectedRows,
+  required List<BigInt> oneCardPerRowIds,
+  required List<BigInt> selectedCardIds,
+}) => selectedRows.length > 1
+    ? BrowserPreviewPayloadBigInt(cardIds: selectedCardIds, currentIndex: 0)
+    : BrowserPreviewPayloadBigInt(
+        cardIds: oneCardPerRowIds,
+        currentIndex: browserPreviewStartingIndex(
+          rowIds: rowIds,
+          selectedRows: selectedRows,
+        ),
+      );
 
 /// Projects `onPaneRowChanged` to ordered adapter positions needing refresh.
 ///

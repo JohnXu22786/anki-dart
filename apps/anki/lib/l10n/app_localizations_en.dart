@@ -541,7 +541,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browserActionFailed => 'The browser action could not be completed';
 
   @override
-  String get browserPreview => 'Preview selected';
+  String get browserPreviewTitle => 'Card Preview';
+
+  @override
+  String get browserPreviewLoadFailed =>
+      'This preview could not be loaded. The card or collection may have changed.';
+
+  @override
+  String get browserPreviewRetry => 'Try again';
+
+  @override
+  String get browserPreviewPrevious => 'Previous card';
+
+  @override
+  String get browserPreviewNext => 'Next card';
+
+  @override
+  String get browserPreviewShowAnswer => 'Show answer';
+
+  @override
+  String get browserPreviewBackSideOnly => 'Show answers only';
+
+  @override
+  String browserPreviewProgress(int current, int total) {
+    return '$current of $total';
+  }
+
+  @override
+  String get browserPreview => 'Preview';
 
   @override
   String get browserEdit => 'Edit selected';

@@ -1338,3 +1338,23 @@ in `apps/anki/ANKIDROID_SOURCE.sha256`. The Kotlin source declares
 `GPL-3.0-or-later`; the resource values are adapted rather than copied as
 Android resources. The Flutter mapping and tests are Copyright © 2026 John
 Tsui under `GPL-3.0-or-later`. Root `COPYING` remains byte-identical.
+
+## Card Browser preview launch and Previewer screen
+
+The collection-backed Card Browser preview route in
+`apps/anki/lib/collection_card_browser_controller.dart`,
+`card_browser_preview.dart`, and `card_browser_preview_screen.dart` follows
+AnkiDroid 2.25.3 at `d9bf072f814a0c37d30a694192593b31ff2df875`:
+`CardBrowserViewModel.kt:1265–1282`, `CardBrowserFragment.kt:1595–1605`,
+`PreviewerFragment.kt:70–183,205–255`, and `PreviewerViewModel.kt:32–63,93–104,134–202`.
+The exact source and test hashes are in
+`apps/anki/ANKIDROID_SOURCE.sha256`; the behavior mapping and limits are in
+`ANKIDROID_UPSTREAM.md`. The referenced Kotlin sources declare
+`GPL-3.0-or-later`; no Android code, resources, or strings are copied.
+
+Static question and answer HTML is presented through `flutter_html` 3.0.0, a
+Flutter-widget renderer published under MIT. Its dependency on the `html`
+package is constrained to 0.15.5 because 0.15.7 removed the internal selector
+API used by `flutter_html` 3.0.0. The app uses the renderer's Flutter widget
+surface on Android, iOS, Web, Windows, macOS, and Linux; JavaScript and media
+playback parity are not included. Root `COPYING` remains byte-identical.

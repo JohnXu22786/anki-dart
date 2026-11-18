@@ -85,6 +85,42 @@ void main() {
       expect(payload.currentIndex, -1);
       expect(payload.cardIds, [10, 20, 30]);
     });
+
+    test('BigInt payload preserves exact IDs and collection order', () {
+      final large = BigInt.parse('9007199254740993');
+      final rowCardIds = [large, BigInt.from(20), BigInt.from(30)];
+
+      final payload = browserPreviewPayloadBigInt(
+        rowIds: [
+          BrowserRowId.bigInt(large),
+          const BrowserRowId(20),
+          const BrowserRowId(30),
+        ],
+        selectedRows: [BrowserRowId.bigInt(large)],
+        oneCardPerRowIds: rowCardIds,
+        selectedCardIds: [BigInt.from(30), large],
+      );
+
+      expect(payload.cardIds, same(rowCardIds));
+      expect(payload.cardIds.first, large);
+      expect(payload.currentIndex, 0);
+    });
+
+    test('BigInt payload uses selected card order for multiple rows', () {
+      final first = BigInt.parse('9223372036854775806');
+      final second = BigInt.parse('9007199254740993');
+      final selected = [second, first];
+
+      final payload = browserPreviewPayloadBigInt(
+        rowIds: [BrowserRowId.bigInt(first), BrowserRowId.bigInt(second)],
+        selectedRows: [BrowserRowId.bigInt(second), BrowserRowId.bigInt(first)],
+        oneCardPerRowIds: [first, second],
+        selectedCardIds: selected,
+      );
+
+      expect(payload.cardIds, same(selected));
+      expect(payload.currentIndex, 0);
+    });
   });
 
   group('Browser preview starting index', () {

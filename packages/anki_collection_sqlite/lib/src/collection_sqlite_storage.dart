@@ -16,6 +16,7 @@ import 'package:anki_search_sql/anki_search_sql.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:protobuf/protobuf.dart';
 import 'package:sqlite3/common.dart';
+import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
 import 'card_data_functions.dart';
 import 'fnvhash.dart';
@@ -26,6 +27,8 @@ import 'regex_functions.dart';
 import 'search_executor.dart';
 import 'unicase_collation.dart';
 import 'deck_tree.dart';
+import 'note_update.dart';
+import 'core_random_position.dart';
 
 part 'legacy_collection_migrations.dart';
 
@@ -83,6 +86,7 @@ final class CollectionSqliteStorage
   final int Function()? _nowMillis;
   final Map<String, CommonPreparedStatement> _statementCache = {};
   Future<void> _searchQueue = Future<void>.value();
+  Future<void> _existingNoteUpdateQueue = Future<void>.value();
   late final DeckStorage _deckStorage = DeckStorage(
     _DeckStorageDatabase(_database),
   );
@@ -147,6 +151,307 @@ final class CollectionSqliteStorage
     _noteStorage.updateNote(note);
     await _flushIfAutocommit();
   }
+
+  /// Updates an existing note with Anki Core's editor-save behavior.
+  ///
+  /// The operation compares semantic content before preparing fields, keeps
+  /// the stored timestamp on no-op detection, resolves the stored notetype and
+  /// normalization setting, and adds any newly required cards in the same
+  /// savepoint as the note update. Existing cards are left untouched. The
+  /// returned undo record contains Core's old-note snapshot; a collection-wide
+  /// undo/redo stack is not yet part of this package.
+  Future<ExistingNoteUpdateResult> updateExistingNote(Note edited) {
+    final result = _existingNoteUpdateQueue.then(
+      (_) => _updateExistingNote(edited),
+    );
+    _existingNoteUpdateQueue = result.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {},
+    );
+    return result;
+  }
+
+  Future<ExistingNoteUpdateResult> _updateExistingNote(Note edited) async {
+    if (_closing || _connectionClosed || _closed) {
+      throw StateError('collection storage is closing');
+    }
+    final original = await getNote(edited.id);
+    if (original == null) throw StateError('note not found: ${edited.id}');
+
+    // Core's note_differs_from_db ignores stored derived values and trusts
+    // the persisted mtime over a stale editor copy.
+    final candidate = copyNote(edited)
+      ..mtimeSecs = original.mtimeSecs
+      ..fieldsMut();
+    edited.mtimeSecs = original.mtimeSecs;
+    if (!_semanticNoteDiffers(original, candidate)) {
+      return ExistingNoteUpdateResult(
+        changed: false,
+        note: edited,
+        addedCards: const [],
+      );
+    }
+
+    final notetypes = await getNotetypesByIds([NotetypeId(edited.notetypeId)]);
+    if (notetypes.isEmpty) {
+      throw StateError('edited note type not found: ${edited.notetypeId}');
+    }
+    final notetype = notetypes.single;
+    final existingCards = await allCardsOfNote(edited.id);
+    final normalizeText = _normalizeNoteText;
+    final collectionMtimeMillis = _readInt64(
+      _database.select('SELECT mod FROM col').single['mod'],
+    );
+    final modifiedAtMillis =
+        _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
+
+    // No await occurs inside this savepoint. The update queue prevents stale
+    // concurrent editor saves, and synchronous row writes cannot interleave
+    // with other storage calls before release.
+    _database.execute('SAVEPOINT core_update_existing_note');
+    late final ExistingNoteUpdateResult result;
+    try {
+      final addedTags = _canonifyEditedTags(edited);
+      edited.prepareForUpdate(notetype, normalizeText: normalizeText);
+      edited.markModified(-1, mtimeSecs: modifiedAtMillis ~/ 1000);
+
+      _noteStorage.updateNote(edited);
+      final addedCards = <Card>[];
+      final requiredOrdinals = _requiredCardOrdinals(
+        edited,
+        notetype,
+        existingCards,
+      );
+      if (requiredOrdinals.isNotEmpty) {
+        final targetDeck = _deckForGeneratedCard(
+          existingCards,
+          notetype.id.value,
+        );
+        final existingDue = _existingNewCardDue(existingCards);
+        final duePosition = existingDue == null
+            ? _nextGeneratedCardPosition()
+            : null;
+        for (final ordinal in requiredOrdinals) {
+          final templateIndex = notetype.isCloze ? 0 : ordinal;
+          final templateTarget = notetype.isCloze
+              ? Int64.ZERO
+              : notetype.templates[templateIndex].config.targetDeckId;
+          final deckId = _deckForAdding(
+            templateTarget == Int64.ZERO ? targetDeck : templateTarget,
+          );
+          final due = existingDue ?? _dueForDeck(duePosition!, deckId);
+          final card = Card.newCard(
+            noteId: edited.id,
+            templateIdx: ordinal,
+            deckId: deckId,
+            due: due,
+          );
+          final id = _addCardSync(card);
+          addedCards.add(_cardWithId(card, id));
+        }
+      }
+      _database.execute('UPDATE col SET mod = ?', [modifiedAtMillis]);
+      _database.execute('RELEASE core_update_existing_note');
+      result = ExistingNoteUpdateResult(
+        changed: true,
+        note: edited,
+        addedCards: List.unmodifiable(addedCards),
+        undoRecord: UpdatedNoteUndoRecord(
+          original,
+          collectionMtimeMillis: collectionMtimeMillis,
+          addedTags: addedTags,
+        ),
+      );
+    } catch (error, stackTrace) {
+      try {
+        _database.execute('ROLLBACK TO core_update_existing_note');
+        _database.execute('RELEASE core_update_existing_note');
+      } catch (_) {
+        // Keep the operation's original failure observable.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+    await _flushIfAutocommit();
+    return result;
+  }
+
+  bool get _normalizeNoteText {
+    final value =
+        readCollectionConfig('normalize_note_text') ??
+        readCollectionConfig('normalizeNoteText');
+    return value is bool ? value : true;
+  }
+
+  List<String> _canonifyEditedTags(Note note) {
+    final canonicalByFoldedName = <String, String>{};
+    final addedTags = <String>[];
+    for (final raw in note.tags) {
+      for (final tag in raw.split(RegExp(r'[ \u3000]+'))) {
+        if (tag.isEmpty) continue;
+        final normalized = tag
+            .split('::')
+            .map((component) {
+              final cleaned = unorm
+                  .nfc(component)
+                  .replaceAll(RegExp(r'[\x00-\x1f\x7f \u3000]'), '')
+                  .trim();
+              return cleaned.isEmpty ? 'blank' : cleaned;
+            })
+            .join('::');
+        var preferred = _tagStorage.preferredTagCase(normalized);
+        if (preferred == null) {
+          final components = normalized.split('::');
+          for (
+            var parentCount = components.length - 1;
+            parentCount > 0 && preferred == null;
+            parentCount--
+          ) {
+            final parent = components.take(parentCount).join('::');
+            final storedParent = _tagStorage.preferredTagCase(parent);
+            if (storedParent != null) {
+              preferred =
+                  '$storedParent::${components.skip(parentCount).join('::')}';
+            }
+          }
+        }
+        final finalName = preferred ?? normalized;
+        final folded = unicodeCaseFold(finalName);
+        canonicalByFoldedName.putIfAbsent(folded, () => finalName);
+        if (_tagStorage.preferredTagCase(finalName) == null) {
+          _database.execute(
+            'INSERT OR IGNORE INTO tags (tag, usn, collapsed) VALUES (?, -1, 1)',
+            [finalName],
+          );
+          addedTags.add(finalName);
+        }
+      }
+    }
+    final canonical = canonicalByFoldedName.keys.toList()..sort();
+    note.tags
+      ..clear()
+      ..addAll(canonical.map((folded) => canonicalByFoldedName[folded]!));
+    return addedTags;
+  }
+
+  List<int> _requiredCardOrdinals(
+    Note note,
+    Notetype notetype,
+    List<Card> existing,
+  ) {
+    final existingOrds = existing.map((card) => card.templateIdx).toSet();
+    final ordinals = <int>[];
+    if (notetype.isCloze) {
+      final clozes = clozeNumbersInFields(
+        note.fields,
+      ).map((number) => (number - 1).clamp(0, 499)).toSet();
+      ordinals.addAll(
+        clozes.where((ordinal) => !existingOrds.contains(ordinal)),
+      );
+    } else {
+      final nonempty = note.nonEmptyFields(notetype.fields);
+      if (note.tags.isNotEmpty) nonempty.add('Tags');
+      for (var ordinal = 0; ordinal < notetype.templates.length; ordinal++) {
+        if (existingOrds.contains(ordinal)) {
+          continue;
+        }
+        if (templateRendersWithFields(
+          notetype.templates[ordinal].config.qFormat,
+          nonempty,
+        )) {
+          ordinals.add(ordinal);
+        }
+      }
+    }
+    if (existing.isEmpty && ordinals.isEmpty) return [0];
+    ordinals.sort();
+    return ordinals;
+  }
+
+  Int64 _deckForGeneratedCard(List<Card> existing, Int64 notetypeId) {
+    final deckIds = existing
+        .map(
+          (card) => card.originalDeckId == Int64.ZERO
+              ? card.deckId
+              : card.originalDeckId,
+        )
+        .toSet();
+    if (deckIds.length == 1 && deckIds.single != Int64.ZERO) {
+      final existingDeck = _deckStorage.getDeck(deckIds.single);
+      if (existingDeck?.configId != null) return deckIds.single;
+    }
+    final rawLastDeck = readCollectionConfig('_nt_${notetypeId}_lastDeck');
+    if (rawLastDeck is int) {
+      final lastDeck = Int64(rawLastDeck);
+      final deck = _deckStorage.getDeck(lastDeck);
+      if (deck?.configId != null) return lastDeck;
+    }
+    return Int64.ONE;
+  }
+
+  int? _existingNewCardDue(List<Card> existing) {
+    final priorNew = existing.where((card) => card.ctype == CardType.newCard);
+    if (priorNew.isNotEmpty) {
+      final card = priorNew.first;
+      final position = card.originalDue != 0 ? card.originalDue : card.due;
+      return position < 0 ? 0 : position;
+    }
+    return null;
+  }
+
+  int _nextGeneratedCardPosition() {
+    final next = readCollectionConfig('nextPos');
+    final position = next is int ? next : 0;
+    _writeConfigValueSync('nextPos', jsonEncode(position + 1));
+    return position;
+  }
+
+  int _dueForDeck(int position, Int64 deckId) {
+    final config = _deckConfigStorage.getDeckConfig(
+      _deckStorage.getDeck(deckId)?.configId ?? Int64.ONE,
+    );
+    final random =
+        config?.inner.newCardInsertOrder ==
+        protoConfig
+            .DeckConfig_Config_NewCardInsertOrder
+            .NEW_CARD_INSERT_ORDER_RANDOM;
+    return random ? coreRandomPosition(position) : position;
+  }
+
+  Int64 _deckForAdding(Int64 targetDeckId) {
+    final deck = _deckStorage.getDeck(targetDeckId);
+    if (deck?.configId != null) return targetDeckId;
+    final defaultDeck = _deckStorage.getDeck(Int64.ONE);
+    if (defaultDeck?.configId == null) {
+      throw StateError('default deck is unavailable for generated card');
+    }
+    return Int64.ONE;
+  }
+
+  Card _cardWithId(Card card, Int64 id) => Card(
+    id: id,
+    noteId: card.noteId,
+    deckId: card.deckId,
+    templateIdx: card.templateIdx,
+    mtimeSecs: card.mtimeSecs,
+    usn: card.usn,
+    ctype: card.ctype,
+    queue: card.queue,
+    due: card.due,
+    interval: card.interval,
+    easeFactorRaw: card.easeFactorRaw,
+    reps: card.reps,
+    lapses: card.lapses,
+    remainingStepsRaw: card.remainingStepsRaw,
+    originalDue: card.originalDue,
+    originalDeckId: card.originalDeckId,
+    flags: card.flags,
+    originalPosition: card.originalPosition,
+    memoryState: card.memoryState,
+    desiredRetention: card.desiredRetention,
+    decay: card.decay,
+    lastReviewTimeSecs: card.lastReviewTimeSecs,
+    customData: card.customData,
+  );
 
   /// Inserts a new note, assigning its generated SQLite row ID to [note].
   Future<void> addNote(Note note) async {
@@ -473,6 +778,11 @@ WHERE queue IN (-2, -3)
   }
 
   Future<void> _writeConfigValue(String key, String encodedJson) async {
+    _writeConfigValueSync(key, encodedJson);
+    await _flushIfAutocommit();
+  }
+
+  void _writeConfigValueSync(String key, String encodedJson) {
     _database.execute(
       'INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) VALUES (?, -1, ?, ?)',
       [
@@ -481,7 +791,6 @@ WHERE queue IN (-2, -3)
         utf8.encode(encodedJson),
       ],
     );
-    await _flushIfAutocommit();
   }
 
   bool? _readConfigBool(String key) {
@@ -567,8 +876,14 @@ WHERE queue IN (-2, -3)
   /// allocation behavior. The shared [Card] model is immutable, so callers
   /// receive the assigned ID instead of having the model mutated in place.
   Future<CardId> addCard(Card card) async {
+    final id = _addCardSync(card);
+    await _flushIfAutocommit();
+    return id;
+  }
+
+  CardId _addCardSync(Card card) {
     final values = _cardValues(card);
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final now = _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
     final statement = _database.prepare('''
       INSERT INTO cards (
         id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
@@ -591,7 +906,6 @@ WHERE queue IN (-2, -3)
     } finally {
       statement.close();
     }
-    await _flushIfAutocommit();
     return id;
   }
 
@@ -1730,4 +2044,26 @@ final class _StockTemplateSection extends _StockTemplateNode {
   final String name;
   final bool negated;
   final List<_StockTemplateNode> children = [];
+}
+
+bool _semanticNoteDiffers(Note stored, Note edited) {
+  if (stored.id != edited.id ||
+      stored.guid != edited.guid ||
+      stored.notetypeId != edited.notetypeId ||
+      stored.usn != edited.usn ||
+      !_sameStrings(stored.tags, edited.tags) ||
+      !_sameStrings(stored.fields, edited.fields)) {
+    return true;
+  }
+  // Core clears `sfld` and `csum` before comparing and ignores the incoming
+  // mtime, which is synchronized to the stored timestamp before this check.
+  return false;
+}
+
+bool _sameStrings(List<String> left, List<String> right) {
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }

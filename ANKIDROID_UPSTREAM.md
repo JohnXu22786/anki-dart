@@ -4675,3 +4675,41 @@ as platform-neutral reasons. The pinned source inputs are listed in
 `apps/anki/ANKIDROID_SOURCE.sha256`. The Dart adaptation is AGPL-3.0-or-later;
 no upstream implementation or resources are copied, and root `COPYING` remains
 unchanged.
+
+## Core-compatible existing-note update operation (Unit 34)
+
+`CollectionSqliteStorage.updateExistingNote()` is the shared collection edit
+operation for existing notes. It ports Core's `Collection.update_note()`
+no-op comparison, stale-mtime replacement, `prepare_for_update()` and configured
+NFC behavior, tag canonification, sync metadata, normal-template and cloze
+card generation, existing-card preservation, per-notetype last deck, template
+target deck, default-deck fallback, due-position allocation, and `col.mod`
+update. Note, generated cards, tag rows, `nextPos`, and collection metadata are
+committed together under a savepoint. Sync/import callers retain the raw
+`addOrUpdateNote()` operation.
+
+The pinned Core inputs are `rslib/src/notes/mod.rs`,
+`rslib/src/notetype/cardgen.rs`, `rslib/src/notes/undo.rs`,
+`rslib/src/tags/register.rs`, `rslib/src/tags/undo.rs`,
+`rslib/src/config/notetype.rs`,
+`rslib/src/collection/transact.rs`, `rslib/src/collection/timestamps.rs`, and
+`rslib/src/storage/collection_timestamps.rs`, and
+`rslib/src/storage/notetype/existing_cards.sql` at
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`; their SHA-256 digests are checked
+by `packages/anki_collection_sqlite/tool/check_package.py` and recorded in its
+`SOURCE.sha256`. The random due helper has Core fixture coverage for positions
+5, 500, and 5001. The AnkiDroid editor call site is pinned in
+`apps/anki/ANKIDROID_SOURCE.sha256` at
+`d9bf072f814a0c37d30a694192593b31ff2df875`.
+
+The operation returns a reversible snapshot containing the old note, prior
+collection modification timestamp, and newly registered tag names, matching
+Core's `UndoableNoteChange::Updated`, `UndoableCollectionChange::Modified`,
+and `UndoableTagChange::Added` payloads.
+The collection package still has no generic undo/redo journal or replay API;
+Unit33's editor must remain on its existing path until that result is wired into
+application-level undo/redo. Focused source-derived cases live in
+`packages/anki_collection_sqlite/test/existing_note_update_test.dart` and
+`core_random_position_test.dart`. Dart changes remain AGPL-3.0-or-later; no
+upstream source file or UI resource is copied, and root `COPYING` remains
+unchanged.

@@ -9,6 +9,15 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASHES = {
+    "rslib/src/notes/mod.rs": "5df79b58906206a87c5a28a06f886227df74e6a65d061d2cb915d35b34d35893",
+    "rslib/src/notetype/cardgen.rs": "291408ba325c6573203abb3770f245a0307186b7a5a1c54d0eddeb763b5b0634",
+    "rslib/src/notes/undo.rs": "2e3d4f5a74b6fef4b92922f7b9f18e69896bb60ff2860bcc5f6b224108ff802a",
+    "rslib/src/tags/register.rs": "f1e3ff446b1f950d748c508eb0d93247c02e77274b0392bff4fa3c2fd53a943d",
+    "rslib/src/tags/undo.rs": "7efcc570c49e2846f5eb530a14dd874abe6d7a9cea506ac6e7d50592d4668531",
+    "rslib/src/config/notetype.rs": "fdfa2b331756b0b5ba20251a9c99addd668a5baad1d35c0183c1a0647d48b29b",
+    "rslib/src/collection/transact.rs": "116b662bac90073ef04e40f43ff60e1546c0a5b6b0219466430aba1a31ae8be0",
+    "rslib/src/collection/timestamps.rs": "daa5072f5e201b77038cdd574e7283fbea9f621f7f5c97d836796bb11807b9ac",
+    "rslib/src/storage/collection_timestamps.rs": "1652457f868e36766c281f848b70bd619eeed31e32ccf8b3972083a4ff70de38",
     "rslib/src/decks/tree.rs": "0ab80ff9af9ebe7e9c06e6901e358f526ea938c2c315189c9528267c8c510b93",
     "rslib/src/decks/limits.rs": "d8de3c382f4f4e130699dd18bbc46b6a93664fc97ef8d45448479b4fb165af27",
     "rslib/src/decks/counts.rs": "6f2072a10af7c063eb98ebccca40395ee58ffd287d74061ab381645c4d36a01d",
@@ -29,6 +38,7 @@ SOURCE_HASHES = {
     "rslib/src/storage/notetype/get_notetype.sql": "70bf01ceb8ff3001e75420b637d803e8acf6992200c29f2719f6976b10907f34",
     "rslib/src/storage/notetype/get_fields.sql": "473fcf61c0d32ab4e8d96294a20248e05cd7c13c1bb39aaa731b2cd16c129765",
     "rslib/src/storage/notetype/get_templates.sql": "ab91efa1af4740d8689e616413b08a10d3b5993601924cf5f9d832b03d79041e",
+    "rslib/src/storage/notetype/existing_cards.sql": "16e4249a55c1480480fdd04df830a45e5c02d673613702b81b2d585209a41ddb",
     "rslib/src/text.rs": "2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762",
     "rslib/src/cloze.rs": "478a35d1248be262ed2d0941202ac8f201c7eb0a5c57b7198d3ace03898fd1c5",
     "rslib/src/storage/card/data.rs": "aacbb588af4cf902eeb54d15cecc37a35b410441d67839f48929fea9fd515a89",

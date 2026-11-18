@@ -32,8 +32,8 @@ class Note {
   NoteId id;
   final String guid;
   final Int64 notetypeId;
-  final Int64 mtimeSecs;
-  final int usn;
+  Int64 mtimeSecs;
+  int usn;
   final List<String> tags;
   final List<String> _fields;
   String? _sortField;
@@ -89,6 +89,13 @@ class Note {
   void _markDirty() {
     _sortField = null;
     _checksum = null;
+  }
+
+  /// Mark an existing note modified with the collection's sync sequence and
+  /// current timestamp, matching Anki Core's `Note::set_modified()`.
+  void markModified(int usn, {required int mtimeSecs}) {
+    this.usn = usn.toSigned(32);
+    this.mtimeSecs = Int64(mtimeSecs);
   }
 
   /// Prepare fields and cached values before saving, matching Anki Core's

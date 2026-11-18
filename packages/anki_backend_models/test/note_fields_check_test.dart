@@ -45,6 +45,36 @@ void main() {
     });
   });
 
+  group('clozeNumbersInFields', () {
+    test('includes nested comma-separated nonzero ordinals', () {
+      expect(
+        clozeNumbersInFields(['{{c1,3::outer {{c2::inner}}}}', '{{c0::zero}}']),
+        {1, 2, 3},
+      );
+    });
+
+    test('ignores unclosed clozes and nesting beyond the source limit', () {
+      var deeplyNested = '';
+      for (var ordinal = 1; ordinal <= 11; ordinal++) {
+        deeplyNested += '{{c$ordinal::';
+      }
+      deeplyNested += 'deep${'}}' * 11}';
+      expect(clozeNumbersInFields(['{{c12::unfinished']), isEmpty);
+      expect(clozeNumbersInFields([deeplyNested]),
+          {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+    });
+
+    test('ignores nested clozes under an unclosed outer cloze', () {
+      expect(
+        clozeNumbersInFields([
+          '{{c12::outer {{c1::inner}}',
+          '{{c0::outer {{c1::inner}}',
+        ]),
+        isEmpty,
+      );
+    });
+  });
+
   group('Notetype.clozeFields', () {
     test('reads cloze-filtered references from first question format only', () {
       final type = notetype(

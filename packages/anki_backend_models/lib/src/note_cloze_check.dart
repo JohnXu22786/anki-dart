@@ -59,6 +59,54 @@ bool containsCloze(String text) {
   return found;
 }
 
+/// Return the ordinal numbers from closed clozes in [fields], matching Core's
+/// `cloze_number_in_fields()` tokenizer. Comma-separated ordinals and nested
+/// clozes are included; nesting deeper than ten levels is ignored.
+Set<int> clozeNumbersInFields(Iterable<String> fields) {
+  final found = <int>{};
+  for (final field in fields) {
+    final stack = <Set<int>>[];
+    var index = 0;
+    while (index < field.length) {
+      if (field.startsWith('{{c', index)) {
+        var end = index + 3;
+        while (end < field.length &&
+            (_isAsciiDigit(field.codeUnitAt(end)) || field[end] == ',')) {
+          end++;
+        }
+        final ordinals = field
+            .substring(index + 3, end)
+            .split(',')
+            .map(int.tryParse)
+            .whereType<int>()
+            .where((ordinal) => ordinal >= 0 && ordinal <= 0xffff)
+            .toSet();
+        if (ordinals.isNotEmpty && field.startsWith('::', end)) {
+          if (stack.length < 10) {
+            stack.add(ordinals);
+          }
+          index = end + 2;
+          continue;
+        }
+      }
+      if (field.startsWith('}}', index)) {
+        if (stack.isNotEmpty) {
+          final ordinals = stack.removeLast();
+          if (stack.isEmpty) {
+            found.addAll(ordinals.where((ordinal) => ordinal != 0));
+          } else {
+            stack.last.addAll(ordinals);
+          }
+        }
+        index += 2;
+      } else {
+        index++;
+      }
+    }
+  }
+  return found;
+}
+
 bool _isAsciiDigit(int rune) => rune >= 0x30 && rune <= 0x39;
 
 class _ClozeFrame {

@@ -48,6 +48,10 @@ SOURCE_HASHES = {
     "rslib/src/template.rs": "59e5d111308ffd61a818704ffda53922e3600ed435e4b220ce32adbecdf460e3",
     "proto/anki/stats.proto": "5b22c0aa2133b68eefc93964299668732941ee3688140cd98430b033ee567ea4",
     "proto/anki/notes.proto": "cbd4cb07075d51d7854c94bccf0b00a47f5b7f5b8ac5be1246f7ddcf003799f6",
+    "rslib/src/scheduler/states/review.rs": "57ed79be2d29e6185ecf7c0444e3f21929ce5b86b1e8d5b60aacf90c9fdb494d",
+    "rslib/src/scheduler/states/fuzz.rs": "30a33e2e522ebcb56ca434a897f66209fcb4284065115ee031def73097343105",
+    "rslib/src/scheduler/states/mod.rs": "f4247b73f39403a1f8eb423d52bec91bf3e7f6a005f1b93767a24a0a0ee8f7a9",
+    "rslib/src/scheduler/states/steps.rs": "3baf0c2c125599998929dfb292e91d07202458977d67f906a27b632776eaf4fa",
 }
 THIRD_PARTY_HASHES = {
     "htmlescape-0.3.1.crate": "e9025058dae765dee5070ec375f591e2ba14638c63feff74f13805a72e523163",

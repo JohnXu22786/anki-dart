@@ -10,6 +10,15 @@ void main() {
   if (card.id.toInt() + note.id.toInt() != 3) {
     throw StateError('model package JS smoke compilation failed');
   }
+  final reviewStates = ReviewCardState(
+    scheduledDays: 10,
+    elapsedDays: 14,
+  ).nextStates(const ReviewSchedulingContext());
+  if (reviewStates.hard.review.scheduledDays != 12 ||
+      reviewStates.good.review.scheduledDays != 30 ||
+      reviewStates.easy.review.scheduledDays != 46) {
+    throw StateError('review-state calculation differs on JavaScript');
+  }
   if (fieldChecksum('test') != 2840236005) {
     throw StateError('unsigned SHA-1 checksum differs on JavaScript');
   }

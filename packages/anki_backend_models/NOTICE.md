@@ -60,6 +60,18 @@ source order and returns a set of names, omitting values with no matching field.
 
 The `Tag` value model follows `rslib/src/tags/mod.rs` at the pinned Anki Core commit; its SHA-256 is recorded in `SOURCE.sha256`.
 
+`ReviewCardState.nextStates()` ports the review-state transition and interval
+calculation from `rslib/src/scheduler/states/review.rs`, including the review
+fuzz rules from `states/fuzz.rs` and the `LearningSteps` failure-delay inputs
+from `states/steps.rs`. It accepts scheduler configuration, deterministic fuzz,
+and FSRS-provided next intervals/memory as inputs; FSRS calculation, review
+queue construction, persistence and answer execution remain host-owned. The
+adaptation follows Anki Core commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`; exact source hashes are recorded in
+`SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and contributors and is
+licensed under AGPL-3.0-or-later. This package and the adaptation retain the
+same license; root `COPYING` is unchanged.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

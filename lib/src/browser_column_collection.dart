@@ -32,13 +32,35 @@ enum BrowserColumnType { text, numeric, date, unspecified }
 ///
 /// The data type may depend on [BrowserColumnMode]. Labels, samples, sort types,
 /// and backend row values stay with the host.
+enum BrowserColumnSortUnavailableReason {
+  renderedTemplate,
+  cardsModeOnly,
+  unsupported,
+}
+
 enum BrowserColumn {
-  question('question', BrowserColumnType.text),
-  answer('answer', BrowserColumnType.text),
+  question(
+    'question',
+    BrowserColumnType.text,
+    sortingCards: false,
+    sortingNotes: false,
+    unavailableReason: BrowserColumnSortUnavailableReason.renderedTemplate,
+  ),
+  answer(
+    'answer',
+    BrowserColumnType.text,
+    sortingCards: false,
+    sortingNotes: false,
+    unavailableReason: BrowserColumnSortUnavailableReason.renderedTemplate,
+  ),
   sortField('noteFld', BrowserColumnType.text),
   deck('deck', BrowserColumnType.text),
   tags('noteTags', BrowserColumnType.text),
-  cardType('template', BrowserColumnType.text, BrowserColumnType.numeric),
+  cardType(
+    'template',
+    BrowserColumnType.text,
+    notesType: BrowserColumnType.numeric,
+  ),
   due('cardDue', BrowserColumnType.unspecified),
   ease('cardEase', BrowserColumnType.numeric),
   changed('cardMod', BrowserColumnType.date),
@@ -48,17 +70,44 @@ enum BrowserColumn {
   lapses('cardLapses', BrowserColumnType.numeric),
   noteType('note', BrowserColumnType.text),
   reviews('cardReps', BrowserColumnType.numeric),
-  fsrsDifficulty('difficulty', BrowserColumnType.numeric),
-  fsrsRetrievability('retrievability', BrowserColumnType.numeric),
-  fsrsStability('stability', BrowserColumnType.numeric),
+  fsrsDifficulty(
+    'difficulty',
+    BrowserColumnType.numeric,
+    sortingNotes: false,
+    unavailableReason: BrowserColumnSortUnavailableReason.cardsModeOnly,
+  ),
+  fsrsRetrievability(
+    'retrievability',
+    BrowserColumnType.numeric,
+    sortingNotes: false,
+    unavailableReason: BrowserColumnSortUnavailableReason.cardsModeOnly,
+  ),
+  fsrsStability(
+    'stability',
+    BrowserColumnType.numeric,
+    sortingNotes: false,
+    unavailableReason: BrowserColumnSortUnavailableReason.cardsModeOnly,
+  ),
   originalPosition('originalPosition', BrowserColumnType.numeric);
 
-  const BrowserColumn(this.key, this.cardsType, [BrowserColumnType? notesType])
-    : notesType = notesType ?? cardsType;
+  const BrowserColumn(
+    this.key,
+    this.cardsType, {
+    BrowserColumnType? notesType,
+    this.sortingCards = true,
+    this.sortingNotes = true,
+    this.unavailableReason,
+  }) : notesType = notesType ?? cardsType;
 
   final String key;
   final BrowserColumnType cardsType;
   final BrowserColumnType notesType;
+  final bool sortingCards;
+  final bool sortingNotes;
+  final BrowserColumnSortUnavailableReason? unavailableReason;
+
+  bool canSort(BrowserColumnMode mode) =>
+      mode == BrowserColumnMode.cards ? sortingCards : sortingNotes;
 
   /// Returns the data type displayed for [mode], matching AnkiDroid's mapping.
   BrowserColumnType typeFor(BrowserColumnMode mode) =>

@@ -607,9 +607,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('browser-sort-menu')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Sort cards: Question'));
+    await tester.tap(find.text('Tags').last);
     await tester.pumpAndSettle();
-    expect(controller.sortedColumns, [BrowserColumn.question]);
+    expect(controller.sortedColumns, [BrowserColumn.tags]);
 
     await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
     await tester.pumpAndSettle();
@@ -625,7 +625,7 @@ void main() {
     controller.sortCompleter = Completer<CardBrowserSnapshot>();
     await tester.tap(find.byKey(const ValueKey('browser-sort-menu')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Sort cards: Question'));
+    await tester.tap(find.text('Tags').last);
     await tester.pump();
     controller.searchResult = CardBrowserSnapshot(
       columns: _sample().columns,
@@ -650,6 +650,45 @@ void main() {
     expect(controller.bulkActions, hasLength(1));
     expect(controller.bulkActions.single.$1, CardBrowserBulkAction.suspend);
     expect(controller.bulkActions.single.$2, [const BrowserRowId(41)]);
+  });
+
+  testWidgets(
+    'sort menu labels hidden columns and stays available when empty',
+    (tester) async {
+      final controller = _Controller(
+        CardBrowserSnapshot(columns: const [], rows: const []),
+      );
+      await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('browser-sort-menu')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('browser-sort-menu')));
+      await tester.pumpAndSettle();
+      expect(find.text('Sort field'), findsOneWidget);
+      expect(find.text('Question'), findsOneWidget);
+      await tester.tap(find.text('Sort field'));
+      await tester.pumpAndSettle();
+      expect(controller.sortedColumns, [BrowserColumn.sortField]);
+    },
+  );
+
+  testWidgets('sort menu preserves caller-projected active labels', (
+    tester,
+  ) async {
+    final controller = _Controller(
+      CardBrowserSnapshot(
+        columns: const [
+          CardBrowserColumn(type: BrowserColumn.tags, label: 'Custom tags'),
+        ],
+        rows: const [],
+      ),
+    );
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-sort-menu')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Custom tags'), findsOneWidget);
   });
 
   testWidgets('bulk delete refreshes rows and clears successful selection', (

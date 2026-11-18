@@ -4633,3 +4633,21 @@ remain host-specific. The filter-history preference key is a stable shared
 Flutter key rather than a copied Android resource. The Dart implementation is
 GPL-3.0-or-later; no upstream code or resources are copied, and root
 `COPYING` remains unchanged.
+
+## Card Browser mode-aware sort choices (Unit 26)
+
+`BrowserSortOption` in `lib/src/browser_sort_options.dart` models the source
+sort chooser's active, other-sortable, and unavailable groups in the pinned
+`CardBrowserColumn` order. It preserves active-column order, caller-projected
+labels, the selected reverse direction, and type-specific direction
+explanations. Sortability in both Cards and Notes modes is centralized on
+`BrowserColumn` and gates both persisted preference resolution and application
+of a new sort in `CollectionCardBrowserController`; the mapping matches the
+actual supported branches of `packages/anki_search_sql`'s card and note sort
+compiler. Unknown and mode-incompatible persisted keys resolve to no ordering
+instead of reaching the compiler and throwing. The source's unavailable
+categories (rendered Question/Answer and Cards-only FSRS sort data) are exposed
+as platform-neutral reasons. The pinned source inputs are listed in
+`apps/anki/ANKIDROID_SOURCE.sha256`. The Dart adaptation is AGPL-3.0-or-later;
+no upstream implementation or resources are copied, and root `COPYING` remains
+unchanged.

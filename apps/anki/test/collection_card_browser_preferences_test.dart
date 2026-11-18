@@ -562,7 +562,7 @@ void main() {
   });
 
   test(
-    'sort config reloads and is saved before unsupported search fails',
+    'sort config reloads and rejects unsupported sort choices before saving',
     () async {
       final first = CollectionCardBrowserController(
         runtime,
@@ -586,9 +586,64 @@ void main() {
         ),
         throwsUnsupportedError,
       );
-      expect(runtime.storage!.readCollectionConfig('sortType'), 'garbage');
+      expect(runtime.storage!.readCollectionConfig('sortType'), 'deck');
       expect(runtime.storage!.readCollectionConfig('sortBackwards'), isTrue);
       expect(await preferences.getBool('anki.browser.noSorting'), isFalse);
+    },
+  );
+
+  test(
+    'mode-incompatible persisted sort falls back without compiling it',
+    () async {
+      await runtime.storage!.writeCollectionConfig(
+        'browserTableShowNotesMode',
+        true,
+      );
+      await runtime.storage!.writeCollectionConfig(
+        'noteSortType',
+        'difficulty',
+      );
+      await runtime.storage!.writeCollectionConfig(
+        'browserNoteSortBackwards',
+        true,
+      );
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+
+      final snapshot = await controller.load();
+      expect(snapshot.sortType, isA<BrowserSortNoOrdering>());
+      await expectLater(
+        controller.updateSort(
+          const BrowserSortCollectionOrdering(key: 'question', reverse: false),
+        ),
+        throwsUnsupportedError,
+      );
+    },
+  );
+
+  test(
+    'advertised timing-based sorts compile in their supported modes',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await controller.load();
+      await controller.updateSort(
+        const BrowserSortCollectionOrdering(key: 'cardDue', reverse: false),
+      );
+      await controller.updateSort(
+        const BrowserSortCollectionOrdering(
+          key: 'retrievability',
+          reverse: false,
+        ),
+      );
+      await controller.updateMode(BrowserColumnMode.notes);
+      await controller.updateSort(
+        const BrowserSortCollectionOrdering(key: 'cardDue', reverse: false),
+      );
     },
   );
 

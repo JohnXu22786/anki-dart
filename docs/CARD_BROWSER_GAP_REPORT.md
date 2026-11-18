@@ -92,8 +92,12 @@ platform adapters provide storage and presentation.
 
 - Match Android's exact themed row colors and test row metadata in each native
   runtime. The Flutter app currently uses platform-neutral color tints.
-- Implement context-sensitive Card Browser sorting not represented by current
-  sort contracts, plus Note Editor navigation, preview, and bulk operations.
+- The shared Card Browser now offers mode-aware sorting choices, including
+  hidden sortable columns and unavailable columns, with persisted-key and
+  compiler availability validation. Android's sectioned sheet presentation,
+  explanatory subtitles, and localized unavailability text remain follow-up
+  UI work.
+- Implement Note Editor navigation, preview, and bulk operations.
 - Implement Note Editor navigation, preview, and bulk operations. Render the
   canonical source search string for structured history rows.
 - Migrate and track unresolved upstream Card Browser TODO coverage.

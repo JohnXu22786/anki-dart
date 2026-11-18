@@ -1140,6 +1140,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No sorting'**
   String get browserSortNoOrdering;
+
+  /// No description provided for @browserSortActiveSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Active columns'**
+  String get browserSortActiveSection;
+
+  /// No description provided for @browserSortOtherSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Other sortable columns'**
+  String get browserSortOtherSection;
+
+  /// No description provided for @browserSortUnavailableSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get browserSortUnavailableSection;
+
+  /// No description provided for @browserSortUseField.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Sort Field instead'**
+  String get browserSortUseField;
+
+  /// No description provided for @browserSortCardsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Available in Cards mode only'**
+  String get browserSortCardsOnly;
+
+  /// No description provided for @browserSortTextAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'A to Z'**
+  String get browserSortTextAscending;
+
+  /// No description provided for @browserSortTextDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Z to A'**
+  String get browserSortTextDescending;
+
+  /// No description provided for @browserSortNumericAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Low to high'**
+  String get browserSortNumericAscending;
+
+  /// No description provided for @browserSortNumericDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'High to low'**
+  String get browserSortNumericDescending;
+
+  /// No description provided for @browserSortDateAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get browserSortDateAscending;
+
+  /// No description provided for @browserSortDateDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get browserSortDateDescending;
 }
 
 class _AppLocalizationsDelegate

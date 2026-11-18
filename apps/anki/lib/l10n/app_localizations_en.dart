@@ -571,4 +571,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserSortNoOrdering => 'No sorting';
+
+  @override
+  String get browserSortActiveSection => 'Active columns';
+
+  @override
+  String get browserSortOtherSection => 'Other sortable columns';
+
+  @override
+  String get browserSortUnavailableSection => 'Unavailable';
+
+  @override
+  String get browserSortUseField => 'Use Sort Field instead';
+
+  @override
+  String get browserSortCardsOnly => 'Available in Cards mode only';
+
+  @override
+  String get browserSortTextAscending => 'A to Z';
+
+  @override
+  String get browserSortTextDescending => 'Z to A';
+
+  @override
+  String get browserSortNumericAscending => 'Low to high';
+
+  @override
+  String get browserSortNumericDescending => 'High to low';
+
+  @override
+  String get browserSortDateAscending => 'Oldest first';
+
+  @override
+  String get browserSortDateDescending => 'Newest first';
 }

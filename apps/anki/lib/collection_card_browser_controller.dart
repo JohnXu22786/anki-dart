@@ -106,8 +106,8 @@ final class CollectionCardBrowserController
         ),
       },
       configKeys: _sortKeysFor(_mode),
-      availableColumnKeys: SearchSqlSortColumn.values
-          .where((column) => column != SearchSqlSortColumn.custom)
+      availableColumnKeys: BrowserColumn.values
+          .where((column) => column.canSort(_mode))
           .map((column) => column.key),
     );
   }
@@ -327,6 +327,10 @@ final class CollectionCardBrowserController
 
   @override
   Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType) async {
+    if (sortType case BrowserSortCollectionOrdering(:final key)
+        when !browserSortKeyAvailable(key, _mode)) {
+      throw UnsupportedError('Card Browser sorting by "$key" is unavailable.');
+    }
     final plan = buildBrowserSortSavePlan(
       sortType: sortType,
       configKeys: _sortKeysFor(_mode),
@@ -352,6 +356,7 @@ final class CollectionCardBrowserController
     final sortType = _sortType;
     final storage = _storage;
     final timing = storage.timingTodayForNow();
+    final learnAheadSecs = storage.readCollectionConfig('collapseTime');
     final selectedDeckId = storage.currentDeckId;
     final decks = storage.decks.getAllDecksInNameOrder();
     final deckIdsWithChildren = <BigInt, List<BigInt>>{
@@ -371,6 +376,12 @@ final class CollectionCardBrowserController
       resultType: mode == BrowserColumnMode.cards
           ? SearchResultType.cards
           : SearchResultType.notes,
+      timing: SearchSqlTiming(
+        daysElapsed: timing.daysElapsed,
+        now: BigInt.from(timing.now),
+        learnAheadSecs: learnAheadSecs is int ? learnAheadSecs : 1200,
+        nextDayAt: BigInt.from(timing.nextDayAt),
+      ),
       deckIdsWithChildren: deckIdsWithChildren,
       sortOrder: sortOrder,
     );
@@ -638,6 +649,9 @@ final class CollectionCardBrowserController
       };
 
   SearchSqlSortOrder _sortOrder(String key, bool reverse) {
+    if (!browserSortKeyAvailable(key, _mode)) {
+      throw UnsupportedError('Card Browser sorting by "$key" is unavailable.');
+    }
     final column = SearchSqlSortColumn.values.where(
       (value) => value.key == key,
     );

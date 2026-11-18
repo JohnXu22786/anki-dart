@@ -90,14 +90,27 @@ platform adapters provide storage and presentation.
 - Source pins and adaptation boundaries are recorded in
   `ANKIDROID_UPSTREAM.md` and `apps/anki/ANKIDROID_SOURCE.sha256`.
 
+## Unit 26 — mode-aware sort choices
+
+- The sort chooser groups active sortable columns in active-column order, then
+  hidden sortable and unavailable columns in source order. Choices use the
+  current Cards or Notes mode and include selected-direction explanations and
+  source-specific unavailable reasons. Labels preserve host projections for
+  active columns and use localized column names for hidden columns.
+- Sort validation shares the mode availability mapping with the collection
+  controller and SearchSql compiler. Invalid persisted sort keys fall back to
+  no ordering, unsupported selections are rejected before saving, and
+  timing-based sorts receive collection timing.
+- The source mapping is pinned in `apps/anki/ANKIDROID_SOURCE.sha256`; behavior
+  and license boundaries are recorded in `ANKIDROID_UPSTREAM.md`.
+
 ## Remaining migration work
 
 - Match Android's exact themed row colors and test row metadata in each native
   runtime. The Flutter app currently uses platform-neutral color tints.
-- Implement context-sensitive Card Browser sorting not represented by current
-  sort contracts, plus Note Editor navigation, preview, and bulk operations.
-- Implement Note Editor navigation, preview, and bulk operations. Wire the
-  canonical source search string into structured history row presentation.
+- Note Editor navigation, preview, and bulk actions remain unimplemented.
+- Structured filter-only history rows still use stored IDs in summaries; wire
+  the canonical source search string into row presentation.
 - Migrate and track unresolved upstream Card Browser TODO coverage.
 - Verify each platform's storage and presentation adapters in its native
   runtime; the shared Flutter implementation has no platform-specific browser

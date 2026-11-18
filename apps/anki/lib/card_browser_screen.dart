@@ -1009,7 +1009,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             onPressed: _showSavedSearches,
             icon: const Icon(Icons.bookmarks_outlined),
           ),
-          if (snapshot != null && snapshot.columns.isNotEmpty)
+          if (snapshot != null)
             PopupMenuButton<BrowserColumn>(
               key: const ValueKey('browser-column-options-menu'),
               tooltip: 'Column options',
@@ -1020,34 +1020,75 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
               ],
               onSelected: _openColumnOptions,
             ),
-          if (snapshot != null && snapshot.columns.isNotEmpty)
+          if (snapshot != null)
             PopupMenuButton<BrowserSortType>(
               key: const ValueKey('browser-sort-menu'),
               tooltip: s.browserSort,
               icon: const Icon(Icons.sort),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: const BrowserSortNoOrdering(),
-                  child: Text(s.browserSortNoOrdering),
-                ),
-                for (final column in snapshot.columns)
+              itemBuilder: (context) {
+                final options = buildBrowserSortOptions(
+                  mode: snapshot.mode,
+                  activeColumns: snapshot.columns.map((column) => column.type),
+                  labels: {
+                    for (final column in BrowserColumn.values)
+                      column: _browserColumnSortLabel(s, column, snapshot.mode),
+                    for (final column in snapshot.columns)
+                      column.type: column.label,
+                  },
+                  selectedSort: snapshot.sortType,
+                );
+                final entries = <PopupMenuEntry<BrowserSortType>>[
                   PopupMenuItem(
-                    value: BrowserSortCollectionOrdering(
-                      key: column.type.key,
-                      reverse:
-                          snapshot.sortType is BrowserSortCollectionOrdering &&
-                              (snapshot.sortType
-                                          as BrowserSortCollectionOrdering)
-                                      .key ==
-                                  column.type.key
-                          ? !(snapshot.sortType
-                                    as BrowserSortCollectionOrdering)
-                                .reverse
-                          : false,
-                    ),
-                    child: Text('${s.browserSort}: ${column.label}'),
+                    value: const BrowserSortNoOrdering(),
+                    child: Text(s.browserSortNoOrdering),
                   ),
-              ],
+                ];
+                BrowserSortOptionSection? previousSection;
+                for (final option in options) {
+                  if (previousSection != option.section) {
+                    entries.add(
+                      PopupMenuItem<BrowserSortType>(
+                        enabled: false,
+                        child: Text(switch (option.section) {
+                          BrowserSortOptionSection.active =>
+                            s.browserSortActiveSection,
+                          BrowserSortOptionSection.other =>
+                            s.browserSortOtherSection,
+                          BrowserSortOptionSection.unavailable =>
+                            s.browserSortUnavailableSection,
+                        }),
+                      ),
+                    );
+                    previousSection = option.section;
+                  }
+                  entries.add(
+                    PopupMenuItem(
+                      value: BrowserSortCollectionOrdering(
+                        key: option.column.key,
+                        reverse:
+                            snapshot.sortType
+                                    is BrowserSortCollectionOrdering &&
+                                (snapshot.sortType
+                                            as BrowserSortCollectionOrdering)
+                                        .key ==
+                                    option.column.key
+                            ? !(snapshot.sortType
+                                      as BrowserSortCollectionOrdering)
+                                  .reverse
+                            : false,
+                      ),
+                      enabled: option.column.canSort(snapshot.mode),
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(option.label),
+                        subtitle: Text(_sortOptionSubtitle(s, option)),
+                      ),
+                    ),
+                  );
+                }
+                return entries;
+              },
               onSelected: (sortType) => _runAction(() => _sort(sortType)),
             ),
           if (_selectedRows.isNotEmpty) ...[
@@ -1581,3 +1622,57 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
           )
           .join(', ');
 }
+
+String _sortOptionSubtitle(AppLocalizations s, BrowserSortOption option) {
+  if (!option.column.canSort(option.mode)) {
+    return switch (option.unavailableReason) {
+      BrowserColumnSortUnavailableReason.renderedTemplate =>
+        s.browserSortUseField,
+      BrowserColumnSortUnavailableReason.cardsModeOnly =>
+        s.browserSortCardsOnly,
+      BrowserColumnSortUnavailableReason.unsupported || null => '',
+    };
+  }
+  return switch (option.selectedExplanation) {
+    BrowserSortExplanation.textAscending => s.browserSortTextAscending,
+    BrowserSortExplanation.textDescending => s.browserSortTextDescending,
+    BrowserSortExplanation.numericAscending => s.browserSortNumericAscending,
+    BrowserSortExplanation.numericDescending => s.browserSortNumericDescending,
+    BrowserSortExplanation.dateAscending => s.browserSortDateAscending,
+    BrowserSortExplanation.dateDescending => s.browserSortDateDescending,
+    null => '',
+  };
+}
+
+String _browserColumnSortLabel(
+  AppLocalizations s,
+  BrowserColumn column,
+  BrowserColumnMode mode,
+) => switch (column) {
+  BrowserColumn.question => 'Question',
+  BrowserColumn.answer => 'Answer',
+  BrowserColumn.sortField => 'Sort field',
+  BrowserColumn.deck => 'Deck',
+  BrowserColumn.tags => 'Tags',
+  BrowserColumn.cardType when mode == BrowserColumnMode.notes => 'Cards',
+  BrowserColumn.cardType => 'Card type',
+  BrowserColumn.noteType => 'Note type',
+  BrowserColumn.due => s.browserColumnDue,
+  BrowserColumn.ease =>
+    mode == BrowserColumnMode.notes
+        ? s.browserColumnAverageEase
+        : s.browserColumnEase,
+  BrowserColumn.changed => s.browserColumnCardModified,
+  BrowserColumn.created => s.browserColumnCreated,
+  BrowserColumn.edited => s.browserColumnNoteModified,
+  BrowserColumn.interval =>
+    mode == BrowserColumnMode.notes
+        ? s.browserColumnAverageInterval
+        : s.browserColumnInterval,
+  BrowserColumn.lapses => s.browserColumnLapses,
+  BrowserColumn.reviews => s.browserColumnReviews,
+  BrowserColumn.fsrsDifficulty => s.browserColumnFsrsDifficulty,
+  BrowserColumn.fsrsRetrievability => s.browserColumnFsrsRetrievability,
+  BrowserColumn.fsrsStability => s.browserColumnFsrsStability,
+  BrowserColumn.originalPosition => s.browserColumnOriginalPosition,
+};

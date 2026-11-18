@@ -8,7 +8,10 @@ import 'dart:collection';
 import 'package:anki_dart/anki_dart.dart';
 import 'package:flutter/material.dart';
 
+import 'card_browser_row_colors.dart';
 import 'l10n/app_localizations.dart';
+
+export 'card_browser_row_colors.dart';
 
 /// One host-projected column in the Card Browser table.
 ///
@@ -44,21 +47,6 @@ final class CardBrowserRow {
   final BrowserRowError? error;
   final Map<String, bool> rtlCells;
   final Map<String, CardBrowserElideMode> elideModes;
-}
-
-enum CardBrowserRowColor {
-  defaultColor,
-  unknown,
-  marked,
-  suspended,
-  buried,
-  flagRed,
-  flagOrange,
-  flagGreen,
-  flagBlue,
-  flagPink,
-  flagTurquoise,
-  flagPurple,
 }
 
 enum BrowserRowError { databaseCheckRequired }
@@ -1308,8 +1296,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                       onTap: () => _activateRow(row.id),
                       onLongPress: () => _handleLongPress(row.id),
                       onSecondaryTap: () => _handleRightClick(row.id),
-                      child: Container(
-                        color: _rowBackground(row),
+                      child: Ink(
+                        color: _rowBackground(row, Theme.of(context)),
                         child: _buildWideRow(
                           leading: SizedBox(
                             width: _wideLeadingWidth,
@@ -1364,11 +1352,16 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                 ? _buildHeading(column, sortType)
                 : Text(
                     row!.cells[column.type.key] ?? '',
-                    style: row.error == null
-                        ? null
-                        : const TextStyle(
-                            decoration: TextDecoration.lineThrough,
-                          ),
+                    style: TextStyle(
+                      color: resolveCardBrowserRowForegroundColor(
+                        row.color,
+                        Theme.of(context),
+                        deleted: row.error != null,
+                      ),
+                      decoration: row.error == null
+                          ? null
+                          : TextDecoration.lineThrough,
+                    ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1548,6 +1541,11 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     itemBuilder: (context, index) {
       final row = snapshot.rows[index];
       final selected = row.error == null && _selectedRows.contains(row.id);
+      final foreground = resolveCardBrowserRowForegroundColor(
+        row.color,
+        Theme.of(context),
+        deleted: row.error != null,
+      );
       return Semantics(
         key: ValueKey('browser-row-${row.id.bigValue}'),
         container: true,
@@ -1555,7 +1553,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         selected: selected,
         label: _rowLabel(row, snapshot.columns),
         child: Card(
-          color: _rowBackground(row),
+          color: _rowBackground(row, Theme.of(context)),
+          surfaceTintColor: Colors.transparent,
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => _activateRow(row.id),
@@ -1589,18 +1588,19 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                                     column.label,
                                     style: Theme.of(context)
                                         .textTheme
-                                        .labelMedium,
+                                        .labelMedium
+                                        ?.copyWith(color: foreground),
                                   ),
                                 ),
                                 Expanded(
                                   child: Text(
                                     row.cells[column.type.key] ?? '',
-                                    style: row.error == null
-                                        ? null
-                                        : const TextStyle(
-                                            decoration:
-                                                TextDecoration.lineThrough,
-                                          ),
+                                    style: TextStyle(
+                                      color: foreground,
+                                      decoration: row.error == null
+                                          ? null
+                                          : TextDecoration.lineThrough,
+                                    ),
                                     maxLines:
                                         column.type == BrowserColumn.question ||
                                             column.type == BrowserColumn.answer
@@ -1617,7 +1617,11 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                                   visualDensity: VisualDensity.compact,
                                   onPressed: () =>
                                       _openColumnOptions(column.type),
-                                  icon: const Icon(Icons.more_vert, size: 18),
+                                  icon: Icon(
+                                    Icons.more_vert,
+                                    size: 18,
+                                    color: foreground,
+                                  ),
                                 ),
                               ],
                             ),
@@ -1640,20 +1644,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     return row.cells[columns.first.type.key] ?? row.id.bigValue.toString();
   }
 
-  Color? _rowBackground(CardBrowserRow row) => switch (row.color) {
-    CardBrowserRowColor.unknown => null,
-    CardBrowserRowColor.marked => Colors.yellow.withValues(alpha: 0.14),
-    CardBrowserRowColor.suspended => Colors.grey.withValues(alpha: 0.12),
-    CardBrowserRowColor.buried => Colors.red.withValues(alpha: 0.10),
-    CardBrowserRowColor.flagRed => Colors.red.withValues(alpha: 0.13),
-    CardBrowserRowColor.flagOrange => Colors.orange.withValues(alpha: 0.14),
-    CardBrowserRowColor.flagGreen => Colors.green.withValues(alpha: 0.14),
-    CardBrowserRowColor.flagBlue => Colors.blue.withValues(alpha: 0.13),
-    CardBrowserRowColor.flagPink => Colors.pink.withValues(alpha: 0.13),
-    CardBrowserRowColor.flagTurquoise => Colors.cyan.withValues(alpha: 0.13),
-    CardBrowserRowColor.flagPurple => Colors.purple.withValues(alpha: 0.13),
-    CardBrowserRowColor.defaultColor => null,
-  };
+  Color _rowBackground(CardBrowserRow row, ThemeData theme) =>
+      resolveCardBrowserRowColor(row.color, theme, deleted: row.error != null);
 
   String _rowLabel(CardBrowserRow row, List<CardBrowserColumn> columns) =>
       columns

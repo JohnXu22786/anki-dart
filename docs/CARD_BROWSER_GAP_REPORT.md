@@ -120,10 +120,29 @@ platform adapters provide storage and presentation.
 
 ## Remaining migration work
 
-- Match Android's exact themed row colors and test row metadata in each native
-  runtime. The Flutter app currently uses platform-neutral color tints.
+- Exercise black/e-ink palette and focused-pane rendering in a host once those
+  theme modes and pane-current state are exposed by the Flutter app.
 - Note Editor navigation, preview, and bulk actions remain unimplemented.
 - Migrate and track unresolved upstream Card Browser TODO coverage.
 - Verify each platform's storage and presentation adapters in its native
   runtime; the shared Flutter implementation has no platform-specific browser
   logic.
+
+## Unit 29 — source-matched semantic row theme colors
+
+- The shared `CardBrowserRowColor` resolver maps default/unknown, marked,
+  suspended, buried, and all seven flags to AnkiDroid 2.25.3's pinned light and
+  dark resources. Explicit black and e-ink palettes project their corresponding
+  source values for hosts that configure those modes.
+- A focused pane row takes precedence over backend color. Backend errors use
+  the theme background, remain unchecked, and retain strike-through rendering.
+  Multi-select changes selection state and checkbox only; it preserves the row
+  color. The `InkWell` continues to provide Flutter's pressed feedback.
+- Semantic row backgrounds retain the exact source values. Row text chooses
+  black or white to keep at least 4.5:1 contrast against those backgrounds.
+- The current Flutter app selects light/dark from brightness and has no black,
+  e-ink, or pane-current theme state. The shared mapping supports explicit
+  black/e-ink palette configuration and focused-row precedence, but the host
+  must provide those values to render them in an active screen.
+- Pinned source hashes, license attribution, and adaptation boundaries are in
+  `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.

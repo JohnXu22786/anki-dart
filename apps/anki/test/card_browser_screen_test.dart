@@ -14,6 +14,174 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('narrow row cards do not tint source row colors', (tester) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = _Controller(
+      CardBrowserSnapshot(
+        columns: const [
+          CardBrowserColumn(type: BrowserColumn.tags, label: 'Tags'),
+        ],
+        rows: [
+          CardBrowserRow(
+            id: const BrowserRowId(1),
+            cells: const {'noteTags': 'marked'},
+            color: CardBrowserRowColor.marked,
+          ),
+        ],
+      ),
+    );
+    await tester.pumpWidget(_app(controller, const Size(400, 800)));
+    await tester.pumpAndSettle();
+
+    final row = find.byKey(const ValueKey('browser-row-1'));
+    final card = tester.widget<Card>(
+      find.descendant(of: row, matching: find.byType(Card)),
+    );
+    expect(card.color, const Color(0xffd9b2e9));
+    expect(card.surfaceTintColor, Colors.transparent);
+  });
+
+  testWidgets(
+    'narrow row option icons use the contrast-safe color for flag rows',
+    (tester) async {
+      const size = Size(400, 800);
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      const flagColors = [
+        CardBrowserRowColor.flagRed,
+        CardBrowserRowColor.flagOrange,
+        CardBrowserRowColor.flagGreen,
+        CardBrowserRowColor.flagBlue,
+        CardBrowserRowColor.flagPink,
+        CardBrowserRowColor.flagTurquoise,
+        CardBrowserRowColor.flagPurple,
+      ];
+
+      for (final brightness in [Brightness.light, Brightness.dark]) {
+        final rows = [
+          for (var i = 0; i < flagColors.length; i++)
+            CardBrowserRow(
+              id: BrowserRowId(i + 1),
+              cells: {'noteTags': 'flag ${flagColors[i].name}'},
+              color: flagColors[i],
+            ),
+        ];
+        final theme = ThemeData(brightness: brightness);
+        await tester.pumpWidget(
+          _app(
+            _Controller(
+              CardBrowserSnapshot(
+                columns: const [
+                  CardBrowserColumn(type: BrowserColumn.tags, label: 'Tags'),
+                ],
+                rows: rows,
+              ),
+            ),
+            size,
+            theme: theme,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        for (var i = 0; i < flagColors.length; i++) {
+          final row = find.byKey(ValueKey('browser-row-${i + 1}'));
+          final options = tester.widget<IconButton>(
+            find.descendant(of: row, matching: find.byType(IconButton)),
+          );
+          final icon = options.icon as Icon;
+          expect(
+            icon.color,
+            resolveCardBrowserRowForegroundColor(
+              flagColors[i],
+              Theme.of(tester.element(row)),
+            ),
+            reason: '${flagColors[i].name} on $brightness rows',
+          );
+        }
+      }
+    },
+  );
+
+  testWidgets(
+    'row colors survive selection and errors use the theme background',
+    (tester) async {
+      final controller = _Controller(
+        CardBrowserSnapshot(
+          columns: const [
+            CardBrowserColumn(type: BrowserColumn.tags, label: 'Tags'),
+          ],
+          rows: [
+            CardBrowserRow(
+              id: const BrowserRowId(1),
+              cells: const {'noteTags': 'marked'},
+              color: CardBrowserRowColor.marked,
+            ),
+            CardBrowserRow(
+              id: const BrowserRowId(2),
+              cells: const {'noteTags': 'error'},
+              color: CardBrowserRowColor.flagRed,
+              error: BrowserRowError.databaseCheckRequired,
+            ),
+          ],
+        ),
+      );
+      await tester.pumpWidget(_app(controller, const Size(500, 800)));
+      await tester.pumpAndSettle();
+
+      final markedRow = find.byKey(const ValueKey('browser-row-1'));
+      await tester.longPress(markedRow);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widgetList<Ink>(
+              find.descendant(of: markedRow, matching: find.byType(Ink)),
+            )
+            .any(
+              (ink) =>
+                  (ink.decoration as BoxDecoration).color ==
+                  const Color(0xffd9b2e9),
+            ),
+        isTrue,
+      );
+      expect(
+        tester
+            .getSemantics(markedRow)
+            .getSemanticsData()
+            .flagsCollection
+            .isSelected,
+        Tristate.isTrue,
+      );
+
+      final errorRow = find.byKey(const ValueKey('browser-row-2'));
+      expect(
+        tester
+            .widgetList<Ink>(
+              find.descendant(of: errorRow, matching: find.byType(Ink)),
+            )
+            .any(
+              (ink) =>
+                  (ink.decoration as BoxDecoration).color ==
+                  const Color(0xffffffff),
+            ),
+        isTrue,
+      );
+      expect(
+        tester
+            .getSemantics(errorRow)
+            .getSemanticsData()
+            .flagsCollection
+            .isSelected,
+        Tristate.isFalse,
+      );
+    },
+  );
+
   testWidgets(
     'error rows show the source message and unchecked selection state',
     (tester) async {
@@ -95,7 +263,12 @@ void main() {
     await tester.pumpAndSettle();
 
     final cell = tester.widget<Text>(find.text('Default Deck'));
-    expect(cell.style, isNull);
+    expect(
+      cell.style?.color,
+      Theme.of(tester.element(find.text('Default Deck'))).colorScheme.onSurface,
+    );
+    expect(cell.style?.fontFamily, isNull);
+    expect(cell.style?.fontSize, isNull);
     expect(cell.textDirection, isNull);
     expect(cell.overflow, TextOverflow.ellipsis);
     expect(cell.maxLines, isNot(1));
@@ -874,19 +1047,21 @@ void main() {
   });
 }
 
-Widget _app(_Controller controller, Size size) => MaterialApp(
-  localizationsDelegates: const [
-    AppLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
-  supportedLocales: AppLocalizations.supportedLocales,
-  home: MediaQuery(
-    data: MediaQueryData(size: size),
-    child: CardBrowserScreen(controller: controller),
-  ),
-);
+Widget _app(_Controller controller, Size size, {ThemeData? theme}) =>
+    MaterialApp(
+      theme: theme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: MediaQuery(
+        data: MediaQueryData(size: size),
+        child: CardBrowserScreen(controller: controller),
+      ),
+    );
 
 CardBrowserSnapshot _sample() => CardBrowserSnapshot(
   columns: [

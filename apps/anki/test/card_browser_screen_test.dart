@@ -137,6 +137,31 @@ void main() {
     );
   });
 
+  testWidgets('successful sort refreshes invalidated undo availability', (
+    tester,
+  ) async {
+    final controller = _EditorController(_sample())
+      ..canUndo = true
+      ..invalidateUndoOnSort = true;
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('browser-sort-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tags').last);
+    await tester.pumpAndSettle();
+
+    expect(controller.sortedColumns, [BrowserColumn.tags]);
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsNothing,
+    );
+  });
+
   testWidgets(
     'undo failure reports an error and invalidation hides the action',
     (tester) async {
@@ -1564,6 +1589,7 @@ class _EditorController extends _Controller
   int refreshCalls = 0;
   bool canUndo = false;
   bool collectionClosed = false;
+  bool invalidateUndoOnSort = false;
   bool failUndo = false;
   bool pendingUndoActive = false;
   Completer<void>? pendingUndo;
@@ -1591,6 +1617,13 @@ class _EditorController extends _Controller
   @override
   Future<void> saveFields(Int64 noteId, List<String> fields) async {
     canUndo = true;
+  }
+
+  @override
+  Future<CardBrowserSnapshot> updateSort(BrowserSortType sortType) async {
+    final result = await super.updateSort(sortType);
+    if (invalidateUndoOnSort) canUndo = false;
+    return result;
   }
 
   @override

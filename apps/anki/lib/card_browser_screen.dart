@@ -732,6 +732,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       final snapshot = await widget.controller.updateSort(next);
       if (!mounted || generation != _requestGeneration) return;
       setState(() => _snapshot = snapshot);
+      _refreshNoteUpdateUndoStatus();
     } catch (error) {
       if (!mounted || generation != _requestGeneration) return;
       _showActionError(error);

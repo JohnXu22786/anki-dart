@@ -1470,6 +1470,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Undo note edit'**
   String get browserUndoNoteEdit;
+
+  /// No description provided for @deletingDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting deck…'**
+  String get deletingDeck;
+
+  /// No description provided for @deckDeletionResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards deleted from {deckName}: {cardsDeleted}'**
+  String deckDeletionResult(int cardsDeleted, String deckName);
+
+  /// No description provided for @deckDeletionUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'Deck deletion undone'**
+  String get deckDeletionUndone;
+
+  /// No description provided for @deckDeletionRedone.
+  ///
+  /// In en, this message translates to:
+  /// **'Deck deletion redone'**
+  String get deckDeletionRedone;
+
+  /// No description provided for @deckDeletionFlushWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage could not be synced.'**
+  String get deckDeletionFlushWarning;
+
+  /// No description provided for @undoDeckDeletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undoDeckDeletion;
+
+  /// No description provided for @redoDeckDeletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get redoDeckDeletion;
 }
 
 class _AppLocalizationsDelegate

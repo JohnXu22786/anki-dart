@@ -74,6 +74,21 @@ final class CollectionSqliteOptions {
   final FutureOr<void> Function(CommonDatabase database)? configureConnection;
 }
 
+/// Name and deleted-card count returned by a collection deck removal.
+final class DeckRemovalResult {
+  const DeckRemovalResult({
+    required this.deckName,
+    required this.cardsDeleted,
+    required this.collectionUndoGeneration,
+    this.persistenceWarning = false,
+  });
+
+  final String deckName;
+  final int cardsDeleted;
+  final int collectionUndoGeneration;
+  final bool persistenceWarning;
+}
+
 /// A concrete adapter for the source-compatible collection open sequence.
 ///
 /// This configures SQLite before schema inspection with zero busy timeout,
@@ -82,6 +97,7 @@ final class CollectionSqliteOptions {
 /// transaction statements. Core's `field_at_index`, `process_text`,
 /// `fnvhash`, card-data, FSRS, and regex extraction functions and `unicase`
 /// collation are installed on every connection; other functions are not.
+
 final class CollectionSqliteStorage
     implements CollectionOpenDatabase, CollectionSchemaMigrationDatabase {
   CollectionSqliteStorage._(this._database, this._driver, this._nowMillis);
@@ -969,6 +985,7 @@ INSERT OR REPLACE INTO cards (
     required Future<void> Function() apply,
     required Future<void> Function() undo,
     required Future<void> Function() redo,
+    void Function(int generation)? onCommitted,
   }) async {
     final operationDone = await _acquireCollectionUndoOperation();
     try {
@@ -1008,6 +1025,7 @@ INSERT OR REPLACE INTO cards (
         if (_collectionUndoSteps.length > 30) _collectionUndoSteps.removeAt(0);
       }
       _collectionUndoGeneration++;
+      onCommitted?.call(_collectionUndoGeneration);
       await _flush();
       return true;
     } finally {
@@ -1071,7 +1089,7 @@ INSERT OR REPLACE INTO cards (
         _collectionRedoSteps.add(step);
       }
       _collectionUndoGeneration++;
-      await _flush();
+      await _flushAfterCommittedUndoRedo();
     } finally {
       _releaseCollectionUndoOperation(operationDone);
     }
@@ -1121,10 +1139,289 @@ INSERT OR REPLACE INTO cards (
         _collectionUndoSteps.add(step);
       }
       _collectionUndoGeneration++;
-      await _flush();
+      await _flushAfterCommittedUndoRedo();
     } finally {
       _releaseCollectionUndoOperation(operationDone);
     }
+  }
+
+  Future<void> _flushAfterCommittedUndoRedo() async {
+    try {
+      await _flush();
+    } on Object {
+      // SQLite has already committed and history has advanced. Retry once,
+      // then leave the committed undo/redo outcome reachable to its caller.
+      try {
+        await flushPendingWrites();
+      } on Object {
+        // As with deck removal, a persistent driver failure must not make a
+        // committed collection operation look like it was rolled back.
+      }
+    }
+  }
+
+  /// Removes a deck and its descendants using Anki Core's deck removal rules.
+  ///
+  /// Cards in normal decks and notes left without cards are deleted. Cards in
+  /// filtered decks are returned to their original deck and scheduling state.
+  /// The operation is atomic and participates in the collection undo history.
+  Future<DeckRemovalResult> removeDeckAndChildren(
+    Int64 deckId, {
+    String defaultDeckName = 'Default',
+  }) async {
+    late Deck target;
+    late List<Deck> decks;
+    late int now;
+    late Int64 afterMtime;
+    late Int64 beforeMtime;
+    late bool currentDeckWasDeleted;
+    final cardsToDelete = <Card>[];
+    final cardsToReturn = <Card>[];
+    final revlogs = <RevlogEntry>[];
+    final notes = <Note>[];
+    final cardGraves = <Int64, bool>{};
+    final noteGraves = <Int64, bool>{};
+    final auxConfigRows = <Map<String, Object?>>[];
+    final decksToRemove = <Deck>[];
+    final deckGraves = <Int64, bool>{};
+    late List<Map<String, Object?>> currentDeckConfig;
+
+    var committed = false;
+    var prepared = false;
+    var persistenceWarning = false;
+    var committedUndoGeneration = 0;
+    try {
+      committed = await runUndoableCollectionOperation(
+        prepare: () async {
+          final currentTarget = _deckStorage.getDeck(deckId);
+          if (currentTarget == null) {
+            throw StateError('deck not found: $deckId');
+          }
+          target = currentTarget;
+          decks = _deckStorage.deckWithChildren(deckId);
+          now = DateTime.now().toUtc().millisecondsSinceEpoch;
+          afterMtime = Int64(now);
+          beforeMtime = collectionModifiedAt;
+          currentDeckWasDeleted = decks.any((deck) => deck.id == currentDeckId);
+          currentDeckConfig = _database.select(
+            'SELECT key, usn, mtime_secs, val FROM config WHERE key = ?',
+            ['curDeck'],
+          );
+          for (final deck in decks) {
+            decksToRemove.add(Deck.fromProto(deck.toProto()));
+            if (deck.id != Int64.ONE) {
+              deckGraves[deck.id] = hasDeckDeletionGrave(deck.id);
+            }
+            final rows = _database.select(
+              'SELECT id, nid, did, ord, cast(mod AS integer), usn, type, queue, '
+              'due, cast(ivl AS integer), factor, reps, lapses, left, odue, odid, '
+              'flags, data FROM cards WHERE did = ?',
+              [_toSqlInt64(deck.id)],
+            );
+            final deckCards = rows.map(_cardFromRow).toList(growable: false);
+            if (deck.kind is FilteredDeckKind) {
+              cardsToReturn.addAll(deckCards);
+            } else {
+              cardsToDelete.addAll(deckCards);
+              for (final card in deckCards) {
+                revlogs.addAll(_revlogStorage.getRevlogEntriesForCard(card.id));
+                cardGraves[card.id] = hasDeletionGrave(card.id, note: false);
+              }
+            }
+            final prefix = '_deck_${deck.id}_';
+            auxConfigRows.addAll(
+              _database.select(
+                'SELECT key, usn, mtime_secs, val FROM config '
+                'WHERE substr(key, 1, length(?)) = ?',
+                [prefix, prefix],
+              ),
+            );
+          }
+          final deletedNoteIds = cardsToDelete
+              .map((card) => card.noteId)
+              .toSet();
+          final cardsByNote = await cardsOfNotes(deletedNoteIds);
+          final notesById = await getNotesByIds(deletedNoteIds);
+          for (final note in notesById) {
+            final surviving = (cardsByNote[note.id] ?? const <Card>[]).any(
+              (card) => !cardsToDelete.any((deleted) => deleted.id == card.id),
+            );
+            if (!surviving) {
+              notes.add(copyNote(note));
+              noteGraves[note.id] = hasDeletionGrave(note.id, note: true);
+            }
+          }
+          prepared = true;
+          return true;
+        },
+        apply: () async {
+          for (final card in cardsToReturn) {
+            await addOrUpdateCard(_cardRestoredFromFilteredDeck(card));
+          }
+          for (final entry in revlogs) {
+            _revlogStorage.removeRevlogEntry(entry.id);
+          }
+          for (final card in cardsToDelete) {
+            await removeCard(card.id);
+            addDeletionGrave(card.id, note: false);
+          }
+          for (final note in notes) {
+            await removeNote(note.id);
+            addDeletionGrave(note.id, note: true);
+          }
+          for (final deck in decks) {
+            final prefix = '_deck_${deck.id}_';
+            _database.execute(
+              'DELETE FROM config WHERE substr(key, 1, length(?)) = ?',
+              [prefix, prefix],
+            );
+            if (deck.id == Int64.ONE) {
+              final reset = Deck(
+                id: deck.id,
+                name: defaultDeckName,
+                mtimeSecs: Int64(now ~/ 1000),
+                usn: -1,
+                common: deck.common,
+                kind: deck.kind,
+              );
+              _deckStorage.updateDeck(reset);
+            } else {
+              _deckStorage.removeDeck(deck.id);
+              addDeckDeletionGrave(deck.id);
+            }
+          }
+          if (currentDeckWasDeleted) await selectDeck(Int64.ONE);
+          _database.execute('UPDATE col SET mod = ?', [
+            _toSqlInt64(afterMtime),
+          ]);
+        },
+        undo: () async {
+          if (currentDeckConfig.isEmpty) {
+            _database.execute('DELETE FROM config WHERE key = ?', ['curDeck']);
+          } else {
+            final row = currentDeckConfig.single;
+            _database.execute(
+              'INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) '
+              'VALUES (?, ?, ?, ?)',
+              [row['key'], row['usn'], row['mtime_secs'], row['val']],
+            );
+          }
+          for (final row in auxConfigRows) {
+            _database.execute(
+              'INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) '
+              'VALUES (?, ?, ?, ?)',
+              [row['key'], row['usn'], row['mtime_secs'], row['val']],
+            );
+          }
+          for (final deck in decksToRemove) {
+            _deckStorage.addOrUpdateDeckWithExistingId(deck);
+            if (deck.id != Int64.ONE && deckGraves[deck.id] != true) {
+              removeDeckDeletionGrave(deck.id);
+            }
+          }
+          for (final card in cardsToReturn) {
+            await addOrUpdateCard(card);
+          }
+          for (final note in notes) {
+            await addOrUpdateNote(note);
+            if (noteGraves[note.id] != true) {
+              removeDeletionGrave(note.id, note: true);
+            }
+          }
+          for (final card in cardsToDelete) {
+            await addOrUpdateCard(card);
+            if (cardGraves[card.id] != true) {
+              removeDeletionGrave(card.id, note: false);
+            }
+          }
+          for (final entry in revlogs) {
+            restoreRevlogEntry(entry);
+          }
+          restoreCollectionModifiedAt(beforeMtime);
+        },
+        redo: () async {
+          for (final card in cardsToReturn) {
+            await addOrUpdateCard(_cardRestoredFromFilteredDeck(card));
+          }
+          for (final entry in revlogs) {
+            _revlogStorage.removeRevlogEntry(entry.id);
+          }
+          for (final card in cardsToDelete) {
+            await removeCard(card.id);
+            addDeletionGrave(card.id, note: false);
+          }
+          for (final note in notes) {
+            await removeNote(note.id);
+            addDeletionGrave(note.id, note: true);
+          }
+          for (final deck in decks) {
+            final prefix = '_deck_${deck.id}_';
+            _database.execute(
+              'DELETE FROM config WHERE substr(key, 1, length(?)) = ?',
+              [prefix, prefix],
+            );
+            if (deck.id == Int64.ONE) {
+              _deckStorage.updateDeck(
+                Deck(
+                  id: deck.id,
+                  name: defaultDeckName,
+                  mtimeSecs: Int64(now ~/ 1000),
+                  usn: -1,
+                  common: deck.common,
+                  kind: deck.kind,
+                ),
+              );
+            } else {
+              _deckStorage.removeDeck(deck.id);
+              addDeckDeletionGrave(deck.id);
+            }
+          }
+          if (currentDeckWasDeleted) await selectDeck(Int64.ONE);
+          restoreCollectionModifiedAt(afterMtime);
+        },
+        onCommitted: (generation) => committedUndoGeneration = generation,
+      );
+    } catch (error, stackTrace) {
+      if (!prepared) Error.throwWithStackTrace(error, stackTrace);
+      final applied =
+          decks.every(
+            (deck) => deck.id == Int64.ONE
+                ? _deckStorage.getDeck(deck.id)?.name == defaultDeckName
+                : _deckStorage.getDeck(deck.id) == null,
+          ) &&
+          cardsToDelete.every(
+            (card) => _database.select('SELECT 1 FROM cards WHERE id = ?', [
+              _toSqlInt64(card.id),
+            ]).isEmpty,
+          ) &&
+          notes.every(
+            (note) => _database.select('SELECT 1 FROM notes WHERE id = ?', [
+              _toSqlInt64(note.id),
+            ]).isEmpty,
+          ) &&
+          _readInt64(_database.select('SELECT mod FROM col').single['mod']) ==
+              afterMtime;
+      if (!applied || !_database.autocommit) {
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      // A flush can fail after SQLite commits. Retry persistence once after
+      // reconciling the collection rows; never report a rollback in that case.
+      try {
+        await flushPendingWrites();
+      } on Object {
+        persistenceWarning = true;
+      }
+      committed = true;
+    }
+    // A Web driver may fail after SQLite committed. The operation and history
+    // remain committed in that case; callers reconcile from the collection.
+    if (!committed) throw StateError('deck removal was not committed');
+    return DeckRemovalResult(
+      deckName: target.name,
+      cardsDeleted: cardsToDelete.length,
+      collectionUndoGeneration: committedUndoGeneration,
+      persistenceWarning: persistenceWarning,
+    );
   }
 
   /// Restores a review log entry with its original 64-bit ID.
@@ -1348,6 +1645,31 @@ GROUP BY did
     _database.execute('DELETE FROM graves WHERE oid = ? AND type = ?', [
       _toSqlInt64(objectId),
       note ? 1 : 0,
+    ]);
+  }
+
+  /// Records a deleted deck using Core's distinct deck-grave type.
+  void addDeckDeletionGrave(Int64 deckId) {
+    _throwIfExternalCollectionUndoOperationIsActive();
+    _invalidateOperationHistoryAfterSubstoreWrite();
+    _database.execute(
+      'INSERT OR IGNORE INTO graves (oid, type, usn) VALUES (?, 2, -1)',
+      [_toSqlInt64(deckId)],
+    );
+  }
+
+  /// Reports whether a deck deletion grave already existed.
+  bool hasDeckDeletionGrave(Int64 deckId) => _database.select(
+    'SELECT 1 FROM graves WHERE oid = ? AND type = 2',
+    [_toSqlInt64(deckId)],
+  ).isNotEmpty;
+
+  /// Removes a deck grave when a deletion is undone.
+  void removeDeckDeletionGrave(Int64 deckId) {
+    _throwIfExternalCollectionUndoOperationIsActive();
+    _invalidateOperationHistoryAfterSubstoreWrite();
+    _database.execute('DELETE FROM graves WHERE oid = ? AND type = 2', [
+      _toSqlInt64(deckId),
     ]);
   }
 
@@ -2468,6 +2790,27 @@ void _registerCoreFieldIndexFunction(CommonDatabase database) {
       final values = fields.split('\x1f');
       return index < values.length ? values[index] : '';
     },
+  );
+}
+
+Card _cardRestoredFromFilteredDeck(Card card) {
+  final queue = card.queue.value < 0
+      ? card.queue
+      : switch (card.ctype) {
+          CardType.newCard => CardQueue.newCard,
+          CardType.review => CardQueue.review,
+          CardType.learn || CardType.relearn =>
+            card.originalDue > 1000000000
+                ? CardQueue.learn
+                : CardQueue.dayLearn,
+        };
+  return Card.fromProto(
+    card.toProto()
+      ..deckId = card.originalDeckId
+      ..due = card.originalDue
+      ..queue = queue.value
+      ..originalDeckId = Int64.ZERO
+      ..originalDue = 0,
   );
 }
 

@@ -558,6 +558,115 @@ void main() {
   );
 
   test(
+    'Card Browser Add Note uses its remembered deck without selecting it',
+    () async {
+      final storage = runtime.storage!;
+      final currentDeckId = storage.currentDeckId;
+      final rememberedDeckId = Int64.parseInt('9007199254740995');
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: rememberedDeckId,
+          name: 'Remembered browser deck',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final browser = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await browser.load();
+      await browser.selectBrowserDeck(rememberedDeckId);
+
+      final draft = await browser.loadNewNote();
+
+      expect(draft.deckId, rememberedDeckId);
+      expect(storage.currentDeckId, currentDeckId);
+      expect(
+        await preferences.getString('anki.browser.lastDeckId'),
+        '9007199254740995',
+      );
+    },
+  );
+
+  test('Card Browser Add Note falls back for All Decks and unusable remembered IDs', () async {
+    final storage = runtime.storage!;
+    final currentDeckId = storage.currentDeckId;
+    final filteredDeck = storage.decks.addDeck(
+      Deck(
+        name: 'Filtered browser deck',
+        kind: FilteredDeckKind(deck_proto.Deck_Filtered()),
+      ),
+    );
+    final missingDeckId = Int64(987654321);
+    final browser = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    await browser.load();
+    final cases = <String>[
+      '-1',
+      'not-an-int64',
+      missingDeckId.toString(),
+      filteredDeck.id.toString(),
+    ];
+
+    for (final rememberedId in cases) {
+      await preferences.setString('anki.browser.lastDeckId', rememberedId);
+      final draft = await browser.loadNewNote();
+      expect(draft.deckId, currentDeckId, reason: 'rememberedId=$rememberedId');
+    }
+
+    storage.decks.removeDeck(filteredDeck.id);
+    await preferences.setString(
+      'anki.browser.lastDeckId',
+      filteredDeck.id.toString(),
+    );
+    final deletedDeckDraft = await browser.loadNewNote();
+    expect(deletedDeckDraft.deckId, currentDeckId);
+    expect(storage.currentDeckId, currentDeckId);
+  });
+
+  test(
+    'explicit Deck Picker deck takes precedence over remembered browser deck',
+    () async {
+      final storage = runtime.storage!;
+      final currentDeckId = storage.currentDeckId;
+      final browserDeckId = storage.decks
+          .addDeck(
+            Deck(
+              name: 'Browser remembered deck',
+              kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+            ),
+          )
+          .id;
+      final explicitDeckId = storage.decks
+          .addDeck(
+            Deck(
+              name: 'Explicit Deck Picker deck',
+              kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+            ),
+          )
+          .id;
+      await preferences.setString(
+        'anki.browser.lastDeckId',
+        browserDeckId.toString(),
+      );
+      final currentDeckPort = await CollectionDeckPickerRepository(runtime)
+          .createNewNotePortForCurrentDeck();
+      expect((await currentDeckPort.loadNewNote()).deckId, currentDeckId);
+
+      final draft = await CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+        selectedNewNoteDeckId: () => explicitDeckId,
+      ).loadNewNote();
+
+      expect(draft.deckId, explicitDeckId);
+      expect(storage.currentDeckId, currentDeckId);
+    },
+  );
+
+  test(
     'new-note retry flushes committed writes without adding a duplicate',
     () async {
       final storage = runtime.storage!;

@@ -123,4 +123,60 @@ void main() {
       throwsStateError,
     );
   });
+
+  test('repeated editor saves coalesce to one note-update undo', () async {
+    final storage = runtime.storage!;
+    final notetype = (await storage.getNotetypesByIds(
+      await storage.getAllNotetypeIds(),
+    )).firstWhere((type) => type.name == 'Basic');
+    final note = Note(
+      id: Int64(42),
+      guid: 'coalesced-editor-edits',
+      notetypeId: notetype.id.value,
+      fields: ['original', 'back'],
+    )..prepareForUpdate(notetype, normalizeText: false);
+    await storage.addOrUpdateNote(note);
+    await storage.addCardIfUnique(
+      Card(id: Int64(142), noteId: note.id, deckId: Int64.ONE),
+    );
+    final controller = CollectionCardBrowserController(runtime);
+
+    await controller.saveFields(note.id, ['first edit', 'back']);
+    await controller.saveFields(note.id, ['second edit', 'back']);
+    expect(controller.canUndoNoteUpdate, isTrue);
+
+    await controller.undoLastNoteUpdate();
+
+    expect((await storage.getNote(note.id))!.fields, ['original', 'back']);
+    expect(controller.canUndoNoteUpdate, isFalse);
+  });
+
+  test(
+    'external collection mutation invalidates browser undo status',
+    () async {
+      final storage = runtime.storage!;
+      final notetype = (await storage.getNotetypesByIds(
+        await storage.getAllNotetypeIds(),
+      )).firstWhere((type) => type.name == 'Basic');
+      final note = Note(
+        id: Int64(43),
+        guid: 'invalidated-editor-edit',
+        notetypeId: notetype.id.value,
+        fields: ['original', 'back'],
+      )..prepareForUpdate(notetype, normalizeText: false);
+      await storage.addOrUpdateNote(note);
+      await storage.addCardIfUnique(
+        Card(id: Int64(143), noteId: note.id, deckId: Int64.ONE),
+      );
+      final controller = CollectionCardBrowserController(runtime);
+      await controller.saveFields(note.id, ['edited', 'back']);
+      expect(controller.canUndoNoteUpdate, isTrue);
+
+      await storage.executeBatch(
+        "UPDATE notes SET sfld = 'external edit' WHERE id = 43",
+      );
+
+      expect(controller.canUndoNoteUpdate, isFalse);
+    },
+  );
 }

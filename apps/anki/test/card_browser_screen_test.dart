@@ -18,6 +18,115 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('note-update undo appears after saving and restores the edit', (
+    tester,
+  ) async {
+    final controller = _EditorController(_sample());
+    await tester.pumpWidget(_app(controller, const Size(400, 800)));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsNothing,
+    );
+    await tester.tap(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('note-field-0')),
+      'edited',
+    );
+    await tester.tap(find.byKey(const ValueKey('note-editor-save')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsOneWidget,
+    );
+    expect(find.byTooltip('Undo note edit'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-note-update-undo')));
+    await tester.pumpAndSettle();
+    expect(controller.undoCalls, 1);
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('note-update undo is disabled while replay is pending', (
+    tester,
+  ) async {
+    final controller = _EditorController(_sample())..canUndo = true;
+    controller.pendingUndo = Completer<void>();
+    await tester.pumpWidget(_app(controller, const Size(400, 800)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-note-update-undo')));
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+    );
+    await tester.pumpAndSettle();
+    final item = tester.widget<PopupMenuItem<String>>(
+      find.byKey(const ValueKey('browser-note-update-undo')),
+    );
+    expect(item.enabled, isFalse);
+    await tester.tap(find.byKey(const ValueKey('browser-note-update-undo')));
+    expect(controller.undoCalls, 1);
+
+    controller.pendingUndo!.complete();
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsNothing,
+    );
+  });
+
+  testWidgets(
+    'undo failure reports an error and invalidation hides the action',
+    (tester) async {
+      final controller = _EditorController(_sample())
+        ..canUndo = true
+        ..failUndo = true;
+      await tester.pumpWidget(_app(controller, const Size(400, 800)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('browser-note-update-undo')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('The browser action could not be completed'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('browser-note-update-undo-menu')),
+        findsOneWidget,
+      );
+
+      controller.canUndo = false;
+      await tester.enterText(
+        find.byKey(const ValueKey('browser-search')),
+        'front',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('browser-note-update-undo-menu')),
+        findsNothing,
+      );
+    },
+  );
+
   testWidgets('browser rows open the shared editor and refresh on return', (
     tester,
   ) async {
@@ -365,6 +474,28 @@ void main() {
     expect(controller.modeChanges, [BrowserColumnMode.notes]);
     expect(controller.snapshot.mode, BrowserColumnMode.notes);
     expect(controller.selectionUpdates.last, isEmpty);
+  });
+
+  testWidgets('failed mode change refreshes invalidated undo availability', (
+    tester,
+  ) async {
+    final controller = _UndoModeController(_sample());
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('browser-mode-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Notes').last);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsNothing,
+    );
   });
 
   testWidgets(
@@ -1375,12 +1506,25 @@ final class _PreviewController extends _Controller
   }
 }
 
-final class _EditorController extends _Controller
-    implements CardBrowserNoteEditorController {
+class _EditorController extends _Controller
+    implements
+        CardBrowserNoteEditorController,
+        CardBrowserNoteUpdateUndoController {
   _EditorController(super.snapshot);
 
   final resolvedRows = <BrowserRowId>[];
   int refreshCalls = 0;
+  bool canUndo = false;
+  bool failUndo = false;
+  bool pendingUndoActive = false;
+  Completer<void>? pendingUndo;
+  int undoCalls = 0;
+
+  @override
+  bool get canUndoNoteUpdate => canUndo;
+
+  @override
+  bool get noteUpdateUndoPending => pendingUndoActive;
 
   @override
   Future<Int64> resolveNoteIdForRow(BrowserRowId rowId) async {
@@ -1393,11 +1537,50 @@ final class _EditorController extends _Controller
       NoteEditorContent(labels: const ['Front'], values: const ['front']);
 
   @override
-  Future<void> saveFields(Int64 noteId, List<String> fields) async {}
+  Future<void> saveFields(Int64 noteId, List<String> fields) async {
+    canUndo = true;
+  }
 
   @override
   Future<CardBrowserSnapshot> refresh() async {
     refreshCalls++;
     return snapshot;
+  }
+
+  @override
+  Future<void> undoLastNoteUpdate() async {
+    undoCalls++;
+    pendingUndoActive = true;
+    try {
+      if (failUndo) throw StateError('replay failed');
+      await pendingUndo?.future;
+      canUndo = false;
+    } finally {
+      pendingUndoActive = false;
+    }
+  }
+}
+
+final class _UndoModeController extends _Controller
+    implements CardBrowserNoteUpdateUndoController {
+  _UndoModeController(super.snapshot);
+
+  bool canUndo = true;
+
+  @override
+  bool get canUndoNoteUpdate => canUndo;
+
+  @override
+  bool get noteUpdateUndoPending => false;
+
+  @override
+  Future<void> undoLastNoteUpdate() async {
+    canUndo = false;
+  }
+
+  @override
+  Future<CardBrowserSnapshot> updateMode(BrowserColumnMode mode) async {
+    canUndo = false;
+    throw StateError('mode update failed after collection invalidation');
   }
 }

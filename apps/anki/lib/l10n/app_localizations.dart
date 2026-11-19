@@ -1284,6 +1284,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved'**
   String get noteEditorSaved;
+
+  /// No description provided for @browserUndoNoteEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo note edit'**
+  String get browserUndoNoteEdit;
 }
 
 class _AppLocalizationsDelegate

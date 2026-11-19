@@ -647,4 +647,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noteEditorSaved => 'Saved';
+
+  @override
+  String get browserUndoNoteEdit => 'Undo note edit';
 }

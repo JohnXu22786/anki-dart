@@ -62,6 +62,7 @@ void main() {
         notetypeId: notetype.id.value,
         fields: ['original', 'back'],
       )..prepareForUpdate(notetype, normalizeText: false);
+      note.tags.add('kept');
       await storage.addOrUpdateNote(note);
       expect(
         await storage.addCardIfUnique(
@@ -85,6 +86,7 @@ void main() {
 
       final saved = await storage.getNote(noteId);
       expect(saved!.fields, ['édit', 'updated back']);
+      expect(saved.tags, ['kept']);
       expect(saved.checksum, isNotNull);
       await expectLater(
         controller.saveFields(noteId, ['wrong field count']),
@@ -121,6 +123,66 @@ void main() {
     await expectLater(
       CollectionCardBrowserController(runtime).saveFields(note.id, ['edited']),
       throwsStateError,
+    );
+  });
+
+  test('loads collection tags and saves tag-only edits with undo', () async {
+    final storage = runtime.storage!;
+    final notetype = (await storage.getNotetypesByIds(
+      await storage.getAllNotetypeIds(),
+    )).firstWhere((type) => type.name == 'Basic');
+    final note = Note(
+      id: Int64(52),
+      guid: 'tag-only-editor-update',
+      notetypeId: notetype.id.value,
+      fields: ['front', 'back'],
+    )..prepareForUpdate(notetype, normalizeText: false);
+    note.tags.addAll(['Existing']);
+    await storage.addOrUpdateNote(note);
+    storage.tags.registerTag(Tag(name: 'Known', usn: -1, expanded: true));
+    final controller = CollectionCardBrowserController(runtime);
+
+    final content = await controller.loadNote(note.id);
+    expect(content.tags, ['Existing']);
+    expect(content.availableTags, contains('Known'));
+    await controller.saveNote(note.id, note.fields, [
+      'Existing',
+      'New::Child',
+      'new::child',
+    ]);
+
+    final editedTags = (await storage.getNote(note.id))!.tags;
+    expect(editedTags, contains('Existing'));
+    expect(
+      editedTags.where((tag) => tag.toLowerCase() == 'new::child'),
+      hasLength(1),
+    );
+    expect(controller.canUndoNoteUpdate, isTrue);
+    await controller.undoLastNoteUpdate();
+    expect((await storage.getNote(note.id))!.tags, ['Existing']);
+  });
+
+  test('unchanged tags do not write and failed saves can be retried', () async {
+    final storage = runtime.storage!;
+    final notetype = (await storage.getNotetypesByIds(
+      await storage.getAllNotetypeIds(),
+    )).firstWhere((type) => type.name == 'Basic');
+    final note = Note(
+      id: Int64(53),
+      guid: 'unchanged-editor-tags',
+      notetypeId: notetype.id.value,
+      fields: ['front', 'back'],
+    )..prepareForUpdate(notetype, normalizeText: false);
+    note.tags.addAll(['a::z', 'a-b']);
+    await storage.addOrUpdateNote(note);
+    final controller = CollectionCardBrowserController(runtime);
+
+    await controller.saveNote(note.id, note.fields, ['a::z', 'a-b']);
+    expect(controller.canUndoNoteUpdate, isFalse);
+    await controller.saveFields(note.id, ['edited', 'back']);
+    expect(
+      (await storage.getNote(note.id))!.tags,
+      unorderedEquals(['a::z', 'a-b']),
     );
   });
 

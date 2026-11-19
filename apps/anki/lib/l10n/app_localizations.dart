@@ -1285,6 +1285,54 @@ abstract class AppLocalizations {
   /// **'Saved'**
   String get noteEditorSaved;
 
+  /// No description provided for @noteEditorTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get noteEditorTags;
+
+  /// No description provided for @noteEditorEditTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit tags'**
+  String get noteEditorEditTags;
+
+  /// No description provided for @noteEditorAddTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag'**
+  String get noteEditorAddTag;
+
+  /// No description provided for @noteEditorTagName.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get noteEditorTagName;
+
+  /// No description provided for @noteEditorDuplicateTag.
+  ///
+  /// In en, this message translates to:
+  /// **'This tag already exists'**
+  String get noteEditorDuplicateTag;
+
+  /// No description provided for @noteEditorEmptyTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a tag name'**
+  String get noteEditorEmptyTag;
+
+  /// No description provided for @noteEditorFilterTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter tags'**
+  String get noteEditorFilterTags;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
   /// No description provided for @browserUndoNoteEdit.
   ///
   /// In en, this message translates to:

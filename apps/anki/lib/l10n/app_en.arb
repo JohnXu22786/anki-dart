@@ -317,5 +317,13 @@
   "noteEditorSaveError": "Changes could not be saved. Try again.",
   "noteEditorSaving": "Saving…",
   "noteEditorSaved": "Saved",
+  "noteEditorTags": "Tags",
+  "noteEditorEditTags": "Edit tags",
+  "noteEditorAddTag": "Add tag",
+  "noteEditorTagName": "Tag name",
+  "noteEditorDuplicateTag": "This tag already exists",
+  "noteEditorEmptyTag": "Enter a tag name",
+  "noteEditorFilterTags": "Filter tags",
+  "done": "Done",
   "browserUndoNoteEdit": "Undo note edit"
 }

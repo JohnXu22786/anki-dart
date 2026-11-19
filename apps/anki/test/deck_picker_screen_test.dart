@@ -6,15 +6,50 @@
 import 'dart:async';
 import 'dart:ui' show Tristate;
 
-import 'package:anki_dart/deck_picker.dart';
 import 'package:anki_app/deck_picker_screen.dart';
 import 'package:anki_app/l10n/app_localizations.dart';
+import 'package:anki_app/note_editor_screen.dart';
+import 'package:anki_dart/anki_dart.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets(
+    'Deck Picker Add Card selects its deck and opens the shared editor',
+    (tester) async {
+      final editor = _FakeDeckPickerNewNotePort();
+      final repository = _DeckRepository([
+        DeckPickerDeck(
+          id: 42,
+          exactId: Int64(9007199254740995),
+          name: 'Grammar',
+        ),
+      ])..editorPort = editor;
+      await tester.pumpWidget(_app(repository));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('More actions for Grammar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add card'));
+      await tester.pumpAndSettle();
+
+      expect(repository.selected, [42]);
+      expect(repository.selectedExact, [Int64(9007199254740995)]);
+      expect(editor.loadCalls, 1);
+      expect(find.byType(NoteEditorScreen), findsOneWidget);
+      expect(find.text('Add note'), findsOneWidget);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.byType(DeckPickerScreen), findsOneWidget);
+      expect(repository.loadCalls, 2);
+      expect(repository.actions, isEmpty);
+    },
+  );
+
   testWidgets(
     'shows hierarchical names and counts and sends selected deck to study',
     (tester) async {
@@ -756,8 +791,10 @@ Widget _app(
   home: DeckPickerScreen(repository: repository, onBrowseCards: onBrowseCards),
 );
 
-final class _DeckRepository implements DeckPickerRepository {
+final class _DeckRepository
+    implements DeckPickerRepository, DeckPickerNewNotePortProvider {
   _DeckRepository(this.decks);
+  NewNoteEditorPort? editorPort;
   @override
   bool get scheduleRemindersEnabled => false;
   @override
@@ -781,6 +818,7 @@ final class _DeckRepository implements DeckPickerRepository {
       ),
   ];
   final List<DeckPickerDeck> decks;
+  int loadCalls = 0;
   bool pendingLoad = false;
   bool failLoad = false;
   bool deferSelectionState = false;
@@ -791,11 +829,23 @@ final class _DeckRepository implements DeckPickerRepository {
   final pendingSelections = <int, Completer<void>>{};
   final studied = <int>[];
   final selected = <int>[];
+  final selectedExact = <Int64>[];
   final actions = <(DeckPickerAction, int)>[];
   final filteredRequests = <FilteredDeckRequest>[];
 
   @override
+  Future<NewNoteEditorPort> selectDeckAndCreateNewNotePort(
+    DeckPickerDeck deck,
+  ) async {
+    selected.add(deck.id);
+    currentDeckId = deck.id;
+    selectedExact.add(deck.exactId ?? Int64(deck.id));
+    return editorPort!;
+  }
+
+  @override
   Future<List<DeckPickerDeck>> loadDecks() {
+    loadCalls++;
     if (pendingLoad) {
       return (_pending = Completer<List<DeckPickerDeck>>()).future;
     }
@@ -836,4 +886,39 @@ final class _DeckRepository implements DeckPickerRepository {
   @override
   Future<void> buildFilteredDeck(FilteredDeckRequest request) async =>
       filteredRequests.add(request);
+}
+
+final class _FakeDeckPickerNewNotePort implements NewNoteEditorPort {
+  int loadCalls = 0;
+
+  @override
+  Future<NewNoteEditorDraft> loadNewNote() async {
+    loadCalls++;
+    return NewNoteEditorDraft(
+      notetypeId: Int64.ONE,
+      deckId: Int64(42),
+      content: NoteEditorContent(labels: const ['Front'], values: const ['']),
+    );
+  }
+
+  @override
+  Future<NoteFieldsCheckResult> validateNewNote(
+    Int64 notetypeId,
+    List<String> fields,
+  ) async => const NoteFieldsCheckSuccess();
+
+  @override
+  Future<int> saveNewNote({
+    required NewNoteEditorDraft draft,
+    required List<String> fields,
+    required List<String> tags,
+  }) async => 1;
+
+  @override
+  Future<NoteEditorContent> loadNote(Int64 noteId) =>
+      Future.error(UnimplementedError());
+
+  @override
+  Future<void> saveNote(Int64 noteId, List<String> fields, List<String> tags) =>
+      Future.error(UnimplementedError());
 }

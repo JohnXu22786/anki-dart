@@ -1412,3 +1412,20 @@ next-note reset, deck fallback, returned card count, and browser refresh.
 Source hashes for the cited pinned AnkiDroid and libanki files are recorded in
 `apps/anki/ANKIDROID_SOURCE.sha256`; no Android source, assets, or strings were
 copied. Root `COPYING` remains byte-identical.
+
+## Deck Picker Add Card route (Unit40)
+
+The Deck Picker context-menu Add Card action now routes to the same shared
+new-note editor and Unit38 collection operation used by Card Browser. In the
+pinned source, `DeckPicker.onContextMenuOptionSelected(ADD_CARD)` calls
+`DeckPickerViewModel.addNote(deckId, setAsCurrent = true)`; the view model
+selects that deck in the collection before emitting
+`NoteEditorDestination.AddNote(deckId)` (`DeckPicker.kt:1058–1065`,
+`DeckPickerViewModel.kt:287–295`). The Flutter host performs the same
+selection before building the editor port and retains the exact `Int64` deck
+ID through the add route. On save, the editor remains open and resets for the
+next note, matching `NoteEditorFragment.onNoteAdded()` for callers that do not
+request close (`NoteEditorFragment.kt:1212–1241`). Returning to the Deck Picker
+reloads the deck tree/counts. Other context actions remain host operations;
+the global keyboard shortcut `A` is a separate migration gap. Root `COPYING`
+remains byte-identical and no Android source or resource was copied.

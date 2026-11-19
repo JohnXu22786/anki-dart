@@ -9,15 +9,34 @@ import 'package:anki_dart/anki_dart.dart' show FilteredDeckOptions;
 import 'package:fixnum/fixnum.dart';
 
 import 'collection_runtime.dart';
+import 'collection_card_browser_controller.dart';
 import 'deck_picker_screen.dart';
+import 'note_editor_screen.dart';
 
 /// Collection-backed Deck Picker projection shared by all Flutter targets.
 /// Unsupported feature routes fail visibly until their backend units are
 /// implemented; successful-looking placeholder actions are not emitted.
-final class CollectionDeckPickerRepository implements DeckPickerRepository {
+final class CollectionDeckPickerRepository
+    implements DeckPickerRepository, DeckPickerNewNotePortProvider {
   const CollectionDeckPickerRepository(this.collections);
 
   final CollectionRuntime collections;
+
+  @override
+  Future<NewNoteEditorPort> selectDeckAndCreateNewNotePort(
+    DeckPickerDeck deck,
+  ) async {
+    final storage = _storage;
+    final id = deck.exactId ?? Int64(deck.id);
+    if (storage.decks.getDeck(id) == null) {
+      throw StateError('deck not found: $id');
+    }
+    await storage.selectDeck(id);
+    return CollectionCardBrowserController(
+      collections,
+      selectedNewNoteDeckId: () => id,
+    );
+  }
 
   CollectionSqliteStorage get _storage {
     final storage = collections.storage;
@@ -55,6 +74,7 @@ final class CollectionDeckPickerRepository implements DeckPickerRepository {
     final id = node.deckId;
     return DeckPickerDeck(
       id: id.toInt(),
+      exactId: id,
       name: name,
       newCount: node.newCount,
       learningCount: node.learnCount,

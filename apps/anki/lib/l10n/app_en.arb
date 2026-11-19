@@ -342,6 +342,7 @@
   "noteEditorEmptyTag": "Enter a tag name",
   "noteEditorFilterTags": "Filter tags",
   "noteEditorDeck": "Deck",
+  "noteEditorNoteType": "Note type",
   "noteEditorChooseDeck": "Choose deck",
   "noteEditorFilterDecks": "Filter decks",
   "noteEditorDeckLoadError": "Decks could not be loaded.",

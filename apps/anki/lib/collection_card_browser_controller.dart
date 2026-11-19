@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_backend_models/anki_backend_models.dart' as models;
 import 'package:anki_backend_protocol/anki/notes.pbenum.dart' as note_proto;
+import 'package:anki_backend_protocol/anki/decks.pb.dart' as deck_proto;
 import 'package:anki_dart/anki_dart.dart';
 import 'package:anki_search_parser/anki_search_parser.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
@@ -1039,6 +1040,7 @@ final class CollectionCardBrowserController
                   left.name.toLowerCase().compareTo(right.name.toLowerCase()),
             ))
             .first;
+    final sortedTypes = _sortedNewNoteTypes(allTypes);
 
     final useCurrentDeck = storage.readCollectionConfig('addToCur') != false;
     final rememberedDeck = storage.readCollectionConfigInt64(
@@ -1070,12 +1072,119 @@ final class CollectionCardBrowserController
       deckId: selectedDeck,
       deckName: storage.decks.getDeck(selectedDeck)!.name,
       note: note,
+      noteTypes: sortedTypes,
       content: NoteEditorContent(
         labels: notetype.fields.map((field) => field.name).toList(),
         values: note.fields,
         availableTags: storage.tags.allTags().map((tag) => tag.name).toList(),
       ),
     );
+  }
+
+  @override
+  Future<NewNoteEditorDraft> changeNewNoteType({
+    required NewNoteEditorDraft draft,
+    required Int64 notetypeId,
+    required List<String> fields,
+    required List<String> tags,
+  }) async {
+    final storage = _storage;
+    if (notetypeId == draft.notetypeId) return draft;
+    final types = await storage.getNotetypesByIds([
+      models.NotetypeId(notetypeId),
+    ]);
+    if (types.isEmpty) throw StateError('Note type does not exist.');
+    final notetype = types.single;
+
+    // NoteEditorFragment.changeNoteType sets the current model and the
+    // selected collection deck's legacy mid before refreshing the draft.
+    await storage.writeCollectionConfigInt64('curModel', notetypeId);
+    final currentDeck = storage.decks.getDeck(storage.currentDeckId);
+    if (currentDeck != null) {
+      Map<String, Object?> other;
+      try {
+        final decoded = jsonDecode(utf8.decode(currentDeck.common.other));
+        other = decoded is Map
+            ? decoded.map((key, value) => MapEntry(key.toString(), value))
+            : <String, Object?>{};
+      } catch (_) {
+        other = <String, Object?>{};
+      }
+      other['mid'] = notetypeId.toString();
+      final common = deck_proto.Deck_Common.fromBuffer(
+        currentDeck.common.writeToBuffer(),
+      )..other = utf8.encode(jsonEncode(other));
+      storage.decks.updateDeck(
+        models.Deck(
+          id: currentDeck.id,
+          name: currentDeck.name,
+          mtimeSecs: currentDeck.mtimeSecs,
+          usn: currentDeck.usn,
+          common: common,
+          kind: currentDeck.kind,
+        ),
+      );
+      await storage.flushPendingWrites();
+    }
+
+    var deckId = draft.deckId;
+    if (storage.readCollectionConfig('addToCur') == false) {
+      final rememberedDeckId = storage.readCollectionConfigInt64(
+        '_nt_${notetype.id.value}_lastDeck',
+      );
+      final rememberedDeck = rememberedDeckId == null
+          ? null
+          : storage.decks.getDeck(rememberedDeckId);
+      if (rememberedDeckId != null && rememberedDeck?.configId != null) {
+        deckId = rememberedDeckId;
+      }
+    }
+
+    final note = models.Note.newNote(
+      notetype,
+      randomU64: () {
+        final random = Random.secure();
+        return (BigInt.from(random.nextInt(0x100000000)) << 32) |
+            BigInt.from(random.nextInt(0x100000000));
+      },
+    );
+    note.fieldsMut()
+      ..clear()
+      ..addAll(models.fixNoteFieldCount(fields, notetype.fields.length));
+    note.tags
+      ..clear()
+      ..addAll(tags);
+    return NewNoteEditorDraft(
+      notetypeId: notetype.id.value,
+      deckId: deckId,
+      deckName: storage.decks.getDeck(deckId)?.name ?? draft.deckName,
+      note: note,
+      noteTypes: _sortedNewNoteTypes(
+        await storage.getNotetypesByIds(await storage.getAllNotetypeIds()),
+      ),
+      content: NoteEditorContent(
+        labels: notetype.fields.map((field) => field.name).toList(),
+        values: note.fields,
+        tags: tags,
+        availableTags: storage.tags.allTags().map((tag) => tag.name).toList(),
+      ),
+    );
+  }
+
+  List<NewNoteEditorNoteType> _sortedNewNoteTypes(
+    Iterable<models.Notetype> notetypes,
+  ) {
+    final indexed = notetypes.indexed.toList();
+    indexed.sort((left, right) {
+      final comparison = left.$2.name.toLowerCase().compareTo(
+        right.$2.name.toLowerCase(),
+      );
+      return comparison == 0 ? left.$1.compareTo(right.$1) : comparison;
+    });
+    return [
+      for (final (_, notetype) in indexed)
+        NewNoteEditorNoteType(id: notetype.id.value, name: notetype.name),
+    ];
   }
 
   @override

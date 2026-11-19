@@ -207,6 +207,10 @@ final class CollectionSqliteStorage
   Future<void> writeCollectionConfig(String key, Object value) =>
       _writeConfigValue(key, jsonEncode(value));
 
+  /// Writes an integer config value without losing precision above 2^53.
+  Future<void> writeCollectionConfigInt64(String key, Int64 value) =>
+      _writeConfigValue(key, value.toString());
+
   /// Returns source-compatible Deck row operations on this collection.
   DeckStorage get decks => _deckStorage;
 

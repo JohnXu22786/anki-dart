@@ -42,6 +42,71 @@ void main() {
     );
   });
 
+  testWidgets(
+    'new-note type selection refreshes labels and values with exact ID',
+    (tester) async {
+      final port = _FakeNewNoteEditorPort();
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('note-field-0')),
+        'kept value',
+      );
+      await tester.tap(find.byKey(const Key('note-editor-tags')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('tag-select-Science::Chemistry')));
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('note-editor-select-note-type')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cloze').last);
+      await tester.pumpAndSettle();
+
+      expect(port.lastNotetypeId, Int64.parseInt('9007199254740993'));
+      expect(find.text('Text'), findsOneWidget);
+      expect(find.byKey(const Key('note-field-1')), findsNothing);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('note-field-0')))
+            .controller!
+            .text,
+        'kept value',
+      );
+      expect(
+        find.byKey(const Key('note-editor-tag-Science::Chemistry')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('failed type change restores the selected type display', (
+    tester,
+  ) async {
+    final port = _FakeNewNoteEditorPort()..failTypeChange = true;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-editor-select-note-type')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cloze').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Basic'), findsOneWidget);
+    expect(port.lastNotetypeId, Int64(12));
+    expect(find.text('Front'), findsOneWidget);
+  });
+
   testWidgets('new note deck choice keeps exact ID and draft edits', (
     tester,
   ) async {
@@ -69,6 +134,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Course::Unit'), findsOneWidget);
+    await _scrollToEditorSave(tester);
     await tester.tap(find.byKey(const Key('note-editor-save')));
     await tester.pumpAndSettle();
 
@@ -100,7 +166,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Default'), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const Key('note-editor-save')));
+    await _scrollToEditorSave(tester);
     await tester.tap(find.byKey(const Key('note-editor-save')));
     await tester.pumpAndSettle();
     expect(port.lastSavedDeckId, Int64(34));
@@ -166,6 +232,7 @@ void main() {
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     port.validation = const NoteFieldsCheckSuccess(); // NORMAL or DUPLICATE.
+    await _scrollToEditorSave(tester);
     await tester.tap(find.byKey(const Key('note-editor-save')));
     await tester.pumpAndSettle();
 
@@ -189,6 +256,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('note-field-0')), 'draft');
+    await _scrollToEditorSave(tester);
     await tester.tap(find.byKey(const Key('note-editor-save')));
     await tester.pumpAndSettle();
     expect(port.addCalls, 0);
@@ -203,6 +271,7 @@ void main() {
 
     port.validation = const NoteFieldsCheckSuccess();
     port.failAdd = true;
+    await _scrollToEditorSave(tester);
     await tester.tap(find.byKey(const Key('note-editor-save')));
     await tester.pumpAndSettle();
     expect(find.text('Changes could not be saved. Try again.'), findsOneWidget);
@@ -230,8 +299,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('note-field-0')), 'front');
+    await _scrollToEditorSave(tester);
     await tester.tap(find.byKey(const Key('note-editor-save')));
     await tester.pump();
+    await _scrollToEditorSave(tester);
     await tester.tap(find.byKey(const Key('note-editor-save')));
     expect(port.addCalls, 1);
     port.pendingAdd!.complete(2);
@@ -284,6 +355,7 @@ void main() {
         find.byKey(const Key('note-field-0')),
         'will be committed',
       );
+      await _scrollToEditorSave(tester);
       await tester.tap(find.byKey(const Key('note-editor-save')));
       await tester.pumpAndSettle();
 
@@ -323,6 +395,7 @@ void main() {
       port.failAddAfterCommit = false;
       await tester.drag(find.byType(ListView).first, const Offset(0, -140));
       await tester.pumpAndSettle();
+      await _scrollToEditorSave(tester);
       await tester.tap(find.byKey(const Key('note-editor-save')));
       await tester.pumpAndSettle();
       expect(port.addCalls, 2);
@@ -357,6 +430,8 @@ void main() {
     );
     await tester.tap(find.text('Open editor'));
     await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('note-editor-select-note-type')), findsNothing);
 
     expect(find.text('Front'), findsOneWidget);
     expect(find.text('Back'), findsOneWidget);
@@ -683,6 +758,7 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
   int loadedDrafts = 0;
   int validationCalls = 0;
   int addCalls = 0;
+  bool failTypeChange = false;
   bool failAdd = false;
   bool failDeckLoad = false;
   bool failAddAfterCommit = false;
@@ -711,10 +787,53 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
       notetypeId: lastNotetypeId!,
       deckId: lastDeckId!,
       deckName: 'Default',
+      noteTypes: [
+        NewNoteEditorNoteType(id: Int64(12), name: 'Basic'),
+        NewNoteEditorNoteType(
+          id: Int64.parseInt('9007199254740993'),
+          name: 'Cloze',
+        ),
+      ],
       note: models.Note(notetypeId: lastNotetypeId!, fields: const ['', '']),
       content: NoteEditorContent(
         labels: const ['Front', 'Back'],
         values: const ['', ''],
+        availableTags: const ['selected', 'Science::Chemistry'],
+      ),
+    );
+  }
+
+  @override
+  Future<NewNoteEditorDraft> changeNewNoteType({
+    required NewNoteEditorDraft draft,
+    required Int64 notetypeId,
+    required List<String> fields,
+    required List<String> tags,
+  }) async {
+    if (failTypeChange) throw StateError('type change failed');
+    lastNotetypeId = notetypeId;
+    final labels = notetypeId == Int64.parseInt('9007199254740993')
+        ? const ['Text']
+        : const ['Front', 'Back'];
+    final nextFields = List<String>.of(fields.take(labels.length));
+    while (nextFields.length < labels.length) {
+      nextFields.add('');
+    }
+    final note = models.Note(
+      notetypeId: notetypeId,
+      fields: nextFields,
+      tags: tags,
+    );
+    return NewNoteEditorDraft(
+      notetypeId: notetypeId,
+      deckId: draft.deckId,
+      deckName: draft.deckName,
+      note: note,
+      noteTypes: draft.noteTypes,
+      content: NoteEditorContent(
+        labels: labels,
+        values: nextFields,
+        tags: tags,
         availableTags: const ['selected', 'Science::Chemistry'],
       ),
     );
@@ -761,4 +880,17 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
   @override
   Future<void> saveNote(Int64 noteId, List<String> fields, List<String> tags) =>
       _existing.saveNote(noteId, fields, tags);
+}
+
+Future<void> _scrollToEditorSave(WidgetTester tester) async {
+  final save = find.byKey(const Key('note-editor-save'));
+  if (save.evaluate().isNotEmpty) {
+    await tester.ensureVisible(save);
+    return;
+  }
+  await tester.scrollUntilVisible(
+    save,
+    250,
+    scrollable: find.byType(Scrollable).first,
+  );
 }

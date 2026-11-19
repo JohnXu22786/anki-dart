@@ -4655,6 +4655,9 @@ the note, tags, cards, config, and collection timestamp. Its result reports
 the generated-card count and `OpChanges` flags; it does not add a second undo
 journal. `UndoableNoteChange::Added` is the Core note undo payload, while the
 generic undo stack remains outside this package operation.
+The last-deck config value remains a JSON number on disk, and later card
+generation parses its raw decimal digits directly as `Int64` so IDs above
+JavaScript's safe integer limit survive a config round trip.
 
 The selected deck is supplied by the host, which owns any default-deck
 preference. A missing or filtered selected deck falls back to the normal

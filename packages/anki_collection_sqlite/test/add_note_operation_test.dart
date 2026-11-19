@@ -120,6 +120,10 @@ void main() {
       );
       expect(storage.tags.getTag('topic')!.name, 'Topic');
       expect(_readConfig(database, '_nt_9_lastDeck'), 9007199254740995);
+      expect(
+        _readRawConfigValue(database, '_nt_9_lastDeck'),
+        '9007199254740995',
+      );
       expect(_readConfig(database, '_deck_9007199254740995_lastNotetype'), 9);
       expect(_readConfig(database, 'curModel'), 9);
       expect(_readConfig(database, 'nextPos'), 2);
@@ -152,6 +156,35 @@ void main() {
 
       expect(result.generatedCardCount, 2);
       expect(cards.map((card) => card.templateIdx), [0, 1]);
+    },
+  );
+
+  test(
+    'last-deck config preserves an ID above JavaScript safe integer',
+    () async {
+      final added = await storage.addNoteToDeck(
+        _newNote(),
+        Int64(9007199254740995),
+      );
+      database.execute('DELETE FROM cards WHERE nid = ?', [
+        BigInt.parse(added.note.id.toString()),
+      ]);
+      final edited = Note(
+        id: added.note.id,
+        guid: added.note.guid,
+        notetypeId: added.note.notetypeId,
+        tags: added.note.tags,
+        fields: ['changed front', 'back'],
+      );
+
+      await storage.updateExistingNote(edited);
+
+      expect(
+        (await storage.allCardsOfNote(
+          added.note.id,
+        )).map((card) => card.deckId),
+        everyElement(Int64(9007199254740995)),
+      );
     },
   );
 
@@ -308,6 +341,11 @@ Object? _readConfig(Database database, String key) {
   return rows.isEmpty
       ? null
       : jsonDecode(utf8.decode(rows.single['val'] as List<int>));
+}
+
+String? _readRawConfigValue(Database database, String key) {
+  final rows = database.select('SELECT val FROM config WHERE key = ?', [key]);
+  return rows.isEmpty ? null : utf8.decode(rows.single['val'] as List<int>);
 }
 
 Note _newNote({

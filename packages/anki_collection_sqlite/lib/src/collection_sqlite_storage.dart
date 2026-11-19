@@ -604,9 +604,8 @@ INSERT OR REPLACE INTO cards (
       final existingDeck = _deckStorage.getDeck(deckIds.single);
       if (existingDeck?.configId != null) return deckIds.single;
     }
-    final rawLastDeck = readCollectionConfig('_nt_${notetypeId}_lastDeck');
-    if (rawLastDeck is int) {
-      final lastDeck = Int64(rawLastDeck);
+    final lastDeck = _readConfigInt64('_nt_${notetypeId}_lastDeck');
+    if (lastDeck != null) {
       final deck = _deckStorage.getDeck(lastDeck);
       if (deck?.configId != null) return lastDeck;
     }
@@ -1132,6 +1131,23 @@ WHERE queue IN (-2, -3)
     if (rows.isEmpty) return null;
     final value = _decodeJsonValue(rows.single['val']);
     return value is int ? value : null;
+  }
+
+  /// Reads an integer JSON config value without routing it through a JS number.
+  Int64? _readConfigInt64(String key) {
+    final rows = _database.select('SELECT val FROM config WHERE key = ?', [
+      key,
+    ]);
+    if (rows.isEmpty) return null;
+    final value = utf8.decode(rows.single['val'] as List<int>).trim();
+    if (!RegExp(r'^-?(?:0|[1-9][0-9]*)$').hasMatch(value)) return null;
+    try {
+      return Int64.parseInt(value);
+    } on FormatException {
+      return null;
+    } on RangeError {
+      return null;
+    }
   }
 
   Future<void> _writeConfigValue(String key, String encodedJson) async {

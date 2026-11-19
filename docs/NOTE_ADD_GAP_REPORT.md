@@ -18,6 +18,12 @@ deck configuration failures, SQL errors, and card-generation failures
 propagate and roll back the note, generated cards, tags, `nextPos`, operation
 config, and collection mtime.
 
+The last-deck setting remains the same JSON numeric value Core stores. When a
+later card-generation path reads it, the adapter parses the stored decimal
+directly into `Int64` rather than decoding it through a JavaScript number. A
+fixture checks both the exact raw JSON digits and a subsequent lookup for a
+deck ID above `2^53`.
+
 ## Boundaries still owned by the host or follow-up work
 
 - AnkiDroid runs `fieldsCheck()` before invoking its add-note operation. This

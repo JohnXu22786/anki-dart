@@ -1113,7 +1113,7 @@ final class CollectionCardBrowserController
       other['mid'] = notetypeId.toString();
       final common = deck_proto.Deck_Common.fromBuffer(
         currentDeck.common.writeToBuffer(),
-      )..other = utf8.encode(jsonEncode(other));
+      )..other = utf8.encode(_encodeDeckOtherWithNumericMid(other, notetypeId));
       storage.decks.updateDeck(
         models.Deck(
           id: currentDeck.id,
@@ -1185,6 +1185,24 @@ final class CollectionCardBrowserController
       for (final (_, notetype) in indexed)
         NewNoteEditorNoteType(id: notetype.id.value, name: notetype.name),
     ];
+  }
+
+  String _encodeDeckOtherWithNumericMid(
+    Map<String, Object?> other,
+    Int64 notetypeId,
+  ) {
+    // `mid` is a JSON number in Anki's legacy deck representation. Encoding
+    // the Int64 through `jsonEncode` would either quote it or lose precision
+    // on JavaScript targets, so emit only this already validated integer as
+    // a raw JSON number and encode every other value normally.
+    final entries = other.entries.map((entry) {
+      final key = jsonEncode(entry.key);
+      final value = entry.key == 'mid'
+          ? notetypeId.toString()
+          : jsonEncode(entry.value);
+      return '$key:$value';
+    });
+    return '{${entries.join(',')}}';
   }
 
   @override

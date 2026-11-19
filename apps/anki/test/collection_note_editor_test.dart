@@ -901,10 +901,9 @@ UPDATE fields SET name = 'Text' WHERE ntid = ${cloze.id.value} AND ord = 0;
     expect(storage.currentDeckId, originalCurrentDeck);
     expect(storage.readCollectionConfigInt64('curModel'), cloze.id.value);
     final currentDeck = storage.decks.getDeck(originalCurrentDeck)!;
-    expect(
-      jsonDecode(utf8.decode(currentDeck.common.other))['mid'],
-      cloze.id.value.toString(),
-    );
+    final currentDeckOther = utf8.decode(currentDeck.common.other);
+    expect(currentDeckOther, contains('"mid":${cloze.id.value}'));
+    expect(jsonDecode(currentDeckOther)['mid'], cloze.id.value.toInt());
     expect(
       await controller.validateNewNote(
         switched.notetypeId,

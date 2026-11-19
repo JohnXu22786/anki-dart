@@ -10,6 +10,8 @@ import 'package:anki_backend_storage/anki_backend_storage.dart';
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as protoDeck;
 import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as protoConfig;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as protoNotetype;
+import 'package:anki_backend_protocol/anki/collection.pb.dart'
+    as protoCollection;
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:anki_scheduler_timing/anki_scheduler_timing.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
@@ -29,6 +31,7 @@ import 'unicase_collation.dart';
 import 'deck_tree.dart';
 import 'note_update.dart';
 import 'core_random_position.dart';
+import 'add_note.dart';
 
 part 'legacy_collection_migrations.dart';
 
@@ -620,19 +623,43 @@ INSERT OR REPLACE INTO cards (
     return null;
   }
 
-  int _nextGeneratedCardPosition() {
+  int _nextGeneratedCardPosition({int? modifiedAtMillis}) {
     final next = readCollectionConfig('nextPos');
     final position = next is int ? next : 0;
-    _writeConfigValueSync('nextPos', jsonEncode(position + 1));
+    _setOperationConfig(
+      'nextPos',
+      jsonEncode((position + 1) & 0xffffffff),
+      modifiedAtMillis ?? DateTime.now().millisecondsSinceEpoch,
+    );
     return position;
   }
 
-  int _dueForDeck(int position, Int64 deckId) {
-    final config = _deckConfigStorage.getDeckConfig(
-      _deckStorage.getDeck(deckId)?.configId ?? Int64.ONE,
+  bool _setOperationConfig(String key, String encodedJson, int nowMillis) {
+    final rows = _database.select('SELECT val FROM config WHERE key = ?', [
+      key,
+    ]);
+    if (rows.isNotEmpty &&
+        utf8.decode(rows.single['val'] as List<int>) == encodedJson) {
+      return false;
+    }
+    _database.execute(
+      'INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) VALUES (?, -1, ?, ?)',
+      [key, nowMillis ~/ 1000, utf8.encode(encodedJson)],
     );
+    return true;
+  }
+
+  int _dueForDeck(int position, Int64 deckId) {
+    final deck = _deckStorage.getDeck(deckId);
+    if (deck == null || deck.configId == null) {
+      throw StateError('deck does not exist or is filtered: $deckId');
+    }
+    final config = _deckConfigStorage.getDeckConfig(deck.configId!);
+    if (config == null) {
+      throw StateError('missing deck configuration: ${deck.configId}');
+    }
     final random =
-        config?.inner.newCardInsertOrder ==
+        config.inner.newCardInsertOrder ==
         protoConfig
             .DeckConfig_Config_NewCardInsertOrder
             .NEW_CARD_INSERT_ORDER_RANDOM;
@@ -644,7 +671,7 @@ INSERT OR REPLACE INTO cards (
     if (deck?.configId != null) return targetDeckId;
     final defaultDeck = _deckStorage.getDeck(Int64.ONE);
     if (defaultDeck?.configId == null) {
-      throw StateError('default deck is unavailable for generated card');
+      throw StateError('invalid default deck');
     }
     return Int64.ONE;
   }
@@ -679,6 +706,114 @@ INSERT OR REPLACE INTO cards (
   Future<void> addNote(Note note) async {
     _noteStorage.addNote(note);
     await _flushIfAutocommit();
+  }
+
+  /// Adds a new note to [deckId], generating the cards Core requires.
+  ///
+  /// The caller selects the deck (including resolving any host-side default
+  /// deck preference). The note, registered tags, cards, config updates, and
+  /// collection modification time are committed together. On failure the
+  /// savepoint is rolled back and [note] retains its original ID.
+  Future<AddNoteResult> addNoteToDeck(Note note, Int64 deckId) async {
+    if (_closing || _connectionClosed || _closed) {
+      throw StateError('collection storage is closing');
+    }
+    if (note.id != Int64.ZERO) {
+      throw StateError('note ID must be zero before it can be added');
+    }
+    final notetypes = await getNotetypesByIds([NotetypeId(note.notetypeId)]);
+    if (notetypes.isEmpty) {
+      throw StateError('missing note type: ${note.notetypeId}');
+    }
+    // Another call may have saved this same mutable Note while the lookup was
+    // pending.
+    if (note.id != Int64.ZERO) {
+      throw StateError('note ID must be zero before it can be added');
+    }
+    final notetype = notetypes.single;
+    final operationMillis =
+        _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
+    final originalId = note.id;
+    _database.execute('SAVEPOINT core_add_note');
+    late final AddNoteResult result;
+    try {
+      final addedTags = _canonifyEditedTags(note);
+      note.prepareForUpdate(notetype, normalizeText: _normalizeNoteText);
+      note.markModified(-1, mtimeSecs: operationMillis ~/ 1000);
+      _noteStorage.addNote(note);
+
+      final lastDeckConfigKey = '_nt_${note.notetypeId}_lastDeck';
+      final lastNotetypeConfigKey = '_deck_${deckId}_lastNotetype';
+      var configChanged = false;
+      var nextPositionChanged = false;
+      var generatedCardCount = 0;
+      final ordinals = _requiredCardOrdinals(note, notetype, const []);
+      if (ordinals.isNotEmpty) {
+        final nextPosition = _nextGeneratedCardPosition(
+          modifiedAtMillis: operationMillis,
+        );
+        nextPositionChanged = true;
+        for (final ordinal in ordinals) {
+          final templateTargetDeck = notetype.isCloze
+              ? Int64.ZERO
+              : notetype.templates[ordinal].config.targetDeckId;
+          final targetDeck = templateTargetDeck == Int64.ZERO
+              ? deckId
+              : templateTargetDeck;
+          final actualDeck = _deckForAdding(targetDeck);
+          final due = _dueForDeck(nextPosition, actualDeck);
+          final card = Card.newCard(
+            noteId: note.id,
+            templateIdx: ordinal,
+            deckId: actualDeck,
+            due: due,
+          );
+          _addCardSync(card);
+          generatedCardCount++;
+        }
+      }
+
+      final configMillis = operationMillis;
+      configChanged |= _setOperationConfig(
+        lastDeckConfigKey,
+        _jsonInt64(deckId),
+        configMillis,
+      );
+      configChanged |= _setOperationConfig(
+        lastNotetypeConfigKey,
+        _jsonInt64(note.notetypeId),
+        configMillis,
+      );
+      configChanged |= _setOperationConfig(
+        'curModel',
+        _jsonInt64(note.notetypeId),
+        configMillis,
+      );
+      _database.execute('UPDATE col SET mod = ?', [operationMillis]);
+      _database.execute('RELEASE core_add_note');
+      result = AddNoteResult(
+        note: note,
+        generatedCardCount: generatedCardCount,
+        changes: protoCollection.OpChanges(
+          note: true,
+          card: generatedCardCount > 0,
+          tag: addedTags.isNotEmpty,
+          config: configChanged || nextPositionChanged,
+          mtime: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      try {
+        _database.execute('ROLLBACK TO core_add_note');
+        _database.execute('RELEASE core_add_note');
+      } catch (_) {
+        // Preserve the original failure.
+      }
+      note.id = originalId;
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+    await _flushIfAutocommit();
+    return result;
   }
 
   /// Inserts [note] only when its ID is unused.
@@ -1958,6 +2093,8 @@ Int64 _readInt64(Object? value) => switch (value) {
 };
 
 BigInt _toSqlInt64(Int64 value) => BigInt.parse(value.toString());
+
+String _jsonInt64(Int64 value) => value.toString();
 
 BigInt? _asBigInt(Object? value) => switch (value) {
   int integer => BigInt.from(integer),

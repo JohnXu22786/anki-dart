@@ -91,3 +91,17 @@ mutation methods clear this scoped history; direct substore writes and enclosing
 transactions must call `discardExistingNoteUpdateUndoHistory()`. This is
 not yet a generic journal for other collection operations, and the application
 does not yet present this history through an undo/redo affordance.
+
+`CollectionSqliteStorage.addNoteToDeck()` maps Anki Core's new-note operation
+from `rslib/src/notes/mod.rs`, `rslib/src/notetype/cardgen.rs`,
+`rslib/src/notes/undo.rs`, `rslib/src/tags/register.rs`,
+`rslib/src/config/{mod.rs,notetype.rs,deck.rs}`,
+`rslib/src/collection/transact.rs`, `rslib/src/undo/changes.rs`,
+`rslib/src/card/mod.rs`, and the note/card/config storage paths at
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. AnkiDroid's caller and validation
+result boundary are `AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt`
+and `NoteFieldsCheckResult.kt` at
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The implementation uses existing
+shared model/storage helpers and copies no upstream source. It is distributed
+under AGPL-3.0-or-later; root `COPYING` remains unchanged. See
+`docs/NOTE_ADD_GAP_REPORT.md` for supported behavior and host-owned validation.

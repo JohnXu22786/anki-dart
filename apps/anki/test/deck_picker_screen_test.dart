@@ -102,6 +102,74 @@ void main() {
     expect(find.text('Redo'), findsOneWidget);
   });
 
+  testWidgets('unbury uses the exact deck ID and offers undo and redo', (
+    tester,
+  ) async {
+    final deck = DeckPickerDeck(
+      id: 8,
+      exactId: Int64.parseInt('9007199254740995'),
+      name: 'Languages::Spanish',
+      hasBuried: true,
+    );
+    final repository = _DeckRepository([deck]);
+    final unbury = Completer<DeckPickerUnburyResult>();
+    repository.pendingUnbury = unbury;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Spanish'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Unbury cards'));
+    await tester.pump();
+
+    expect(find.text('Unburying cards…'), findsOneWidget);
+    expect(repository.unburiedExact, [Int64.parseInt('9007199254740995')]);
+    unbury.complete(
+      const DeckPickerUnburyResult(
+        deckName: 'Languages::Spanish',
+        cardsUnburied: 3,
+        collectionUndoGeneration: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Cards unburied from Languages::Spanish: 3'),
+      findsOneWidget,
+    );
+    expect(find.text('Undo'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(repository.undoCalls, 1);
+    expect(find.text('Deck unbury undone'), findsOneWidget);
+    await tester.tap(find.text('Redo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Deck unbury redone'), findsOneWidget);
+    expect(find.text('Undo'), findsOneWidget);
+  });
+
+  testWidgets('unbury failure dismisses progress and reports an error', (
+    tester,
+  ) async {
+    final deck = const DeckPickerDeck(id: 9, name: 'Buried', hasBuried: true);
+    final repository = _DeckRepository([deck])..failUnbury = true;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Buried'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Unbury cards'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unburying cards…'), findsNothing);
+    expect(find.text('Deck action could not be completed'), findsOneWidget);
+    expect(repository.loadCalls, 2);
+  });
+
   testWidgets('delete error dismisses progress, reports failure and reloads', (
     tester,
   ) async {
@@ -1072,6 +1140,7 @@ final class _DeckRepository
         DeckPickerExactBrowseDeckProvider,
         DeckPickerRenameProvider,
         DeckPickerDeleteProvider,
+        DeckPickerUnburyProvider,
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
   NewNoteEditorPort? editorPort;
@@ -1103,6 +1172,7 @@ final class _DeckRepository
   bool failLoad = false;
   bool failRenameAfterUpdate = false;
   bool failDelete = false;
+  bool failUnbury = false;
   bool deferSelectionState = false;
   final failingSelections = <int>{};
   Completer<void>? pendingSelection;
@@ -1117,7 +1187,9 @@ final class _DeckRepository
   final renamedNames = <String>[];
   final filteredRequests = <FilteredDeckRequest>[];
   Completer<DeckPickerDeletionResult>? pendingDelete;
+  Completer<DeckPickerUnburyResult>? pendingUnbury;
   final deletedExact = <Int64>[];
+  final unburiedExact = <Int64>[];
   DeckPickerDeck? _deletedDeck;
   @override
   bool canUndoCollectionOperation = false;
@@ -1218,6 +1290,25 @@ final class _DeckRepository
             persistenceWarning: result.persistenceWarning,
           )
         : result;
+  }
+
+  @override
+  Future<DeckPickerUnburyResult> unburyDeck(DeckPickerDeck deck) async {
+    unburiedExact.add(deck.exactId ?? Int64(deck.id));
+    if (failUnbury) throw StateError('unbury failed');
+    final result =
+        await (pendingUnbury?.future ??
+            Future.value(
+              DeckPickerUnburyResult(
+                deckName: deck.name,
+                cardsUnburied: 1,
+                collectionUndoGeneration: collectionUndoGeneration + 1,
+              ),
+            ));
+    canUndoCollectionOperation = true;
+    canRedoCollectionOperation = false;
+    collectionUndoGeneration++;
+    return result;
   }
 
   @override

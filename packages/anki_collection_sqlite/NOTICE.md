@@ -65,6 +65,12 @@ in `rslib/src/decks/remove.rs`, `rslib/src/decks/undo.rs`, and
 `SOURCE.sha256` and validated by `tool/check_package.py`. The shared adapter
 does not copy Core source.
 
+`unburyDeck()` follows `rslib/src/scheduler/bury_and_suspend.rs` and restores
+learning queues using `rslib/src/scheduler/filtered/card.rs`. It keeps the
+selected deck and descendant scope, Core's buried-queue filter, card type/due
+queue mapping, and undoable collection transaction. These source hashes are
+validated by the same package checker; no upstream implementation is copied.
+
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently
 licensed `sqlite3` package (MIT). See this package's `LICENSE` file for the

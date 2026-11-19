@@ -25,6 +25,7 @@ final class CollectionDeckPickerRepository
         DeckPickerExactBrowseDeckProvider,
         DeckPickerRenameProvider,
         DeckPickerDeleteProvider,
+        DeckPickerUnburyProvider,
         DeckPickerCollectionUndoProvider {
   const CollectionDeckPickerRepository(this.collections);
 
@@ -167,6 +168,17 @@ final class CollectionDeckPickerRepository
     return DeckPickerDeletionResult(
       deckName: result.deckName,
       cardsDeleted: result.cardsDeleted,
+      collectionUndoGeneration: result.collectionUndoGeneration,
+      persistenceWarning: result.persistenceWarning,
+    );
+  }
+
+  @override
+  Future<DeckPickerUnburyResult> unburyDeck(DeckPickerDeck deck) async {
+    final result = await _storage.unburyDeck(deck.exactId ?? Int64(deck.id));
+    return DeckPickerUnburyResult(
+      deckName: result.deckName,
+      cardsUnburied: result.cardsUnburied,
       collectionUndoGeneration: result.collectionUndoGeneration,
       persistenceWarning: result.persistenceWarning,
     );

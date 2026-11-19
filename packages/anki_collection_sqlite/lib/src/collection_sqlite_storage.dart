@@ -89,6 +89,21 @@ final class DeckRemovalResult {
   final bool persistenceWarning;
 }
 
+/// Number of cards restored by a collection-backed deck unbury operation.
+final class DeckUnburyResult {
+  const DeckUnburyResult({
+    required this.deckName,
+    required this.cardsUnburied,
+    required this.collectionUndoGeneration,
+    this.persistenceWarning = false,
+  });
+
+  final String deckName;
+  final int cardsUnburied;
+  final int collectionUndoGeneration;
+  final bool persistenceWarning;
+}
+
 /// A concrete adapter for the source-compatible collection open sequence.
 ///
 /// This configures SQLite before schema inspection with zero busy timeout,
@@ -1423,6 +1438,127 @@ INSERT OR REPLACE INTO cards (
     return DeckRemovalResult(
       deckName: target.name,
       cardsDeleted: cardsToDelete.length,
+      collectionUndoGeneration: committedUndoGeneration,
+      persistenceWarning: persistenceWarning,
+    );
+  }
+
+  /// Unburies buried cards in [deckId] and all of its child decks.
+  ///
+  /// Queue restoration follows Core's card-type/due rule and does not touch
+  /// suspended or otherwise active cards. The snapshots are retained as one
+  /// undoable collection operation. A post-commit flush failure is reconciled
+  /// as a committed result, like deck removal.
+  Future<DeckUnburyResult> unburyDeck(Int64 deckId) async {
+    final target = _deckStorage.getDeck(deckId);
+    if (target == null) throw StateError('deck not found: $deckId');
+
+    var deckIds = <Int64>[];
+    var cardsBefore = <Card>[];
+    var cardsAfter = <Card>[];
+    var beforeMtime = Int64.ZERO;
+    var afterMtime = Int64.ZERO;
+    var committedUndoGeneration = collectionUndoGeneration;
+    var persistenceWarning = false;
+    var prepared = false;
+
+    bool rowsMatchAfter() {
+      for (final expected in cardsAfter) {
+        final rows = _database.select(
+          'SELECT id, nid, did, ord, cast(mod AS integer), usn, type, queue, '
+          'due, cast(ivl AS integer), factor, reps, lapses, left, odue, odid, '
+          'flags, data FROM cards WHERE id = ?',
+          [_toSqlInt64(expected.id)],
+        );
+        if (rows.isEmpty || _cardFromRow(rows.single).queue != expected.queue) {
+          return false;
+        }
+      }
+      return collectionModifiedAt == afterMtime;
+    }
+
+    try {
+      final changed = await runUndoableCollectionOperation(
+        prepare: () async {
+          final current = _deckStorage.getDeck(deckId);
+          if (current == null) throw StateError('deck not found: $deckId');
+          deckIds = _deckStorage.deckIdWithChildren(current);
+          if (deckIds.isEmpty) return false;
+          final placeholders = List.filled(deckIds.length, '?').join(', ');
+          final rows = _database.select(
+            'SELECT id, nid, did, ord, cast(mod AS integer), usn, type, queue, '
+            'due, cast(ivl AS integer), factor, reps, lapses, left, odue, odid, '
+            'flags, data FROM cards WHERE did IN ($placeholders) AND queue IN (?, ?) '
+            'ORDER BY id',
+            [
+              ...deckIds.map(_toSqlInt64),
+              CardQueue.schedBuried.value,
+              CardQueue.userBuried.value,
+            ],
+          );
+          cardsBefore = rows.map(_cardFromRow).toList(growable: false);
+          if (cardsBefore.isEmpty) return false;
+          final now =
+              _nowMillis?.call() ??
+              DateTime.now().toUtc().millisecondsSinceEpoch;
+          beforeMtime = collectionModifiedAt;
+          afterMtime = Int64(now);
+          final cardMtimeSecs = Int64(now ~/ 1000);
+          cardsAfter = cardsBefore
+              .map(
+                (card) => _copyCardWithQueue(
+                  card,
+                  queue: _queueAfterUnbury(card),
+                  mtimeSecs: cardMtimeSecs,
+                  usn: -1,
+                ),
+              )
+              .toList(growable: false);
+          prepared = true;
+          return true;
+        },
+        apply: () async {
+          for (final card in cardsAfter) {
+            await updateCard(card);
+          }
+          restoreCollectionModifiedAt(afterMtime);
+        },
+        undo: () async {
+          for (final card in cardsBefore) {
+            await updateCard(card);
+          }
+          restoreCollectionModifiedAt(beforeMtime);
+        },
+        redo: () async {
+          for (final card in cardsAfter) {
+            await updateCard(card);
+          }
+          restoreCollectionModifiedAt(afterMtime);
+        },
+        onCommitted: (generation) => committedUndoGeneration = generation,
+      );
+      if (!changed) {
+        return DeckUnburyResult(
+          deckName: target.name,
+          cardsUnburied: 0,
+          collectionUndoGeneration: collectionUndoGeneration,
+        );
+      }
+    } catch (error, stackTrace) {
+      if (!prepared) Error.throwWithStackTrace(error, stackTrace);
+      if (!_database.autocommit || !rowsMatchAfter()) {
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      try {
+        await flushPendingWrites();
+      } on Object {
+        persistenceWarning = true;
+      }
+    }
+
+    return DeckUnburyResult(
+      deckName: target.name,
+      cardsUnburied: cardsAfter.length,
       collectionUndoGeneration: committedUndoGeneration,
       persistenceWarning: persistenceWarning,
     );
@@ -3403,6 +3539,44 @@ Card _copyCard(Card card) => Card(
   usn: card.usn,
   ctype: card.ctype,
   queue: card.queue,
+  due: card.due,
+  interval: card.interval,
+  easeFactorRaw: card.easeFactorRaw,
+  reps: card.reps,
+  lapses: card.lapses,
+  remainingStepsRaw: card.remainingStepsRaw,
+  originalDue: card.originalDue,
+  originalDeckId: card.originalDeckId,
+  flags: card.flags,
+  originalPosition: card.originalPosition,
+  memoryState: card.memoryState,
+  desiredRetention: card.desiredRetention,
+  decay: card.decay,
+  lastReviewTimeSecs: card.lastReviewTimeSecs,
+  customData: card.customData,
+);
+
+CardQueue _queueAfterUnbury(Card card) => switch (card.ctype) {
+  CardType.newCard => CardQueue.newCard,
+  CardType.review => CardQueue.review,
+  CardType.learn || CardType.relearn =>
+    isUnixEpochTimestamp(card.due) ? CardQueue.learn : CardQueue.dayLearn,
+};
+
+Card _copyCardWithQueue(
+  Card card, {
+  required CardQueue queue,
+  required Int64 mtimeSecs,
+  required int usn,
+}) => Card(
+  id: card.id,
+  noteId: card.noteId,
+  deckId: card.deckId,
+  templateIdx: card.templateIdx,
+  mtimeSecs: mtimeSecs,
+  usn: usn,
+  ctype: card.ctype,
+  queue: queue,
   due: card.due,
   interval: card.interval,
   easeFactorRaw: card.easeFactorRaw,

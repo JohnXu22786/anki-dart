@@ -379,5 +379,21 @@
   "deckDeletionRedone": "Deck deletion redone",
   "deckDeletionFlushWarning": "Storage could not be synced.",
   "undoDeckDeletion": "Undo",
-  "redoDeckDeletion": "Redo"
+  "redoDeckDeletion": "Redo",
+  "unburyingDeck": "Unburying cards…",
+  "deckUnburiedResult": "Cards unburied from {deckName}: {cardsUnburied}",
+  "@deckUnburiedResult": {
+    "placeholders": {
+      "cardsUnburied": {
+        "type": "int"
+      },
+      "deckName": {
+        "type": "String"
+      }
+    }
+  },
+  "deckUnburyUndone": "Deck unbury undone",
+  "deckUnburyRedone": "Deck unbury redone",
+  "undoDeckUnbury": "Undo",
+  "redoDeckUnbury": "Redo"
 }

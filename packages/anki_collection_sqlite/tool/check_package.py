@@ -35,6 +35,8 @@ SOURCE_HASHES = {
     "rslib/src/scheduler/mod.rs": "0c147a58a2de9dd4e1f1dc199d0cf89b0e3d1e690bb70182d0ca91fd7e8fc0c1",
     "rslib/src/scheduler/bury_and_suspend.rs": "6e155f0368de174f8e57ac773e8ddd3846605982b7e2b3cf0c89a69ee15dbeb9",
     "rslib/src/scheduler/filtered/card.rs": "6aca7e9b55088f43d981eaafa8a02c5de538cf3c7e1c13640e3565de6ee4fd13",
+    "rslib/src/scheduler/filtered/mod.rs": "59345ef120b5ef81f96f82796e2814ca90e5609d340c42846ad0eda362a59f79",
+    "rslib/src/scheduler/service/mod.rs": "d04e23eafc6ff287a4aa5eef5099ee6fa4012b957ffa4949b383704d3f1dd324",
     "rslib/src/config/mod.rs": "4d288b43ebfb365e083f2fcf352e6c6a87b973c0e8fea8aedcef872db8bd03eb",
     "rslib/src/decks/current.rs": "2b1f5b862986d2d34bd2e83d25ee970f4da6dc4cead2f71d9823744e88756051",
     "rslib/src/decks/remove.rs": "f73fa5eab5502799141a3676608e5bd72d4a1acbfe0a6e53da59a623b35e7713",

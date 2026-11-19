@@ -71,6 +71,16 @@ selected deck and descendant scope, Core's buried-queue filter, card type/due
 queue mapping, and undoable collection transaction. These source hashes are
 validated by the same package checker; no upstream implementation is copied.
 
+`emptyFilteredDeck()` follows Core's `empty_filtered_deck()` operation in
+`rslib/src/scheduler/filtered/mod.rs` and its service operation mapping in
+`rslib/src/scheduler/service/mod.rs`. It enumerates cards only in the exact
+filtered deck, restores home deck and original due values, restores the queue
+from card type and due only for nonnegative queues, and clears filtered-deck
+metadata. Each card update uses the collection's current modification time
+and USN. The source hashes, including the shared queue-restoration helper in
+`rslib/src/scheduler/filtered/card.rs`, are checked by `tool/check_package.py`;
+no upstream source is copied.
+
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently
 licensed `sqlite3` package (MIT). See this package's `LICENSE` file for the

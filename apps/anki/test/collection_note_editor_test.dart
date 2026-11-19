@@ -154,6 +154,39 @@ void main() {
     },
   );
 
+  test('Deck Picker empty filtered action preserves exact deck ID', () async {
+    final storage = runtime.storage!;
+    final filteredId = Int64.parseInt('9007199254740995');
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: filteredId,
+        name: 'Filtered wide ID',
+        kind: FilteredDeckKind(deck_proto.Deck_Filtered()),
+      ),
+    );
+    await storage.addOrUpdateCard(
+      Card(
+        id: Int64(777),
+        deckId: filteredId,
+        ctype: CardType.review,
+        queue: CardQueue.review,
+        due: -10,
+        originalDeckId: Int64.ONE,
+        originalDue: 25,
+      ),
+    );
+
+    final repository = CollectionDeckPickerRepository(runtime);
+    await repository.emptyFilteredDeck(
+      DeckPickerDeck(id: 42, exactId: filteredId, name: 'Filtered wide ID'),
+    );
+
+    final restored = (await storage.getCard(Int64(777)))!;
+    expect(restored.deckId, Int64.ONE);
+    expect(restored.due, 25);
+    expect(restored.originalDeckId, Int64.ZERO);
+  });
+
   test(
     'deck rename moves descendants and preserves selection and IDs',
     () async {

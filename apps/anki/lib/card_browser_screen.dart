@@ -107,6 +107,13 @@ abstract interface class CardBrowserNoteEditorController
   Future<CardBrowserSnapshot> refresh();
 }
 
+/// Note-update-only collection undo exposed on source-matched browser surfaces.
+abstract interface class CardBrowserNoteUpdateUndoController {
+  bool get canUndoNoteUpdate;
+  bool get noteUpdateUndoPending;
+  Future<void> undoLastNoteUpdate();
+}
+
 /// Optional mode capability for controllers backed by a collection browser.
 abstract interface class CardBrowserModeController {
   Future<CardBrowserSnapshot> updateMode(BrowserColumnMode mode);
@@ -193,6 +200,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   int _requestGeneration = 0;
   bool _failedDuringInitialLoad = false;
   bool _isMultiSelect = false;
+  bool _noteUpdateUndoAvailable = false;
+  bool _noteUpdateUndoPending = false;
   BrowserRowId? _lastSelectedRowId;
 
   @override
@@ -245,6 +254,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         _snapshot = snapshot;
         _loadState = _BrowserLoadState.loaded;
       });
+      _refreshNoteUpdateUndoStatus();
       await _refreshSearchHistory();
     } catch (error) {
       if (!mounted || generation != _requestGeneration) return;
@@ -252,6 +262,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         _loadState = _BrowserLoadState.failed;
         _failedDuringInitialLoad = true;
       });
+      _refreshNoteUpdateUndoStatus();
     }
   }
 
@@ -282,12 +293,14 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         _snapshot = snapshot;
         _loadState = _BrowserLoadState.loaded;
       });
+      _refreshNoteUpdateUndoStatus();
       await _refreshSearchHistory();
     } catch (error) {
       if (!mounted || generation != _requestGeneration) return;
       setState(() {
         _loadState = _BrowserLoadState.failed;
       });
+      _refreshNoteUpdateUndoStatus();
       await _refreshSearchHistory();
     }
   }
@@ -719,9 +732,11 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       final snapshot = await widget.controller.updateSort(next);
       if (!mounted || generation != _requestGeneration) return;
       setState(() => _snapshot = snapshot);
+      _refreshNoteUpdateUndoStatus();
     } catch (error) {
       if (!mounted || generation != _requestGeneration) return;
       _showActionError(error);
+      _refreshNoteUpdateUndoStatus();
     }
   }
 
@@ -978,6 +993,92 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       final snapshot = await editorController.refresh();
       if (mounted) setState(() => _snapshot = snapshot);
     });
+    _refreshNoteUpdateUndoStatus();
+  }
+
+  void _refreshNoteUpdateUndoStatus() {
+    final controller = widget.controller;
+    var available = false;
+    if (controller is CardBrowserNoteUpdateUndoController) {
+      try {
+        available = (controller as CardBrowserNoteUpdateUndoController)
+            .canUndoNoteUpdate;
+      } catch (_) {
+        available = false;
+      }
+    }
+    if (!mounted) return;
+    setState(() => _noteUpdateUndoAvailable = available);
+  }
+
+  bool get _undoActionAvailable {
+    final controller = widget.controller;
+    if (controller is! CardBrowserNoteUpdateUndoController ||
+        _noteUpdateUndoPending) {
+      return false;
+    }
+    final undoController = controller as CardBrowserNoteUpdateUndoController;
+    try {
+      return !undoController.noteUpdateUndoPending &&
+          undoController.canUndoNoteUpdate;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _undoLastNoteUpdate() async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserNoteUpdateUndoController) {
+      _refreshNoteUpdateUndoStatus();
+      return;
+    }
+    final undoController = controller as CardBrowserNoteUpdateUndoController;
+    try {
+      if (_noteUpdateUndoPending ||
+          undoController.noteUpdateUndoPending ||
+          !undoController.canUndoNoteUpdate) {
+        _refreshNoteUpdateUndoStatus();
+        return;
+      }
+    } catch (error) {
+      _showActionError(error);
+      _refreshNoteUpdateUndoStatus();
+      return;
+    }
+    setState(() => _noteUpdateUndoPending = true);
+    var undone = false;
+    try {
+      await undoController.undoLastNoteUpdate();
+      undone = true;
+    } catch (error) {
+      _showActionError(error);
+    }
+    try {
+      if (undone) {
+        final editorController = widget.controller;
+        if (editorController is CardBrowserNoteEditorController) {
+          final snapshot =
+              await (editorController as CardBrowserNoteEditorController)
+                  .refresh();
+          if (mounted) setState(() => _snapshot = snapshot);
+        }
+      }
+    } catch (error) {
+      _showActionError(error);
+    } finally {
+      if (mounted) {
+        var available = false;
+        try {
+          available = undoController.canUndoNoteUpdate;
+        } catch (_) {
+          available = false;
+        }
+        setState(() {
+          _noteUpdateUndoPending = false;
+          _noteUpdateUndoAvailable = available;
+        });
+      }
+    }
   }
 
   Future<void> _setMode(BrowserColumnMode mode) async {
@@ -1001,6 +1102,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     } catch (error) {
       if (!mounted || generation != _requestGeneration) return;
       _showActionError(error);
+      _refreshNoteUpdateUndoStatus();
     }
   }
 
@@ -1024,6 +1126,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       await action();
     } catch (error) {
       _showActionError(error);
+    } finally {
+      _refreshNoteUpdateUndoStatus();
     }
   }
 
@@ -1047,6 +1151,22 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             : BackButton(onPressed: widget.onClose),
         title: Text(s.cardBrowserTitle),
         actions: [
+          if (_noteUpdateUndoAvailable)
+            PopupMenuButton<String>(
+              key: const ValueKey('browser-note-update-undo-menu'),
+              tooltip: s.browserUndoNoteEdit,
+              icon: const Icon(Icons.more_vert),
+              onOpened: _refreshNoteUpdateUndoStatus,
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  key: const ValueKey('browser-note-update-undo'),
+                  value: 'undo',
+                  enabled: _undoActionAvailable,
+                  child: Text(s.browserUndoNoteEdit),
+                ),
+              ],
+              onSelected: (_) => _undoLastNoteUpdate(),
+            ),
           IconButton(
             key: const ValueKey('browser-manage-columns'),
             tooltip: 'Manage columns',

@@ -29,6 +29,7 @@ final class CollectionCardBrowserController
     implements
         CardBrowserController,
         CardBrowserNoteEditorController,
+        CardBrowserNoteUpdateUndoController,
         CardBrowserModeController,
         CardBrowserSearchRequestController,
         CardBrowserSearchHistoryController,
@@ -83,6 +84,7 @@ final class CollectionCardBrowserController
   String _query = '';
   BrowserSearchRequest _activeRequest = const BrowserSearchRequest(query: '');
   Future<void> _historyWriteTail = Future<void>.value();
+  bool _noteUpdateUndoPending = false;
 
   CollectionSqliteStorage get _storage {
     final storage = collections.storage;
@@ -851,6 +853,23 @@ final class CollectionCardBrowserController
       ..clear()
       ..addAll(fields);
     await storage.updateExistingNote(note);
+  }
+
+  @override
+  bool get canUndoNoteUpdate => _storage.existingNoteUpdateUndoStatus.canUndo;
+
+  @override
+  bool get noteUpdateUndoPending => _noteUpdateUndoPending;
+
+  @override
+  Future<void> undoLastNoteUpdate() async {
+    if (_noteUpdateUndoPending) return;
+    _noteUpdateUndoPending = true;
+    try {
+      await _storage.undoLastExistingNoteUpdate();
+    } finally {
+      _noteUpdateUndoPending = false;
+    }
   }
 
   @override

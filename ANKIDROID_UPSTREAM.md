@@ -4429,7 +4429,8 @@ submits query text and structured search requests through the injected
 `CardBrowserController`, and exposes loading/searching/empty/failure states.
 History restoration/management and the structured-filter editor use the optional
 controller capabilities described in the Unit 24 section. The screen also wires
-row selection, sort, preview, edit, and bulk actions through typed callbacks.
+row selection, sort, preview, edit, and bulk actions through typed callbacks,
+and exposes Unit 36's note-update-only collection undo action when available.
 Wide layouts use a heading row and dynamic columns; narrow layouts show labeled
 card rows. The controller owns history/filter persistence, query execution,
 collection IO, sort persistence, and navigation. Widget tests are in
@@ -4440,9 +4441,14 @@ The source-mapped interactions are from AnkiDroid 2.25.3 at pinned commit
 sets up the row adapter, headings, select-all control and progress indicator;
 `:1068–1092` renders dynamic heading labels and opens column options/manage
 columns; `BrowserMultiColumnAdapter.kt:78–124` creates dynamic cells and handles
-row taps and long presses; and `CardBrowserViewModel.kt:682–705` distinguishes
-single-row editing from multi-selection. Sort, preview, and bulk actions use
-typed host callbacks. `fragment_card_browser.xml:21–52` defines headings and
+row taps and long presses; `CardBrowserFragment.kt:512–515,638,741,879–882`
+sets up a collection undo item when `undoAvailable()` is true, uses
+`undoLabel()`, and dispatches its action to `onUndo()`; and
+`CardBrowserViewModel.kt:682–705` distinguishes single-row editing from
+multi-selection. Unit 36 adapts that placement and availability for the
+bounded note-update history; it does not expose generic undo or Card Browser
+redo. Sort, preview, and bulk actions use typed host callbacks.
+`fragment_card_browser.xml:21–52` defines headings and
 progress, while `item_card_browser.xml:8–44` defines selectable rows and column
 cells. This is a source-derived UI adaptation, not a port of Android lifecycle
 or resources. The Flutter code and tests are GPL-3.0-or-later. No upstream
@@ -4715,10 +4721,10 @@ when they change only note and collection-modification rows. Mutations
 through the storage's asynchronous adapter methods clear this scoped history.
 Direct writes through
 the exposed deck/config/tag stores or an enclosing transaction must call
-`discardExistingNoteUpdateUndoHistory()`. A generic collection journal covering
-unrelated operation types and the app's undo/redo affordance remain incomplete;
-Unit33's editor currently does not expose its history. Focused source-derived
-cases live in
+`discardExistingNoteUpdateUndoHistory()`. Unit 36 exposes this scoped history as
+a shared Card Browser undo action after an existing-note edit. It does not add
+editor undo/redo controls, Card Browser redo, or a generic collection journal
+for unrelated operation types. Focused source-derived cases live in
 `packages/anki_collection_sqlite/test/existing_note_update_test.dart` and
 `core_random_position_test.dart`. Dart changes remain AGPL-3.0-or-later; no
 upstream source file or UI resource is copied, and root `COPYING` remains
@@ -4746,9 +4752,11 @@ canonifies tags, marks the note locally modified (`usn = -1` with the update
 timestamp), generates missing normal/Cloze cards using the collection's Core-
 matched generation rules, and updates `col.mod`. It records up to 30
 note-update-only undo/redo steps in memory and coalesces eligible same-note
-edits within Core's 60-second window. This is not Core's generic collection
-undo journal: unrelated collection operations and a shared application undo
-surface remain follow-up work. AnkiDroid's `noteFieldsCheck()` is only called
+edits within Core's 60-second window. Unit 36 exposes note-update undo in the
+shared Card Browser collection menu, matching AnkiDroid's collection-level
+undo placement. This is not Core's generic collection undo journal: unrelated
+collection operations and editor undo/redo controls remain follow-up work.
+AnkiDroid's `noteFieldsCheck()` is only called
 on its new-note branch, so the existing-note update does not add
 empty-first-field, duplicate, or cloze checks.
 

@@ -41,6 +41,8 @@ void main() {
 
     expect(find.text('Front'), findsOneWidget);
     expect(find.text('Back'), findsOneWidget);
+    expect(find.byTooltip('Undo note edit'), findsNothing);
+    expect(find.byTooltip('Redo note edit'), findsNothing);
     expect(
       tester
           .widget<TextField>(find.byKey(const Key('note-field-0')))

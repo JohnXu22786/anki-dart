@@ -4771,3 +4771,37 @@ and `AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt` at
 `apps/anki/ANKIDROID_SOURCE.sha256`. The shared Flutter adaptation is
 AGPL-3.0-or-later; no upstream implementation or Android resource is copied,
 and root `COPYING` remains unchanged.
+
+## Existing-note tag editing (Unit 37)
+
+The shared existing-note editor loads the edited note's tags and the active
+collection's known tag names. Its accessible tag chooser supports case-
+insensitive hierarchical ordering, filtering, selecting/removing tags, and
+adding a tag. Changes remain local until the user confirms the chooser; Cancel
+discards that chooser session. Duplicate names are rejected using the editor's
+normalized identity, while `CollectionSqliteStorage.updateExistingNote()` stays
+the authority for Core-compatible NFC/whitespace cleanup, preferred stored
+case, duplicate canonicalization, tag registration and note-update undo. A
+tag-only save uses the same note update operation; an unchanged selection is a
+no-op, and a field-only save carries forward the original tags. Save failures
+leave editor values available for retry. Returning to Card Browser keeps the
+existing refresh and selection behavior.
+
+The source behavior is pinned to AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:624–850`
+initializes the existing note's selected tags and `:846–849,1700–1715` opens
+`TagsDialogFactory` with that selection;
+`AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsDialog.kt`,
+`AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsDialogViewModel.kt`,
+`AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsArrayAdapter.kt`, and
+`AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsList.kt` supply the
+collection tag tree, case-insensitive selection, filter, add, duplicate
+prevention, and confirm/cancel behavior. Save compares field and tag changes
+and calls `updateNote()` only after a real change at
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:1259–1337`.
+The single-note editor does not implement
+multi-note indeterminate selection, card-state filtering, Android resources,
+new-note tag entry, or the generic collection journal. Shared Dart UI is used
+on Android, iOS, Web, Windows, macOS, and Linux. No Kotlin source or Android
+resource is copied; existing source hashes remain unchanged.

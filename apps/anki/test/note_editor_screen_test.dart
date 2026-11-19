@@ -71,6 +71,144 @@ void main() {
     expect(find.text('Saved'), findsOneWidget);
   });
 
+  testWidgets('selects tags in a searchable dialog and saves confirmed tags', (
+    tester,
+  ) async {
+    final port = _FakeNoteEditorPort();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: NoteEditorScreen(noteId: Int64(7), port: port),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('selected'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('note-editor-tags')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('tag-filter')), 'Science');
+    expect(find.text('Science::Chemistry'), findsOneWidget);
+    expect(find.byKey(const Key('tag-select-Science')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tag-select-Science::Chemistry')));
+    await tester.pump();
+    expect(
+      tester
+          .widget<CheckboxListTile>(find.byKey(const Key('tag-select-Science')))
+          .value,
+      isNull,
+    );
+    await tester.tap(find.text('Add tag'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('new-tag-name')),
+      'science :: chemistry',
+    );
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+    expect(find.text('This tag already exists'), findsOneWidget);
+    await tester.tap(find.text('Add tag'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('new-tag-name')), 'ı');
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+    expect(find.text('This tag already exists'), findsOneWidget);
+    await tester.tap(find.text('Add tag'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('new-tag-name')), 'New::Child');
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Science::Chemistry'), findsOneWidget);
+    final selectedTagChip = tester.widget<InputChip>(
+      find.byKey(const Key('note-editor-tag-selected')),
+    );
+    selectedTagChip.onDeleted!();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('note-editor-tag-New::Child')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+    expect(port.savedTags, containsAll(['Science::Chemistry', 'New::Child']));
+    expect(port.savedTags, isNot(contains('selected')));
+  });
+
+  testWidgets('canceling tag selection and saving unchanged tags keeps them', (
+    tester,
+  ) async {
+    final port = _FakeNoteEditorPort();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: NoteEditorScreen(noteId: Int64(7), port: port),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-editor-tags')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tag-select-selected')));
+    await tester.tap(find.text('Cancel').last);
+    await tester.pumpAndSettle();
+    expect(find.text('selected'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+    expect(port.savedTags, ['selected']);
+  });
+
+  testWidgets('confirming unchanged hierarchical tags preserves their order', (
+    tester,
+  ) async {
+    final port = _FakeNoteEditorPort()..tags = ['a::z', 'a-b'];
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: NoteEditorScreen(noteId: Int64(7), port: port),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-editor-tags')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+
+    expect(port.savedTags, ['a::z', 'a-b']);
+  });
+
+  testWidgets('rejects empty and whitespace-only tag input', (tester) async {
+    final port = _FakeNoteEditorPort();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: NoteEditorScreen(noteId: Int64(7), port: port),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-editor-tags')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add tag'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('new-tag-name')), '   ');
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Enter a tag name'), findsOneWidget);
+    expect(find.text('blank'), findsNothing);
+  });
+
   testWidgets('load and save failures stay recoverable in the editor', (
     tester,
   ) async {
@@ -99,6 +237,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Changes could not be saved. Try again.'), findsOneWidget);
     expect(find.byKey(const Key('note-field-0')), findsOneWidget);
+    port.failSave = false;
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+    expect(port.savedFields, ['edited', 'back value']);
   });
 
   testWidgets('cancel closes the editor without saving', (tester) async {
@@ -184,6 +326,8 @@ final class _FakeNoteEditorPort implements NoteEditorPort {
   Completer<void>? pendingSave;
   Int64? savedNoteId;
   List<String>? savedFields;
+  List<String>? savedTags;
+  List<String> tags = ['selected'];
 
   @override
   Future<NoteEditorContent> loadNote(Int64 noteId) async {
@@ -191,14 +335,26 @@ final class _FakeNoteEditorPort implements NoteEditorPort {
     return NoteEditorContent(
       labels: const ['Front', 'Back'],
       values: const ['front value', 'back value'],
+      tags: tags,
+      availableTags: const [
+        'selected',
+        'Science::Chemistry',
+        'Science::Biology',
+        'I',
+      ],
     );
   }
 
   @override
-  Future<void> saveFields(Int64 noteId, List<String> fields) async {
+  Future<void> saveNote(
+    Int64 noteId,
+    List<String> fields,
+    List<String> tags,
+  ) async {
     if (failSave) throw StateError('write failed');
     await pendingSave?.future;
     savedNoteId = noteId;
     savedFields = fields;
+    savedTags = tags;
   }
 }

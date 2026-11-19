@@ -9,6 +9,7 @@ import 'package:anki_dart/anki_dart.dart';
 import 'package:anki_search_parser/anki_search_parser.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'browser_row_metadata.dart';
@@ -840,19 +841,36 @@ final class CollectionCardBrowserController
     return NoteEditorContent(
       labels: fields.map((field) => field.name).toList(growable: false),
       values: note.fields,
+      tags: note.tags,
+      availableTags: storage.tags.allTags().map((tag) => tag.name).toList(),
     );
   }
 
   @override
-  Future<void> saveFields(Int64 noteId, List<String> fields) async {
+  Future<void> saveNote(
+    Int64 noteId,
+    List<String> fields,
+    List<String> tags,
+  ) async {
     final storage = _storage;
     final note = await storage.getNote(noteId);
     if (note == null) throw StateError('Note does not exist.');
+    if (listEquals(note.fields, fields) && listEquals(note.tags, tags)) return;
     final noteFields = note.fieldsMut();
     noteFields
       ..clear()
       ..addAll(fields);
+    note.tags
+      ..clear()
+      ..addAll(tags);
     await storage.updateExistingNote(note);
+  }
+
+  /// Compatibility entry point for callers which edit fields only.
+  Future<void> saveFields(Int64 noteId, List<String> fields) async {
+    final note = await _storage.getNote(noteId);
+    if (note == null) throw StateError('Note does not exist.');
+    await saveNote(noteId, fields, note.tags);
   }
 
   @override

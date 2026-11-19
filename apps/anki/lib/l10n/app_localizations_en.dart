@@ -649,5 +649,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteEditorSaved => 'Saved';
 
   @override
+  String get noteEditorTags => 'Tags';
+
+  @override
+  String get noteEditorEditTags => 'Edit tags';
+
+  @override
+  String get noteEditorAddTag => 'Add tag';
+
+  @override
+  String get noteEditorTagName => 'Tag name';
+
+  @override
+  String get noteEditorDuplicateTag => 'This tag already exists';
+
+  @override
+  String get noteEditorEmptyTag => 'Enter a tag name';
+
+  @override
+  String get noteEditorFilterTags => 'Filter tags';
+
+  @override
+  String get done => 'Done';
+
+  @override
   String get browserUndoNoteEdit => 'Undo note edit';
 }

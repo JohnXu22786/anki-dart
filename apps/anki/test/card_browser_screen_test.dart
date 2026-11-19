@@ -1615,7 +1615,11 @@ class _EditorController extends _Controller
       NoteEditorContent(labels: const ['Front'], values: const ['front']);
 
   @override
-  Future<void> saveFields(Int64 noteId, List<String> fields) async {
+  Future<void> saveNote(
+    Int64 noteId,
+    List<String> fields,
+    List<String> tags,
+  ) async {
     canUndo = true;
   }
 

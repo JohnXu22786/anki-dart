@@ -165,7 +165,7 @@ platform adapters provide storage and presentation.
   accessible, localized note-update undo action from the Card Browser collection
   menu. This remains scoped to note updates and does not implement Core's
   generic collection undo journal; the Card Browser has no matching redo action.
-  New-note creation, tag editing, media, image occlusion, add-ons,
+  New-note creation, media, image occlusion, add-ons,
   note-type and template editing, preview, bulk actions, and Android-only
   editor affordances remain follow-up work.
 - Source pins, hashes, attribution, and adaptation boundaries are recorded in
@@ -186,6 +186,34 @@ platform adapters provide storage and presentation.
   Linux.
 - The source mapping and license boundary are recorded in
   `ANKIDROID_UPSTREAM.md`.
+
+## Unit 37 — existing-note tag editing
+
+- The shared existing-note editor loads the note's selected tags and known
+  tags from the active collection. The localized, accessible chooser supports
+  case-insensitive hierarchical ordering, search/filter, select/remove, and
+  adding tags; confirming applies its selection and cancel leaves editor state
+  unchanged. Normalized duplicates are rejected in the chooser, and the
+  collection update remains responsible for Core-compatible tag cleanup,
+  canonicalization, registration and history.
+- Field and tag changes save together through
+  `CollectionSqliteStorage.updateExistingNote()`. Tag-only changes participate
+  in Unit 35 undo, unchanged selection avoids a collection update, and
+  field-only edits preserve the note's tags. Save failures retain entered
+  values for retry. Returning to Card Browser refreshes results and retains
+  selection. Shared behavior applies on Android, iOS, Web, Windows, macOS and
+  Linux.
+- The pinned AnkiDroid 2.25.3 behavior is in
+  `AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:624–850,1259–1337`,
+  `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsDialog.kt`,
+  `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsDialogViewModel.kt`,
+  `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsArrayAdapter.kt`,
+  and `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsList.kt`.
+  Multi-note indeterminate states,
+  card-state filtering, new-note tags, media, image occlusion, add-ons,
+  note-type/template editing, generic collection undo and Android-only
+  affordances remain outside this slice. Exact paths and semantics are in
+  `ANKIDROID_UPSTREAM.md`; no upstream source or resource was copied.
 
 ## Remaining migration work
 

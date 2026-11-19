@@ -89,6 +89,54 @@ void main() {
     );
   });
 
+  testWidgets('undo menu refreshes availability when opened', (tester) async {
+    final controller = _EditorController(_sample())..canUndo = true;
+    await tester.pumpWidget(_app(controller, const Size(400, 800)));
+    await tester.pumpAndSettle();
+
+    controller.canUndo = false;
+    await tester.tap(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+    );
+    await tester.pumpAndSettle();
+
+    final item = tester.widget<PopupMenuItem<String>>(
+      find.byKey(const ValueKey('browser-note-update-undo')),
+    );
+    expect(item.enabled, isFalse);
+    expect(controller.undoCalls, 0);
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('closed collection during undo reports a browser error', (
+    tester,
+  ) async {
+    final controller = _EditorController(_sample())..canUndo = true;
+    await tester.pumpWidget(_app(controller, const Size(400, 800)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+    );
+    await tester.pumpAndSettle();
+    controller.collectionClosed = true;
+    await tester.tap(find.byKey(const ValueKey('browser-note-update-undo')));
+    await tester.pumpAndSettle();
+
+    expect(controller.undoCalls, 0);
+    expect(
+      find.text('The browser action could not be completed'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('browser-note-update-undo-menu')),
+      findsNothing,
+    );
+  });
+
   testWidgets(
     'undo failure reports an error and invalidation hides the action',
     (tester) async {
@@ -1515,13 +1563,17 @@ class _EditorController extends _Controller
   final resolvedRows = <BrowserRowId>[];
   int refreshCalls = 0;
   bool canUndo = false;
+  bool collectionClosed = false;
   bool failUndo = false;
   bool pendingUndoActive = false;
   Completer<void>? pendingUndo;
   int undoCalls = 0;
 
   @override
-  bool get canUndoNoteUpdate => canUndo;
+  bool get canUndoNoteUpdate {
+    if (collectionClosed) throw StateError('collection closed');
+    return canUndo;
+  }
 
   @override
   bool get noteUpdateUndoPending => pendingUndoActive;

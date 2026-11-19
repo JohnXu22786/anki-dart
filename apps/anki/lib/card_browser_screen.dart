@@ -1010,18 +1010,40 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     setState(() => _noteUpdateUndoAvailable = available);
   }
 
-  Future<void> _undoLastNoteUpdate() async {
+  bool get _undoActionAvailable {
     final controller = widget.controller;
     if (controller is! CardBrowserNoteUpdateUndoController ||
-        _noteUpdateUndoPending ||
-        (controller as CardBrowserNoteUpdateUndoController)
-            .noteUpdateUndoPending ||
-        !(controller as CardBrowserNoteUpdateUndoController)
-            .canUndoNoteUpdate) {
+        _noteUpdateUndoPending) {
+      return false;
+    }
+    final undoController = controller as CardBrowserNoteUpdateUndoController;
+    try {
+      return !undoController.noteUpdateUndoPending &&
+          undoController.canUndoNoteUpdate;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _undoLastNoteUpdate() async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserNoteUpdateUndoController) {
       _refreshNoteUpdateUndoStatus();
       return;
     }
     final undoController = controller as CardBrowserNoteUpdateUndoController;
+    try {
+      if (_noteUpdateUndoPending ||
+          undoController.noteUpdateUndoPending ||
+          !undoController.canUndoNoteUpdate) {
+        _refreshNoteUpdateUndoStatus();
+        return;
+      }
+    } catch (error) {
+      _showActionError(error);
+      _refreshNoteUpdateUndoStatus();
+      return;
+    }
     setState(() => _noteUpdateUndoPending = true);
     var undone = false;
     try {
@@ -1133,17 +1155,12 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
               key: const ValueKey('browser-note-update-undo-menu'),
               tooltip: s.browserUndoNoteEdit,
               icon: const Icon(Icons.more_vert),
+              onOpened: _refreshNoteUpdateUndoStatus,
               itemBuilder: (context) => [
                 PopupMenuItem(
                   key: const ValueKey('browser-note-update-undo'),
                   value: 'undo',
-                  enabled:
-                      !_noteUpdateUndoPending &&
-                      !(widget.controller
-                              is CardBrowserNoteUpdateUndoController &&
-                          (widget.controller
-                                  as CardBrowserNoteUpdateUndoController)
-                              .noteUpdateUndoPending),
+                  enabled: _undoActionAvailable,
                   child: Text(s.browserUndoNoteEdit),
                 ),
               ],

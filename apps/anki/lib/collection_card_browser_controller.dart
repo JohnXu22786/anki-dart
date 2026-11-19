@@ -1101,19 +1101,14 @@ final class CollectionCardBrowserController
     await storage.writeCollectionConfigInt64('curModel', notetypeId);
     final currentDeck = storage.decks.getDeck(storage.currentDeckId);
     if (currentDeck != null) {
-      Map<String, Object?> other;
-      try {
-        final decoded = jsonDecode(utf8.decode(currentDeck.common.other));
-        other = decoded is Map
-            ? decoded.map((key, value) => MapEntry(key.toString(), value))
-            : <String, Object?>{};
-      } catch (_) {
-        other = <String, Object?>{};
-      }
-      other['mid'] = notetypeId.toString();
-      final common = deck_proto.Deck_Common.fromBuffer(
-        currentDeck.common.writeToBuffer(),
-      )..other = utf8.encode(_encodeDeckOtherWithNumericMid(other, notetypeId));
+      final common =
+          deck_proto.Deck_Common.fromBuffer(currentDeck.common.writeToBuffer())
+            ..other = utf8.encode(
+              _encodeDeckOtherWithNumericMid(
+                currentDeck.common.other,
+                notetypeId,
+              ),
+            );
       storage.decks.updateDeck(
         models.Deck(
           id: currentDeck.id,
@@ -1188,21 +1183,33 @@ final class CollectionCardBrowserController
   }
 
   String _encodeDeckOtherWithNumericMid(
-    Map<String, Object?> other,
+    List<int> encodedOther,
     Int64 notetypeId,
   ) {
-    // `mid` is a JSON number in Anki's legacy deck representation. Encoding
-    // the Int64 through `jsonEncode` would either quote it or lose precision
-    // on JavaScript targets, so emit only this already validated integer as
-    // a raw JSON number and encode every other value normally.
-    final entries = other.entries.map((entry) {
-      final key = jsonEncode(entry.key);
-      final value = entry.key == 'mid'
-          ? notetypeId.toString()
-          : jsonEncode(entry.value);
-      return '$key:$value';
-    });
-    return '{${entries.join(',')}}';
+    // Replace only the top-level `mid` token. Re-encoding the decoded map
+    // would round unrelated large JSON numbers on JavaScript targets.
+    String source;
+    Object? decoded;
+    try {
+      source = utf8.decode(encodedOther);
+      decoded = jsonDecode(source);
+    } on Object {
+      return '{"mid":$notetypeId}';
+    }
+    if (decoded is! Map) return '{"mid":$notetypeId}';
+
+    final range = _topLevelJsonValueRange(source, 'mid');
+    if (range != null) {
+      return source.replaceRange(range.start, range.end, notetypeId.toString());
+    }
+    final closeBrace = source.lastIndexOf('}');
+    if (closeBrace < 0) return '{"mid":$notetypeId}';
+    final separator = decoded.isEmpty ? '' : ',';
+    return source.replaceRange(
+      closeBrace,
+      closeBrace,
+      '$separator"mid":$notetypeId',
+    );
   }
 
   @override
@@ -1617,50 +1624,51 @@ Int64? legacyDeckNotetypeIdFromJsonBytes(List<int> other) {
     final source = utf8.decode(other);
     // Keep the previous malformed-JSON behavior; the decoded number values
     // are deliberately ignored because JavaScript may round a large `mid`.
-    jsonDecode(source);
-    var index = _skipJsonWhitespace(source, 0);
-    if (index >= source.length || source[index] != '{') return null;
-    index = _skipJsonWhitespace(source, index + 1);
-    Int64? parsedId;
-    var foundMid = false;
-    while (index < source.length && source[index] != '}') {
-      if (source[index] != '"') return null;
-      final keyEnd = _jsonStringEnd(source, index);
-      if (keyEnd == null) return null;
-      final key = jsonDecode(source.substring(index, keyEnd));
-      index = _skipJsonWhitespace(source, keyEnd);
-      if (index >= source.length || source[index] != ':') return null;
-      final valueStart = _skipJsonWhitespace(source, index + 1);
-      final valueEnd = _jsonValueEnd(source, valueStart);
-      if (valueEnd == null) return null;
-      if (key == 'mid') {
-        foundMid = true;
-        final rawValue = source.substring(valueStart, valueEnd);
-        final value = rawValue.trim();
-        if (value.startsWith('"')) {
-          final decoded = jsonDecode(value);
-          parsedId = decoded is String
-              ? _parseLegacyDeckModelId(decoded)
-              : null;
-        } else if (RegExp(r'^-?(?:0|[1-9][0-9]*)$').hasMatch(value)) {
-          parsedId = _parseLegacyDeckModelId(value);
-        } else {
-          parsedId = null;
-        }
-      }
-      index = _skipJsonWhitespace(source, valueEnd);
-      if (index < source.length && source[index] == ',') {
-        index = _skipJsonWhitespace(source, index + 1);
-      } else if (index >= source.length || source[index] != '}') {
-        return null;
-      }
+    final decoded = jsonDecode(source);
+    if (decoded is! Map) return null;
+    final range = _topLevelJsonValueRange(source, 'mid');
+    if (range == null) return null;
+    final rawValue = source.substring(range.start, range.end).trim();
+    if (rawValue.startsWith('"')) {
+      final value = jsonDecode(rawValue);
+      return value is String ? _parseLegacyDeckModelId(value) : null;
     }
-    if (index >= source.length || source[index] != '}') return null;
-    if (_skipJsonWhitespace(source, index + 1) != source.length) return null;
-    return foundMid ? parsedId : null;
+    if (!RegExp(r'^-?(?:0|[1-9][0-9]*)$').hasMatch(rawValue)) return null;
+    return _parseLegacyDeckModelId(rawValue);
   } on Object {
     return null;
   }
+}
+
+({int start, int end})? _topLevelJsonValueRange(
+  String source,
+  String wantedKey,
+) {
+  var index = _skipJsonWhitespace(source, 0);
+  if (index >= source.length || source[index] != '{') return null;
+  index = _skipJsonWhitespace(source, index + 1);
+  ({int start, int end})? result;
+  while (index < source.length && source[index] != '}') {
+    if (source[index] != '"') return null;
+    final keyEnd = _jsonStringEnd(source, index);
+    if (keyEnd == null) return null;
+    final key = jsonDecode(source.substring(index, keyEnd));
+    index = _skipJsonWhitespace(source, keyEnd);
+    if (index >= source.length || source[index] != ':') return null;
+    final valueStart = _skipJsonWhitespace(source, index + 1);
+    final valueEnd = _jsonValueEnd(source, valueStart);
+    if (valueEnd == null) return null;
+    if (key == wantedKey) result = (start: valueStart, end: valueEnd);
+    index = _skipJsonWhitespace(source, valueEnd);
+    if (index < source.length && source[index] == ',') {
+      index = _skipJsonWhitespace(source, index + 1);
+    } else if (index >= source.length || source[index] != '}') {
+      return null;
+    }
+  }
+  if (index >= source.length || source[index] != '}') return null;
+  if (_skipJsonWhitespace(source, index + 1) != source.length) return null;
+  return result;
 }
 
 Int64? _parseLegacyDeckModelId(String value) {

@@ -896,6 +896,24 @@ UPDATE fields SET name = 'Text' WHERE ntid = ${cloze.id.value} AND ord = 0;
     );
     await storage.writeCollectionConfigInt64('curModel', basic.id.value);
     final originalCurrentDeck = storage.currentDeckId;
+    final currentDeckBefore = storage.decks.getDeck(originalCurrentDeck)!;
+    final currentDeckCommon =
+        deck_proto.Deck_Common.fromBuffer(
+            currentDeckBefore.common.writeToBuffer(),
+          )
+          ..other = utf8.encode(
+            '{"large":9007199254740995,"nested":{"large":9007199254740997}}',
+          );
+    storage.decks.updateDeck(
+      Deck(
+        id: currentDeckBefore.id,
+        name: currentDeckBefore.name,
+        mtimeSecs: currentDeckBefore.mtimeSecs,
+        usn: currentDeckBefore.usn,
+        common: currentDeckCommon,
+        kind: currentDeckBefore.kind,
+      ),
+    );
     final controller = CollectionCardBrowserController(
       runtime,
       selectedNewNoteDeckId: () => selectedDeck.id,
@@ -926,7 +944,10 @@ UPDATE fields SET name = 'Text' WHERE ntid = ${cloze.id.value} AND ord = 0;
     final currentDeck = storage.decks.getDeck(originalCurrentDeck)!;
     final currentDeckOther = utf8.decode(currentDeck.common.other);
     expect(currentDeckOther, contains('"mid":${cloze.id.value}'));
+    expect(currentDeckOther, contains('"large":9007199254740995'));
+    expect(currentDeckOther, contains('"large":9007199254740997'));
     expect(jsonDecode(currentDeckOther)['mid'], cloze.id.value.toInt());
+    expect((await controller.loadNewNote()).notetypeId, wideClozeId);
     expect(
       await controller.validateNewNote(
         switched.notetypeId,

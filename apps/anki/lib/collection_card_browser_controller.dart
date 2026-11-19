@@ -1231,11 +1231,18 @@ final class CollectionCardBrowserController
   bool get canUndoCollectionOperation => _storage.canUndoCollectionOperation;
 
   @override
+  bool get canRedoCollectionOperation => _storage.canRedoCollectionOperation;
+
+  @override
   int get collectionUndoGeneration => _storage.collectionUndoGeneration;
 
   @override
   Future<void> undoLastCollectionOperation() =>
       _storage.undoLastCollectionOperation();
+
+  @override
+  Future<void> redoLastCollectionOperation() =>
+      _storage.redoLastCollectionOperation();
 
   @override
   Future<CardBrowserSnapshot> refresh() => _searchRequest(_activeRequest);

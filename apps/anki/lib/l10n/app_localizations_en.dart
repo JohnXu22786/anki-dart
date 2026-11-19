@@ -594,7 +594,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browserBulkActionCompleted => 'Browser action completed';
 
   @override
+  String get browserBulkActionUndone => 'Browser action undone';
+
+  @override
   String get browserUndoBulkAction => 'Undo';
+
+  @override
+  String get browserRedoBulkAction => 'Redo';
 
   @override
   String get browserSuspend => 'Suspend';

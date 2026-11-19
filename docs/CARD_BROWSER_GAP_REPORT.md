@@ -4,7 +4,7 @@ The Flutter Card Browser is shared across Android, iOS, Web, Windows, macOS,
 and Linux. Collection queries and preference behavior live in shared Dart;
 platform adapters provide storage and presentation.
 
-## Implemented through Unit 36
+## Implemented through Unit 44
 
 - Cards/Notes mode loads and saves through the active collection's
   `browserTableShowNotesMode` config. Cards remains the default.
@@ -24,8 +24,10 @@ platform adapters provide storage and presentation.
   templates, field replacement, and text-line conversion.
 - Saved searches work in either mode. Selection and navigation preserve the
   current row identity. Unit 33 adds existing-note field editing, and Unit 36
-  exposes its note-update undo action in the shared Card Browser menu; preview
-  and bulk operations remain unavailable.
+  exposes its note-update undo action in the shared Card Browser menu. Unit 44
+  connects suspend, bury, and delete to the active collection and provides
+  undo/redo actions for those bulk operations; preview and other browser
+  operations remain scoped to their documented capabilities.
 
 ## Unit 23 — Core row values and metadata
 
@@ -164,10 +166,10 @@ platform adapters provide storage and presentation.
   records bounded in-memory undo/redo for note updates. Unit 36 exposes an
   accessible, localized note-update undo action from the Card Browser collection
   menu. This remains scoped to note updates and does not implement Core's
-  generic collection undo journal; the Card Browser has no matching redo action.
-  New-note creation, media, image occlusion, add-ons,
-  note-type and template editing, preview, bulk actions, and Android-only
-  editor affordances remain follow-up work.
+  generic collection undo journal. Unit 44 adds separate undo/redo access for
+  Card Browser bulk suspend, bury, and delete operations. New-note creation,
+  media, image occlusion, add-ons, note-type and template editing, and
+  Android-only editor affordances remain follow-up work.
 - Source pins, hashes, attribution, and adaptation boundaries are recorded in
   `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
 

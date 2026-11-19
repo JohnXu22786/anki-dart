@@ -1271,6 +1271,11 @@ void main() {
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();
     expect(controller.undoCalls, 1);
+    expect(find.text('Browser action undone'), findsOneWidget);
+    expect(find.text('Redo'), findsOneWidget);
+    await tester.tap(find.text('Redo'));
+    await tester.pumpAndSettle();
+    expect(controller.redoCalls, 1);
   });
 
   testWidgets('an older bulk undo snackbar cannot undo a newer operation', (
@@ -1750,11 +1755,16 @@ final class _UndoBulkController extends _Controller
 
   int generation = 0;
   int undoCalls = 0;
+  int redoCalls = 0;
   bool canUndo = false;
+  bool canRedo = false;
   bool failAfterCommit = false;
 
   @override
   bool get canUndoCollectionOperation => canUndo;
+
+  @override
+  bool get canRedoCollectionOperation => canRedo;
 
   @override
   int get collectionUndoGeneration => generation;
@@ -1774,6 +1784,16 @@ final class _UndoBulkController extends _Controller
   Future<void> undoLastCollectionOperation() async {
     undoCalls++;
     canUndo = false;
+    canRedo = true;
+    generation++;
+  }
+
+  @override
+  Future<void> redoLastCollectionOperation() async {
+    redoCalls++;
+    canUndo = true;
+    canRedo = false;
+    generation++;
   }
 }
 

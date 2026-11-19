@@ -959,6 +959,7 @@ INSERT OR REPLACE INTO cards (
   RevlogStorage get revlog => _revlogStorage;
 
   bool get canUndoCollectionOperation => _collectionUndoSteps.isNotEmpty;
+  bool get canRedoCollectionOperation => _collectionRedoSteps.isNotEmpty;
   int get collectionUndoGeneration => _collectionUndoGeneration;
 
   /// Commits one collection operation and retains its exact inverse in the

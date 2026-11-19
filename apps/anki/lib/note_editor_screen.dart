@@ -45,6 +45,7 @@ final class NewNoteEditorDraft {
     required this.notetypeId,
     required this.deckId,
     required this.content,
+    this.noteTypes = const [],
     this.deckName = '',
     this.note,
   });
@@ -53,6 +54,7 @@ final class NewNoteEditorDraft {
   final Int64 deckId;
   final String deckName;
   final NoteEditorContent content;
+  final List<NewNoteEditorNoteType> noteTypes;
   final models.Note? note;
 
   NewNoteEditorDraft copyWith({
@@ -63,8 +65,17 @@ final class NewNoteEditorDraft {
     deckId: deckId,
     deckName: deckName,
     content: content,
+    noteTypes: noteTypes,
     note: note,
   );
+}
+
+/// A selectable note type for the shared new-note editor.
+final class NewNoteEditorNoteType {
+  const NewNoteEditorNoteType({required this.id, required this.name});
+
+  final Int64 id;
+  final String name;
 }
 
 /// A selectable regular deck for the shared new-note editor.
@@ -77,6 +88,12 @@ final class NewNoteEditorDeck {
 
 abstract interface class NewNoteEditorPort implements NoteEditorPort {
   Future<NewNoteEditorDraft> loadNewNote();
+  Future<NewNoteEditorDraft> changeNewNoteType({
+    required NewNoteEditorDraft draft,
+    required Int64 notetypeId,
+    required List<String> fields,
+    required List<String> tags,
+  });
   Future<List<NewNoteEditorDeck>> loadSelectableDecks();
   Future<NoteFieldsCheckResult> validateNewNote(
     Int64 notetypeId,
@@ -125,6 +142,8 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
   List<String> _tags = [];
   bool _loading = true;
   bool _saving = false;
+  bool _changingType = false;
+  int _noteTypeSelectionRevision = 0;
   bool _committedRetryPending = false;
   String? _loadError;
   String? _saveError;
@@ -325,6 +344,37 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
           ),
           children: [
             if (widget._isNewNote) ...[
+              if (_newNoteDraft!.noteTypes.isNotEmpty) ...[
+                Text(
+                  strings.noteEditorNoteType,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                KeyedSubtree(
+                  key: const Key('note-editor-select-note-type'),
+                  child: DropdownButtonFormField<Int64>(
+                    key: ValueKey(
+                      'note-editor-select-note-type-'
+                      '${_newNoteDraft!.notetypeId}-$_noteTypeSelectionRevision',
+                    ),
+                    initialValue: _newNoteDraft!.notetypeId,
+                    items: [
+                      for (final type in _newNoteDraft!.noteTypes)
+                        DropdownMenuItem(
+                          value: type.id,
+                          child: Text(type.name),
+                        ),
+                    ],
+                    onChanged:
+                        _saving || _changingType || _committedRetryPending
+                        ? null
+                        : (id) {
+                            if (id != null) _selectNoteType(id);
+                          },
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
               Text(
                 strings.noteEditorDeck,
                 style: Theme.of(context).textTheme.titleMedium,
@@ -332,7 +382,7 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 key: const Key('note-editor-select-deck'),
-                onPressed: _saving || _committedRetryPending
+                onPressed: _saving || _changingType || _committedRetryPending
                     ? null
                     : _selectDeck,
                 icon: const Icon(Icons.folder_open_outlined),
@@ -349,7 +399,7 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
               TextField(
                 key: Key('note-field-$index'),
                 controller: _fields[index],
-                enabled: !_saving,
+                enabled: !_saving && !_changingType,
                 minLines: 3,
                 maxLines: 8,
                 textCapitalization: TextCapitalization.sentences,
@@ -375,13 +425,13 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   InputChip(
                     key: Key('note-editor-tag-$tag'),
                     label: Text(tag),
-                    onDeleted: _saving
+                    onDeleted: _saving || _changingType
                         ? null
                         : () => setState(() => _tags.remove(tag)),
                   ),
                 OutlinedButton.icon(
                   key: const Key('note-editor-tags'),
-                  onPressed: _saving ? null : _editTags,
+                  onPressed: _saving || _changingType ? null : _editTags,
                   icon: const Icon(Icons.sell_outlined),
                   label: Text(strings.noteEditorEditTags),
                 ),
@@ -403,7 +453,7 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 ),
                 FilledButton.icon(
                   key: const Key('note-editor-save'),
-                  onPressed: _saving ? null : _save,
+                  onPressed: _saving || _changingType ? null : _save,
                   icon: _saving
                       ? const SizedBox.square(
                           dimension: 18,
@@ -453,6 +503,44 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
           deckName: selected.name,
         );
         _saveError = null;
+      });
+    }
+  }
+
+  Future<void> _selectNoteType(Int64 notetypeId) async {
+    final draft = _newNoteDraft!;
+    if (notetypeId == draft.notetypeId || _changingType) return;
+    setState(() {
+      _changingType = true;
+      _saveError = null;
+    });
+    try {
+      final fields = _fields.map((field) => field.text).toList(growable: false);
+      final updated = await (widget.port as NewNoteEditorPort)
+          .changeNewNoteType(
+            draft: draft,
+            notetypeId: notetypeId,
+            fields: fields,
+            tags: List<String>.of(_tags),
+          );
+      if (!mounted) return;
+      _disposeFields();
+      setState(() {
+        _newNoteDraft = updated;
+        _content = updated.content;
+        _fields = [
+          for (final value in updated.content.values)
+            TextEditingController(text: value),
+        ];
+        _tags = List.of(updated.content.tags);
+        _changingType = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _changingType = false;
+        _noteTypeSelectionRevision++;
+        _saveError = AppLocalizations.of(context)!.noteEditorSaveError;
       });
     }
   }

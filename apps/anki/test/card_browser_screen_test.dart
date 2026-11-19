@@ -1955,6 +1955,14 @@ class _EditorController extends _Controller
   );
 
   @override
+  Future<NewNoteEditorDraft> changeNewNoteType({
+    required NewNoteEditorDraft draft,
+    required Int64 notetypeId,
+    required List<String> fields,
+    required List<String> tags,
+  }) => Future.error(UnimplementedError());
+
+  @override
   Future<List<NewNoteEditorDeck>> loadSelectableDecks() async => [
     NewNoteEditorDeck(id: Int64.ONE, name: 'Default'),
   ];

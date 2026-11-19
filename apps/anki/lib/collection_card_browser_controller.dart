@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_backend_models/anki_backend_models.dart' as models;
 import 'package:anki_backend_protocol/anki/notes.pbenum.dart' as note_proto;
+import 'package:anki_backend_protocol/anki/decks.pb.dart' as deck_proto;
 import 'package:anki_dart/anki_dart.dart';
 import 'package:anki_search_parser/anki_search_parser.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
@@ -1039,6 +1040,7 @@ final class CollectionCardBrowserController
                   left.name.toLowerCase().compareTo(right.name.toLowerCase()),
             ))
             .first;
+    final sortedTypes = _sortedNewNoteTypes(allTypes);
 
     final useCurrentDeck = storage.readCollectionConfig('addToCur') != false;
     final rememberedDeck = storage.readCollectionConfigInt64(
@@ -1070,11 +1072,143 @@ final class CollectionCardBrowserController
       deckId: selectedDeck,
       deckName: storage.decks.getDeck(selectedDeck)!.name,
       note: note,
+      noteTypes: sortedTypes,
       content: NoteEditorContent(
         labels: notetype.fields.map((field) => field.name).toList(),
         values: note.fields,
         availableTags: storage.tags.allTags().map((tag) => tag.name).toList(),
       ),
+    );
+  }
+
+  @override
+  Future<NewNoteEditorDraft> changeNewNoteType({
+    required NewNoteEditorDraft draft,
+    required Int64 notetypeId,
+    required List<String> fields,
+    required List<String> tags,
+  }) async {
+    final storage = _storage;
+    if (notetypeId == draft.notetypeId) return draft;
+    final types = await storage.getNotetypesByIds([
+      models.NotetypeId(notetypeId),
+    ]);
+    if (types.isEmpty) throw StateError('Note type does not exist.');
+    final notetype = types.single;
+
+    // NoteEditorFragment.changeNoteType sets the current model and the
+    // selected collection deck's legacy mid before refreshing the draft.
+    await storage.writeCollectionConfigInt64('curModel', notetypeId);
+    final currentDeck = storage.decks.getDeck(storage.currentDeckId);
+    if (currentDeck != null) {
+      final common =
+          deck_proto.Deck_Common.fromBuffer(currentDeck.common.writeToBuffer())
+            ..other = utf8.encode(
+              _encodeDeckOtherWithNumericMid(
+                currentDeck.common.other,
+                notetypeId,
+              ),
+            );
+      storage.decks.updateDeck(
+        models.Deck(
+          id: currentDeck.id,
+          name: currentDeck.name,
+          mtimeSecs: currentDeck.mtimeSecs,
+          usn: currentDeck.usn,
+          common: common,
+          kind: currentDeck.kind,
+        ),
+      );
+      await storage.flushPendingWrites();
+    }
+
+    var deckId = draft.deckId;
+    if (storage.readCollectionConfig('addToCur') == false) {
+      final rememberedDeckId = storage.readCollectionConfigInt64(
+        '_nt_${notetype.id.value}_lastDeck',
+      );
+      final rememberedDeck = rememberedDeckId == null
+          ? null
+          : storage.decks.getDeck(rememberedDeckId);
+      if (rememberedDeckId != null && rememberedDeck?.configId != null) {
+        deckId = rememberedDeckId;
+      }
+    }
+
+    final note = models.Note.newNote(
+      notetype,
+      randomU64: () {
+        final random = Random.secure();
+        return (BigInt.from(random.nextInt(0x100000000)) << 32) |
+            BigInt.from(random.nextInt(0x100000000));
+      },
+    );
+    note.fieldsMut()
+      ..clear()
+      ..addAll(models.fixNoteFieldCount(fields, notetype.fields.length));
+    note.tags
+      ..clear()
+      ..addAll(tags);
+    return NewNoteEditorDraft(
+      notetypeId: notetype.id.value,
+      deckId: deckId,
+      deckName: storage.decks.getDeck(deckId)?.name ?? draft.deckName,
+      note: note,
+      noteTypes: _sortedNewNoteTypes(
+        await storage.getNotetypesByIds(await storage.getAllNotetypeIds()),
+      ),
+      content: NoteEditorContent(
+        labels: notetype.fields.map((field) => field.name).toList(),
+        values: note.fields,
+        tags: tags,
+        availableTags: storage.tags.allTags().map((tag) => tag.name).toList(),
+      ),
+    );
+  }
+
+  List<NewNoteEditorNoteType> _sortedNewNoteTypes(
+    Iterable<models.Notetype> notetypes,
+  ) {
+    final indexed = notetypes.indexed.toList();
+    indexed.sort((left, right) {
+      final comparison = left.$2.name.toLowerCase().compareTo(
+        right.$2.name.toLowerCase(),
+      );
+      return comparison == 0 ? left.$1.compareTo(right.$1) : comparison;
+    });
+    return [
+      for (final (_, notetype) in indexed)
+        NewNoteEditorNoteType(id: notetype.id.value, name: notetype.name),
+    ];
+  }
+
+  String _encodeDeckOtherWithNumericMid(
+    List<int> encodedOther,
+    Int64 notetypeId,
+  ) {
+    // Replace only the top-level `mid` token. Re-encoding the decoded map
+    // would round unrelated large JSON numbers on JavaScript targets.
+    String source;
+    Object? decoded;
+    try {
+      source = utf8.decode(encodedOther);
+      decoded = jsonDecode(source);
+    } on Object {
+      return '{"mid":$notetypeId}';
+    }
+    if (decoded is! Map) return '{"mid":$notetypeId}';
+
+    final range = _topLevelJsonValueRange(source, 'mid');
+    if (range != null) {
+      return source.replaceRange(range.start, range.end, notetypeId.toString());
+    }
+    final closeBrace = source.lastIndexOf('}');
+    if (closeBrace < 0) return '{"mid":$notetypeId}';
+    final separator = decoded.isEmpty ? '' : ',';
+    return source.replaceRange(
+      closeBrace,
+      closeBrace,
+      '$separator"mid":$notetypeId',
     );
   }
 
@@ -1169,26 +1303,8 @@ final class CollectionCardBrowserController
     return result.generatedCardCount;
   }
 
-  Int64? _configInt64(Object? value) {
-    if (value is int) return Int64(value);
-    if (value is String) {
-      try {
-        return Int64.parseInt(value);
-      } on FormatException {
-        return null;
-      }
-    }
-    return null;
-  }
-
   Int64? _legacyDeckNotetypeId(List<int> other) {
-    if (other.isEmpty) return null;
-    try {
-      final decoded = jsonDecode(utf8.decode(other));
-      return decoded is Map ? _configInt64(decoded['mid']) : null;
-    } catch (_) {
-      return null;
-    }
+    return legacyDeckNotetypeIdFromJsonBytes(other);
   }
 
   Future<Int64?> _loadRememberedBrowserDeck(
@@ -1494,6 +1610,136 @@ final class CollectionCardBrowserController
           ? models.CardQueue.learn
           : models.CardQueue.dayLearn,
   };
+}
+
+/// Reads the top-level legacy deck `mid` without rounding JSON Int64 values.
+///
+/// `jsonDecode` converts large numbers to JavaScript doubles on Web, which can
+/// change an ID before it is wrapped in [Int64]. The small scanner below finds
+/// only the top-level member and parses its original integer token directly.
+@visibleForTesting
+Int64? legacyDeckNotetypeIdFromJsonBytes(List<int> other) {
+  if (other.isEmpty) return null;
+  try {
+    final source = utf8.decode(other);
+    // Keep the previous malformed-JSON behavior; the decoded number values
+    // are deliberately ignored because JavaScript may round a large `mid`.
+    final decoded = jsonDecode(source);
+    if (decoded is! Map) return null;
+    final range = _topLevelJsonValueRange(source, 'mid');
+    if (range == null) return null;
+    final rawValue = source.substring(range.start, range.end).trim();
+    if (rawValue.startsWith('"')) {
+      final value = jsonDecode(rawValue);
+      return value is String ? _parseLegacyDeckModelId(value) : null;
+    }
+    if (!RegExp(r'^-?(?:0|[1-9][0-9]*)$').hasMatch(rawValue)) return null;
+    return _parseLegacyDeckModelId(rawValue);
+  } on Object {
+    return null;
+  }
+}
+
+({int start, int end})? _topLevelJsonValueRange(
+  String source,
+  String wantedKey,
+) {
+  var index = _skipJsonWhitespace(source, 0);
+  if (index >= source.length || source[index] != '{') return null;
+  index = _skipJsonWhitespace(source, index + 1);
+  ({int start, int end})? result;
+  while (index < source.length && source[index] != '}') {
+    if (source[index] != '"') return null;
+    final keyEnd = _jsonStringEnd(source, index);
+    if (keyEnd == null) return null;
+    final key = jsonDecode(source.substring(index, keyEnd));
+    index = _skipJsonWhitespace(source, keyEnd);
+    if (index >= source.length || source[index] != ':') return null;
+    final valueStart = _skipJsonWhitespace(source, index + 1);
+    final valueEnd = _jsonValueEnd(source, valueStart);
+    if (valueEnd == null) return null;
+    if (key == wantedKey) result = (start: valueStart, end: valueEnd);
+    index = _skipJsonWhitespace(source, valueEnd);
+    if (index < source.length && source[index] == ',') {
+      index = _skipJsonWhitespace(source, index + 1);
+    } else if (index >= source.length || source[index] != '}') {
+      return null;
+    }
+  }
+  if (index >= source.length || source[index] != '}') return null;
+  if (_skipJsonWhitespace(source, index + 1) != source.length) return null;
+  return result;
+}
+
+Int64? _parseLegacyDeckModelId(String value) {
+  try {
+    return Int64.parseInt(value);
+  } on FormatException {
+    return null;
+  }
+}
+
+int _skipJsonWhitespace(String source, int index) {
+  while (index < source.length) {
+    final character = source.codeUnitAt(index);
+    if (character != 0x20 &&
+        character != 0x09 &&
+        character != 0x0a &&
+        character != 0x0d) {
+      break;
+    }
+    index++;
+  }
+  return index;
+}
+
+int? _jsonStringEnd(String source, int start) {
+  for (var index = start + 1; index < source.length; index++) {
+    final character = source.codeUnitAt(index);
+    if (character == 0x5c) {
+      index++;
+    } else if (character == 0x22) {
+      return index + 1;
+    }
+  }
+  return null;
+}
+
+int? _jsonValueEnd(String source, int start) {
+  if (start >= source.length) return null;
+  if (source[start] == '"') return _jsonStringEnd(source, start);
+  if (source[start] != '{' && source[start] != '[') {
+    var index = start;
+    while (index < source.length &&
+        source[index] != ',' &&
+        source[index] != '}' &&
+        source[index] != ']' &&
+        source[index] != ' ' &&
+        source[index] != '\t' &&
+        source[index] != '\n' &&
+        source[index] != '\r') {
+      index++;
+    }
+    return index == start ? null : index;
+  }
+
+  final closing = <int>[];
+  for (var index = start; index < source.length; index++) {
+    final character = source.codeUnitAt(index);
+    if (character == 0x22) {
+      final end = _jsonStringEnd(source, index);
+      if (end == null) return null;
+      index = end - 1;
+    } else if (character == 0x7b) {
+      closing.add(0x7d);
+    } else if (character == 0x5b) {
+      closing.add(0x5d);
+    } else if (character == 0x7d || character == 0x5d) {
+      if (closing.isEmpty || closing.removeLast() != character) return null;
+      if (closing.isEmpty) return index + 1;
+    }
+  }
+  return null;
 }
 
 /// Reads and renders the selected browser results from the active collection.

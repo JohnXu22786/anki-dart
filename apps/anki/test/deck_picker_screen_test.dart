@@ -1298,6 +1298,14 @@ final class _FakeDeckPickerNewNotePort implements NewNoteEditorPort {
   }
 
   @override
+  Future<NewNoteEditorDraft> changeNewNoteType({
+    required NewNoteEditorDraft draft,
+    required Int64 notetypeId,
+    required List<String> fields,
+    required List<String> tags,
+  }) => Future.error(UnimplementedError());
+
+  @override
   Future<NoteFieldsCheckResult> validateNewNote(
     Int64 notetypeId,
     List<String> fields,

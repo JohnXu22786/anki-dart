@@ -706,6 +706,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteEditorDeck => 'Deck';
 
   @override
+  String get noteEditorNoteType => 'Note type';
+
+  @override
   String get noteEditorChooseDeck => 'Choose deck';
 
   @override

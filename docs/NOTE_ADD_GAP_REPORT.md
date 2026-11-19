@@ -54,31 +54,33 @@ tag edits in the editor. A successful add reports Unit38's generated card
 count and loads a fresh empty draft; leaving the editor refreshes the browser's
 active search while preserving its selected rows.
 
-Default selection follows the supported collection state: the current deck's
-legacy `mid` value wins when available, then `curModel`, then Basic or the
-first note type; an explicit host-provided browser deck wins only while it
-exists and is not filtered. Otherwise the controller follows the collection's
-add-to-current-deck preference and remembered last deck, falling back to the
-current deck or Default when invalid. The app does not currently persist the
-separate AnkiDroid Card Browser `lastDeckId`; when no host callback supplies
-that value, it uses the collection's current deck. A future Card Browser deck
-selection host can provide the exact persisted browser ID through
-`selectedNewNoteDeckId`.
+New notes initially use the current deck's legacy `mid` value when that
+notetype exists, then `curModel`, Basic, or the first available type. The
+initial destination deck follows this priority: a valid explicit Deck Picker
+choice; the valid regular deck remembered by an initialized Card Browser; then
+the collection add-to-current-deck preference and per-type remembered deck,
+falling back to the current deck or Default when invalid. The browser's
+separate AnkiDroid `lastDeckId` is persisted as an exact decimal string and
+passed automatically when Add Note comes from an initialized browser. The All
+Decks sentinel and missing, deleted, malformed, or filtered browser IDs use
+the fallback; an uninitialized Deck Picker current-deck route ignores browser
+state. Selecting a note type updates `curModel` and the current deck's legacy
+`mid`, refreshes fields while preserving compatible entered values and tags,
+and applies that type's remembered destination deck when valid; otherwise the
+current draft's selected deck remains selected.
 
 ## Boundaries still owned by the host or follow-up work
 
 - Image Occlusion field setup and its special empty-field message remain out
   of this editor flow; the app maps ordinary new-note validation only.
-- A shared deck selector is implemented for new notes. It lists exact 64-bit
-  IDs for normal decks only, shows nested names in full, supports filtering for
-  larger catalogs, and changes only the editor's in-memory draft. The
-  collection's current deck is not changed by this selection;
-  `saveNewNote()` passes the selected ID to `addNoteToDeck()`. A missing or
-  newly filtered deck cannot be saved; the user can choose another available
-  deck. Cancellation retains the current choice, an empty catalog is shown
-  explicitly, and catalog load errors can be retried. A note-type picker is
-  not implemented; the host still resolves the supported initial note type
-  and destination deck.
+- The shared new-note editor now provides both a regular-deck selector and a
+  note-type selector. Both preserve exact 64-bit IDs. The deck selector shows
+  nested names, filters larger catalogs, changes only the in-memory draft, and
+  prevents saving to a missing or newly filtered deck. The note-type selector
+  sorts visible types by name and updates the draft's field labels, compatible
+  values, validation, generated cards, `curModel`, and current deck `mid`.
+  Existing-note conversion, Image Occlusion setup, template/media editing, and
+  full notetype management remain separate follow-up flows.
 - Core `transact(Op::AddNote)` records note/card/tag/config/collection undo
   payloads and returns operation changes. This method returns `OpChanges` and
   does not create a generic undo journal or an operation-specific history.

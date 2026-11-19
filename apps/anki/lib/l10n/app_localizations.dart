@@ -1393,6 +1393,12 @@ abstract class AppLocalizations {
   /// **'Deck'**
   String get noteEditorDeck;
 
+  /// No description provided for @noteEditorNoteType.
+  ///
+  /// In en, this message translates to:
+  /// **'Note type'**
+  String get noteEditorNoteType;
+
   /// No description provided for @noteEditorChooseDeck.
   ///
   /// In en, this message translates to:

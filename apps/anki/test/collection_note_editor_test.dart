@@ -24,6 +24,29 @@ import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('legacy deck mid parses exact numeric Int64 JSON tokens', () {
+    expect(
+      legacyDeckNotetypeIdFromJsonBytes(
+        utf8.encode('{"nested":{"mid":7},"mid":9007199254740993}'),
+      ),
+      Int64.parseInt('9007199254740993'),
+    );
+    expect(
+      legacyDeckNotetypeIdFromJsonBytes(
+        utf8.encode('{"mid":"9007199254740993"}'),
+      ),
+      Int64.parseInt('9007199254740993'),
+    );
+    expect(
+      legacyDeckNotetypeIdFromJsonBytes(utf8.encode('{"nested":{"mid":7}}')),
+      isNull,
+    );
+    expect(
+      legacyDeckNotetypeIdFromJsonBytes(utf8.encode('{"mid"::7}')),
+      isNull,
+    );
+  });
+
   late io.Directory directory;
   late CollectionRuntime runtime;
   late SharedPreferencesAsync preferences;
@@ -829,6 +852,172 @@ void main() {
       expect(storage.currentDeckId, originalCurrentDeck);
     },
   );
+
+  test('new-note type switching sorts names, refreshes fields, preserves tags and applies deck defaults', () async {
+    final storage = runtime.storage!;
+    var types = await storage.getNotetypesByIds(
+      await storage.getAllNotetypeIds(),
+    );
+    final originalClozeId = types
+        .singleWhere((type) => type.name == 'Cloze')
+        .id
+        .value;
+    final wideClozeId = Int64.parseInt('9007199254740993');
+    await storage.executeBatch('''
+UPDATE notetypes SET id = $wideClozeId WHERE id = $originalClozeId;
+UPDATE fields SET ntid = $wideClozeId WHERE ntid = $originalClozeId;
+UPDATE templates SET ntid = $wideClozeId WHERE ntid = $originalClozeId;
+''');
+    types = await storage.getNotetypesByIds(await storage.getAllNotetypeIds());
+    final basic = types.singleWhere((type) => type.name == 'Basic');
+    final cloze = types.singleWhere((type) => type.name == 'Cloze');
+    expect(cloze.id.value, wideClozeId);
+    await storage.executeBatch('''
+DELETE FROM fields WHERE ntid = ${cloze.id.value} AND ord = 1;
+UPDATE fields SET name = 'Text' WHERE ntid = ${cloze.id.value} AND ord = 0;
+''');
+
+    final rememberedDeck = storage.decks.addDeck(
+      Deck(
+        name: 'Remembered cloze deck',
+        kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+      ),
+    );
+    final selectedDeck = storage.decks.addDeck(
+      Deck(
+        name: 'Explicit editor deck',
+        kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+      ),
+    );
+    await storage.writeCollectionConfig('addToCur', false);
+    await storage.writeCollectionConfigInt64(
+      '_nt_${cloze.id.value}_lastDeck',
+      rememberedDeck.id,
+    );
+    await storage.writeCollectionConfigInt64('curModel', basic.id.value);
+    final originalCurrentDeck = storage.currentDeckId;
+    final currentDeckBefore = storage.decks.getDeck(originalCurrentDeck)!;
+    final currentDeckCommon =
+        deck_proto.Deck_Common.fromBuffer(
+            currentDeckBefore.common.writeToBuffer(),
+          )
+          ..other = utf8.encode(
+            '{"large":9007199254740995,"nested":{"large":9007199254740997}}',
+          );
+    storage.decks.updateDeck(
+      Deck(
+        id: currentDeckBefore.id,
+        name: currentDeckBefore.name,
+        mtimeSecs: currentDeckBefore.mtimeSecs,
+        usn: currentDeckBefore.usn,
+        common: currentDeckCommon,
+        kind: currentDeckBefore.kind,
+      ),
+    );
+    final controller = CollectionCardBrowserController(
+      runtime,
+      selectedNewNoteDeckId: () => selectedDeck.id,
+    );
+    final initial = await controller.loadNewNote();
+
+    final expectedNames = types.map((type) => type.name).toList()
+      ..sort(
+        (left, right) => left.toLowerCase().compareTo(right.toLowerCase()),
+      );
+    expect(initial.noteTypes.map((type) => type.name), expectedNames);
+    expect(initial.notetypeId, basic.id.value);
+    expect(initial.deckId, selectedDeck.id);
+
+    final switched = await controller.changeNewNoteType(
+      draft: initial,
+      notetypeId: cloze.id.value,
+      fields: ['{{c1::front}}', 'back'],
+      tags: ['Study::Tagged'],
+    );
+    expect(switched.notetypeId, cloze.id.value);
+    expect(switched.content.labels, ['Text']);
+    expect(switched.content.values, ['{{c1::front}}; back']);
+    expect(switched.content.tags, ['Study::Tagged']);
+    expect(switched.deckId, rememberedDeck.id);
+    expect(storage.currentDeckId, originalCurrentDeck);
+    expect(storage.readCollectionConfigInt64('curModel'), cloze.id.value);
+    final currentDeck = storage.decks.getDeck(originalCurrentDeck)!;
+    final currentDeckOther = utf8.decode(currentDeck.common.other);
+    expect(currentDeckOther, contains('"mid":${cloze.id.value}'));
+    expect(currentDeckOther, contains('"large":9007199254740995'));
+    expect(currentDeckOther, contains('"large":9007199254740997'));
+    expect(jsonDecode(currentDeckOther)['mid'], cloze.id.value.toInt());
+    expect((await controller.loadNewNote()).notetypeId, wideClozeId);
+    expect(
+      await controller.validateNewNote(
+        switched.notetypeId,
+        switched.content.values,
+      ),
+      isA<NoteFieldsCheckSuccess>(),
+    );
+    expect(
+      await controller.validateNewNote(switched.notetypeId, ['']),
+      isA<NoteFieldsCheckFailure>(),
+    );
+    await storage.addNoteToDeck(
+      Note(notetypeId: switched.notetypeId, fields: switched.content.values),
+      rememberedDeck.id,
+    );
+    expect(
+      await controller.validateNewNote(
+        switched.notetypeId,
+        switched.content.values,
+      ),
+      isA<NoteFieldsCheckSuccess>(),
+      reason: 'duplicates remain nonfatal after changing note type',
+    );
+    final cardsCreated = await controller.saveNewNote(
+      draft: switched,
+      fields: switched.content.values,
+      tags: switched.content.tags,
+    );
+    expect(cardsCreated, greaterThan(0));
+    final saved = await storage.getNote(switched.note!.id);
+    expect(saved!.notetypeId, cloze.id.value);
+    expect(saved.fields, ['{{c1::front}}; back']);
+    expect(saved.tags, ['Study::Tagged']);
+
+    await storage.writeCollectionConfigInt64(
+      '_nt_${cloze.id.value}_lastDeck',
+      Int64(987654321),
+    );
+    final fallback = await controller.changeNewNoteType(
+      draft: initial.copyWith(
+        deckId: selectedDeck.id,
+        deckName: selectedDeck.name,
+      ),
+      notetypeId: cloze.id.value,
+      fields: ['kept field', 'kept extra'],
+      tags: const [],
+    );
+    expect(fallback.deckId, selectedDeck.id);
+
+    final filteredDeck = storage.decks.addDeck(
+      Deck(
+        name: 'Filtered remembered destination',
+        kind: FilteredDeckKind(deck_proto.Deck_Filtered()),
+      ),
+    );
+    await storage.writeCollectionConfigInt64(
+      '_nt_${cloze.id.value}_lastDeck',
+      filteredDeck.id,
+    );
+    final filteredFallback = await controller.changeNewNoteType(
+      draft: initial.copyWith(
+        deckId: selectedDeck.id,
+        deckName: selectedDeck.name,
+      ),
+      notetypeId: cloze.id.value,
+      fields: ['kept field', 'kept extra'],
+      tags: const [],
+    );
+    expect(filteredFallback.deckId, selectedDeck.id);
+  });
 
   test(
     'new-note save rejects a destination deck that became filtered',

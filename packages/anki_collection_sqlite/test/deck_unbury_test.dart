@@ -218,6 +218,14 @@ void main() {
       expect((await storage.getCard(Int64(500)))!.originalDeckId, home.id);
       await storage.redoLastCollectionOperation();
       expect((await storage.getCard(Int64(500)))!.deckId, home.id);
+      await storage.addOrUpdateCard(
+        Card(id: Int64(504), deckId: home.id, ctype: CardType.newCard),
+      );
+      expect(storage.canUndoCollectionOperation, isFalse);
+      await expectLater(
+        storage.undoLastCollectionOperation(),
+        throwsStateError,
+      );
     },
   );
 

@@ -298,6 +298,8 @@
   "browserPreview": "Preview",
   "browserEdit": "Edit selected",
   "browserBulkActions": "Actions for selected cards",
+  "browserBulkActionCompleted": "Browser action completed",
+  "browserUndoBulkAction": "Undo",
   "browserSuspend": "Suspend",
   "browserBury": "Bury",
   "browserDelete": "Delete",

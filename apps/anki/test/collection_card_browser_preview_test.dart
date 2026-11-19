@@ -347,6 +347,93 @@ void main() {
   });
 
   test(
+    'bulk suspend undo restores exact queues and leaves current deck alone',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final snapshot = await controller.load();
+      final selected = [snapshot.rows[0].id, snapshot.rows[1].id];
+      final before = [
+        for (final id in cardIds.take(2)) (await storage.getCard(id))!,
+      ];
+      final currentDeck = storage.currentDeckId;
+
+      await controller.performBulkAction(
+        CardBrowserBulkAction.suspend,
+        selected,
+      );
+      expect(controller.canUndoCollectionOperation, isTrue);
+      for (final id in cardIds.take(2)) {
+        expect((await storage.getCard(id))!.queue, models.CardQueue.suspended);
+      }
+
+      await controller.undoLastCollectionOperation();
+      for (var index = 0; index < before.length; index++) {
+        expect(
+          (await storage.getCard(before[index].id))!.queue,
+          before[index].queue,
+        );
+      }
+      expect(controller.canUndoCollectionOperation, isFalse);
+      expect(storage.currentDeckId, currentDeck);
+    },
+  );
+
+  test('later collection mutation invalidates the bulk undo step', () async {
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    final snapshot = await controller.load();
+    await controller.performBulkAction(CardBrowserBulkAction.suspend, [
+      snapshot.rows.first.id,
+    ]);
+    expect(controller.canUndoCollectionOperation, isTrue);
+
+    await storage.updateCard((await storage.getCard(cardIds.last))!);
+
+    expect(controller.canUndoCollectionOperation, isFalse);
+  });
+
+  test(
+    'bury undo preserves a suspended card within a mixed selection',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final snapshot = await controller.load();
+      final selected = [snapshot.rows[0].id, snapshot.rows[1].id];
+      final suspended = models.Card.fromProto(
+        (await storage.getCard(cardIds.first))!.toProto()
+          ..queue = models.CardQueue.suspended.value,
+      );
+      await storage.updateCard(suspended);
+      final before = [
+        (await storage.getCard(cardIds.first))!,
+        (await storage.getCard(cardIds[1]))!,
+      ];
+
+      await controller.performBulkAction(CardBrowserBulkAction.bury, selected);
+      expect(
+        (await storage.getCard(cardIds.first))!.queue,
+        models.CardQueue.suspended,
+      );
+      expect(
+        (await storage.getCard(cardIds[1]))!.queue,
+        models.CardQueue.userBuried,
+      );
+
+      await controller.undoLastCollectionOperation();
+      for (final card in before) {
+        expect((await storage.getCard(card.id))!.queue, card.queue);
+      }
+    },
+  );
+
+  test(
     'deleting a selected card deletes its note and refreshes the active search',
     () async {
       final controller = CollectionCardBrowserController(
@@ -371,6 +458,87 @@ void main() {
         greaterThan(1),
       );
       expect(storage.currentDeckId, currentDeck);
+    },
+  );
+
+  test(
+    'delete undo restores notes, sibling cards, and review history losslessly',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final snapshot = await controller.search('Question 1');
+      final note = (await storage.getNote(noteIds.first))!;
+      final cards = await storage.allCardsOfNote(noteIds.first);
+      final revlog = models.RevlogEntry(
+        id: models.RevlogId(Int64.parseInt('9007199254741123')),
+        cardId: cards.first.id,
+        usn: -1,
+        buttonChosen: 3,
+        interval: 17,
+        lastInterval: 8,
+        easeFactor: 2500,
+        takenMillis: 1234,
+        reviewKind: models.RevlogReviewKind.review,
+      );
+      storage.revlog.addRevlogEntry(revlog);
+      final currentDeck = storage.currentDeckId;
+
+      await controller.performBulkAction(CardBrowserBulkAction.delete, [
+        snapshot.rows.first.id,
+      ]);
+      expect(await storage.getNote(note.id), isNull);
+      expect(storage.revlog.getRevlogEntry(revlog.id), isNull);
+
+      await controller.undoLastCollectionOperation();
+      expect(
+        (await storage.getNote(note.id))!.toProto().writeToBuffer(),
+        note.toProto().writeToBuffer(),
+      );
+      expect(await storage.allCardsOfNote(note.id), hasLength(cards.length));
+      final restoredReview = storage.revlog.getRevlogEntry(revlog.id)!;
+      expect(
+        restoredReview.toProto().writeToBuffer(),
+        revlog.toProto().writeToBuffer(),
+      );
+      expect(storage.currentDeckId, currentDeck);
+    },
+  );
+
+  test(
+    'Notes mode deletes and restores a selected note with no cards',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await controller.load();
+      await controller.updateMode(BrowserColumnMode.notes);
+      final notetypes = await storage.getNotetypesByIds(
+        await storage.getAllNotetypeIds(),
+      );
+      final basic = notetypes.firstWhere((value) => value.name == 'Basic');
+      final orphan = models.Note.newNote(
+        basic,
+        randomU64: () => BigInt.from(99),
+      );
+      orphan.setField(0, 'Orphaned question');
+      orphan.setField(1, 'Orphaned answer');
+      orphan.prepareForUpdate(basic, normalizeText: false);
+      await storage.addNote(orphan);
+
+      await controller.performBulkAction(CardBrowserBulkAction.delete, [
+        BrowserRowId.bigInt(BigInt.parse(orphan.id.toString())),
+      ]);
+      expect(await storage.getNote(orphan.id), isNull);
+
+      await controller.undoLastCollectionOperation();
+      expect((await storage.getNote(orphan.id))!.fields, [
+        'Orphaned question',
+        'Orphaned answer',
+      ]);
+      expect(await storage.allCardsOfNote(orphan.id), isEmpty);
     },
   );
 

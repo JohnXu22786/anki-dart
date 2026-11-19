@@ -699,18 +699,120 @@ void main() {
   });
 
   test(
-    'direct substore writes require explicit history invalidation',
+    'direct substore writes invalidate operation history automatically',
     () async {
       await storage.updateExistingNote(_note(fields: ['edited', 'back']));
-      storage.tags.registerTag(Tag(name: 'direct', usn: -1, expanded: false));
-      expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+      await storage.runUndoableCollectionOperation(
+        apply: () async {},
+        undo: () async {},
+        redo: () async {},
+      );
+      expect(storage.canUndoCollectionOperation, isTrue);
 
-      storage.discardExistingNoteUpdateUndoHistory();
+      storage.tags.registerTag(Tag(name: 'direct', usn: -1, expanded: false));
 
       expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
       expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+      expect(storage.canUndoCollectionOperation, isFalse);
     },
   );
+
+  test('revlog substore writes invalidate collection operation undo', () async {
+    database.execute('''
+      CREATE TABLE revlog (
+        id INTEGER PRIMARY KEY, cid INTEGER, usn INTEGER, ease INTEGER,
+        ivl INTEGER, lastIvl INTEGER, factor INTEGER, time INTEGER, type INTEGER
+      )
+    ''');
+    await storage.runUndoableCollectionOperation(
+      apply: () async {},
+      undo: () async {},
+      redo: () async {},
+    );
+    expect(storage.canUndoCollectionOperation, isTrue);
+
+    storage.revlog.addRevlogEntry(
+      RevlogEntry(id: RevlogId(Int64(123)), cardId: Int64(42)),
+    );
+
+    expect(storage.canUndoCollectionOperation, isFalse);
+  });
+
+  test('public note updates invalidate collection operation undo', () async {
+    await storage.runUndoableCollectionOperation(
+      apply: () async {},
+      undo: () async {},
+      redo: () async {},
+    );
+    expect(storage.canUndoCollectionOperation, isTrue);
+    final note = (await storage.getNote(Int64(42)))!;
+    note.fieldsMut()[0] = 'external update';
+    final notetype = (await storage.getNotetypesByIds([
+      NotetypeId(note.notetypeId),
+    ])).single;
+    note.prepareForUpdate(notetype, normalizeText: false);
+
+    await storage.updateNote(note);
+
+    expect(storage.canUndoCollectionOperation, isFalse);
+  });
+
+  test('public undo helpers invalidate stale collection history', () async {
+    database.execute(
+      'CREATE TABLE graves (usn INTEGER, oid INTEGER, type INTEGER)',
+    );
+
+    Future<void> addUndoStep() => storage.runUndoableCollectionOperation(
+      apply: () async {},
+      undo: () async {},
+      redo: () async {},
+    );
+
+    await addUndoStep();
+    storage.addDeletionGrave(Int64(55), note: false);
+    expect(storage.canUndoCollectionOperation, isFalse);
+
+    await addUndoStep();
+    storage.removeDeletionGrave(Int64(55), note: false);
+    expect(storage.canUndoCollectionOperation, isFalse);
+
+    await addUndoStep();
+    storage.restoreCollectionModifiedAt(Int64(99));
+    expect(storage.canUndoCollectionOperation, isFalse);
+  });
+
+  test('bulk operation supersedes existing note edit undo history', () async {
+    await storage.updateExistingNote(_note(fields: ['edited', 'back']));
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+
+    await storage.runUndoableCollectionOperation(
+      apply: () async => database.execute('UPDATE col SET mod = 700'),
+      undo: () async => database.execute('UPDATE col SET mod = 500'),
+      redo: () async => database.execute('UPDATE col SET mod = 700'),
+    );
+
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+    expect(storage.canUndoCollectionOperation, isTrue);
+  });
+
+  test('post-commit flush failure retains the committed undo step', () async {
+    flushHook = () async => throw StateError('injected flush failure');
+
+    await expectLater(
+      storage.runUndoableCollectionOperation(
+        apply: () async => database.execute('UPDATE col SET mod = 700'),
+        undo: () async => database.execute('UPDATE col SET mod = 500'),
+        redo: () async => database.execute('UPDATE col SET mod = 700'),
+      ),
+      throwsA(isA<StateError>()),
+    );
+    flushHook = null;
+
+    expect(await storage.queryInt('SELECT mod FROM col'), 700);
+    expect(storage.canUndoCollectionOperation, isTrue);
+    await storage.undoLastCollectionOperation();
+    expect(await storage.queryInt('SELECT mod FROM col'), 500);
+  });
 
   test(
     'executeBatch invalidates note-update history before direct SQL writes',

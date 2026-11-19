@@ -591,6 +591,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browserBulkActions => 'Actions for selected cards';
 
   @override
+  String get browserBulkActionCompleted => 'Browser action completed';
+
+  @override
+  String get browserUndoBulkAction => 'Undo';
+
+  @override
   String get browserSuspend => 'Suspend';
 
   @override

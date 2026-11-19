@@ -117,6 +117,13 @@ abstract interface class CardBrowserNoteUpdateUndoController {
   Future<void> undoLastNoteUpdate();
 }
 
+/// Collection operation history for source-compatible browser bulk undo.
+abstract interface class CardBrowserCollectionUndoController {
+  bool get canUndoCollectionOperation;
+  int get collectionUndoGeneration;
+  Future<void> undoLastCollectionOperation();
+}
+
 /// Optional mode capability for controllers backed by a collection browser.
 abstract interface class CardBrowserModeController {
   Future<CardBrowserSnapshot> updateMode(BrowserColumnMode mode);
@@ -1256,15 +1263,67 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
 
   void _runBulkAction(CardBrowserBulkAction action) {
     _runAction(() async {
-      await widget.controller.performBulkAction(
-        action,
-        List.unmodifiable(_selectedRows),
-      );
+      final controller = widget.controller;
+      final strings = AppLocalizations.of(context)!;
+      final messenger = ScaffoldMessenger.of(context);
+      final undoController = controller is CardBrowserCollectionUndoController
+          ? controller as CardBrowserCollectionUndoController
+          : null;
+      final generationBefore = undoController?.collectionUndoGeneration;
+      Object? actionError;
+      try {
+        await widget.controller.performBulkAction(
+          action,
+          List.unmodifiable(_selectedRows),
+        );
+      } catch (error) {
+        actionError = error;
+      }
+      final committed =
+          actionError == null ||
+          (undoController != null &&
+              undoController.collectionUndoGeneration != generationBefore);
+      if (!committed) {
+        Error.throwWithStackTrace(actionError, StackTrace.current);
+      }
       if (!mounted) return;
       if (action == CardBrowserBulkAction.delete) {
         _lastSelectedRowId = null;
         _publishSelection(const [], false);
       }
+      await _search(_searchController.text);
+      if (!mounted) return;
+      if (actionError != null) _showActionError(actionError);
+      if (undoController != null &&
+          undoController.canUndoCollectionOperation &&
+          undoController.collectionUndoGeneration != generationBefore) {
+        final expectedGeneration = undoController.collectionUndoGeneration;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(strings.browserBulkActionCompleted),
+            action: SnackBarAction(
+              label: strings.browserUndoBulkAction,
+              onPressed: () => _undoLastCollectionOperation(expectedGeneration),
+            ),
+          ),
+        );
+      }
+    });
+  }
+
+  Future<void> _undoLastCollectionOperation(int expectedGeneration) async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserCollectionUndoController) {
+      return;
+    }
+    final undoController = controller as CardBrowserCollectionUndoController;
+    if (!undoController.canUndoCollectionOperation ||
+        undoController.collectionUndoGeneration != expectedGeneration) {
+      return;
+    }
+    await _runAction(() async {
+      await undoController.undoLastCollectionOperation();
+      if (!mounted) return;
       await _search(_searchController.text);
     });
   }

@@ -94,21 +94,37 @@ final class CollectionSqliteStorage
   final List<_ExistingNoteUpdateUndoStep> _noteUpdateRedoSteps = [];
   int _noteUpdateUndoCounter = 0;
   int _noteUpdateHistoryGeneration = 0;
+  final List<_CollectionUndoStep> _collectionUndoSteps = [];
+  final List<_CollectionUndoStep> _collectionRedoSteps = [];
+  bool _preservingCollectionUndoHistory = false;
+  int _collectionUndoGeneration = 0;
   late final DeckStorage _deckStorage = DeckStorage(
-    _DeckStorageDatabase(_database),
+    _DeckStorageDatabase(
+      _database,
+      _invalidateOperationHistoryAfterSubstoreWrite,
+    ),
   );
   late final DeckConfigStorage _deckConfigStorage = DeckConfigStorage(
-    _DeckStorageDatabase(_database),
+    _DeckStorageDatabase(
+      _database,
+      _invalidateOperationHistoryAfterSubstoreWrite,
+    ),
   );
   late final TagStorage _tagStorage = TagStorage(
-    _DeckStorageDatabase(_database),
+    _DeckStorageDatabase(
+      _database,
+      _invalidateOperationHistoryAfterSubstoreWrite,
+    ),
   );
   late final NoteStorage _noteStorage = NoteStorage(
     _CollectionNoteStorageDatabase(this),
     nowMillis: _nowMillis,
   );
   late final RevlogStorage _revlogStorage = RevlogStorage(
-    _DeckStorageDatabase(_database),
+    _DeckStorageDatabase(
+      _database,
+      _invalidateOperationHistoryAfterSubstoreWrite,
+    ),
   );
   bool _connectionClosed = false;
   bool _closed = false;
@@ -215,6 +231,7 @@ final class CollectionSqliteStorage
         final operationTimeMillis =
             _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
         late final ExistingNoteUpdateResult result;
+        _preservingCollectionUndoHistory = true;
         try {
           result = await _updateExistingNote(
             edited,
@@ -223,8 +240,12 @@ final class CollectionSqliteStorage
         } catch (_) {
           discardExistingNoteUpdateUndoHistory();
           rethrow;
+        } finally {
+          _preservingCollectionUndoHistory = false;
         }
         if (result.changed) {
+          _collectionUndoSteps.clear();
+          _collectionRedoSteps.clear();
           final record = result.undoRecord!;
           final afterMillis = _readInt64(
             _database.select('SELECT mod FROM col').single['mod'],
@@ -283,6 +304,16 @@ final class CollectionSqliteStorage
     _noteUpdateHistoryGeneration++;
     _noteUpdateUndoSteps.clear();
     _noteUpdateRedoSteps.clear();
+    if (!_preservingCollectionUndoHistory) {
+      _collectionUndoSteps.clear();
+      _collectionRedoSteps.clear();
+    }
+  }
+
+  void _invalidateOperationHistoryAfterSubstoreWrite() {
+    if (!_preservingCollectionUndoHistory) {
+      discardExistingNoteUpdateUndoHistory();
+    }
   }
 
   /// Reverts the latest successful [updateExistingNote] operation.
@@ -292,6 +323,7 @@ final class CollectionSqliteStorage
     }
     _noteUpdateUndoCounter++;
     final step = _noteUpdateUndoSteps.removeLast();
+    _preservingCollectionUndoHistory = true;
     try {
       _applyExistingNoteUpdateUndoStep(step, undo: true);
       _noteUpdateRedoSteps.add(step);
@@ -299,6 +331,8 @@ final class CollectionSqliteStorage
     } catch (_) {
       discardExistingNoteUpdateUndoHistory();
       rethrow;
+    } finally {
+      _preservingCollectionUndoHistory = false;
     }
   });
 
@@ -309,6 +343,7 @@ final class CollectionSqliteStorage
     }
     _noteUpdateUndoCounter++;
     final step = _noteUpdateRedoSteps.removeLast();
+    _preservingCollectionUndoHistory = true;
     try {
       _applyExistingNoteUpdateUndoStep(step, undo: false);
       _noteUpdateUndoSteps.add(step);
@@ -316,6 +351,8 @@ final class CollectionSqliteStorage
     } catch (_) {
       discardExistingNoteUpdateUndoHistory();
       rethrow;
+    } finally {
+      _preservingCollectionUndoHistory = false;
     }
   });
 
@@ -869,6 +906,98 @@ INSERT OR REPLACE INTO cards (
   /// Returns source-compatible review log row operations on this collection.
   RevlogStorage get revlog => _revlogStorage;
 
+  bool get canUndoCollectionOperation => _collectionUndoSteps.isNotEmpty;
+  int get collectionUndoGeneration => _collectionUndoGeneration;
+
+  /// Commits one collection operation and retains its exact inverse in the
+  /// same bounded, process-local history used by Card Browser bulk actions.
+  Future<void> runUndoableCollectionOperation({
+    required Future<void> Function() apply,
+    required Future<void> Function() undo,
+    required Future<void> Function() redo,
+  }) async {
+    await beginExclusive();
+    _preservingCollectionUndoHistory = true;
+    try {
+      await apply();
+      _executeCached('commit');
+      // Bulk operations supersede the editor's narrower undo history while
+      // retaining the just-committed collection operation in the shared stack.
+      discardExistingNoteUpdateUndoHistory();
+    } catch (error, stackTrace) {
+      try {
+        await rollback();
+      } catch (_) {
+        // Keep the operation failure visible.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    } finally {
+      _preservingCollectionUndoHistory = false;
+    }
+    _collectionRedoSteps.clear();
+    _collectionUndoSteps.add(_CollectionUndoStep(undo: undo, redo: redo));
+    _collectionUndoGeneration++;
+    if (_collectionUndoSteps.length > 30) _collectionUndoSteps.removeAt(0);
+    await _flush();
+  }
+
+  Future<void> undoLastCollectionOperation() async {
+    if (_collectionUndoSteps.isEmpty) {
+      throw StateError('no collection operation to undo');
+    }
+    final step = _collectionUndoSteps.removeLast();
+    try {
+      await _replayCollectionOperation(step.undo);
+    } catch (_) {
+      _collectionUndoSteps.add(step);
+      rethrow;
+    }
+    _collectionRedoSteps.add(step);
+    _collectionUndoGeneration++;
+    await _flush();
+  }
+
+  Future<void> _replayCollectionOperation(
+    Future<void> Function() action,
+  ) async {
+    await beginExclusive();
+    _preservingCollectionUndoHistory = true;
+    try {
+      await action();
+      _executeCached('commit');
+    } catch (error, stackTrace) {
+      try {
+        await rollback();
+      } catch (_) {}
+      Error.throwWithStackTrace(error, stackTrace);
+    } finally {
+      _preservingCollectionUndoHistory = false;
+    }
+  }
+
+  /// Reapplies the most recently undone browser collection operation.
+  Future<void> redoLastCollectionOperation() async {
+    if (_collectionRedoSteps.isEmpty) {
+      throw StateError('no collection operation to redo');
+    }
+    final step = _collectionRedoSteps.removeLast();
+    try {
+      await _replayCollectionOperation(step.redo);
+    } catch (_) {
+      _collectionRedoSteps.add(step);
+      rethrow;
+    }
+    _collectionUndoSteps.add(step);
+    _collectionUndoGeneration++;
+    await _flush();
+  }
+
+  /// Restores a review log entry with its original 64-bit ID.
+  void restoreRevlogEntry(RevlogEntry entry) {
+    final restored = _revlogStorage.addRevlogEntry(entry);
+    if (restored == null) throw StateError('revlog ID is already in use');
+  }
+
   /// Opens [location] through the chosen [driver] and applies collection
   /// connection pragmas before returning the database adapter.
   ///
@@ -1047,6 +1176,41 @@ GROUP BY did
 
   /// Returns Core's configured current deck, or its source default ID.
   Int64 get currentDeckId => readCollectionConfigInt64('curDeck') ?? Int64.ONE;
+
+  /// Returns the collection modification value exactly as stored by Core.
+  Int64 get collectionModifiedAt =>
+      _readInt64(_database.select('SELECT mod FROM col').single['mod']);
+
+  /// Restores the exact stored collection modification value during undo.
+  void restoreCollectionModifiedAt(Int64 value) {
+    _invalidateOperationHistoryAfterSubstoreWrite();
+    _database.execute('UPDATE col SET mod = ?', [_toSqlInt64(value)]);
+  }
+
+  /// Records a Core-compatible card or note deletion grave.
+  void addDeletionGrave(Int64 objectId, {required bool note}) {
+    _invalidateOperationHistoryAfterSubstoreWrite();
+    _database.execute(
+      'INSERT OR IGNORE INTO graves (oid, type, usn) VALUES (?, ?, -1)',
+      [_toSqlInt64(objectId), note ? 1 : 0],
+    );
+  }
+
+  /// Reports whether the collection already has this grave before an action.
+  bool hasDeletionGrave(Int64 objectId, {required bool note}) =>
+      _database.select('SELECT 1 FROM graves WHERE oid = ? AND type = ?', [
+        _toSqlInt64(objectId),
+        note ? 1 : 0,
+      ]).isNotEmpty;
+
+  /// Removes a deletion grave when an operation is undone.
+  void removeDeletionGrave(Int64 objectId, {required bool note}) {
+    _invalidateOperationHistoryAfterSubstoreWrite();
+    _database.execute('DELETE FROM graves WHERE oid = ? AND type = ?', [
+      _toSqlInt64(objectId),
+      note ? 1 : 0,
+    ]);
+  }
 
   /// Marks the collection as modified at [modifiedAtMillis].
   ///
@@ -2018,6 +2182,13 @@ WHERE queue IN (-2, -3)
   }
 }
 
+final class _CollectionUndoStep {
+  const _CollectionUndoStep({required this.undo, required this.redo});
+
+  final Future<void> Function() undo;
+  final Future<void> Function() redo;
+}
+
 final class _CollectionNoteStorageDatabase implements NoteStorageDatabase {
   const _CollectionNoteStorageDatabase(this.storage);
 
@@ -2062,9 +2233,10 @@ final class _DeckStorageDatabase
         DeckConfigStorageDatabase,
         TagStorageDatabase,
         RevlogStorageDatabase {
-  const _DeckStorageDatabase(this.database);
+  const _DeckStorageDatabase(this.database, this.onWrite);
 
   final CommonDatabase database;
+  final void Function() onWrite;
 
   @override
   Int64 get lastInsertRowId => Int64(database.lastInsertRowId);
@@ -2089,7 +2261,9 @@ final class _DeckStorageDatabase
   @override
   int execute(String sql, [List<Object?> parameters = const []]) {
     database.execute(sql, _sqliteParameters(parameters));
-    return database.updatedRows;
+    final updatedRows = database.updatedRows;
+    if (updatedRows > 0) onWrite();
+    return updatedRows;
   }
 
   static List<Object?> _sqliteParameters(List<Object?> parameters) => parameters

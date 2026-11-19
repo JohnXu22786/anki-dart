@@ -1171,6 +1171,18 @@ abstract class AppLocalizations {
   /// **'Actions for selected cards'**
   String get browserBulkActions;
 
+  /// No description provided for @browserBulkActionCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser action completed'**
+  String get browserBulkActionCompleted;
+
+  /// No description provided for @browserUndoBulkAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get browserUndoBulkAction;
+
   /// No description provided for @browserSuspend.
   ///
   /// In en, this message translates to:

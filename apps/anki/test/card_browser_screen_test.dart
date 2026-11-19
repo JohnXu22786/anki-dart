@@ -1253,6 +1253,74 @@ void main() {
     },
   );
 
+  testWidgets('successful bulk operation exposes collection undo', (
+    tester,
+  ) async {
+    final controller = _UndoBulkController(_sample());
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Browser action completed'), findsOneWidget);
+    expect(find.text('Undo'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(controller.undoCalls, 1);
+  });
+
+  testWidgets('an older bulk undo snackbar cannot undo a newer operation', (
+    tester,
+  ) async {
+    final controller = _UndoBulkController(_sample());
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-bury')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Undo').first);
+    await tester.pumpAndSettle();
+
+    expect(controller.undoCalls, 0);
+  });
+
+  testWidgets('post-commit error still leaves the undo snackbar reachable', (
+    tester,
+  ) async {
+    final controller = _UndoBulkController(_sample())..failAfterCommit = true;
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('The browser action could not be completed'),
+      findsOneWidget,
+    );
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(controller.undoCalls, 1);
+  });
+
   testWidgets('sort menu preserves caller-projected active labels', (
     tester,
   ) async {
@@ -1673,6 +1741,39 @@ final class _PreviewController extends _Controller
       ],
       currentIndex: 0,
     );
+  }
+}
+
+final class _UndoBulkController extends _Controller
+    implements CardBrowserCollectionUndoController {
+  _UndoBulkController(super.snapshot);
+
+  int generation = 0;
+  int undoCalls = 0;
+  bool canUndo = false;
+  bool failAfterCommit = false;
+
+  @override
+  bool get canUndoCollectionOperation => canUndo;
+
+  @override
+  int get collectionUndoGeneration => generation;
+
+  @override
+  Future<void> performBulkAction(
+    CardBrowserBulkAction action,
+    List<BrowserRowId> rows,
+  ) async {
+    await super.performBulkAction(action, rows);
+    canUndo = true;
+    generation++;
+    if (failAfterCommit) throw StateError('flush failure after commit');
+  }
+
+  @override
+  Future<void> undoLastCollectionOperation() async {
+    undoCalls++;
+    canUndo = false;
   }
 }
 

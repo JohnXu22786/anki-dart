@@ -287,6 +287,36 @@ void main() {
       ).loadNewNote();
       expect(noBrowserOverride.deckId, rememberedDeck.id);
 
+      final wideDeckId = Int64(9007199254740995);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: wideDeckId,
+          name: 'Wide remembered deck',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      await storage.selectDeck(wideDeckId);
+      expect(storage.currentDeckId, wideDeckId);
+      await storage.writeCollectionConfig('addToCur', true);
+      final wideCurrentDefault = await CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      ).loadNewNote();
+      expect(wideCurrentDefault.deckId, wideDeckId);
+
+      await storage.addNoteToDeck(
+        Note(notetypeId: cloze.id.value, fields: ['{{c1::wide}}', 'back']),
+        wideDeckId,
+      );
+      await storage.selectDeck(currentDeck.id);
+      await storage.writeCollectionConfig('addToCur', false);
+      final wideRememberedDefault = await CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      ).loadNewNote();
+      expect(wideRememberedDefault.notetypeId, cloze.id.value);
+      expect(wideRememberedDefault.deckId, wideDeckId);
+
       await storage.writeCollectionConfig('curModel', cloze.id.value.toInt());
       final staleMidDeck = storage.decks.addDeck(
         Deck(
@@ -315,13 +345,19 @@ void main() {
         preferences: preferences,
       );
       final draft = await controller.loadNewNote();
-      const fields = ['flush retry unique front', 'back'];
-      final tags = ['FlushRetry'];
+      const initialFields = ['flush retry unique front', 'back'];
+      const editedFields = ['edited after flush failure', 'back'];
+      const initialTags = ['FlushRetry'];
+      const editedTags = ['FlushRetryEdited'];
       flushFails = true;
       final initialFlushCalls = flushCalls;
 
       await expectLater(
-        controller.saveNewNote(draft: draft, fields: fields, tags: tags),
+        controller.saveNewNote(
+          draft: draft,
+          fields: initialFields,
+          tags: initialTags,
+        ),
         throwsStateError,
       );
 
@@ -340,8 +376,8 @@ void main() {
       final retryFlushCalls = flushCalls;
       final count = await controller.saveNewNote(
         draft: draft,
-        fields: fields,
-        tags: tags,
+        fields: editedFields,
+        tags: editedTags,
       );
 
       expect(count, cardsBeforeRetry.length);
@@ -352,6 +388,9 @@ void main() {
         await storage.allCardIdsOfNoteInTemplateOrder(committedId),
         cardsBeforeRetry,
       );
+      final saved = await storage.getNote(committedId);
+      expect(saved!.fields, editedFields);
+      expect(saved.tags, editedTags);
     },
   );
 

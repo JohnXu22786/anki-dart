@@ -140,6 +140,9 @@ final class CollectionSqliteStorage
     return _decodeJsonValue(rows.single['val']);
   }
 
+  /// Reads an integer config value without routing it through a JS number.
+  Int64? readCollectionConfigInt64(String key) => _readConfigInt64(key);
+
   ExistingNoteUpdateConfigSnapshot? _readExistingNoteUpdateConfigSnapshot(
     String key,
   ) {
@@ -1043,9 +1046,7 @@ GROUP BY did
   }
 
   /// Returns Core's configured current deck, or its source default ID.
-  Int64 get currentDeckId => _readConfigInt('curDeck') == null
-      ? Int64.ONE
-      : Int64(_readConfigInt('curDeck')!);
+  Int64 get currentDeckId => readCollectionConfigInt64('curDeck') ?? Int64.ONE;
 
   /// Selects [deckId], matching Core's non-undoable current-deck setting.
   Future<void> selectDeck(Int64 deckId) =>

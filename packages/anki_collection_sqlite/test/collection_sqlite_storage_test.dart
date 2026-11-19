@@ -65,6 +65,29 @@ void main() {
     await reopened.close();
   });
 
+  test(
+    'reads current and remembered deck IDs without JS number narrowing',
+    () async {
+      final database = await _openLatestCollection(path);
+      const wideId = '9007199254740995';
+      await database.executeBatch(
+        "INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) "
+        "VALUES ('curDeck', -1, 0, CAST('$wideId' AS BLOB))",
+      );
+      await database.executeBatch(
+        "INSERT OR REPLACE INTO config (key, usn, mtime_secs, val) "
+        "VALUES ('_nt_9_lastDeck', -1, 0, CAST('$wideId' AS BLOB))",
+      );
+
+      expect(database.currentDeckId, Int64.parseInt(wideId));
+      expect(
+        database.readCollectionConfigInt64('_nt_9_lastDeck'),
+        Int64.parseInt(wideId),
+      );
+      await database.close();
+    },
+  );
+
   test('source callbacks create localized defaults and reopen unchanged', () async {
     final database = await CollectionSqliteStorage.open(
       driver: _nativeDriver,

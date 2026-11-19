@@ -871,8 +871,7 @@ final class CollectionCardBrowserController
         ? deckNotetypeId
         : null;
     final configuredTypeId =
-        validDeckNotetypeId ??
-        _configInt64(storage.readCollectionConfig('curModel'));
+        validDeckNotetypeId ?? storage.readCollectionConfigInt64('curModel');
     final notetype =
         typeById[configuredTypeId] ??
         typeById[Int64.ONE] ??
@@ -883,8 +882,8 @@ final class CollectionCardBrowserController
             .first;
 
     final useCurrentDeck = storage.readCollectionConfig('addToCur') != false;
-    final rememberedDeck = _configInt64(
-      storage.readCollectionConfig('_nt_${notetype.id.value}_lastDeck'),
+    final rememberedDeck = storage.readCollectionConfigInt64(
+      '_nt_${notetype.id.value}_lastDeck',
     );
     final fallbackDeck = useCurrentDeck
         ? _usableDeck(storage, currentDeck)
@@ -977,9 +976,10 @@ final class CollectionCardBrowserController
     }
     if (note.id != Int64.ZERO) {
       // addNoteToDeck commits before its async driver flush. If that flush
-      // failed, retry persistence of the already-committed note instead of
-      // adding twice.
+      // failed, retry persistence then reconcile any edits made after the
+      // failed save without adding the note or its cards twice.
       await storage.flushPendingWrites();
+      await saveNote(note.id, fields, tags);
       return (await storage.allCardIdsOfNoteInTemplateOrder(note.id)).length;
     }
     note.fieldsMut()

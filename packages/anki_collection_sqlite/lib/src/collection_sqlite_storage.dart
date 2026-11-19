@@ -141,13 +141,13 @@ final class CollectionSqliteStorage
     String key,
   ) {
     final rows = _database.select(
-      'SELECT key, usn, mtime_secs, val FROM config WHERE key = ?',
+      'SELECT key AS config_key, usn, mtime_secs, val FROM config WHERE key = ?',
       [key],
     );
     if (rows.isEmpty) return null;
     final row = rows.single;
     return ExistingNoteUpdateConfigSnapshot(
-      key: row['key'] as String,
+      key: row['config_key'] as String,
       usn: (row['usn'] as num).toInt(),
       mtimeSecs: _readInt64(row['mtime_secs']),
       value: row['val'] as List<int>,

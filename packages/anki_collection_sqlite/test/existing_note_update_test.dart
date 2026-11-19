@@ -66,7 +66,7 @@ void main() {
         config BLOB, PRIMARY KEY (ntid, ord)
       );
       CREATE TABLE config (
-        key TEXT PRIMARY KEY, usn INTEGER, mtime_secs INTEGER, val BLOB
+        KEY TEXT PRIMARY KEY, usn INTEGER, mtime_secs INTEGER, val BLOB
       );
       CREATE TABLE tags (
         tag TEXT PRIMARY KEY COLLATE unicase, usn INTEGER, collapsed INTEGER

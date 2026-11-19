@@ -24,6 +24,29 @@ import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('legacy deck mid parses exact numeric Int64 JSON tokens', () {
+    expect(
+      legacyDeckNotetypeIdFromJsonBytes(
+        utf8.encode('{"nested":{"mid":7},"mid":9007199254740993}'),
+      ),
+      Int64.parseInt('9007199254740993'),
+    );
+    expect(
+      legacyDeckNotetypeIdFromJsonBytes(
+        utf8.encode('{"mid":"9007199254740993"}'),
+      ),
+      Int64.parseInt('9007199254740993'),
+    );
+    expect(
+      legacyDeckNotetypeIdFromJsonBytes(utf8.encode('{"nested":{"mid":7}}')),
+      isNull,
+    );
+    expect(
+      legacyDeckNotetypeIdFromJsonBytes(utf8.encode('{"mid"::7}')),
+      isNull,
+    );
+  });
+
   late io.Directory directory;
   late CollectionRuntime runtime;
   late SharedPreferencesAsync preferences;

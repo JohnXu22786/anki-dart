@@ -1296,26 +1296,8 @@ final class CollectionCardBrowserController
     return result.generatedCardCount;
   }
 
-  Int64? _configInt64(Object? value) {
-    if (value is int) return Int64(value);
-    if (value is String) {
-      try {
-        return Int64.parseInt(value);
-      } on FormatException {
-        return null;
-      }
-    }
-    return null;
-  }
-
   Int64? _legacyDeckNotetypeId(List<int> other) {
-    if (other.isEmpty) return null;
-    try {
-      final decoded = jsonDecode(utf8.decode(other));
-      return decoded is Map ? _configInt64(decoded['mid']) : null;
-    } catch (_) {
-      return null;
-    }
+    return legacyDeckNotetypeIdFromJsonBytes(other);
   }
 
   Future<Int64?> _loadRememberedBrowserDeck(
@@ -1621,6 +1603,135 @@ final class CollectionCardBrowserController
           ? models.CardQueue.learn
           : models.CardQueue.dayLearn,
   };
+}
+
+/// Reads the top-level legacy deck `mid` without rounding JSON Int64 values.
+///
+/// `jsonDecode` converts large numbers to JavaScript doubles on Web, which can
+/// change an ID before it is wrapped in [Int64]. The small scanner below finds
+/// only the top-level member and parses its original integer token directly.
+@visibleForTesting
+Int64? legacyDeckNotetypeIdFromJsonBytes(List<int> other) {
+  if (other.isEmpty) return null;
+  try {
+    final source = utf8.decode(other);
+    // Keep the previous malformed-JSON behavior; the decoded number values
+    // are deliberately ignored because JavaScript may round a large `mid`.
+    jsonDecode(source);
+    var index = _skipJsonWhitespace(source, 0);
+    if (index >= source.length || source[index] != '{') return null;
+    index = _skipJsonWhitespace(source, index + 1);
+    Int64? parsedId;
+    var foundMid = false;
+    while (index < source.length && source[index] != '}') {
+      if (source[index] != '"') return null;
+      final keyEnd = _jsonStringEnd(source, index);
+      if (keyEnd == null) return null;
+      final key = jsonDecode(source.substring(index, keyEnd));
+      index = _skipJsonWhitespace(source, keyEnd);
+      if (index >= source.length || source[index] != ':') return null;
+      final valueStart = _skipJsonWhitespace(source, index + 1);
+      final valueEnd = _jsonValueEnd(source, valueStart);
+      if (valueEnd == null) return null;
+      if (key == 'mid') {
+        foundMid = true;
+        final rawValue = source.substring(valueStart, valueEnd);
+        final value = rawValue.trim();
+        if (value.startsWith('"')) {
+          final decoded = jsonDecode(value);
+          parsedId = decoded is String
+              ? _parseLegacyDeckModelId(decoded)
+              : null;
+        } else if (RegExp(r'^-?(?:0|[1-9][0-9]*)$').hasMatch(value)) {
+          parsedId = _parseLegacyDeckModelId(value);
+        } else {
+          parsedId = null;
+        }
+      }
+      index = _skipJsonWhitespace(source, valueEnd);
+      if (index < source.length && source[index] == ',') {
+        index = _skipJsonWhitespace(source, index + 1);
+      } else if (index >= source.length || source[index] != '}') {
+        return null;
+      }
+    }
+    if (index >= source.length || source[index] != '}') return null;
+    if (_skipJsonWhitespace(source, index + 1) != source.length) return null;
+    return foundMid ? parsedId : null;
+  } on Object {
+    return null;
+  }
+}
+
+Int64? _parseLegacyDeckModelId(String value) {
+  try {
+    return Int64.parseInt(value);
+  } on FormatException {
+    return null;
+  }
+}
+
+int _skipJsonWhitespace(String source, int index) {
+  while (index < source.length) {
+    final character = source.codeUnitAt(index);
+    if (character != 0x20 &&
+        character != 0x09 &&
+        character != 0x0a &&
+        character != 0x0d) {
+      break;
+    }
+    index++;
+  }
+  return index;
+}
+
+int? _jsonStringEnd(String source, int start) {
+  for (var index = start + 1; index < source.length; index++) {
+    final character = source.codeUnitAt(index);
+    if (character == 0x5c) {
+      index++;
+    } else if (character == 0x22) {
+      return index + 1;
+    }
+  }
+  return null;
+}
+
+int? _jsonValueEnd(String source, int start) {
+  if (start >= source.length) return null;
+  if (source[start] == '"') return _jsonStringEnd(source, start);
+  if (source[start] != '{' && source[start] != '[') {
+    var index = start;
+    while (index < source.length &&
+        source[index] != ',' &&
+        source[index] != '}' &&
+        source[index] != ']' &&
+        source[index] != ' ' &&
+        source[index] != '\t' &&
+        source[index] != '\n' &&
+        source[index] != '\r') {
+      index++;
+    }
+    return index == start ? null : index;
+  }
+
+  final closing = <int>[];
+  for (var index = start; index < source.length; index++) {
+    final character = source.codeUnitAt(index);
+    if (character == 0x22) {
+      final end = _jsonStringEnd(source, index);
+      if (end == null) return null;
+      index = end - 1;
+    } else if (character == 0x7b) {
+      closing.add(0x7d);
+    } else if (character == 0x5b) {
+      closing.add(0x5d);
+    } else if (character == 0x7d || character == 0x5d) {
+      if (closing.isEmpty || closing.removeLast() != character) return null;
+      if (closing.isEmpty) return index + 1;
+    }
+  }
+  return null;
 }
 
 /// Reads and renders the selected browser results from the active collection.

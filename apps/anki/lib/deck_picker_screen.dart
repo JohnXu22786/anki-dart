@@ -118,6 +118,11 @@ abstract interface class DeckPickerNewNotePortProvider {
   Future<NewNoteEditorPort> createNewNotePortForCurrentDeck();
 }
 
+/// Optional source route that selects a deck without narrowing its 64-bit ID.
+abstract interface class DeckPickerExactBrowseDeckProvider {
+  Future<void> selectDeckForBrowse(DeckPickerDeck deck);
+}
+
 /// Explicit placeholder while a platform/backend collection service is not connected.
 final class UnavailableDeckPickerRepository implements DeckPickerRepository {
   const UnavailableDeckPickerRepository();
@@ -160,7 +165,7 @@ final class DeckPickerScreen extends StatefulWidget {
   });
   final DeckPickerRepository repository;
   final VoidCallback? onClose;
-  final ValueChanged<int>? onBrowseCards;
+  final ValueChanged<Int64>? onBrowseCards;
   @override
   State<DeckPickerScreen> createState() => _DeckPickerScreenState();
 }
@@ -590,7 +595,7 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
     if (action != null) {
       if (action == DeckPickerAction.browseCards &&
           widget.onBrowseCards != null) {
-        await _browseCards(deck.id);
+        await _browseCards(deck);
       } else if (action == DeckPickerAction.addCard &&
           widget.repository is DeckPickerNewNotePortProvider) {
         await _addNote(deck);
@@ -648,10 +653,16 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
     }
   }
 
-  Future<void> _browseCards(int deckId) async {
+  Future<void> _browseCards(DeckPickerDeck deck) async {
     setState(() => _showAddActions = false);
     try {
-      await widget.repository.selectDeck(deckId);
+      final repository = widget.repository;
+      if (repository is DeckPickerExactBrowseDeckProvider) {
+        final exactBrowser = repository as DeckPickerExactBrowseDeckProvider;
+        await exactBrowser.selectDeckForBrowse(deck);
+      } else {
+        await repository.selectDeck(deck.id);
+      }
     } on Object {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -664,7 +675,7 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
     }
     if (!mounted) return;
     _reload();
-    widget.onBrowseCards?.call(deckId);
+    widget.onBrowseCards?.call(deck.exactId ?? Int64(deck.id));
   }
 
   List<DeckPickerAction> _actionsFor(DeckPickerDeck d) => [

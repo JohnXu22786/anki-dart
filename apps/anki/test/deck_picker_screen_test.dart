@@ -735,7 +735,7 @@ void main() {
     final repository = _DeckRepository([
       const DeckPickerDeck(id: 8, name: 'Biology'),
     ]);
-    final browsed = <int>[];
+    final browsed = <Int64>[];
     await tester.pumpWidget(_app(repository, onBrowseCards: browsed.add));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('More actions for Biology'));
@@ -745,7 +745,27 @@ void main() {
 
     expect(repository.selected, [8]);
     expect(repository.actions, isEmpty);
-    expect(browsed, [8]);
+    expect(browsed, [Int64(8)]);
+  });
+
+  testWidgets('browsing preserves an exact wide deck ID through navigation', (
+    tester,
+  ) async {
+    const placeholderId = 8;
+    final exactId = Int64(9007199254740995);
+    final repository = _DeckRepository([
+      DeckPickerDeck(id: placeholderId, exactId: exactId, name: 'Wide'),
+    ]);
+    final browsed = <Int64>[];
+    await tester.pumpWidget(_app(repository, onBrowseCards: browsed.add));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Wide'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Browse cards'));
+    await tester.pumpAndSettle();
+
+    expect(repository.selectedExact, [exactId]);
+    expect(browsed, [exactId]);
   });
 
   testWidgets('narrow viewport golden', (tester) async {
@@ -819,7 +839,7 @@ void main() {
 
 Widget _app(
   DeckPickerRepository repository, {
-  ValueChanged<int>? onBrowseCards,
+  ValueChanged<Int64>? onBrowseCards,
 }) => MaterialApp(
   localizationsDelegates: const [
     AppLocalizations.delegate,
@@ -831,7 +851,10 @@ Widget _app(
 );
 
 final class _DeckRepository
-    implements DeckPickerRepository, DeckPickerNewNotePortProvider {
+    implements
+        DeckPickerRepository,
+        DeckPickerNewNotePortProvider,
+        DeckPickerExactBrowseDeckProvider {
   _DeckRepository(this.decks);
   NewNoteEditorPort? editorPort;
   @override
@@ -887,6 +910,13 @@ final class _DeckRepository
   Future<NewNoteEditorPort> createNewNotePortForCurrentDeck() async {
     currentDeckNewNoteRequests++;
     return editorPort!;
+  }
+
+  @override
+  Future<void> selectDeckForBrowse(DeckPickerDeck deck) async {
+    selected.add(deck.id);
+    selectedExact.add(deck.exactId ?? Int64(deck.id));
+    currentDeckId = deck.id;
   }
 
   @override

@@ -132,6 +132,154 @@ void main() {
   );
 
   test(
+    'deck rename moves descendants and preserves selection and IDs',
+    () async {
+      final storage = runtime.storage!;
+      final parentId = Int64(9007199254740995);
+      final childId = Int64(61);
+      final grandchildId = Int64(62);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: parentId,
+          name: 'Old root',
+          common: deck_proto.Deck_Common(studyCollapsed: false),
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: childId,
+          name: 'Old root::Child',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: grandchildId,
+          name: 'Old root::Child::Leaf',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      await storage.selectDeck(childId);
+
+      final repository = CollectionDeckPickerRepository(runtime);
+      await repository.renameDeck(
+        DeckPickerDeck(id: 60, exactId: parentId, name: 'Old root'),
+        'New parent::New root',
+      );
+
+      expect(storage.decks.getDeck(parentId)!.name, 'New parent::New root');
+      expect(
+        storage.decks.getDeck(childId)!.name,
+        'New parent::New root::Child',
+      );
+      expect(
+        storage.decks.getDeck(grandchildId)!.name,
+        'New parent::New root::Child::Leaf',
+      );
+      expect(storage.decks.getDeck(parentId)!.common.studyCollapsed, isFalse);
+      expect(storage.decks.getDeckId('Old root'), isNull);
+      expect(storage.decks.getDeckId('New parent'), isNotNull);
+      expect(storage.currentDeckId, childId);
+
+      await repository.loadDecks();
+      expect(
+        storage.decks.getDeck(childId)!.name,
+        'New parent::New root::Child',
+      );
+    },
+  );
+
+  test(
+    'deck rename normalizes names and rejects duplicates and filtered paths',
+    () async {
+      final storage = runtime.storage!;
+      final sourceId = Int64(70);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: sourceId,
+          name: 'Source',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final targetId = Int64(71);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: targetId,
+          name: 'Target',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final filteredId = Int64(72);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: filteredId,
+          name: 'Filtered parent',
+          kind: FilteredDeckKind(deck_proto.Deck_Filtered()),
+        ),
+      );
+      final repository = CollectionDeckPickerRepository(runtime);
+      final pickerDeck = DeckPickerDeck(
+        id: sourceId.toInt(),
+        exactId: sourceId,
+        name: 'Source',
+      );
+
+      expect(repository.isDeckNameAvailable(pickerDeck, ' target '), isFalse);
+      await expectLater(
+        storage.renameDeck(sourceId, ' target '),
+        throwsStateError,
+      );
+      expect(await storage.renameDeck(sourceId, ' Source '), isFalse);
+      await expectLater(
+        storage.renameDeck(sourceId, 'Filtered parent::Moved'),
+        throwsStateError,
+      );
+      await expectLater(
+        storage.renameDeck(sourceId, 'source::Moved'),
+        throwsStateError,
+      );
+      expect(storage.decks.getDeck(sourceId)!.name, 'Source');
+      expect(storage.decks.getDeck(targetId)!.name, 'Target');
+    },
+  );
+
+  test(
+    'deck rename handles missing IDs and retries after flush failure',
+    () async {
+      final storage = runtime.storage!;
+      await expectLater(
+        storage.renameDeck(Int64(9999), 'Missing'),
+        throwsStateError,
+      );
+      await expectLater(
+        storage.renameDeck(Int64.ONE, '  '),
+        throwsArgumentError,
+      );
+
+      final sourceId = Int64(80);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: sourceId,
+          name: 'Retry source',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      flushFails = true;
+      await expectLater(
+        storage.renameDeck(sourceId, 'Retry target'),
+        throwsStateError,
+      );
+      expect(storage.decks.getDeck(sourceId)!.name, 'Retry target');
+
+      flushFails = false;
+      expect(await storage.renameDeck(sourceId, 'Retry target'), isFalse);
+      expect(flushCalls, greaterThanOrEqualTo(2));
+      expect(storage.decks.getDeck(sourceId)!.name, 'Retry target');
+    },
+  );
+
+  test(
     'resolves a wide card ID and saves normalized fields to its note',
     () async {
       final storage = runtime.storage!;

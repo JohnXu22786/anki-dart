@@ -5,6 +5,8 @@
 
 import 'package:anki_backend_protocol/anki/decks.pb.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:anki_backend_models/anki_backend_models.dart'
+    show normalizeDeckName;
 import 'package:anki_dart/anki_dart.dart' show FilteredDeckOptions;
 import 'package:fixnum/fixnum.dart';
 
@@ -20,7 +22,8 @@ final class CollectionDeckPickerRepository
     implements
         DeckPickerRepository,
         DeckPickerNewNotePortProvider,
-        DeckPickerExactBrowseDeckProvider {
+        DeckPickerExactBrowseDeckProvider,
+        DeckPickerRenameProvider {
   const CollectionDeckPickerRepository(this.collections);
 
   final CollectionRuntime collections;
@@ -132,6 +135,22 @@ final class CollectionDeckPickerRepository
       Future.error(
         UnsupportedError('Deck action ${action.name} is not implemented yet.'),
       );
+
+  @override
+  bool isDeckNameAvailable(DeckPickerDeck deck, String name) {
+    if (name.trim().isEmpty) return false;
+    final storage = _storage;
+    final normalized = normalizeDeckName(name).replaceAll('::', '\x1f');
+    final existingId = storage.decks.getDeckId(normalized);
+    final deckId = deck.exactId ?? Int64(deck.id);
+    return existingId == null || existingId == deckId;
+  }
+
+  @override
+  Future<void> renameDeck(DeckPickerDeck deck, String name) async {
+    final deckId = deck.exactId ?? Int64(deck.id);
+    await _storage.renameDeck(deckId, name);
+  }
 
   @override
   Future<void> createDeck(String name) async {

@@ -1119,6 +1119,113 @@ GROUP BY did
     return result;
   }
 
+  /// Renames a deck and its descendants, preserving their IDs and payloads.
+  /// Returns false when the normalized target name is already the current name.
+  /// The operation is atomic so a duplicate or filtered-ancestor failure does
+  /// not leave partially renamed descendants or newly-created parent decks.
+  Future<bool> renameDeck(Int64 deckId, String newName) async {
+    if (newName.trim().isEmpty) throw ArgumentError.value(newName, 'newName');
+    final sourceDeck = _deckStorage.getDeck(deckId);
+    if (sourceDeck == null) throw StateError('deck not found: $deckId');
+
+    final normalizedName = normalizeDeckName(newName);
+    final sourceDecks = _deckStorage.deckWithChildren(deckId);
+    final movedIds = sourceDecks.map((deck) => deck.id).toSet();
+    final currentName = normalizeDeckName(sourceDeck.name);
+    if (normalizedName == currentName) {
+      await _flush();
+      return false;
+    }
+    final targetComponents = normalizedName.split('::');
+    final sourceComponents = currentName.split('::');
+    if (targetComponents.length > sourceComponents.length &&
+        compareUniCase(
+              targetComponents.take(sourceComponents.length).join('::'),
+              currentName,
+            ) ==
+            0) {
+      throw StateError('cannot rename a deck into its own hierarchy');
+    }
+
+    final allDecks = _deckStorage.getAllDecksInNameOrder();
+    final renamedNames = <String>[];
+    for (final deck in sourceDecks) {
+      final suffix = deck.name == sourceDeck.name
+          ? ''
+          : deck.name.substring(sourceDeck.name.length);
+      renamedNames.add('$normalizedName$suffix');
+    }
+    if (renamedNames.toSet().length != renamedNames.length) {
+      throw StateError('duplicate deck name');
+    }
+    final namesById = {for (final deck in allDecks) deck.id: deck.name};
+    for (var index = 0; index < renamedNames.length; index++) {
+      final existingId = _deckStorage.getDeckId(
+        renamedNames[index].replaceAll('::', '\x1f'),
+      );
+      if (existingId != null &&
+          (!movedIds.contains(existingId) ||
+              namesById[existingId] != sourceDecks[index].name)) {
+        throw StateError('duplicate deck name: ${renamedNames[index]}');
+      }
+    }
+
+    final components = normalizedName.split('::');
+    var ancestorName = '';
+    for (final component in components.take(components.length - 1)) {
+      ancestorName = ancestorName.isEmpty
+          ? component
+          : '$ancestorName::$component';
+      final ancestorId = _deckStorage.getDeckId(
+        ancestorName.replaceAll('::', '\x1f'),
+      );
+      if (ancestorId != null &&
+          _deckStorage.getDeck(ancestorId)?.kind is FilteredDeckKind) {
+        throw StateError('cannot rename a deck under a filtered deck');
+      }
+    }
+
+    _database.execute('begin');
+    try {
+      var ancestorName = '';
+      for (final component in components.take(components.length - 1)) {
+        ancestorName = ancestorName.isEmpty
+            ? component
+            : '$ancestorName::$component';
+        final nativeName = ancestorName.replaceAll('::', '\x1f');
+        if (_deckStorage.getDeckId(nativeName) == null) {
+          final initial = Deck.newNormal();
+          _deckStorage.addDeck(
+            Deck(
+              name: ancestorName,
+              common: initial.common,
+              kind: initial.kind,
+            ),
+          );
+        }
+      }
+      for (var index = 0; index < sourceDecks.length; index++) {
+        final deck = sourceDecks[index];
+        _deckStorage.updateDeck(
+          Deck(
+            id: deck.id,
+            name: renamedNames[index],
+            mtimeSecs: Int64(DateTime.now().millisecondsSinceEpoch ~/ 1000),
+            usn: -1,
+            common: deck.common,
+            kind: deck.kind,
+          ),
+        );
+      }
+      _database.execute('commit');
+    } catch (_) {
+      if (!_database.autocommit) _database.execute('rollback');
+      rethrow;
+    }
+    await _flushIfAutocommit(preserveNoteUpdateHistory: true);
+    return true;
+  }
+
   Future<void> _unburyIfDayRolledOver(int today) async {
     final lastUnburied = _readConfigInt('lastUnburied') ?? 0;
     if (!(lastUnburied < today || today + 7 < lastUnburied)) return;

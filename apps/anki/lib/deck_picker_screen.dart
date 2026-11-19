@@ -123,6 +123,13 @@ abstract interface class DeckPickerExactBrowseDeckProvider {
   Future<void> selectDeckForBrowse(DeckPickerDeck deck);
 }
 
+/// Optional exact-ID route for Deck Picker rename, including validation used
+/// while the rename dialog is open.
+abstract interface class DeckPickerRenameProvider {
+  bool isDeckNameAvailable(DeckPickerDeck deck, String name);
+  Future<void> renameDeck(DeckPickerDeck deck, String name);
+}
+
 /// Explicit placeholder while a platform/backend collection service is not connected.
 final class UnavailableDeckPickerRepository implements DeckPickerRepository {
   const UnavailableDeckPickerRepository();
@@ -599,9 +606,58 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       } else if (action == DeckPickerAction.addCard &&
           widget.repository is DeckPickerNewNotePortProvider) {
         await _addNote(deck);
+      } else if (action == DeckPickerAction.renameDeck &&
+          widget.repository is DeckPickerRenameProvider) {
+        await _renameDeck(deck, s);
       } else {
         await _invoke(() => widget.repository.performAction(action, deck.id));
       }
+    }
+  }
+
+  Future<void> _renameDeck(DeckPickerDeck deck, AppLocalizations s) async {
+    final provider = widget.repository as DeckPickerRenameProvider;
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        var available = provider.isDeckNameAvailable(deck, deck.name);
+        var value = deck.name;
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: Text(s.renameDeck),
+            content: TextFormField(
+              key: const ValueKey('rename-deck-name'),
+              initialValue: value,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: s.newDeckName,
+                errorText: value.trim().isEmpty || available
+                    ? null
+                    : s.deckNameExists,
+              ),
+              onChanged: (newValue) => setDialogState(() {
+                value = newValue;
+                available = provider.isDeckNameAvailable(deck, newValue);
+              }),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(s.cancel),
+              ),
+              FilledButton(
+                onPressed: value.trim().isEmpty || !available
+                    ? null
+                    : () => Navigator.pop(context, value),
+                child: Text(s.rename),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (name != null) {
+      await _invoke(() => provider.renameDeck(deck, name), reloadOnError: true);
     }
   }
 
@@ -777,13 +833,17 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
     if (mounted) _reload();
   }
 
-  Future<void> _invoke(Future<void> Function() action) async {
+  Future<void> _invoke(
+    Future<void> Function() action, {
+    bool reloadOnError = false,
+  }) async {
     setState(() => _showAddActions = false);
     try {
       await action();
       if (mounted) _reload();
     } on Object {
       if (mounted) {
+        if (reloadOnError) _reload();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.deckActionFailed),

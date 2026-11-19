@@ -9,6 +9,8 @@ import 'dart:ui' show Tristate;
 import 'package:anki_app/deck_picker_screen.dart';
 import 'package:anki_app/l10n/app_localizations.dart';
 import 'package:anki_app/note_editor_screen.dart';
+import 'package:anki_backend_models/anki_backend_models.dart'
+    show normalizeDeckName;
 import 'package:anki_dart/anki_dart.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
@@ -729,6 +731,89 @@ void main() {
     expect(repository.actions, [(DeckPickerAction.browseCards, 8)]);
   });
 
+  testWidgets('rename dialog validates names and refreshes after success', (
+    tester,
+  ) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 8, name: 'Biology'),
+      const DeckPickerDeck(id: 9, name: 'Chemistry'),
+    ]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Biology'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rename deck'));
+    await tester.pumpAndSettle();
+
+    final field = find.byKey(const ValueKey('rename-deck-name'));
+    final input = find.descendant(of: field, matching: find.byType(TextField));
+    expect(tester.widget<TextField>(input).controller!.text, 'Biology');
+    expect(find.text('A deck with this name already exists'), findsNothing);
+    final renameButton = find.widgetWithText(FilledButton, 'Rename');
+
+    await tester.enterText(input, '');
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(renameButton).onPressed, isNull);
+    expect(find.text('A deck with this name already exists'), findsNothing);
+    await tester.enterText(input, 'Chemistry');
+    await tester.pumpAndSettle();
+    expect(find.text('A deck with this name already exists'), findsOneWidget);
+    expect(tester.widget<FilledButton>(renameButton).onPressed, isNull);
+
+    await tester.enterText(input, 'Biology::Genetics');
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(renameButton).onPressed, isNotNull);
+    await tester.tap(renameButton);
+    await tester.pumpAndSettle();
+
+    expect(repository.renamedNames, ['Biology::Genetics']);
+    expect(repository.loadCalls, 2);
+    expect(repository.decks.first.name, 'Biology::Genetics');
+  });
+
+  testWidgets('canceling rename makes no repository call', (tester) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 8, name: 'Biology'),
+    ]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Biology'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rename deck'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(repository.renamedNames, isEmpty);
+    expect(repository.loadCalls, 1);
+  });
+
+  testWidgets('rename reloads after a committed write reports a flush error', (
+    tester,
+  ) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 8, name: 'Biology'),
+    ])..failRenameAfterUpdate = true;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Biology'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rename deck'));
+    await tester.pumpAndSettle();
+    final input = find.descendant(
+      of: find.byKey(const ValueKey('rename-deck-name')),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(input, 'Biology renamed');
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Rename'));
+    await tester.pumpAndSettle();
+
+    expect(repository.decks.first.name, 'Biology renamed');
+    expect(repository.loadCalls, 2);
+    expect(find.text('Deck action could not be completed'), findsOneWidget);
+  });
+
   testWidgets('browsing passes the selected deck without selecting it', (
     tester,
   ) async {
@@ -855,7 +940,8 @@ final class _DeckRepository
     implements
         DeckPickerRepository,
         DeckPickerNewNotePortProvider,
-        DeckPickerExactBrowseDeckProvider {
+        DeckPickerExactBrowseDeckProvider,
+        DeckPickerRenameProvider {
   _DeckRepository(this.decks);
   NewNoteEditorPort? editorPort;
   @override
@@ -884,6 +970,7 @@ final class _DeckRepository
   int loadCalls = 0;
   bool pendingLoad = false;
   bool failLoad = false;
+  bool failRenameAfterUpdate = false;
   bool deferSelectionState = false;
   final failingSelections = <int>{};
   Completer<void>? pendingSelection;
@@ -895,6 +982,7 @@ final class _DeckRepository
   final selectedExact = <Int64>[];
   int currentDeckNewNoteRequests = 0;
   final actions = <(DeckPickerAction, int)>[];
+  final renamedNames = <String>[];
   final filteredRequests = <FilteredDeckRequest>[];
 
   @override
@@ -954,6 +1042,36 @@ final class _DeckRepository
   @override
   Future<void> performAction(DeckPickerAction action, int deckId) async =>
       actions.add((action, deckId));
+  @override
+  bool isDeckNameAvailable(DeckPickerDeck deck, String name) {
+    if (name.trim().isEmpty) return false;
+    final normalized = normalizeDeckName(name);
+    return !decks.any(
+      (candidate) =>
+          candidate.id != deck.id &&
+          normalizeDeckName(candidate.name) == normalized,
+    );
+  }
+
+  @override
+  Future<void> renameDeck(DeckPickerDeck deck, String name) async {
+    renamedNames.add(name);
+    final index = decks.indexWhere((candidate) => candidate.id == deck.id);
+    decks[index] = DeckPickerDeck(
+      id: deck.id,
+      exactId: deck.exactId,
+      name: normalizeDeckName(name),
+      newCount: deck.newCount,
+      learningCount: deck.learningCount,
+      reviewCount: deck.reviewCount,
+      children: deck.children,
+      filtered: deck.filtered,
+      collapsed: deck.collapsed,
+      hasBuried: deck.hasBuried,
+    );
+    if (failRenameAfterUpdate) throw StateError('flush failed after commit');
+  }
+
   @override
   Future<void> createDeck(String name) async {}
   @override

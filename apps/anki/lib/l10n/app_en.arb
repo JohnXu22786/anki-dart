@@ -117,6 +117,8 @@
   "createFilteredDeck": "Create filtered deck",
   "create": "Create",
   "deckName": "Deck name",
+  "newDeckName": "New name",
+  "deckNameExists": "A deck with this name already exists",
   "deckActionFailed": "Deck action could not be completed",
   "filteredDeckOptions": "Filtered deck options",
   "filter": "Filter",

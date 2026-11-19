@@ -511,6 +511,18 @@ abstract class AppLocalizations {
   /// **'Deck name'**
   String get deckName;
 
+  /// No description provided for @newDeckName.
+  ///
+  /// In en, this message translates to:
+  /// **'New name'**
+  String get newDeckName;
+
+  /// No description provided for @deckNameExists.
+  ///
+  /// In en, this message translates to:
+  /// **'A deck with this name already exists'**
+  String get deckNameExists;
+
   /// No description provided for @deckActionFailed.
   ///
   /// In en, this message translates to:

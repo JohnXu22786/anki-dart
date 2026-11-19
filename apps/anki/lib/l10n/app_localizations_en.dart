@@ -237,6 +237,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deckName => 'Deck name';
 
   @override
+  String get newDeckName => 'New name';
+
+  @override
+  String get deckNameExists => 'A deck with this name already exists';
+
+  @override
   String get deckActionFailed => 'Deck action could not be completed';
 
   @override

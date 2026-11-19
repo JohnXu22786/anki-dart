@@ -1065,6 +1065,7 @@ final class CollectionCardBrowserController
     return NewNoteEditorDraft(
       notetypeId: notetype.id.value,
       deckId: selectedDeck,
+      deckName: storage.decks.getDeck(selectedDeck)!.name,
       note: note,
       content: NoteEditorContent(
         labels: notetype.fields.map((field) => field.name).toList(),
@@ -1072,6 +1073,16 @@ final class CollectionCardBrowserController
         availableTags: storage.tags.allTags().map((tag) => tag.name).toList(),
       ),
     );
+  }
+
+  @override
+  Future<List<NewNoteEditorDeck>> loadSelectableDecks() async {
+    final decks = _storage.decks
+        .getAllDecksInNameOrder()
+        .where((deck) => deck.id != Int64.ZERO && deck.configId != null)
+        .map((deck) => NewNoteEditorDeck(id: deck.id, name: deck.name))
+        .toList(growable: false);
+    return decks;
   }
 
   @override
@@ -1140,6 +1151,10 @@ final class CollectionCardBrowserController
       await storage.flushPendingWrites();
       await saveNote(note.id, fields, tags);
       return (await storage.allCardIdsOfNoteInTemplateOrder(note.id)).length;
+    }
+    if (draft.deckId == Int64.ZERO ||
+        storage.decks.getDeck(draft.deckId)?.configId == null) {
+      throw StateError('The selected note deck no longer exists.');
     }
     note.fieldsMut()
       ..clear()

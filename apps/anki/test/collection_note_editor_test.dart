@@ -565,7 +565,18 @@ void main() {
         runtime,
         preferences: preferences,
       );
-      final draft = await controller.loadNewNote();
+      final selectedDeckId = Int64(9007199254740997);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: selectedDeckId,
+          name: 'Flush retry destination',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final draft = (await controller.loadNewNote()).copyWith(
+        deckId: selectedDeckId,
+        deckName: 'Flush retry destination',
+      );
       const initialFields = ['flush retry unique front', 'back'];
       const editedFields = ['edited after flush failure', 'back'];
       const initialTags = ['FlushRetry'];
@@ -593,6 +604,13 @@ void main() {
       );
       expect(noteCountBeforeRetry, 1);
 
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: selectedDeckId,
+          name: 'Flush retry destination',
+          kind: FilteredDeckKind(deck_proto.Deck_Filtered()),
+        ),
+      );
       flushFails = false;
       final retryFlushCalls = flushCalls;
       final count = await controller.saveNewNote(
@@ -654,6 +672,90 @@ void main() {
         reason:
             'duplicate field input remains nonfatal at save validation time',
       );
+    },
+  );
+
+  test(
+    'new-note deck catalog excludes filtered decks and saves exact choice',
+    () async {
+      final storage = runtime.storage!;
+      final originalCurrentDeck = storage.currentDeckId;
+      final wideDeckId = Int64(9007199254740995);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: wideDeckId,
+          name: 'Course::Wide deck',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final filteredDeck = storage.decks.addDeck(
+        Deck(
+          name: 'Filtered destination',
+          kind: FilteredDeckKind(deck_proto.Deck_Filtered()),
+        ),
+      );
+      final controller = CollectionCardBrowserController(runtime);
+
+      final choices = await controller.loadSelectableDecks();
+      expect(choices.map((deck) => deck.id), contains(wideDeckId));
+      expect(choices.map((deck) => deck.name), contains('Course::Wide deck'));
+      expect(choices.map((deck) => deck.id), isNot(contains(filteredDeck.id)));
+
+      final initial = await controller.loadNewNote();
+      final selected = initial.copyWith(
+        deckId: wideDeckId,
+        deckName: 'Course::Wide deck',
+      );
+      expect(storage.currentDeckId, originalCurrentDeck);
+      await controller.saveNewNote(
+        draft: selected,
+        fields: ['deck choice regression test', 'back'],
+        tags: ['DeckChoice'],
+      );
+      final cards = await storage.allCardIdsOfNoteInTemplateOrder(
+        selected.note!.id,
+      );
+      expect(cards, isNotEmpty);
+      expect((await storage.getCard(cards.first))!.deckId, wideDeckId);
+      expect(storage.currentDeckId, originalCurrentDeck);
+    },
+  );
+
+  test(
+    'new-note save rejects a destination deck that became filtered',
+    () async {
+      final storage = runtime.storage!;
+      final selectedId = Int64(9007199254740997);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: selectedId,
+          name: 'Deck that changes kind',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final controller = CollectionCardBrowserController(runtime);
+      final loaded = await controller.loadNewNote();
+      final selected = loaded.copyWith(
+        deckId: selectedId,
+        deckName: 'Deck that changes kind',
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: selectedId,
+          name: 'Deck that changes kind',
+          kind: FilteredDeckKind(deck_proto.Deck_Filtered()),
+        ),
+      );
+
+      await expectLater(
+        controller.saveNewNote(
+          draft: selected,
+          fields: ['stale deck test', 'back'],
+          tags: const [],
+        ),
+        throwsStateError,
+      );
+      expect(await storage.queryInt('SELECT count(*) FROM notes'), 0);
     },
   );
 

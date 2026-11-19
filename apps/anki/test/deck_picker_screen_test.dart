@@ -1085,6 +1085,11 @@ final class _FakeDeckPickerNewNotePort implements NewNoteEditorPort {
   int loadCalls = 0;
 
   @override
+  Future<List<NewNoteEditorDeck>> loadSelectableDecks() async => [
+    NewNoteEditorDeck(id: Int64(42), name: 'Selected'),
+  ];
+
+  @override
   Future<NewNoteEditorDraft> loadNewNote() async {
     loadCalls++;
     return NewNoteEditorDraft(

@@ -38,6 +38,10 @@ final class CollectionDeckPickerRepository
     );
   }
 
+  @override
+  Future<NewNoteEditorPort> createNewNotePortForCurrentDeck() =>
+      Future.value(CollectionCardBrowserController(collections));
+
   CollectionSqliteStorage get _storage {
     final storage = collections.storage;
     if (storage == null || !collections.isInitialized) {

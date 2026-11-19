@@ -1427,5 +1427,16 @@ ID through the add route. On save, the editor remains open and resets for the
 next note, matching `NoteEditorFragment.onNoteAdded()` for callers that do not
 request close (`NoteEditorFragment.kt:1212–1241`). Returning to the Deck Picker
 reloads the deck tree/counts. Other context actions remain host operations;
-the global keyboard shortcut `A` is a separate migration gap. Root `COPYING`
-remains byte-identical and no Android source or resource was copied.
+Root `COPYING` remains byte-identical and no Android source or resource was
+copied.
+
+## Deck Picker add-note shortcut (Unit41)
+
+The cross-platform Deck Picker handles the pinned `A` key on key-up and opens
+the shared new-note editor without an explicit deck override. This mirrors
+`DeckPicker.onKeyUp(KEYCODE_A)`, which skips handling while the deck search
+field has focus and calls `DeckPickerViewModel.addNote(deckId = null,
+setAsCurrent = true)` (`DeckPicker.kt:1657–1669`). The collection-backed
+editor port consequently uses the collection's current/default deck behavior,
+including exact 64-bit IDs on Web. Root `COPYING` remains byte-identical; no
+Android source or resource was copied.

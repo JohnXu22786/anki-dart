@@ -1358,3 +1358,57 @@ package is constrained to 0.15.5 because 0.15.7 removed the internal selector
 API used by `flutter_html` 3.0.0. The app uses the renderer's Flutter widget
 surface on Android, iOS, Web, Windows, macOS, and Linux; JavaScript and media
 playback parity are not included. Root `COPYING` remains byte-identical.
+
+## Shared cross-platform new-note editor (Unit39)
+
+The shared add flow in `apps/anki/lib/note_editor_screen.dart`,
+`card_browser_screen.dart`, and `collection_card_browser_controller.dart` is
+source-derived from AnkiDroid 2.25.3 at `d9bf072f814a0c37d30a694192593b31ff2df875`.
+`NoteEditorFragment.setupEditor()` classifies the caller and initializes add
+mode (`NoteEditorFragment.kt:625–820`); note fields come from the selected
+current notetype via `setNote(null, ...)` (`2143–2165`).
+`libanki/Notetypes.current()` selects the current deck's `mid`, then `curModel`
+or ID 1, and finally the first note type (`Notetypes.kt:152–162`). The spinner
+list is alphabetically ordered (`NoteTypeSpinnerUtils.kt:12–39`), while the
+initial selected position comes from the note itself
+(`NoteEditorFragment.kt:2425–2429`).
+
+Deck resolution preserves `EXTRA_DID` when it names a usable normal deck;
+zero, missing, or filtered IDs fall through to `defaultsForAdding()` during
+setup (`NoteEditorFragment.kt:754–778`). Without an explicit ID,
+`setDid()` uses the current note type's remembered destination when
+`ADDING_DEFAULTS_TO_CURRENT_DECK` is false, otherwise the selected current
+deck, with filtered current decks falling back to Default
+(`NoteEditorFragment.kt:2107–2135`; `Collection.kt:738–756`). The Card Browser
+caller supplies current search terms and its persisted `lastDeckId`
+(`CardBrowserFragment.kt:1881–1889`); `CardBrowserViewModel.setSelectedDeck()`
+stores that ID independently of the collection current deck
+(`CardBrowserViewModel.kt:401–414`). The Dart controller contract accepts an
+explicit `selectedNewNoteDeckId`, but the current app does not yet connect an
+equivalent persisted Card Browser deck repository. Its no-override path uses
+the active collection's current deck and `addToCur`/remembered-deck settings;
+this is documented as a host integration gap rather than exact last-deck
+parity.
+
+`saveNote()` copies field and tag edits, prevents overlapping add jobs, checks
+the fields result and only then calls the collection add operation
+(`NoteEditorFragment.kt:1259–1290`). `saveNoteWithProgress()` passes the
+selected deck ID to `addNote()` and reports Core's generated-card count
+(`1243–1253`). `onNoteAdded(count)` resets note data and only closes callers
+that request close; the Card Browser caller stays in the editor for another
+note (`1212–1241`). `NoteFieldsCheckResult.kt:50–79` maps NORMAL and DUPLICATE
+to success, the empty/cloze states to their localized failures, and
+UNRECOGNIZED to a failure with no message. The Dart flow reuses
+`anki_backend_models.noteFieldsCheck()` and
+`projectNoteFieldsCheckResult()`; it adds no duplicate prompt.
+
+The collection host calls Unit38's atomic `addNoteToDeck()` once after
+validation. The shared editor retains edits after validation/storage errors,
+shows the returned generated-card count, and resets for the next note. When it
+closes, Card Browser refreshes its active search while keeping row selection.
+Focused widget and collection-controller tests cover setup, field/tag entry,
+validation and duplicate handling, failed-save retention, single-flight add,
+next-note reset, deck fallback, returned card count, and browser refresh.
+Source hashes for the cited pinned AnkiDroid and libanki files are recorded in
+`apps/anki/ANKIDROID_SOURCE.sha256`; no Android source, assets, or strings were
+copied. Root `COPYING` remains byte-identical.

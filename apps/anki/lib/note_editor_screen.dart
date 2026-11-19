@@ -4,6 +4,7 @@
  */
 
 import 'package:anki_dart/anki_dart.dart';
+import 'package:anki_backend_models/anki_backend_models.dart' as models;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 
@@ -39,6 +40,33 @@ abstract interface class NoteEditorPort {
   Future<void> saveNote(Int64 noteId, List<String> fields, List<String> tags);
 }
 
+final class NewNoteEditorDraft {
+  const NewNoteEditorDraft({
+    required this.notetypeId,
+    required this.deckId,
+    required this.content,
+    this.note,
+  });
+
+  final Int64 notetypeId;
+  final Int64 deckId;
+  final NoteEditorContent content;
+  final models.Note? note;
+}
+
+abstract interface class NewNoteEditorPort implements NoteEditorPort {
+  Future<NewNoteEditorDraft> loadNewNote();
+  Future<NoteFieldsCheckResult> validateNewNote(
+    Int64 notetypeId,
+    List<String> fields,
+  );
+  Future<int> saveNewNote({
+    required NewNoteEditorDraft draft,
+    required List<String> fields,
+    required List<String> tags,
+  });
+}
+
 /// Shared, responsive editor for an existing note's fields and tags.
 final class NoteEditorScreen extends StatefulWidget {
   const NoteEditorScreen({
@@ -47,11 +75,22 @@ final class NoteEditorScreen extends StatefulWidget {
     this.resolveNoteId,
     this.onCancel,
     super.key,
-  }) : assert(noteId != null || resolveNoteId != null);
+  }) : assert(noteId != null || resolveNoteId != null),
+       _isNewNote = false;
+
+  const NoteEditorScreen.newNote({
+    required NewNoteEditorPort newNotePort,
+    this.onCancel,
+    super.key,
+  }) : noteId = null,
+       resolveNoteId = null,
+       port = newNotePort,
+       _isNewNote = true;
 
   final Int64? noteId;
   final Future<Int64> Function()? resolveNoteId;
   final NoteEditorPort port;
+  final bool _isNewNote;
   final VoidCallback? onCancel;
 
   @override
@@ -64,9 +103,11 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
   List<String> _tags = [];
   bool _loading = true;
   bool _saving = false;
+  bool _committedRetryPending = false;
   String? _loadError;
   String? _saveError;
   Int64? _resolvedNoteId;
+  NewNoteEditorDraft? _newNoteDraft;
 
   @override
   void initState() {
@@ -79,7 +120,8 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.noteId != widget.noteId ||
         oldWidget.resolveNoteId != widget.resolveNoteId ||
-        oldWidget.port != widget.port) {
+        oldWidget.port != widget.port ||
+        oldWidget._isNewNote != widget._isNewNote) {
       _disposeFields();
       _load();
     }
@@ -103,14 +145,22 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _loading = true;
       _loadError = null;
       _saveError = null;
+      _committedRetryPending = false;
     });
     try {
-      final noteId = widget.noteId ?? await widget.resolveNoteId!();
-      final content = await widget.port.loadNote(noteId);
+      late final NoteEditorContent content;
+      if (widget._isNewNote) {
+        final draft = await (widget.port as NewNoteEditorPort).loadNewNote();
+        _newNoteDraft = draft;
+        content = draft.content;
+      } else {
+        final noteId = widget.noteId ?? await widget.resolveNoteId!();
+        content = await widget.port.loadNote(noteId);
+        _resolvedNoteId = noteId;
+      }
       if (!mounted) return;
       _disposeFields();
       _content = content;
-      _resolvedNoteId = noteId;
       _fields = [
         for (final value in content.values) TextEditingController(text: value),
       ];
@@ -133,11 +183,40 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _saveError = null;
     });
     try {
-      await widget.port.saveNote(
-        _resolvedNoteId!,
-        _fields.map((field) => field.text).toList(growable: false),
-        List.of(_tags),
-      );
+      final fields = _fields.map((field) => field.text).toList(growable: false);
+      final tags = List<String>.of(_tags);
+      if (widget._isNewNote) {
+        final port = widget.port as NewNoteEditorPort;
+        final draft = _newNoteDraft!;
+        final result = await port.validateNewNote(draft.notetypeId, fields);
+        if (result case NoteFieldsCheckFailure(:final localizedMessage)) {
+          if (!mounted) return;
+          setState(() {
+            _saving = false;
+            _saveError =
+                localizedMessage ??
+                AppLocalizations.of(context)!.noteEditorValidationError;
+          });
+          return;
+        }
+        final cardCount = await port.saveNewNote(
+          draft: draft,
+          fields: fields,
+          tags: tags,
+        );
+        if (!mounted) return;
+        final strings = AppLocalizations.of(context)!;
+        setState(() {
+          _saving = false;
+          _committedRetryPending = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(strings.noteEditorAddedCards(cardCount))),
+        );
+        await _load();
+        return;
+      }
+      await widget.port.saveNote(_resolvedNoteId!, fields, tags);
       if (!mounted) return;
       setState(() => _saving = false);
       final strings = AppLocalizations.of(context)!;
@@ -148,9 +227,16 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
       });
     } catch (_) {
       if (!mounted) return;
+      final draftNoteId = _newNoteDraft?.note?.id;
+      final committedButNotFlushed =
+          widget._isNewNote && draftNoteId != null && draftNoteId != Int64.ZERO;
+      final strings = AppLocalizations.of(context)!;
       setState(() {
         _saving = false;
-        _saveError = AppLocalizations.of(context)!.noteEditorSaveError;
+        _committedRetryPending = committedButNotFlushed;
+        _saveError = committedButNotFlushed
+            ? strings.noteEditorCommittedRetryError
+            : strings.noteEditorSaveError;
       });
     }
   }
@@ -168,13 +254,17 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
     return PopScope(
-      canPop: !_saving,
+      canPop: !_saving && !_committedRetryPending,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(strings.noteEditorTitle),
+          title: Text(
+            widget._isNewNote
+                ? strings.noteEditorAddTitle
+                : strings.noteEditorTitle,
+          ),
           leading: IconButton(
             tooltip: strings.cancel,
-            onPressed: _saving ? null : _cancel,
+            onPressed: _saving || _committedRetryPending ? null : _cancel,
             icon: const Icon(Icons.arrow_back),
           ),
         ),
@@ -265,7 +355,7 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
               runSpacing: 8,
               children: [
                 TextButton(
-                  onPressed: _saving ? null : _cancel,
+                  onPressed: _saving || _committedRetryPending ? null : _cancel,
                   child: Text(strings.cancel),
                 ),
                 FilledButton.icon(

@@ -87,6 +87,30 @@ void main() {
   tearDown(() async => storage.close());
 
   test(
+    'checksum query returns only the matching type and first field',
+    () async {
+      final added = await storage.addNoteToDeck(
+        _newNote(fields: ['checksum match', 'back']),
+        Int64.ONE,
+      );
+      final checksum = added.note.checksum!;
+
+      final matches = storage.getNoteFieldsByChecksum(
+        added.note.notetypeId,
+        checksum,
+      );
+      expect(matches, hasLength(1));
+      expect(matches.single.noteId, added.note.id);
+      expect(matches.single.firstField, 'checksum match');
+      expect(storage.getNoteFieldsByChecksum(Int64(10), checksum), isEmpty);
+      expect(
+        storage.getNoteFieldsByChecksum(added.note.notetypeId, checksum ^ 1),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
     'adds a prepared note, tags, normal cards, and config atomically',
     () async {
       const decomposed = 'e\u0301';
@@ -343,6 +367,8 @@ void main() {
       expect(await storage.queryInt('SELECT count(*) FROM cards'), 2);
       expect(await storage.queryInt('SELECT count(*) FROM tags'), 1);
       expect(await storage.queryInt('SELECT mod FROM col'), 9007199254740993);
+
+      await expectLater(storage.flushPendingWrites(), completes);
     },
   );
 }

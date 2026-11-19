@@ -1,10 +1,17 @@
 # AnkiDroid 2.25.3, d9bf072f814a0c37d30a694192593b31ff2df875
 79e219a087960e6af3d2bfa1996f8c46818cfa1daed908c4175cf41dded901df  AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt
+3e3ec1a9f14f17d40b091e5ee4d8b154579ecae41523faae630fdf0f995577ce  AnkiDroid/src/main/java/com/ichi2/anki/NoteFieldsCheckResult.kt
+eacd31477a1752a0ae611db4d6650cd797f15f18e93888d38b474b991a815933  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt
+cab02bf77a295121632ca0cac1aab181cf2f6985ae28e2dbede14f5dbcc05c36  AnkiDroid/src/main/java/com/ichi2/anki/ui/NoteTypeSpinnerUtils.kt
 bac8273102ddf438a10566372e2edac21ea11da3094404f049cb058171a13f3a  AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SortOrderBottomSheetFragment.kt
 e8146c9da9753bd43181ed2dcb877030d2e1e5c0973fa7b2b5ced62aa72f2126  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserColumn.kt
 88c5d4506189866ff8d67b55d4693b50d7514e0cd54f11cac10b25985b74b6f4  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt
 0e9b6dfb8f1421941ffd7204fbbf548e7532a0859e6ec143e567f66381538ad1  AnkiDroid/src/main/java/com/ichi2/anki/deckpicker/DeckPickerViewModel.kt
 34ec591dc74b05223754fc6b18f6bc0dd140e479c4752069a8d761f13acce7ef  AnkiDroid/src/main/java/com/ichi2/anki/AnkiActivity.kt
+17da72de540b532564b4112b8242a4146b4eba6176c58340aa57e610d73ace70  libanki/src/main/java/com/ichi2/anki/libanki/Notetypes.kt
+70410666e0545af8f051d113f3b3ccdbe99adf0b30e0ca4508eae5daa3ae4373  libanki/src/main/java/com/ichi2/anki/libanki/Collection.kt
+a6ce7314b1306eb25e092e83caa4781795b0fba9c8b5bf8a6a63eb6ef29a0268  libanki/src/main/java/com/ichi2/anki/libanki/Note.kt
+2f134af8e03d9c967818a73dccd48d46ee43fd5d850ed84b2b81aeb545120371  anki-common/src/main/kotlin/com/ichi2/anki/common/utils/ext/Config.kt
 
 # Anki Core, e64c6b1aee3e8d668fb8bbe084beada8e070d985
 877e18ef2ddcc497a91fca0c2a84d2f22658f09582d8c7f2ba1f03ca2d4ba73c  rslib/src/storage/sqlite.rs

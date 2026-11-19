@@ -140,6 +140,9 @@ final class CollectionSqliteStorage
     return _decodeJsonValue(rows.single['val']);
   }
 
+  /// Reads an integer config value without routing it through a JS number.
+  Int64? readCollectionConfigInt64(String key) => _readConfigInt64(key);
+
   ExistingNoteUpdateConfigSnapshot? _readExistingNoteUpdateConfigSnapshot(
     String key,
   ) {
@@ -716,6 +719,20 @@ INSERT OR REPLACE INTO cards (
     await _flushIfAutocommit();
   }
 
+  /// Retries persistence of writes already committed to SQLite.
+  ///
+  /// This is useful after an operation reports a driver flush failure after
+  /// its SQLite transaction has committed. It does not run a transaction or
+  /// change collection data. A retry is only valid while storage is open and
+  /// no SQLite transaction is active.
+  Future<void> flushPendingWrites() async {
+    if (_closing || _connectionClosed || _closed) {
+      throw StateError('collection storage is closing');
+    }
+    if (!_database.autocommit) throw StateError('active transaction');
+    await _flush();
+  }
+
   /// Adds a new note to [deckId], generating the cards Core requires.
   ///
   /// The caller selects the deck (including resolving any host-side default
@@ -1029,9 +1046,7 @@ GROUP BY did
   }
 
   /// Returns Core's configured current deck, or its source default ID.
-  Int64 get currentDeckId => _readConfigInt('curDeck') == null
-      ? Int64.ONE
-      : Int64(_readConfigInt('curDeck')!);
+  Int64 get currentDeckId => readCollectionConfigInt64('curDeck') ?? Int64.ONE;
 
   /// Selects [deckId], matching Core's non-undoable current-deck setting.
   Future<void> selectDeck(Int64 deckId) =>
@@ -1442,6 +1457,28 @@ WHERE queue IN (-2, -3)
         if (notesById[id.toString()] case final note?) note,
     ];
   }
+
+  /// Returns first fields for notes whose notetype and Core checksum match.
+  ///
+  /// This is the storage half of `Note.fieldsCheck()` duplicate detection;
+  /// field normalization and exact text comparison remain in the model layer.
+  List<NoteChecksumMatch> getNoteFieldsByChecksum(
+    Int64 notetypeId,
+    int checksum,
+  ) => _database
+      .select(
+        'SELECT id, guid, mid, mod, usn, tags, flds, cast(sfld AS text), csum '
+        'FROM notes WHERE mid = ? AND csum = ?',
+        [_toSqlInt64(notetypeId), checksum.toUnsigned(32)],
+      )
+      .map((row) {
+        final note = _noteFromRow(row);
+        return NoteChecksumMatch(
+          noteId: note.id,
+          firstField: note.fields.first,
+        );
+      })
+      .toList(growable: false);
 
   /// Loads stored note types for [ids], including their fields and templates.
   /// Each table is read in bounded batches, independent of the number of rows.

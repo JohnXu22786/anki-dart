@@ -218,6 +218,55 @@ void main() {
     expect(controller.refreshCalls, 1);
   });
 
+  testWidgets('Card Browser Add saves then preserves search and selection', (
+    tester,
+  ) async {
+    final controller = _EditorController(_sample());
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('browser-add-note')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('browser-search')),
+      'front',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    expect(controller.selectedRows, [const BrowserRowId(41)]);
+
+    await tester.tap(find.byKey(const ValueKey('browser-add-note')));
+    await tester.pumpAndSettle();
+    expect(find.byType(NoteEditorScreen), findsOneWidget);
+    expect(find.text('Add note'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('note-field-0')), 'new front');
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+    expect(controller.newNoteSaveCalls, 1);
+    expect(find.byType(NoteEditorScreen), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-field-0')))
+          .controller!
+          .text,
+      isEmpty,
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(controller.refreshCalls, 1);
+    expect(controller.queries.last, 'front');
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('browser-search')))
+          .controller!
+          .text,
+      'front',
+    );
+    expect(controller.selectedRows, [const BrowserRowId(41)]);
+  });
+
   testWidgets(
     'Card Browser preview action opens the collection preview route',
     (tester) async {
@@ -1581,12 +1630,13 @@ final class _PreviewController extends _Controller
 
 class _EditorController extends _Controller
     implements
-        CardBrowserNoteEditorController,
+        CardBrowserNewNoteEditorController,
         CardBrowserNoteUpdateUndoController {
   _EditorController(super.snapshot);
 
   final resolvedRows = <BrowserRowId>[];
   int refreshCalls = 0;
+  int newNoteSaveCalls = 0;
   bool canUndo = false;
   bool collectionClosed = false;
   bool invalidateUndoOnSort = false;
@@ -1613,6 +1663,29 @@ class _EditorController extends _Controller
   @override
   Future<NoteEditorContent> loadNote(Int64 noteId) async =>
       NoteEditorContent(labels: const ['Front'], values: const ['front']);
+
+  @override
+  Future<NewNoteEditorDraft> loadNewNote() async => NewNoteEditorDraft(
+    notetypeId: Int64.ONE,
+    deckId: Int64.ONE,
+    content: NoteEditorContent(labels: const ['Front'], values: const ['']),
+  );
+
+  @override
+  Future<NoteFieldsCheckResult> validateNewNote(
+    Int64 notetypeId,
+    List<String> fields,
+  ) async => const NoteFieldsCheckSuccess();
+
+  @override
+  Future<int> saveNewNote({
+    required NewNoteEditorDraft draft,
+    required List<String> fields,
+    required List<String> tags,
+  }) async {
+    newNoteSaveCalls++;
+    return 1;
+  }
 
   @override
   Future<void> saveNote(

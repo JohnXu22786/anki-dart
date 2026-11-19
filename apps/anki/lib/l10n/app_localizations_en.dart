@@ -636,6 +636,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteEditorTitle => 'Edit note';
 
   @override
+  String get noteEditorAddTitle => 'Add note';
+
+  @override
   String get noteEditorLoadError =>
       'This note could not be loaded from the active collection.';
 
@@ -668,6 +671,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noteEditorFilterTags => 'Filter tags';
+
+  @override
+  String get noteEditorValidationError => 'The note fields are invalid.';
+
+  @override
+  String get noteEditorFirstFieldEmpty => 'The first field is empty.';
+
+  @override
+  String get noteEditorMissingCloze => 'A cloze deletion is required.';
+
+  @override
+  String get noteEditorNoteTypeNotCloze =>
+      'Cloze deletions require a Cloze note type.';
+
+  @override
+  String get noteEditorFieldNotCloze =>
+      'Cloze deletions must be in a Cloze field.';
+
+  @override
+  String noteEditorAddedCards(int count) {
+    return 'Added note. Cards created: $count';
+  }
 
   @override
   String get done => 'Done';

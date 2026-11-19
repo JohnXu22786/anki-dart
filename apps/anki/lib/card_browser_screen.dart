@@ -107,6 +107,9 @@ abstract interface class CardBrowserNoteEditorController
   Future<CardBrowserSnapshot> refresh();
 }
 
+abstract interface class CardBrowserNewNoteEditorController
+    implements CardBrowserNoteEditorController, NewNoteEditorPort {}
+
 /// Note-update-only collection undo exposed on source-matched browser surfaces.
 abstract interface class CardBrowserNoteUpdateUndoController {
   bool get canUndoNoteUpdate;
@@ -996,6 +999,24 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     _refreshNoteUpdateUndoStatus();
   }
 
+  Future<void> _addNewNote() async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserNewNoteEditorController) return;
+    final newNoteController = controller as CardBrowserNewNoteEditorController;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            NoteEditorScreen.newNote(newNotePort: newNoteController),
+      ),
+    );
+    if (!mounted) return;
+    await _runAction(() async {
+      final snapshot = await newNoteController.refresh();
+      if (mounted) setState(() => _snapshot = snapshot);
+    });
+    _refreshNoteUpdateUndoStatus();
+  }
+
   void _refreshNoteUpdateUndoStatus() {
     final controller = widget.controller;
     var available = false;
@@ -1151,6 +1172,13 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             : BackButton(onPressed: widget.onClose),
         title: Text(s.cardBrowserTitle),
         actions: [
+          if (widget.controller is CardBrowserNewNoteEditorController)
+            IconButton(
+              key: const ValueKey('browser-add-note'),
+              tooltip: s.noteEditorAddTitle,
+              onPressed: _addNewNote,
+              icon: const Icon(Icons.add),
+            ),
           if (_noteUpdateUndoAvailable)
             PopupMenuButton<String>(
               key: const ValueKey('browser-note-update-undo-menu'),

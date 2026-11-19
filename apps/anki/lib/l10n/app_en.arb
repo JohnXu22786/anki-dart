@@ -313,6 +313,7 @@
   "browserSortDateAscending": "Oldest first",
   "browserSortDateDescending": "Newest first",
   "noteEditorTitle": "Edit note",
+  "noteEditorAddTitle": "Add note",
   "noteEditorLoadError": "This note could not be loaded from the active collection.",
   "noteEditorSaveError": "Changes could not be saved. Try again.",
   "noteEditorSaving": "Saving…",
@@ -324,6 +325,19 @@
   "noteEditorDuplicateTag": "This tag already exists",
   "noteEditorEmptyTag": "Enter a tag name",
   "noteEditorFilterTags": "Filter tags",
+  "noteEditorValidationError": "The note fields are invalid.",
+  "noteEditorFirstFieldEmpty": "The first field is empty.",
+  "noteEditorMissingCloze": "A cloze deletion is required.",
+  "noteEditorNoteTypeNotCloze": "Cloze deletions require a Cloze note type.",
+  "noteEditorFieldNotCloze": "Cloze deletions must be in a Cloze field.",
+  "noteEditorAddedCards": "Added note. Cards created: {count}",
+  "@noteEditorAddedCards": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "done": "Done",
   "browserUndoNoteEdit": "Undo note edit"
 }

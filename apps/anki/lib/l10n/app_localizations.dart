@@ -1261,6 +1261,12 @@ abstract class AppLocalizations {
   /// **'Edit note'**
   String get noteEditorTitle;
 
+  /// No description provided for @noteEditorAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add note'**
+  String get noteEditorAddTitle;
+
   /// No description provided for @noteEditorLoadError.
   ///
   /// In en, this message translates to:
@@ -1326,6 +1332,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filter tags'**
   String get noteEditorFilterTags;
+
+  /// No description provided for @noteEditorValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'The note fields are invalid.'**
+  String get noteEditorValidationError;
+
+  /// No description provided for @noteEditorFirstFieldEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The first field is empty.'**
+  String get noteEditorFirstFieldEmpty;
+
+  /// No description provided for @noteEditorMissingCloze.
+  ///
+  /// In en, this message translates to:
+  /// **'A cloze deletion is required.'**
+  String get noteEditorMissingCloze;
+
+  /// No description provided for @noteEditorNoteTypeNotCloze.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloze deletions require a Cloze note type.'**
+  String get noteEditorNoteTypeNotCloze;
+
+  /// No description provided for @noteEditorFieldNotCloze.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloze deletions must be in a Cloze field.'**
+  String get noteEditorFieldNotCloze;
+
+  /// No description provided for @noteEditorAddedCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Added note. Cards created: {count}'**
+  String noteEditorAddedCards(int count);
 
   /// No description provided for @done.
   ///

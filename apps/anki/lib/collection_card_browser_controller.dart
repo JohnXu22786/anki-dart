@@ -3,8 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_backend_models/anki_backend_models.dart' as models;
+import 'package:anki_backend_protocol/anki/notes.pbenum.dart' as note_proto;
 import 'package:anki_dart/anki_dart.dart';
 import 'package:anki_search_parser/anki_search_parser.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
@@ -30,6 +34,7 @@ final class CollectionCardBrowserController
     implements
         CardBrowserController,
         CardBrowserNoteEditorController,
+        CardBrowserNewNoteEditorController,
         CardBrowserNoteUpdateUndoController,
         CardBrowserModeController,
         CardBrowserSearchRequestController,
@@ -41,6 +46,7 @@ final class CollectionCardBrowserController
     this.collections, {
     SharedPreferencesAsync? preferences,
     CardBrowserPreviewLoader? previewLoader,
+    this.selectedNewNoteDeckId,
   }) : _preferencesOverride = preferences {
     _previewLoader =
         previewLoader ?? CollectionCardBrowserPreviewLoader(collections);
@@ -49,6 +55,7 @@ final class CollectionCardBrowserController
   final CollectionRuntime collections;
   final AppLocalizationsEn _l10n = AppLocalizationsEn();
   final SharedPreferencesAsync? _preferencesOverride;
+  final Int64? Function()? selectedNewNoteDeckId;
   late final CardBrowserPreviewLoader _previewLoader;
   SharedPreferencesAsync get _preferences =>
       _preferencesOverride ?? SharedPreferencesAsync();
@@ -844,6 +851,171 @@ final class CollectionCardBrowserController
       tags: note.tags,
       availableTags: storage.tags.allTags().map((tag) => tag.name).toList(),
     );
+  }
+
+  @override
+  Future<NewNoteEditorDraft> loadNewNote() async {
+    final storage = _storage;
+    final allTypes = await storage.getNotetypesByIds(
+      await storage.getAllNotetypeIds(),
+    );
+    if (allTypes.isEmpty) throw StateError('The collection has no note types.');
+    final typeById = {for (final type in allTypes) type.id.value: type};
+    final currentDeck = storage.currentDeckId;
+    final deck = storage.decks.getDeck(currentDeck);
+    final deckNotetypeId = deck == null
+        ? null
+        : _legacyDeckNotetypeId(deck.common.other);
+    final configuredTypeId =
+        deckNotetypeId ??
+        _configInt64(storage.readCollectionConfig('curModel'));
+    final notetype =
+        typeById[configuredTypeId] ??
+        typeById[Int64.ONE] ??
+        (List<models.Notetype>.of(allTypes)..sort(
+              (left, right) =>
+                  left.name.toLowerCase().compareTo(right.name.toLowerCase()),
+            ))
+            .first;
+
+    final useCurrentDeck = storage.readCollectionConfig('addToCur') != false;
+    final rememberedDeck = _configInt64(
+      storage.readCollectionConfig('_nt_${notetype.id.value}_lastDeck'),
+    );
+    final fallbackDeck = useCurrentDeck
+        ? _usableDeck(storage, currentDeck)
+        : _usableDeck(storage, rememberedDeck ?? currentDeck);
+    final requestedDeck = selectedNewNoteDeckId?.call();
+    final selectedDeck =
+        requestedDeck != null &&
+            requestedDeck != Int64.ZERO &&
+            _usableDeck(storage, requestedDeck) == requestedDeck
+        ? requestedDeck
+        : fallbackDeck;
+    final note = models.Note.newNote(
+      notetype,
+      randomU64: () {
+        final random = Random.secure();
+        return (BigInt.from(random.nextInt(0x100000000)) << 32) |
+            BigInt.from(random.nextInt(0x100000000));
+      },
+    );
+    return NewNoteEditorDraft(
+      notetypeId: notetype.id.value,
+      deckId: selectedDeck,
+      note: note,
+      content: NoteEditorContent(
+        labels: notetype.fields.map((field) => field.name).toList(),
+        values: note.fields,
+        availableTags: storage.tags.allTags().map((tag) => tag.name).toList(),
+      ),
+    );
+  }
+
+  @override
+  Future<NoteFieldsCheckResult> validateNewNote(
+    Int64 notetypeId,
+    List<String> fields,
+  ) async {
+    final storage = _storage;
+    final values = await storage.getNotetypesByIds([
+      models.NotetypeId(notetypeId),
+    ]);
+    if (values.isEmpty) throw StateError('Note type does not exist.');
+    final note = models.Note(notetypeId: notetypeId, fields: fields);
+    final normalize =
+        storage.readCollectionConfig('normalize_note_text') ??
+        storage.readCollectionConfig('normalizeNoteText');
+    final state = models.noteFieldsCheck(
+      note: note,
+      getNotetype: (_) => values.single,
+      normalizeText: normalize is bool ? normalize : true,
+      loadFieldsByChecksum: storage.getNoteFieldsByChecksum,
+    );
+    final status = switch (state) {
+      note_proto.NoteFieldsCheckResponse_State.NORMAL =>
+        NoteFieldsCheckStatus.normal,
+      note_proto.NoteFieldsCheckResponse_State.DUPLICATE =>
+        NoteFieldsCheckStatus.duplicate,
+      note_proto.NoteFieldsCheckResponse_State.EMPTY =>
+        NoteFieldsCheckStatus.empty,
+      note_proto.NoteFieldsCheckResponse_State.MISSING_CLOZE =>
+        NoteFieldsCheckStatus.missingCloze,
+      note_proto.NoteFieldsCheckResponse_State.NOTETYPE_NOT_CLOZE =>
+        NoteFieldsCheckStatus.noteTypeNotCloze,
+      note_proto.NoteFieldsCheckResponse_State.FIELD_NOT_CLOZE =>
+        NoteFieldsCheckStatus.fieldNotCloze,
+      _ => NoteFieldsCheckStatus.unrecognized,
+    };
+    return projectNoteFieldsCheckResult(
+      status: status,
+      isImageOcclusion: false,
+      messages: NoteFieldsCheckMessages(
+        imageOcclusionEmpty: _l10n.noteEditorFirstFieldEmpty,
+        firstFieldEmpty: _l10n.noteEditorFirstFieldEmpty,
+        missingCloze: _l10n.noteEditorMissingCloze,
+        noteTypeNotCloze: _l10n.noteEditorNoteTypeNotCloze,
+        fieldNotCloze: _l10n.noteEditorFieldNotCloze,
+      ),
+    );
+  }
+
+  @override
+  Future<int> saveNewNote({
+    required NewNoteEditorDraft draft,
+    required List<String> fields,
+    required List<String> tags,
+  }) async {
+    final storage = _storage;
+    final note = draft.note;
+    if (note == null || note.notetypeId != draft.notetypeId) {
+      throw StateError('New-note draft is no longer valid.');
+    }
+    if (note.id != Int64.ZERO) {
+      // addNoteToDeck commits before its async driver flush. If that flush
+      // failed, reconcile the already-committed note instead of adding twice.
+      return (await storage.allCardIdsOfNoteInTemplateOrder(note.id)).length;
+    }
+    note.fieldsMut()
+      ..clear()
+      ..addAll(fields);
+    note.tags
+      ..clear()
+      ..addAll(tags);
+    final result = await storage.addNoteToDeck(note, draft.deckId);
+    return result.generatedCardCount;
+  }
+
+  Int64? _configInt64(Object? value) {
+    if (value is int) return Int64(value);
+    if (value is String) {
+      try {
+        return Int64.parseInt(value);
+      } on FormatException {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  Int64? _legacyDeckNotetypeId(List<int> other) {
+    if (other.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(utf8.decode(other));
+      return decoded is Map ? _configInt64(decoded['mid']) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Int64 _usableDeck(CollectionSqliteStorage storage, Int64? deckId) {
+    final deck = deckId == null ? null : storage.decks.getDeck(deckId);
+    if (deck?.configId != null) return deckId!;
+    final defaultDeck = storage.decks.getDeck(Int64.ONE);
+    if (defaultDeck?.configId == null) {
+      throw StateError('The collection has no usable default deck.');
+    }
+    return Int64.ONE;
   }
 
   @override

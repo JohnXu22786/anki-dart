@@ -1443,6 +1443,28 @@ WHERE queue IN (-2, -3)
     ];
   }
 
+  /// Returns first fields for notes whose notetype and Core checksum match.
+  ///
+  /// This is the storage half of `Note.fieldsCheck()` duplicate detection;
+  /// field normalization and exact text comparison remain in the model layer.
+  List<NoteChecksumMatch> getNoteFieldsByChecksum(
+    Int64 notetypeId,
+    int checksum,
+  ) => _database
+      .select(
+        'SELECT id, guid, mid, mod, usn, tags, flds, cast(sfld AS text), csum '
+        'FROM notes WHERE mid = ? AND csum = ?',
+        [_toSqlInt64(notetypeId), checksum.toUnsigned(32)],
+      )
+      .map((row) {
+        final note = _noteFromRow(row);
+        return NoteChecksumMatch(
+          noteId: note.id,
+          firstField: note.fields.first,
+        );
+      })
+      .toList(growable: false);
+
   /// Loads stored note types for [ids], including their fields and templates.
   /// Each table is read in bounded batches, independent of the number of rows.
   Future<List<Notetype>> getNotetypesByIds(Iterable<NotetypeId> ids) async {

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import 'dart:convert';
 import 'dart:io' as io;
 
 import 'package:anki_app/app_collection_callbacks.dart';
@@ -11,6 +12,7 @@ import 'package:anki_app/collection_runtime.dart';
 import 'package:anki_app/l10n/app_localizations_en.dart';
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:anki_backend_protocol/anki/decks.pb.dart' as deck_proto;
 import 'package:anki_dart/anki_dart.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -214,6 +216,113 @@ void main() {
   });
 
   test(
+    'new-note defaults use current deck mid and safe deck fallbacks',
+    () async {
+      final storage = runtime.storage!;
+      final allTypes = await storage.getNotetypesByIds(
+        await storage.getAllNotetypeIds(),
+      );
+      final basic = allTypes.singleWhere((type) => type.name == 'Basic');
+      final cloze = allTypes.singleWhere((type) => type.name == 'Cloze');
+      await storage.writeCollectionConfig('curModel', basic.id.value.toInt());
+
+      final currentDeck = storage.decks.addDeck(
+        Deck(
+          name: 'Current',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+          common: deck_proto.Deck_Common(
+            other: utf8.encode(jsonEncode({'mid': cloze.id.value.toInt()})),
+          ),
+        ),
+      );
+      final rememberedDeck = storage.decks.addDeck(
+        Deck(
+          name: 'Remembered',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final filteredDeck = storage.decks.addDeck(
+        Deck(
+          name: 'Filtered',
+          kind: FilteredDeckKind(deck_proto.Deck_Filtered()),
+        ),
+      );
+      await storage.selectDeck(currentDeck.id);
+
+      final currentDeckController = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+        selectedNewNoteDeckId: () => filteredDeck.id,
+      );
+      final sourceDefaults = await currentDeckController.loadNewNote();
+      expect(sourceDefaults.notetypeId, cloze.id.value);
+      expect(sourceDefaults.deckId, currentDeck.id);
+      expect(sourceDefaults.content.labels, ['Text', 'Back Extra']);
+      expect(sourceDefaults.content.values, ['', '']);
+
+      await storage.writeCollectionConfig('addToCur', false);
+      await storage.writeCollectionConfig(
+        '_nt_${cloze.id.value}_lastDeck',
+        rememberedDeck.id.toInt(),
+      );
+      final rememberedDefaults = await CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+        selectedNewNoteDeckId: () => Int64(987654321),
+      ).loadNewNote();
+      expect(rememberedDefaults.notetypeId, cloze.id.value);
+      expect(rememberedDefaults.deckId, rememberedDeck.id);
+      final noBrowserOverride = await CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      ).loadNewNote();
+      expect(noBrowserOverride.deckId, rememberedDeck.id);
+    },
+  );
+
+  test(
+    'new-note controller validates and adds atomically through Unit38',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final draft = await controller.loadNewNote();
+      final empty = await controller.validateNewNote(
+        draft.notetypeId,
+        draft.content.values,
+      );
+      expect(empty, isA<NoteFieldsCheckFailure>());
+      expect(
+        (empty as NoteFieldsCheckFailure).localizedMessage,
+        'The first field is empty.',
+      );
+
+      final fields = ['new unique front', 'back'];
+      expect(
+        await controller.validateNewNote(draft.notetypeId, fields),
+        isA<NoteFieldsCheckSuccess>(),
+      );
+      final count = await controller.saveNewNote(
+        draft: draft,
+        fields: fields,
+        tags: ['Unit39'],
+      );
+      expect(count, greaterThan(0));
+      expect(draft.note!.id, isNot(Int64.ZERO));
+      final saved = await runtime.storage!.getNote(draft.note!.id);
+      expect(saved!.fields, fields);
+      expect(saved.tags, ['Unit39']);
+      expect(
+        await controller.validateNewNote(draft.notetypeId, fields),
+        isA<NoteFieldsCheckSuccess>(),
+        reason:
+            'duplicate field input remains nonfatal at save validation time',
+      );
+    },
+  );
+
+  test(
     'external collection mutation invalidates browser undo status',
     () async {
       final storage = runtime.storage!;
@@ -239,6 +348,44 @@ void main() {
       );
 
       expect(controller.canUndoNoteUpdate, isFalse);
+    },
+  );
+
+  test(
+    'new-note controller maps Cloze validation states in source order',
+    () async {
+      final storage = runtime.storage!;
+      final types = await storage.getNotetypesByIds(
+        await storage.getAllNotetypeIds(),
+      );
+      final basic = types.singleWhere((type) => type.name == 'Basic');
+      final cloze = types.singleWhere((type) => type.name == 'Cloze');
+      final controller = CollectionCardBrowserController(runtime);
+
+      final outsideCloze = await controller.validateNewNote(basic.id.value, [
+        '{{c1::text}}',
+        '',
+      ]);
+      expect(
+        (outsideCloze as NoteFieldsCheckFailure).localizedMessage,
+        'Cloze deletions require a Cloze note type.',
+      );
+      final missingCloze = await controller.validateNewNote(cloze.id.value, [
+        'text',
+        '',
+      ]);
+      expect(
+        (missingCloze as NoteFieldsCheckFailure).localizedMessage,
+        'A cloze deletion is required.',
+      );
+      final wrongClozeField = await controller.validateNewNote(cloze.id.value, [
+        '',
+        '{{c1::text}}',
+      ]);
+      expect(
+        (wrongClozeField as NoteFieldsCheckFailure).localizedMessage,
+        'Cloze deletions must be in a Cloze field.',
+      );
     },
   );
 }

@@ -30,16 +30,44 @@ directly into `Int64` rather than decoding it through a JavaScript number. A
 fixture checks both the exact raw JSON digits and a subsequent lookup for a
 deck ID above `2^53`.
 
+## Shared cross-platform Note Editor flow
+
+`apps/anki/lib/note_editor_screen.dart` now supports a new-note mode alongside
+existing-note editing. The Card Browser toolbar exposes Add when its controller
+implements `CardBrowserNewNoteEditorController`; the collection controller
+creates an empty Core `Note`, supplies the chosen notetype and deck IDs through
+`NewNoteEditorDraft`, and calls the Unit38 `addNoteToDeck()` operation after
+validation. The shared field and tag UI is used on all Flutter targets.
+
+The new-note host validates through the existing
+`anki_backend_models.noteFieldsCheck()` implementation and projects its
+generated state through `projectNoteFieldsCheckResult()`. Its precedence and
+message mapping follow Core and AnkiDroid: invalid Cloze note type/field states
+precede first-field emptiness; an empty first field precedes missing Cloze and
+duplicate checks; `DUPLICATE` is a successful validation state; unknown states
+fail without a specific message. Validation or storage errors leave field and
+tag edits in the editor. A successful add reports Unit38's generated card
+count and loads a fresh empty draft; leaving the editor refreshes the browser's
+active search while preserving its selected rows.
+
+Default selection follows the supported collection state: the current deck's
+legacy `mid` value wins when available, then `curModel`, then Basic or the
+first note type; an explicit host-provided browser deck wins only while it
+exists and is not filtered. Otherwise the controller follows the collection's
+add-to-current-deck preference and remembered last deck, falling back to the
+current deck or Default when invalid. The app does not currently persist the
+separate AnkiDroid Card Browser `lastDeckId`; when no host callback supplies
+that value, it uses the collection's current deck. A future Card Browser deck
+selection host can provide the exact persisted browser ID through
+`selectedNewNoteDeckId`.
+
 ## Boundaries still owned by the host or follow-up work
 
-- AnkiDroid runs `fieldsCheck()` before invoking its add-note operation. This
-  package operation intentionally does not port duplicate detection, empty
-  first-field rules, cloze validation messages, image-occlusion messages, or
-  other editor validation presentation. The current shared adapter forwards
-  `fieldsCheck()` to its host callback; it does not implement backend checks.
-- Deck picker state and host default-deck preference resolution remain outside
-  the package. The caller passes the selected deck ID; a missing or filtered
-  deck falls back to Core's normal default deck during card generation.
+- Image Occlusion field setup and its special empty-field message remain out
+  of this editor flow; the app maps ordinary new-note validation only.
+- A dedicated deck or note-type picker is not implemented. The host contract
+  supplies concrete IDs; the collection controller resolves its supported
+  default/current values and rejects missing/filtered explicit browser decks.
 - Core `transact(Op::AddNote)` records note/card/tag/config/collection undo
   payloads and returns operation changes. This method returns `OpChanges` and
   does not create a generic undo journal or an operation-specific history.

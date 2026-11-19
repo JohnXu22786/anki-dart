@@ -7,11 +7,147 @@ import 'dart:async';
 
 import 'package:anki_app/l10n/app_localizations.dart';
 import 'package:anki_app/note_editor_screen.dart';
+import 'package:anki_dart/anki_dart.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('new note loads the selected type, deck, empty fields and tags', (
+    tester,
+  ) async {
+    final port = _FakeNewNoteEditorPort();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(port.loadedDrafts, 1);
+    expect(port.lastNotetypeId, Int64(12));
+    expect(port.lastDeckId, Int64(34));
+    expect(find.text('Front'), findsOneWidget);
+    expect(find.text('Back'), findsOneWidget);
+    expect(find.text('selected'), findsNothing);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-field-0')))
+          .controller!
+          .text,
+      isEmpty,
+    );
+  });
+
+  testWidgets('new note validates and treats duplicate as nonfatal', (
+    tester,
+  ) async {
+    final port = _FakeNewNoteEditorPort()
+      ..validation = const NoteFieldsCheckSuccess();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('note-field-0')), 'front');
+    await tester.tap(find.byKey(const Key('note-editor-tags')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tag-select-Science::Chemistry')));
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    port.validation = const NoteFieldsCheckSuccess(); // NORMAL or DUPLICATE.
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+
+    expect(port.validationCalls, 1);
+    expect(port.addCalls, 1);
+    expect(port.lastFields, ['front', '']);
+    expect(port.lastTags, ['Science::Chemistry']);
+  });
+
+  testWidgets('new note keeps edits after validation and storage failures', (
+    tester,
+  ) async {
+    final port = _FakeNewNoteEditorPort()
+      ..validation = const NoteFieldsCheckFailure('First field is empty.');
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('note-field-0')), 'draft');
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+    expect(port.addCalls, 0);
+    expect(find.text('First field is empty.'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-field-0')))
+          .controller!
+          .text,
+      'draft',
+    );
+
+    port.validation = const NoteFieldsCheckSuccess();
+    port.failAdd = true;
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+    expect(find.text('Changes could not be saved. Try again.'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-field-0')))
+          .controller!
+          .text,
+      'draft',
+    );
+  });
+
+  testWidgets('new note save is single-flight and resets after success', (
+    tester,
+  ) async {
+    final port = _FakeNewNoteEditorPort()
+      ..pendingAdd = Completer<int>()
+      ..validation = const NoteFieldsCheckSuccess();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('note-field-0')), 'front');
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    expect(port.addCalls, 1);
+    port.pendingAdd!.complete(2);
+    await tester.pumpAndSettle();
+
+    expect(port.addCalls, 1);
+    expect(port.loadedDrafts, 2);
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(
+      (tester.widget<SnackBar>(find.byType(SnackBar)).content as Text).data,
+      'Added note. Cards created: 2',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-field-0')))
+          .controller!
+          .text,
+      isEmpty,
+    );
+  });
+
   testWidgets('shows fields in notetype order and saves edited values', (
     tester,
   ) async {
@@ -357,4 +493,64 @@ final class _FakeNoteEditorPort implements NoteEditorPort {
     savedFields = fields;
     savedTags = tags;
   }
+}
+
+final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
+  final _FakeNoteEditorPort _existing = _FakeNoteEditorPort();
+  int loadedDrafts = 0;
+  int validationCalls = 0;
+  int addCalls = 0;
+  bool failAdd = false;
+  Completer<int>? pendingAdd;
+  NoteFieldsCheckResult validation = const NoteFieldsCheckSuccess();
+  Int64? lastNotetypeId;
+  Int64? lastDeckId;
+  List<String>? lastFields;
+  List<String>? lastTags;
+
+  @override
+  Future<NewNoteEditorDraft> loadNewNote() async {
+    loadedDrafts++;
+    lastNotetypeId = Int64(12);
+    lastDeckId = Int64(34);
+    return NewNoteEditorDraft(
+      notetypeId: lastNotetypeId!,
+      deckId: lastDeckId!,
+      content: NoteEditorContent(
+        labels: const ['Front', 'Back'],
+        values: const ['', ''],
+        availableTags: const ['selected', 'Science::Chemistry'],
+      ),
+    );
+  }
+
+  @override
+  Future<NoteFieldsCheckResult> validateNewNote(
+    Int64 notetypeId,
+    List<String> fields,
+  ) async {
+    validationCalls++;
+    return validation;
+  }
+
+  @override
+  Future<int> saveNewNote({
+    required NewNoteEditorDraft draft,
+    required List<String> fields,
+    required List<String> tags,
+  }) async {
+    addCalls++;
+    if (failAdd) throw StateError('write failed');
+    lastFields = fields;
+    lastTags = tags;
+    return pendingAdd?.future ?? 2;
+  }
+
+  @override
+  Future<NoteEditorContent> loadNote(Int64 noteId) =>
+      _existing.loadNote(noteId);
+
+  @override
+  Future<void> saveNote(Int64 noteId, List<String> fields, List<String> tags) =>
+      _existing.saveNote(noteId, fields, tags);
 }

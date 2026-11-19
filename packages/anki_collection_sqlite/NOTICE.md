@@ -58,6 +58,13 @@ limit aggregation. Exact source SHA-256 values are recorded in `SOURCE.sha256`;
 learning-cutoff, deck-config-limit, and day-rollover unbury behavior from the
 collection and platform clock.
 
+`removeDeckAndChildren()` follows the pinned Core deck removal and undo paths
+in `rslib/src/decks/remove.rs`, `rslib/src/decks/undo.rs`, and
+`rslib/src/config/deck.rs`; filtered-deck queue restoration follows
+`rslib/src/scheduler/filtered/card.rs`. The source hashes are listed in
+`SOURCE.sha256` and validated by `tool/check_package.py`. The shared adapter
+does not copy Core source.
+
 The Dart adapter and tests are Copyright (C) 2026 John Tsui and distributed
 under AGPL-3.0-or-later. SQLite bindings are provided by the independently
 licensed `sqlite3` package (MIT). See this package's `LICENSE` file for the

@@ -130,6 +130,37 @@ abstract interface class DeckPickerRenameProvider {
   Future<void> renameDeck(DeckPickerDeck deck, String name);
 }
 
+/// Collection-backed delete route that preserves the deck's exact 64-bit ID.
+abstract interface class DeckPickerDeleteProvider {
+  Future<DeckPickerDeletionResult> deleteDeck(
+    DeckPickerDeck deck, {
+    required String defaultDeckName,
+  });
+}
+
+final class DeckPickerDeletionResult {
+  const DeckPickerDeletionResult({
+    required this.deckName,
+    required this.cardsDeleted,
+    this.collectionUndoGeneration = 0,
+    this.persistenceWarning = false,
+  });
+
+  final String deckName;
+  final int cardsDeleted;
+  final int collectionUndoGeneration;
+  final bool persistenceWarning;
+}
+
+/// Undo and redo state exposed by collection-backed Deck Picker actions.
+abstract interface class DeckPickerCollectionUndoProvider {
+  bool get canUndoCollectionOperation;
+  bool get canRedoCollectionOperation;
+  int get collectionUndoGeneration;
+  Future<void> undoLastCollectionOperation();
+  Future<void> redoLastCollectionOperation();
+}
+
 /// Explicit placeholder while a platform/backend collection service is not connected.
 final class UnavailableDeckPickerRepository implements DeckPickerRepository {
   const UnavailableDeckPickerRepository();
@@ -609,9 +640,131 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       } else if (action == DeckPickerAction.renameDeck &&
           widget.repository is DeckPickerRenameProvider) {
         await _renameDeck(deck, s);
+      } else if (action == DeckPickerAction.deleteDeck &&
+          widget.repository is DeckPickerDeleteProvider) {
+        await _deleteDeck(deck, s);
       } else {
         await _invoke(() => widget.repository.performAction(action, deck.id));
       }
+    }
+  }
+
+  Future<void> _deleteDeck(DeckPickerDeck deck, AppLocalizations s) async {
+    final provider = widget.repository as DeckPickerDeleteProvider;
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final progress = showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              Expanded(child: Text(s.deletingDeck)),
+            ],
+          ),
+        ),
+      ),
+    );
+    try {
+      final result = await provider.deleteDeck(
+        deck,
+        defaultDeckName: s.collectionDefaultDeck,
+      );
+      if (navigator.canPop()) navigator.pop();
+      await progress;
+      if (!mounted) return;
+      _reload();
+      final message = result.persistenceWarning
+          ? '${s.deckDeletionResult(result.cardsDeleted, result.deckName)}\n${s.deckDeletionFlushWarning}'
+          : s.deckDeletionResult(result.cardsDeleted, result.deckName);
+      final undoProvider = widget.repository;
+      final undo = undoProvider is DeckPickerCollectionUndoProvider
+          ? undoProvider as DeckPickerCollectionUndoProvider
+          : null;
+      if (undo != null &&
+          undo.canUndoCollectionOperation &&
+          undo.collectionUndoGeneration == result.collectionUndoGeneration) {
+        final generation = result.collectionUndoGeneration;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            action: SnackBarAction(
+              label: s.undoDeckDeletion,
+              onPressed: () => _undoDeckDeletion(undo, generation),
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
+      }
+    } on Object {
+      if (navigator.canPop()) navigator.pop();
+      await progress;
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(s.deckActionFailed)));
+    }
+  }
+
+  Future<void> _undoDeckDeletion(
+    DeckPickerCollectionUndoProvider provider,
+    int generation,
+  ) async {
+    if (!provider.canUndoCollectionOperation ||
+        provider.collectionUndoGeneration != generation) {
+      return;
+    }
+    try {
+      await provider.undoLastCollectionOperation();
+      if (!mounted) return;
+      _reload();
+      final redoGeneration = provider.collectionUndoGeneration;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.deckDeletionUndone),
+          action: SnackBarAction(
+            label: AppLocalizations.of(context)!.redoDeckDeletion,
+            onPressed: () => _redoDeckDeletion(provider, redoGeneration),
+          ),
+        ),
+      );
+    } on Object {
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
+    }
+  }
+
+  Future<void> _redoDeckDeletion(
+    DeckPickerCollectionUndoProvider provider,
+    int generation,
+  ) async {
+    if (!provider.canRedoCollectionOperation ||
+        provider.collectionUndoGeneration != generation) {
+      return;
+    }
+    try {
+      await provider.redoLastCollectionOperation();
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.deckDeletionRedone),
+        ),
+      );
+    } on Object {
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
     }
   }
 

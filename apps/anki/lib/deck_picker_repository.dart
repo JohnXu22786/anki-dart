@@ -23,7 +23,9 @@ final class CollectionDeckPickerRepository
         DeckPickerRepository,
         DeckPickerNewNotePortProvider,
         DeckPickerExactBrowseDeckProvider,
-        DeckPickerRenameProvider {
+        DeckPickerRenameProvider,
+        DeckPickerDeleteProvider,
+        DeckPickerCollectionUndoProvider {
   const CollectionDeckPickerRepository(this.collections);
 
   final CollectionRuntime collections;
@@ -135,6 +137,40 @@ final class CollectionDeckPickerRepository
       Future.error(
         UnsupportedError('Deck action ${action.name} is not implemented yet.'),
       );
+
+  @override
+  bool get canUndoCollectionOperation => _storage.canUndoCollectionOperation;
+
+  @override
+  bool get canRedoCollectionOperation => _storage.canRedoCollectionOperation;
+
+  @override
+  int get collectionUndoGeneration => _storage.collectionUndoGeneration;
+
+  @override
+  Future<void> undoLastCollectionOperation() =>
+      _storage.undoLastCollectionOperation();
+
+  @override
+  Future<void> redoLastCollectionOperation() =>
+      _storage.redoLastCollectionOperation();
+
+  @override
+  Future<DeckPickerDeletionResult> deleteDeck(
+    DeckPickerDeck deck, {
+    required String defaultDeckName,
+  }) async {
+    final result = await _storage.removeDeckAndChildren(
+      deck.exactId ?? Int64(deck.id),
+      defaultDeckName: defaultDeckName,
+    );
+    return DeckPickerDeletionResult(
+      deckName: result.deckName,
+      cardsDeleted: result.cardsDeleted,
+      collectionUndoGeneration: result.collectionUndoGeneration,
+      persistenceWarning: result.persistenceWarning,
+    );
+  }
 
   @override
   bool isDeckNameAvailable(DeckPickerDeck deck, String name) {

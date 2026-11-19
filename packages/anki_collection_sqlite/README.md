@@ -66,11 +66,21 @@ tags, `nextPos` config, and collection timestamp. Writes through the adapter's
 async mutation methods clear this scoped history. Direct writes through the
 exposed deck, deck-config, or tag stores and enclosing transactions must call
 `discardExistingNoteUpdateUndoHistory()`.
-This does not yet provide a generic collection history for unrelated
-operations, and the application does not yet surface these methods in its
-undo/redo UI.
+This note-specific history remains separate from the collection-operation
+history used by browser bulk actions and deck removal.
 Sync/import callers should continue using the low-level `addOrUpdateNote` and
 raw card operations where their replacement semantics are intended.
+
+`removeDeckAndChildren` removes a deck and its descendants in one exclusive,
+undoable collection operation. Normal-deck cards and notes left without cards
+are deleted with Core-compatible graves and revlog cleanup; filtered-deck cards
+return to their original deck, due value, and queue. Deck-specific auxiliary
+config is cleared, while Default is emptied and reset to the host-localized
+default name in place. The result
+contains the requested deck name and deleted-card count. Up to 30 collection
+operations can be undone/redone in memory; later external mutations invalidate
+stale history, and a post-commit driver-flush error is reconciled against the
+committed collection before persistence is retried.
 
 The native entry point uses the bundled SQLite from `sqlite3`:
 

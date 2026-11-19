@@ -361,5 +361,22 @@
     }
   },
   "done": "Done",
-  "browserUndoNoteEdit": "Undo note edit"
+  "browserUndoNoteEdit": "Undo note edit",
+  "deletingDeck": "Deleting deck…",
+  "deckDeletionResult": "Cards deleted from {deckName}: {cardsDeleted}",
+  "@deckDeletionResult": {
+    "placeholders": {
+      "cardsDeleted": {
+        "type": "int"
+      },
+      "deckName": {
+        "type": "String"
+      }
+    }
+  },
+  "deckDeletionUndone": "Deck deletion undone",
+  "deckDeletionRedone": "Deck deletion redone",
+  "deckDeletionFlushWarning": "Storage could not be synced.",
+  "undoDeckDeletion": "Undo",
+  "redoDeckDeletion": "Redo"
 }

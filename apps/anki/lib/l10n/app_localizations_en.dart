@@ -747,4 +747,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserUndoNoteEdit => 'Undo note edit';
+
+  @override
+  String get deletingDeck => 'Deleting deck…';
+
+  @override
+  String deckDeletionResult(int cardsDeleted, String deckName) {
+    return 'Cards deleted from $deckName: $cardsDeleted';
+  }
+
+  @override
+  String get deckDeletionUndone => 'Deck deletion undone';
+
+  @override
+  String get deckDeletionRedone => 'Deck deletion redone';
+
+  @override
+  String get deckDeletionFlushWarning => 'Storage could not be synced.';
+
+  @override
+  String get undoDeckDeletion => 'Undo';
+
+  @override
+  String get redoDeckDeletion => 'Redo';
 }

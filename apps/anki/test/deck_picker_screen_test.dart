@@ -53,6 +53,135 @@ void main() {
     },
   );
 
+  testWidgets('delete uses the exact deck ID, progress, result and undo', (
+    tester,
+  ) async {
+    final deck = DeckPickerDeck(
+      id: 8,
+      exactId: Int64.parseInt('9007199254740995'),
+      name: 'Languages::Spanish',
+      reviewCount: 12,
+    );
+    final repository = _DeckRepository([deck]);
+    final deletion = Completer<DeckPickerDeletionResult>();
+    repository.pendingDelete = deletion;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Spanish'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete deck'));
+    await tester.pump();
+
+    expect(find.text('Deleting deck…'), findsOneWidget);
+    expect(repository.deletedExact, [Int64.parseInt('9007199254740995')]);
+    expect(find.text('Are you sure?'), findsNothing);
+
+    deletion.complete(
+      const DeckPickerDeletionResult(
+        deckName: 'Languages::Spanish',
+        cardsDeleted: 12,
+        collectionUndoGeneration: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Spanish'), findsNothing);
+    expect(repository.currentDeckId, 1);
+    expect(
+      find.text('Cards deleted from Languages::Spanish: 12'),
+      findsOneWidget,
+    );
+    expect(find.text('Undo'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Spanish'), findsOneWidget);
+    expect(find.text('Deck deletion undone'), findsOneWidget);
+    expect(find.text('Redo'), findsOneWidget);
+  });
+
+  testWidgets('delete error dismisses progress, reports failure and reloads', (
+    tester,
+  ) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 9, name: 'Temporary'),
+    ])..failDelete = true;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    final loadsBeforeAction = repository.loadCalls;
+
+    await tester.tap(find.byTooltip('More actions for Temporary'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete deck'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Deleting deck…'), findsNothing);
+    expect(find.text('Deck action could not be completed'), findsOneWidget);
+    expect(repository.loadCalls, loadsBeforeAction + 1);
+    expect(find.text('Temporary'), findsOneWidget);
+  });
+
+  testWidgets('committed deletion with a flush warning still offers undo', (
+    tester,
+  ) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 10, name: 'Committed'),
+    ]);
+    final deletion = Completer<DeckPickerDeletionResult>();
+    repository.pendingDelete = deletion;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Committed'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete deck'));
+    await tester.pump();
+    deletion.complete(
+      const DeckPickerDeletionResult(
+        deckName: 'Committed',
+        cardsDeleted: 2,
+        collectionUndoGeneration: 1,
+        persistenceWarning: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Cards deleted from Committed: 2'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Storage could not be synced.'), findsOneWidget);
+    expect(find.text('Undo'), findsOneWidget);
+    expect(repository.canUndoCollectionOperation, isTrue);
+  });
+
+  testWidgets('delete undo does not target a later collection operation', (
+    tester,
+  ) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 10, name: 'Committed'),
+    ])..advanceUndoGenerationAfterDelete = true;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Committed'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete deck'));
+    await tester.pumpAndSettle();
+
+    expect(repository.collectionUndoGeneration, 2);
+    expect(find.text('Undo'), findsNothing);
+    expect(repository.undoCalls, 0);
+  });
+
   testWidgets('A opens the shared editor without overriding the current deck', (
     tester,
   ) async {
@@ -941,7 +1070,9 @@ final class _DeckRepository
         DeckPickerRepository,
         DeckPickerNewNotePortProvider,
         DeckPickerExactBrowseDeckProvider,
-        DeckPickerRenameProvider {
+        DeckPickerRenameProvider,
+        DeckPickerDeleteProvider,
+        DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
   NewNoteEditorPort? editorPort;
   @override
@@ -971,6 +1102,7 @@ final class _DeckRepository
   bool pendingLoad = false;
   bool failLoad = false;
   bool failRenameAfterUpdate = false;
+  bool failDelete = false;
   bool deferSelectionState = false;
   final failingSelections = <int>{};
   Completer<void>? pendingSelection;
@@ -984,6 +1116,17 @@ final class _DeckRepository
   final actions = <(DeckPickerAction, int)>[];
   final renamedNames = <String>[];
   final filteredRequests = <FilteredDeckRequest>[];
+  Completer<DeckPickerDeletionResult>? pendingDelete;
+  final deletedExact = <Int64>[];
+  DeckPickerDeck? _deletedDeck;
+  @override
+  bool canUndoCollectionOperation = false;
+  @override
+  bool canRedoCollectionOperation = false;
+  @override
+  int collectionUndoGeneration = 0;
+  bool advanceUndoGenerationAfterDelete = false;
+  int undoCalls = 0;
 
   @override
   Future<NewNoteEditorPort> selectDeckAndCreateNewNotePort(
@@ -1042,6 +1185,61 @@ final class _DeckRepository
   @override
   Future<void> performAction(DeckPickerAction action, int deckId) async =>
       actions.add((action, deckId));
+
+  @override
+  Future<DeckPickerDeletionResult> deleteDeck(
+    DeckPickerDeck deck, {
+    required String defaultDeckName,
+  }) async {
+    deletedExact.add(deck.exactId ?? Int64(deck.id));
+    if (failDelete) throw StateError('delete failed');
+    final result =
+        await (pendingDelete?.future ??
+            Future.value(
+              DeckPickerDeletionResult(
+                deckName: deck.name,
+                cardsDeleted:
+                    deck.newCount + deck.learningCount + deck.reviewCount,
+                collectionUndoGeneration: collectionUndoGeneration + 1,
+              ),
+            ));
+    _deletedDeck = deck;
+    decks.removeWhere((candidate) => candidate.id == deck.id);
+    currentDeckId = 1;
+    canUndoCollectionOperation = true;
+    canRedoCollectionOperation = false;
+    collectionUndoGeneration++;
+    if (advanceUndoGenerationAfterDelete) collectionUndoGeneration++;
+    return result.collectionUndoGeneration == 0
+        ? DeckPickerDeletionResult(
+            deckName: result.deckName,
+            cardsDeleted: result.cardsDeleted,
+            collectionUndoGeneration: collectionUndoGeneration,
+            persistenceWarning: result.persistenceWarning,
+          )
+        : result;
+  }
+
+  @override
+  Future<void> undoLastCollectionOperation() async {
+    undoCalls++;
+    if (_deletedDeck != null) decks.add(_deletedDeck!);
+    currentDeckId = _deletedDeck?.id;
+    canUndoCollectionOperation = false;
+    canRedoCollectionOperation = true;
+    collectionUndoGeneration++;
+  }
+
+  @override
+  Future<void> redoLastCollectionOperation() async {
+    final deck = _deletedDeck;
+    if (deck != null) decks.removeWhere((candidate) => candidate.id == deck.id);
+    currentDeckId = 1;
+    canUndoCollectionOperation = true;
+    canRedoCollectionOperation = false;
+    collectionUndoGeneration++;
+  }
+
   @override
   bool isDeckNameAvailable(DeckPickerDeck deck, String name) {
     if (name.trim().isEmpty) return false;

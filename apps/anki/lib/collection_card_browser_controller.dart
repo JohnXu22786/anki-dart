@@ -866,8 +866,12 @@ final class CollectionCardBrowserController
     final deckNotetypeId = deck == null
         ? null
         : _legacyDeckNotetypeId(deck.common.other);
+    final validDeckNotetypeId =
+        deckNotetypeId != null && typeById.containsKey(deckNotetypeId)
+        ? deckNotetypeId
+        : null;
     final configuredTypeId =
-        deckNotetypeId ??
+        validDeckNotetypeId ??
         _configInt64(storage.readCollectionConfig('curModel'));
     final notetype =
         typeById[configuredTypeId] ??

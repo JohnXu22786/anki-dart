@@ -277,6 +277,23 @@ void main() {
         preferences: preferences,
       ).loadNewNote();
       expect(noBrowserOverride.deckId, rememberedDeck.id);
+
+      await storage.writeCollectionConfig('curModel', cloze.id.value.toInt());
+      final staleMidDeck = storage.decks.addDeck(
+        Deck(
+          name: 'Stale note type',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+          common: deck_proto.Deck_Common(
+            other: utf8.encode(jsonEncode({'mid': 987654321})),
+          ),
+        ),
+      );
+      await storage.selectDeck(staleMidDeck.id);
+      final staleMidDefaults = await CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      ).loadNewNote();
+      expect(staleMidDefaults.notetypeId, cloze.id.value);
     },
   );
 

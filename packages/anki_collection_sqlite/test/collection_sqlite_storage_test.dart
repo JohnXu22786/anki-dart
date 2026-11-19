@@ -603,14 +603,34 @@ void main() {
           due: 0,
         ),
       );
+      final unrelatedCardId = await database.addCard(
+        Card(
+          noteId: Int64(202),
+          deckId: deck.id,
+          queue: CardQueue.newCard,
+          due: 1,
+        ),
+      );
       final creationSecs = await database.queryInt('SELECT crt FROM col');
       final now = DateTime.fromMillisecondsSinceEpoch(
         (creationSecs + 10 * Duration.secondsPerDay) * 1000,
         isUtc: true,
       );
 
+      final beforeBulkSuspend = (await database.getCard(unrelatedCardId))!;
+      final suspended = Card.fromProto(
+        beforeBulkSuspend.toProto()..queue = CardQueue.suspended.value,
+      );
+      await database.runUndoableCollectionOperation(
+        apply: () async => database.updateCard(suspended),
+        undo: () async => database.updateCard(beforeBulkSuspend),
+        redo: () async => database.updateCard(suspended),
+      );
+      expect(database.canUndoCollectionOperation, isTrue);
+
       final tree = await database.deckTreeForNow(now: now);
 
+      expect(database.canUndoCollectionOperation, isFalse);
       expect((await database.getCard(cardId))!.queue, CardQueue.newCard);
       expect(tree.children.single.newCount, 1);
       expect(

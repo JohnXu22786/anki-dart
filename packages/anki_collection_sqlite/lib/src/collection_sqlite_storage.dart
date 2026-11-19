@@ -1549,7 +1549,9 @@ GROUP BY did
     return true;
   }
 
-  Future<void> _unburyIfDayRolledOver(int today) async {
+  Future<void> _unburyIfDayRolledOver(
+    int today,
+  ) => _withExternalCollectionMutation(() async {
     final lastUnburied = _readConfigInt('lastUnburied') ?? 0;
     if (!(lastUnburied < today || today + 7 < lastUnburied)) return;
     _database.execute('begin');
@@ -1573,6 +1575,7 @@ WHERE queue IN (-2, -3)
         ],
       );
       _database.execute('commit');
+      discardExistingNoteUpdateUndoHistory();
       await _flush();
     } catch (error, stackTrace) {
       try {
@@ -1582,7 +1585,7 @@ WHERE queue IN (-2, -3)
       }
       Error.throwWithStackTrace(error, stackTrace);
     }
-  }
+  });
 
   int? _readConfigInt(String key) {
     final rows = _database.select('SELECT val FROM config WHERE key = ?', [

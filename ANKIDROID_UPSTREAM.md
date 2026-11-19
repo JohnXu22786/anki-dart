@@ -4691,9 +4691,11 @@ committed together under a savepoint. Sync/import callers retain the raw
 The pinned Core inputs are `rslib/src/notes/mod.rs`,
 `rslib/src/notetype/cardgen.rs`, `rslib/src/notes/undo.rs`,
 `rslib/src/tags/register.rs`, `rslib/src/tags/undo.rs`,
-`rslib/src/config/notetype.rs`,
+`rslib/src/card/undo.rs`, `rslib/src/collection/undo.rs`,
+`rslib/src/undo/changes.rs`, `rslib/src/undo/mod.rs`,
+`rslib/src/config/undo.rs`, `rslib/src/config/notetype.rs`,
 `rslib/src/collection/transact.rs`, `rslib/src/collection/timestamps.rs`, and
-`rslib/src/storage/collection_timestamps.rs`, and
+`rslib/src/storage/collection_timestamps.rs` and
 `rslib/src/storage/notetype/existing_cards.sql` at
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985`; their SHA-256 digests are checked
 by `packages/anki_collection_sqlite/tool/check_package.py` and recorded in its
@@ -4705,10 +4707,18 @@ by `packages/anki_collection_sqlite/tool/check_package.py` and recorded in its
 The operation returns a reversible snapshot containing the old note, prior
 collection modification timestamp, and newly registered tag names, matching
 Core's `UndoableNoteChange::Updated`, `UndoableCollectionChange::Modified`,
-and `UndoableTagChange::Added` payloads.
-The collection package still has no generic undo/redo journal or replay API;
-Unit33's editor must remain on its existing path until that result is wired into
-application-level undo/redo. Focused source-derived cases live in
+and `UndoableTagChange::Added` payloads. The storage package records successful
+existing-note updates in an in-memory history of up to 30 undo steps and
+replays note, added cards, added tags, `nextPos` config, and `col.mod` on
+undo/redo. Successive same-note edits coalesce within Core's 60-second window
+when they change only note and collection-modification rows. Mutations
+through the storage's asynchronous adapter methods clear this scoped history.
+Direct writes through
+the exposed deck/config/tag stores or an enclosing transaction must call
+`discardExistingNoteUpdateUndoHistory()`. A generic collection journal covering
+unrelated operation types and the app's undo/redo affordance remain incomplete;
+Unit33's editor currently does not expose its history. Focused source-derived
+cases live in
 `packages/anki_collection_sqlite/test/existing_note_update_test.dart` and
 `core_random_position_test.dart`. Dart changes remain AGPL-3.0-or-later; no
 upstream source file or UI resource is copied, and root `COPYING` remains

@@ -5,12 +5,14 @@ import 'package:fixnum/fixnum.dart';
 
 /// The reversible snapshot recorded for Anki Core's `Updated` note change.
 ///
-/// This is an operation-boundary record. The collection package does not yet
-/// own a generic undo stack that can consume it.
+/// This is an operation-boundary record consumed by the scoped note-update
+/// history. The collection package does not yet provide a generic undo stack.
 final class UpdatedNoteUndoRecord {
   UpdatedNoteUndoRecord(
     Note note, {
     required this.collectionMtimeMillis,
+    this.nextCardPositionConfigBefore,
+    this.nextCardPositionConfigAfter,
     required Iterable<String> addedTags,
   }) : oldNote = copyNote(note),
        addedTags = List.unmodifiable(addedTags);
@@ -21,9 +23,30 @@ final class UpdatedNoteUndoRecord {
   /// operation record.
   final Int64 collectionMtimeMillis;
 
+  /// Exact prior `nextPos` config row, or null if it was not present.
+  final ExistingNoteUpdateConfigSnapshot? nextCardPositionConfigBefore;
+
+  /// Exact resulting `nextPos` config row, or null if it remains absent.
+  final ExistingNoteUpdateConfigSnapshot? nextCardPositionConfigAfter;
+
   /// Tag rows registered by the update, corresponding to Core's
   /// `UndoableTagChange::Added` entries.
   final List<String> addedTags;
+}
+
+/// Exact `config` row snapshot used to undo Core's next-card-position update.
+final class ExistingNoteUpdateConfigSnapshot {
+  ExistingNoteUpdateConfigSnapshot({
+    required this.key,
+    required this.usn,
+    required this.mtimeSecs,
+    required Iterable<int> value,
+  }) : value = List.unmodifiable(value);
+
+  final String key;
+  final int usn;
+  final Int64 mtimeSecs;
+  final List<int> value;
 }
 
 /// Result of updating an existing note using Core's edit semantics.
@@ -53,3 +76,17 @@ Note copyNote(Note note) => Note(
   sortField: note.sortField,
   checksum: note.checksum,
 );
+
+/// Availability of the note-update-only history in one open SQLite storage.
+/// This does not report generic collection undo/redo support.
+final class ExistingNoteUpdateUndoStatus {
+  const ExistingNoteUpdateUndoStatus({
+    required this.canUndo,
+    required this.canRedo,
+    required this.lastStep,
+  });
+
+  final bool canUndo;
+  final bool canRedo;
+  final int lastStep;
+}

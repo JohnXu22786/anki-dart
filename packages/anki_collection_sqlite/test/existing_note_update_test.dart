@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 John Tsui
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
@@ -16,14 +17,27 @@ import 'package:test/test.dart';
 void main() {
   late CollectionSqliteStorage storage;
   late Database database;
+  late int nowMillis;
+  late int nowMillisReads;
+  late bool advanceClockAtCommit;
+  late Future<void> Function()? flushHook;
 
   setUp(() async {
+    nowMillis = 9007199254740993;
+    nowMillisReads = 0;
+    advanceClockAtCommit = false;
+    flushHook = null;
     storage = await CollectionSqliteStorage.open(
       driver: CollectionSqliteDriver(
         openDatabase: (_) => database = sqlite3.openInMemory(),
+        flush: () async => flushHook?.call(),
       ),
       location: ':memory:',
-      nowMillis: () => 9007199254740993,
+      nowMillis: () {
+        nowMillisReads++;
+        if (advanceClockAtCommit && nowMillisReads == 2) nowMillis += 1_000;
+        return nowMillis;
+      },
     );
     _activeDatabase = database;
     await storage.executeBatch('''
@@ -119,6 +133,145 @@ void main() {
       expect(await storage.queryInt('SELECT mod FROM col'), 9007199254740993);
     },
   );
+
+  test(
+    'existing note update can be undone and redone with cards and tags',
+    () async {
+      final result = await storage.updateExistingNote(
+        _note(fields: ['new front', 'back'], tags: ['old', 'new-tag']),
+      );
+      final generatedCard = result.addedCards.single;
+
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+      expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+      expect(storage.existingNoteUpdateUndoStatus.lastStep, 1);
+      await storage.undoLastExistingNoteUpdate();
+
+      final undone = await storage.getNote(Int64(42));
+      expect(undone!.fields, ['front', 'back']);
+      expect(undone.tags, ['old']);
+      expect(undone.mtimeSecs, Int64(100));
+      expect(await storage.getCard(generatedCard.id), isNull);
+      expect(storage.tags.getTag('new-tag'), isNull);
+      expect(await storage.queryInt('SELECT mod FROM col'), 500);
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+      expect(storage.existingNoteUpdateUndoStatus.canRedo, isTrue);
+      expect(storage.existingNoteUpdateUndoStatus.lastStep, 2);
+
+      await storage.redoLastExistingNoteUpdate();
+      final redone = await storage.getNote(Int64(42));
+      expect(redone!.fields, ['new front', 'back']);
+      expect(redone.tags, ['new-tag', 'old']);
+      expect(redone.mtimeSecs, Int64(9007199254740));
+      expect(await storage.getCard(generatedCard.id), isNotNull);
+      expect(storage.tags.getTag('new-tag'), isNotNull);
+      expect(await storage.queryInt('SELECT mod FROM col'), 9007199254740993);
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+      expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+      expect(storage.existingNoteUpdateUndoStatus.lastStep, 3);
+    },
+  );
+
+  test('no-op edit creates no undo history', () async {
+    await storage.updateExistingNote(
+      _note(fields: ['front', 'back'], tags: ['old']),
+    );
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+    expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+    await expectLater(storage.undoLastExistingNoteUpdate(), throwsStateError);
+  });
+
+  test('rapid edits to the same note coalesce into one undo step', () async {
+    database.execute('''
+      INSERT INTO cards (
+        id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+        lapses, left, odue, odid, flags, data
+      ) VALUES (1, 42, 1, 0, 100, 0, 0, 0, 1, 0, 2500, 0, 0, 0, 0, 0, 0, '')
+    ''');
+
+    await storage.updateExistingNote(_note(fields: ['first edit', 'back']));
+    nowMillis += 59_000;
+    await storage.updateExistingNote(_note(fields: ['second edit', 'back']));
+
+    expect(storage.existingNoteUpdateUndoStatus.lastStep, 2);
+    await storage.undoLastExistingNoteUpdate();
+    expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
+    await storage.redoLastExistingNoteUpdate();
+    expect((await storage.getNote(Int64(42)))!.fields, ['second edit', 'back']);
+    expect(storage.existingNoteUpdateUndoStatus.lastStep, 4);
+  });
+
+  test('edits at the 60-second boundary remain separate undo steps', () async {
+    database.execute('''
+      INSERT INTO cards (
+        id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+        lapses, left, odue, odid, flags, data
+      ) VALUES (1, 42, 1, 0, 100, 0, 0, 0, 1, 0, 2500, 0, 0, 0, 0, 0, 0, '')
+    ''');
+
+    await storage.updateExistingNote(_note(fields: ['first edit', 'back']));
+    nowMillis += 60_000;
+    await storage.updateExistingNote(_note(fields: ['second edit', 'back']));
+
+    await storage.undoLastExistingNoteUpdate();
+    expect((await storage.getNote(Int64(42)))!.fields, ['first edit', 'back']);
+    await storage.undoLastExistingNoteUpdate();
+    expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
+  });
+
+  test('rapid edits with card or tag changes remain separate steps', () async {
+    await storage.updateExistingNote(
+      _note(fields: ['first edit', 'back'], tags: ['old', 'new-first']),
+    );
+    nowMillis += 1_000;
+    await storage.updateExistingNote(
+      _note(
+        fields: ['second edit', 'back'],
+        tags: ['old', 'new-first', 'new-second'],
+      ),
+    );
+
+    await storage.undoLastExistingNoteUpdate();
+    expect((await storage.getNote(Int64(42)))!.fields, ['first edit', 'back']);
+    expect(storage.tags.getTag('new-first'), isNotNull);
+    await storage.undoLastExistingNoteUpdate();
+    expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
+    expect(storage.tags.getTag('new-first'), isNull);
+  });
+
+  test(
+    'coalescing window is checked after the second edit completes',
+    () async {
+      database.execute('''
+      INSERT INTO cards (
+        id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+        lapses, left, odue, odid, flags, data
+      ) VALUES (1, 42, 1, 0, 100, 0, 0, 0, 1, 0, 2500, 0, 0, 0, 0, 0, 0, '')
+    ''');
+      await storage.updateExistingNote(_note(fields: ['first edit', 'back']));
+
+      nowMillis += 59_000;
+      nowMillisReads = 0;
+      advanceClockAtCommit = true;
+      await storage.updateExistingNote(_note(fields: ['second edit', 'back']));
+      advanceClockAtCommit = false;
+
+      await storage.undoLastExistingNoteUpdate();
+      expect((await storage.getNote(Int64(42)))!.fields, [
+        'first edit',
+        'back',
+      ]);
+    },
+  );
+
+  test('a new edit after undo clears note-update redo history', () async {
+    await storage.updateExistingNote(_note(fields: ['first', 'back']));
+    await storage.undoLastExistingNoteUpdate();
+    await storage.updateExistingNote(_note(fields: ['second', 'back']));
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+    expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+    await expectLater(storage.redoLastExistingNoteUpdate(), throwsStateError);
+  });
 
   test(
     'changing notetype uses edited type and snapshots the original type',
@@ -232,13 +385,46 @@ void main() {
         DeckConfig(id: Int64.ONE, inner: inner),
       );
       await storage.writeCollectionConfig('nextPos', 5);
+      final beforeConfig = database.select(
+        'SELECT usn, mtime_secs, val FROM config WHERE key = ?',
+        ['nextPos'],
+      ).single;
 
       final result = await storage.updateExistingNote(
         _note(fields: ['new front', 'back'], tags: ['old']),
       );
+      final afterConfig = database.select(
+        'SELECT usn, mtime_secs, val FROM config WHERE key = ?',
+        ['nextPos'],
+      ).single;
 
       expect(result.addedCards.single.due, 180);
       expect(storage.readCollectionConfig('nextPos'), 6);
+      await storage.undoLastExistingNoteUpdate();
+      expect(storage.readCollectionConfig('nextPos'), 5);
+      final undoneConfig = database.select(
+        'SELECT usn, mtime_secs, val FROM config WHERE key = ?',
+        ['nextPos'],
+      ).single;
+      expect(undoneConfig['usn'], beforeConfig['usn']);
+      expect(undoneConfig['mtime_secs'], beforeConfig['mtime_secs']);
+      expect(
+        List<int>.from(undoneConfig['val'] as List<int>),
+        List<int>.from(beforeConfig['val'] as List<int>),
+      );
+
+      await storage.redoLastExistingNoteUpdate();
+      expect(storage.readCollectionConfig('nextPos'), 6);
+      final redoneConfig = database.select(
+        'SELECT usn, mtime_secs, val FROM config WHERE key = ?',
+        ['nextPos'],
+      ).single;
+      expect(redoneConfig['usn'], afterConfig['usn']);
+      expect(redoneConfig['mtime_secs'], afterConfig['mtime_secs']);
+      expect(
+        List<int>.from(redoneConfig['val'] as List<int>),
+        List<int>.from(afterConfig['val'] as List<int>),
+      );
     },
   );
 
@@ -277,6 +463,26 @@ void main() {
       expect(storage.readCollectionConfig('nextPos'), 6);
     },
   );
+
+  test('undo and redo restore whether nextPos config existed', () async {
+    database.execute('DELETE FROM config WHERE key = ?', ['nextPos']);
+    expect(storage.readCollectionConfig('nextPos'), isNull);
+
+    await storage.updateExistingNote(_note(fields: ['new front', 'back']));
+    expect(storage.readCollectionConfig('nextPos'), 1);
+
+    await storage.undoLastExistingNoteUpdate();
+    expect(storage.readCollectionConfig('nextPos'), isNull);
+    expect(
+      await storage.queryInt(
+        "SELECT count(*) FROM config WHERE key = 'nextPos'",
+      ),
+      0,
+    );
+
+    await storage.redoLastExistingNoteUpdate();
+    expect(storage.readCollectionConfig('nextPos'), 1);
+  });
 
   test('missing template target deck falls back to Default', () async {
     await _saveNotetype(
@@ -481,6 +687,144 @@ void main() {
       0,
     );
   });
+
+  test('an untracked collection mutation clears note-update history', () async {
+    await storage.updateExistingNote(_note(fields: ['edited', 'back']));
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+
+    await storage.writeCollectionConfig('untracked-change', true);
+
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+    expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+  });
+
+  test(
+    'direct substore writes require explicit history invalidation',
+    () async {
+      await storage.updateExistingNote(_note(fields: ['edited', 'back']));
+      storage.tags.registerTag(Tag(name: 'direct', usn: -1, expanded: false));
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+
+      storage.discardExistingNoteUpdateUndoHistory();
+
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+      expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+    },
+  );
+
+  test(
+    'executeBatch invalidates note-update history before direct SQL writes',
+    () async {
+      await storage.updateExistingNote(_note(fields: ['edited', 'back']));
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+
+      await storage.executeBatch(
+        "UPDATE notes SET flds = 'external edit' WHERE id = 42",
+      );
+
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+      expect((await storage.getNote(Int64(42)))!.fields, ['external edit']);
+    },
+  );
+
+  test(
+    'adapter mutation during update flush prevents stale undo history',
+    () async {
+      final firstFlushStarted = Completer<void>();
+      final releaseFirstFlush = Completer<void>();
+      var flushCount = 0;
+      flushHook = () async {
+        flushCount++;
+        if (flushCount == 1) {
+          firstFlushStarted.complete();
+          await releaseFirstFlush.future;
+        }
+      };
+
+      final update = storage.updateExistingNote(
+        _note(fields: ['note update', 'back']),
+      );
+      await firstFlushStarted.future;
+      final concurrent = _note(fields: ['concurrent change', 'back'])
+        ..prepareForUpdate(_normalNotetype(), normalizeText: true);
+      await storage.updateNote(concurrent);
+      releaseFirstFlush.complete();
+      await update;
+
+      expect((await storage.getNote(Int64(42)))!.fields, [
+        'concurrent change',
+        'back',
+      ]);
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+    },
+  );
+
+  test(
+    'failed undo rolls back SQLite rows and consumes the popped undo entry',
+    () async {
+      final result = await storage.updateExistingNote(
+        _note(fields: ['edited', 'back'], tags: ['old', 'new-tag']),
+      );
+      database.execute('''
+      CREATE TRIGGER reject_card_delete BEFORE DELETE ON cards
+      BEGIN SELECT RAISE(ABORT, 'blocked'); END
+    ''');
+
+      await expectLater(
+        storage.undoLastExistingNoteUpdate(),
+        throwsA(anything),
+      );
+
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+      expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+      expect((await storage.getNote(Int64(42)))!.fields, ['edited', 'back']);
+      expect(await storage.getCard(result.addedCards.single.id), isNotNull);
+      expect(storage.tags.getTag('new-tag'), isNotNull);
+      expect(await storage.queryInt('SELECT mod FROM col'), 9007199254740993);
+
+      expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+      await expectLater(storage.undoLastExistingNoteUpdate(), throwsStateError);
+    },
+  );
+
+  test('failed edit clears older undo and redo entries', () async {
+    await storage.updateExistingNote(_note(fields: ['first edit', 'back']));
+    await storage.undoLastExistingNoteUpdate();
+    expect(storage.existingNoteUpdateUndoStatus.canRedo, isTrue);
+    database.execute('''
+      CREATE TRIGGER reject_note_update BEFORE UPDATE ON notes
+      BEGIN SELECT RAISE(ABORT, 'blocked'); END
+    ''');
+
+    await expectLater(
+      storage.updateExistingNote(_note(fields: ['second edit', 'back'])),
+      throwsA(anything),
+    );
+
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+    expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+    expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
+  });
+
+  test(
+    'note-update undo history retains only the newest 30 operations',
+    () async {
+      for (var index = 0; index < 31; index++) {
+        if (index > 0) nowMillis += 60_000;
+        await storage.updateExistingNote(
+          _note(fields: ['edit $index', 'back']),
+        );
+      }
+
+      expect(storage.existingNoteUpdateUndoStatus.lastStep, 31);
+      for (var index = 0; index < 30; index++) {
+        await storage.undoLastExistingNoteUpdate();
+      }
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+      expect(storage.existingNoteUpdateUndoStatus.canRedo, isTrue);
+      expect((await storage.getNote(Int64(42)))!.fields.first, 'edit 0');
+    },
+  );
 
   test(
     'concurrent note updates do not roll back another successful update',

@@ -59,9 +59,16 @@ tag canonicalization, modified metadata, normal/cloze card generation, and
 collection timestamp update in one savepoint. Its result reports the updated
 note, newly generated cards, and an `UpdatedNoteUndoRecord` containing the old
 note, prior collection modification timestamp, and tag names newly registered
-by the operation. This snapshot matches the note, tag, and collection data
-needed for Core's update undo entries; the package does not yet provide the
-application-level undo/redo stack or its replay wiring.
+by the operation. The package records up to 30 undo steps in an in-memory
+history, coalescing successive card/tag/config-free edits to the same note
+within Core's 60-second window. It can undo or redo the note, generated cards,
+tags, `nextPos` config, and collection timestamp. Writes through the adapter's
+async mutation methods clear this scoped history. Direct writes through the
+exposed deck, deck-config, or tag stores and enclosing transactions must call
+`discardExistingNoteUpdateUndoHistory()`.
+This does not yet provide a generic collection history for unrelated
+operations, and the application does not yet surface these methods in its
+undo/redo UI.
 Sync/import callers should continue using the low-level `addOrUpdateNote` and
 raw card operations where their replacement semantics are intended.
 

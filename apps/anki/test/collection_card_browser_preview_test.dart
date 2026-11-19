@@ -8,6 +8,7 @@ import 'dart:io' as io;
 import 'package:anki_app/app_collection_callbacks.dart';
 import 'package:anki_app/collection_card_browser_controller.dart';
 import 'package:anki_app/collection_runtime.dart';
+import 'package:anki_app/card_browser_screen.dart';
 import 'package:anki_app/l10n/app_localizations_en.dart';
 import 'package:anki_backend_models/anki_backend_models.dart' as models;
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
@@ -26,6 +27,7 @@ void main() {
   late SharedPreferencesAsync preferences;
   late List<Int64> noteIds;
   late List<Int64> cardIds;
+  late sqlite.Database database;
 
   setUp(() async {
     SharedPreferencesAsyncPlatform.instance =
@@ -36,8 +38,9 @@ void main() {
     );
     runtime = CollectionRuntime(
       locationForProfile: (_) async => '${directory.path}/collection.anki2',
-      createDriver: () async =>
-          CollectionSqliteDriver(openDatabase: sqlite.sqlite3.open),
+      createDriver: () async => CollectionSqliteDriver(
+        openDatabase: (location) => database = sqlite.sqlite3.open(location),
+      ),
     );
     storage = await runtime
         .openOrCreate(
@@ -167,6 +170,225 @@ void main() {
       throwsStateError,
     );
     expect(snapshot.rows, isNotEmpty);
+  });
+
+  test(
+    'suspend and bury toggle mixed and all-selected states with exact IDs',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await controller.load();
+      database.execute('UPDATE col SET mod = 1');
+      final largeCardId = Int64.parseInt('9007199254740997');
+      final originalLargeCard = (await storage.getCard(cardIds.first))!;
+      await storage.addOrUpdateCard(
+        models.Card.fromProto(originalLargeCard.toProto()..id = largeCardId),
+      );
+      final selected = [
+        BrowserRowId.bigInt(BigInt.parse(cardIds[1].toString())),
+        BrowserRowId.bigInt(BigInt.parse(largeCardId.toString())),
+      ];
+
+      await storage.updateCard(
+        models.Card.fromProto(
+          (await storage.getCard(cardIds[1]))!.toProto()
+            ..queue = models.CardQueue.suspended.value,
+        ),
+      );
+      await controller.performBulkAction(
+        CardBrowserBulkAction.suspend,
+        selected,
+      );
+      expect(
+        (await storage.getCard(cardIds[1]))!.queue,
+        models.CardQueue.suspended,
+      );
+      expect(
+        (await storage.getCard(largeCardId))!.queue,
+        models.CardQueue.suspended,
+      );
+      expect(
+        database.select('SELECT mod FROM col').single['mod'],
+        greaterThan(1),
+      );
+      await controller.performBulkAction(
+        CardBrowserBulkAction.suspend,
+        selected,
+      );
+      expect(
+        (await storage.getCard(cardIds[1]))!.queue,
+        models.CardQueue.newCard,
+      );
+      expect(
+        (await storage.getCard(largeCardId))!.queue,
+        models.CardQueue.newCard,
+      );
+
+      await storage.updateCard(
+        models.Card.fromProto(
+          (await storage.getCard(cardIds[1]))!.toProto()
+            ..queue = models.CardQueue.userBuried.value,
+        ),
+      );
+      await controller.performBulkAction(CardBrowserBulkAction.bury, selected);
+      expect(
+        (await storage.getCard(cardIds[1]))!.queue,
+        models.CardQueue.userBuried,
+      );
+      expect(
+        (await storage.getCard(largeCardId))!.queue,
+        models.CardQueue.userBuried,
+      );
+      await storage.updateCard(
+        models.Card.fromProto(
+          (await storage.getCard(largeCardId))!.toProto()
+            ..queue = models.CardQueue.schedBuried.value,
+        ),
+      );
+      await controller.performBulkAction(CardBrowserBulkAction.bury, selected);
+      expect(
+        (await storage.getCard(cardIds[1]))!.queue,
+        models.CardQueue.newCard,
+      );
+      expect(
+        (await storage.getCard(largeCardId))!.queue,
+        models.CardQueue.newCard,
+      );
+    },
+  );
+
+  test('Notes mode actions expand selected notes to every card', () async {
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    await controller.load();
+    final notes = await controller.updateMode(BrowserColumnMode.notes);
+    final selectedNote = notes.rows.first.id;
+    final cardsForNote = await storage.allCardsOfNote(noteIds.first);
+    expect(cardsForNote, hasLength(2));
+    final largeNoteId = Int64.parseInt('9007199254740999');
+    final largeCardId = Int64.parseInt('9007199254741001');
+    final sourceNote = (await storage.getNote(noteIds.last))!;
+    final largeNote = models.Note.fromProto(
+      sourceNote.toProto()..id = largeNoteId,
+    );
+    final notetype = (await storage.getNotetypesByIds([
+      models.NotetypeId(largeNote.notetypeId),
+    ])).single;
+    largeNote.prepareForUpdate(notetype, normalizeText: false);
+    await storage.addOrUpdateNote(largeNote);
+    final sourceCard = (await storage.getCard(cardIds.last))!;
+    await storage.addOrUpdateCard(
+      models.Card.fromProto(
+        sourceCard.toProto()
+          ..id = largeCardId
+          ..noteId = largeNoteId,
+      ),
+    );
+    final currentDeck = storage.currentDeckId;
+
+    await controller.performBulkAction(CardBrowserBulkAction.bury, [
+      selectedNote,
+    ]);
+    for (final card in cardsForNote) {
+      expect(
+        (await storage.getCard(card.id))!.queue,
+        models.CardQueue.userBuried,
+      );
+    }
+    await controller.performBulkAction(CardBrowserBulkAction.suspend, [
+      selectedNote,
+    ]);
+    for (final card in cardsForNote) {
+      expect(
+        (await storage.getCard(card.id))!.queue,
+        models.CardQueue.suspended,
+      );
+    }
+    await controller.performBulkAction(CardBrowserBulkAction.suspend, [
+      BrowserRowId.bigInt(BigInt.parse(largeNoteId.toString())),
+    ]);
+    expect(
+      (await storage.getCard(largeCardId))!.queue,
+      models.CardQueue.suspended,
+    );
+    expect(storage.currentDeckId, currentDeck);
+  });
+
+  test('failed multi-card suspend rolls back and succeeds on retry', () async {
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    final snapshot = await controller.load();
+    final selected = [snapshot.rows[0].id, snapshot.rows[1].id];
+    database.execute('''
+      CREATE TRIGGER fail_bulk_action BEFORE UPDATE ON cards
+      WHEN OLD.id = ${cardIds[1]}
+      BEGIN SELECT RAISE(ABORT, 'injected bulk update failure'); END
+    ''');
+
+    await expectLater(
+      controller.performBulkAction(CardBrowserBulkAction.suspend, selected),
+      throwsA(isA<Object>()),
+    );
+    for (final id in cardIds.take(2)) {
+      expect((await storage.getCard(id))!.queue, models.CardQueue.newCard);
+    }
+
+    database.execute('DROP TRIGGER fail_bulk_action');
+    await controller.performBulkAction(CardBrowserBulkAction.suspend, selected);
+    for (final id in cardIds.take(2)) {
+      expect((await storage.getCard(id))!.queue, models.CardQueue.suspended);
+    }
+  });
+
+  test(
+    'deleting a selected card deletes its note and refreshes the active search',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final snapshot = await controller.search('Question 1');
+      expect(snapshot.rows, hasLength(2));
+      final currentDeck = storage.currentDeckId;
+      database.execute('UPDATE col SET mod = 1');
+
+      await controller.performBulkAction(CardBrowserBulkAction.delete, [
+        snapshot.rows.first.id,
+      ]);
+      final refreshed = await controller.refresh();
+
+      expect(await storage.getNote(noteIds.first), isNull);
+      expect(await storage.allCardsOfNote(noteIds.first), isEmpty);
+      expect(refreshed.rows, isEmpty);
+      expect(
+        database.select('SELECT mod FROM col').single['mod'],
+        greaterThan(1),
+      );
+      expect(storage.currentDeckId, currentDeck);
+    },
+  );
+
+  test('empty bulk selection leaves collection data unchanged', () async {
+    final controller = CollectionCardBrowserController(
+      runtime,
+      preferences: preferences,
+    );
+    await controller.load();
+    for (final action in CardBrowserBulkAction.values) {
+      await controller.performBulkAction(action, const []);
+    }
+    for (final id in cardIds) {
+      expect((await storage.getCard(id))!.queue, models.CardQueue.newCard);
+    }
+    for (final id in noteIds) {
+      expect(await storage.getNote(id), isNotNull);
+    }
   });
 
   test(

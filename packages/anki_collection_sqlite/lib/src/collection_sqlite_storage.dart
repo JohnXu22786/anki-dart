@@ -1048,6 +1048,17 @@ GROUP BY did
   /// Returns Core's configured current deck, or its source default ID.
   Int64 get currentDeckId => readCollectionConfigInt64('curDeck') ?? Int64.ONE;
 
+  /// Marks the collection as modified at [modifiedAtMillis].
+  ///
+  /// Higher-level collection operations use this alongside card or note row
+  /// changes so the collection metadata reflects the committed operation.
+  Future<void> updateCollectionModifiedAt(Int64 modifiedAtMillis) async {
+    _database.execute('UPDATE col SET mod = ?', [
+      _toSqlInt64(modifiedAtMillis),
+    ]);
+    await _flushIfAutocommit();
+  }
+
   /// Selects [deckId], matching Core's non-undoable current-deck setting.
   Future<void> selectDeck(Int64 deckId) =>
       _writeConfigValue('curDeck', deckId.toString());

@@ -1233,9 +1233,134 @@ final class CollectionCardBrowserController
   Future<void> performBulkAction(
     CardBrowserBulkAction action,
     List<BrowserRowId> selectedRows,
-  ) => Future.error(
-    UnsupportedError('Card Browser bulk actions are not implemented.'),
-  );
+  ) async {
+    final storage = _storage;
+    if (selectedRows.isEmpty) return;
+    final cardIds = await _selectedCardIds(storage, selectedRows);
+    if (cardIds.isEmpty) return;
+    final operationTimeMillis = DateTime.now().toUtc().millisecondsSinceEpoch;
+
+    if (action == CardBrowserBulkAction.delete) {
+      final selectedCards = await storage.getCardsByIds(cardIds);
+      final noteIds = selectedCards.map((card) => card.noteId).toSet();
+      final cardsByNote = await storage.cardsOfNotes(noteIds);
+      await _withBulkActionTransaction(storage, () async {
+        for (final noteId in noteIds) {
+          for (final card in cardsByNote[noteId] ?? const <models.Card>[]) {
+            for (final entry in storage.revlog.getRevlogEntriesForCard(
+              card.id,
+            )) {
+              storage.revlog.removeRevlogEntry(entry.id);
+            }
+            await storage.removeCard(card.id);
+          }
+          await storage.removeNote(noteId);
+        }
+        await storage.updateCollectionModifiedAt(Int64(operationTimeMillis));
+      });
+      await updateSelection(const []);
+      return;
+    }
+
+    final cards = await storage.getCardsByIds(cardIds);
+    if (cards.isEmpty) return;
+    final allSuspended = cards.every(
+      (card) => card.queue == models.CardQueue.suspended,
+    );
+    final allBuried = cards.every(
+      (card) =>
+          card.queue == models.CardQueue.schedBuried ||
+          card.queue == models.CardQueue.userBuried,
+    );
+    final shouldRestore = action == CardBrowserBulkAction.suspend
+        ? allSuspended
+        : allBuried;
+    final modifiedAt = Int64(operationTimeMillis ~/ 1000);
+    final updates = <models.Card>[];
+    for (final card in cards) {
+      final queue = switch (action) {
+        CardBrowserBulkAction.suspend =>
+          shouldRestore
+              ? _queueForType(card)
+              : card.queue == models.CardQueue.suspended
+              ? card.queue
+              : models.CardQueue.suspended,
+        CardBrowserBulkAction.bury =>
+          shouldRestore
+              ? _queueForType(card)
+              : card.queue == models.CardQueue.suspended
+              ? card.queue
+              : models.CardQueue.userBuried,
+        CardBrowserBulkAction.delete => card.queue,
+      };
+      if (queue != card.queue) {
+        updates.add(
+          models.Card.fromProto(
+            card.toProto()
+              ..queue = queue.value
+              ..usn = -1
+              ..mtimeSecs = modifiedAt,
+          ),
+        );
+      }
+    }
+    if (updates.isEmpty) return;
+    await _withBulkActionTransaction(storage, () async {
+      for (final card in updates) {
+        await storage.updateCard(card);
+      }
+      await storage.updateCollectionModifiedAt(Int64(operationTimeMillis));
+    });
+  }
+
+  Future<List<Int64>> _selectedCardIds(
+    CollectionSqliteStorage storage,
+    List<BrowserRowId> selectedRows,
+  ) async {
+    if (_mode == BrowserColumnMode.cards) {
+      return selectedRows
+          .map((row) => Int64.parseInt(row.bigValue.toString()))
+          .toSet()
+          .toList(growable: false);
+    }
+    final noteIds = selectedRows
+        .map((row) => Int64.parseInt(row.bigValue.toString()))
+        .toSet()
+        .toList(growable: false);
+    final cardsByNote = await storage.cardsOfNotes(noteIds);
+    return [
+      for (final noteId in noteIds)
+        for (final card in cardsByNote[noteId] ?? const <models.Card>[])
+          card.id,
+    ];
+  }
+
+  models.CardQueue _queueForType(models.Card card) => switch (card.ctype) {
+    models.CardType.newCard => models.CardQueue.newCard,
+    models.CardType.review => models.CardQueue.review,
+    models.CardType.learn || models.CardType.relearn =>
+      card.due > 1000000000
+          ? models.CardQueue.learn
+          : models.CardQueue.dayLearn,
+  };
+
+  Future<void> _withBulkActionTransaction(
+    CollectionSqliteStorage storage,
+    Future<void> Function() action,
+  ) async {
+    await storage.beginExclusive();
+    try {
+      await action();
+      await storage.commit();
+    } catch (error, stackTrace) {
+      try {
+        await storage.rollback();
+      } catch (_) {
+        // Keep the operation failure as the visible error.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
 }
 
 /// Reads and renders the selected browser results from the active collection.

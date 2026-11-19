@@ -4640,6 +4640,55 @@ Flutter key rather than a copied Android resource. The Dart implementation is
 GPL-3.0-or-later; no upstream code or resources are copied, and root
 `COPYING` remains unchanged.
 
+## Core-compatible collection add-note operation (Unit 38)
+
+`CollectionSqliteStorage.addNoteToDeck()` is the shared collection mutation
+contract for a new, unsaved `Note` and a caller-selected deck. It follows
+Anki Core's `Collection::add_note()` / `add_note_inner()` order: resolve the
+notetype and normalization setting, canonify and register tags, prepare note
+fields, assign local sync metadata, insert the note, generate normal or Cloze
+cards, update `nextPos` when a new-card due position is needed, and persist the
+per-notetype last deck, per-deck last notetype, current notetype, and
+collection modified time. New notes always receive at least one card: Core
+generates ordinal 0 when no template otherwise matches. One savepoint covers
+the note, tags, cards, config, and collection timestamp. Its result reports
+the generated-card count and `OpChanges` flags; it does not add a second undo
+journal. `UndoableNoteChange::Added` is the Core note undo payload, while the
+generic undo stack remains outside this package operation.
+The last-deck config value remains a JSON number on disk, and later card
+generation parses its raw decimal digits directly as `Int64` so IDs above
+JavaScript's safe integer limit survive a config round trip.
+Operation failures before savepoint release roll back all SQL state. The
+driver's async flush follows SQLite commit; a flush failure is reported as a
+post-commit error with the full operation still present, so callers should
+re-read the collection before retrying.
+
+The selected deck is supplied by the host, which owns any default-deck
+preference. A missing or filtered selected deck falls back to the normal
+default deck when generating cards. An invalid default deck or missing deck
+configuration surfaces as an operation error and rolls back all writes. This
+method is a client-side collection adapter and uses local `usn = -1`, matching
+the existing collection mutation paths; it does not create cards when a host
+rejects note fields. AnkiDroid performs `fieldsCheck()` before calling
+`addNote()`, so field validation presentation remains a host/editor step.
+
+Source behavior is pinned to Anki Core
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`, principally
+`rslib/src/notes/mod.rs`, `rslib/src/notetype/cardgen.rs`,
+`rslib/src/notes/undo.rs`, `rslib/src/tags/register.rs`,
+`rslib/src/config/{mod.rs,notetype.rs,deck.rs}`,
+`rslib/src/collection/transact.rs`, `rslib/src/undo/changes.rs`,
+`rslib/src/card/mod.rs`, and the existing note/card/config storage methods.
+Exact source hashes are recorded in `packages/anki_collection_sqlite/SOURCE.sha256`
+and checked by its package verifier. The AnkiDroid caller and validation
+result mapping are pinned at
+`d9bf072f814a0c37d30a694192593b31ff2df875` in
+`apps/anki/ANKIDROID_SOURCE.sha256`. The Dart code and fixtures are
+AGPL-3.0-or-later, reuse existing shared note/tag/card helpers, and copy no
+upstream source. Root `COPYING` remains unchanged. See
+[`docs/NOTE_ADD_GAP_REPORT.md`](docs/NOTE_ADD_GAP_REPORT.md) for remaining
+boundaries and fixture scope.
+
 ## Card Browser canonical search-history display (Unit 31)
 
 The collection-backed history refresh loads the active collection's current

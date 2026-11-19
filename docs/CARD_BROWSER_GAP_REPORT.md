@@ -155,14 +155,16 @@ platform adapters provide storage and presentation.
   order. Save reloads the existing Note and its exact matching Notetype,
   replaces only the fields, applies Core's `Note.prepare_for_update()` field
   count and normalization behavior using the collection's normalization
-  setting, then persists through `CollectionSqliteStorage.updateNote()`.
+  setting, then persists through `CollectionSqliteStorage.updateExistingNote()`.
   Failed saves retain the editor and values for correction or retry. Returning
   to the browser refreshes its current search while retaining its selection.
-- New-note creation, generated-card creation, tags, media, image occlusion,
-  add-ons, note-type and template editing, preview, bulk actions, and Android-
-  only editor affordances remain follow-up work. The field-only editor does
-  not implement Core's transactional card regeneration or undo stack; these
-  require the shared Core collection update service.
+- The collection operation runs in a SQLite savepoint, sets local note
+  modification metadata, generates newly required normal/Cloze cards, and
+  records bounded in-memory undo/redo for note updates. It does not implement
+  Core's generic collection undo journal or expose a collection-level undo
+  action yet. New-note creation, tag editing, media, image occlusion, add-ons,
+  note-type and template editing, preview, bulk actions, and Android-only
+  editor affordances remain follow-up work.
 - Source pins, hashes, attribution, and adaptation boundaries are recorded in
   `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
 

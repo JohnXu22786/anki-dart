@@ -4741,12 +4741,16 @@ field values, and calls Core `update_note()`. The current Flutter slice uses
 the shared Dart `Note.prepareForUpdate()` implementation for Core's field
 count, cleanup, NFC normalization, checksum, and sort-field derivation, and
 uses the collection's `normalizeNoteText` setting (defaulting to enabled).
-The storage adapter's field-only update does not perform Core's transaction,
-undo recording, synchronization metadata update, or generated-card refresh;
-those require a shared Core collection update service and remain follow-up
-work. AnkiDroid's `noteFieldsCheck()` is only called on its new-note branch,
-so the existing-note update does not add empty-first-field, duplicate, or
-cloze checks.
+`CollectionSqliteStorage.updateExistingNote()` applies a SQLite savepoint,
+canonifies tags, marks the note locally modified (`usn = -1` with the update
+timestamp), generates missing normal/Cloze cards using the collection's Core-
+matched generation rules, and updates `col.mod`. It records up to 30
+note-update-only undo/redo steps in memory and coalesces eligible same-note
+edits within Core's 60-second window. This is not Core's generic collection
+undo journal: unrelated collection operations and a shared application undo
+surface remain follow-up work. AnkiDroid's `noteFieldsCheck()` is only called
+on its new-note branch, so the existing-note update does not add
+empty-first-field, duplicate, or cloze checks.
 
 The mapping uses AnkiDroid 2.25.3
 `AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt`,

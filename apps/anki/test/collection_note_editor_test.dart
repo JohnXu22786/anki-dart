@@ -87,6 +87,28 @@ void main() {
   );
 
   test(
+    'Deck Picker shortcut keeps the collection current deck ID exact',
+    () async {
+      final storage = runtime.storage!;
+      final wideDeckId = Int64(9007199254740995);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: wideDeckId,
+          name: 'Shortcut current deck',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      await storage.selectDeck(wideDeckId);
+
+      final repository = CollectionDeckPickerRepository(runtime);
+      final port = await repository.createNewNotePortForCurrentDeck();
+
+      expect(storage.currentDeckId, wideDeckId);
+      expect((await port.loadNewNote()).deckId, wideDeckId);
+    },
+  );
+
+  test(
     'resolves a wide card ID and saves normalized fields to its note',
     () async {
       final storage = runtime.storage!;

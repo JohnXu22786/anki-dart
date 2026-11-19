@@ -12,6 +12,7 @@ import 'package:anki_app/note_editor_screen.dart';
 import 'package:anki_dart/anki_dart.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,6 +50,44 @@ void main() {
       expect(repository.actions, isEmpty);
     },
   );
+
+  testWidgets('A opens the shared editor without overriding the current deck', (
+    tester,
+  ) async {
+    final editor = _FakeDeckPickerNewNotePort();
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 1, name: 'Current'),
+    ])..editorPort = editor;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+    await tester.pumpAndSettle();
+
+    expect(repository.currentDeckNewNoteRequests, 1);
+    expect(repository.selected, isEmpty);
+    expect(editor.loadCalls, 1);
+    expect(find.byType(NoteEditorScreen), findsOneWidget);
+  });
+
+  testWidgets('A remains available to the Deck Picker search field', (
+    tester,
+  ) async {
+    final repository = _DeckRepository([
+      for (var id = 1; id <= 10; id++) DeckPickerDeck(id: id, name: 'Deck $id'),
+    ])..editorPort = _FakeDeckPickerNewNotePort();
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('deck-picker-search')));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+    await tester.pumpAndSettle();
+
+    expect(repository.currentDeckNewNoteRequests, 0);
+    expect(find.byType(NoteEditorScreen), findsNothing);
+  });
 
   testWidgets(
     'shows hierarchical names and counts and sends selected deck to study',
@@ -830,6 +869,7 @@ final class _DeckRepository
   final studied = <int>[];
   final selected = <int>[];
   final selectedExact = <Int64>[];
+  int currentDeckNewNoteRequests = 0;
   final actions = <(DeckPickerAction, int)>[];
   final filteredRequests = <FilteredDeckRequest>[];
 
@@ -840,6 +880,12 @@ final class _DeckRepository
     selected.add(deck.id);
     currentDeckId = deck.id;
     selectedExact.add(deck.exactId ?? Int64(deck.id));
+    return editorPort!;
+  }
+
+  @override
+  Future<NewNoteEditorPort> createNewNotePortForCurrentDeck() async {
+    currentDeckNewNoteRequests++;
     return editorPort!;
   }
 

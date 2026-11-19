@@ -6,6 +6,7 @@
 import 'package:anki_dart/deck_picker.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'l10n/app_localizations.dart';
 import 'note_editor_screen.dart';
@@ -109,6 +110,12 @@ abstract interface class DeckPickerRepository {
 /// Optional source route for opening the shared new-note editor from a deck.
 abstract interface class DeckPickerNewNotePortProvider {
   Future<NewNoteEditorPort> selectDeckAndCreateNewNotePort(DeckPickerDeck deck);
+
+  /// Opens the new-note route without an explicit deck override.
+  ///
+  /// The Deck Picker keyboard shortcut follows AnkiDroid's `deckId = null`
+  /// behavior and lets the collection choose its current/default deck.
+  Future<NewNoteEditorPort> createNewNotePortForCurrentDeck();
 }
 
 /// Explicit placeholder while a platform/backend collection service is not connected.
@@ -161,6 +168,7 @@ final class DeckPickerScreen extends StatefulWidget {
 final class _DeckPickerScreenState extends State<DeckPickerScreen> {
   late Future<List<DeckPickerDeck>> _load;
   final _filterController = TextEditingController();
+  final _searchFocusNode = FocusNode();
   int? _selectedId;
   String _filter = '';
   bool _showFilter = false, _showAddActions = false;
@@ -190,6 +198,7 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
   @override
   void dispose() {
     _filterController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -198,13 +207,20 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
     setState(() => _filter = '');
   }
 
-  void _toggleSearch() => setState(() {
-    _showFilter = !_showFilter;
-    if (!_showFilter) {
-      _filterController.clear();
-      _filter = '';
+  void _toggleSearch() {
+    setState(() {
+      _showFilter = !_showFilter;
+      if (!_showFilter) {
+        _filterController.clear();
+        _filter = '';
+      }
+    });
+    if (_showFilter) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _showFilter) _searchFocusNode.requestFocus();
+      });
     }
-  });
+  }
 
   Future<List<DeckPickerDeck>> _requestDecks() {
     final generation = ++_loadGeneration;
@@ -239,146 +255,162 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final s = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppBar(
-        leading: widget.onClose == null
-            ? null
-            : BackButton(onPressed: widget.onClose),
-        title: _showFilter
-            ? TextField(
-                autofocus: true,
-                controller: _filterController,
-                decoration: InputDecoration(
-                  hintText: s.searchDecks,
-                  border: InputBorder.none,
-                  suffixIcon: IconButton(
-                    tooltip: s.clearSearch,
-                    onPressed: _clearSearch,
-                    icon: const Icon(Icons.clear),
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyUpEvent ||
+            event.logicalKey != LogicalKeyboardKey.keyA ||
+            _searchFocusNode.hasFocus) {
+          return KeyEventResult.ignored;
+        }
+        if (widget.repository is DeckPickerNewNotePortProvider) {
+          _addNoteForCurrentDeck();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: widget.onClose == null
+              ? null
+              : BackButton(onPressed: widget.onClose),
+          title: _showFilter
+              ? TextField(
+                  autofocus: true,
+                  controller: _filterController,
+                  focusNode: _searchFocusNode,
+                  decoration: InputDecoration(
+                    hintText: s.searchDecks,
+                    border: InputBorder.none,
+                    suffixIcon: IconButton(
+                      tooltip: s.clearSearch,
+                      onPressed: _clearSearch,
+                      icon: const Icon(Icons.clear),
+                    ),
                   ),
-                ),
-                onChanged: (v) => setState(() => _filter = v),
-              )
-            : Text(s.deckPickerTitle),
-        actions: [
-          if (_hasSearchableDeckList || _showFilter)
-            IconButton(
-              key: const ValueKey('deck-picker-search'),
-              tooltip: _showFilter ? s.closeSearch : s.searchDecks,
-              onPressed: _toggleSearch,
-              icon: Icon(_showFilter ? Icons.close : Icons.search),
-            ),
-          IconButton(
-            tooltip: s.refreshDecks,
-            onPressed: _reload,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: FutureBuilder<List<DeckPickerDeck>>(
-        future: _load,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return Center(
-              child: Semantics(
-                label: s.loadingDecks,
-                child: const CircularProgressIndicator(),
+                  onChanged: (v) => setState(() => _filter = v),
+                )
+              : Text(s.deckPickerTitle),
+          actions: [
+            if (_hasSearchableDeckList || _showFilter)
+              IconButton(
+                key: const ValueKey('deck-picker-search'),
+                tooltip: _showFilter ? s.closeSearch : s.searchDecks,
+                onPressed: _toggleSearch,
+                icon: Icon(_showFilter ? Icons.close : Icons.search),
               ),
-            );
-          }
-          if (snapshot.hasError) {
-            final unavailable = snapshot.error is UnsupportedError;
-            return _MessageState(
-              icon: unavailable
-                  ? Icons.cloud_off_outlined
-                  : Icons.error_outline,
-              message: unavailable ? s.decksUnavailable : s.deckLoadFailed,
-              actionLabel: unavailable ? null : s.tryAgain,
-              onAction: unavailable ? null : _reload,
-            );
-          }
-          final decks = snapshot.data ?? const <DeckPickerDeck>[];
-          if (decks.isEmpty) {
-            return _MessageState(
-              icon: Icons.layers_outlined,
-              message: s.noDecks,
-            );
-          }
-          final deckIndex = <int, DeckPickerDeck>{};
-          final tree = DeckNode.syntheticRoot(
-            children: decks
-                .map((deck) => _toDeckNode(deck, 0, deckIndex))
-                .toList(growable: false),
-          );
-          final visible = tree.filterAndFlattenDisplay(
-            DeckFilters.create(_filter),
-            selectedDeckId: _selectedId ?? -1,
-          );
-          if (visible.isEmpty) {
-            return _MessageState(
-              icon: Icons.search_off,
-              message: s.noDeckMatches,
-            );
-          }
-          return LayoutBuilder(
-            builder: (context, c) {
-              final wide = c.maxWidth >= 760;
+            IconButton(
+              tooltip: s.refreshDecks,
+              onPressed: _reload,
+              icon: const Icon(Icons.refresh),
+            ),
+          ],
+        ),
+        body: FutureBuilder<List<DeckPickerDeck>>(
+          future: _load,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
               return Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: wide ? 960 : double.infinity,
-                  ),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                          children: [
-                            for (final row in visible)
-                              _deckTile(row, deckIndex[row.did]!, s),
-                          ],
+                child: Semantics(
+                  label: s.loadingDecks,
+                  child: const CircularProgressIndicator(),
+                ),
+              );
+            }
+            if (snapshot.hasError) {
+              final unavailable = snapshot.error is UnsupportedError;
+              return _MessageState(
+                icon: unavailable
+                    ? Icons.cloud_off_outlined
+                    : Icons.error_outline,
+                message: unavailable ? s.decksUnavailable : s.deckLoadFailed,
+                actionLabel: unavailable ? null : s.tryAgain,
+                onAction: unavailable ? null : _reload,
+              );
+            }
+            final decks = snapshot.data ?? const <DeckPickerDeck>[];
+            if (decks.isEmpty) {
+              return _MessageState(
+                icon: Icons.layers_outlined,
+                message: s.noDecks,
+              );
+            }
+            final deckIndex = <int, DeckPickerDeck>{};
+            final tree = DeckNode.syntheticRoot(
+              children: decks
+                  .map((deck) => _toDeckNode(deck, 0, deckIndex))
+                  .toList(growable: false),
+            );
+            final visible = tree.filterAndFlattenDisplay(
+              DeckFilters.create(_filter),
+              selectedDeckId: _selectedId ?? -1,
+            );
+            if (visible.isEmpty) {
+              return _MessageState(
+                icon: Icons.search_off,
+                message: s.noDeckMatches,
+              );
+            }
+            return LayoutBuilder(
+              builder: (context, c) {
+                final wide = c.maxWidth >= 760;
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: wide ? 960 : double.infinity,
+                    ),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                            children: [
+                              for (final row in visible)
+                                _deckTile(row, deckIndex[row.did]!, s),
+                            ],
+                          ),
                         ),
-                      ),
-                      if (_selectedId != null)
-                        SafeArea(
-                          top: false,
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              12,
-                              12,
-                              wide ? 12 : 88,
-                              12,
-                            ),
-                            child: SizedBox(
-                              width: wide ? 320 : double.infinity,
-                              child: FilledButton.icon(
-                                key: const ValueKey('deck-study-selected'),
-                                onPressed: () => _invoke(
-                                  () => widget.repository.study(_selectedId!),
+                        if (_selectedId != null)
+                          SafeArea(
+                            top: false,
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                12,
+                                12,
+                                wide ? 12 : 88,
+                                12,
+                              ),
+                              child: SizedBox(
+                                width: wide ? 320 : double.infinity,
+                                child: FilledButton.icon(
+                                  key: const ValueKey('deck-study-selected'),
+                                  onPressed: () => _invoke(
+                                    () => widget.repository.study(_selectedId!),
+                                  ),
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: Text(s.study),
                                 ),
-                                icon: const Icon(Icons.play_arrow),
-                                label: Text(s.study),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            );
+          },
+        ),
+        floatingActionButton: _showAddActions
+            ? _addActions(s)
+            : FloatingActionButton(
+                key: const ValueKey('deck-picker-add'),
+                heroTag: 'deck-picker-add',
+                tooltip: s.add,
+                onPressed: () => setState(() => _showAddActions = true),
+                child: const Icon(Icons.add),
+              ),
       ),
-      floatingActionButton: _showAddActions
-          ? _addActions(s)
-          : FloatingActionButton(
-              key: const ValueKey('deck-picker-add'),
-              heroTag: 'deck-picker-add',
-              tooltip: s.add,
-              onPressed: () => setState(() => _showAddActions = true),
-              child: const Icon(Icons.add),
-            ),
     );
   }
 
@@ -578,6 +610,28 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       final newNotePort = await notePortProvider.selectDeckAndCreateNewNotePort(
         deck,
       );
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => NoteEditorScreen.newNote(newNotePort: newNotePort),
+        ),
+      );
+      if (!mounted) return;
+      _reload();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
+    }
+  }
+
+  Future<void> _addNoteForCurrentDeck() async {
+    final repository = widget.repository;
+    if (repository is! DeckPickerNewNotePortProvider) return;
+    final portProvider = repository as DeckPickerNewNotePortProvider;
+    try {
+      final newNotePort = await portProvider.createNewNotePortForCurrentDeck();
       if (!mounted) return;
       await Navigator.of(context).push<void>(
         MaterialPageRoute<void>(

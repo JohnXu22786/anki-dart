@@ -177,6 +177,15 @@
   "browserHistoryShowLess": "Show less",
   "browserHistoryClear": "Clear history",
   "browserFilters": "Filters",
+  "browserAllDecks": "All decks",
+  "browserSelectedDeck": "Deck: {name}",
+  "@browserSelectedDeck": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "browserFilterDecks": "Decks",
   "browserFilterNoteTypes": "Note types",
   "browserFilterTags": "Tags",

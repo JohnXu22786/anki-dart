@@ -2935,9 +2935,31 @@ and tests are Copyright © 2026 John Tsui and marked `GPL-3.0-or-later`. Root
   Its initial `getInitialDeck()` selection is projected in
   `lib/src/browser_initial_deck.dart`, preserving launch-intent consumption,
   intent/persisted/all-decks precedence, and host-selected fallback. Android
-  state persistence, intent/deck lookup, collection reads, and `setSelectedDeck`
-  remain host-side. The direct ViewModel tests cover intent and persisted ID
-  behavior and user-choice persistence; unasserted branches are source-derived.
+  source behavior is integrated by `CollectionCardBrowserController` and
+  `StartupShell`: they pass the exact Deck Picker ID as a one-time intent,
+  resolve it against the open collection, persist `lastDeckId` as decimal text
+  separately from the collection current deck, and apply the selected-deck
+  request update before searching. `CardBrowserScreen` exposes the localized
+  deck/All Decks choice. The Browser controller does not mutate collection
+  current-deck state. Pinned source commit is
+  `d9bf072f814a0c37d30a694192593b31ff2df875`; source SHA-256 values are
+  `CardBrowserViewModel.kt`
+  `88c5d4506189866ff8d67b55b4693b50d7514e0cd54f11cac10b25985b74b6f4`,
+  `LastDeckIdRepository.kt`
+  `b7e1da4f87258bf789bf5003c377908ec9df46712f72c4a21379cf5b264897d3`, and
+  `CardBrowserViewModelTest.kt`
+  `0f8643b9e36868ab46316d77ad3e554d8b44211344f1b7526e2dbf7c25f6aa5c`. The
+  direct ViewModel tests cover intent and remembered ID behavior and user-choice
+  persistence; Dart tests cover the host integration, exact IDs above 2^53,
+  invalid fallback, request preservation and unchanged collection current deck.
+  Search-history restoration follows `CardBrowserSearchViewModel`'s separate
+  path: it restores the full deck-filter list without invoking `setSelectedDeck`
+  or changing remembered `lastDeckId`. The controller projects the first
+  restored deck into the visible selection (All Decks for an empty list) and
+  searches the full list without intersecting it with that first deck. It also
+  synchronizes the active request when history is opened for editing without
+  submission, matching `CardBrowserFragment.kt:240–252` and
+  `CardBrowserSearchViewModel.kt:249–258,396–420`.
   Its `toggleMark()` all-or-none target decision is projected by
   `planBrowserBulkMarkToggle()` in `lib/src/browser_bulk_mark.dart`: no selected
   card IDs means no operation; otherwise any unmarked note selects adding the

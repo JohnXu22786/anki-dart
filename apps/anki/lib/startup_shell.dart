@@ -4,6 +4,7 @@
  */
 
 import 'package:anki_dart/profile_onboarding.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 
 import 'app_config.dart';
@@ -32,6 +33,7 @@ final class _StartupShellState extends State<StartupShell> {
   bool _showProfiles = false;
   bool _showDeckPicker = false;
   bool _showCardBrowser = false;
+  Int64? _browserLaunchDeckId;
 
   @override
   void initState() {
@@ -233,14 +235,21 @@ final class _StartupShellState extends State<StartupShell> {
     if (_showCardBrowser) {
       return CardBrowserScreen(
         controller: widget.services.cardBrowser,
-        onClose: () => setState(() => _showCardBrowser = false),
+        launchDeckId: _browserLaunchDeckId,
+        onClose: () => setState(() {
+          _showCardBrowser = false;
+          _browserLaunchDeckId = null;
+        }),
       );
     }
     if (_showDeckPicker) {
       return DeckPickerScreen(
         repository: widget.services.deckPicker,
         onClose: () => setState(() => _showDeckPicker = false),
-        onBrowseCards: (_) => setState(() => _showCardBrowser = true),
+        onBrowseCards: (deckId) => setState(() {
+          _browserLaunchDeckId = deckId;
+          _showCardBrowser = true;
+        }),
       );
     }
     return Scaffold(

@@ -51,7 +51,6 @@ final class CollectionDeckPickerRepository
     if (_storage.decks.getDeck(id) == null) {
       throw StateError('deck not found: $id');
     }
-    await _storage.selectDeck(id);
   }
 
   CollectionSqliteStorage get _storage {

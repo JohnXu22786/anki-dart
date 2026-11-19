@@ -12,6 +12,7 @@ import 'package:anki_app/collection_card_browser_controller.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_dart/anki_dart.dart';
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
+import 'package:anki_backend_protocol/anki/decks.pb.dart' as deck_proto;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -49,6 +50,137 @@ void main() {
     SharedPreferencesAsyncPlatform.instance = null;
     await directory.delete(recursive: true);
   });
+
+  test(
+    'browser launch and remembered decks preserve exact IDs independently',
+    () async {
+      final storage = runtime.storage!;
+      final wideDeckId = Int64.parseInt('9007199254740995');
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: wideDeckId,
+          name: 'Wide browser deck',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final currentDeckId = storage.currentDeckId;
+      final first = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await first.initializeBrowser(launchDeckId: wideDeckId);
+      await first.load();
+
+      expect(await first.loadSelectedBrowserDeck(), wideDeckId);
+      expect(
+        await preferences.getString('anki.browser.lastDeckId'),
+        '9007199254740995',
+      );
+      expect(storage.currentDeckId, currentDeckId);
+
+      final reopened = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await reopened.initializeBrowser(launchDeckId: null);
+      await reopened.load();
+
+      expect(await reopened.loadSelectedBrowserDeck(), wideDeckId);
+      expect(storage.currentDeckId, currentDeckId);
+
+      await reopened.selectBrowserDeck(null);
+      expect(await preferences.getString('anki.browser.lastDeckId'), '-1');
+      final allDecksReopened = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await allDecksReopened.initializeBrowser(launchDeckId: null);
+      await allDecksReopened.load();
+      expect(await allDecksReopened.loadSelectedBrowserDeck(), isNull);
+      expect(storage.currentDeckId, currentDeckId);
+    },
+  );
+
+  test(
+    'invalid launch deck is consumed and falls back to remembered deck',
+    () async {
+      final storage = runtime.storage!;
+      final rememberedDeckId = Int64(2);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: rememberedDeckId,
+          name: 'Remembered browser deck',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      await preferences.setString('anki.browser.lastDeckId', '2');
+      final currentDeckId = storage.currentDeckId;
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await controller.initializeBrowser(launchDeckId: Int64(987654321));
+      await controller.load();
+
+      expect(await controller.loadSelectedBrowserDeck(), rememberedDeckId);
+      expect(storage.currentDeckId, currentDeckId);
+
+      await preferences.setString(
+        'anki.browser.lastDeckId',
+        '999999999999999999999999999999999999',
+      );
+      final malformedPreference = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await malformedPreference.initializeBrowser(launchDeckId: null);
+      await malformedPreference.load();
+      expect(
+        await malformedPreference.loadSelectedBrowserDeck(),
+        currentDeckId,
+      );
+    },
+  );
+
+  test(
+    'browser deck changes persist before search and retain other filters',
+    () async {
+      final storage = runtime.storage!;
+      final wideDeckId = Int64.parseInt('9007199254740995');
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: wideDeckId,
+          name: 'Wide selection deck',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final currentDeckId = storage.currentDeckId;
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await controller.load();
+      await controller.searchRequest(
+        const BrowserSearchRequest(
+          query: 'tag:preserved',
+          filters: BrowserSearchFilters(
+            flags: [3],
+            tags: ['preserved'],
+            cardStateCodes: [1],
+          ),
+        ),
+      );
+
+      await controller.selectBrowserDeck(wideDeckId);
+
+      expect(
+        await preferences.getString('anki.browser.lastDeckId'),
+        '9007199254740995',
+      );
+      expect(await controller.loadSelectedBrowserDeck(), wideDeckId);
+      expect(storage.currentDeckId, currentDeckId);
+    },
+  );
 
   test('active column order persists when a new controller loads', () async {
     final first = CollectionCardBrowserController(
@@ -122,6 +254,43 @@ void main() {
       await reopened.searchRequest(request);
       await reopened.clearSearchHistory();
       expect(await reopened.loadSearchHistory(), isEmpty);
+    },
+  );
+
+  test(
+    'restoring history projects its first deck without changing last deck',
+    () async {
+      final storage = runtime.storage!;
+      final secondDeckId = Int64(2);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: secondDeckId,
+          name: 'Second history deck',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      await preferences.setString('anki.browser.lastDeckId', '2');
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      await controller.initializeBrowser(launchDeckId: null);
+      await controller.load();
+
+      final restored = await controller.restoreSearchHistoryEntry(
+        BrowserSearchHistoryEntry(
+          query: 'tag:history',
+          deckIds: [BigInt.one, BigInt.two],
+        ),
+      );
+
+      expect(restored.filters.decks.map((deck) => deck.id), [
+        BigInt.one,
+        BigInt.two,
+      ]);
+      expect(await controller.loadSelectedBrowserDeck(), Int64.ONE);
+      expect(await controller.loadSelectedBrowserDeckName(), 'Default');
+      expect(await preferences.getString('anki.browser.lastDeckId'), '2');
     },
   );
 

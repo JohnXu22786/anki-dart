@@ -18,6 +18,53 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('browser deck selector carries exact launch and selection IDs', (
+    tester,
+  ) async {
+    final wideId = Int64.parseInt('9007199254740995');
+    final controller = _DeckSelectionController(_sample());
+    await tester.pumpWidget(
+      _app(controller, const Size(400, 800), launchDeckId: wideId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(controller.launchDeckId, wideId);
+    expect(controller.selectedDeckId, wideId);
+    await tester.tap(find.byKey(const ValueKey('browser-selected-deck')));
+    await tester.pumpAndSettle();
+    expect(find.text('All decks'), findsOneWidget);
+    expect(find.byKey(ValueKey('browser-deck-$wideId')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('browser-deck-all')));
+    await tester.pumpAndSettle();
+    expect(controller.selectionCalls, [null]);
+    await tester.tap(find.byKey(const ValueKey('browser-selected-deck')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ValueKey('browser-deck-$wideId')));
+    await tester.pumpAndSettle();
+
+    expect(controller.selectedDeckId, wideId);
+    expect(controller.selectionCalls, [null, wideId]);
+    await tester.tap(find.byKey(const ValueKey('browser-search-filters')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(ValueKey('browser-filter-deck-$wideId')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('browser-filter-apply')));
+    await tester.pumpAndSettle();
+    expect(
+      controller.submittedRequests.last.filters.decks.single.id,
+      BigInt.parse(wideId.toString()),
+    );
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('browser-heading-question')),
+    );
+    await tester.tap(find.byKey(const ValueKey('browser-heading-question')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove column'));
+    await tester.pumpAndSettle();
+    expect(controller.initializeCalls, 1);
+    expect(controller.selectedDeckId, wideId);
+  });
+
   testWidgets('note-update undo appears after saving and restores the edit', (
     tester,
   ) async {
@@ -781,10 +828,6 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('browser-search-filters')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(
-        find.byKey(const ValueKey('browser-filter-deck-1')),
-      );
-      await tester.tap(find.byKey(const ValueKey('browser-filter-deck-1')));
-      await tester.ensureVisible(
         find.byKey(const ValueKey('browser-filter-note-type-2')),
       );
       await tester.tap(
@@ -808,9 +851,7 @@ void main() {
       await tester.pumpAndSettle();
       final filteredRequest = controller.submittedRequests.last;
       expect(filteredRequest.filters.tags, ['biology', 'cell']);
-      expect(filteredRequest.filters.decks.map((deck) => deck.name), [
-        'Default',
-      ]);
+      expect(filteredRequest.filters.decks, isEmpty);
       expect(
         filteredRequest.filters.noteTypes.map((noteType) => noteType.name),
         ['Basic'],
@@ -1374,21 +1415,28 @@ void main() {
   });
 }
 
-Widget _app(_Controller controller, Size size, {ThemeData? theme}) =>
-    MaterialApp(
-      theme: theme,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: CardBrowserScreen(controller: controller),
-      ),
-    );
+Widget _app(
+  _Controller controller,
+  Size size, {
+  ThemeData? theme,
+  Int64? launchDeckId,
+}) => MaterialApp(
+  theme: theme,
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  supportedLocales: AppLocalizations.supportedLocales,
+  home: MediaQuery(
+    data: MediaQueryData(size: size),
+    child: CardBrowserScreen(
+      controller: controller,
+      launchDeckId: launchDeckId,
+    ),
+  ),
+);
 
 CardBrowserSnapshot _sample() => CardBrowserSnapshot(
   columns: [
@@ -1721,6 +1769,51 @@ class _EditorController extends _Controller
       pendingUndoActive = false;
     }
   }
+}
+
+final class _DeckSelectionController extends _Controller
+    implements CardBrowserDeckSelectionController {
+  _DeckSelectionController(super.snapshot);
+
+  Int64? launchDeckId;
+  Int64 selectedDeckId = Int64.ZERO;
+  int initializeCalls = 0;
+  final selectionCalls = <Int64?>[];
+
+  @override
+  Future<void> initializeBrowser({required Int64? launchDeckId}) async {
+    initializeCalls++;
+    this.launchDeckId = launchDeckId;
+    selectedDeckId = launchDeckId ?? Int64.ONE;
+  }
+
+  @override
+  Future<Int64?> loadSelectedBrowserDeck() async =>
+      selectedDeckId == Int64.ZERO ? null : selectedDeckId;
+
+  @override
+  Future<String?> loadSelectedBrowserDeckName() async =>
+      selectedDeckId == Int64.ZERO ? null : 'Wide deck';
+
+  @override
+  Future<CardBrowserSnapshot> selectBrowserDeck(Int64? deckId) async {
+    selectionCalls.add(deckId);
+    selectedDeckId = deckId ?? Int64.ZERO;
+    return snapshot;
+  }
+
+  @override
+  Future<CardBrowserSearchFilterOptions> loadSearchFilterOptions() async =>
+      CardBrowserSearchFilterOptions(
+        decks: [
+          BrowserDeckNameId(
+            name: 'Wide deck',
+            id: BigInt.parse('9007199254740995'),
+          ),
+        ],
+        noteTypes: const [],
+        tags: const [],
+      );
 }
 
 final class _UndoModeController extends _Controller

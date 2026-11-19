@@ -729,7 +729,7 @@ void main() {
     expect(repository.actions, [(DeckPickerAction.browseCards, 8)]);
   });
 
-  testWidgets('browsing selects the deck before opening the browser route', (
+  testWidgets('browsing passes the selected deck without selecting it', (
     tester,
   ) async {
     final repository = _DeckRepository([
@@ -743,7 +743,8 @@ void main() {
     await tester.tap(find.text('Browse cards'));
     await tester.pumpAndSettle();
 
-    expect(repository.selected, [8]);
+    expect(repository.selected, isEmpty);
+    expect(repository.selectedExact, [Int64(8)]);
     expect(repository.actions, isEmpty);
     expect(browsed, [Int64(8)]);
   });
@@ -914,9 +915,7 @@ final class _DeckRepository
 
   @override
   Future<void> selectDeckForBrowse(DeckPickerDeck deck) async {
-    selected.add(deck.id);
     selectedExact.add(deck.exactId ?? Int64(deck.id));
-    currentDeckId = deck.id;
   }
 
   @override

@@ -26,6 +26,7 @@ final class CollectionDeckPickerRepository
         DeckPickerRenameProvider,
         DeckPickerDeleteProvider,
         DeckPickerUnburyProvider,
+        DeckPickerEmptyFilteredDeckProvider,
         DeckPickerCollectionUndoProvider {
   const CollectionDeckPickerRepository(this.collections);
 
@@ -134,10 +135,15 @@ final class CollectionDeckPickerRepository
   }
 
   @override
-  Future<void> performAction(DeckPickerAction action, int deckId) =>
-      Future.error(
-        UnsupportedError('Deck action ${action.name} is not implemented yet.'),
-      );
+  Future<void> performAction(DeckPickerAction action, int deckId) async {
+    if (action == DeckPickerAction.emptyFilteredDeck) {
+      await _storage.emptyFilteredDeck(Int64(deckId));
+      return;
+    }
+    throw UnsupportedError(
+      'Deck action ${action.name} is not implemented yet.',
+    );
+  }
 
   @override
   bool get canUndoCollectionOperation => _storage.canUndoCollectionOperation;
@@ -182,6 +188,11 @@ final class CollectionDeckPickerRepository
       collectionUndoGeneration: result.collectionUndoGeneration,
       persistenceWarning: result.persistenceWarning,
     );
+  }
+
+  @override
+  Future<void> emptyFilteredDeck(DeckPickerDeck deck) async {
+    await _storage.emptyFilteredDeck(deck.exactId ?? Int64(deck.id));
   }
 
   @override

@@ -928,6 +928,41 @@ void main() {
     expect(repository.actions, [(DeckPickerAction.browseCards, 8)]);
   });
 
+  testWidgets(
+    'empty filtered deck action preserves ID and reloads deck state',
+    (tester) async {
+      final filtered = DeckPickerDeck(
+        id: 42,
+        exactId: Int64.parseInt('9007199254740995'),
+        name: 'Filtered',
+        filtered: true,
+        reviewCount: 3,
+      );
+      final repository = _DeckRepository([
+        const DeckPickerDeck(id: 8, name: 'Ordinary'),
+        filtered,
+      ]);
+      await tester.pumpWidget(_app(repository));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('More actions for Ordinary'));
+      await tester.pumpAndSettle();
+      expect(find.text('Empty filtered deck'), findsNothing);
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('More actions for Filtered'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Empty filtered deck'));
+      await tester.pumpAndSettle();
+
+      expect(repository.emptyFilteredExact, [
+        Int64.parseInt('9007199254740995'),
+      ]);
+      expect(repository.loadCalls, 2);
+    },
+  );
+
   testWidgets('rename dialog validates names and refreshes after success', (
     tester,
   ) async {
@@ -1141,6 +1176,7 @@ final class _DeckRepository
         DeckPickerRenameProvider,
         DeckPickerDeleteProvider,
         DeckPickerUnburyProvider,
+        DeckPickerEmptyFilteredDeckProvider,
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
   NewNoteEditorPort? editorPort;
@@ -1173,6 +1209,7 @@ final class _DeckRepository
   bool failRenameAfterUpdate = false;
   bool failDelete = false;
   bool failUnbury = false;
+  final emptyFilteredExact = <Int64>[];
   bool deferSelectionState = false;
   final failingSelections = <int>{};
   Completer<void>? pendingSelection;
@@ -1309,6 +1346,11 @@ final class _DeckRepository
     canRedoCollectionOperation = false;
     collectionUndoGeneration++;
     return result;
+  }
+
+  @override
+  Future<void> emptyFilteredDeck(DeckPickerDeck deck) async {
+    emptyFilteredExact.add(deck.exactId ?? Int64(deck.id));
   }
 
   @override

@@ -148,6 +148,143 @@ void main() {
     expect(storage.canUndoCollectionOperation, isFalse);
   });
 
+  test(
+    'empties only the exact filtered deck with Core queue restoration',
+    () async {
+      final homeId = Int64.parseInt('9007199254740995');
+      final home = await _addDeck('Home', id: homeId);
+      final filtered = await _addDeck('Filtered', filtered: true);
+      final otherFiltered = await _addDeck('Other filtered', filtered: true);
+      await _addCard(
+        Int64(500),
+        filtered.id,
+        CardType.review,
+        CardQueue.review,
+        due: -10,
+        originalDeckId: homeId,
+        originalDue: 42,
+      );
+      await _addCard(
+        Int64(501),
+        filtered.id,
+        CardType.learn,
+        CardQueue.review,
+        due: -10,
+        originalDeckId: homeId,
+        originalDue: 1000000001,
+      );
+      await _addCard(
+        Int64(502),
+        filtered.id,
+        CardType.review,
+        CardQueue.suspended,
+        due: -10,
+        originalDeckId: homeId,
+        originalDue: 77,
+      );
+      await _addCard(
+        Int64(503),
+        otherFiltered.id,
+        CardType.review,
+        CardQueue.review,
+        due: -11,
+        originalDeckId: Int64.ONE,
+        originalDue: 88,
+      );
+      final beforeMtime = storage.collectionModifiedAt;
+      final beforeGeneration = storage.collectionUndoGeneration;
+
+      final result = await storage.emptyFilteredDeck(filtered.id);
+
+      expect(result.cardsReturned, 3);
+      expect(result.collectionUndoGeneration, beforeGeneration + 1);
+      final restoredReview = (await storage.getCard(Int64(500)))!;
+      expect(restoredReview.deckId, home.id);
+      expect(restoredReview.queue, CardQueue.review);
+      expect(restoredReview.due, 42);
+      expect(restoredReview.originalDeckId, Int64.ZERO);
+      expect(restoredReview.originalDue, 0);
+      expect(restoredReview.usn, -1);
+      expect((await storage.getCard(Int64(501)))!.queue, CardQueue.learn);
+      expect((await storage.getCard(Int64(501)))!.due, 1000000001);
+      final suspended = (await storage.getCard(Int64(502)))!;
+      expect(suspended.queue, CardQueue.suspended);
+      expect(suspended.due, 77);
+      expect((await storage.getCard(Int64(503)))!.deckId, otherFiltered.id);
+      expect(storage.collectionModifiedAt, greaterThan(beforeMtime));
+
+      await storage.undoLastCollectionOperation();
+      expect((await storage.getCard(Int64(500)))!.deckId, filtered.id);
+      expect((await storage.getCard(Int64(500)))!.originalDeckId, home.id);
+      await storage.redoLastCollectionOperation();
+      expect((await storage.getCard(Int64(500)))!.deckId, home.id);
+      await storage.addOrUpdateCard(
+        Card(id: Int64(504), deckId: home.id, ctype: CardType.newCard),
+      );
+      expect(storage.canUndoCollectionOperation, isFalse);
+      await expectLater(
+        storage.undoLastCollectionOperation(),
+        throwsStateError,
+      );
+    },
+  );
+
+  test(
+    'filtered deck empty rejects normal decks and empty target is a no-op',
+    () async {
+      final normal = await _addDeck('Normal');
+      await expectLater(
+        storage.emptyFilteredDeck(normal.id),
+        throwsA(anything),
+      );
+      final filtered = await _addDeck('Empty filtered', filtered: true);
+      final generation = storage.collectionUndoGeneration;
+      final result = await storage.emptyFilteredDeck(filtered.id);
+      expect(result.cardsReturned, 0);
+      expect(storage.collectionUndoGeneration, generation);
+      expect(storage.canUndoCollectionOperation, isFalse);
+    },
+  );
+
+  test(
+    'filtered deck empty rolls back and reconciles a committed flush failure',
+    () async {
+      final filtered = await _addDeck('Filtered failure', filtered: true);
+      await _addCard(
+        Int64(600),
+        filtered.id,
+        CardType.review,
+        CardQueue.review,
+        originalDeckId: Int64.ONE,
+        originalDue: 12,
+      );
+      final beforeMtime = storage.collectionModifiedAt;
+      database.execute('''
+      CREATE TRIGGER fail_empty_filtered BEFORE UPDATE ON cards
+      BEGIN SELECT RAISE(ABORT, 'injected update failure'); END
+    ''');
+
+      await expectLater(
+        storage.emptyFilteredDeck(filtered.id),
+        throwsA(anything),
+      );
+      expect((await storage.getCard(Int64(600)))!.deckId, filtered.id);
+      expect((await storage.getCard(Int64(600)))!.originalDeckId, Int64.ONE);
+      expect(storage.collectionModifiedAt, beforeMtime);
+      expect(storage.canUndoCollectionOperation, isFalse);
+
+      database.execute('DROP TRIGGER fail_empty_filtered');
+      failFlushCount = 2;
+      final result = await storage.emptyFilteredDeck(filtered.id);
+      expect(result.cardsReturned, 1);
+      expect(result.persistenceWarning, isTrue);
+      expect((await storage.getCard(Int64(600)))!.deckId, Int64.ONE);
+      expect(storage.canUndoCollectionOperation, isTrue);
+      await storage.undoLastCollectionOperation();
+      expect((await storage.getCard(Int64(600)))!.deckId, filtered.id);
+    },
+  );
+
   test('unbury rolls back card writes on a pre-commit failure', () async {
     final deck = await _addDeck('Rollback');
     await _addCard(Int64(200), deck.id, CardType.review, CardQueue.userBuried);
@@ -200,9 +337,11 @@ void main() {
 
 late CollectionSqliteStorage _activeStorage;
 
-Future<Deck> _addDeck(String name, {Int64? id}) async {
+Future<Deck> _addDeck(String name, {Int64? id, bool filtered = false}) async {
   final initial = Deck(
-    kind: Deck.newNormal().kind,
+    kind: filtered
+        ? FilteredDeckKind(deck_proto.Deck_Filtered())
+        : Deck.newNormal().kind,
     common: Deck.newNormal().common,
     name: name,
   );
@@ -225,6 +364,8 @@ Future<void> _addCard(
   CardType type,
   CardQueue queue, {
   int due = 1,
+  Int64 originalDeckId = Int64.ZERO,
+  int originalDue = 0,
 }) async {
   await _activeStorage.addOrUpdateCard(
     Card(
@@ -235,6 +376,8 @@ Future<void> _addCard(
       due: due,
       mtimeSecs: Int64(9),
       usn: 4,
+      originalDeckId: originalDeckId,
+      originalDue: originalDue,
     ),
   );
 }

@@ -143,6 +143,11 @@ abstract interface class DeckPickerUnburyProvider {
   Future<DeckPickerUnburyResult> unburyDeck(DeckPickerDeck deck);
 }
 
+/// Collection-backed filtered-deck empty route preserving the exact deck ID.
+abstract interface class DeckPickerEmptyFilteredDeckProvider {
+  Future<void> emptyFilteredDeck(DeckPickerDeck deck);
+}
+
 final class DeckPickerDeletionResult {
   const DeckPickerDeletionResult({
     required this.deckName,
@@ -665,6 +670,11 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       } else if (action == DeckPickerAction.unbury &&
           widget.repository is DeckPickerUnburyProvider) {
         await _unburyDeck(deck, s);
+      } else if (action == DeckPickerAction.emptyFilteredDeck &&
+          widget.repository is DeckPickerEmptyFilteredDeckProvider) {
+        final provider =
+            widget.repository as DeckPickerEmptyFilteredDeckProvider;
+        await _invoke(() => provider.emptyFilteredDeck(deck));
       } else {
         await _invoke(() => widget.repository.performAction(action, deck.id));
       }

@@ -170,11 +170,25 @@ abstract interface class CardBrowserSearchFilterOptionsController {
   Future<CardBrowserSearchFilterOptions> loadSearchFilterOptions();
 }
 
+/// Optional collection browser deck selection and one-time route intent.
+abstract interface class CardBrowserDeckSelectionController {
+  Future<void> initializeBrowser({required Int64? launchDeckId});
+  Future<Int64?> loadSelectedBrowserDeck();
+  Future<String?> loadSelectedBrowserDeckName();
+  Future<CardBrowserSnapshot> selectBrowserDeck(Int64? deckId);
+}
+
 /// Responsive Card Browser UI shared by Flutter's mobile and desktop targets.
 final class CardBrowserScreen extends StatefulWidget {
-  const CardBrowserScreen({required this.controller, this.onClose, super.key});
+  const CardBrowserScreen({
+    required this.controller,
+    this.launchDeckId,
+    this.onClose,
+    super.key,
+  });
 
   final CardBrowserController controller;
+  final Int64? launchDeckId;
   final VoidCallback? onClose;
 
   @override
@@ -197,6 +211,9 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   List<CardBrowserSearchHistoryDisplayItem> _searchHistoryDisplayItems =
       const [];
   BrowserSearchFilters _searchFilters = const BrowserSearchFilters();
+  Int64? _selectedBrowserDeckId;
+  String? _selectedBrowserDeckName;
+  bool _browserControllerInitialized = false;
   bool _searchFocused = false;
   CardBrowserSnapshot? _snapshot;
   _BrowserLoadState _loadState = _BrowserLoadState.loading;
@@ -223,10 +240,14 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   @override
   void didUpdateWidget(covariant CardBrowserScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
+    if (oldWidget.controller != widget.controller ||
+        oldWidget.launchDeckId != widget.launchDeckId) {
       _searchController.clear();
       _searchHistory = const [];
       _searchFilters = const BrowserSearchFilters();
+      _selectedBrowserDeckId = null;
+      _selectedBrowserDeckName = null;
+      _browserControllerInitialized = false;
       _selectedRows.clear();
       _isMultiSelect = false;
       _lastSelectedRowId = null;
@@ -251,6 +272,38 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       _failedDuringInitialLoad = false;
     });
     try {
+      final deckController = widget.controller;
+      if (deckController is CardBrowserDeckSelectionController) {
+        final initializeBrowser = !_browserControllerInitialized;
+        _browserControllerInitialized = true;
+        if (initializeBrowser) {
+          await (deckController as CardBrowserDeckSelectionController)
+              .initializeBrowser(launchDeckId: widget.launchDeckId);
+        }
+        _selectedBrowserDeckId =
+            await (deckController as CardBrowserDeckSelectionController)
+                .loadSelectedBrowserDeck();
+        _selectedBrowserDeckName =
+            await (deckController as CardBrowserDeckSelectionController)
+                .loadSelectedBrowserDeckName();
+        final selectedDeckFilters = _selectedBrowserDeckId == null
+            ? const <BrowserDeckNameId>[]
+            : [
+                BrowserDeckNameId(
+                  name:
+                      _selectedBrowserDeckName ??
+                      _selectedBrowserDeckId.toString(),
+                  id: BigInt.parse(_selectedBrowserDeckId.toString()),
+                ),
+              ];
+        _searchFilters = BrowserSearchFilters(
+          decks: selectedDeckFilters,
+          flags: _searchFilters.flags,
+          tags: _searchFilters.tags,
+          noteTypes: _searchFilters.noteTypes,
+          cardStateCodes: _searchFilters.cardStateCodes,
+        );
+      }
       final snapshot = await widget.controller.load();
       if (!mounted || generation != _requestGeneration) return;
       setState(() {
@@ -352,7 +405,27 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
           await (historyController as CardBrowserSearchHistoryController)
               .restoreSearchHistoryEntry(entry);
       if (!mounted || historyController != widget.controller) return;
-      setState(() => _searchFilters = request.filters);
+      final restoredDeck = request.filters.decks.firstOrNull;
+      if (historyController is CardBrowserDeckSelectionController) {
+        final deckController =
+            historyController as CardBrowserDeckSelectionController;
+        final selectedDeckId = await deckController.loadSelectedBrowserDeck();
+        final selectedDeckName = await deckController
+            .loadSelectedBrowserDeckName();
+        setState(() {
+          _selectedBrowserDeckId = selectedDeckId;
+          _selectedBrowserDeckName = selectedDeckName;
+          _searchFilters = request.filters;
+        });
+      } else {
+        setState(() {
+          _selectedBrowserDeckId = restoredDeck == null
+              ? null
+              : Int64.parseInt(restoredDeck.id.toString());
+          _selectedBrowserDeckName = restoredDeck?.name;
+          _searchFilters = request.filters;
+        });
+      }
       _searchController.text = request.query.replaceAll('\n', ' ');
       _searchFocusNode.unfocus();
       if (submit) await _searchRequest(request);
@@ -373,17 +446,12 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       return;
     }
     if (!mounted || filterController != widget.controller) return;
-    final decksById = <String, BrowserDeckNameId>{
-      for (final deck in options.decks) deck.id.toString(): deck,
-      for (final deck in current.decks) deck.id.toString(): deck,
-    };
     final noteTypesById = <String, BrowserNoteTypeNameId>{
       for (final noteType in options.noteTypes)
         noteType.id.toString(): noteType,
       for (final noteType in current.noteTypes)
         noteType.id.toString(): noteType,
     };
-    final selectedDecks = List<BrowserDeckNameId>.of(current.decks);
     final selectedNoteTypes = List<BrowserNoteTypeNameId>.of(current.noteTypes);
     final selectedTags = current.tags.toSet();
     final selectedFlags = current.flags.toSet();
@@ -398,24 +466,6 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(AppLocalizations.of(context)!.browserFilterDecks),
-                for (final deck in decksById.values)
-                  CheckboxListTile(
-                    dense: true,
-                    key: ValueKey('browser-filter-deck-${deck.id}'),
-                    contentPadding: EdgeInsets.zero,
-                    value: selectedDecks.any(
-                      (selected) =>
-                          selected.id.toString() == deck.id.toString(),
-                    ),
-                    title: Text(deck.name),
-                    onChanged: (value) => updateDialog(() {
-                      selectedDecks.removeWhere(
-                        (selected) => selected.id == deck.id,
-                      );
-                      if (value == true) selectedDecks.add(deck);
-                    }),
-                  ),
                 Text(AppLocalizations.of(context)!.browserFilterNoteTypes),
                 for (final noteType in noteTypesById.values)
                   CheckboxListTile(
@@ -510,17 +560,12 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
             FilledButton(
               key: const ValueKey('browser-filter-apply'),
               onPressed: () {
-                var filters = current;
-                filters = (browserSetDecksFilter(
-                  currentFilters: filters,
-                  decks: selectedDecks,
-                ) as BrowserFilterUpdateUser).state;
-                filters = BrowserSearchFilters(
-                  decks: filters.decks,
-                  flags: filters.flags,
-                  tags: filters.tags,
+                var filters = BrowserSearchFilters(
+                  decks: current.decks,
+                  flags: current.flags,
+                  tags: current.tags,
                   noteTypes: selectedNoteTypes,
-                  cardStateCodes: filters.cardStateCodes,
+                  cardStateCodes: current.cardStateCodes,
                 );
                 filters = (browserSetTagsFilter(
                   currentFilters: filters,
@@ -553,6 +598,88 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     await _searchRequest(
       BrowserSearchRequest(query: _searchController.text, filters: updated),
     );
+  }
+
+  Future<void> _editBrowserDeck() async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserDeckSelectionController ||
+        controller is! CardBrowserSearchFilterOptionsController) {
+      return;
+    }
+    late final CardBrowserSearchFilterOptions options;
+    try {
+      options = await (controller as CardBrowserSearchFilterOptionsController)
+          .loadSearchFilterOptions();
+    } catch (error) {
+      _showActionError(error);
+      return;
+    }
+    if (!mounted || controller != widget.controller) return;
+    final selected = _selectedBrowserDeckId ?? Int64.ZERO;
+    final result = await showDialog<Int64>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.browserFilterDecks),
+        content: SizedBox(
+          width: 420,
+          child: RadioGroup<Int64>(
+            groupValue: selected,
+            onChanged: (value) => Navigator.pop(dialogContext, value),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<Int64>(
+                    key: const ValueKey('browser-deck-all'),
+                    value: Int64.ZERO,
+                    title: Text(AppLocalizations.of(context)!.browserAllDecks),
+                  ),
+                  for (final deck in options.decks)
+                    RadioListTile<Int64>(
+                      key: ValueKey('browser-deck-${deck.id}'),
+                      value: Int64.parseInt(deck.id.toString()),
+                      title: Text(deck.name),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || result == null) return;
+    final deckId = result == Int64.ZERO ? null : result;
+    await _runAction(() async {
+      final snapshot = await (controller as CardBrowserDeckSelectionController)
+          .selectBrowserDeck(deckId);
+      final selectedDeck = deckId == null
+          ? const <BrowserDeckNameId>[]
+          : [
+              options.decks.firstWhere(
+                (deck) => deck.id.toString() == deckId.toString(),
+              ),
+            ];
+      setState(() {
+        _selectedBrowserDeckId = deckId;
+        _selectedBrowserDeckName = selectedDeck.isEmpty
+            ? null
+            : selectedDeck.single.name;
+        _searchFilters = BrowserSearchFilters(
+          decks: selectedDeck,
+          flags: _searchFilters.flags,
+          tags: _searchFilters.tags,
+          noteTypes: _searchFilters.noteTypes,
+          cardStateCodes: _searchFilters.cardStateCodes,
+        );
+        _snapshot = snapshot;
+      });
+    });
   }
 
   Future<void> _removeSearchHistoryEntry(
@@ -1372,6 +1499,22 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
                   icon: const Icon(Icons.arrow_forward),
                 ),
                 border: const OutlineInputBorder(),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              key: const ValueKey('browser-selected-deck'),
+              onPressed: _editBrowserDeck,
+              icon: const Icon(Icons.layers_outlined),
+              label: Text(
+                _selectedBrowserDeckId == null
+                    ? s.browserAllDecks
+                    : s.browserSelectedDeck(
+                        _selectedBrowserDeckName ??
+                            _selectedBrowserDeckId.toString(),
+                      ),
               ),
             ),
           ),

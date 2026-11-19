@@ -25,7 +25,7 @@ import 'package:test/test.dart';
 
 void expectDeck(
   BrowserInitialDeckSelection actual, {
-  required int id,
+  required BigInt id,
   required String name,
 }) {
   expect(
@@ -37,10 +37,10 @@ void expectDeck(
 }
 
 void main() {
-  const allDecksId = 1;
-  const current = BrowserDeckSelection(7, 'Current');
-  const persisted = BrowserDeckSelection(8, 'Persisted');
-  const intent = BrowserDeckSelection(9, 'From intent');
+  final allDecksId = BigInt.from(-1);
+  final current = BrowserDeckSelection(BigInt.from(7), 'Current');
+  final persisted = BrowserDeckSelection(BigInt.from(8), 'Persisted');
+  final intent = BrowserDeckSelection(BigInt.from(9), 'From intent');
 
   group('Card Browser initial deck selection', () {
     test(
@@ -49,25 +49,29 @@ void main() {
         final plan = planBrowserInitialDeck(
           launchIntentConsumed: false,
           intentDeck: null,
-          lastDeckId: 8,
+          lastDeckId: BigInt.from(8),
           allDecksId: allDecksId,
           validLastDeck: persisted,
           currentSelectedDeck: current,
         );
 
         expect(plan.consumeLaunchIntent, isTrue);
-        expectDeck(plan.selectedDeck, id: 8, name: 'Persisted');
+        expectDeck(plan.selectedDeck, id: BigInt.from(8), name: 'Persisted');
 
         final alreadyConsumed = planBrowserInitialDeck(
           launchIntentConsumed: true,
           intentDeck: intent,
-          lastDeckId: 8,
+          lastDeckId: BigInt.from(8),
           allDecksId: allDecksId,
           validLastDeck: persisted,
           currentSelectedDeck: current,
         );
         expect(alreadyConsumed.consumeLaunchIntent, isFalse);
-        expectDeck(alreadyConsumed.selectedDeck, id: 8, name: 'Persisted');
+        expectDeck(
+          alreadyConsumed.selectedDeck,
+          id: BigInt.from(8),
+          name: 'Persisted',
+        );
       },
     );
 
@@ -82,7 +86,21 @@ void main() {
       );
 
       expect(plan.consumeLaunchIntent, isTrue);
-      expectDeck(plan.selectedDeck, id: 9, name: 'From intent');
+      expectDeck(plan.selectedDeck, id: BigInt.from(9), name: 'From intent');
+    });
+
+    test('launch deck IDs remain exact above JavaScript safe integers', () {
+      final wideId = BigInt.parse('9007199254740995');
+      final plan = planBrowserInitialDeck(
+        launchIntentConsumed: false,
+        intentDeck: BrowserDeckSelection(wideId, 'Wide deck'),
+        lastDeckId: BigInt.from(7),
+        allDecksId: allDecksId,
+        validLastDeck: current,
+        currentSelectedDeck: current,
+      );
+
+      expectDeck(plan.selectedDeck, id: wideId, name: 'Wide deck');
     });
 
     test('all-decks sentinel takes precedence over a valid persisted deck', () {
@@ -104,7 +122,7 @@ void main() {
         final valid = planBrowserInitialDeck(
           launchIntentConsumed: true,
           intentDeck: null,
-          lastDeckId: 8,
+          lastDeckId: BigInt.from(8),
           allDecksId: allDecksId,
           validLastDeck: persisted,
           currentSelectedDeck: current,
@@ -112,14 +130,14 @@ void main() {
         final invalid = planBrowserInitialDeck(
           launchIntentConsumed: true,
           intentDeck: null,
-          lastDeckId: 404,
+          lastDeckId: BigInt.from(404),
           allDecksId: allDecksId,
           validLastDeck: null,
           currentSelectedDeck: current,
         );
 
-        expectDeck(valid.selectedDeck, id: 8, name: 'Persisted');
-        expectDeck(invalid.selectedDeck, id: 7, name: 'Current');
+        expectDeck(valid.selectedDeck, id: BigInt.from(8), name: 'Persisted');
+        expectDeck(invalid.selectedDeck, id: BigInt.from(7), name: 'Current');
       },
     );
 
@@ -135,7 +153,7 @@ void main() {
           currentSelectedDeck: current,
         );
 
-        expectDeck(plan.selectedDeck, id: 7, name: 'Current');
+        expectDeck(plan.selectedDeck, id: BigInt.from(7), name: 'Current');
       },
     );
   });

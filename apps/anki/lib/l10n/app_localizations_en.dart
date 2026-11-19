@@ -379,6 +379,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browserFilters => 'Filters';
 
   @override
+  String get browserAllDecks => 'All decks';
+
+  @override
+  String browserSelectedDeck(String name) {
+    return 'Deck: $name';
+  }
+
+  @override
   String get browserFilterDecks => 'Decks';
 
   @override

@@ -787,6 +787,18 @@ abstract class AppLocalizations {
   /// **'Filters'**
   String get browserFilters;
 
+  /// No description provided for @browserAllDecks.
+  ///
+  /// In en, this message translates to:
+  /// **'All decks'**
+  String get browserAllDecks;
+
+  /// No description provided for @browserSelectedDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'Deck: {name}'**
+  String browserSelectedDeck(String name);
+
   /// No description provided for @browserFilterDecks.
   ///
   /// In en, this message translates to:

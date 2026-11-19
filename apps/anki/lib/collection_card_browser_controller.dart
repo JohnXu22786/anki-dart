@@ -41,6 +41,7 @@ final class CollectionCardBrowserController
         CardBrowserSearchHistoryController,
         CardBrowserSearchHistoryDisplayController,
         CardBrowserSearchFilterOptionsController,
+        CardBrowserDeckSelectionController,
         CardBrowserPreviewController {
   CollectionCardBrowserController(
     this.collections, {
@@ -93,6 +94,12 @@ final class CollectionCardBrowserController
   BrowserSearchRequest _activeRequest = const BrowserSearchRequest(query: '');
   Future<void> _historyWriteTail = Future<void>.value();
   bool _noteUpdateUndoPending = false;
+  Int64 _selectedBrowserDeckId = Int64.ZERO;
+  Int64? _launchDeckId;
+  bool _launchIntentConsumed = true;
+  bool _browserDeckInitialized = false;
+  static final BigInt _allDecksLastId = BigInt.from(-1);
+  static const _lastDeckIdKey = 'anki.browser.lastDeckId';
 
   CollectionSqliteStorage get _storage {
     final storage = collections.storage;
@@ -104,10 +111,143 @@ final class CollectionCardBrowserController
 
   @override
   Future<CardBrowserSnapshot> load() async {
+    await _initializeSelectedBrowserDeck();
     _mode = _readMode();
     _modeLoaded = true;
     await _loadSortType();
     return _search(_query);
+  }
+
+  @override
+  Future<void> initializeBrowser({required Int64? launchDeckId}) async {
+    _launchDeckId = launchDeckId;
+    _launchIntentConsumed = false;
+    _browserDeckInitialized = false;
+  }
+
+  @override
+  Future<Int64?> loadSelectedBrowserDeck() async {
+    if (!_browserDeckInitialized) await _initializeSelectedBrowserDeck();
+    return _selectedBrowserDeckId == Int64.ZERO ? null : _selectedBrowserDeckId;
+  }
+
+  @override
+  Future<String?> loadSelectedBrowserDeckName() async {
+    final id = await loadSelectedBrowserDeck();
+    if (id == null) return null;
+    return _storage.decks.getDeck(id)?.name;
+  }
+
+  Future<void> _initializeSelectedBrowserDeck() async {
+    if (_browserDeckInitialized) return;
+    final storage = _storage;
+    final decks = storage.decks.getAllDecksInNameOrder();
+    final launchIntentConsumed = _launchIntentConsumed;
+    final requestedLaunchDeckId = launchIntentConsumed ? null : _launchDeckId;
+    if (!launchIntentConsumed) {
+      _launchIntentConsumed = true;
+      _launchDeckId = null;
+    }
+    BrowserDeckSelection selectionFor(Int64 id) {
+      final deck = storage.decks.getDeck(id);
+      if (deck == null) throw StateError('Card Browser deck no longer exists.');
+      return BrowserDeckSelection(BigInt.parse(id.toString()), deck.name);
+    }
+
+    final currentDeckId = storage.currentDeckId;
+    final currentDeck = storage.decks.getDeck(currentDeckId) == null
+        ? (storage.decks.getDeck(Int64.ONE) == null
+              ? decks.first
+              : storage.decks.getDeck(Int64.ONE)!)
+        : storage.decks.getDeck(currentDeckId)!;
+    final rawLastDeckId = await _preferences.getString(_lastDeckIdKey);
+    final BigInt? lastDeckId = rawLastDeckId == null
+        ? null
+        : BigInt.tryParse(rawLastDeckId);
+    Int64? validLastDeckId;
+    if (lastDeckId != null && lastDeckId != _allDecksLastId) {
+      try {
+        final candidate = Int64.parseInt(lastDeckId.toString());
+        if (storage.decks.getDeck(candidate) != null) {
+          validLastDeckId = candidate;
+        }
+      } on Object {
+        // Malformed or out-of-range stored values fall back to the collection.
+      }
+    }
+    final validLastDeck = validLastDeckId == null
+        ? null
+        : selectionFor(validLastDeckId);
+    final intentDeckId = requestedLaunchDeckId;
+    final intentDeck =
+        intentDeckId != null && storage.decks.getDeck(intentDeckId) != null
+        ? selectionFor(intentDeckId)
+        : null;
+    final plan = planBrowserInitialDeck(
+      launchIntentConsumed: launchIntentConsumed,
+      intentDeck: intentDeck,
+      lastDeckId: lastDeckId,
+      allDecksId: _allDecksLastId,
+      validLastDeck: validLastDeck,
+      currentSelectedDeck: selectionFor(currentDeck.id),
+    );
+    _selectedBrowserDeckId = switch (plan.selectedDeck) {
+      BrowserAllDecksSelection() => Int64.ZERO,
+      BrowserDeckSelection(:final id) => Int64.parseInt(id.toString()),
+    };
+    final updatePlan = planBrowserSelectedDeckUpdate(
+      selectedDeck: switch (plan.selectedDeck) {
+        BrowserAllDecksSelection() => const BrowserSelectAllDecks(),
+        BrowserDeckSelection(:final id, :final name) =>
+          BrowserSelectSpecificDeck(
+            id: id,
+            deckNameId: BrowserDeckNameId(name: name, id: id),
+          ),
+      },
+      allDecksId: _allDecksLastId,
+      currentRequest: _activeRequest,
+    );
+    _query = updatePlan.updatedRequest.query;
+    _activeRequest = updatePlan.updatedRequest;
+    await _preferences.setString(
+      _lastDeckIdKey,
+      updatePlan.lastDeckId.toString(),
+    );
+    _browserDeckInitialized = true;
+  }
+
+  @override
+  Future<CardBrowserSnapshot> selectBrowserDeck(Int64? deckId) async {
+    final storage = _storage;
+    final selectedDeck = deckId == null
+        ? const BrowserSelectAllDecks()
+        : () {
+            final deck = storage.decks.getDeck(deckId);
+            if (deck == null) {
+              throw StateError('Card Browser deck no longer exists.');
+            }
+            return BrowserSelectSpecificDeck(
+              id: BigInt.parse(deck.id.toString()),
+              deckNameId: BrowserDeckNameId(
+                name: deck.name,
+                id: BigInt.parse(deck.id.toString()),
+              ),
+            );
+          }();
+    final plan = planBrowserSelectedDeckUpdate(
+      selectedDeck: selectedDeck,
+      allDecksId: _allDecksLastId,
+      currentRequest: _activeRequest,
+    );
+    final unchangedSelection =
+        _selectedBrowserDeckId == (deckId ?? Int64.ZERO) &&
+        plan.updatedRequest == _activeRequest;
+    await _preferences.setString(_lastDeckIdKey, plan.lastDeckId.toString());
+    _selectedBrowserDeckId = deckId ?? Int64.ZERO;
+    _query = plan.updatedRequest.query;
+    _activeRequest = plan.updatedRequest;
+    if (unchangedSelection && _lastSnapshot != null) return _lastSnapshot!;
+    return _searchRequest(plan.updatedRequest);
   }
 
   BrowserColumnMode _readMode() =>
@@ -336,12 +476,23 @@ final class CollectionCardBrowserController
           id: BigInt.parse(notetype.id.toString()),
         ),
     ];
-    return BrowserSearchRequest.fromHistoryEntry(
+    final request =
+        BrowserSearchRequest.fromHistoryEntry(
           entry,
           deckNameMap: deckNameMap,
           noteTypeMap: noteTypeMap,
         ) ??
         BrowserSearchRequest(query: entry.query);
+    final restoredDeck = request.filters.decks.firstOrNull;
+    _selectedBrowserDeckId = restoredDeck == null
+        ? Int64.ZERO
+        : Int64.parseInt(restoredDeck.id.toString());
+    _browserDeckInitialized = true;
+    // History can also populate the search editor without submitting. Keep
+    // the active request synchronized so a later deck choice preserves it.
+    _query = request.query;
+    _activeRequest = request;
+    return request;
   }
 
   @override
@@ -453,7 +604,14 @@ final class CollectionCardBrowserController
     final storage = _storage;
     final timing = storage.timingTodayForNow();
     final learnAheadSecs = storage.readCollectionConfig('collapseTime');
-    final selectedDeckId = storage.currentDeckId;
+    // A restored structured search may carry several deck filters. The source
+    // projects its first deck into the selector but searches the full filter
+    // list; do not intersect that list with the selector's first deck.
+    final selectedDeckId = request.filters.decks.isNotEmpty
+        ? Int64.ZERO
+        : _browserDeckInitialized
+        ? _selectedBrowserDeckId
+        : storage.currentDeckId;
     final decks = storage.decks.getAllDecksInNameOrder();
     final deckIdsWithChildren = <BigInt, List<BigInt>>{
       for (final deck in decks)

@@ -38,7 +38,7 @@ final class BrowserSelectAllDecks extends BrowserSelectedDeck {
 final class BrowserSelectSpecificDeck extends BrowserSelectedDeck {
   const BrowserSelectSpecificDeck({required this.id, required this.deckNameId});
 
-  final int id;
+  final BigInt id;
   final BrowserDeckNameId deckNameId;
 }
 
@@ -52,7 +52,7 @@ final class BrowserPersistLastDeckIdEffect
     extends BrowserSelectedDeckUpdateEffect {
   const BrowserPersistLastDeckIdEffect(this.deckId);
 
-  final int deckId;
+  final BigInt deckId;
 }
 
 /// Requests source search execution using the prepared request.
@@ -87,7 +87,7 @@ final class BrowserSelectedDeckUpdatePlan {
          ),
        ]);
 
-  final int lastDeckId;
+  final BigInt lastDeckId;
   final List<BrowserDeckNameId> deckFilter;
   final BrowserSearchRequest updatedRequest;
   final List<BrowserSelectedDeckUpdateEffect> effects;
@@ -103,10 +103,10 @@ final class BrowserSelectedDeckUpdatePlan {
 /// mutation, collection access, or search execution.
 BrowserSelectedDeckUpdatePlan planBrowserSelectedDeckUpdate({
   required BrowserSelectedDeck selectedDeck,
-  required int allDecksId,
+  required BigInt allDecksId,
   required BrowserSearchRequest currentRequest,
 }) {
-  final int lastDeckId;
+  final BigInt lastDeckId;
   final List<BrowserDeckNameId> deckFilter;
   switch (selectedDeck) {
     case BrowserSelectAllDecks():

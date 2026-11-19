@@ -1384,11 +1384,18 @@ caller supplies current search terms and its persisted `lastDeckId`
 (`CardBrowserFragment.kt:1881–1889`); `CardBrowserViewModel.setSelectedDeck()`
 stores that ID independently of the collection current deck
 (`CardBrowserViewModel.kt:401–414`). The Dart controller contract accepts an
-explicit `selectedNewNoteDeckId`, but the current app does not yet connect an
-equivalent persisted Card Browser deck repository. Its no-override path uses
-the active collection's current deck and `addToCur`/remembered-deck settings;
-this is documented as a host integration gap rather than exact last-deck
-parity.
+explicit `selectedNewNoteDeckId` for the new-note flow. Unit43 separately
+connects Card Browser deck selection: `StartupShell` forwards the exact
+Deck Picker `Int64` as a one-time launch intent, and
+`CollectionCardBrowserController` resolves that intent before a valid remembered
+deck and current-collection fallback. It stores `lastDeckId` as decimal text in
+SharedPreferences, updates the active request before searching, and does not
+call `selectDeck()`. Direct Browser opens prefer a valid remembered Browser
+deck and fall back to the collection current deck when no valid remembered
+selection exists; neither path changes collection current-deck state. The
+Browser selector is implemented by `CardBrowserScreen`.
+Pinned 2.25.3 source/test SHA-256 values are recorded below in the Unit43
+mapping; this is an app integration, not an Android state or repository port.
 
 `saveNote()` copies field and tag edits, prevents overlapping add jobs, checks
 the fields result and only then calls the collection add operation
@@ -1449,6 +1456,50 @@ IDs above JavaScript's safe integer range. This matches
 `DeckPickerViewModel.browseCards(deckId)`, which selects that deck before
 emitting `BrowserDestination.ToDeck(deckId)` (`DeckPicker.kt:1057–1061`,
 `DeckPickerViewModel.kt:277–280`). The optional exact-ID adapter preserves the
-existing repository fallback for non-collection hosts. Independently persisted
-Browser `lastDeckId` remains a separate source behavior. Root `COPYING` remains
-byte-identical; no Android source or resource was copied.
+existing repository fallback for non-collection hosts. The current Flutter
+collection adapter validates but does not select that deck as the collection's
+current deck; `StartupShell` passes the exact ID into the Card Browser as a
+one-time initial-deck intent, where Unit43 resolves and remembers it separately.
+Root `COPYING` remains byte-identical; no Android source or resource was copied.
+
+## Card Browser selected deck (Unit43)
+
+`CardBrowserViewModel.setSelectedDeck()` at `CardBrowserViewModel.kt:404–425`
+persists `ALL_DECKS_ID` or the exact selected ID before requesting a search with
+`forceRefresh=false`, and updates only the deck filter while preserving query
+and non-deck filters. `getInitialDeck()` at `:449–477,584–586` consumes the
+explicit launch ID once, then resolves a valid intent deck, the All Decks
+sentinel, a valid remembered deck, or the collection selected deck. The
+separate `LastDeckIdRepository.kt:12–52` persists the remembered value under
+`DeckPickerState/lastDeckId` without mutating `Decks.select()`.
+
+Search-history restoration follows a distinct source path:
+`CardBrowserSearchViewModel.selectSearchHistoryEntry()` restores its full
+`SearchFilters` and submits them without calling `setSelectedDeck()`. The
+source UI projects the first restored deck filter as the displayed deck, or
+All Decks when the list is empty (`CardBrowserFragment.kt:240–252`). The Dart
+controller mirrors that projection in in-memory Browser selection, searches
+the full restored deck-filter list without adding the projected first deck as
+an extra restriction, synchronizes the active request even when history is
+opened for editing without submission, and leaves the remembered `lastDeckId`
+preference unchanged on history restore.
+
+The Dart plans in `lib/src/browser_initial_deck.dart` and
+`lib/src/browser_selected_deck_update_plan.dart` use `BigInt` for exact IDs.
+`CollectionCardBrowserController` resolves IDs against the open collection,
+consumes the intent before lookup, stores the remembered ID as decimal text in
+SharedPreferences, applies the selection update before searching, and scopes
+empty-deck-filter searches to its own selected Browser deck. `StartupShell`
+passes Deck Picker's exact route ID through `CardBrowserScreen`; the screen
+offers a localized single-deck/All Decks choice. These app responsibilities
+leave collection current-deck state unchanged. Pinned AnkiDroid 2.25.3 commit is
+`d9bf072f814a0c37d30a694192593b31ff2df875`. SHA-256: `CardBrowserViewModel.kt`
+`88c5d4506189866ff8d67b55b4693b50d7514e0cd54f11cac10b25985b74b6f4`,
+`LastDeckIdRepository.kt`
+`b7e1da4f87258bf789bf5003c377908ec9df46712f72c4a21379cf5b264897d3`, and
+`CardBrowserViewModelTest.kt`
+`0f8643b9e36868ab46316d77ad3e554d8b44211344f1b7526e2dbf7c25f6aa5c`. The
+direct upstream tests cover intent/remembered-deck resolution and process
+recreation after a user choice; Dart host tests cover exact IDs above 2^53,
+invalid fallback, persistence, filters, and unchanged collection current deck.
+Root `COPYING` remains byte-identical; no Android source or resource was copied.

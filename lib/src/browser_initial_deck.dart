@@ -34,7 +34,7 @@ final class BrowserAllDecksSelection extends BrowserInitialDeckSelection {
 final class BrowserDeckSelection extends BrowserInitialDeckSelection {
   const BrowserDeckSelection(this.id, this.name);
 
-  final int id;
+  final BigInt id;
   final String name;
 }
 
@@ -66,8 +66,8 @@ final class BrowserInitialDeckPlan {
 BrowserInitialDeckPlan planBrowserInitialDeck({
   required bool launchIntentConsumed,
   required BrowserDeckSelection? intentDeck,
-  required int? lastDeckId,
-  required int allDecksId,
+  required BigInt? lastDeckId,
+  required BigInt allDecksId,
   required BrowserDeckSelection? validLastDeck,
   required BrowserDeckSelection currentSelectedDeck,
 }) {

@@ -43,11 +43,11 @@ void main() {
 
         final plan = planBrowserSelectedDeckUpdate(
           selectedDeck: const BrowserSelectAllDecks(),
-          allDecksId: -1,
+          allDecksId: BigInt.from(-1),
           currentRequest: currentRequest,
         );
 
-        expect(plan.lastDeckId, -1);
+        expect(plan.lastDeckId, BigInt.from(-1));
         expect(plan.deckFilter, isEmpty);
         expect(plan.updatedRequest.query, currentRequest.query);
         expect(plan.updatedRequest.filters.decks, isEmpty);
@@ -65,7 +65,7 @@ void main() {
         expect(plan.effects.first, isA<BrowserPersistLastDeckIdEffect>());
         expect(
           (plan.effects.first as BrowserPersistLastDeckIdEffect).deckId,
-          -1,
+          BigInt.from(-1),
         );
         final search =
             plan.effects.last as BrowserLaunchSelectedDeckSearchEffect;
@@ -76,13 +76,16 @@ void main() {
 
     test('specific deck retains its exact ID and resolved DeckNameId', () {
       final selectedDeck = BrowserSelectSpecificDeck(
-        id: 42,
-        deckNameId: const BrowserDeckNameId(name: 'Resolved::Name', id: 42),
+        id: BigInt.from(42),
+        deckNameId: BrowserDeckNameId(
+          name: 'Resolved::Name',
+          id: BigInt.from(42),
+        ),
       );
       final currentFilters = BrowserSearchFilters(
         flags: [2],
         tags: ['keep'],
-        noteTypes: [BrowserNoteTypeNameId(name: 'Cloze', id: 7)],
+        noteTypes: [BrowserNoteTypeNameId(name: 'Cloze', id: BigInt.from(7))],
         cardStateCodes: [1],
       );
       final currentRequest = BrowserSearchRequest(
@@ -92,11 +95,11 @@ void main() {
 
       final plan = planBrowserSelectedDeckUpdate(
         selectedDeck: selectedDeck,
-        allDecksId: -1,
+        allDecksId: BigInt.from(-1),
         currentRequest: currentRequest,
       );
 
-      expect(plan.lastDeckId, 42);
+      expect(plan.lastDeckId, BigInt.from(42));
       expect(plan.deckFilter, [selectedDeck.deckNameId]);
       expect(plan.deckFilter.single, same(selectedDeck.deckNameId));
       expect(plan.updatedRequest.query, currentRequest.query);
@@ -115,10 +118,33 @@ void main() {
         BrowserPersistLastDeckIdEffect,
         BrowserLaunchSelectedDeckSearchEffect,
       ]);
-      expect((plan.effects.first as BrowserPersistLastDeckIdEffect).deckId, 42);
+      expect(
+        (plan.effects.first as BrowserPersistLastDeckIdEffect).deckId,
+        BigInt.from(42),
+      );
       final search = plan.effects.last as BrowserLaunchSelectedDeckSearchEffect;
       expect(search.request, same(plan.updatedRequest));
       expect(search.forceRefresh, isFalse);
+    });
+
+    test('specific deck update preserves an exact 64-bit ID', () {
+      final wideId = BigInt.parse('9007199254740995');
+      final selectedDeck = BrowserSelectSpecificDeck(
+        id: wideId,
+        deckNameId: BrowserDeckNameId(name: 'Wide deck', id: wideId),
+      );
+      final plan = planBrowserSelectedDeckUpdate(
+        selectedDeck: selectedDeck,
+        allDecksId: BigInt.from(-1),
+        currentRequest: const BrowserSearchRequest(query: ''),
+      );
+
+      expect(plan.lastDeckId, wideId);
+      expect(plan.deckFilter.single.id, wideId);
+      expect(
+        (plan.effects.first as BrowserPersistLastDeckIdEffect).deckId,
+        wideId,
+      );
     });
   });
 }

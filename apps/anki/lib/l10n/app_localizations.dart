@@ -1518,6 +1518,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Redo'**
   String get redoDeckDeletion;
+
+  /// No description provided for @unburyingDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'Unburying cards…'**
+  String get unburyingDeck;
+
+  /// No description provided for @deckUnburiedResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards unburied from {deckName}: {cardsUnburied}'**
+  String deckUnburiedResult(int cardsUnburied, String deckName);
+
+  /// No description provided for @deckUnburyUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'Deck unbury undone'**
+  String get deckUnburyUndone;
+
+  /// No description provided for @deckUnburyRedone.
+  ///
+  /// In en, this message translates to:
+  /// **'Deck unbury redone'**
+  String get deckUnburyRedone;
+
+  /// No description provided for @undoDeckUnbury.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undoDeckUnbury;
+
+  /// No description provided for @redoDeckUnbury.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get redoDeckUnbury;
 }
 
 class _AppLocalizationsDelegate

@@ -138,6 +138,11 @@ abstract interface class DeckPickerDeleteProvider {
   });
 }
 
+/// Collection-backed Deck Picker unbury route preserving the exact deck ID.
+abstract interface class DeckPickerUnburyProvider {
+  Future<DeckPickerUnburyResult> unburyDeck(DeckPickerDeck deck);
+}
+
 final class DeckPickerDeletionResult {
   const DeckPickerDeletionResult({
     required this.deckName,
@@ -148,6 +153,20 @@ final class DeckPickerDeletionResult {
 
   final String deckName;
   final int cardsDeleted;
+  final int collectionUndoGeneration;
+  final bool persistenceWarning;
+}
+
+final class DeckPickerUnburyResult {
+  const DeckPickerUnburyResult({
+    required this.deckName,
+    required this.cardsUnburied,
+    required this.collectionUndoGeneration,
+    this.persistenceWarning = false,
+  });
+
+  final String deckName;
+  final int cardsUnburied;
   final int collectionUndoGeneration;
   final bool persistenceWarning;
 }
@@ -643,9 +662,136 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       } else if (action == DeckPickerAction.deleteDeck &&
           widget.repository is DeckPickerDeleteProvider) {
         await _deleteDeck(deck, s);
+      } else if (action == DeckPickerAction.unbury &&
+          widget.repository is DeckPickerUnburyProvider) {
+        await _unburyDeck(deck, s);
       } else {
         await _invoke(() => widget.repository.performAction(action, deck.id));
       }
+    }
+  }
+
+  Future<void> _unburyDeck(DeckPickerDeck deck, AppLocalizations s) async {
+    final provider = widget.repository as DeckPickerUnburyProvider;
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final progress = showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              Expanded(child: Text(s.unburyingDeck)),
+            ],
+          ),
+        ),
+      ),
+    );
+    try {
+      final result = await provider.unburyDeck(deck);
+      if (navigator.canPop()) navigator.pop();
+      await progress;
+      if (!mounted) return;
+      _reload();
+      final message = result.persistenceWarning
+          ? '${s.deckUnburiedResult(result.cardsUnburied, result.deckName)}\n${s.deckDeletionFlushWarning}'
+          : s.deckUnburiedResult(result.cardsUnburied, result.deckName);
+      final undoProvider = widget.repository;
+      final undo = undoProvider is DeckPickerCollectionUndoProvider
+          ? undoProvider as DeckPickerCollectionUndoProvider
+          : null;
+      if (undo != null &&
+          result.cardsUnburied > 0 &&
+          undo.canUndoCollectionOperation &&
+          undo.collectionUndoGeneration == result.collectionUndoGeneration) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            action: SnackBarAction(
+              label: s.undoDeckUnbury,
+              onPressed: () =>
+                  _undoDeckUnbury(undo, result.collectionUndoGeneration),
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
+      }
+    } on Object {
+      if (navigator.canPop()) navigator.pop();
+      await progress;
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(s.deckActionFailed)));
+    }
+  }
+
+  Future<void> _undoDeckUnbury(
+    DeckPickerCollectionUndoProvider provider,
+    int generation,
+  ) async {
+    if (!provider.canUndoCollectionOperation ||
+        provider.collectionUndoGeneration != generation) {
+      return;
+    }
+    try {
+      await provider.undoLastCollectionOperation();
+      if (!mounted) return;
+      _reload();
+      final redoGeneration = provider.collectionUndoGeneration;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.deckUnburyUndone),
+          action: SnackBarAction(
+            label: AppLocalizations.of(context)!.redoDeckUnbury,
+            onPressed: () => _redoDeckUnbury(provider, redoGeneration),
+          ),
+        ),
+      );
+    } on Object {
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
+    }
+  }
+
+  Future<void> _redoDeckUnbury(
+    DeckPickerCollectionUndoProvider provider,
+    int generation,
+  ) async {
+    if (!provider.canRedoCollectionOperation ||
+        provider.collectionUndoGeneration != generation) {
+      return;
+    }
+    try {
+      await provider.redoLastCollectionOperation();
+      if (!mounted) return;
+      _reload();
+      final undoGeneration = provider.collectionUndoGeneration;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.deckUnburyRedone),
+          action: provider.canUndoCollectionOperation
+              ? SnackBarAction(
+                  label: AppLocalizations.of(context)!.undoDeckUnbury,
+                  onPressed: () => _undoDeckUnbury(provider, undoGeneration),
+                )
+              : null,
+        ),
+      );
+    } on Object {
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
     }
   }
 

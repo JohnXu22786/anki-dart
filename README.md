@@ -73,6 +73,23 @@ under `GPL-3.0-or-later`; root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
 source mapping and attribution.
 
+## Deck Picker collection unbury
+
+`CollectionSqliteStorage.unburyDeck()` and the shared Deck Picker unbury route
+adapt AnkiDroid 2.25.3 `DeckPicker.kt:1036–1038` and
+`DeckPickerViewModel.kt:342–345`, using Core's
+`rslib/src/scheduler/bury_and_suspend.rs` and
+`rslib/src/scheduler/filtered/card.rs` queue-restoration rules. The operation
+uses the exact deck ID and descendants, restores scheduler/user-buried cards to
+the queue selected by card type and due timestamp, and preserves due values and
+unrelated card state. Card timestamps and collection modification time follow
+Core; one transaction records undo/redo, with generation-checked Deck Picker
+actions and post-commit flush recovery. Focused cases live in
+`packages/anki_collection_sqlite/test/deck_unbury_test.dart` and
+`apps/anki/test/deck_picker_screen_test.dart`. Pinned source hashes are checked
+by the SQLite package checker. The Dart adaptation and tests are Copyright ©
+2026 John Tsui under GPL-3.0-or-later, and root `COPYING` remains unchanged.
+
 ## LibAnki Collection sync status and preferences
 
 [`collection_sync_preferences.dart`](lib/src/collection_sync_preferences.dart) and

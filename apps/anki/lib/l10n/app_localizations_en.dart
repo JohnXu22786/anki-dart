@@ -773,4 +773,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get redoDeckDeletion => 'Redo';
+
+  @override
+  String get unburyingDeck => 'Unburying cards…';
+
+  @override
+  String deckUnburiedResult(int cardsUnburied, String deckName) {
+    return 'Cards unburied from $deckName: $cardsUnburied';
+  }
+
+  @override
+  String get deckUnburyUndone => 'Deck unbury undone';
+
+  @override
+  String get deckUnburyRedone => 'Deck unbury redone';
+
+  @override
+  String get undoDeckUnbury => 'Undo';
+
+  @override
+  String get redoDeckUnbury => 'Redo';
 }

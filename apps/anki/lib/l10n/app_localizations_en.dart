@@ -703,6 +703,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteEditorFilterTags => 'Filter tags';
 
   @override
+  String get noteEditorDeck => 'Deck';
+
+  @override
+  String get noteEditorChooseDeck => 'Choose deck';
+
+  @override
+  String get noteEditorFilterDecks => 'Filter decks';
+
+  @override
+  String get noteEditorDeckLoadError => 'Decks could not be loaded.';
+
+  @override
+  String get noteEditorNoDecks => 'No selectable decks are available.';
+
+  @override
+  String get noteEditorNoDeckMatches => 'No decks match your search.';
+
+  @override
   String get noteEditorValidationError => 'The note fields are invalid.';
 
   @override

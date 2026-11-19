@@ -69,9 +69,16 @@ selection host can provide the exact persisted browser ID through
 
 - Image Occlusion field setup and its special empty-field message remain out
   of this editor flow; the app maps ordinary new-note validation only.
-- A dedicated deck or note-type picker is not implemented. The host contract
-  supplies concrete IDs; the collection controller resolves its supported
-  default/current values and rejects missing/filtered explicit browser decks.
+- A shared deck selector is implemented for new notes. It lists exact 64-bit
+  IDs for normal decks only, shows nested names in full, supports filtering for
+  larger catalogs, and changes only the editor's in-memory draft. The
+  collection's current deck is not changed by this selection;
+  `saveNewNote()` passes the selected ID to `addNoteToDeck()`. A missing or
+  newly filtered deck cannot be saved; the user can choose another available
+  deck. Cancellation retains the current choice, an empty catalog is shown
+  explicitly, and catalog load errors can be retried. A note-type picker is
+  not implemented; the host still resolves the supported initial note type
+  and destination deck.
 - Core `transact(Op::AddNote)` records note/card/tag/config/collection undo
   payloads and returns operation changes. This method returns `OpChanges` and
   does not create a generic undo journal or an operation-specific history.

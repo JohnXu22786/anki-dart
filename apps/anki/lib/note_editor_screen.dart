@@ -45,17 +45,39 @@ final class NewNoteEditorDraft {
     required this.notetypeId,
     required this.deckId,
     required this.content,
+    this.deckName = '',
     this.note,
   });
 
   final Int64 notetypeId;
   final Int64 deckId;
+  final String deckName;
   final NoteEditorContent content;
   final models.Note? note;
+
+  NewNoteEditorDraft copyWith({
+    required Int64 deckId,
+    required String deckName,
+  }) => NewNoteEditorDraft(
+    notetypeId: notetypeId,
+    deckId: deckId,
+    deckName: deckName,
+    content: content,
+    note: note,
+  );
+}
+
+/// A selectable regular deck for the shared new-note editor.
+final class NewNoteEditorDeck {
+  const NewNoteEditorDeck({required this.id, required this.name});
+
+  final Int64 id;
+  final String name;
 }
 
 abstract interface class NewNoteEditorPort implements NoteEditorPort {
   Future<NewNoteEditorDraft> loadNewNote();
+  Future<List<NewNoteEditorDeck>> loadSelectableDecks();
   Future<NoteFieldsCheckResult> validateNewNote(
     Int64 notetypeId,
     List<String> fields,
@@ -302,6 +324,27 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
             vertical: 24,
           ),
           children: [
+            if (widget._isNewNote) ...[
+              Text(
+                strings.noteEditorDeck,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                key: const Key('note-editor-select-deck'),
+                onPressed: _saving || _committedRetryPending
+                    ? null
+                    : _selectDeck,
+                icon: const Icon(Icons.folder_open_outlined),
+                label: Text(
+                  _newNoteDraft!.deckName.isEmpty
+                      ? strings.noteEditorChooseDeck
+                      : _newNoteDraft!.deckName,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
             for (var index = 0; index < _content!.labels.length; index++) ...[
               TextField(
                 key: Key('note-field-$index'),
@@ -395,6 +438,127 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
           );
       setState(() => _tags = unchangedSelection ? List.of(_tags) : result);
     }
+  }
+
+  Future<void> _selectDeck() async {
+    final port = widget.port as NewNoteEditorPort;
+    final selected = await showDialog<NewNoteEditorDeck>(
+      context: context,
+      builder: (context) => _NewNoteDeckDialog(port: port),
+    );
+    if (selected != null && mounted) {
+      setState(() {
+        _newNoteDraft = _newNoteDraft!.copyWith(
+          deckId: selected.id,
+          deckName: selected.name,
+        );
+        _saveError = null;
+      });
+    }
+  }
+}
+
+final class _NewNoteDeckDialog extends StatefulWidget {
+  const _NewNoteDeckDialog({required this.port});
+  final NewNoteEditorPort port;
+
+  @override
+  State<_NewNoteDeckDialog> createState() => _NewNoteDeckDialogState();
+}
+
+final class _NewNoteDeckDialogState extends State<_NewNoteDeckDialog> {
+  late Future<List<NewNoteEditorDeck>> _decks;
+  final _filter = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _decks = widget.port.loadSelectableDecks();
+  }
+
+  @override
+  void dispose() {
+    _filter.dispose();
+    super.dispose();
+  }
+
+  void _reload() {
+    setState(() {
+      _decks = widget.port.loadSelectableDecks();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(strings.noteEditorChooseDeck),
+      content: SizedBox(
+        width: 480,
+        height: 420,
+        child: FutureBuilder<List<NewNoteEditorDeck>>(
+          future: _decks,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(strings.noteEditorDeckLoadError),
+                  const SizedBox(height: 12),
+                  TextButton(onPressed: _reload, child: Text(strings.tryAgain)),
+                ],
+              );
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final decks = snapshot.data!;
+            if (decks.isEmpty) return Text(strings.noteEditorNoDecks);
+            final filter = _filter.text.trim().toLowerCase();
+            final visible = decks
+                .where((deck) => deck.name.toLowerCase().contains(filter))
+                .toList(growable: false);
+            return Column(
+              children: [
+                if (decks.length > 8)
+                  TextField(
+                    key: const Key('note-editor-deck-filter'),
+                    controller: _filter,
+                    decoration: InputDecoration(
+                      labelText: strings.noteEditorFilterDecks,
+                      prefixIcon: const Icon(Icons.search),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      for (final deck in visible)
+                        ListTile(
+                          key: Key('note-editor-deck-${deck.id}'),
+                          title: Text(deck.name.split('::').last),
+                          subtitle: deck.name.contains('::')
+                              ? Text(deck.name)
+                              : null,
+                          onTap: () => Navigator.pop(context, deck),
+                        ),
+                      if (visible.isEmpty)
+                        ListTile(title: Text(strings.noteEditorNoDeckMatches)),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(strings.cancel),
+        ),
+      ],
+    );
   }
 }
 

@@ -1955,6 +1955,11 @@ class _EditorController extends _Controller
   );
 
   @override
+  Future<List<NewNoteEditorDeck>> loadSelectableDecks() async => [
+    NewNoteEditorDeck(id: Int64.ONE, name: 'Default'),
+  ];
+
+  @override
   Future<NoteFieldsCheckResult> validateNewNote(
     Int64 notetypeId,
     List<String> fields,

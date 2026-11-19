@@ -42,6 +42,110 @@ void main() {
     );
   });
 
+  testWidgets('new note deck choice keeps exact ID and draft edits', (
+    tester,
+  ) async {
+    final port = _FakeNewNoteEditorPort()
+      ..validation = const NoteFieldsCheckSuccess();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('note-field-0')), 'draft');
+    await tester.tap(find.byKey(const Key('note-editor-tags')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tag-select-Science::Chemistry')));
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-editor-select-deck')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('note-editor-deck-9007199254740993')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Course::Unit'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+
+    expect(port.lastSavedDeckId, Int64.parseInt('9007199254740993'));
+    expect(port.lastFields, ['draft', '']);
+    expect(port.lastTags, ['Science::Chemistry']);
+  });
+
+  testWidgets('canceling deck selection preserves the resolved destination', (
+    tester,
+  ) async {
+    final port = _FakeNewNoteEditorPort();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-editor-select-deck')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Cancel'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Default'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('note-editor-save')));
+    await tester.tap(find.byKey(const Key('note-editor-save')));
+    await tester.pumpAndSettle();
+    expect(port.lastSavedDeckId, Int64(34));
+  });
+
+  testWidgets('deck catalog load failure can be retried', (tester) async {
+    final port = _FakeNewNoteEditorPort()..failDeckLoad = true;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-editor-select-deck')));
+    await tester.pumpAndSettle();
+    expect(find.text('Decks could not be loaded.'), findsOneWidget);
+
+    port.failDeckLoad = false;
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('note-editor-deck-34')), findsOneWidget);
+    expect(port.deckLoadCalls, 2);
+  });
+
+  testWidgets('empty deck catalog explains that no choices are available', (
+    tester,
+  ) async {
+    final port = _FakeNewNoteEditorPort()..deckCatalog = const [];
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: NoteEditorScreen.newNote(newNotePort: port)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-editor-select-deck')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No selectable decks are available.'), findsOneWidget);
+    expect(find.byKey(const Key('note-editor-deck-34')), findsNothing);
+  });
+
   testWidgets('new note validates and treats duplicate as nonfatal', (
     tester,
   ) async {
@@ -207,8 +311,18 @@ void main() {
             .onPressed,
         isNull,
       );
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.byKey(const Key('note-editor-select-deck')),
+            )
+            .onPressed,
+        isNull,
+      );
 
       port.failAddAfterCommit = false;
+      await tester.drag(find.byType(ListView).first, const Offset(0, -140));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('note-editor-save')));
       await tester.pumpAndSettle();
       expect(port.addCalls, 2);
@@ -570,11 +684,21 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
   int validationCalls = 0;
   int addCalls = 0;
   bool failAdd = false;
+  bool failDeckLoad = false;
   bool failAddAfterCommit = false;
+  int deckLoadCalls = 0;
+  List<NewNoteEditorDeck> deckCatalog = [
+    NewNoteEditorDeck(id: Int64(34), name: 'Default'),
+    NewNoteEditorDeck(
+      id: Int64.parseInt('9007199254740993'),
+      name: 'Course::Unit',
+    ),
+  ];
   Completer<int>? pendingAdd;
   NoteFieldsCheckResult validation = const NoteFieldsCheckSuccess();
   Int64? lastNotetypeId;
   Int64? lastDeckId;
+  Int64? lastSavedDeckId;
   List<String>? lastFields;
   List<String>? lastTags;
 
@@ -586,6 +710,7 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
     return NewNoteEditorDraft(
       notetypeId: lastNotetypeId!,
       deckId: lastDeckId!,
+      deckName: 'Default',
       note: models.Note(notetypeId: lastNotetypeId!, fields: const ['', '']),
       content: NoteEditorContent(
         labels: const ['Front', 'Back'],
@@ -593,6 +718,13 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
         availableTags: const ['selected', 'Science::Chemistry'],
       ),
     );
+  }
+
+  @override
+  Future<List<NewNoteEditorDeck>> loadSelectableDecks() async {
+    deckLoadCalls++;
+    if (failDeckLoad) throw StateError('deck catalog unavailable');
+    return deckCatalog;
   }
 
   @override
@@ -611,6 +743,7 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
     required List<String> tags,
   }) async {
     addCalls++;
+    lastSavedDeckId = draft.deckId;
     if (failAddAfterCommit) {
       draft.note!.id = Int64(456);
       throw StateError('driver flush failed after commit');

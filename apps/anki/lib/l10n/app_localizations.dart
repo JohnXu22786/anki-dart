@@ -1387,6 +1387,42 @@ abstract class AppLocalizations {
   /// **'Filter tags'**
   String get noteEditorFilterTags;
 
+  /// No description provided for @noteEditorDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'Deck'**
+  String get noteEditorDeck;
+
+  /// No description provided for @noteEditorChooseDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose deck'**
+  String get noteEditorChooseDeck;
+
+  /// No description provided for @noteEditorFilterDecks.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter decks'**
+  String get noteEditorFilterDecks;
+
+  /// No description provided for @noteEditorDeckLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Decks could not be loaded.'**
+  String get noteEditorDeckLoadError;
+
+  /// No description provided for @noteEditorNoDecks.
+  ///
+  /// In en, this message translates to:
+  /// **'No selectable decks are available.'**
+  String get noteEditorNoDecks;
+
+  /// No description provided for @noteEditorNoDeckMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No decks match your search.'**
+  String get noteEditorNoDeckMatches;
+
   /// No description provided for @noteEditorValidationError.
   ///
   /// In en, this message translates to:

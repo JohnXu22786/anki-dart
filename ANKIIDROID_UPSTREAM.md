@@ -1420,6 +1420,30 @@ Source hashes for the cited pinned AnkiDroid and libanki files are recorded in
 `apps/anki/ANKIDROID_SOURCE.sha256`; no Android source, assets, or strings were
 copied. Root `COPYING` remains byte-identical.
 
+## New-note destination deck selector (Unit46)
+
+The shared new-note editor now displays its resolved destination deck and
+offers a searchable chooser over regular decks. Nested names remain visible,
+filtered decks are excluded, and deck IDs remain `Int64` through selection and
+the call to `addNoteToDeck()`. Choosing a deck updates only the editor's
+in-memory draft; it does not call the collection's current-deck selection
+operation. Cancel leaves the draft choice unchanged. Empty catalogs and load
+failures are displayed in the chooser, with load retry; save rejects a deck
+that has disappeared or become filtered. Field and tag edits stay in the
+editor while the deck changes.
+
+This matches the pinned AnkiDroid 2.25.3 Note Editor behavior: the destination
+name acts as a selector, the picker is opened with `allowAll=false` and
+`allowFiltered=false`, only `SelectableDeck.Deck` is accepted, and selection
+updates local `deckId` and the displayed name without switching the collection
+current deck. The reference is `NoteEditorFragment.onDeckSelected()` at
+`NoteEditorFragment.kt:463–470`, initial deck validation and selector callback
+at `748–780`, the selector view in `fragment_note_editor.xml`, and the deck
+selection shortcut at `1016`. Source SHA-256 values are pinned in the Unit46
+assignment and verified against `/workspace/anki-android-official`; this unit
+does not claim note-type selection, image-occlusion flows, existing-note card
+moves, or full Note Editor parity. Root `COPYING` remains unchanged.
+
 ## Deck Picker Add Card route (Unit40)
 
 The Deck Picker context-menu Add Card action now routes to the same shared

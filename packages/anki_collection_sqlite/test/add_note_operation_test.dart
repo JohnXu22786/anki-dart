@@ -13,13 +13,18 @@ import 'package:test/test.dart';
 void main() {
   late CollectionSqliteStorage storage;
   late Database database;
+  var flushFails = false;
   var nowMillis = 9007199254740993;
 
   setUp(() async {
+    flushFails = false;
     nowMillis = 9007199254740993;
     storage = await CollectionSqliteStorage.open(
       driver: CollectionSqliteDriver(
         openDatabase: (_) => database = sqlite3.openInMemory(),
+        flush: () {
+          if (flushFails) throw StateError('driver flush failed');
+        },
       ),
       location: ':memory:',
       nowMillis: () => nowMillis,
@@ -320,6 +325,26 @@ void main() {
     expect(await storage.queryInt('SELECT count(*) FROM cards'), 0);
     expect(await storage.queryInt('SELECT mod FROM col'), 500);
   });
+
+  test(
+    'driver flush failure is reported after the complete operation commits',
+    () async {
+      flushFails = true;
+      final note = _newNote(tags: ['committed']);
+
+      await expectLater(
+        storage.addNoteToDeck(note, Int64.ONE),
+        throwsStateError,
+      );
+      flushFails = false;
+
+      expect(note.id, isNot(Int64.ZERO));
+      expect(await storage.queryInt('SELECT count(*) FROM notes'), 1);
+      expect(await storage.queryInt('SELECT count(*) FROM cards'), 2);
+      expect(await storage.queryInt('SELECT count(*) FROM tags'), 1);
+      expect(await storage.queryInt('SELECT mod FROM col'), 9007199254740993);
+    },
+  );
 }
 
 Future<void> _saveNotetype(Database database, Notetype notetype) async {

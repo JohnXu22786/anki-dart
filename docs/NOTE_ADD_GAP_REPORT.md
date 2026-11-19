@@ -18,6 +18,12 @@ deck configuration failures, SQL errors, and card-generation failures
 propagate and roll back the note, generated cards, tags, `nextPos`, operation
 config, and collection mtime.
 
+Those rollback guarantees apply to operation errors before the savepoint is
+released. The injected driver's async flush runs after the SQLite commit; if
+that flush fails, the future reports a post-commit error while the complete
+operation remains in the database. Callers must re-read/reconcile before
+retrying after that error.
+
 The last-deck setting remains the same JSON numeric value Core stores. When a
 later card-generation path reads it, the adapter parses the stored decimal
 directly into `Int64` rather than decoding it through a JavaScript number. A

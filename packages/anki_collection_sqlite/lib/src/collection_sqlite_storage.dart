@@ -720,8 +720,11 @@ INSERT OR REPLACE INTO cards (
   ///
   /// The caller selects the deck (including resolving any host-side default
   /// deck preference). The note, registered tags, cards, config updates, and
-  /// collection modification time are committed together. On failure the
-  /// savepoint is rolled back and [note] retains its original ID.
+  /// collection modification time are committed together. Note, SQL, card,
+  /// and config failures before savepoint release roll back and leave [note]
+  /// with its original ID. The driver's async flush occurs after SQLite
+  /// commits; if that flush fails, this future reports a post-commit error and
+  /// the caller must re-read the collection before retrying.
   Future<AddNoteResult> addNoteToDeck(Note note, Int64 deckId) async {
     if (_closing || _connectionClosed || _closed) {
       throw StateError('collection storage is closing');

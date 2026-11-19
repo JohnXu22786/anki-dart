@@ -4658,6 +4658,10 @@ generic undo stack remains outside this package operation.
 The last-deck config value remains a JSON number on disk, and later card
 generation parses its raw decimal digits directly as `Int64` so IDs above
 JavaScript's safe integer limit survive a config round trip.
+Operation failures before savepoint release roll back all SQL state. The
+driver's async flush follows SQLite commit; a flush failure is reported as a
+post-commit error with the full operation still present, so callers should
+re-read the collection before retrying.
 
 The selected deck is supplied by the host, which owns any default-deck
 preference. A missing or filtered selected deck falls back to the normal

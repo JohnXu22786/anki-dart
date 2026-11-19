@@ -17,15 +17,18 @@ import 'card_browser_preview.dart';
 import 'browser_row_values.dart';
 import 'collection_runtime.dart';
 import 'l10n/app_localizations_en.dart';
+import 'note_editor_screen.dart';
 
 /// Collection-backed Card Browser for the active profile.
 ///
 /// It implements source-compatible card/note search and SQL sorting for the
-/// supported query subset. Rendering, editing, preview, and bulk operations
-/// remain separate ports until their Core behavior is connected.
+/// supported query subset. Existing-note field editing uses the same
+/// collection adapter as browser reads; preview and bulk operations remain
+/// separate ports.
 final class CollectionCardBrowserController
     implements
         CardBrowserController,
+        CardBrowserNoteEditorController,
         CardBrowserModeController,
         CardBrowserSearchRequestController,
         CardBrowserSearchHistoryController,
@@ -778,6 +781,80 @@ final class CollectionCardBrowserController
   @override
   Future<void> edit(BrowserRowId rowId) =>
       Future.error(UnsupportedError('The Note Editor is not implemented.'));
+
+  @override
+  Future<Int64> resolveNoteIdForRow(BrowserRowId rowId) async {
+    final storage = _storage;
+    final resolvedRowId = Int64.parseInt(rowId.bigValue.toString());
+    final noteId = switch (_mode) {
+      BrowserColumnMode.notes => resolvedRowId,
+      BrowserColumnMode.cards => (await storage.getCard(resolvedRowId))?.noteId,
+    };
+    if (noteId == null || await storage.getNote(noteId) == null) {
+      throw StateError('The selected browser row no longer has a note.');
+    }
+
+    final noteCardIds = _mode == BrowserColumnMode.notes
+        ? (await storage.allCardIdsOfNoteInTemplateOrder(noteId))
+              .map((id) => BigInt.parse(id.toString()))
+              .toList(growable: false)
+        : const <BigInt>[];
+    final cardIds = browserEditorCardIdsBigInt(
+      resolvedRowCardId: _mode == BrowserColumnMode.cards
+          ? BigInt.parse(resolvedRowId.toString())
+          : (noteCardIds.isEmpty ? null : noteCardIds.first),
+      mode: _mode,
+      isInMultiSelectMode: _selectedRows.isNotEmpty,
+      noteCardIds: noteCardIds,
+      selectedCardIds: _selectedRows
+          .map((row) => row.bigValue)
+          .toList(growable: false),
+    );
+    if (cardIds.isEmpty) {
+      throw StateError('The selected note has no editable cards.');
+    }
+    final selectedCard = await storage.getCard(
+      Int64.parseInt(cardIds.first.toString()),
+    );
+    if (selectedCard == null || selectedCard.noteId != noteId) {
+      throw StateError('The selected browser row no longer has a note.');
+    }
+    return noteId;
+  }
+
+  @override
+  Future<NoteEditorContent> loadNote(Int64 noteId) async {
+    final storage = _storage;
+    final note = await storage.getNote(noteId);
+    if (note == null) throw StateError('Note does not exist.');
+    final notetypes = await storage.getNotetypesByIds([
+      models.NotetypeId(note.notetypeId),
+    ]);
+    final notetype = notetypes.where(
+      (type) => type.id == models.NotetypeId(note.notetypeId),
+    );
+    if (notetype.isEmpty) throw StateError('Note type does not exist.');
+    final fields = notetype.single.fields;
+    return NoteEditorContent(
+      labels: fields.map((field) => field.name).toList(growable: false),
+      values: note.fields,
+    );
+  }
+
+  @override
+  Future<void> saveFields(Int64 noteId, List<String> fields) async {
+    final storage = _storage;
+    final note = await storage.getNote(noteId);
+    if (note == null) throw StateError('Note does not exist.');
+    final noteFields = note.fieldsMut();
+    noteFields
+      ..clear()
+      ..addAll(fields);
+    await storage.updateExistingNote(note);
+  }
+
+  @override
+  Future<CardBrowserSnapshot> refresh() => _searchRequest(_activeRequest);
 
   @override
   Future<void> performBulkAction(

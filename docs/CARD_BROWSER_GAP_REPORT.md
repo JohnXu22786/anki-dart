@@ -4,7 +4,7 @@ The Flutter Card Browser is shared across Android, iOS, Web, Windows, macOS,
 and Linux. Collection queries and preference behavior live in shared Dart;
 platform adapters provide storage and presentation.
 
-## Implemented through Unit 31
+## Implemented through Unit 33
 
 - Cards/Notes mode loads and saves through the active collection's
   `browserTableShowNotesMode` config. Cards remains the default.
@@ -23,8 +23,8 @@ platform adapters provide storage and presentation.
 - Question and Answer columns render the selected card using Core-compatible
   templates, field replacement, and text-line conversion.
 - Saved searches work in either mode. Selection and navigation preserve the
-  current row identity; unsupported Note Editor, preview, and bulk operations
-  continue to report their existing unavailable errors.
+  current row identity. Unit 33 adds existing-note field editing; preview and
+  bulk operations remain unavailable.
 
 ## Unit 23 — Core row values and metadata
 
@@ -144,13 +144,37 @@ platform adapters provide storage and presentation.
 - The source mapping is pinned in `apps/anki/ANKIDROID_SOURCE.sha256`; behavior
   and license boundaries are recorded in `ANKIDROID_UPSTREAM.md`.
 
+## Unit 33 — existing-note field editing
+
+- Card Browser edit opens one shared Flutter screen on all six targets. Cards
+  mode resolves the selected Card to its Note; Notes mode resolves the Note's
+  Cards in template order. Browser IDs remain exact signed 64-bit values, and
+  a missing row, note, collection, or matching note type shows a localized
+  recoverable load error.
+- The editor displays current values under notetype field names in stored
+  order. Save reloads the existing Note and its exact matching Notetype,
+  replaces only the fields, applies Core's `Note.prepare_for_update()` field
+  count and normalization behavior using the collection's normalization
+  setting, then persists through `CollectionSqliteStorage.updateExistingNote()`.
+  Failed saves retain the editor and values for correction or retry. Returning
+  to the browser refreshes its current search while retaining its selection.
+- The collection operation runs in a SQLite savepoint, sets local note
+  modification metadata, generates newly required normal/Cloze cards, and
+  records bounded in-memory undo/redo for note updates. It does not implement
+  Core's generic collection undo journal or expose a collection-level undo
+  action yet. New-note creation, tag editing, media, image occlusion, add-ons,
+  note-type and template editing, preview, bulk actions, and Android-only
+  editor affordances remain follow-up work.
+- Source pins, hashes, attribution, and adaptation boundaries are recorded in
+  `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
+
 ## Remaining migration work
 
 - Exercise black/e-ink palette and focused-pane rendering in a host once those
   theme modes and pane-current state are exposed by the Flutter app.
-- Note Editor navigation and bulk actions remain unimplemented. Preview now
-  covers collection-backed static question/answer content; reviewer actions,
-  audio playback, and full JavaScript/media rendering parity remain open.
+- Preview now covers collection-backed static question/answer content;
+  reviewer actions, audio playback, full JavaScript/media rendering parity,
+  and bulk actions remain open.
 - Migrate and track unresolved upstream Card Browser TODO coverage.
 - Verify each platform's storage and presentation adapters in its native
   runtime; the shared Flutter implementation has no platform-specific browser

@@ -6,12 +6,14 @@
 import 'dart:collection';
 
 import 'package:anki_dart/anki_dart.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 
 import 'card_browser_row_colors.dart';
 import 'card_browser_preview.dart';
 import 'card_browser_preview_screen.dart';
 import 'l10n/app_localizations.dart';
+import 'note_editor_screen.dart';
 
 export 'card_browser_row_colors.dart';
 
@@ -96,6 +98,13 @@ abstract interface class CardBrowserController {
     CardBrowserBulkAction action,
     List<BrowserRowId> selectedRows,
   );
+}
+
+/// Collection-backed editor and refresh capability used by the shared route.
+abstract interface class CardBrowserNoteEditorController
+    implements NoteEditorPort {
+  Future<Int64> resolveNoteIdForRow(BrowserRowId rowId);
+  Future<CardBrowserSnapshot> refresh();
 }
 
 /// Optional mode capability for controllers backed by a collection browser.
@@ -922,7 +931,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     if (_isMultiSelect) {
       _toggleRow(rowId);
     } else {
-      _runAction(() => widget.controller.edit(rowId));
+      _editRow(rowId);
     }
   }
 
@@ -946,7 +955,29 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
 
   void _editSelected() {
     final id = _selectedRows.firstOrNull;
-    if (id != null) _runAction(() => widget.controller.edit(id));
+    if (id != null) _editRow(id);
+  }
+
+  Future<void> _editRow(BrowserRowId rowId) async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserNoteEditorController) {
+      await _runAction(() => controller.edit(rowId));
+      return;
+    }
+    final editorController = controller as CardBrowserNoteEditorController;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => NoteEditorScreen(
+          resolveNoteId: () => editorController.resolveNoteIdForRow(rowId),
+          port: editorController,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    await _runAction(() async {
+      final snapshot = await editorController.refresh();
+      if (mounted) setState(() => _snapshot = snapshot);
+    });
   }
 
   Future<void> _setMode(BrowserColumnMode mode) async {

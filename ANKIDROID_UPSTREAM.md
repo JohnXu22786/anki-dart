@@ -4723,3 +4723,43 @@ cases live in
 `core_random_position_test.dart`. Dart changes remain AGPL-3.0-or-later; no
 upstream source file or UI resource is copied, and root `COPYING` remains
 unchanged.
+
+## Existing-note field editor (Unit 33)
+
+The shared `NoteEditorScreen` loads one existing note through
+`CollectionCardBrowserController`, displays its current fields in the exact
+stored notetype field order, and writes field-only edits through
+`CollectionSqliteStorage.updateExistingNote()` so Core prepares the note and
+generates cards within the shared collection operation. Browser Cards mode resolves its row's
+Card to a Note; Notes mode resolves the Note's Card IDs in template order.
+Selected Cards mode IDs retain source ordering and use BigInt-safe Dart
+identities through lookup and persistence. Missing collection data is reported
+in the shared localized editor and remains retryable.
+
+AnkiDroid's `NoteEditorFragment.kt` update path reloads the edited note, applies
+field values, and calls Core `update_note()`. The current Flutter slice uses
+the shared Dart `Note.prepareForUpdate()` implementation for Core's field
+count, cleanup, NFC normalization, checksum, and sort-field derivation, and
+uses the collection's `normalizeNoteText` setting (defaulting to enabled).
+`CollectionSqliteStorage.updateExistingNote()` applies a SQLite savepoint,
+canonifies tags, marks the note locally modified (`usn = -1` with the update
+timestamp), generates missing normal/Cloze cards using the collection's Core-
+matched generation rules, and updates `col.mod`. It records up to 30
+note-update-only undo/redo steps in memory and coalesces eligible same-note
+edits within Core's 60-second window. This is not Core's generic collection
+undo journal: unrelated collection operations and a shared application undo
+surface remain follow-up work. AnkiDroid's `noteFieldsCheck()` is only called
+on its new-note branch, so the existing-note update does not add
+empty-first-field, duplicate, or cloze checks.
+
+The mapping uses AnkiDroid 2.25.3
+`AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt`,
+`AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorDestination.kt`,
+`AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt`,
+and `AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt` at
+`d9bf072f814a0c37d30a694192593b31ff2df875`; Core behavior maps to
+`rslib/src/notes/mod.rs` and `rslib/src/config/bool.rs` at
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. Exact input hashes are recorded in
+`apps/anki/ANKIDROID_SOURCE.sha256`. The shared Flutter adaptation is
+AGPL-3.0-or-later; no upstream implementation or Android resource is copied,
+and root `COPYING` remains unchanged.

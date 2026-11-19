@@ -87,4 +87,19 @@ void main() {
       expect(result, [203]);
     });
   });
+
+  test('BigInt Card Browser IDs remain exact through selection mapping', () {
+    final rowId = BigInt.parse('9007199254740993');
+    final selected = [BigInt.parse('9007199254740995'), rowId];
+    expect(
+      browserEditorCardIdsBigInt(
+        resolvedRowCardId: rowId,
+        mode: BrowserColumnMode.cards,
+        isInMultiSelectMode: true,
+        noteCardIds: const [],
+        selectedCardIds: selected,
+      ),
+      selected,
+    );
+  });
 }

@@ -631,4 +631,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserSortDateDescending => 'Newest first';
+
+  @override
+  String get noteEditorTitle => 'Edit note';
+
+  @override
+  String get noteEditorLoadError =>
+      'This note could not be loaded from the active collection.';
+
+  @override
+  String get noteEditorSaveError => 'Changes could not be saved. Try again.';
+
+  @override
+  String get noteEditorSaving => 'Saving…';
+
+  @override
+  String get noteEditorSaved => 'Saved';
 }

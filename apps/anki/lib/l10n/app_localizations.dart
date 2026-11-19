@@ -1254,6 +1254,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Newest first'**
   String get browserSortDateDescending;
+
+  /// No description provided for @noteEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note'**
+  String get noteEditorTitle;
+
+  /// No description provided for @noteEditorLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'This note could not be loaded from the active collection.'**
+  String get noteEditorLoadError;
+
+  /// No description provided for @noteEditorSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes could not be saved. Try again.'**
+  String get noteEditorSaveError;
+
+  /// No description provided for @noteEditorSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get noteEditorSaving;
+
+  /// No description provided for @noteEditorSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get noteEditorSaved;
 }
 
 class _AppLocalizationsDelegate

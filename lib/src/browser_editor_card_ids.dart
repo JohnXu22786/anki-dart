@@ -39,3 +39,18 @@ List<int> browserEditorCardIds({
   if (isInMultiSelectMode) return selectedCardIds;
   return [resolvedRowCardId];
 }
+
+/// BigInt-safe form used by collection-backed Card Browser integrations.
+List<BigInt> browserEditorCardIdsBigInt({
+  required BigInt? resolvedRowCardId,
+  required BrowserColumnMode mode,
+  required bool isInMultiSelectMode,
+  required List<BigInt> noteCardIds,
+  required List<BigInt> selectedCardIds,
+}) {
+  if (resolvedRowCardId == null) return const [];
+
+  if (mode == BrowserColumnMode.notes) return noteCardIds;
+  if (isInMultiSelectMode) return selectedCardIds;
+  return [resolvedRowCardId];
+}

@@ -8,7 +8,9 @@ import 'dart:io' as io;
 
 import 'package:anki_app/app_collection_callbacks.dart';
 import 'package:anki_app/collection_card_browser_controller.dart';
+import 'package:anki_app/deck_picker_repository.dart';
 import 'package:anki_app/collection_runtime.dart';
+import 'package:anki_app/deck_picker_screen.dart';
 import 'package:anki_app/l10n/app_localizations_en.dart';
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
@@ -57,6 +59,32 @@ void main() {
     SharedPreferencesAsyncPlatform.instance = null;
     await directory.delete(recursive: true);
   });
+
+  test(
+    'Deck Picker Add Card carries the exact selected 64-bit deck ID',
+    () async {
+      final storage = runtime.storage!;
+      final wideDeckId = Int64(9007199254740995);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: wideDeckId,
+          name: 'Deck Picker wide ID',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final repository = CollectionDeckPickerRepository(runtime);
+      final port = await repository.selectDeckAndCreateNewNotePort(
+        DeckPickerDeck(
+          id: 42,
+          exactId: wideDeckId,
+          name: 'Deck Picker wide ID',
+        ),
+      );
+
+      expect(storage.currentDeckId, wideDeckId);
+      expect((await port.loadNewNote()).deckId, wideDeckId);
+    },
+  );
 
   test(
     'resolves a wide card ID and saves normalized fields to its note',

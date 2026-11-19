@@ -4,15 +4,18 @@
  */
 
 import 'package:anki_dart/deck_picker.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 
 import 'l10n/app_localizations.dart';
+import 'note_editor_screen.dart';
 
 /// Deck tree and due counts projected by the collection host for display.
 final class DeckPickerDeck {
   const DeckPickerDeck({
     required this.id,
     required this.name,
+    this.exactId,
     this.newCount = 0,
     this.learningCount = 0,
     this.reviewCount = 0,
@@ -22,6 +25,9 @@ final class DeckPickerDeck {
     this.hasBuried = false,
   });
   final int id;
+
+  /// Exact collection deck ID for backends that preserve 64-bit IDs on Web.
+  final Int64? exactId;
   final String name;
   final int newCount, learningCount, reviewCount;
   final List<DeckPickerDeck> children;
@@ -98,6 +104,11 @@ abstract interface class DeckPickerRepository {
   Future<void> createDeck(String name);
   Future<void> createSharedDeck();
   Future<void> buildFilteredDeck(FilteredDeckRequest request);
+}
+
+/// Optional source route for opening the shared new-note editor from a deck.
+abstract interface class DeckPickerNewNotePortProvider {
+  Future<NewNoteEditorPort> selectDeckAndCreateNewNotePort(DeckPickerDeck deck);
 }
 
 /// Explicit placeholder while a platform/backend collection service is not connected.
@@ -548,9 +559,38 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       if (action == DeckPickerAction.browseCards &&
           widget.onBrowseCards != null) {
         await _browseCards(deck.id);
+      } else if (action == DeckPickerAction.addCard &&
+          widget.repository is DeckPickerNewNotePortProvider) {
+        await _addNote(deck);
       } else {
         await _invoke(() => widget.repository.performAction(action, deck.id));
       }
+    }
+  }
+
+  Future<void> _addNote(DeckPickerDeck deck) async {
+    final repository = widget.repository;
+    if (repository is! DeckPickerNewNotePortProvider) return;
+    final notePortProvider = repository as DeckPickerNewNotePortProvider;
+    try {
+      // AnkiDroid's DeckPickerViewModel.addNote() calls decks.select() for
+      // the context-menu deck before navigating to NoteEditorDestination.AddNote.
+      final newNotePort = await notePortProvider.selectDeckAndCreateNewNotePort(
+        deck,
+      );
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => NoteEditorScreen.newNote(newNotePort: newNotePort),
+        ),
+      );
+      if (!mounted) return;
+      _reload();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
     }
   }
 

@@ -367,6 +367,8 @@ void main() {
       expect(await storage.queryInt('SELECT count(*) FROM cards'), 2);
       expect(await storage.queryInt('SELECT count(*) FROM tags'), 1);
       expect(await storage.queryInt('SELECT mod FROM col'), 9007199254740993);
+
+      await expectLater(storage.flushPendingWrites(), completes);
     },
   );
 }

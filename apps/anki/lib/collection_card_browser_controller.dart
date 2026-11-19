@@ -977,7 +977,9 @@ final class CollectionCardBrowserController
     }
     if (note.id != Int64.ZERO) {
       // addNoteToDeck commits before its async driver flush. If that flush
-      // failed, reconcile the already-committed note instead of adding twice.
+      // failed, retry persistence of the already-committed note instead of
+      // adding twice.
+      await storage.flushPendingWrites();
       return (await storage.allCardIdsOfNoteInTemplateOrder(note.id)).length;
     }
     note.fieldsMut()

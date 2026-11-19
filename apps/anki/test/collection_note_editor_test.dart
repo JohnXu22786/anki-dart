@@ -25,16 +25,25 @@ void main() {
   late io.Directory directory;
   late CollectionRuntime runtime;
   late SharedPreferencesAsync preferences;
+  var flushFails = false;
+  var flushCalls = 0;
 
   setUp(() async {
+    flushFails = false;
+    flushCalls = 0;
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
     preferences = SharedPreferencesAsync();
     directory = await io.Directory.systemTemp.createTemp('anki-note-editor-');
     runtime = CollectionRuntime(
       locationForProfile: (_) async => '${directory.path}/collection.anki2',
-      createDriver: () async =>
-          CollectionSqliteDriver(openDatabase: sqlite.sqlite3.open),
+      createDriver: () async => CollectionSqliteDriver(
+        openDatabase: sqlite.sqlite3.open,
+        flush: () {
+          flushCalls++;
+          if (flushFails) throw StateError('test flush failed');
+        },
+      ),
     );
     await runtime.openOrCreate(
       ProfileId.defaultId,
@@ -294,6 +303,55 @@ void main() {
         preferences: preferences,
       ).loadNewNote();
       expect(staleMidDefaults.notetypeId, cloze.id.value);
+    },
+  );
+
+  test(
+    'new-note retry flushes committed writes without adding a duplicate',
+    () async {
+      final storage = runtime.storage!;
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final draft = await controller.loadNewNote();
+      const fields = ['flush retry unique front', 'back'];
+      final tags = ['FlushRetry'];
+      flushFails = true;
+      final initialFlushCalls = flushCalls;
+
+      await expectLater(
+        controller.saveNewNote(draft: draft, fields: fields, tags: tags),
+        throwsStateError,
+      );
+
+      final committedId = draft.note!.id;
+      expect(committedId, isNot(Int64.ZERO));
+      final cardsBeforeRetry = await storage.allCardIdsOfNoteInTemplateOrder(
+        committedId,
+      );
+      expect(cardsBeforeRetry, isNotEmpty);
+      final noteCountBeforeRetry = await storage.queryInt(
+        'SELECT count(*) FROM notes',
+      );
+      expect(noteCountBeforeRetry, 1);
+
+      flushFails = false;
+      final retryFlushCalls = flushCalls;
+      final count = await controller.saveNewNote(
+        draft: draft,
+        fields: fields,
+        tags: tags,
+      );
+
+      expect(count, cardsBeforeRetry.length);
+      expect(flushCalls, greaterThan(retryFlushCalls));
+      expect(flushCalls, greaterThan(initialFlushCalls));
+      expect(await storage.queryInt('SELECT count(*) FROM notes'), 1);
+      expect(
+        await storage.allCardIdsOfNoteInTemplateOrder(committedId),
+        cardsBeforeRetry,
+      );
     },
   );
 

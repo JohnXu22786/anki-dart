@@ -716,6 +716,20 @@ INSERT OR REPLACE INTO cards (
     await _flushIfAutocommit();
   }
 
+  /// Retries persistence of writes already committed to SQLite.
+  ///
+  /// This is useful after an operation reports a driver flush failure after
+  /// its SQLite transaction has committed. It does not run a transaction or
+  /// change collection data. A retry is only valid while storage is open and
+  /// no SQLite transaction is active.
+  Future<void> flushPendingWrites() async {
+    if (_closing || _connectionClosed || _closed) {
+      throw StateError('collection storage is closing');
+    }
+    if (!_database.autocommit) throw StateError('active transaction');
+    await _flush();
+  }
+
   /// Adds a new note to [deckId], generating the cards Core requires.
   ///
   /// The caller selects the deck (including resolving any host-side default

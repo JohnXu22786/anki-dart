@@ -573,16 +573,11 @@ INSERT OR REPLACE INTO cards (
         clozes.where((ordinal) => !existingOrds.contains(ordinal)),
       );
     } else {
-      final nonempty = note.nonEmptyFields(notetype.fields);
-      if (note.tags.isNotEmpty) nonempty.add('Tags');
       for (var ordinal = 0; ordinal < notetype.templates.length; ordinal++) {
         if (existingOrds.contains(ordinal)) {
           continue;
         }
-        if (templateRendersWithFields(
-          notetype.templates[ordinal].config.qFormat,
-          nonempty,
-        )) {
+        if (_normalTemplateRendersForNote(note, notetype, ordinal)) {
           ordinals.add(ordinal);
         }
       }
@@ -590,6 +585,20 @@ INSERT OR REPLACE INTO cards (
     if (existing.isEmpty && ordinals.isEmpty) return [0];
     ordinals.sort();
     return ordinals;
+  }
+
+  bool _normalTemplateRendersForNote(
+    Note note,
+    Notetype notetype,
+    int ordinal,
+  ) {
+    if (ordinal < 0 || ordinal >= notetype.templates.length) return false;
+    final nonempty = note.nonEmptyFields(notetype.fields);
+    if (note.tags.isNotEmpty) nonempty.add('Tags');
+    return templateRendersWithFields(
+      notetype.templates[ordinal].config.qFormat,
+      nonempty,
+    );
   }
 
   Int64 _deckForGeneratedCard(List<Card> existing, Int64 notetypeId) {
@@ -753,9 +762,12 @@ INSERT OR REPLACE INTO cards (
         );
         nextPositionChanged = true;
         for (final ordinal in ordinals) {
-          final templateTargetDeck = notetype.isCloze
-              ? Int64.ZERO
-              : notetype.templates[ordinal].config.targetDeckId;
+          final hasTemplateTarget =
+              !notetype.isCloze &&
+              _normalTemplateRendersForNote(note, notetype, ordinal);
+          final templateTargetDeck = hasTemplateTarget
+              ? notetype.templates[ordinal].config.targetDeckId
+              : Int64.ZERO;
           final targetDeck = templateTargetDeck == Int64.ZERO
               ? deckId
               : templateTargetDeck;

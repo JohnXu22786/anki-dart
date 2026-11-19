@@ -202,6 +202,33 @@ void main() {
   });
 
   test(
+    'fallback card uses selected deck instead of template target deck',
+    () async {
+      database.execute(
+        'UPDATE templates SET config = ? WHERE ntid = 9 AND ord = 0',
+        [
+          proto.Notetype_Template_Config(
+            qFormat: '{{Front}}',
+            aFormat: '{{Back}}',
+            targetDeckId: Int64(9007199254740995),
+          ).writeToBuffer(),
+        ],
+      );
+
+      final result = await storage.addNoteToDeck(
+        _newNote(fields: ['', '']),
+        Int64.ONE,
+      );
+
+      expect(result.generatedCardCount, 1);
+      expect(
+        (await storage.allCardsOfNote(result.note.id)).single.deckId,
+        Int64.ONE,
+      );
+    },
+  );
+
+  test(
     'honors disabled normalization and ignores a missing selected deck',
     () async {
       await storage.writeCollectionConfig('normalize_note_text', false);

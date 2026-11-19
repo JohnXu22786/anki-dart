@@ -507,7 +507,7 @@ void main() {
   );
 
   test(
-    'Notes mode deletes and restores a selected note with no cards',
+    'Notes mode delete follows AnkiDroid card-ID mapping for cardless notes',
     () async {
       final controller = CollectionCardBrowserController(
         runtime,
@@ -531,9 +531,6 @@ void main() {
       await controller.performBulkAction(CardBrowserBulkAction.delete, [
         BrowserRowId.bigInt(BigInt.parse(orphan.id.toString())),
       ]);
-      expect(await storage.getNote(orphan.id), isNull);
-
-      await controller.undoLastCollectionOperation();
       expect((await storage.getNote(orphan.id))!.fields, [
         'Orphaned question',
         'Orphaned answer',

@@ -36,6 +36,8 @@ import 'add_note.dart';
 part 'legacy_collection_migrations.dart';
 
 const _preparedStatementCacheCapacity = 50;
+final _collectionUndoOperationZoneKey = Object();
+final _externalCollectionMutationZoneKey = Object();
 
 /// Opens a SQLite database for the caller-selected platform and location.
 ///
@@ -96,35 +98,25 @@ final class CollectionSqliteStorage
   int _noteUpdateHistoryGeneration = 0;
   final List<_CollectionUndoStep> _collectionUndoSteps = [];
   final List<_CollectionUndoStep> _collectionRedoSteps = [];
+  int _collectionUndoExternalMutationGeneration = 0;
   bool _preservingCollectionUndoHistory = false;
   int _collectionUndoGeneration = 0;
+  Completer<void>? _collectionUndoOperationDone;
   late final DeckStorage _deckStorage = DeckStorage(
-    _DeckStorageDatabase(
-      _database,
-      _invalidateOperationHistoryAfterSubstoreWrite,
-    ),
+    _DeckStorageDatabase(this, _invalidateOperationHistoryAfterSubstoreWrite),
   );
   late final DeckConfigStorage _deckConfigStorage = DeckConfigStorage(
-    _DeckStorageDatabase(
-      _database,
-      _invalidateOperationHistoryAfterSubstoreWrite,
-    ),
+    _DeckStorageDatabase(this, _invalidateOperationHistoryAfterSubstoreWrite),
   );
   late final TagStorage _tagStorage = TagStorage(
-    _DeckStorageDatabase(
-      _database,
-      _invalidateOperationHistoryAfterSubstoreWrite,
-    ),
+    _DeckStorageDatabase(this, _invalidateOperationHistoryAfterSubstoreWrite),
   );
   late final NoteStorage _noteStorage = NoteStorage(
     _CollectionNoteStorageDatabase(this),
     nowMillis: _nowMillis,
   );
   late final RevlogStorage _revlogStorage = RevlogStorage(
-    _DeckStorageDatabase(
-      _database,
-      _invalidateOperationHistoryAfterSubstoreWrite,
-    ),
+    _DeckStorageDatabase(this, _invalidateOperationHistoryAfterSubstoreWrite),
   );
   bool _connectionClosed = false;
   bool _closed = false;
@@ -210,7 +202,7 @@ final class CollectionSqliteStorage
 
   /// Updates a note after its derived fields have been prepared.
   Future<void> updateNote(Note note) async {
-    _noteStorage.updateNote(note);
+    await _withExternalCollectionMutation(() => _noteStorage.updateNote(note));
     await _flushIfAutocommit();
   }
 
@@ -225,23 +217,30 @@ final class CollectionSqliteStorage
   /// collection undo/redo stack.
   Future<ExistingNoteUpdateResult> updateExistingNote(Note edited) =>
       _serializeNoteUpdate(() async {
+        late ExistingNoteUpdateResult result;
+        late int operationTimeMillis;
+        late int historyGenerationAtStart;
+        final operationDone = await _acquireCollectionUndoOperation();
         _noteUpdateRedoSteps.clear();
         _noteUpdateUndoCounter++;
-        final historyGenerationAtStart = _noteUpdateHistoryGeneration;
-        final operationTimeMillis =
-            _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
-        late final ExistingNoteUpdateResult result;
+        historyGenerationAtStart = _noteUpdateHistoryGeneration;
         _preservingCollectionUndoHistory = true;
         try {
-          result = await _updateExistingNote(
-            edited,
-            operationTimeMillis: operationTimeMillis,
+          operationTimeMillis =
+              _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
+          result = await runZoned(
+            () => _updateExistingNote(
+              edited,
+              operationTimeMillis: operationTimeMillis,
+            ),
+            zoneValues: {_collectionUndoOperationZoneKey: this},
           );
         } catch (_) {
           discardExistingNoteUpdateUndoHistory();
           rethrow;
         } finally {
           _preservingCollectionUndoHistory = false;
+          _releaseCollectionUndoOperation(operationDone);
         }
         if (result.changed) {
           _collectionUndoSteps.clear();
@@ -301,60 +300,104 @@ final class CollectionSqliteStorage
   /// Invalidates the scoped history after direct substore writes or a caller
   /// transaction that changes collection state outside this adapter.
   void discardExistingNoteUpdateUndoHistory() {
+    if (identical(Zone.current[_collectionUndoOperationZoneKey], this)) return;
+    _clearExistingNoteUpdateUndoHistory();
+    if (_preservingCollectionUndoHistory) {
+      _collectionUndoExternalMutationGeneration++;
+    }
+    _collectionUndoSteps.clear();
+    _collectionRedoSteps.clear();
+    _collectionUndoGeneration++;
+  }
+
+  void _clearExistingNoteUpdateUndoHistory() {
     _noteUpdateHistoryGeneration++;
     _noteUpdateUndoSteps.clear();
     _noteUpdateRedoSteps.clear();
-    if (!_preservingCollectionUndoHistory) {
-      _collectionUndoSteps.clear();
-      _collectionRedoSteps.clear();
-    }
   }
 
   void _invalidateOperationHistoryAfterSubstoreWrite() {
-    if (!_preservingCollectionUndoHistory) {
-      discardExistingNoteUpdateUndoHistory();
-    }
+    discardExistingNoteUpdateUndoHistory();
   }
 
   /// Reverts the latest successful [updateExistingNote] operation.
-  Future<void> undoLastExistingNoteUpdate() => _serializeNoteUpdate(() async {
-    if (_noteUpdateUndoSteps.isEmpty) {
-      throw StateError('no existing-note update to undo');
-    }
-    _noteUpdateUndoCounter++;
-    final step = _noteUpdateUndoSteps.removeLast();
-    _preservingCollectionUndoHistory = true;
-    try {
-      _applyExistingNoteUpdateUndoStep(step, undo: true);
-      _noteUpdateRedoSteps.add(step);
-      await _flushIfAutocommit(preserveNoteUpdateHistory: true);
-    } catch (_) {
-      discardExistingNoteUpdateUndoHistory();
-      rethrow;
-    } finally {
-      _preservingCollectionUndoHistory = false;
-    }
-  });
+  Future<void> undoLastExistingNoteUpdate() => _serializeNoteUpdate(
+    () => _withCollectionUndoOperation(() async {
+      if (_noteUpdateUndoSteps.isEmpty) {
+        throw StateError('no existing-note update to undo');
+      }
+      _noteUpdateUndoCounter++;
+      final step = _noteUpdateUndoSteps.removeLast();
+      _preservingCollectionUndoHistory = true;
+      try {
+        runZoned(
+          () => _applyExistingNoteUpdateUndoStep(step, undo: true),
+          zoneValues: {_collectionUndoOperationZoneKey: this},
+        );
+        _noteUpdateRedoSteps.add(step);
+        await _flushIfAutocommit(preserveNoteUpdateHistory: true);
+      } catch (_) {
+        discardExistingNoteUpdateUndoHistory();
+        rethrow;
+      } finally {
+        _preservingCollectionUndoHistory = false;
+      }
+    }),
+  );
 
   /// Reapplies the latest undone [updateExistingNote] operation.
-  Future<void> redoLastExistingNoteUpdate() => _serializeNoteUpdate(() async {
-    if (_noteUpdateRedoSteps.isEmpty) {
-      throw StateError('no existing-note update to redo');
-    }
-    _noteUpdateUndoCounter++;
-    final step = _noteUpdateRedoSteps.removeLast();
-    _preservingCollectionUndoHistory = true;
+  Future<void> redoLastExistingNoteUpdate() => _serializeNoteUpdate(
+    () => _withCollectionUndoOperation(() async {
+      if (_noteUpdateRedoSteps.isEmpty) {
+        throw StateError('no existing-note update to redo');
+      }
+      _noteUpdateUndoCounter++;
+      final step = _noteUpdateRedoSteps.removeLast();
+      _preservingCollectionUndoHistory = true;
+      try {
+        runZoned(
+          () => _applyExistingNoteUpdateUndoStep(step, undo: false),
+          zoneValues: {_collectionUndoOperationZoneKey: this},
+        );
+        _noteUpdateUndoSteps.add(step);
+        await _flushIfAutocommit(preserveNoteUpdateHistory: true);
+      } catch (_) {
+        discardExistingNoteUpdateUndoHistory();
+        rethrow;
+      } finally {
+        _preservingCollectionUndoHistory = false;
+      }
+    }),
+  );
+
+  Future<T> _withCollectionUndoOperation<T>(
+    Future<T> Function() operation,
+  ) async {
+    final operationDone = await _acquireCollectionUndoOperation();
     try {
-      _applyExistingNoteUpdateUndoStep(step, undo: false);
-      _noteUpdateUndoSteps.add(step);
-      await _flushIfAutocommit(preserveNoteUpdateHistory: true);
-    } catch (_) {
-      discardExistingNoteUpdateUndoHistory();
-      rethrow;
+      return await operation();
     } finally {
-      _preservingCollectionUndoHistory = false;
+      _releaseCollectionUndoOperation(operationDone);
     }
-  });
+  }
+
+  Future<T> _withExternalCollectionMutation<T>(
+    FutureOr<T> Function() mutation,
+  ) async {
+    if (identical(Zone.current[_collectionUndoOperationZoneKey], this) ||
+        identical(Zone.current[_externalCollectionMutationZoneKey], this)) {
+      return await mutation();
+    }
+    final operationDone = await _acquireCollectionUndoOperation();
+    try {
+      return await runZoned(
+        () async => await mutation(),
+        zoneValues: {_externalCollectionMutationZoneKey: this},
+      );
+    } finally {
+      _releaseCollectionUndoOperation(operationDone);
+    }
+  }
 
   Future<T> _serializeNoteUpdate<T>(Future<T> Function() operation) {
     final result = _existingNoteUpdateQueue.then((_) => operation());
@@ -752,7 +795,7 @@ INSERT OR REPLACE INTO cards (
 
   /// Inserts a new note, assigning its generated SQLite row ID to [note].
   Future<void> addNote(Note note) async {
-    _noteStorage.addNote(note);
+    await _withExternalCollectionMutation(() => _noteStorage.addNote(note));
     await _flushIfAutocommit();
   }
 
@@ -780,126 +823,135 @@ INSERT OR REPLACE INTO cards (
   /// commits; if that flush fails, this future reports a post-commit error and
   /// the caller must re-read the collection before retrying.
   Future<AddNoteResult> addNoteToDeck(Note note, Int64 deckId) async {
-    if (_closing || _connectionClosed || _closed) {
-      throw StateError('collection storage is closing');
-    }
-    if (note.id != Int64.ZERO) {
-      throw StateError('note ID must be zero before it can be added');
-    }
-    final notetypes = await getNotetypesByIds([NotetypeId(note.notetypeId)]);
-    if (notetypes.isEmpty) {
-      throw StateError('missing note type: ${note.notetypeId}');
-    }
-    // Another call may have saved this same mutable Note while the lookup was
-    // pending.
-    if (note.id != Int64.ZERO) {
-      throw StateError('note ID must be zero before it can be added');
-    }
-    final notetype = notetypes.single;
-    final operationMillis =
-        _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
-    final originalId = note.id;
-    _database.execute('SAVEPOINT core_add_note');
-    late final AddNoteResult result;
-    try {
-      final addedTags = _canonifyEditedTags(note);
-      note.prepareForUpdate(notetype, normalizeText: _normalizeNoteText);
-      note.markModified(-1, mtimeSecs: operationMillis ~/ 1000);
-      _noteStorage.addNote(note);
-
-      final lastDeckConfigKey = '_nt_${note.notetypeId}_lastDeck';
-      final lastNotetypeConfigKey = '_deck_${deckId}_lastNotetype';
-      var configChanged = false;
-      var nextPositionChanged = false;
-      var generatedCardCount = 0;
-      final ordinals = _requiredCardOrdinals(note, notetype, const []);
-      if (ordinals.isNotEmpty) {
-        final nextPosition = _nextGeneratedCardPosition(
-          modifiedAtMillis: operationMillis,
-        );
-        nextPositionChanged = true;
-        for (final ordinal in ordinals) {
-          final hasTemplateTarget =
-              !notetype.isCloze &&
-              _normalTemplateRendersForNote(note, notetype, ordinal);
-          final templateTargetDeck = hasTemplateTarget
-              ? notetype.templates[ordinal].config.targetDeckId
-              : Int64.ZERO;
-          final targetDeck = templateTargetDeck == Int64.ZERO
-              ? deckId
-              : templateTargetDeck;
-          final actualDeck = _deckForAdding(targetDeck);
-          final due = _dueForDeck(nextPosition, actualDeck);
-          final card = Card.newCard(
-            noteId: note.id,
-            templateIdx: ordinal,
-            deckId: actualDeck,
-            due: due,
-          );
-          _addCardSync(card);
-          generatedCardCount++;
-        }
+    final operationResult = await _withExternalCollectionMutation(() async {
+      if (_closing || _connectionClosed || _closed) {
+        throw StateError('collection storage is closing');
       }
-
-      final configMillis = operationMillis;
-      configChanged |= _setOperationConfig(
-        lastDeckConfigKey,
-        _jsonInt64(deckId),
-        configMillis,
-      );
-      configChanged |= _setOperationConfig(
-        lastNotetypeConfigKey,
-        _jsonInt64(note.notetypeId),
-        configMillis,
-      );
-      configChanged |= _setOperationConfig(
-        'curModel',
-        _jsonInt64(note.notetypeId),
-        configMillis,
-      );
-      _database.execute('UPDATE col SET mod = ?', [operationMillis]);
-      _database.execute('RELEASE core_add_note');
-      result = AddNoteResult(
-        note: note,
-        generatedCardCount: generatedCardCount,
-        changes: protoCollection.OpChanges(
-          note: true,
-          card: generatedCardCount > 0,
-          tag: addedTags.isNotEmpty,
-          config: configChanged || nextPositionChanged,
-          mtime: true,
-        ),
-      );
-    } catch (error, stackTrace) {
+      if (note.id != Int64.ZERO) {
+        throw StateError('note ID must be zero before it can be added');
+      }
+      final notetypes = await getNotetypesByIds([NotetypeId(note.notetypeId)]);
+      if (notetypes.isEmpty) {
+        throw StateError('missing note type: ${note.notetypeId}');
+      }
+      // Another call may have saved this same mutable Note while the lookup was
+      // pending.
+      if (note.id != Int64.ZERO) {
+        throw StateError('note ID must be zero before it can be added');
+      }
+      final notetype = notetypes.single;
+      final operationMillis =
+          _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
+      final originalId = note.id;
+      _database.execute('SAVEPOINT core_add_note');
+      late final AddNoteResult result;
       try {
-        _database.execute('ROLLBACK TO core_add_note');
+        final addedTags = _canonifyEditedTags(note);
+        note.prepareForUpdate(notetype, normalizeText: _normalizeNoteText);
+        note.markModified(-1, mtimeSecs: operationMillis ~/ 1000);
+        _noteStorage.addNote(note);
+
+        final lastDeckConfigKey = '_nt_${note.notetypeId}_lastDeck';
+        final lastNotetypeConfigKey = '_deck_${deckId}_lastNotetype';
+        var configChanged = false;
+        var nextPositionChanged = false;
+        var generatedCardCount = 0;
+        final ordinals = _requiredCardOrdinals(note, notetype, const []);
+        if (ordinals.isNotEmpty) {
+          final nextPosition = _nextGeneratedCardPosition(
+            modifiedAtMillis: operationMillis,
+          );
+          nextPositionChanged = true;
+          for (final ordinal in ordinals) {
+            final hasTemplateTarget =
+                !notetype.isCloze &&
+                _normalTemplateRendersForNote(note, notetype, ordinal);
+            final templateTargetDeck = hasTemplateTarget
+                ? notetype.templates[ordinal].config.targetDeckId
+                : Int64.ZERO;
+            final targetDeck = templateTargetDeck == Int64.ZERO
+                ? deckId
+                : templateTargetDeck;
+            final actualDeck = _deckForAdding(targetDeck);
+            final due = _dueForDeck(nextPosition, actualDeck);
+            final card = Card.newCard(
+              noteId: note.id,
+              templateIdx: ordinal,
+              deckId: actualDeck,
+              due: due,
+            );
+            _addCardSync(card);
+            generatedCardCount++;
+          }
+        }
+
+        final configMillis = operationMillis;
+        configChanged |= _setOperationConfig(
+          lastDeckConfigKey,
+          _jsonInt64(deckId),
+          configMillis,
+        );
+        configChanged |= _setOperationConfig(
+          lastNotetypeConfigKey,
+          _jsonInt64(note.notetypeId),
+          configMillis,
+        );
+        configChanged |= _setOperationConfig(
+          'curModel',
+          _jsonInt64(note.notetypeId),
+          configMillis,
+        );
+        _database.execute('UPDATE col SET mod = ?', [operationMillis]);
         _database.execute('RELEASE core_add_note');
-      } catch (_) {
-        // Preserve the original failure.
+        result = AddNoteResult(
+          note: note,
+          generatedCardCount: generatedCardCount,
+          changes: protoCollection.OpChanges(
+            note: true,
+            card: generatedCardCount > 0,
+            tag: addedTags.isNotEmpty,
+            config: configChanged || nextPositionChanged,
+            mtime: true,
+          ),
+        );
+      } catch (error, stackTrace) {
+        try {
+          _database.execute('ROLLBACK TO core_add_note');
+          _database.execute('RELEASE core_add_note');
+        } catch (_) {
+          // Preserve the original failure.
+        }
+        note.id = originalId;
+        Error.throwWithStackTrace(error, stackTrace);
       }
-      note.id = originalId;
-      Error.throwWithStackTrace(error, stackTrace);
-    }
+      return result;
+    });
     await _flushIfAutocommit();
-    return result;
+    return operationResult;
   }
 
   /// Inserts [note] only when its ID is unused.
   Future<bool> addNoteIfUnique(Note note) async {
-    final inserted = _noteStorage.addNoteIfUnique(note);
+    final inserted = await _withExternalCollectionMutation(
+      () => _noteStorage.addNoteIfUnique(note),
+    );
     await _flushIfAutocommit();
     return inserted;
   }
 
   /// Inserts or replaces the row with [note]'s ID.
   Future<void> addOrUpdateNote(Note note) async {
-    _noteStorage.addOrUpdateNote(note);
+    await _withExternalCollectionMutation(
+      () => _noteStorage.addOrUpdateNote(note),
+    );
     await _flushIfAutocommit();
   }
 
   /// Removes a note; a missing ID is a successful no-op.
   Future<void> removeNote(Int64 noteId) async {
-    _noteStorage.removeNote(noteId);
+    await _withExternalCollectionMutation(
+      () => _noteStorage.removeNote(noteId),
+    );
     await _flushIfAutocommit();
   }
 
@@ -911,50 +963,117 @@ INSERT OR REPLACE INTO cards (
 
   /// Commits one collection operation and retains its exact inverse in the
   /// same bounded, process-local history used by Card Browser bulk actions.
-  Future<void> runUndoableCollectionOperation({
+  Future<bool> runUndoableCollectionOperation({
+    Future<bool> Function()? prepare,
     required Future<void> Function() apply,
     required Future<void> Function() undo,
     required Future<void> Function() redo,
   }) async {
-    await beginExclusive();
-    _preservingCollectionUndoHistory = true;
+    final operationDone = await _acquireCollectionUndoOperation();
     try {
-      await apply();
-      _executeCached('commit');
-      // Bulk operations supersede the editor's narrower undo history while
-      // retaining the just-committed collection operation in the shared stack.
-      discardExistingNoteUpdateUndoHistory();
-    } catch (error, stackTrace) {
+      await beginExclusive();
+      final externalMutationGeneration =
+          _collectionUndoExternalMutationGeneration;
+      _preservingCollectionUndoHistory = true;
+      late final bool prepared;
       try {
-        await rollback();
-      } catch (_) {
-        // Keep the operation failure visible.
+        prepared = await runZoned(() async {
+          if (prepare != null && !await prepare()) {
+            _executeCached('rollback');
+            return false;
+          }
+          await apply();
+          _executeCached('commit');
+          // Bulk operations supersede the editor's narrower undo history
+          // while retaining the just-committed collection operation.
+          _clearExistingNoteUpdateUndoHistory();
+          return true;
+        }, zoneValues: {_collectionUndoOperationZoneKey: this});
+      } catch (error, stackTrace) {
+        try {
+          _executeCached('rollback');
+        } catch (_) {
+          // Keep the operation failure visible.
+        }
+        Error.throwWithStackTrace(error, stackTrace);
+      } finally {
+        _preservingCollectionUndoHistory = false;
       }
-      Error.throwWithStackTrace(error, stackTrace);
+      if (!prepared) return false;
+      if (externalMutationGeneration ==
+          _collectionUndoExternalMutationGeneration) {
+        _collectionRedoSteps.clear();
+        _collectionUndoSteps.add(_CollectionUndoStep(undo: undo, redo: redo));
+        if (_collectionUndoSteps.length > 30) _collectionUndoSteps.removeAt(0);
+      }
+      _collectionUndoGeneration++;
+      await _flush();
+      return true;
     } finally {
-      _preservingCollectionUndoHistory = false;
+      if (identical(_collectionUndoOperationDone, operationDone)) {
+        _collectionUndoOperationDone = null;
+      }
+      operationDone.complete();
     }
-    _collectionRedoSteps.clear();
-    _collectionUndoSteps.add(_CollectionUndoStep(undo: undo, redo: redo));
-    _collectionUndoGeneration++;
-    if (_collectionUndoSteps.length > 30) _collectionUndoSteps.removeAt(0);
-    await _flush();
+  }
+
+  Future<Completer<void>> _acquireCollectionUndoOperation() {
+    if (identical(Zone.current[_collectionUndoOperationZoneKey], this)) {
+      return Future.error(StateError('nested undoable collection operation'));
+    }
+    final activeOperation = _collectionUndoOperationDone;
+    if (activeOperation == null) {
+      final operationDone = Completer<void>();
+      _collectionUndoOperationDone = operationDone;
+      return Future.value(operationDone);
+    }
+    return activeOperation.future.then(
+      (_) => _acquireCollectionUndoOperation(),
+    );
+  }
+
+  void _releaseCollectionUndoOperation(Completer<void> operationDone) {
+    if (identical(_collectionUndoOperationDone, operationDone)) {
+      _collectionUndoOperationDone = null;
+    }
+    operationDone.complete();
+  }
+
+  void _throwIfExternalCollectionUndoOperationIsActive() {
+    if (_collectionUndoOperationDone != null &&
+        !identical(Zone.current[_collectionUndoOperationZoneKey], this) &&
+        !identical(Zone.current[_externalCollectionMutationZoneKey], this)) {
+      throw StateError('collection mutation during undoable operation');
+    }
   }
 
   Future<void> undoLastCollectionOperation() async {
-    if (_collectionUndoSteps.isEmpty) {
-      throw StateError('no collection operation to undo');
-    }
-    final step = _collectionUndoSteps.removeLast();
+    final operationDone = await _acquireCollectionUndoOperation();
     try {
-      await _replayCollectionOperation(step.undo);
-    } catch (_) {
-      _collectionUndoSteps.add(step);
-      rethrow;
+      if (_collectionUndoSteps.isEmpty) {
+        throw StateError('no collection operation to undo');
+      }
+      final externalMutationGeneration =
+          _collectionUndoExternalMutationGeneration;
+      final step = _collectionUndoSteps.removeLast();
+      try {
+        await _replayCollectionOperation(step.undo);
+      } catch (_) {
+        if (externalMutationGeneration ==
+            _collectionUndoExternalMutationGeneration) {
+          _collectionUndoSteps.add(step);
+        }
+        rethrow;
+      }
+      if (externalMutationGeneration ==
+          _collectionUndoExternalMutationGeneration) {
+        _collectionRedoSteps.add(step);
+      }
+      _collectionUndoGeneration++;
+      await _flush();
+    } finally {
+      _releaseCollectionUndoOperation(operationDone);
     }
-    _collectionRedoSteps.add(step);
-    _collectionUndoGeneration++;
-    await _flush();
   }
 
   Future<void> _replayCollectionOperation(
@@ -963,11 +1082,13 @@ INSERT OR REPLACE INTO cards (
     await beginExclusive();
     _preservingCollectionUndoHistory = true;
     try {
-      await action();
-      _executeCached('commit');
+      await runZoned(() async {
+        await action();
+        _executeCached('commit');
+      }, zoneValues: {_collectionUndoOperationZoneKey: this});
     } catch (error, stackTrace) {
       try {
-        await rollback();
+        _executeCached('rollback');
       } catch (_) {}
       Error.throwWithStackTrace(error, stackTrace);
     } finally {
@@ -977,23 +1098,37 @@ INSERT OR REPLACE INTO cards (
 
   /// Reapplies the most recently undone browser collection operation.
   Future<void> redoLastCollectionOperation() async {
-    if (_collectionRedoSteps.isEmpty) {
-      throw StateError('no collection operation to redo');
-    }
-    final step = _collectionRedoSteps.removeLast();
+    final operationDone = await _acquireCollectionUndoOperation();
     try {
-      await _replayCollectionOperation(step.redo);
-    } catch (_) {
-      _collectionRedoSteps.add(step);
-      rethrow;
+      if (_collectionRedoSteps.isEmpty) {
+        throw StateError('no collection operation to redo');
+      }
+      final externalMutationGeneration =
+          _collectionUndoExternalMutationGeneration;
+      final step = _collectionRedoSteps.removeLast();
+      try {
+        await _replayCollectionOperation(step.redo);
+      } catch (_) {
+        if (externalMutationGeneration ==
+            _collectionUndoExternalMutationGeneration) {
+          _collectionRedoSteps.add(step);
+        }
+        rethrow;
+      }
+      if (externalMutationGeneration ==
+          _collectionUndoExternalMutationGeneration) {
+        _collectionUndoSteps.add(step);
+      }
+      _collectionUndoGeneration++;
+      await _flush();
+    } finally {
+      _releaseCollectionUndoOperation(operationDone);
     }
-    _collectionUndoSteps.add(step);
-    _collectionUndoGeneration++;
-    await _flush();
   }
 
   /// Restores a review log entry with its original 64-bit ID.
   void restoreRevlogEntry(RevlogEntry entry) {
+    _throwIfExternalCollectionUndoOperationIsActive();
     final restored = _revlogStorage.addRevlogEntry(entry);
     if (restored == null) throw StateError('revlog ID is already in use');
   }
@@ -1183,12 +1318,14 @@ GROUP BY did
 
   /// Restores the exact stored collection modification value during undo.
   void restoreCollectionModifiedAt(Int64 value) {
+    _throwIfExternalCollectionUndoOperationIsActive();
     _invalidateOperationHistoryAfterSubstoreWrite();
     _database.execute('UPDATE col SET mod = ?', [_toSqlInt64(value)]);
   }
 
   /// Records a Core-compatible card or note deletion grave.
   void addDeletionGrave(Int64 objectId, {required bool note}) {
+    _throwIfExternalCollectionUndoOperationIsActive();
     _invalidateOperationHistoryAfterSubstoreWrite();
     _database.execute(
       'INSERT OR IGNORE INTO graves (oid, type, usn) VALUES (?, ?, -1)',
@@ -1205,6 +1342,7 @@ GROUP BY did
 
   /// Removes a deletion grave when an operation is undone.
   void removeDeletionGrave(Int64 objectId, {required bool note}) {
+    _throwIfExternalCollectionUndoOperationIsActive();
     _invalidateOperationHistoryAfterSubstoreWrite();
     _database.execute('DELETE FROM graves WHERE oid = ? AND type = ?', [
       _toSqlInt64(objectId),
@@ -1217,9 +1355,12 @@ GROUP BY did
   /// Higher-level collection operations use this alongside card or note row
   /// changes so the collection metadata reflects the committed operation.
   Future<void> updateCollectionModifiedAt(Int64 modifiedAtMillis) async {
-    _database.execute('UPDATE col SET mod = ?', [
-      _toSqlInt64(modifiedAtMillis),
-    ]);
+    await _withExternalCollectionMutation(() {
+      _database.execute('UPDATE col SET mod = ?', [
+        _toSqlInt64(modifiedAtMillis),
+      ]);
+      discardExistingNoteUpdateUndoHistory();
+    });
     await _flushIfAutocommit();
   }
 
@@ -1233,26 +1374,28 @@ GROUP BY did
     required bool collapsed,
     bool browser = false,
   }) async {
-    final deck = _deckStorage.getDeck(deckId);
-    if (deck == null) throw StateError('deck not found: $deckId');
-    final common = deck.common.deepCopy();
-    if (browser) {
-      common.browserCollapsed = collapsed;
-    } else {
-      common.studyCollapsed = collapsed;
-    }
-    _deckStorage.updateDeck(
-      Deck(
-        id: deck.id,
-        name: deck.name,
-        mtimeSecs: Int64(DateTime.now().millisecondsSinceEpoch ~/ 1000),
-        // Anki Core's client-side Collection.usn() returns -1. The update
-        // path marks modified decks with that value before writing them.
-        usn: -1,
-        common: common,
-        kind: deck.kind,
-      ),
-    );
+    await _withExternalCollectionMutation(() {
+      final deck = _deckStorage.getDeck(deckId);
+      if (deck == null) throw StateError('deck not found: $deckId');
+      final common = deck.common.deepCopy();
+      if (browser) {
+        common.browserCollapsed = collapsed;
+      } else {
+        common.studyCollapsed = collapsed;
+      }
+      _deckStorage.updateDeck(
+        Deck(
+          id: deck.id,
+          name: deck.name,
+          mtimeSecs: Int64(DateTime.now().millisecondsSinceEpoch ~/ 1000),
+          // Anki Core's client-side Collection.usn() returns -1. The update
+          // path marks modified decks with that value before writing them.
+          usn: -1,
+          common: common,
+          kind: deck.kind,
+        ),
+      );
+    });
     await _flushIfAutocommit();
   }
 
@@ -1283,10 +1426,12 @@ GROUP BY did
         result = _deckStorage.getDeck(existingId);
         continue;
       }
-      final initial = Deck.newNormal();
-      final added = _deckStorage.addDeck(
-        Deck(name: currentName, common: initial.common, kind: initial.kind),
-      );
+      final added = await _withExternalCollectionMutation(() {
+        final initial = Deck.newNormal();
+        return _deckStorage.addDeck(
+          Deck(name: currentName, common: initial.common, kind: initial.kind),
+        );
+      });
       result = added;
       await _flushIfAutocommit();
     }
@@ -1360,43 +1505,45 @@ GROUP BY did
       }
     }
 
-    _database.execute('begin');
-    try {
-      var ancestorName = '';
-      for (final component in components.take(components.length - 1)) {
-        ancestorName = ancestorName.isEmpty
-            ? component
-            : '$ancestorName::$component';
-        final nativeName = ancestorName.replaceAll('::', '\x1f');
-        if (_deckStorage.getDeckId(nativeName) == null) {
-          final initial = Deck.newNormal();
-          _deckStorage.addDeck(
+    await _withExternalCollectionMutation(() async {
+      _database.execute('begin');
+      try {
+        var ancestorName = '';
+        for (final component in components.take(components.length - 1)) {
+          ancestorName = ancestorName.isEmpty
+              ? component
+              : '$ancestorName::$component';
+          final nativeName = ancestorName.replaceAll('::', '\x1f');
+          if (_deckStorage.getDeckId(nativeName) == null) {
+            final initial = Deck.newNormal();
+            _deckStorage.addDeck(
+              Deck(
+                name: ancestorName,
+                common: initial.common,
+                kind: initial.kind,
+              ),
+            );
+          }
+        }
+        for (var index = 0; index < sourceDecks.length; index++) {
+          final deck = sourceDecks[index];
+          _deckStorage.updateDeck(
             Deck(
-              name: ancestorName,
-              common: initial.common,
-              kind: initial.kind,
+              id: deck.id,
+              name: renamedNames[index],
+              mtimeSecs: Int64(DateTime.now().millisecondsSinceEpoch ~/ 1000),
+              usn: -1,
+              common: deck.common,
+              kind: deck.kind,
             ),
           );
         }
+        _database.execute('commit');
+      } catch (_) {
+        if (!_database.autocommit) _database.execute('rollback');
+        rethrow;
       }
-      for (var index = 0; index < sourceDecks.length; index++) {
-        final deck = sourceDecks[index];
-        _deckStorage.updateDeck(
-          Deck(
-            id: deck.id,
-            name: renamedNames[index],
-            mtimeSecs: Int64(DateTime.now().millisecondsSinceEpoch ~/ 1000),
-            usn: -1,
-            common: deck.common,
-            kind: deck.kind,
-          ),
-        );
-      }
-      _database.execute('commit');
-    } catch (_) {
-      if (!_database.autocommit) _database.execute('rollback');
-      rethrow;
-    }
+    });
     await _flushIfAutocommit(preserveNoteUpdateHistory: true);
     return true;
   }
@@ -1463,7 +1610,10 @@ WHERE queue IN (-2, -3)
   }
 
   Future<void> _writeConfigValue(String key, String encodedJson) async {
-    _writeConfigValueSync(key, encodedJson);
+    await _withExternalCollectionMutation(() {
+      _writeConfigValueSync(key, encodedJson);
+      discardExistingNoteUpdateUndoHistory();
+    });
     await _flushIfAutocommit();
   }
 
@@ -1546,22 +1696,24 @@ WHERE queue IN (-2, -3)
 
   /// Updates all persisted scheduling fields for [card].
   Future<void> updateCard(Card card) async {
-    _database.execute('''
+    await _withExternalCollectionMutation(() {
+      _database.execute('''
       UPDATE cards SET nid = ?, did = ?, ord = ?, mod = ?, usn = ?,
         type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?,
         lapses = ?, left = ?, odue = ?, odid = ?, flags = ?, data = ?
       WHERE id = ?
     ''', _cardValues(card)..add(_toSqlInt64(card.id)));
+      if (_database.updatedRows > 0) discardExistingNoteUpdateUndoHistory();
+    });
     await _flushIfAutocommit();
   }
 
-  /// Inserts [card], allocating a new row ID if the current time ID is taken.
-  ///
-  /// Returns the ID assigned by SQLite, including the source's collision
-  /// allocation behavior. The shared [Card] model is immutable, so callers
-  /// receive the assigned ID instead of having the model mutated in place.
   Future<CardId> addCard(Card card) async {
-    final id = _addCardSync(card);
+    final id = await _withExternalCollectionMutation(() {
+      final inserted = _addCardSync(card);
+      discardExistingNoteUpdateUndoHistory();
+      return inserted;
+    });
     await _flushIfAutocommit();
     return id;
   }
@@ -1594,45 +1746,50 @@ WHERE queue IN (-2, -3)
     return id;
   }
 
-  /// Inserts [card] only when its ID is unused, returning whether a row was
-  /// inserted. Constraints handled by SQLite's `OR IGNORE` policy return
-  /// `false`; SQLite errors not handled by that policy are surfaced.
   Future<bool> addCardIfUnique(Card card) async {
-    final values = _cardValues(card);
-    final statement = _database.prepare('''
+    final inserted = await _withExternalCollectionMutation(() {
+      final values = _cardValues(card);
+      final statement = _database.prepare('''
       INSERT OR IGNORE INTO cards (
         id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
         lapses, left, odue, odid, flags, data
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''');
-    late final bool inserted;
-    try {
-      statement.execute([_toSqlInt64(card.id), ...values]);
-      inserted = _database.updatedRows == 1;
-    } finally {
-      statement.close();
-    }
+      late final bool inserted;
+      try {
+        statement.execute([_toSqlInt64(card.id), ...values]);
+        inserted = _database.updatedRows == 1;
+      } finally {
+        statement.close();
+      }
+      if (inserted) discardExistingNoteUpdateUndoHistory();
+      return inserted;
+    });
     await _flushIfAutocommit();
     return inserted;
   }
 
-  /// Inserts or replaces [card] using its provided ID, as used by sync/undo.
   Future<void> addOrUpdateCard(Card card) async {
-    _database.execute(
-      '''
+    await _withExternalCollectionMutation(() {
+      _database.execute(
+        '''
       INSERT OR REPLACE INTO cards (
         id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
         lapses, left, odue, odid, flags, data
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''',
-      [_toSqlInt64(card.id), ..._cardValues(card)],
-    );
+        [_toSqlInt64(card.id), ..._cardValues(card)],
+      );
+      if (_database.updatedRows > 0) discardExistingNoteUpdateUndoHistory();
+    });
     await _flushIfAutocommit();
   }
 
-  /// Removes [id]. Deleting a missing row succeeds without a result.
   Future<void> removeCard(CardId id) async {
-    _database.execute('DELETE FROM cards WHERE id = ?', [_toSqlInt64(id)]);
+    await _withExternalCollectionMutation(() {
+      _database.execute('DELETE FROM cards WHERE id = ?', [_toSqlInt64(id)]);
+      if (_database.updatedRows > 0) discardExistingNoteUpdateUndoHistory();
+    });
     await _flushIfAutocommit();
   }
 
@@ -1871,8 +2028,10 @@ WHERE queue IN (-2, -3)
   Future<void> executeBatch(String sql) async {
     // This escape hatch can mutate any collection table, so it invalidates
     // note-update history even when the caller's batch later fails.
-    discardExistingNoteUpdateUndoHistory();
-    _database.execute(sql);
+    await _withExternalCollectionMutation(() {
+      discardExistingNoteUpdateUndoHistory();
+      _database.execute(sql);
+    });
     if (_database.autocommit) await _flush();
   }
 
@@ -2028,6 +2187,9 @@ WHERE queue IN (-2, -3)
 
   @override
   Future<void> commit() async {
+    if (_collectionUndoOperationDone != null) {
+      throw StateError('cannot commit during an undoable operation');
+    }
     if (_database.autocommit) return;
     _executeCached('commit');
     await _flush();
@@ -2035,6 +2197,9 @@ WHERE queue IN (-2, -3)
 
   @override
   Future<void> rollback() async {
+    if (_collectionUndoOperationDone != null) {
+      throw StateError('cannot roll back during an undoable operation');
+    }
     if (_database.autocommit) return;
     _database.execute('rollback');
     await _flush();
@@ -2219,11 +2384,14 @@ final class _CollectionNoteStorageStatement implements NoteStorageStatement {
 
   @override
   int execute(List<Object?> parameters) {
+    storage._throwIfExternalCollectionUndoOperationIsActive();
     statement.execute([
       for (final parameter in parameters)
         if (parameter is Int64) _toSqlInt64(parameter) else parameter,
     ]);
-    return storage._database.updatedRows;
+    final updatedRows = storage._database.updatedRows;
+    if (updatedRows > 0) storage.discardExistingNoteUpdateUndoHistory();
+    return updatedRows;
   }
 }
 
@@ -2233,10 +2401,12 @@ final class _DeckStorageDatabase
         DeckConfigStorageDatabase,
         TagStorageDatabase,
         RevlogStorageDatabase {
-  const _DeckStorageDatabase(this.database, this.onWrite);
+  const _DeckStorageDatabase(this.storage, this.onWrite);
 
-  final CommonDatabase database;
+  final CollectionSqliteStorage storage;
   final void Function() onWrite;
+
+  CommonDatabase get database => storage._database;
 
   @override
   Int64 get lastInsertRowId => Int64(database.lastInsertRowId);
@@ -2260,6 +2430,7 @@ final class _DeckStorageDatabase
 
   @override
   int execute(String sql, [List<Object?> parameters = const []]) {
+    storage._throwIfExternalCollectionUndoOperationIsActive();
     database.execute(sql, _sqliteParameters(parameters));
     final updatedRows = database.updatedRows;
     if (updatedRows > 0) onWrite();

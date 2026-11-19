@@ -1250,33 +1250,43 @@ final class CollectionCardBrowserController
     final operationTimeMillis = DateTime.now().toUtc().millisecondsSinceEpoch;
 
     if (action == CardBrowserBulkAction.delete) {
-      final requestedNoteIds = _mode == BrowserColumnMode.notes
-          ? selectedRows
-                .map((row) => Int64.parseInt(row.bigValue.toString()))
-                .toSet()
-          : (await storage.getCardsByIds(
-              await _selectedCardIds(storage, selectedRows),
-            )).map((card) => card.noteId).toSet();
-      final notes = await storage.getNotesByIds(requestedNoteIds);
-      final noteIds = notes.map((note) => note.id).toSet();
-      if (noteIds.isEmpty) return;
-      final cardsByNote = await storage.cardsOfNotes(noteIds);
-      final cards = [for (final noteId in noteIds) ...?cardsByNote[noteId]];
-      final revlogs = [
-        for (final card in cards)
-          ...storage.revlog.getRevlogEntriesForCard(card.id),
-      ];
-      final existingCardGraves = {
-        for (final card in cards)
-          card.id: storage.hasDeletionGrave(card.id, note: false),
-      };
-      final existingNoteGraves = {
-        for (final noteId in noteIds)
-          noteId: storage.hasDeletionGrave(noteId, note: true),
-      };
-      final mtimeBefore = storage.collectionModifiedAt;
+      late List<models.Note> notes;
+      late Set<Int64> noteIds;
+      late Map<Int64, List<models.Card>> cardsByNote;
+      late List<models.Card> cards;
+      late List<models.RevlogEntry> revlogs;
+      late Map<Int64, bool> existingCardGraves;
+      late Map<Int64, bool> existingNoteGraves;
+      late Int64 mtimeBefore;
       final mtimeAfter = Int64(operationTimeMillis);
-      await storage.runUndoableCollectionOperation(
+      final committed = await storage.runUndoableCollectionOperation(
+        prepare: () async {
+          // AnkiDroid resolves selected note rows to their card IDs before
+          // calling Core's removeNotes. A selected note with no cards therefore
+          // produces no deletion, matching the upstream behavior.
+          final requestedNoteIds = (await storage.getCardsByIds(
+            await _selectedCardIds(storage, selectedRows),
+          )).map((card) => card.noteId).toSet();
+          notes = await storage.getNotesByIds(requestedNoteIds);
+          noteIds = notes.map((note) => note.id).toSet();
+          if (noteIds.isEmpty) return false;
+          cardsByNote = await storage.cardsOfNotes(noteIds);
+          cards = [for (final noteId in noteIds) ...?cardsByNote[noteId]];
+          revlogs = [
+            for (final card in cards)
+              ...storage.revlog.getRevlogEntriesForCard(card.id),
+          ];
+          existingCardGraves = {
+            for (final card in cards)
+              card.id: storage.hasDeletionGrave(card.id, note: false),
+          };
+          existingNoteGraves = {
+            for (final noteId in noteIds)
+              noteId: storage.hasDeletionGrave(noteId, note: true),
+          };
+          mtimeBefore = storage.collectionModifiedAt;
+          return true;
+        },
         apply: () async {
           for (final noteId in noteIds) {
             for (final card in cardsByNote[noteId] ?? const <models.Card>[]) {
@@ -1326,58 +1336,15 @@ final class CollectionCardBrowserController
           storage.restoreCollectionModifiedAt(mtimeAfter);
         },
       );
+      if (!committed) return;
       await updateSelection(const []);
       return;
     }
 
-    final cardIds = await _selectedCardIds(storage, selectedRows);
-    if (cardIds.isEmpty) return;
-
-    final cards = await storage.getCardsByIds(cardIds);
-    if (cards.isEmpty) return;
-    final allSuspended = cards.every(
-      (card) => card.queue == models.CardQueue.suspended,
-    );
-    final allBuried = cards.every(
-      (card) =>
-          card.queue == models.CardQueue.schedBuried ||
-          card.queue == models.CardQueue.userBuried,
-    );
-    final shouldRestore = action == CardBrowserBulkAction.suspend
-        ? allSuspended
-        : allBuried;
     final modifiedAt = Int64(operationTimeMillis ~/ 1000);
-    final updates = <models.Card>[];
-    for (final card in cards) {
-      final queue = switch (action) {
-        CardBrowserBulkAction.suspend =>
-          shouldRestore
-              ? _queueForType(card)
-              : card.queue == models.CardQueue.suspended
-              ? card.queue
-              : models.CardQueue.suspended,
-        CardBrowserBulkAction.bury =>
-          shouldRestore
-              ? _queueForType(card)
-              : card.queue == models.CardQueue.suspended
-              ? card.queue
-              : models.CardQueue.userBuried,
-        CardBrowserBulkAction.delete => card.queue,
-      };
-      if (queue != card.queue) {
-        updates.add(
-          models.Card.fromProto(
-            card.toProto()
-              ..queue = queue.value
-              ..usn = -1
-              ..mtimeSecs = modifiedAt,
-          ),
-        );
-      }
-    }
-    if (updates.isEmpty) return;
-    final beforeById = {for (final card in cards) card.id: card};
-    final mtimeBefore = storage.collectionModifiedAt;
+    late List<models.Card> updates;
+    late Map<Int64, models.Card> beforeById;
+    late Int64 mtimeBefore;
     final mtimeAfter = Int64(operationTimeMillis);
     Future<void> applyCards(Iterable<models.Card> values) async {
       for (final card in values) {
@@ -1386,6 +1353,56 @@ final class CollectionCardBrowserController
     }
 
     await storage.runUndoableCollectionOperation(
+      prepare: () async {
+        final cardIds = await _selectedCardIds(storage, selectedRows);
+        if (cardIds.isEmpty) return false;
+
+        final cards = await storage.getCardsByIds(cardIds);
+        if (cards.isEmpty) return false;
+        final allSuspended = cards.every(
+          (card) => card.queue == models.CardQueue.suspended,
+        );
+        final allBuried = cards.every(
+          (card) =>
+              card.queue == models.CardQueue.schedBuried ||
+              card.queue == models.CardQueue.userBuried,
+        );
+        final shouldRestore = action == CardBrowserBulkAction.suspend
+            ? allSuspended
+            : allBuried;
+        updates = [];
+        for (final card in cards) {
+          final queue = switch (action) {
+            CardBrowserBulkAction.suspend =>
+              shouldRestore
+                  ? _queueForType(card)
+                  : card.queue == models.CardQueue.suspended
+                  ? card.queue
+                  : models.CardQueue.suspended,
+            CardBrowserBulkAction.bury =>
+              shouldRestore
+                  ? _queueForType(card)
+                  : card.queue == models.CardQueue.suspended
+                  ? card.queue
+                  : models.CardQueue.userBuried,
+            CardBrowserBulkAction.delete => card.queue,
+          };
+          if (queue != card.queue) {
+            updates.add(
+              models.Card.fromProto(
+                card.toProto()
+                  ..queue = queue.value
+                  ..usn = -1
+                  ..mtimeSecs = modifiedAt,
+              ),
+            );
+          }
+        }
+        if (updates.isEmpty) return false;
+        beforeById = {for (final card in cards) card.id: card};
+        mtimeBefore = storage.collectionModifiedAt;
+        return true;
+      },
       apply: () async {
         await applyCards(updates);
         await storage.updateCollectionModifiedAt(mtimeAfter);

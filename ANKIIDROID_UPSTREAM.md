@@ -1527,3 +1527,28 @@ direct upstream tests cover intent/remembered-deck resolution and process
 recreation after a user choice; Dart host tests cover exact IDs above 2^53,
 invalid fallback, persistence, filters, and unchanged collection current deck.
 Root `COPYING` remains byte-identical; no Android source or resource was copied.
+
+## Card Browser Add Note remembered deck (Unit48)
+
+At AnkiDroid commit `d9bf072f814a0c37d30a694192593b31ff2df875`,
+`CardBrowserFragment.kt:1881–1889` builds the Add Note destination with
+`activityViewModel.lastDeckId`, while `CardBrowserViewModel.kt:401–407,449–470`
+exposes and resolves the independently remembered browser deck. Its
+`LastDeckIdRepository.kt:12–52` persists that value separately and does not
+select a collection deck. The pinned file hashes match the dispatch record:
+`CardBrowserFragment.kt` `eacd31477a1752a0ae611db4d6650cd797f15f18e93888d38b474b991a815933`,
+`CardBrowserViewModel.kt` `88c5d4506189866ff8d67b55d4693b50d7514e0cd54f11cac10b25985b74b6f4`,
+and `LastDeckIdRepository.kt`
+`b7e1da4f87258bf789bf5003c377908ec9df46712f72c4a21379cf5b264897d3`.
+
+After the Card Browser controller initializes, it reads the existing
+`anki.browser.lastDeckId` preference while building a new-note draft. It accepts
+only a present, parseable, existing regular deck; All Decks, malformed, missing,
+deleted, and filtered values fall through to the existing adding-deck
+selection. Uninitialized controller instances used by Deck Picker's current-
+deck route do not consume the browser preference, and a valid explicit
+`selectedNewNoteDeckId` from Deck Picker still has priority. The handoff does
+not call `selectDeck`, so `curDeck` remains independent. Controller/storage
+tests cover regular and wide IDs, invalid fallbacks, Deck Picker routing,
+explicit precedence, and unchanged `curDeck`; pinned upstream hashes were
+checked locally. No Android implementation was changed or copied.

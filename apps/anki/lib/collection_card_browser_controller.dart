@@ -1048,12 +1048,15 @@ final class CollectionCardBrowserController
         ? _usableDeck(storage, currentDeck)
         : _usableDeck(storage, rememberedDeck ?? currentDeck);
     final requestedDeck = selectedNewNoteDeckId?.call();
+    final rememberedBrowserDeck = _browserDeckInitialized
+        ? await _loadRememberedBrowserDeck(storage)
+        : null;
     final selectedDeck =
         requestedDeck != null &&
             requestedDeck != Int64.ZERO &&
             _usableDeck(storage, requestedDeck) == requestedDeck
         ? requestedDeck
-        : fallbackDeck;
+        : rememberedBrowserDeck ?? fallbackDeck;
     final note = models.Note.newNote(
       notetype,
       randomU64: () {
@@ -1184,6 +1187,21 @@ final class CollectionCardBrowserController
       final decoded = jsonDecode(utf8.decode(other));
       return decoded is Map ? _configInt64(decoded['mid']) : null;
     } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Int64?> _loadRememberedBrowserDeck(
+    CollectionSqliteStorage storage,
+  ) async {
+    final rawDeckId = await _preferences.getString(_lastDeckIdKey);
+    final parsedDeckId = rawDeckId == null ? null : BigInt.tryParse(rawDeckId);
+    if (parsedDeckId == null || parsedDeckId == _allDecksLastId) return null;
+    try {
+      final deckId = Int64.parseInt(parsedDeckId.toString());
+      final deck = storage.decks.getDeck(deckId);
+      return deck?.configId == null ? null : deckId;
+    } on Object {
       return null;
     }
   }

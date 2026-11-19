@@ -1254,7 +1254,6 @@ final class CollectionCardBrowserController
   ) async {
     final storage = _storage;
     if (selectedRows.isEmpty) return;
-    final operationTimeMillis = DateTime.now().toUtc().millisecondsSinceEpoch;
 
     if (action == CardBrowserBulkAction.delete) {
       late List<models.Note> notes;
@@ -1265,9 +1264,12 @@ final class CollectionCardBrowserController
       late Map<Int64, bool> existingCardGraves;
       late Map<Int64, bool> existingNoteGraves;
       late Int64 mtimeBefore;
-      final mtimeAfter = Int64(operationTimeMillis);
+      late int operationTimeMillis;
+      late Int64 mtimeAfter;
       final committed = await storage.runUndoableCollectionOperation(
         prepare: () async {
+          operationTimeMillis = DateTime.now().toUtc().millisecondsSinceEpoch;
+          mtimeAfter = Int64(operationTimeMillis);
           // AnkiDroid resolves selected note rows to their card IDs before
           // calling Core's removeNotes. A selected note with no cards therefore
           // produces no deletion, matching the upstream behavior.
@@ -1348,11 +1350,12 @@ final class CollectionCardBrowserController
       return;
     }
 
-    final modifiedAt = Int64(operationTimeMillis ~/ 1000);
+    late int operationTimeMillis;
+    late Int64 modifiedAt;
     late List<models.Card> updates;
     late Map<Int64, models.Card> beforeById;
     late Int64 mtimeBefore;
-    final mtimeAfter = Int64(operationTimeMillis);
+    late Int64 mtimeAfter;
     Future<void> applyCards(Iterable<models.Card> values) async {
       for (final card in values) {
         await storage.updateCard(card);
@@ -1361,6 +1364,9 @@ final class CollectionCardBrowserController
 
     await storage.runUndoableCollectionOperation(
       prepare: () async {
+        operationTimeMillis = DateTime.now().toUtc().millisecondsSinceEpoch;
+        modifiedAt = Int64(operationTimeMillis ~/ 1000);
+        mtimeAfter = Int64(operationTimeMillis);
         final cardIds = await _selectedCardIds(storage, selectedRows);
         if (cardIds.isEmpty) return false;
 

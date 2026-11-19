@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
+import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:anki_app/app_collection_callbacks.dart';
@@ -345,6 +346,47 @@ void main() {
       expect((await storage.getCard(id))!.queue, models.CardQueue.suspended);
     }
   });
+
+  test(
+    'queued bulk action timestamps after earlier collection writes finish',
+    () async {
+      final controller = CollectionCardBrowserController(
+        runtime,
+        preferences: preferences,
+      );
+      final snapshot = await controller.load();
+      final operationStarted = Completer<void>();
+      final releaseOperation = Completer<void>();
+      late Int64 earlierWriteTimestamp;
+      final earlierWrite = storage.runUndoableCollectionOperation(
+        apply: () async {
+          operationStarted.complete();
+          await releaseOperation.future;
+          earlierWriteTimestamp = Int64(
+            DateTime.now().toUtc().millisecondsSinceEpoch,
+          );
+          await storage.updateCollectionModifiedAt(earlierWriteTimestamp);
+        },
+        undo: () async {},
+        redo: () async {},
+      );
+      await operationStarted.future;
+
+      final bulkAction = controller.performBulkAction(
+        CardBrowserBulkAction.suspend,
+        [snapshot.rows.first.id],
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      releaseOperation.complete();
+      await earlierWrite;
+      await bulkAction;
+
+      expect(
+        storage.collectionModifiedAt,
+        greaterThanOrEqualTo(earlierWriteTimestamp),
+      );
+    },
+  );
 
   test(
     'bulk suspend undo restores exact queues and leaves current deck alone',

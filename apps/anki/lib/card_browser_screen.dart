@@ -1305,6 +1305,7 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
   void _showCollectionHistorySnackbar(
     CardBrowserCollectionUndoController controller, {
     required bool redo,
+    bool retryAfterFailure = false,
   }) {
     final strings = AppLocalizations.of(context)!;
     final canAct = redo
@@ -1315,7 +1316,9 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          redo
+          retryAfterFailure
+              ? strings.browserActionFailed
+              : redo
               ? strings.browserBulkActionUndone
               : strings.browserBulkActionCompleted,
         ),
@@ -1341,12 +1344,35 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         undoController.collectionUndoGeneration != expectedGeneration) {
       return;
     }
+    var failed = false;
     await _runAction(() async {
-      await undoController.undoLastCollectionOperation();
-      if (!mounted) return;
-      await _search(_searchController.text);
-      if (mounted) _showCollectionHistorySnackbar(undoController, redo: true);
+      try {
+        await undoController.undoLastCollectionOperation();
+        if (!mounted) return;
+        await _search(_searchController.text);
+        if (mounted) {
+          _showCollectionHistorySnackbar(undoController, redo: true);
+        }
+      } catch (_) {
+        failed = true;
+        rethrow;
+      }
     });
+    if (!failed || !mounted) return;
+    if (undoController.collectionUndoGeneration == expectedGeneration &&
+        undoController.canUndoCollectionOperation) {
+      _showCollectionHistorySnackbar(
+        undoController,
+        redo: false,
+        retryAfterFailure: true,
+      );
+    } else if (undoController.canRedoCollectionOperation) {
+      _showCollectionHistorySnackbar(
+        undoController,
+        redo: true,
+        retryAfterFailure: true,
+      );
+    }
   }
 
   Future<void> _redoLastCollectionOperation(int expectedGeneration) async {
@@ -1357,12 +1383,35 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         undoController.collectionUndoGeneration != expectedGeneration) {
       return;
     }
+    var failed = false;
     await _runAction(() async {
-      await undoController.redoLastCollectionOperation();
-      if (!mounted) return;
-      await _search(_searchController.text);
-      if (mounted) _showCollectionHistorySnackbar(undoController, redo: false);
+      try {
+        await undoController.redoLastCollectionOperation();
+        if (!mounted) return;
+        await _search(_searchController.text);
+        if (mounted) {
+          _showCollectionHistorySnackbar(undoController, redo: false);
+        }
+      } catch (_) {
+        failed = true;
+        rethrow;
+      }
     });
+    if (!failed || !mounted) return;
+    if (undoController.collectionUndoGeneration == expectedGeneration &&
+        undoController.canRedoCollectionOperation) {
+      _showCollectionHistorySnackbar(
+        undoController,
+        redo: true,
+        retryAfterFailure: true,
+      );
+    } else if (undoController.canUndoCollectionOperation) {
+      _showCollectionHistorySnackbar(
+        undoController,
+        redo: false,
+        retryAfterFailure: true,
+      );
+    }
   }
 
   Future<void> _runAction(Future<void> Function() action) async {

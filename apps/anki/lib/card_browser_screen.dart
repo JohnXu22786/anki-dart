@@ -1359,8 +1359,13 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       }
     });
     if (!failed || !mounted) return;
-    if (undoController.collectionUndoGeneration == expectedGeneration &&
-        undoController.canUndoCollectionOperation) {
+    final committed =
+        undoController.collectionUndoGeneration != expectedGeneration;
+    if (committed) await _search(_searchController.text);
+    if (!mounted) return;
+    if (!committed &&
+        undoController.canUndoCollectionOperation &&
+        undoController.collectionUndoGeneration == expectedGeneration) {
       _showCollectionHistorySnackbar(
         undoController,
         redo: false,
@@ -1398,8 +1403,13 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       }
     });
     if (!failed || !mounted) return;
-    if (undoController.collectionUndoGeneration == expectedGeneration &&
-        undoController.canRedoCollectionOperation) {
+    final committed =
+        undoController.collectionUndoGeneration != expectedGeneration;
+    if (committed) await _search(_searchController.text);
+    if (!mounted) return;
+    if (!committed &&
+        undoController.canRedoCollectionOperation &&
+        undoController.collectionUndoGeneration == expectedGeneration) {
       _showCollectionHistorySnackbar(
         undoController,
         redo: true,

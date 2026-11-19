@@ -1353,6 +1353,56 @@ void main() {
     expect(find.text('Redo'), findsOneWidget);
   });
 
+  testWidgets('post-commit undo failure refreshes collection rows', (
+    tester,
+  ) async {
+    final controller = _UndoBulkController(_sample());
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
+    await tester.pumpAndSettle();
+
+    final searchesBeforeUndo = controller.queries.length;
+    controller.failUndoAfterCommit = true;
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(controller.queries, hasLength(searchesBeforeUndo + 1));
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Redo'), findsOneWidget);
+  });
+
+  testWidgets('post-commit redo failure refreshes collection rows', (
+    tester,
+  ) async {
+    final controller = _UndoBulkController(_sample());
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    final searchesBeforeRedo = controller.queries.length;
+    controller.failRedoAfterCommit = true;
+    await tester.tap(find.text('Redo'));
+    await tester.pumpAndSettle();
+
+    expect(controller.queries, hasLength(searchesBeforeRedo + 1));
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsOneWidget);
+  });
+
   testWidgets('post-commit error still leaves the undo snackbar reachable', (
     tester,
   ) async {
@@ -1813,6 +1863,8 @@ final class _UndoBulkController extends _Controller
   bool failAfterCommit = false;
   bool failUndo = false;
   bool failRedo = false;
+  bool failUndoAfterCommit = false;
+  bool failRedoAfterCommit = false;
 
   @override
   bool get canUndoCollectionOperation => canUndo;
@@ -1841,6 +1893,9 @@ final class _UndoBulkController extends _Controller
     canUndo = false;
     canRedo = true;
     generation++;
+    if (failUndoAfterCommit) {
+      throw StateError('injected flush failure after undo commit');
+    }
   }
 
   @override
@@ -1850,6 +1905,9 @@ final class _UndoBulkController extends _Controller
     canUndo = true;
     canRedo = false;
     generation++;
+    if (failRedoAfterCommit) {
+      throw StateError('injected flush failure after redo commit');
+    }
   }
 }
 

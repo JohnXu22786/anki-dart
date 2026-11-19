@@ -3152,9 +3152,9 @@ MathJax render context, WebView textZoom/lifecycle, previewer
 collection flag mutation and StateFlow
 publication (flag codes and ordered write/publish intent are modeled), Card
 Browser selected-card lookup, collection flag writes and card-state-changed
-event execution (the ordered plan is modeled), mark-state lookup, bulk tag and
-suspend writes/undo (bulk-mark and bulk-suspend target decisions are modeled),
-and note editing, Android card-template asset loading,
+event execution (the ordered plan is modeled), mark-state lookup, bulk tag
+writes/undo (the bulk-mark target decision is modeled), and note editing,
+Android card-template asset loading,
 card template rendering, media-reference parsing/path resolution and playback
 (resolved audio-button and video-tag markup fragments plus the audio/video tag
 classification decision are modeled), card/note-dependent

@@ -21,12 +21,14 @@ void main() {
   late int nowMillisReads;
   late bool advanceClockAtCommit;
   late Future<void> Function()? flushHook;
+  void Function()? onNowMillis;
 
   setUp(() async {
     nowMillis = 9007199254740993;
     nowMillisReads = 0;
     advanceClockAtCommit = false;
     flushHook = null;
+    onNowMillis = null;
     storage = await CollectionSqliteStorage.open(
       driver: CollectionSqliteDriver(
         openDatabase: (_) => database = sqlite3.openInMemory(),
@@ -34,6 +36,7 @@ void main() {
       ),
       location: ':memory:',
       nowMillis: () {
+        onNowMillis?.call();
         nowMillisReads++;
         if (advanceClockAtCommit && nowMillisReads == 2) nowMillis += 1_000;
         return nowMillis;
@@ -699,18 +702,238 @@ void main() {
   });
 
   test(
-    'direct substore writes require explicit history invalidation',
+    'direct substore writes invalidate operation history automatically',
     () async {
       await storage.updateExistingNote(_note(fields: ['edited', 'back']));
-      storage.tags.registerTag(Tag(name: 'direct', usn: -1, expanded: false));
-      expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+      await storage.runUndoableCollectionOperation(
+        apply: () async {},
+        undo: () async {},
+        redo: () async {},
+      );
+      expect(storage.canUndoCollectionOperation, isTrue);
 
-      storage.discardExistingNoteUpdateUndoHistory();
+      storage.tags.registerTag(Tag(name: 'direct', usn: -1, expanded: false));
 
       expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
       expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+      expect(storage.canUndoCollectionOperation, isFalse);
     },
   );
+
+  test(
+    'interleaved writes wait until a failing bulk operation rolls back',
+    () async {
+      final operationStarted = Completer<void>();
+      final continueOperation = Completer<void>();
+      final operation = storage.runUndoableCollectionOperation(
+        apply: () async {
+          database.execute('UPDATE col SET mod = 700');
+          operationStarted.complete();
+          await continueOperation.future;
+          throw StateError('bulk operation failed');
+        },
+        undo: () async => database.execute('UPDATE col SET mod = 500'),
+        redo: () async => database.execute('UPDATE col SET mod = 800'),
+      );
+      await operationStarted.future;
+
+      final externalWrite = storage.writeCollectionConfig(
+        'interleaved-write',
+        true,
+      );
+      continueOperation.complete();
+      await expectLater(operation, throwsA(isA<StateError>()));
+      await externalWrite;
+
+      expect(await storage.readCollectionConfig('interleaved-write'), isTrue);
+      expect(storage.canUndoCollectionOperation, isFalse);
+    },
+  );
+
+  test(
+    'collection undo preparation is protected from external writes',
+    () async {
+      final preparationStarted = Completer<void>();
+      final continuePreparation = Completer<void>();
+      Object? preparedValue;
+      final operation = storage.runUndoableCollectionOperation(
+        prepare: () async {
+          preparedValue = storage.readCollectionConfig('prepare-race');
+          preparationStarted.complete();
+          await continuePreparation.future;
+          return true;
+        },
+        apply: () async => database.execute('UPDATE col SET mod = 700'),
+        undo: () async => database.execute('UPDATE col SET mod = 500'),
+        redo: () async => database.execute('UPDATE col SET mod = 700'),
+      );
+      await preparationStarted.future;
+
+      final externalWrite = storage.writeCollectionConfig('prepare-race', true);
+      continuePreparation.complete();
+      expect(await operation, isTrue);
+      await externalWrite;
+
+      expect(preparedValue, isNull);
+      expect(await storage.readCollectionConfig('prepare-race'), isTrue);
+      expect(storage.canUndoCollectionOperation, isFalse);
+    },
+  );
+
+  test(
+    'undo waits for an in-flight bulk operation before choosing its step',
+    () async {
+      await storage.runUndoableCollectionOperation(
+        apply: () async => database.execute('UPDATE col SET mod = 100'),
+        undo: () async => database.execute('UPDATE col SET mod = 0'),
+        redo: () async => database.execute('UPDATE col SET mod = 100'),
+      );
+      final operationStarted = Completer<void>();
+      final continueOperation = Completer<void>();
+      final operation = storage.runUndoableCollectionOperation(
+        apply: () async {
+          operationStarted.complete();
+          await continueOperation.future;
+          database.execute('UPDATE col SET mod = 200');
+        },
+        undo: () async => database.execute('UPDATE col SET mod = 100'),
+        redo: () async => database.execute('UPDATE col SET mod = 200'),
+      );
+      await operationStarted.future;
+
+      final undo = storage.undoLastCollectionOperation();
+      continueOperation.complete();
+      expect(await operation, isTrue);
+      await undo;
+
+      expect(await storage.queryInt('SELECT mod FROM col'), 100);
+      expect(storage.canUndoCollectionOperation, isTrue);
+    },
+  );
+
+  test(
+    'public transaction controls cannot interrupt bulk operations',
+    () async {
+      final operationStarted = Completer<void>();
+      final continueOperation = Completer<void>();
+      final operation = storage.runUndoableCollectionOperation(
+        apply: () async {
+          operationStarted.complete();
+          await continueOperation.future;
+          database.execute('UPDATE col SET mod = 700');
+        },
+        undo: () async => database.execute('UPDATE col SET mod = 500'),
+        redo: () async => database.execute('UPDATE col SET mod = 700'),
+      );
+      await operationStarted.future;
+
+      await expectLater(storage.commit(), throwsA(isA<StateError>()));
+      await expectLater(storage.rollback(), throwsA(isA<StateError>()));
+      continueOperation.complete();
+
+      expect(await operation, isTrue);
+      expect(await storage.queryInt('SELECT mod FROM col'), 700);
+    },
+  );
+
+  test('revlog substore writes invalidate collection operation undo', () async {
+    database.execute('''
+      CREATE TABLE revlog (
+        id INTEGER PRIMARY KEY, cid INTEGER, usn INTEGER, ease INTEGER,
+        ivl INTEGER, lastIvl INTEGER, factor INTEGER, time INTEGER, type INTEGER
+      )
+    ''');
+    await storage.runUndoableCollectionOperation(
+      apply: () async {},
+      undo: () async {},
+      redo: () async {},
+    );
+    expect(storage.canUndoCollectionOperation, isTrue);
+
+    storage.revlog.addRevlogEntry(
+      RevlogEntry(id: RevlogId(Int64(123)), cardId: Int64(42)),
+    );
+
+    expect(storage.canUndoCollectionOperation, isFalse);
+  });
+
+  test('public note updates invalidate collection operation undo', () async {
+    await storage.runUndoableCollectionOperation(
+      apply: () async {},
+      undo: () async {},
+      redo: () async {},
+    );
+    expect(storage.canUndoCollectionOperation, isTrue);
+    final note = (await storage.getNote(Int64(42)))!;
+    note.fieldsMut()[0] = 'external update';
+    final notetype = (await storage.getNotetypesByIds([
+      NotetypeId(note.notetypeId),
+    ])).single;
+    note.prepareForUpdate(notetype, normalizeText: false);
+
+    await storage.updateNote(note);
+
+    expect(storage.canUndoCollectionOperation, isFalse);
+  });
+
+  test('public undo helpers invalidate stale collection history', () async {
+    database.execute(
+      'CREATE TABLE graves (usn INTEGER, oid INTEGER, type INTEGER)',
+    );
+
+    Future<void> addUndoStep() async {
+      await storage.runUndoableCollectionOperation(
+        apply: () async {},
+        undo: () async {},
+        redo: () async {},
+      );
+    }
+
+    await addUndoStep();
+    storage.addDeletionGrave(Int64(55), note: false);
+    expect(storage.canUndoCollectionOperation, isFalse);
+
+    await addUndoStep();
+    storage.removeDeletionGrave(Int64(55), note: false);
+    expect(storage.canUndoCollectionOperation, isFalse);
+
+    await addUndoStep();
+    storage.restoreCollectionModifiedAt(Int64(99));
+    expect(storage.canUndoCollectionOperation, isFalse);
+  });
+
+  test('bulk operation supersedes existing note edit undo history', () async {
+    await storage.updateExistingNote(_note(fields: ['edited', 'back']));
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+
+    await storage.runUndoableCollectionOperation(
+      apply: () async => database.execute('UPDATE col SET mod = 700'),
+      undo: () async => database.execute('UPDATE col SET mod = 500'),
+      redo: () async => database.execute('UPDATE col SET mod = 700'),
+    );
+
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+    expect(storage.canUndoCollectionOperation, isTrue);
+  });
+
+  test('post-commit flush failure retains the committed undo step', () async {
+    flushHook = () async => throw StateError('injected flush failure');
+
+    await expectLater(
+      storage.runUndoableCollectionOperation(
+        apply: () async => database.execute('UPDATE col SET mod = 700'),
+        undo: () async => database.execute('UPDATE col SET mod = 500'),
+        redo: () async => database.execute('UPDATE col SET mod = 700'),
+      ),
+      throwsA(isA<StateError>()),
+    );
+    flushHook = null;
+
+    expect(await storage.queryInt('SELECT mod FROM col'), 700);
+    expect(storage.canUndoCollectionOperation, isTrue);
+    await storage.undoLastCollectionOperation();
+    expect(await storage.queryInt('SELECT mod FROM col'), 500);
+  });
 
   test(
     'executeBatch invalidates note-update history before direct SQL writes',
@@ -823,6 +1046,100 @@ void main() {
       expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
       expect(storage.existingNoteUpdateUndoStatus.canRedo, isTrue);
       expect((await storage.getNote(Int64(42)))!.fields.first, 'edit 0');
+    },
+  );
+
+  test(
+    'card update is serialized before a later undoable operation snapshots it',
+    () async {
+      final original = Card.newCard(
+        noteId: Int64(42),
+        templateIdx: 0,
+        deckId: Int64.ONE,
+        due: 1,
+      );
+      final cardId = await storage.addCard(original);
+      final stored = (await storage.getCard(cardId))!;
+      final externalUpdate = Card.fromProto(
+        stored.toProto()..queue = CardQueue.suspended.value,
+      );
+      final update = storage.updateCard(externalUpdate);
+      late Card beforeBulk;
+      final bulk = storage.runUndoableCollectionOperation(
+        prepare: () async {
+          beforeBulk = (await storage.getCard(cardId))!;
+          return true;
+        },
+        apply: () async {
+          await storage.updateCard(
+            Card.fromProto(
+              beforeBulk.toProto()..queue = CardQueue.userBuried.value,
+            ),
+          );
+        },
+        undo: () async => storage.addOrUpdateCard(beforeBulk),
+        redo: () async => storage.addOrUpdateCard(
+          Card.fromProto(
+            beforeBulk.toProto()..queue = CardQueue.userBuried.value,
+          ),
+        ),
+      );
+
+      await update;
+      expect(await bulk, isTrue);
+      await storage.undoLastCollectionOperation();
+      expect((await storage.getCard(cardId))!.queue, CardQueue.suspended);
+    },
+  );
+
+  test(
+    'deck collapse waits until an undoable collection operation finishes',
+    () async {
+      final operationStarted = Completer<void>();
+      final continueOperation = Completer<void>();
+      final operation = storage.runUndoableCollectionOperation(
+        apply: () async {
+          operationStarted.complete();
+          await continueOperation.future;
+        },
+        undo: () async {},
+        redo: () async {},
+      );
+      await operationStarted.future;
+
+      final collapse = storage.setDeckCollapsed(Int64.ONE, collapsed: false);
+      continueOperation.complete();
+      await operation;
+      await collapse;
+
+      expect(storage.decks.getDeck(Int64.ONE)!.common.studyCollapsed, isFalse);
+    },
+  );
+
+  test(
+    'bulk mutation started during note update waits until its database writes finish',
+    () async {
+      late Future<bool> bulkOperation;
+      onNowMillis = () {
+        onNowMillis = null;
+        bulkOperation = storage.runUndoableCollectionOperation(
+          apply: () async {
+            final note = (await storage.getNote(Int64(42)))!
+              ..setField(0, 'bulk change');
+            note.prepareForUpdate(_normalNotetype(), normalizeText: true);
+            await storage.updateNote(note);
+          },
+          undo: () async {},
+          redo: () async {},
+        );
+      };
+
+      await storage.updateExistingNote(_note(fields: ['note update', 'back']));
+      expect(await bulkOperation, isTrue);
+      expect((await storage.getNote(Int64(42)))!.fields, [
+        'bulk change',
+        'back',
+      ]);
     },
   );
 

@@ -117,6 +117,15 @@ abstract interface class CardBrowserNoteUpdateUndoController {
   Future<void> undoLastNoteUpdate();
 }
 
+/// Collection operation history for source-compatible browser bulk undo.
+abstract interface class CardBrowserCollectionUndoController {
+  bool get canUndoCollectionOperation;
+  bool get canRedoCollectionOperation;
+  int get collectionUndoGeneration;
+  Future<void> undoLastCollectionOperation();
+  Future<void> redoLastCollectionOperation();
+}
+
 /// Optional mode capability for controllers backed by a collection browser.
 abstract interface class CardBrowserModeController {
   Future<CardBrowserSnapshot> updateMode(BrowserColumnMode mode);
@@ -1256,17 +1265,163 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
 
   void _runBulkAction(CardBrowserBulkAction action) {
     _runAction(() async {
-      await widget.controller.performBulkAction(
-        action,
-        List.unmodifiable(_selectedRows),
-      );
+      final controller = widget.controller;
+      final undoController = controller is CardBrowserCollectionUndoController
+          ? controller as CardBrowserCollectionUndoController
+          : null;
+      final generationBefore = undoController?.collectionUndoGeneration;
+      Object? actionError;
+      try {
+        await widget.controller.performBulkAction(
+          action,
+          List.unmodifiable(_selectedRows),
+        );
+      } catch (error) {
+        actionError = error;
+      }
+      final committed =
+          actionError == null ||
+          (undoController != null &&
+              undoController.collectionUndoGeneration != generationBefore);
+      if (!committed) {
+        Error.throwWithStackTrace(actionError, StackTrace.current);
+      }
       if (!mounted) return;
       if (action == CardBrowserBulkAction.delete) {
         _lastSelectedRowId = null;
         _publishSelection(const [], false);
       }
       await _search(_searchController.text);
+      if (!mounted) return;
+      if (actionError != null) _showActionError(actionError);
+      if (undoController != null &&
+          undoController.canUndoCollectionOperation &&
+          undoController.collectionUndoGeneration != generationBefore) {
+        _showCollectionHistorySnackbar(undoController, redo: false);
+      }
     });
+  }
+
+  void _showCollectionHistorySnackbar(
+    CardBrowserCollectionUndoController controller, {
+    required bool redo,
+    bool retryAfterFailure = false,
+  }) {
+    final strings = AppLocalizations.of(context)!;
+    final canAct = redo
+        ? controller.canRedoCollectionOperation
+        : controller.canUndoCollectionOperation;
+    if (!canAct) return;
+    final expectedGeneration = controller.collectionUndoGeneration;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          retryAfterFailure
+              ? strings.browserActionFailed
+              : redo
+              ? strings.browserBulkActionUndone
+              : strings.browserBulkActionCompleted,
+        ),
+        action: SnackBarAction(
+          label: redo
+              ? strings.browserRedoBulkAction
+              : strings.browserUndoBulkAction,
+          onPressed: () => redo
+              ? _redoLastCollectionOperation(expectedGeneration)
+              : _undoLastCollectionOperation(expectedGeneration),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _undoLastCollectionOperation(int expectedGeneration) async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserCollectionUndoController) {
+      return;
+    }
+    final undoController = controller as CardBrowserCollectionUndoController;
+    if (!undoController.canUndoCollectionOperation ||
+        undoController.collectionUndoGeneration != expectedGeneration) {
+      return;
+    }
+    var failed = false;
+    await _runAction(() async {
+      try {
+        await undoController.undoLastCollectionOperation();
+        if (!mounted) return;
+        await _search(_searchController.text);
+        if (mounted) {
+          _showCollectionHistorySnackbar(undoController, redo: true);
+        }
+      } catch (_) {
+        failed = true;
+        rethrow;
+      }
+    });
+    if (!failed || !mounted) return;
+    final committed =
+        undoController.collectionUndoGeneration != expectedGeneration;
+    if (committed) await _search(_searchController.text);
+    if (!mounted) return;
+    if (!committed &&
+        undoController.canUndoCollectionOperation &&
+        undoController.collectionUndoGeneration == expectedGeneration) {
+      _showCollectionHistorySnackbar(
+        undoController,
+        redo: false,
+        retryAfterFailure: true,
+      );
+    } else if (undoController.canRedoCollectionOperation) {
+      _showCollectionHistorySnackbar(
+        undoController,
+        redo: true,
+        retryAfterFailure: true,
+      );
+    }
+  }
+
+  Future<void> _redoLastCollectionOperation(int expectedGeneration) async {
+    final controller = widget.controller;
+    if (controller is! CardBrowserCollectionUndoController) return;
+    final undoController = controller as CardBrowserCollectionUndoController;
+    if (!undoController.canRedoCollectionOperation ||
+        undoController.collectionUndoGeneration != expectedGeneration) {
+      return;
+    }
+    var failed = false;
+    await _runAction(() async {
+      try {
+        await undoController.redoLastCollectionOperation();
+        if (!mounted) return;
+        await _search(_searchController.text);
+        if (mounted) {
+          _showCollectionHistorySnackbar(undoController, redo: false);
+        }
+      } catch (_) {
+        failed = true;
+        rethrow;
+      }
+    });
+    if (!failed || !mounted) return;
+    final committed =
+        undoController.collectionUndoGeneration != expectedGeneration;
+    if (committed) await _search(_searchController.text);
+    if (!mounted) return;
+    if (!committed &&
+        undoController.canRedoCollectionOperation &&
+        undoController.collectionUndoGeneration == expectedGeneration) {
+      _showCollectionHistorySnackbar(
+        undoController,
+        redo: true,
+        retryAfterFailure: true,
+      );
+    } else if (undoController.canUndoCollectionOperation) {
+      _showCollectionHistorySnackbar(
+        undoController,
+        redo: false,
+        retryAfterFailure: true,
+      );
+    }
   }
 
   Future<void> _runAction(Future<void> Function() action) async {

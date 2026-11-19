@@ -646,6 +646,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteEditorSaveError => 'Changes could not be saved. Try again.';
 
   @override
+  String get noteEditorCommittedRetryError =>
+      'The note was added, but saving it to storage failed. Retry Save before leaving.';
+
+  @override
   String get noteEditorSaving => 'Saving…';
 
   @override

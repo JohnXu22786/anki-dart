@@ -1279,6 +1279,12 @@ abstract class AppLocalizations {
   /// **'Changes could not be saved. Try again.'**
   String get noteEditorSaveError;
 
+  /// No description provided for @noteEditorCommittedRetryError.
+  ///
+  /// In en, this message translates to:
+  /// **'The note was added, but saving it to storage failed. Retry Save before leaving.'**
+  String get noteEditorCommittedRetryError;
+
   /// No description provided for @noteEditorSaving.
   ///
   /// In en, this message translates to:

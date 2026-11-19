@@ -7,6 +7,7 @@ import 'dart:async';
 
 import 'package:anki_app/l10n/app_localizations.dart';
 import 'package:anki_app/note_editor_screen.dart';
+import 'package:anki_backend_models/anki_backend_models.dart' as models;
 import 'package:anki_dart/anki_dart.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
@@ -147,6 +148,74 @@ void main() {
       isEmpty,
     );
   });
+
+  testWidgets(
+    'committed add failure explains pending storage and blocks exit',
+    (tester) async {
+      final port = _FakeNewNoteEditorPort()
+        ..failAddAfterCommit = true
+        ..validation = const NoteFieldsCheckSuccess();
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: FilledButton(
+                onPressed: () => Navigator.push<void>(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => NoteEditorScreen.newNote(newNotePort: port),
+                  ),
+                ),
+                child: const Text('Open add editor'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open add editor'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('note-field-0')),
+        'will be committed',
+      );
+      await tester.tap(find.byKey(const Key('note-editor-save')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'The note was added, but saving it to storage failed. Retry Save before leaving.',
+        ),
+        findsOneWidget,
+      );
+      expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isFalse);
+      expect(
+        tester
+            .widget<IconButton>(
+              find.descendant(
+                of: find.byType(AppBar),
+                matching: find.byType(IconButton),
+              ),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, 'Cancel'))
+            .onPressed,
+        isNull,
+      );
+
+      port.failAddAfterCommit = false;
+      await tester.tap(find.byKey(const Key('note-editor-save')));
+      await tester.pumpAndSettle();
+      expect(port.addCalls, 2);
+      expect(port.loadedDrafts, 2);
+      expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isTrue);
+    },
+  );
 
   testWidgets('shows fields in notetype order and saves edited values', (
     tester,
@@ -501,6 +570,7 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
   int validationCalls = 0;
   int addCalls = 0;
   bool failAdd = false;
+  bool failAddAfterCommit = false;
   Completer<int>? pendingAdd;
   NoteFieldsCheckResult validation = const NoteFieldsCheckSuccess();
   Int64? lastNotetypeId;
@@ -516,6 +586,7 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
     return NewNoteEditorDraft(
       notetypeId: lastNotetypeId!,
       deckId: lastDeckId!,
+      note: models.Note(notetypeId: lastNotetypeId!, fields: const ['', '']),
       content: NoteEditorContent(
         labels: const ['Front', 'Back'],
         values: const ['', ''],
@@ -540,6 +611,10 @@ final class _FakeNewNoteEditorPort implements NewNoteEditorPort {
     required List<String> tags,
   }) async {
     addCalls++;
+    if (failAddAfterCommit) {
+      draft.note!.id = Int64(456);
+      throw StateError('driver flush failed after commit');
+    }
     if (failAdd) throw StateError('write failed');
     lastFields = fields;
     lastTags = tags;

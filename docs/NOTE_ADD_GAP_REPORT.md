@@ -22,10 +22,11 @@ Those rollback guarantees apply to operation errors before the savepoint is
 released. The injected driver's async flush runs after the SQLite commit; if
 that flush fails, the future reports a post-commit error while the complete
 operation remains in the database. Callers must re-read/reconcile before
-retrying after that error. The new-note editor keeps its in-memory draft and
-retries only the driver's pending flush before reporting success; it does not
-repeat the committed add operation. Other callers must explicitly reconcile
-the collection state before retrying.
+retrying after that error. The new-note editor keeps its in-memory draft,
+retries the driver's pending flush, and then persists any later field/tag
+edits through the existing note-update operation; it does not repeat the
+committed add operation. Other callers must explicitly reconcile the
+collection state before retrying.
 
 The last-deck setting remains the same JSON numeric value Core stores. When a
 later card-generation path reads it, the adapter parses the stored decimal

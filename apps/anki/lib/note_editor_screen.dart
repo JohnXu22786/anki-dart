@@ -103,6 +103,7 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
   List<String> _tags = [];
   bool _loading = true;
   bool _saving = false;
+  bool _committedRetryPending = false;
   String? _loadError;
   String? _saveError;
   Int64? _resolvedNoteId;
@@ -144,6 +145,7 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _loading = true;
       _loadError = null;
       _saveError = null;
+      _committedRetryPending = false;
     });
     try {
       late final NoteEditorContent content;
@@ -204,7 +206,10 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
         );
         if (!mounted) return;
         final strings = AppLocalizations.of(context)!;
-        setState(() => _saving = false);
+        setState(() {
+          _saving = false;
+          _committedRetryPending = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(strings.noteEditorAddedCards(cardCount))),
         );
@@ -222,9 +227,16 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
       });
     } catch (_) {
       if (!mounted) return;
+      final draftNoteId = _newNoteDraft?.note?.id;
+      final committedButNotFlushed =
+          widget._isNewNote && draftNoteId != null && draftNoteId != Int64.ZERO;
+      final strings = AppLocalizations.of(context)!;
       setState(() {
         _saving = false;
-        _saveError = AppLocalizations.of(context)!.noteEditorSaveError;
+        _committedRetryPending = committedButNotFlushed;
+        _saveError = committedButNotFlushed
+            ? strings.noteEditorCommittedRetryError
+            : strings.noteEditorSaveError;
       });
     }
   }
@@ -242,7 +254,7 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
     return PopScope(
-      canPop: !_saving,
+      canPop: !_saving && !_committedRetryPending,
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -252,7 +264,7 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
           ),
           leading: IconButton(
             tooltip: strings.cancel,
-            onPressed: _saving ? null : _cancel,
+            onPressed: _saving || _committedRetryPending ? null : _cancel,
             icon: const Icon(Icons.arrow_back),
           ),
         ),
@@ -343,7 +355,7 @@ final class _NoteEditorScreenState extends State<NoteEditorScreen> {
               runSpacing: 8,
               children: [
                 TextButton(
-                  onPressed: _saving ? null : _cancel,
+                  onPressed: _saving || _committedRetryPending ? null : _cancel,
                   child: Text(strings.cancel),
                 ),
                 FilledButton.icon(

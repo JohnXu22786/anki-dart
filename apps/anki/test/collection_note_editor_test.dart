@@ -108,6 +108,25 @@ void main() {
     },
   );
 
+  test('Deck Picker Browse Cards selects the exact 64-bit deck ID', () async {
+    final storage = runtime.storage!;
+    final wideDeckId = Int64(9007199254740995);
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: wideDeckId,
+        name: 'Browser wide ID',
+        kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+      ),
+    );
+
+    final repository = CollectionDeckPickerRepository(runtime);
+    await repository.selectDeckForBrowse(
+      DeckPickerDeck(id: 8, exactId: wideDeckId, name: 'Browser wide ID'),
+    );
+
+    expect(storage.currentDeckId, wideDeckId);
+  });
+
   test(
     'resolves a wide card ID and saves normalized fields to its note',
     () async {

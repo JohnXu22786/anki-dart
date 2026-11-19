@@ -17,7 +17,10 @@ import 'note_editor_screen.dart';
 /// Unsupported feature routes fail visibly until their backend units are
 /// implemented; successful-looking placeholder actions are not emitted.
 final class CollectionDeckPickerRepository
-    implements DeckPickerRepository, DeckPickerNewNotePortProvider {
+    implements
+        DeckPickerRepository,
+        DeckPickerNewNotePortProvider,
+        DeckPickerExactBrowseDeckProvider {
   const CollectionDeckPickerRepository(this.collections);
 
   final CollectionRuntime collections;
@@ -41,6 +44,15 @@ final class CollectionDeckPickerRepository
   @override
   Future<NewNoteEditorPort> createNewNotePortForCurrentDeck() =>
       Future.value(CollectionCardBrowserController(collections));
+
+  @override
+  Future<void> selectDeckForBrowse(DeckPickerDeck deck) async {
+    final id = deck.exactId ?? Int64(deck.id);
+    if (_storage.decks.getDeck(id) == null) {
+      throw StateError('deck not found: $id');
+    }
+    await _storage.selectDeck(id);
+  }
 
   CollectionSqliteStorage get _storage {
     final storage = collections.storage;

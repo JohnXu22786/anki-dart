@@ -1440,3 +1440,15 @@ setAsCurrent = true)` (`DeckPicker.kt:1657–1669`). The collection-backed
 editor port consequently uses the collection's current/default deck behavior,
 including exact 64-bit IDs on Web. Root `COPYING` remains byte-identical; no
 Android source or resource was copied.
+
+## Deck Picker Browse Cards route (Unit42)
+
+The context-menu Browse Cards action now carries the exact collection `Int64`
+deck ID through selection and the host route callback, so Web does not narrow
+IDs above JavaScript's safe integer range. This matches
+`DeckPickerViewModel.browseCards(deckId)`, which selects that deck before
+emitting `BrowserDestination.ToDeck(deckId)` (`DeckPicker.kt:1057–1061`,
+`DeckPickerViewModel.kt:277–280`). The optional exact-ID adapter preserves the
+existing repository fallback for non-collection hosts. Independently persisted
+Browser `lastDeckId` remains a separate source behavior. Root `COPYING` remains
+byte-identical; no Android source or resource was copied.

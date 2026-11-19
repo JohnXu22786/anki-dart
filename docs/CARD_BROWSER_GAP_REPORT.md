@@ -4,7 +4,7 @@ The Flutter Card Browser is shared across Android, iOS, Web, Windows, macOS,
 and Linux. Collection queries and preference behavior live in shared Dart;
 platform adapters provide storage and presentation.
 
-## Implemented through Unit 33
+## Implemented through Unit 36
 
 - Cards/Notes mode loads and saves through the active collection's
   `browserTableShowNotesMode` config. Cards remains the default.
@@ -23,8 +23,9 @@ platform adapters provide storage and presentation.
 - Question and Answer columns render the selected card using Core-compatible
   templates, field replacement, and text-line conversion.
 - Saved searches work in either mode. Selection and navigation preserve the
-  current row identity. Unit 33 adds existing-note field editing; preview and
-  bulk operations remain unavailable.
+  current row identity. Unit 33 adds existing-note field editing, and Unit 36
+  exposes its note-update undo action in the shared Card Browser menu; preview
+  and bulk operations remain unavailable.
 
 ## Unit 23 — Core row values and metadata
 
@@ -160,13 +161,31 @@ platform adapters provide storage and presentation.
   to the browser refreshes its current search while retaining its selection.
 - The collection operation runs in a SQLite savepoint, sets local note
   modification metadata, generates newly required normal/Cloze cards, and
-  records bounded in-memory undo/redo for note updates. It does not implement
-  Core's generic collection undo journal or expose a collection-level undo
-  action yet. New-note creation, tag editing, media, image occlusion, add-ons,
+  records bounded in-memory undo/redo for note updates. Unit 36 exposes an
+  accessible, localized note-update undo action from the Card Browser collection
+  menu. This remains scoped to note updates and does not implement Core's
+  generic collection undo journal; the Card Browser has no matching redo action.
+  New-note creation, tag editing, media, image occlusion, add-ons,
   note-type and template editing, preview, bulk actions, and Android-only
   editor affordances remain follow-up work.
 - Source pins, hashes, attribution, and adaptation boundaries are recorded in
   `apps/anki/ANKIDROID_SOURCE.sha256` and `ANKIDROID_UPSTREAM.md`.
+
+## Unit 36 — collection undo after note edits
+
+- After an existing-note save, the Card Browser shows a localized, accessible
+  undo menu action when the bounded note-update history reports it available.
+  The action disappears or refreshes after save, undo, collection changes,
+  history invalidation, and failed mode changes; successful replay refreshes
+  the visible browser results. Replay errors use the existing localized browser
+  action error.
+- This is the pinned source's collection-level undo placement. It does not add
+  undo or redo controls to the editor, expose redo from the Card Browser, or
+  claim that unrelated collection operations can be undone. The shared Flutter
+  surface applies the same behavior on Android, iOS, Web, Windows, macOS, and
+  Linux.
+- The source mapping and license boundary are recorded in
+  `ANKIDROID_UPSTREAM.md`.
 
 ## Remaining migration work
 

@@ -63,7 +63,7 @@ void main() {
     },
   );
 
-  testWidgets('Export deck publishes the selected exact deck ID', (
+  testWidgets('Export deck opens options and publishes typed selected deck', (
     tester,
   ) async {
     final exactId = Int64.parseInt('9007199254740995');
@@ -79,9 +79,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Export deck'));
     await tester.pumpAndSettle();
+    expect(repository.exportRequests, isEmpty);
+    expect(find.text('Anki deck package (.apkg)'), findsOneWidget);
+    await tester.tap(find.text('Export').last);
+    await tester.pumpAndSettle();
 
     expect(repository.exportRequests, hasLength(1));
     expect(repository.exportRequests.single.deckId, exactId);
+    expect(
+      repository.exportRequests.single.format,
+      DeckPickerExportFormat.apkg,
+    );
     expect(repository.actions, isEmpty);
   });
 

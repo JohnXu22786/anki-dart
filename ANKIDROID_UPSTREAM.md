@@ -1,5 +1,29 @@
 # AnkiDroid source baseline
 
+## Deck Picker export options dialog (Unit 63)
+
+`lib/src/deck_picker_export_deck_request.dart` and
+`apps/anki/lib/deck_picker_export_dialog.dart` model the Deck Picker export
+format selector, source-defined option defaults and visibility, deck scope, and
+typed callback request. They follow AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+`ExportDialogFragment.kt`, `dialog_export_options.xml`,
+`ExportDialogFragmentTest.kt`, `BackendExporting.kt`, and
+`DeckPickerViewModel.kt`. Exact source hashes are recorded in
+`apps/anki/ANKIDROID_SOURCE.sha256`. The format order is Collection, APKG,
+Notes plain text, and Cards plain text. Deck Picker opens APKG and selects the
+requested deck when available; a missing/stale selection starts at All decks.
+Collection export hides the deck selector. APKG and text exports retain the
+selected exact `Int64` deck ID, while All decks maps to an unrestricted null
+limit. The callback carries the chosen format and option values; file creation,
+media packaging, paths, progress, and save/share remain host work. No export
+completion is reported by this configuration-only route.
+
+The pinned AnkiDroid sources declare `GPL-3.0-or-later`; the Dart adaptation and
+focused source-derived model/widget tests are Copyright © 2026 John Tsui under
+the same license. Root `COPYING` remains unchanged. See `NOTICE.md` for the
+source and attribution record.
+
 ## Deck Picker normal-deck daily limits (Unit 56)
 
 `apps/anki/lib/deck_options_editor.dart`, the `DeckPickerDailyLimitsProvider`

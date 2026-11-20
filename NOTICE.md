@@ -1,3 +1,20 @@
+## Deck Picker export options dialog
+
+[`lib/src/deck_picker_export_deck_request.dart`](lib/src/deck_picker_export_deck_request.dart),
+[`apps/anki/lib/deck_picker_export_dialog.dart`](apps/anki/lib/deck_picker_export_dialog.dart),
+and their focused tests adapt the export options behavior from AnkiDroid 2.25.3
+`ExportDialogFragment.kt`, `dialog_export_options.xml`,
+`ExportDialogFragmentTest.kt`, `BackendExporting.kt`, and
+`DeckPickerViewModel.kt`, pinned to commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The dialog preserves the four
+format choices, defaults, option visibility, selected deck and all-deck scope,
+and the typed callback boundary with exact `Int64` IDs. It does not generate an
+export file or handle media, destinations, progress, or delivery. Exact source
+hashes are listed in `apps/anki/ANKIDROID_SOURCE.sha256`. The pinned sources
+declare `GPL-3.0-or-later`; the adaptation and tests are Copyright © 2026 John
+Tsui under the same license. Root `COPYING` remains unchanged. See
+[`ANKIDROID_UPSTREAM.md`](ANKIDROID_UPSTREAM.md) for the behavior boundary.
+
 ## LibAnki Collection raw backend forwarding
 
 [`collection_remaining_raw.dart`](lib/src/collection_remaining_raw.dart) and its

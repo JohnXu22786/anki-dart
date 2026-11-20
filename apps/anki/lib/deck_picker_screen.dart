@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import 'dart:async';
+
 import 'package:anki_dart/deck_picker.dart';
 import 'package:anki_dart/anki_dart.dart'
     show CustomStudyCardState, CustomStudySavedState;
@@ -12,6 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'l10n/app_localizations.dart';
+import 'deck_picker_export_dialog.dart';
 import 'note_editor_screen.dart';
 import 'deck_description_editor.dart';
 import 'deck_options_editor.dart';
@@ -799,6 +802,7 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
       ),
     );
     if (action != null) {
+      if (!mounted) return;
       if (action == DeckPickerAction.browseCards &&
           widget.onBrowseCards != null) {
         await _browseCards(deck);
@@ -806,11 +810,15 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
         final repository = widget.repository;
         if (repository is DeckPickerExportDeckProvider) {
           final provider = repository as DeckPickerExportDeckProvider;
-          final request = projectDeckPickerExportDeck(
-            exactDeckId: deck.exactId,
-            legacyDeckId: deck.id,
+          await showDialog<void>(
+            context: context,
+            builder: (context) => DeckPickerExportDialog(
+              decks: _loadedDecks,
+              selectedDeckId: deck.exactId ?? Int64(deck.id),
+              onExport: (request) =>
+                  unawaited(_invoke(() => provider.exportDeck(request))),
+            ),
           );
-          await _invoke(() => provider.exportDeck(request));
         } else {
           await _invoke(
             () => Future<void>.error(

@@ -355,6 +355,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportDeck => 'Export deck';
 
   @override
+  String get exportDialogTitle => 'Export deck';
+
+  @override
+  String get exportFormat => 'Export format';
+
+  @override
+  String get exportScope => 'Decks';
+
+  @override
+  String get allDecks => 'All decks';
+
+  @override
+  String get exportCollection => 'Anki collection package (.colpkg)';
+
+  @override
+  String get exportApkg => 'Anki deck package (.apkg)';
+
+  @override
+  String get exportNotes => 'Notes in plain text (.txt)';
+
+  @override
+  String get exportCards => 'Cards in plain text (.txt)';
+
+  @override
+  String get export => 'Export';
+
+  @override
+  String get includeScheduling => 'Include scheduling information';
+
+  @override
+  String get includeDeckConfigs => 'Include deck configurations';
+
+  @override
+  String get includeMedia => 'Include media';
+
+  @override
+  String get includeLegacy => 'Support older Anki versions';
+
+  @override
+  String get includeHtml => 'Include HTML and media references';
+
+  @override
+  String get includeTags => 'Include tags';
+
+  @override
+  String get includeDeckName => 'Include deck';
+
+  @override
+  String get includeNotetypeName => 'Include note type';
+
+  @override
+  String get includeGuid => 'Include GUID';
+
+  @override
   String get unbury => 'Unbury cards';
 
   @override

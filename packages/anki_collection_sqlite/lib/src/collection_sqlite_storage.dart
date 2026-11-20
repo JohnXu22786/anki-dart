@@ -2680,6 +2680,28 @@ WHERE queue IN (-2, -3)
     return rows.isEmpty ? null : _cardFromRow(rows.first);
   }
 
+  /// Returns the union of note tags in [deckId] and its descendants.
+  ///
+  /// The host combines these with the collection tag table to preserve
+  /// TagsDialog's custom-study selection and hierarchy behavior.
+  Future<List<String>> tagsForDeck(Int64 deckId) async {
+    final deck = _deckStorage.getDeck(deckId);
+    if (deck == null) throw StateError('deck not found: $deckId');
+    final ids = _deckStorage.deckIdWithChildren(deck).toList(growable: false);
+    if (ids.isEmpty) return const [];
+    final placeholders = List.filled(ids.length, '?').join(', ');
+    final rows = _database.select(
+      'SELECT n.tags FROM cards c JOIN notes n ON n.id = c.nid '
+      'WHERE c.did IN ($placeholders) ORDER BY n.id, c.id',
+      ids.map(_toSqlInt64).toList(growable: false),
+    );
+    final tagsOnNotes = <String>{};
+    for (final row in rows) {
+      tagsOnNotes.addAll(_splitTags(row['tags'] as String));
+    }
+    return tagsOnNotes.toList(growable: false);
+  }
+
   /// Returns stored cards in the requested ID order, omitting missing IDs.
   ///
   /// IDs are chunked to stay below conservative SQLite bind-parameter limits.

@@ -402,5 +402,27 @@
   "deckUnburyUndone": "Deck unbury undone",
   "deckUnburyRedone": "Deck unbury redone",
   "undoDeckUnbury": "Undo",
-  "redoDeckUnbury": "Redo"
+  "redoDeckUnbury": "Redo",
+  "customStudyCardStateOrTag": "Study by card state or tag",
+  "customStudyNewCardsOnly": "New cards only",
+  "customStudyDueCardsOnly": "Due cards only",
+  "customStudyReviewCardsRandom": "All review cards in random order",
+  "customStudyAllCardsRandom": "All cards in random order",
+  "customStudyCardsToStudy": "Cards to study",
+  "customStudyIncludeTag": "Include {tag}",
+  "@customStudyIncludeTag": {
+    "placeholders": {
+      "tag": {}
+    }
+  },
+  "customStudyExcludeTag": "Exclude {tag}",
+  "@customStudyExcludeTag": {
+    "placeholders": {
+      "tag": {}
+    }
+  },
+  "customStudyTooManyTags": "Select no more than 100 tags.",
+  "customStudyPositiveCount": "Enter a positive card count.",
+  "customStudyInclude": "Include",
+  "customStudyExclude": "Exclude"
 }

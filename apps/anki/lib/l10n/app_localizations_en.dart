@@ -815,4 +815,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get redoDeckUnbury => 'Redo';
+
+  @override
+  String get customStudyCardStateOrTag => 'Study by card state or tag';
+
+  @override
+  String get customStudyNewCardsOnly => 'New cards only';
+
+  @override
+  String get customStudyDueCardsOnly => 'Due cards only';
+
+  @override
+  String get customStudyReviewCardsRandom => 'All review cards in random order';
+
+  @override
+  String get customStudyAllCardsRandom => 'All cards in random order';
+
+  @override
+  String get customStudyCardsToStudy => 'Cards to study';
+
+  @override
+  String customStudyIncludeTag(Object tag) {
+    return 'Include $tag';
+  }
+
+  @override
+  String customStudyExcludeTag(Object tag) {
+    return 'Exclude $tag';
+  }
+
+  @override
+  String get customStudyTooManyTags => 'Select no more than 100 tags.';
+
+  @override
+  String get customStudyPositiveCount => 'Enter a positive card count.';
+
+  @override
+  String get customStudyInclude => 'Include';
+
+  @override
+  String get customStudyExclude => 'Exclude';
 }

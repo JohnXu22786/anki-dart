@@ -1716,6 +1716,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Exclude'**
   String get customStudyExclude;
+
+  /// No description provided for @reviewAhead.
+  ///
+  /// In en, this message translates to:
+  /// **'Review ahead'**
+  String get reviewAhead;
+
+  /// No description provided for @reviewAheadDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days to review ahead'**
+  String get reviewAheadDays;
+
+  /// No description provided for @reviewAheadMinimumDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter at least 1 day.'**
+  String get reviewAheadMinimumDays;
+
+  /// No description provided for @customStudyNoCards.
+  ///
+  /// In en, this message translates to:
+  /// **'No cards matched the criteria you provided.'**
+  String get customStudyNoCards;
+
+  /// No description provided for @day.
+  ///
+  /// In en, this message translates to:
+  /// **'day'**
+  String get day;
+
+  /// No description provided for @days.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get days;
 }
 
 class _AppLocalizationsDelegate

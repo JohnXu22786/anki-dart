@@ -3,7 +3,6 @@
 
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -880,4 +879,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customStudyExclude => 'Exclude';
+
+  @override
+  String get reviewAhead => 'Review ahead';
+
+  @override
+  String get reviewAheadDays => 'Days to review ahead';
+
+  @override
+  String get reviewAheadMinimumDays => 'Enter at least 1 day.';
+
+  @override
+  String get customStudyNoCards =>
+      'No cards matched the criteria you provided.';
+
+  @override
+  String get day => 'day';
+
+  @override
+  String get days => 'days';
 }

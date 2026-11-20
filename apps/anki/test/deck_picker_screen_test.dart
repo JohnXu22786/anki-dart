@@ -1216,6 +1216,8 @@ void main() {
       );
       await tester.tap(find.text('Custom study'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Study by card state or tag'));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).last, '25');
       await tester.tap(find.bySemanticsLabel('Include exam'));
       await tester.tap(find.text('Create'));
@@ -1228,6 +1230,51 @@ void main() {
       expect(repository.customStudyRequests.single.cardLimit, 25);
       expect(repository.customStudyRequests.single.includedTags, ['exam']);
       expect(await SharedPreferencesAsync().getInt('amountOfCards'), 25);
+    },
+  );
+
+  testWidgets(
+    'Review Ahead disables Create until the selected period matches',
+    (tester) async {
+      final deckId = Int64.parseInt('9007199254740995');
+      final repository = _DeckRepository([
+        DeckPickerDeck(id: 8, exactId: deckId, name: 'Biology'),
+      ])..reviewAheadMatches = false;
+      await tester.pumpWidget(_app(repository));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More actions for Biology'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Custom study'),
+        160,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Custom study'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Review ahead'));
+      await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
+
+      final create = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Create'),
+      );
+      expect(create.onPressed, isNull);
+      expect(
+        find.text('No cards matched the criteria you provided.'),
+        findsOneWidget,
+      );
+
+      repository.reviewAheadMatches = true;
+      await tester.enterText(find.byType(TextField).last, '3');
+      await tester.pumpAndSettle();
+      final enabled = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Create'),
+      );
+      expect(enabled.onPressed, isNotNull);
+      await tester.tap(find.text('Create'));
+      await tester.pumpAndSettle();
+      expect(repository.reviewAheadRequests, [(deckId, 3)]);
+      expect(await SharedPreferencesAsync().getInt('aheadDays'), 3);
     },
   );
 
@@ -1504,6 +1551,7 @@ final class _DeckRepository
         DeckPickerEmptyFilteredDeckProvider,
         DeckPickerDescriptionProvider,
         DeckPickerCustomStudyProvider,
+        DeckPickerReviewAheadProvider,
         DeckPickerDailyLimitsProvider,
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
@@ -1561,6 +1609,8 @@ final class _DeckRepository
   final filteredRequests = <FilteredDeckRequest>[];
   final customStudyDecks = <Int64>[];
   final customStudyRequests = <CustomStudyTagsRequest>[];
+  bool reviewAheadMatches = true;
+  final reviewAheadRequests = <(Int64, int)>[];
   Completer<DeckPickerDeletionResult>? pendingDelete;
   Completer<DeckPickerUnburyResult>? pendingUnbury;
   final deletedExact = <Int64>[];
@@ -1816,6 +1866,14 @@ final class _DeckRepository
     customStudyDecks.add(deck.exactId ?? Int64(deck.id));
     customStudyRequests.add(request);
   }
+
+  @override
+  Future<bool> hasReviewAheadCards(DeckPickerDeck deck, int days) async =>
+      reviewAheadMatches;
+
+  @override
+  Future<void> createReviewAhead(DeckPickerDeck deck, int days) async =>
+      reviewAheadRequests.add((deck.exactId ?? Int64(deck.id), days));
 
   @override
   Future<void> createDeck(String name) async {}

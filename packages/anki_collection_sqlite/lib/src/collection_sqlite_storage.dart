@@ -197,6 +197,22 @@ final class CollectionSqliteStorage
     return result;
   }
 
+  /// Returns whether a Core search matches at least one card in this
+  /// collection. This uses the same parser, timing context and SQL compiler as
+  /// filtered-deck construction, while limiting work to one result.
+  Future<bool> hasCardsMatchingSearch(String search) async {
+    final nodes = searchParser.parse(search);
+    final node = nodes.length == 1
+        ? nodes.single
+        : searchParser.GroupNode(nodes);
+    final plan = compileSearchSqlWithSort(
+      node,
+      timing: _filteredSearchTiming(),
+      sortOrder: SearchSqlSortOrder.custom('c.id limit 1'),
+    );
+    return (await executeSearchPlan(plan)).isNotEmpty;
+  }
+
   /// Reads a JSON value from the collection config table.
   Object? readCollectionConfig(String key) {
     final rows = _database.select('SELECT val FROM config WHERE key = ?', [

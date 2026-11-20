@@ -903,6 +903,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get previewNewCardsDays => 'Days since added';
 
   @override
+  String get increaseTodaysNewLimit => 'Increase today\'s new card limit';
+
+  @override
+  String get increaseTodaysReviewLimit => 'Increase today\'s review card limit';
+
+  @override
+  String get availableNewCards => 'Available new cards';
+
+  @override
+  String get availableReviewCards => 'Available review cards';
+
+  @override
+  String get inSubdecks => 'in subdecks';
+
+  @override
+  String get ok => 'OK';
+
+  @override
   String get customStudyNoCards =>
       'No cards matched the criteria you provided.';
 

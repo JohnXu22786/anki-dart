@@ -56,7 +56,14 @@ enum DeckPickerAction {
   deleteDeck,
 }
 
-enum _CustomStudyChoice { tags, reviewAhead, forgotten, previewNewCards }
+enum _CustomStudyChoice {
+  tags,
+  reviewAhead,
+  forgotten,
+  previewNewCards,
+  extendNew,
+  extendReview,
+}
 
 /// Values entered in filtered-deck options; query semantics belong to the host.
 final class FilteredDeckRequest {
@@ -180,6 +187,41 @@ abstract interface class DeckPickerReviewAheadProvider {
 abstract interface class DeckPickerForgottenCardsProvider {
   Future<bool> hasForgottenCards(DeckPickerDeck deck, int days);
   Future<void> createForgottenCards(DeckPickerDeck deck, int days);
+}
+
+abstract interface class DeckPickerExtendLimitsProvider {
+  Future<CustomStudyLimitDefaults> customStudyLimitDefaults(
+    DeckPickerDeck deck,
+  );
+  Future<void> extendTodayLimits(
+    DeckPickerDeck deck,
+    CustomStudyLimitRequest request,
+  );
+}
+
+enum CustomStudyLimitKind { newCards, reviewCards }
+
+final class CustomStudyLimitRequest {
+  const CustomStudyLimitRequest({required this.kind, required this.delta});
+  final CustomStudyLimitKind kind;
+  final int delta;
+}
+
+final class CustomStudyLimitDefaults {
+  const CustomStudyLimitDefaults({
+    required this.extendNew,
+    required this.extendReview,
+    required this.availableNew,
+    required this.availableReview,
+    required this.availableNewInChildren,
+    required this.availableReviewInChildren,
+  });
+  final int extendNew,
+      extendReview,
+      availableNew,
+      availableReview,
+      availableNewInChildren,
+      availableReviewInChildren;
 }
 
 abstract interface class DeckPickerPreviewNewCardsProvider {
@@ -802,6 +844,22 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
                 onTap: () =>
                     Navigator.pop(context, _CustomStudyChoice.previewNewCards),
               ),
+            if (widget.repository is DeckPickerExtendLimitsProvider) ...[
+              ListTile(
+                title: Text(
+                  AppLocalizations.of(context)!.increaseTodaysNewLimit,
+                ),
+                onTap: () =>
+                    Navigator.pop(context, _CustomStudyChoice.extendNew),
+              ),
+              ListTile(
+                title: Text(
+                  AppLocalizations.of(context)!.increaseTodaysReviewLimit,
+                ),
+                onTap: () =>
+                    Navigator.pop(context, _CustomStudyChoice.extendReview),
+              ),
+            ],
           ],
         ),
         actions: [
@@ -823,6 +881,11 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
     }
     if (choice == _CustomStudyChoice.previewNewCards) {
       await _previewNewCards(deck);
+      return;
+    }
+    if (choice == _CustomStudyChoice.extendNew ||
+        choice == _CustomStudyChoice.extendReview) {
+      await _extendTodayLimits(deck, choice);
       return;
     }
     late final List<String> tags;
@@ -926,6 +989,52 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
         // Saving a default is optional after the collection operation succeeds.
       }
     });
+  }
+
+  Future<void> _extendTodayLimits(
+    DeckPickerDeck deck,
+    _CustomStudyChoice choice,
+  ) async {
+    final provider = widget.repository as DeckPickerExtendLimitsProvider;
+    final isNew = choice == _CustomStudyChoice.extendNew;
+    try {
+      final defaults = await provider.customStudyLimitDefaults(deck);
+      if (!mounted) return;
+      final value = await showDialog<int>(
+        context: context,
+        builder: (_) => _ExtendTodayLimitDialog(
+          title: isNew
+              ? AppLocalizations.of(context)!.increaseTodaysNewLimit
+              : AppLocalizations.of(context)!.increaseTodaysReviewLimit,
+          initialValue: isNew ? defaults.extendNew : defaults.extendReview,
+          available: isNew ? defaults.availableNew : defaults.availableReview,
+          availableInChildren: isNew
+              ? defaults.availableNewInChildren
+              : defaults.availableReviewInChildren,
+          availableLabel: isNew
+              ? AppLocalizations.of(context)!.availableNewCards
+              : AppLocalizations.of(context)!.availableReviewCards,
+        ),
+      );
+      if (value == null) return;
+      await _invoke(
+        () => provider.extendTodayLimits(
+          deck,
+          CustomStudyLimitRequest(
+            kind: isNew
+                ? CustomStudyLimitKind.newCards
+                : CustomStudyLimitKind.reviewCards,
+            delta: value,
+          ),
+        ),
+        reloadOnError: true,
+      );
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
+    }
   }
 
   Future<void> _editDailyLimits(DeckPickerDeck deck) async {
@@ -1935,6 +2044,80 @@ DeckNode _toDeckNode(
     children: [
       for (final child in deck.children)
         _toDeckNode(child, depth + 1, deckIndex),
+    ],
+  );
+}
+
+final class _ExtendTodayLimitDialog extends StatefulWidget {
+  const _ExtendTodayLimitDialog({
+    required this.title,
+    required this.initialValue,
+    required this.available,
+    required this.availableInChildren,
+    required this.availableLabel,
+  });
+  final String title, availableLabel;
+  final int initialValue, available, availableInChildren;
+  @override
+  State<_ExtendTodayLimitDialog> createState() =>
+      _ExtendTodayLimitDialogState();
+}
+
+class _ExtendTodayLimitDialogState extends State<_ExtendTodayLimitDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialValue.toString(),
+  );
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.title),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.availableInChildren == 0
+              ? '${widget.availableLabel}: ${widget.available}'
+              : '${widget.availableLabel}: ${widget.available} (${widget.availableInChildren} ${AppLocalizations.of(context)!.inSubdecks})',
+        ),
+        TextField(
+          key: const ValueKey('custom-study-limit-delta'),
+          controller: _controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(signed: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^-?\d*')),
+          ],
+        ),
+      ],
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: Text(AppLocalizations.of(context)!.cancel),
+      ),
+      ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _controller,
+        builder: (context, editingValue, child) {
+          final parsed = int.tryParse(editingValue.text);
+          final value =
+              parsed != null && parsed >= -0x80000000 && parsed <= 0x7fffffff
+              ? parsed
+              : null;
+          return TextButton(
+            onPressed: value == null || value == 0
+                ? null
+                : () => Navigator.pop(context, value),
+            child: child!,
+          );
+        },
+        child: Text(AppLocalizations.of(context)!.ok),
+      ),
     ],
   );
 }

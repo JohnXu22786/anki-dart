@@ -58,6 +58,7 @@ final class CollectionDeckPickerRepository
         DeckPickerForgottenCardsProvider,
         DeckPickerPreviewNewCardsProvider,
         DeckPickerDailyLimitsProvider,
+        DeckPickerExtendLimitsProvider,
         DeckPickerCollectionUndoProvider {
   const CollectionDeckPickerRepository(this.collections);
 
@@ -419,6 +420,35 @@ final class CollectionDeckPickerRepository
     deck.exactId ?? Int64(deck.id),
     description: description,
     markdownDescription: markdownDescription,
+  );
+
+  @override
+  Future<CustomStudyLimitDefaults> customStudyLimitDefaults(
+    DeckPickerDeck deck,
+  ) async {
+    final defaults = await _storage.customStudyLimitDefaults(
+      _customStudyDeckId(deck),
+    );
+    return CustomStudyLimitDefaults(
+      extendNew: defaults.extendNew,
+      extendReview: defaults.extendReview,
+      availableNew: defaults.availableNew,
+      availableReview: defaults.availableReview,
+      availableNewInChildren: defaults.availableNewInChildren,
+      availableReviewInChildren: defaults.availableReviewInChildren,
+    );
+  }
+
+  @override
+  Future<void> extendTodayLimits(
+    DeckPickerDeck deck,
+    CustomStudyLimitRequest request,
+  ) => _storage.extendCustomStudyLimits(
+    _customStudyDeckId(deck),
+    newDelta: request.kind == CustomStudyLimitKind.newCards ? request.delta : 0,
+    reviewDelta: request.kind == CustomStudyLimitKind.reviewCards
+        ? request.delta
+        : 0,
   );
 
   @override

@@ -1233,6 +1233,73 @@ void main() {
     },
   );
 
+  testWidgets('today limit extensions use signed int32 deltas for exact deck', (
+    tester,
+  ) async {
+    final deckId = Int64.parseInt('9007199254740995');
+    final repository = _DeckRepository([
+      DeckPickerDeck(id: 8, exactId: deckId, name: 'Biology'),
+    ]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    Future<void> openExtendChoice(String title) async {
+      await tester.tap(find.byTooltip('More actions for Biology'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Custom study'),
+        160,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Custom study'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(title));
+      await tester.pumpAndSettle();
+    }
+
+    await openExtendChoice("Increase today's new card limit");
+    await tester.enterText(
+      find.byKey(const ValueKey('custom-study-limit-delta')),
+      '2147483648',
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, 'OK'))
+          .onPressed,
+      isNull,
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('custom-study-limit-delta')),
+      '2147483647',
+    );
+    await tester.pump();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(repository.customStudyLimitRequests.single.$1, deckId);
+    expect(
+      repository.customStudyLimitRequests.single.$2.kind,
+      CustomStudyLimitKind.newCards,
+    );
+    expect(repository.customStudyLimitRequests.single.$2.delta, 2147483647);
+
+    await openExtendChoice("Increase today's review card limit");
+    await tester.enterText(
+      find.byKey(const ValueKey('custom-study-limit-delta')),
+      '-2147483648',
+    );
+    await tester.pump();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(repository.customStudyLimitRequests.last.$1, deckId);
+    expect(
+      repository.customStudyLimitRequests.last.$2.kind,
+      CustomStudyLimitKind.reviewCards,
+    );
+    expect(repository.customStudyLimitRequests.last.$2.delta, -2147483648);
+  });
+
   testWidgets(
     'Review Ahead disables Create until the selected period matches',
     (tester) async {
@@ -1614,6 +1681,7 @@ final class _DeckRepository
         DeckPickerReviewAheadProvider,
         DeckPickerForgottenCardsProvider,
         DeckPickerPreviewNewCardsProvider,
+        DeckPickerExtendLimitsProvider,
         DeckPickerDailyLimitsProvider,
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
@@ -1693,6 +1761,24 @@ final class _DeckRepository
   final dailyLimitSaves = <(Int64, int, int)>[];
   int newLimit = 34;
   int reviewLimit = 187;
+  final customStudyLimitRequests = <(Int64, CustomStudyLimitRequest)>[];
+  @override
+  Future<CustomStudyLimitDefaults> customStudyLimitDefaults(
+    DeckPickerDeck deck,
+  ) async => const CustomStudyLimitDefaults(
+    extendNew: 3,
+    extendReview: 4,
+    availableNew: 2,
+    availableReview: 5,
+    availableNewInChildren: 1,
+    availableReviewInChildren: 0,
+  );
+  @override
+  Future<void> extendTodayLimits(
+    DeckPickerDeck deck,
+    CustomStudyLimitRequest request,
+  ) async =>
+      customStudyLimitRequests.add((deck.exactId ?? Int64(deck.id), request));
 
   @override
   Future<NewNoteEditorPort> selectDeckAndCreateNewNotePort(

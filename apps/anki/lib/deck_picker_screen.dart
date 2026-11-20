@@ -148,6 +148,10 @@ abstract interface class DeckPickerEmptyFilteredDeckProvider {
   Future<void> emptyFilteredDeck(DeckPickerDeck deck);
 }
 
+abstract interface class DeckPickerRebuildFilteredDeckProvider {
+  Future<void> rebuildFilteredDeck(DeckPickerDeck deck);
+}
+
 final class DeckPickerDeletionResult {
   const DeckPickerDeletionResult({
     required this.deckName,
@@ -675,6 +679,11 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
         final provider =
             widget.repository as DeckPickerEmptyFilteredDeckProvider;
         await _invoke(() => provider.emptyFilteredDeck(deck));
+      } else if (action == DeckPickerAction.rebuildFilteredDeck &&
+          widget.repository is DeckPickerRebuildFilteredDeckProvider) {
+        final provider =
+            widget.repository as DeckPickerRebuildFilteredDeckProvider;
+        await _invoke(() => provider.rebuildFilteredDeck(deck));
       } else {
         await _invoke(() => widget.repository.performAction(action, deck.id));
       }

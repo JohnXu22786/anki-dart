@@ -24,6 +24,7 @@ dependencies:
   anki_backend_protocol:
     path: ../../packages/anki_backend_protocol
   fixnum: ^1.1.0
+  protobuf: ^3.1.0
   flutter:
     sdk: flutter
   flutter_localizations:

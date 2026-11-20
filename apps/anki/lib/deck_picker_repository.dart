@@ -6,9 +6,13 @@
 import 'package:anki_backend_protocol/anki/decks.pb.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_backend_models/anki_backend_models.dart'
-    show normalizeDeckName;
-import 'package:anki_dart/anki_dart.dart' show FilteredDeckOptions;
+    show FilteredDeckKind, normalizeDeckName;
+import 'package:anki_backend_protocol/anki/decks.pb.dart' as deck_proto;
+import 'package:anki_search_parser/anki_search_parser.dart' show deckSearch;
+import 'package:anki_dart/anki_dart.dart'
+    show FilteredDeckOptions, SearchTermState;
 import 'package:fixnum/fixnum.dart';
+import 'package:protobuf/protobuf.dart';
 
 import 'collection_runtime.dart';
 import 'collection_card_browser_controller.dart';
@@ -25,6 +29,7 @@ final class CollectionDeckPickerRepository
         DeckPickerExactBrowseDeckProvider,
         DeckPickerRenameProvider,
         DeckPickerDeleteProvider,
+        DeckPickerRebuildFilteredDeckProvider,
         DeckPickerUnburyProvider,
         DeckPickerEmptyFilteredDeckProvider,
         DeckPickerCollectionUndoProvider {
@@ -80,10 +85,49 @@ final class CollectionDeckPickerRepository
   bool get scheduleRemindersEnabled => false;
 
   @override
-  FilteredDeckOptions get newFilteredDeckOptions => const FilteredDeckOptions();
+  FilteredDeckOptions get newFilteredDeckOptions {
+    final now = DateTime.now();
+    final storage = collections.storage;
+    final deck = collections.isInitialized && storage != null
+        ? storage.decks.getDeck(storage.currentDeckId)
+        : null;
+    final defaultSearch = deck == null || deck.kind is FilteredDeckKind
+        ? ''
+        : deckSearch(deck.name);
+    final defaultName =
+        'Filtered Deck ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    return FilteredDeckOptions(
+      name: defaultName,
+      title: defaultName,
+      filter1State: SearchTermState(
+        search: defaultSearch.isEmpty ? '' : '$defaultSearch is:due',
+        limit: '100',
+        index: 1,
+      ),
+      filter2State: SearchTermState(
+        search: defaultSearch.isEmpty ? '' : '$defaultSearch is:new',
+        limit: '20',
+        index: 6,
+      ),
+      delayAgain: '60',
+      delayHard: '600',
+    );
+  }
 
   @override
-  List<FilteredDeckOrderOption> get filteredDeckOrderOptions => const [];
+  List<FilteredDeckOrderOption> get filteredDeckOrderOptions => const [
+    FilteredDeckOrderOption(orderNumber: 0, label: 'Oldest reviewed first'),
+    FilteredDeckOrderOption(orderNumber: 1, label: 'Random'),
+    FilteredDeckOrderOption(orderNumber: 2, label: 'Intervals ascending'),
+    FilteredDeckOrderOption(orderNumber: 3, label: 'Intervals descending'),
+    FilteredDeckOrderOption(orderNumber: 4, label: 'Lapses'),
+    FilteredDeckOrderOption(orderNumber: 5, label: 'Added'),
+    FilteredDeckOrderOption(orderNumber: 6, label: 'Due'),
+    FilteredDeckOrderOption(orderNumber: 7, label: 'Reverse added'),
+    FilteredDeckOrderOption(orderNumber: 8, label: 'Retrievability ascending'),
+    FilteredDeckOrderOption(orderNumber: 9, label: 'Retrievability descending'),
+    FilteredDeckOrderOption(orderNumber: 10, label: 'Relative overdueness'),
+  ];
 
   @override
   Future<List<DeckPickerDeck>> loadDecks() async {
@@ -136,6 +180,23 @@ final class CollectionDeckPickerRepository
 
   @override
   Future<void> performAction(DeckPickerAction action, int deckId) async {
+    if (action == DeckPickerAction.rebuildFilteredDeck) {
+      final id = Int64(deckId);
+      final deck = _storage.decks.getDeck(id);
+      if (deck == null) throw StateError('deck not found: $deckId');
+      if (deck.kind case FilteredDeckKind(:final value)) {
+        await _storage.buildFilteredDeck(
+          deck_proto.FilteredDeckForUpdate(
+            id: id,
+            name: deck.name,
+            config: value.deepCopy(),
+            allowEmpty: true,
+          ),
+        );
+        return;
+      }
+      throw StateError('filtered deck required: $deckId');
+    }
     if (action == DeckPickerAction.emptyFilteredDeck) {
       await _storage.emptyFilteredDeck(Int64(deckId));
       return;
@@ -196,6 +257,25 @@ final class CollectionDeckPickerRepository
   }
 
   @override
+  Future<void> rebuildFilteredDeck(DeckPickerDeck deck) async {
+    final id = deck.exactId ?? Int64(deck.id);
+    final stored = _storage.decks.getDeck(id);
+    if (stored == null) throw StateError('deck not found: $id');
+    if (stored.kind case FilteredDeckKind(:final value)) {
+      await _storage.buildFilteredDeck(
+        deck_proto.FilteredDeckForUpdate(
+          id: id,
+          name: stored.name,
+          config: value.deepCopy(),
+          allowEmpty: true,
+        ),
+      );
+      return;
+    }
+    throw StateError('filtered deck required: $id');
+  }
+
+  @override
   bool isDeckNameAvailable(DeckPickerDeck deck, String name) {
     if (name.trim().isEmpty) return false;
     final storage = _storage;
@@ -223,7 +303,49 @@ final class CollectionDeckPickerRepository
   );
 
   @override
-  Future<void> buildFilteredDeck(FilteredDeckRequest request) => Future.error(
-    UnsupportedError('Filtered deck scheduling is not implemented yet.'),
-  );
+  Future<void> buildFilteredDeck(FilteredDeckRequest request) async {
+    int parsedLimit(String value) {
+      final parsed = int.tryParse(value);
+      if (parsed == null || parsed < 0 || parsed > 0x7fffffff) {
+        throw ArgumentError.value(value, 'limit', 'expected a signed 32-bit integer');
+      }
+      return parsed;
+    }
+
+    final term1 = deck_proto.Deck_Filtered_SearchTerm(
+      search: request.search1,
+      limit: parsedLimit(request.limit1),
+      order:
+          deck_proto.Deck_Filtered_SearchTerm_Order.valueOf(request.order1) ??
+          deck_proto.Deck_Filtered_SearchTerm_Order.OLDEST_REVIEWED_FIRST,
+    );
+    final terms = <deck_proto.Deck_Filtered_SearchTerm>[term1];
+    if (request.secondFilterEnabled) {
+      terms.add(
+        deck_proto.Deck_Filtered_SearchTerm(
+          search: request.search2,
+          limit: parsedLimit(request.limit2),
+          order:
+              deck_proto.Deck_Filtered_SearchTerm_Order.valueOf(
+                request.order2,
+              ) ??
+              deck_proto.Deck_Filtered_SearchTerm_Order.OLDEST_REVIEWED_FIRST,
+        ),
+      );
+    }
+    await _storage.buildFilteredDeck(
+      deck_proto.FilteredDeckForUpdate(
+        id: Int64.ZERO,
+        name: request.name,
+        allowEmpty: request.allowEmpty,
+        config: deck_proto.Deck_Filtered(
+          reschedule: request.shouldReschedule,
+          searchTerms: terms,
+          previewAgainSecs: int.tryParse(request.delayAgain) ?? 60,
+          previewHardSecs: int.tryParse(request.delayHard) ?? 600,
+          previewGoodSecs: int.tryParse(request.delayGood) ?? 0,
+        ),
+      ),
+    );
+  }
 }

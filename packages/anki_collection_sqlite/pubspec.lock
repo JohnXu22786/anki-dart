@@ -53,7 +53,7 @@ packages:
     source: path
     version: "0.1.0"
   anki_search_parser:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../anki_search_parser"
       relative: true

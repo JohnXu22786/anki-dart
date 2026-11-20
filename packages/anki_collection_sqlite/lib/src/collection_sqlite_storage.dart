@@ -15,6 +15,7 @@ import 'package:anki_backend_protocol/anki/collection.pb.dart'
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:anki_scheduler_timing/anki_scheduler_timing.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
+import 'package:anki_search_parser/anki_search_parser.dart' as searchParser;
 import 'package:fixnum/fixnum.dart';
 import 'package:protobuf/protobuf.dart';
 import 'package:sqlite3/common.dart';
@@ -117,6 +118,17 @@ final class FilteredDeckEmptyResult {
   final int cardsReturned;
   final int collectionUndoGeneration;
   final bool persistenceWarning;
+}
+
+/// Result of creating or rebuilding a filtered deck in the collection.
+final class FilteredDeckBuildResult {
+  const FilteredDeckBuildResult({
+    required this.deckId,
+    required this.cardsMoved,
+  });
+
+  final Int64 deckId;
+  final int cardsMoved;
 }
 
 /// A concrete adapter for the source-compatible collection open sequence.
@@ -1697,6 +1709,268 @@ INSERT OR REPLACE INTO cards (
       collectionUndoGeneration: committedUndoGeneration,
       persistenceWarning: persistenceWarning,
     );
+  }
+
+  /// Creates/updates a filtered deck and moves matching cards into it.
+  /// Search parsing, filtering, ordering and limits run on this collection.
+  Future<FilteredDeckBuildResult> buildFilteredDeck(
+    protoDeck.FilteredDeckForUpdate request,
+  ) async {
+    if (request.config.searchTerms.isEmpty ||
+        request.config.searchTerms.length > 2) {
+      throw ArgumentError('filtered decks require one or two search terms');
+    }
+    if (request.config.searchTerms.any((term) => term.limit > 0x7fffffff)) {
+      throw RangeError('filtered deck limits must fit a signed Kotlin Int');
+    }
+    if (request.name.trim().isEmpty) {
+      throw ArgumentError.value(request.name, 'name');
+    }
+    final name = normalizeDeckName(request.name.trim());
+
+    var deckId = request.id;
+    final existing = deckId == Int64.ZERO ? null : _deckStorage.getDeck(deckId);
+    if (deckId != Int64.ZERO && existing == null) {
+      throw StateError('deck not found: $deckId');
+    }
+    if (existing != null && existing.kind is! FilteredDeckKind) {
+      throw StateError('filtered deck required: $deckId');
+    }
+    final conflictingDeck = _deckStorage.getAllDecks().any(
+      (deck) =>
+          deck.id != deckId &&
+          compareUniCase(normalizeDeckName(deck.name), name) == 0,
+    );
+    if (conflictingDeck) {
+      throw StateError('deck name already exists: $name');
+    }
+
+    final config = request.config.deepCopy();
+    for (final term in config.searchTerms) {
+      term.search = searchParser.normalizeSearch(term.search);
+    }
+    final previousDeck = existing;
+    final previousCurrentDeckId = currentDeckId;
+    final cardsBefore = <String, Card>{};
+    final cardsAfter = <String, Card>{};
+    final beforeMtime = collectionModifiedAt;
+    var afterMtime = beforeMtime;
+    Deck? deckAfter;
+    FilteredDeckBuildResult? result;
+    await runUndoableCollectionOperation(
+      prepare: () async {
+        if (existing != null) {
+          final rows = _database.select(
+            'SELECT id FROM cards WHERE did = ? ORDER BY id',
+            [_toSqlInt64(existing.id)],
+          );
+          final cards = await getCardsByIds(
+            rows.map((row) => _readInt64(row['id'])),
+          );
+          for (final card in cards) {
+            cardsBefore[card.id.toString()] = card;
+          }
+        }
+        return true;
+      },
+      apply: () async {
+        final targetName = name;
+        var targetDeck = existing;
+        if (targetDeck == null) {
+          final now = Int64(
+            (_nowMillis?.call() ??
+                    DateTime.now().toUtc().millisecondsSinceEpoch) ~/
+                1000,
+          );
+          targetDeck = _deckStorage.addDeck(
+            Deck(
+              name: targetName,
+              mtimeSecs: now,
+              usn: -1,
+              common: Deck.newNormal().common,
+              kind: FilteredDeckKind(config),
+            ),
+          );
+          deckId = targetDeck.id;
+        } else {
+          targetDeck = Deck(
+            id: targetDeck.id,
+            name: targetName,
+            mtimeSecs: Int64(
+              (_nowMillis?.call() ??
+                      DateTime.now().toUtc().millisecondsSinceEpoch) ~/
+                  1000,
+            ),
+            usn: -1,
+            common: targetDeck.common,
+            kind: FilteredDeckKind(config),
+          );
+          _deckStorage.updateDeck(targetDeck);
+        }
+
+        // Rebuilding first returns cards already in this deck to their home queues.
+        final inDeck = await getCardsByIds(
+          _database
+              .select('SELECT id FROM cards WHERE did = ? ORDER BY id', [
+                _toSqlInt64(deckId),
+              ])
+              .map((row) => Int64.parseInt(_readInt64(row['id']).toString())),
+        );
+        for (final card in inDeck) {
+          cardsBefore.putIfAbsent(card.id.toString(), () => card);
+          await updateCard(_cardRestoredFromFilteredDeck(card));
+          cardsAfter[card.id.toString()] = _cardRestoredFromFilteredDeck(card);
+        }
+
+        var position = -100000;
+        final searchTiming = _filteredSearchTiming();
+        final movedIds = <String>{};
+        for (final term in config.searchTerms) {
+          final order = _filteredOrderSql(term.order.value, searchTiming);
+          final query = term.search.trim().isEmpty
+              ? '-is:suspended -is:buried'
+              : '(${term.search}) -is:suspended -is:buried';
+          final nodes = searchParser.parse(query);
+          final node = nodes.length == 1
+              ? nodes.single
+              : searchParser.GroupNode(nodes);
+          final compiledPlan = compileSearchSqlWithSort(
+            node,
+            timing: searchTiming,
+            sortOrder: SearchSqlSortOrder.custom(
+              '$order, fnvhash(c.id, c.mod) limit ${term.limit}',
+            ),
+          );
+          // Core's `-deck:filtered` predicate means cards currently in any
+          // filtered deck; this is stored directly in cards.odid, not a deck name.
+          final plan = CompiledSearchSqlWithSort(
+            search: CompiledSearchSql(
+              sql: compiledPlan.search.sql.replaceFirst(
+                RegExp(r' order by '),
+                ' and c.odid = 0 order by ',
+              ),
+              arguments: compiledPlan.search.arguments,
+              requiredTable: compiledPlan.search.requiredTable,
+            ),
+            preparationSql: compiledPlan.preparationSql,
+          );
+          final ids = await executeSearchPlan(plan);
+          for (final bigId in ids) {
+            final id = Int64.parseInt(bigId.toString());
+            if (movedIds.contains(id.toString())) continue;
+            final card = await getCard(id);
+            if (card == null || card.originalDeckId != Int64.ZERO) continue;
+            cardsBefore.putIfAbsent(card.id.toString(), () => card);
+            movedIds.add(id.toString());
+            final moved = Card.fromProto(
+              card.toProto()
+                ..deckId = deckId
+                ..originalDeckId = card.deckId
+                ..originalDue = card.due
+                ..queue = config.reschedule
+                    ? card.queue.value
+                    : CardQueue.review.value
+                // Core assigns search positions only to positive due values.
+                ..due = card.due > 0 ? position : card.due
+                ..usn = -1,
+            );
+            await updateCard(moved);
+            cardsAfter[id.toString()] = moved;
+            position++;
+          }
+        }
+        if (movedIds.isEmpty && !request.allowEmpty) {
+          throw StateError('filtered deck search returned no cards');
+        }
+        await selectDeck(deckId);
+        deckAfter = _deckStorage.getDeck(deckId);
+        afterMtime = Int64(
+          (_nowMillis?.call() ??
+                  DateTime.now().toUtc().millisecondsSinceEpoch) ~/
+              1000,
+        );
+        restoreCollectionModifiedAt(afterMtime);
+        result = FilteredDeckBuildResult(
+          deckId: deckId,
+          cardsMoved: movedIds.length,
+        );
+      },
+      undo: () async {
+        for (final card in cardsBefore.values) {
+          await updateCard(card);
+        }
+        if (previousDeck == null) {
+          _deckStorage.removeDeck(deckId);
+        } else {
+          _deckStorage.addOrUpdateDeckWithExistingId(previousDeck);
+        }
+        await selectDeck(previousCurrentDeckId);
+        restoreCollectionModifiedAt(beforeMtime);
+      },
+      redo: () async {
+        final deck = deckAfter;
+        if (deck == null) throw StateError('filtered deck redo state missing');
+        _deckStorage.addOrUpdateDeckWithExistingId(deck);
+        for (final card in cardsAfter.values) {
+          await updateCard(card);
+        }
+        await selectDeck(deck.id);
+        restoreCollectionModifiedAt(afterMtime);
+      },
+    );
+    return result!;
+  }
+
+  SearchSqlTiming _filteredSearchTiming() {
+    final nowMillis =
+        _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
+    final fallbackNow = nowMillis ~/ 1000;
+    late final SchedTimingToday timing;
+    try {
+      timing = timingTodayForNow(
+        now: DateTime.fromMillisecondsSinceEpoch(nowMillis).toLocal(),
+      );
+    } on Object {
+      // Small in-memory test collections may not contain Core's timing rows.
+      timing = SchedTimingToday(
+        now: fallbackNow,
+        daysElapsed: fallbackNow ~/ 86400,
+        nextDayAt: (fallbackNow ~/ 86400 + 1) * 86400,
+      );
+    }
+    return SearchSqlTiming(
+      daysElapsed: timing.daysElapsed,
+      now: BigInt.from(timing.now),
+      learnAheadSecs: _readConfigInt('collapseTime') ?? 1200,
+      nextDayAt: BigInt.from(timing.nextDayAt),
+    );
+  }
+
+  String _filteredOrderSql(int order, SearchSqlTiming timing) {
+    final now = timing.now;
+    final day = timing.daysElapsed;
+    final nextDay = timing.nextDayAt!;
+    final fsrsEnabled = readCollectionConfig('fsrs') == true;
+    return switch (order) {
+      0 => '(select max(id) from revlog where cid=c.id)',
+      1 => 'random()',
+      2 => 'c.ivl',
+      3 => 'c.ivl desc',
+      4 => 'c.lapses desc',
+      5 => 'n.id, c.ord',
+      6 =>
+        '(case when c.due > 1000000000 then c.due else (c.due - $day) * 86400 + $now end), c.ord',
+      7 => 'n.id desc, c.ord asc',
+      8 when fsrsEnabled =>
+        "extract_fsrs_retrievability(c.data, case when c.odue != 0 then c.odue else c.due end, c.ivl, $day, $nextDay, $now) asc",
+      8 => 'fnvhash(c.id, c.mod)',
+      9 when fsrsEnabled =>
+        "extract_fsrs_retrievability(c.data, case when c.odue != 0 then c.odue else c.due end, c.ivl, $day, $nextDay, $now) desc",
+      9 => 'fnvhash(c.id, c.mod)',
+      10 =>
+        "extract_fsrs_relative_retrievability(c.data, case when c.odue != 0 then c.odue else c.due end, c.ivl, $day, $nextDay, $now) asc",
+      _ => throw ArgumentError.value(order, 'order'),
+    };
   }
 
   /// Restores a review log entry with its original 64-bit ID.

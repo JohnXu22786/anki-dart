@@ -4857,3 +4857,43 @@ multi-note indeterminate selection, card-state filtering, Android resources,
 new-note tag entry, or the generic collection journal. Shared Dart UI is used
 on Android, iOS, Web, Windows, macOS, and Linux. No Kotlin source or Android
 resource is copied; existing source hashes remain unchanged.
+
+## Filtered Deck creation and rebuild (Unit52)
+
+The shared Deck Picker options form sends its two possible searches, limits,
+order enum numbers, rescheduling choice, preview delays, allow-empty choice,
+and deck name to the collection. The collection normalizes and validates the
+searches, persists them on the filtered deck, selects the exact resulting deck
+ID, and executes the searches against its own SQLite connection. At most two
+terms are accepted, and limits must fit the signed 32-bit form value so a
+negative value cannot wrap into an effectively unlimited protobuf limit. Each
+term's matches are independently ordered and limited;
+suspended, buried, and already-filtered cards are excluded before cards move.
+Cards keep their home deck and due value in `odid`/`odue`; a non-rescheduling
+move uses the review queue, matching Core. Rebuild returns cards already in the
+target deck to their home queues before applying the deck's saved search terms.
+The whole build/rebuild is one SQLite transaction and one undoable collection
+operation; invalid searches and disallowed empty matches roll back.
+
+This behavior follows AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`:
+`FilteredDeckOptionsFragment.kt` submits the complete form,
+`FilteredDeckOptionsState.kt` and `FilteredDeckOptionsViewModel.kt` define the
+option state and request mapping, and `DeckPickerViewModel.kt` performs
+rebuilds for the selected filtered deck. Their verified SHA-256 hashes are
+`905234e6eae29433330eeb2e3658bfb15c612d9bf77ff157dc603b32afaa1422`,
+`c4b0170e3b1a506cda80dae582c3951ea9250c86054e08abb424ab36dec6429c`,
+`263cfd8a3b1ebf16899929c50ad13b0511870c6aaae040dc6155113847f44df8`, and
+`0e9b6dfb8f1421941ffd7204fbbf548e7532a0859e6ec143e567f66381538ad1`.
+`DeckPicker.kt`, hash
+`9859b3f9a604b52a67193027fcdec2b2e67e6a50a1ea04f760425822a23ac242`, supplies
+the action route.
+
+The collection scheduling behavior is pinned to Anki Core commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`, specifically
+`rslib/src/scheduler/filtered/mod.rs` (SHA-256
+`59345ef120b5ef81f96f82796e2814ca90e5609d340c42846ad0eda362a59f79`) and
+`rslib/src/scheduler/filtered/card.rs` (SHA-256
+`6aca7e9b55088f43d981eaafa8a02c5de538cf3c7e1c13640e3565de6ee4fd13`).
+No upstream source file was copied; the implementation remains in the existing
+AGPL-3.0-or-later collection and app packages.

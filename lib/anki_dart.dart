@@ -574,3 +574,4 @@ export 'src/note_remove_tag.dart';
 export 'src/note_tag_wrappers.dart';
 export 'src/custom_study_search.dart';
 export 'src/custom_study_review_ahead.dart';
+export 'src/custom_study_forgotten_cards.dart';

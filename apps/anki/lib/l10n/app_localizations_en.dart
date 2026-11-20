@@ -382,6 +382,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get export => 'Export';
 
   @override
+  String get exportUnsupported => 'This export format is not supported yet.';
+
+  @override
+  String get exportReadyTitle => 'Export ready';
+
+  @override
+  String get exportSave => 'Save';
+
+  @override
+  String get exportShare => 'Share';
+
+  @override
+  String get exportDeliveryFailed => 'Could not deliver the export. Try again.';
+
+  @override
+  String get exportTooLarge =>
+      'This export is too large to keep ready. Try a smaller deck.';
+
+  @override
+  String get exportPendingStoreFull =>
+      'Too many exports are waiting. Finish or close a pending export and try again.';
+
+  @override
+  String get exportShareTooLarge =>
+      'This export is too large to share from Linux. Use Save instead.';
+
+  @override
   String get includeScheduling => 'Include scheduling information';
 
   @override

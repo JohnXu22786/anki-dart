@@ -4,9 +4,11 @@
  */
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui' show Tristate;
 
 import 'package:anki_app/deck_picker_screen.dart';
+import 'package:anki_app/text_export_delivery.dart';
 import 'package:anki_app/deck_description_editor.dart';
 import 'package:anki_app/deck_options_editor.dart';
 import 'package:anki_app/l10n/app_localizations.dart';
@@ -20,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sembast/sembast_memory.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -28,6 +31,10 @@ void main() {
   setUp(() {
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
+    final factory = newDatabaseFactoryMemory();
+    PendingTextExportStore.instance = PendingTextExportStore(
+      openDatabase: () => factory.openDatabase('pending'),
+    );
   });
 
   testWidgets(
@@ -90,6 +97,7 @@ void main() {
       repository.exportRequests.single.format,
       DeckPickerExportFormat.apkg,
     );
+    expect(find.text('Export ready'), findsOneWidget);
     expect(repository.actions, isEmpty);
   });
 
@@ -115,6 +123,97 @@ void main() {
 
     expect(repository.actions, isEmpty);
     expect(find.text('Deck action could not be completed'), findsOneWidget);
+  });
+
+  testWidgets(
+    'export generation failures show localized errors and no result',
+    (tester) async {
+      final repository = _DeckRepository([
+        DeckPickerDeck(id: 42, name: 'Grammar'),
+      ])..exportError = StateError('generation failed');
+      await tester.pumpWidget(_app(repository));
+      await tester.pumpAndSettle();
+
+      Future<void> startExport() async {
+        await tester.tap(find.byTooltip('More actions for Grammar'));
+        await tester.pumpAndSettle();
+        await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Export deck'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Export').last);
+        await tester.pumpAndSettle();
+      }
+
+      await startExport();
+      expect(find.text('Deck action could not be completed'), findsOneWidget);
+      expect(find.text('Export ready'), findsNothing);
+      await tester.pump(const Duration(seconds: 5));
+
+      repository.exportError = UnsupportedError('not implemented');
+      await startExport();
+      expect(
+        find.text('This export format is not supported yet.'),
+        findsOneWidget,
+      );
+      expect(find.text('Export ready'), findsNothing);
+      await tester.pump(const Duration(seconds: 5));
+
+      final factory = newDatabaseFactoryMemory();
+      PendingTextExportStore.instance = PendingTextExportStore(
+        openDatabase: () => factory.openDatabase('too-large'),
+        maxArtifactBytes: 1,
+      );
+      repository.exportError = null;
+      await startExport();
+      expect(
+        find.text(
+          'This export is too large to keep ready. Try a smaller deck.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Export ready'), findsNothing);
+    },
+  );
+
+  testWidgets('pending text result reopens after Flutter state restoration', (
+    tester,
+  ) async {
+    final delivery = _RecordingExportDelivery();
+    final repository = _DeckRepository([
+      DeckPickerDeck(id: 42, name: 'Grammar'),
+    ]);
+    await tester.pumpWidget(
+      _app(
+        repository,
+        restorationScopeId: 'export-restoration',
+        exportDelivery: delivery,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Grammar'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export deck'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('export-format')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Notes in plain text (.txt)').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export').last);
+    await tester.pumpAndSettle();
+    expect(find.text('notes.txt'), findsOneWidget);
+
+    await tester.restartAndRestore();
+    await tester.pumpAndSettle();
+    expect(find.text('Export ready'), findsOneWidget);
+    expect(find.text('notes.txt'), findsOneWidget);
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(delivery.saved?.fileName, 'notes.txt');
+    expect(delivery.saved?.text, 'export');
   });
 
   testWidgets('description editor loads, saves both fields, and refreshes', (
@@ -1759,6 +1858,7 @@ Widget _app(
   DeckPickerRepository repository, {
   ValueChanged<Int64>? onBrowseCards,
   String? restorationScopeId,
+  TextExportDelivery? exportDelivery,
 }) => MaterialApp(
   restorationScopeId: restorationScopeId,
   localizationsDelegates: const [
@@ -1767,8 +1867,25 @@ Widget _app(
     GlobalWidgetsLocalizations.delegate,
   ],
   supportedLocales: AppLocalizations.supportedLocales,
-  home: DeckPickerScreen(repository: repository, onBrowseCards: onBrowseCards),
+  home: DeckPickerScreen(
+    repository: repository,
+    onBrowseCards: onBrowseCards,
+    exportDelivery: exportDelivery ?? const PlatformTextExportDelivery(),
+  ),
 );
+
+final class _RecordingExportDelivery implements TextExportDelivery {
+  TextExportArtifact? saved;
+
+  @override
+  Future<bool> save(TextExportArtifact artifact) async {
+    saved = artifact;
+    return true;
+  }
+
+  @override
+  Future<bool> share(TextExportArtifact artifact) async => true;
+}
 
 final class _BasicDeckRepository implements DeckPickerRepository {
   _BasicDeckRepository(this.deck);
@@ -1824,6 +1941,7 @@ final class _DeckRepository
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
   final List<DeckPickerExportDeckRequest> exportRequests = [];
+  Object? exportError;
   NewNoteEditorPort? editorPort;
   @override
   bool get scheduleRemindersEnabled => false;
@@ -1987,8 +2105,21 @@ final class _DeckRepository
   @override
   Future<void> toggleDeckExpand(int deckId) async {}
   @override
-  Future<void> exportDeck(DeckPickerExportDeckRequest request) async =>
-      exportRequests.add(request);
+  Future<TextExportArtifact> exportDeck(
+    DeckPickerExportDeckRequest request,
+  ) async {
+    exportRequests.add(request);
+    final error = exportError;
+    if (error != null) throw error;
+    return TextExportArtifact(
+      fileName: request.format == DeckPickerExportFormat.cards
+          ? 'cards.txt'
+          : 'notes.txt',
+      text: 'export',
+      bytes: Uint8List.fromList(utf8.encode('export')),
+    );
+  }
+
   @override
   Future<void> performAction(DeckPickerAction action, int deckId) async =>
       actions.add((action, deckId));

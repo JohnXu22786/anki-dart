@@ -6,7 +6,7 @@
 import 'package:anki_backend_protocol/anki/decks.pb.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_backend_models/anki_backend_models.dart'
-    show FilteredDeckKind, normalizeDeckName;
+    show FilteredDeckKind, NormalDeckKind, normalizeDeckName;
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as deck_proto;
 import 'package:anki_search_parser/anki_search_parser.dart' show deckSearch;
 import 'package:anki_dart/anki_dart.dart'
@@ -16,6 +16,7 @@ import 'package:protobuf/protobuf.dart';
 
 import 'collection_runtime.dart';
 import 'collection_card_browser_controller.dart';
+import 'deck_description_editor.dart';
 import 'deck_picker_screen.dart';
 import 'note_editor_screen.dart';
 
@@ -32,6 +33,7 @@ final class CollectionDeckPickerRepository
         DeckPickerRebuildFilteredDeckProvider,
         DeckPickerUnburyProvider,
         DeckPickerEmptyFilteredDeckProvider,
+        DeckPickerDescriptionProvider,
         DeckPickerCollectionUndoProvider {
   const CollectionDeckPickerRepository(this.collections);
 
@@ -207,6 +209,32 @@ final class CollectionDeckPickerRepository
   }
 
   @override
+  Future<DeckDescription> loadDescription(DeckPickerDeck deck) async {
+    final id = deck.exactId ?? Int64(deck.id);
+    final stored = _storage.decks.getDeck(id);
+    if (stored == null) throw StateError('deck not found: $id');
+    if (stored.kind is! NormalDeckKind) {
+      throw StateError('normal deck required: $id');
+    }
+    final normal = (stored.kind as NormalDeckKind).value;
+    return DeckDescription(
+      description: normal.description,
+      markdown: normal.markdownDescription,
+    );
+  }
+
+  @override
+  Future<void> saveDescription(
+    DeckPickerDeck deck, {
+    required String description,
+    required bool markdownDescription,
+  }) => _storage.updateDeckDescription(
+    deck.exactId ?? Int64(deck.id),
+    description: description,
+    markdownDescription: markdownDescription,
+  );
+
+  @override
   bool get canUndoCollectionOperation => _storage.canUndoCollectionOperation;
 
   @override
@@ -307,7 +335,11 @@ final class CollectionDeckPickerRepository
     int parsedLimit(String value) {
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < 0 || parsed > 0x7fffffff) {
-        throw ArgumentError.value(value, 'limit', 'expected a signed 32-bit integer');
+        throw ArgumentError.value(
+          value,
+          'limit',
+          'expected a signed 32-bit integer',
+        );
       }
       return parsed;
     }

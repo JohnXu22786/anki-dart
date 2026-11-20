@@ -2271,6 +2271,40 @@ GROUP BY did
     await _flushIfAutocommit();
   }
 
+  /// Updates a normal deck's description using an undoable collection write.
+  /// The deck ID is kept as an [Int64] so Web callers do not narrow it.
+  Future<void> updateDeckDescription(
+    Int64 deckId, {
+    required String description,
+    required bool markdownDescription,
+  }) async {
+    final before = _deckStorage.getDeck(deckId);
+    if (before == null) throw StateError('deck not found: $deckId');
+    if (before.kind is! NormalDeckKind) {
+      throw StateError('normal deck required: $deckId');
+    }
+
+    final normal = (before.kind as NormalDeckKind).value.deepCopy()
+      ..description = description
+      ..markdownDescription = markdownDescription;
+    final after = Deck(
+      id: before.id,
+      name: before.name,
+      mtimeSecs: Int64(
+        (_nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch) ~/ 1000,
+      ),
+      usn: -1,
+      common: before.common,
+      kind: NormalDeckKind(normal),
+    );
+
+    await runUndoableCollectionOperation(
+      apply: () async => _deckStorage.updateDeck(after),
+      undo: () async => _deckStorage.updateDeck(before),
+      redo: () async => _deckStorage.updateDeck(after),
+    );
+  }
+
   /// Returns whether [deckId] or any of its descendants contains buried cards.
   bool deckHasBuriedCards(Int64 deckId) {
     final deck = _deckStorage.getDeck(deckId);

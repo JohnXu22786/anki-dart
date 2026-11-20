@@ -339,6 +339,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editDeckDescription => 'Edit deck description';
 
   @override
+  String get deckDescriptionLabel => 'Description';
+
+  @override
+  String get deckDescriptionMarkdown => 'Format as Markdown';
+
+  @override
+  String get deckDescriptionSaved => 'Deck description saved';
+
+  @override
+  String get deckDescriptionDiscardTitle => 'Discard changes?';
+
+  @override
+  String get deckDescriptionDiscardMessage =>
+      'Your unsaved description changes will be lost.';
+
+  @override
+  String get deckDescriptionDiscard => 'Discard';
+
+  @override
+  String get deckDescriptionSaveFailed => 'Deck description could not be saved';
+
+  @override
   String get scheduleReminders => 'Schedule review reminders';
 
   @override

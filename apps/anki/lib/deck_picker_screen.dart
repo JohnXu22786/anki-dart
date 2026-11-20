@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 
 import 'l10n/app_localizations.dart';
 import 'note_editor_screen.dart';
+import 'deck_description_editor.dart';
 
 /// Deck tree and due counts projected by the collection host for display.
 final class DeckPickerDeck {
@@ -150,6 +151,16 @@ abstract interface class DeckPickerEmptyFilteredDeckProvider {
 
 abstract interface class DeckPickerRebuildFilteredDeckProvider {
   Future<void> rebuildFilteredDeck(DeckPickerDeck deck);
+}
+
+/// Exact-ID route for loading and saving a normal deck's description.
+abstract interface class DeckPickerDescriptionProvider {
+  Future<DeckDescription> loadDescription(DeckPickerDeck deck);
+  Future<void> saveDescription(
+    DeckPickerDeck deck, {
+    required String description,
+    required bool markdownDescription,
+  });
 }
 
 final class DeckPickerDeletionResult {
@@ -684,9 +695,45 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
         final provider =
             widget.repository as DeckPickerRebuildFilteredDeckProvider;
         await _invoke(() => provider.rebuildFilteredDeck(deck));
+      } else if (action == DeckPickerAction.editDescription &&
+          widget.repository is DeckPickerDescriptionProvider) {
+        await _editDescription(deck);
       } else {
         await _invoke(() => widget.repository.performAction(action, deck.id));
       }
+    }
+  }
+
+  Future<void> _editDescription(DeckPickerDeck deck) async {
+    final provider = widget.repository as DeckPickerDescriptionProvider;
+    try {
+      final initial = await provider.loadDescription(deck);
+      if (!mounted) return;
+      final saved = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => DeckDescriptionEditor(
+          initial: initial,
+          onSave: (description, markdown) => provider.saveDescription(
+            deck,
+            description: description,
+            markdownDescription: markdown,
+          ),
+        ),
+      );
+      if (saved == true && mounted) {
+        _reload();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.deckDescriptionSaved),
+          ),
+        );
+      }
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
     }
   }
 

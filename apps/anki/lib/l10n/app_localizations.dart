@@ -715,6 +715,48 @@ abstract class AppLocalizations {
   /// **'Edit deck description'**
   String get editDeckDescription;
 
+  /// No description provided for @deckDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get deckDescriptionLabel;
+
+  /// No description provided for @deckDescriptionMarkdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Format as Markdown'**
+  String get deckDescriptionMarkdown;
+
+  /// No description provided for @deckDescriptionSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Deck description saved'**
+  String get deckDescriptionSaved;
+
+  /// No description provided for @deckDescriptionDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get deckDescriptionDiscardTitle;
+
+  /// No description provided for @deckDescriptionDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your unsaved description changes will be lost.'**
+  String get deckDescriptionDiscardMessage;
+
+  /// No description provided for @deckDescriptionDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get deckDescriptionDiscard;
+
+  /// No description provided for @deckDescriptionSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Deck description could not be saved'**
+  String get deckDescriptionSaveFailed;
+
   /// No description provided for @scheduleReminders.
   ///
   /// In en, this message translates to:

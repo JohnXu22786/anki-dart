@@ -505,6 +505,111 @@ void main() {
     await database.close();
   });
 
+  test(
+    'deck description update preserves exact ID, Markdown, and undo',
+    () async {
+      final database = await _openLatestCollection(path);
+      final id = Int64.parseInt('9007199254740995');
+      database.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: id,
+          name: 'Description test',
+          kind: NormalDeckKind(
+            proto.Deck_Normal(configId: Int64(17), description: 'before'),
+          ),
+        ),
+      );
+
+      await database.updateDeckDescription(
+        id,
+        description: 'after\nsecond line',
+        markdownDescription: true,
+      );
+      var updated = database.decks.getDeck(id)!;
+      expect(updated.id, id);
+      expect(updated.kind, isA<NormalDeckKind>());
+      var normal = (updated.kind as NormalDeckKind).value;
+      expect(normal.description, 'after\nsecond line');
+      expect(normal.markdownDescription, isTrue);
+      expect(normal.configId, Int64(17));
+      expect(database.canUndoCollectionOperation, isTrue);
+
+      await database.undoLastCollectionOperation();
+      updated = database.decks.getDeck(id)!;
+      normal = (updated.kind as NormalDeckKind).value;
+      expect(normal.description, 'before');
+      expect(normal.markdownDescription, isFalse);
+
+      await database.redoLastCollectionOperation();
+      updated = database.decks.getDeck(id)!;
+      normal = (updated.kind as NormalDeckKind).value;
+      expect(normal.description, 'after\nsecond line');
+      expect(normal.markdownDescription, isTrue);
+      await database.close();
+    },
+  );
+
+  test(
+    'deck description rejects missing decks and rolls back storage errors',
+    () async {
+      final database = await _openLatestCollection(path);
+      final id = Int64.parseInt('9007199254740995');
+      database.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: id,
+          name: 'Description failure test',
+          kind: NormalDeckKind(
+            proto.Deck_Normal(configId: Int64(17), description: 'before'),
+          ),
+        ),
+      );
+      final filteredId = Int64(41);
+      database.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: filteredId,
+          name: 'Filtered description test',
+          kind: FilteredDeckKind(proto.Deck_Filtered()),
+        ),
+      );
+
+      await expectLater(
+        database.updateDeckDescription(
+          Int64(987654),
+          description: 'missing',
+          markdownDescription: true,
+        ),
+        throwsStateError,
+      );
+      await expectLater(
+        database.updateDeckDescription(
+          filteredId,
+          description: 'filtered',
+          markdownDescription: true,
+        ),
+        throwsStateError,
+      );
+      database.decks.db.execute('''
+CREATE TRIGGER reject_description_update BEFORE UPDATE ON decks
+BEGIN
+  SELECT RAISE(ABORT, 'storage failure');
+END
+''');
+      await expectLater(
+        database.updateDeckDescription(
+          id,
+          description: 'after',
+          markdownDescription: true,
+        ),
+        throwsA(isA<SqliteException>()),
+      );
+      final normal = (database.decks.getDeck(id)!.kind as NormalDeckKind).value;
+      expect(normal.description, 'before');
+      expect(normal.markdownDescription, isFalse);
+      expect(database.canUndoCollectionOperation, isFalse);
+      await database.close();
+    },
+  );
+
   test('deckTree queries scheduler queues and projects Core limits', () async {
     final database = await CollectionSqliteStorage.open(
       driver: _nativeDriver,

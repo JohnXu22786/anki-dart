@@ -53,6 +53,68 @@ void main() {
     },
   );
 
+  testWidgets(
+    'create subdeck uses the parent exact ID and ignores empty input',
+    (tester) async {
+      final parent = DeckPickerDeck(
+        id: 8,
+        exactId: Int64.parseInt('9007199254740995'),
+        name: 'Languages',
+      );
+      final repository = _DeckRepository([parent]);
+      await tester.pumpWidget(_app(repository));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('More actions for Languages'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Create subdeck'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('subdeck-name')), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Create'))
+            .onPressed,
+        isNull,
+      );
+      await tester.enterText(find.byKey(const ValueKey('subdeck-name')), '""');
+      await tester.pumpAndSettle();
+      expect(find.text('A deck with this name already exists'), findsNothing);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Create'))
+            .onPressed,
+        isNull,
+      );
+      repository.failNextSubdeck = true;
+      await tester.enterText(
+        find.byKey(const ValueKey('subdeck-name')),
+        'Spanish',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Create'));
+      await tester.pumpAndSettle();
+      expect(find.text('Deck action could not be completed'), findsOneWidget);
+      expect(repository.createdSubdecks, isEmpty);
+
+      await tester.tap(find.byTooltip('More actions for Languages'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Create subdeck'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('subdeck-name')),
+        'Spanish',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Create'));
+      await tester.pumpAndSettle();
+
+      expect(repository.createdSubdecks, [
+        (Int64.parseInt('9007199254740995'), 'Spanish'),
+      ]);
+      expect(repository.actions, isEmpty);
+    },
+  );
+
   testWidgets('delete uses the exact deck ID, progress, result and undo', (
     tester,
   ) async {
@@ -1173,6 +1235,7 @@ final class _DeckRepository
         DeckPickerRepository,
         DeckPickerNewNotePortProvider,
         DeckPickerExactBrowseDeckProvider,
+        DeckPickerCreateSubdeckProvider,
         DeckPickerRenameProvider,
         DeckPickerDeleteProvider,
         DeckPickerUnburyProvider,
@@ -1221,6 +1284,8 @@ final class _DeckRepository
   final selectedExact = <Int64>[];
   int currentDeckNewNoteRequests = 0;
   final actions = <(DeckPickerAction, int)>[];
+  final createdSubdecks = <(Int64, String)>[];
+  bool failNextSubdeck = false;
   final renamedNames = <String>[];
   final filteredRequests = <FilteredDeckRequest>[];
   Completer<DeckPickerDeletionResult>? pendingDelete;
@@ -1256,6 +1321,19 @@ final class _DeckRepository
   @override
   Future<void> selectDeckForBrowse(DeckPickerDeck deck) async {
     selectedExact.add(deck.exactId ?? Int64(deck.id));
+  }
+
+  @override
+  bool isSubdeckNameAvailable(DeckPickerDeck parent, String name) =>
+      name.isNotEmpty && name.replaceAll('"', '').isNotEmpty;
+
+  @override
+  Future<void> createSubdeck(DeckPickerDeck parent, String name) async {
+    if (failNextSubdeck) {
+      failNextSubdeck = false;
+      throw StateError('subdeck creation failed');
+    }
+    createdSubdecks.add((parent.exactId ?? Int64(parent.id), name));
   }
 
   @override

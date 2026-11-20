@@ -745,6 +745,114 @@ abstract class AppLocalizations {
   /// **'Export deck'**
   String get exportDeck;
 
+  /// No description provided for @exportDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export deck'**
+  String get exportDialogTitle;
+
+  /// No description provided for @exportFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Export format'**
+  String get exportFormat;
+
+  /// No description provided for @exportScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Decks'**
+  String get exportScope;
+
+  /// No description provided for @allDecks.
+  ///
+  /// In en, this message translates to:
+  /// **'All decks'**
+  String get allDecks;
+
+  /// No description provided for @exportCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Anki collection package (.colpkg)'**
+  String get exportCollection;
+
+  /// No description provided for @exportApkg.
+  ///
+  /// In en, this message translates to:
+  /// **'Anki deck package (.apkg)'**
+  String get exportApkg;
+
+  /// No description provided for @exportNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes in plain text (.txt)'**
+  String get exportNotes;
+
+  /// No description provided for @exportCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards in plain text (.txt)'**
+  String get exportCards;
+
+  /// No description provided for @export.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get export;
+
+  /// No description provided for @includeScheduling.
+  ///
+  /// In en, this message translates to:
+  /// **'Include scheduling information'**
+  String get includeScheduling;
+
+  /// No description provided for @includeDeckConfigs.
+  ///
+  /// In en, this message translates to:
+  /// **'Include deck configurations'**
+  String get includeDeckConfigs;
+
+  /// No description provided for @includeMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Include media'**
+  String get includeMedia;
+
+  /// No description provided for @includeLegacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Support older Anki versions'**
+  String get includeLegacy;
+
+  /// No description provided for @includeHtml.
+  ///
+  /// In en, this message translates to:
+  /// **'Include HTML and media references'**
+  String get includeHtml;
+
+  /// No description provided for @includeTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Include tags'**
+  String get includeTags;
+
+  /// No description provided for @includeDeckName.
+  ///
+  /// In en, this message translates to:
+  /// **'Include deck'**
+  String get includeDeckName;
+
+  /// No description provided for @includeNotetypeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Include note type'**
+  String get includeNotetypeName;
+
+  /// No description provided for @includeGuid.
+  ///
+  /// In en, this message translates to:
+  /// **'Include GUID'**
+  String get includeGuid;
+
   /// No description provided for @unbury.
   ///
   /// In en, this message translates to:

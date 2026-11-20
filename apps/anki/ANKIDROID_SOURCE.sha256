@@ -1,4 +1,8 @@
 # AnkiDroid 2.25.3, d9bf072f814a0c37d30a694192593b31ff2df875
+ab31c1a2d1d014121dff4efb2633338d535f97602327f82d874756e5c446287a  AnkiDroid/src/main/java/com/ichi2/anki/export/ExportDialogFragment.kt
+8a4c728c9051c559d8859906c5d20da70179fd8725450fffd0b30c9f90246591  AnkiDroid/src/main/res/layout/dialog_export_options.xml
+2497822276e8fd0656c0a3609aa1d7ecfaf56afd4ba7da9b921a7ce204f413ca  AnkiDroid/src/test/java/com/ichi2/anki/export/ExportDialogFragmentTest.kt
+ae85e8467b6e5b469c52f6f12c91d2e92c96bf03caa62ff4a2aa52540c65a070  AnkiDroid/src/main/java/com/ichi2/anki/BackendExporting.kt
 79e219a087960e6af3d2bfa1996f8c46818cfa1daed908c4175cf41dded901df  AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt
 3e3ec1a9f14f17d40b091e5ee4d8b154579ecae41523faae630fdf0f995577ce  AnkiDroid/src/main/java/com/ichi2/anki/NoteFieldsCheckResult.kt
 eacd31477a1752a0ae611db4d6650cd797f15f18e93888d38b474b991a815933  AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt

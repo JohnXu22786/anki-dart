@@ -8,6 +8,7 @@ import 'dart:ui' show Tristate;
 
 import 'package:anki_app/deck_picker_screen.dart';
 import 'package:anki_app/deck_description_editor.dart';
+import 'package:anki_app/deck_options_editor.dart';
 import 'package:anki_app/l10n/app_localizations.dart';
 import 'package:anki_app/note_editor_screen.dart';
 import 'package:anki_backend_models/anki_backend_models.dart'
@@ -117,6 +118,72 @@ void main() {
     expect(repository.markdownDescription, isFalse);
     expect(repository.loadCalls, 2);
     expect(find.text('Deck description saved'), findsOneWidget);
+  });
+
+  testWidgets('Deck Options loads and saves daily limits for exact deck', (
+    tester,
+  ) async {
+    final deck = DeckPickerDeck(
+      id: 8,
+      exactId: Int64.parseInt('9007199254740995'),
+      name: 'Languages::Spanish',
+    );
+    final repository = _DeckRepository([deck]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Spanish'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deck options'));
+    await tester.pumpAndSettle();
+
+    expect(repository.dailyLimitLoads, [Int64.parseInt('9007199254740995')]);
+    expect(find.text('34'), findsOneWidget);
+    expect(find.text('187'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('deck-new-limit')), '42');
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('deck-new-limit')))
+          .controller!
+          .text,
+      '42',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(repository.dailyLimitSaves, [
+      (Int64.parseInt('9007199254740995'), 42, 187),
+    ]);
+    expect(repository.loadCalls, 2);
+    expect(find.text('Deck options saved'), findsOneWidget);
+    expect(find.byType(DeckOptionsEditor), findsOneWidget);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DeckOptionsEditor), findsNothing);
+  });
+
+  testWidgets('filtered Deck Options stay on their separate action path', (
+    tester,
+  ) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 9, name: 'Filtered', filtered: true),
+    ]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Filtered'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deck options'));
+    await tester.pumpAndSettle();
+
+    expect(repository.dailyLimitLoads, isEmpty);
+    expect(repository.actions, [(DeckPickerAction.deckOptions, 9)]);
+    expect(find.byType(DeckOptionsEditor), findsNothing);
   });
 
   testWidgets('description editor closes unchanged and confirms discard', (
@@ -1437,6 +1504,7 @@ final class _DeckRepository
         DeckPickerEmptyFilteredDeckProvider,
         DeckPickerDescriptionProvider,
         DeckPickerCustomStudyProvider,
+        DeckPickerDailyLimitsProvider,
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
   NewNoteEditorPort? editorPort;
@@ -1506,6 +1574,10 @@ final class _DeckRepository
   int collectionUndoGeneration = 0;
   bool advanceUndoGenerationAfterDelete = false;
   int undoCalls = 0;
+  final dailyLimitLoads = <Int64>[];
+  final dailyLimitSaves = <(Int64, int, int)>[];
+  int newLimit = 34;
+  int reviewLimit = 187;
 
   @override
   Future<NewNoteEditorPort> selectDeckAndCreateNewNotePort(
@@ -1599,6 +1671,27 @@ final class _DeckRepository
     if (failDescriptionSave) throw StateError('description save failed');
     this.description = description;
     this.markdownDescription = markdownDescription;
+  }
+
+  @override
+  Future<DeckDailyLimits> loadDailyLimits(DeckPickerDeck deck) async {
+    dailyLimitLoads.add(deck.exactId ?? Int64(deck.id));
+    return DeckDailyLimits(newPerDay: newLimit, reviewsPerDay: reviewLimit);
+  }
+
+  @override
+  Future<void> saveDailyLimits(
+    DeckPickerDeck deck, {
+    required int newPerDay,
+    required int reviewsPerDay,
+  }) async {
+    dailyLimitSaves.add((
+      deck.exactId ?? Int64(deck.id),
+      newPerDay,
+      reviewsPerDay,
+    ));
+    newLimit = newPerDay;
+    reviewLimit = reviewsPerDay;
   }
 
   @override

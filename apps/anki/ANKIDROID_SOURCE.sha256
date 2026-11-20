@@ -99,3 +99,18 @@ a29a3780e53c917b30bfc967d6a1b969929f90e94de2eceb8500031df54ea36e  rslib/src/conf
 0d6d0ba9f3f38547c473046ca40bb697c3984b00def2c90fc64896dc445dc3e9  AnkiDroid/src/main/java/com/ichi2/anki/dialogs/CreateDeckDialog.kt
 f6d73fb20184bdef1f801b5ea6e8e5fba5225cab457e55f9eea329a5a1c586a0  libanki/src/main/java/com/ichi2/anki/libanki/Decks.kt
 8a30360746f253377ce8d5e7dd4298c23adf228765b442e52f4d67853a440572  AnkiDroid/src/test/java/com/ichi2/anki/dialogs/CreateDeckDialogTest.kt
+
+# AnkiDroid 2.25.3 Deck Options route and persistence boundary, d9bf072f814a0c37d30a694192593b31ff2df875
+ebbbaaf66aae9821c85f52d6aa5dc3fff1d66c6b5ee24d4b441d5177ba7baed1  AnkiDroid/src/main/java/com/ichi2/anki/pages/DeckOptions.kt
+d210148a8a9c4c2ee557dc11152a71c5f7059b3e2f12ca312d19b24c4ab8492d  AnkiDroid/src/main/java/com/ichi2/anki/pages/DeckOptionsDestination.kt
+86bc2e07ff88f6498db4914a6a54b7aa52fc9341392f0e5e3937babf1e838633  AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt
+8791e645e82dd1d6a93da26bc07fafda1e30b55959f78ac2fe1c5c7e713bbe8d  libanki/src/main/java/com/ichi2/anki/libanki/BackendDeckOptions.kt
+f6d73fb20184bdef1f801b5ea6e8e5fba5225cab457e55f9eea329a5a1c586a0  libanki/src/main/java/com/ichi2/anki/libanki/Decks.kt
+8585fa7cff7d5a1e1cdd4debd83f5af88194baffa031fd791d40127c2c7efd85  AnkiDroid/src/test/java/com/ichi2/anki/pages/DeckOptionsTest.kt
+bed6c28a249a2d1ee3066f95dfe028fc5c40ea8abca1720f7f1068aa5aebd081  AnkiDroid/src/androidTest/java/com/ichi2/anki/pages/DeckOptionsTest.kt
+
+# AnkiDroid 2.25.3 filtered deck options, d9bf072f814a0c37d30a694192593b31ff2df875
+905234e6eae29433330eeb2e3658bfb15c612d9bf77ff157dc603b32afaa1422  AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsFragment.kt
+263cfd8a3b1ebf16899929c50ad13b0511870c6aaae040dc6155113847f44df8  AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsViewModel.kt
+c4b0170e3b1a506cda80dae582c3951ea9250c86054e08abb424ab36dec6429c  AnkiDroid/src/main/java/com/ichi2/anki/filtered/FilteredDeckOptionsState.kt
+4b2f03b44458bf578d2422201b3259bf81e4b3cfd46d9090db419e94f599039f  AnkiDroid/src/test/java/com/ichi2/anki/filtered/FilteredDeckOptionsViewModelTest.kt

@@ -22,6 +22,7 @@ import 'package:protobuf/protobuf.dart';
 import 'collection_runtime.dart';
 import 'collection_card_browser_controller.dart';
 import 'deck_description_editor.dart';
+import 'deck_options_editor.dart';
 import 'deck_picker_screen.dart';
 import 'note_editor_screen.dart';
 
@@ -45,6 +46,7 @@ final class CollectionDeckPickerRepository
         DeckPickerEmptyFilteredDeckProvider,
         DeckPickerDescriptionProvider,
         DeckPickerCustomStudyProvider,
+        DeckPickerDailyLimitsProvider,
         DeckPickerCollectionUndoProvider {
   const CollectionDeckPickerRepository(this.collections);
 
@@ -302,6 +304,34 @@ final class CollectionDeckPickerRepository
     deck.exactId ?? Int64(deck.id),
     description: description,
     markdownDescription: markdownDescription,
+  );
+
+  @override
+  Future<DeckDailyLimits> loadDailyLimits(DeckPickerDeck deck) async {
+    final id = deck.exactId ?? Int64(deck.id);
+    final stored = _storage.decks.getDeck(id);
+    if (stored == null) throw StateError('deck not found: $id');
+    final configId = stored.configId;
+    if (configId == null) throw StateError('normal deck required: $id');
+    final config = _storage.deckConfigs.getDeckConfig(configId);
+    if (config == null) {
+      throw StateError('missing deck configuration: $configId');
+    }
+    return DeckDailyLimits(
+      newPerDay: config.inner.newPerDay,
+      reviewsPerDay: config.inner.reviewsPerDay,
+    );
+  }
+
+  @override
+  Future<void> saveDailyLimits(
+    DeckPickerDeck deck, {
+    required int newPerDay,
+    required int reviewsPerDay,
+  }) => _storage.updateDeckDailyLimits(
+    deck.exactId ?? Int64(deck.id),
+    newPerDay: newPerDay,
+    reviewsPerDay: reviewsPerDay,
   );
 
   @override

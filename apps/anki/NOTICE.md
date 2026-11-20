@@ -82,3 +82,17 @@ Tsui under `GPL-3.0-or-later`; the repository adapter keeps its declared
 `AGPL-3.0-or-later` license. Exact source hashes and behavior mapping are
 recorded in `ANKIDROID_SOURCE.sha256` and `../../ANKIDROID_UPSTREAM.md`. Root
 `COPYING` remains unchanged.
+
+The normal-deck daily limits editor in `lib/deck_options_editor.dart`,
+`lib/deck_picker_screen.dart`, and `lib/deck_picker_repository.dart` follows
+the AnkiDroid 2.25.3 Deck Picker and Deck Options route, plus Anki Core's
+`ts/routes/deck-options/DailyLimits.svelte`, `SpinBoxRow.svelte`, route loader,
+save button, and deck-options state. The route edits the selected deck's
+existing shared preset and keeps other configuration values; filtered decks
+continue through their separate filtered-options route. Source hashes,
+behavior boundaries, and licenses are recorded in
+`ANKIDROID_SOURCE.sha256`, `ANKI_CORE_SOURCE.sha256`, and
+`../../ANKIDROID_UPSTREAM.md`.
+The AnkiDroid source is GPL-3.0-or-later and the Anki Core source is
+AGPL-3.0-or-later. No upstream implementation or localized strings were
+copied; root `COPYING` is unchanged.

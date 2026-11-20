@@ -1369,4 +1369,39 @@ UPDATE fields SET name = 'Text' WHERE ntid = ${cloze.id.value} AND ord = 0;
       );
     },
   );
+
+  test('daily limits repository preserves exact deck and preset IDs', () async {
+    final storage = runtime.storage!;
+    final deckId = Int64.parseInt('9007199254740995');
+    final configId = Int64.parseInt('9007199254740997');
+    final config = DeckConfig.defaults()..inner.buryNew = true;
+    storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+      DeckConfig(
+        id: configId,
+        name: 'Wide preset',
+        inner: config.inner
+          ..newPerDay = 37
+          ..reviewsPerDay = 241,
+      ),
+    );
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: deckId,
+        name: 'Wide deck',
+        kind: NormalDeckKind(deck_proto.Deck_Normal(configId: configId)),
+      ),
+    );
+    final repository = CollectionDeckPickerRepository(runtime);
+    final target = DeckPickerDeck(id: 5, exactId: deckId, name: 'Wide deck');
+
+    final loaded = await repository.loadDailyLimits(target);
+    expect(loaded.newPerDay, 37);
+    expect(loaded.reviewsPerDay, 241);
+    await repository.saveDailyLimits(target, newPerDay: 0, reviewsPerDay: 9999);
+    final saved = storage.deckConfigs.getDeckConfig(configId)!;
+    expect(saved.id, configId);
+    expect(saved.inner.newPerDay, 0);
+    expect(saved.inner.reviewsPerDay, 9999);
+    expect(saved.inner.buryNew, isTrue);
+  });
 }

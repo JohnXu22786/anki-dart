@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'note_editor_screen.dart';
 import 'deck_description_editor.dart';
+import 'deck_options_editor.dart';
 
 /// Deck tree and due counts projected by the collection host for display.
 final class DeckPickerDeck {
@@ -188,6 +189,16 @@ abstract interface class DeckPickerDescriptionProvider {
     DeckPickerDeck deck, {
     required String description,
     required bool markdownDescription,
+  });
+}
+
+/// Collection-backed daily limit editing for normal decks and their presets.
+abstract interface class DeckPickerDailyLimitsProvider {
+  Future<DeckDailyLimits> loadDailyLimits(DeckPickerDeck deck);
+  Future<void> saveDailyLimits(
+    DeckPickerDeck deck, {
+    required int newPerDay,
+    required int reviewsPerDay,
   });
 }
 
@@ -732,6 +743,10 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       } else if (action == DeckPickerAction.editDescription &&
           widget.repository is DeckPickerDescriptionProvider) {
         await _editDescription(deck);
+      } else if (action == DeckPickerAction.deckOptions &&
+          !deck.filtered &&
+          widget.repository is DeckPickerDailyLimitsProvider) {
+        await _editDailyLimits(deck);
       } else {
         await _invoke(() => widget.repository.performAction(action, deck.id));
       }
@@ -770,6 +785,50 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
           // A saved default is optional; the created session already succeeded.
         }
       });
+    }
+  }
+
+  Future<void> _editDailyLimits(DeckPickerDeck deck) async {
+    final provider = widget.repository as DeckPickerDailyLimitsProvider;
+    try {
+      final limits = await provider.loadDailyLimits(deck);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => DeckOptionsEditor(
+          deckName: deck.name,
+          initialNewPerDay: limits.newPerDay,
+          initialReviewsPerDay: limits.reviewsPerDay,
+          onSave: (newPerDay, reviewsPerDay) async {
+            try {
+              await provider.saveDailyLimits(
+                deck,
+                newPerDay: newPerDay,
+                reviewsPerDay: reviewsPerDay,
+              );
+            } on Object {
+              // Storage may commit before a platform flush fails.
+              if (mounted) _reload();
+              rethrow;
+            }
+          },
+          onSaved: () {
+            if (!mounted) return;
+            _reload();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!.deckOptionsSaved),
+              ),
+            );
+          },
+        ),
+      );
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
     }
   }
 

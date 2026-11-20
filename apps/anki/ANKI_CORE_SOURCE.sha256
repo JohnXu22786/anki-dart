@@ -1,0 +1,7 @@
+# Anki Core Deck Options daily limits and save flow, e64c6b1aee3e8d668fb8bbe084beada8e070d985
+56cc5d1ca5de2681ba1b72565fa47b34c61a35faca13dfde036bf7524bcd7e87  ts/routes/deck-options/DailyLimits.svelte
+0f0a38ddd05e4f83457dcb2767cb1375f13f015bed0cc58510c19199c1d6b5c6  ts/routes/deck-options/SpinBoxRow.svelte
+691ca18e2fea2dfcfd87b5e650c9fb31514a99984c51dcd0d047591919e89e33  ts/routes/deck-options/lib.ts
+cb3a33a222e22cb7de75b6a12746e82fbfdf8997704d646ca1093bbb5ff17946  ts/routes/deck-options/SaveButton.svelte
+a1b694e983967b0de4a05ae3fffbb71899f7fe6bc874fd0ec539ed06b6a103e6  ts/routes/deck-options/[deckId]/+page.ts
+c501a8c381a7e4b729223056f3f4cb751c5a8a41d7120a16ba84742b15f2a1e6  ts/routes/deck-options/[deckId]/+page.svelte

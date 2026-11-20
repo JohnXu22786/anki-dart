@@ -307,6 +307,83 @@ void main() {
   });
 
   test(
+    'Deck Picker preview creates an undoable non-rescheduling session',
+    () async {
+      final storage = runtime.storage!;
+      final deckId = Int64.parseInt('9007199254740995');
+      final noteId = Int64.parseInt('9007199254740997');
+      final cardId = Int64.parseInt('9007199254740999');
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: deckId,
+          name: 'Preview Home',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final notetype = (await storage.getNotetypesByIds(
+        await storage.getAllNotetypeIds(),
+      )).firstWhere((type) => type.name == 'Basic');
+      final note = Note(
+        id: noteId,
+        guid: 'preview-new-card',
+        notetypeId: notetype.id.value,
+        fields: ['front', 'back'],
+      )..prepareForUpdate(notetype, normalizeText: false);
+      await storage.addOrUpdateNote(note);
+      await storage.addCardIfUnique(
+        Card(id: cardId, noteId: noteId, deckId: deckId),
+      );
+      final repository = CollectionDeckPickerRepository(runtime);
+      final selected = DeckPickerDeck(
+        id: deckId.toInt(),
+        exactId: deckId,
+        name: 'Preview Home',
+      );
+
+      await repository.createPreviewNewCards(selected, 7);
+
+      final session = storage.decks.getDeck(storage.currentDeckId)!;
+      expect(session.kind, isA<FilteredDeckKind>());
+      expect((await storage.getCard(cardId))!.deckId, session.id);
+      final config = (session.kind as FilteredDeckKind).value;
+      expect(config.reschedule, isFalse);
+      expect(
+        config.searchTerms.single.search,
+        'is:new added:7 "deck:Preview Home"',
+      );
+      expect(
+        config.searchTerms.single.order,
+        deck_proto.Deck_Filtered_SearchTerm_Order.ADDED,
+      );
+
+      await storage.undoLastCollectionOperation();
+      expect(storage.decks.getDeck(session.id), isNull);
+      expect((await storage.getCard(cardId))!.deckId, deckId);
+
+      final emptyDeckId = Int64.parseInt('9007199254741005');
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: emptyDeckId,
+          name: 'Empty Preview Home',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      await expectLater(
+        repository.createPreviewNewCards(
+          DeckPickerDeck(
+            id: emptyDeckId.toInt(),
+            exactId: emptyDeckId,
+            name: 'Empty Preview Home',
+          ),
+          7,
+        ),
+        throwsStateError,
+      );
+      expect(storage.decks.getDeckByName('Custom Study Session'), isNull);
+    },
+  );
+
+  test(
     'Deck Picker build maps options and rebuilds the exact filtered deck',
     () async {
       final storage = runtime.storage!;

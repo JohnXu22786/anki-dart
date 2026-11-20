@@ -56,7 +56,7 @@ enum DeckPickerAction {
   deleteDeck,
 }
 
-enum _CustomStudyChoice { tags, reviewAhead, forgotten }
+enum _CustomStudyChoice { tags, reviewAhead, forgotten, previewNewCards }
 
 /// Values entered in filtered-deck options; query semantics belong to the host.
 final class FilteredDeckRequest {
@@ -180,6 +180,10 @@ abstract interface class DeckPickerReviewAheadProvider {
 abstract interface class DeckPickerForgottenCardsProvider {
   Future<bool> hasForgottenCards(DeckPickerDeck deck, int days);
   Future<void> createForgottenCards(DeckPickerDeck deck, int days);
+}
+
+abstract interface class DeckPickerPreviewNewCardsProvider {
+  Future<void> createPreviewNewCards(DeckPickerDeck deck, int days);
 }
 
 final class CustomStudyTagsRequest {
@@ -792,6 +796,12 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
                 onTap: () =>
                     Navigator.pop(context, _CustomStudyChoice.forgotten),
               ),
+            if (widget.repository is DeckPickerPreviewNewCardsProvider)
+              ListTile(
+                title: Text(AppLocalizations.of(context)!.previewNewCards),
+                onTap: () =>
+                    Navigator.pop(context, _CustomStudyChoice.previewNewCards),
+              ),
           ],
         ),
         actions: [
@@ -809,6 +819,10 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
     }
     if (choice == _CustomStudyChoice.forgotten) {
       await _forgottenCards(deck);
+      return;
+    }
+    if (choice == _CustomStudyChoice.previewNewCards) {
+      await _previewNewCards(deck);
       return;
     }
     late final List<String> tags;
@@ -885,6 +899,29 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       await provider.createForgottenCards(deck, days);
       try {
         await SharedPreferencesAsync().setInt('forgottenDays', days);
+      } on Object {
+        // Saving a default is optional after the collection operation succeeds.
+      }
+    });
+  }
+
+  Future<void> _previewNewCards(DeckPickerDeck deck) async {
+    final provider = widget.repository as DeckPickerPreviewNewCardsProvider;
+    final saved = await SharedPreferencesAsync().getInt('previewDays');
+    if (!mounted) return;
+    final days = await showDialog<int>(
+      context: context,
+      builder: (_) => _PreviewNewCardsDialog(
+        initialDays: saved ?? 1,
+        title: AppLocalizations.of(context)!.previewNewCards,
+        daysLabel: AppLocalizations.of(context)!.previewNewCardsDays,
+      ),
+    );
+    if (days == null) return;
+    await _invoke(() async {
+      await provider.createPreviewNewCards(deck, days);
+      try {
+        await SharedPreferencesAsync().setInt('previewDays', days);
       } on Object {
         // Saving a default is optional after the collection operation succeeds.
       }
@@ -1919,6 +1956,82 @@ final class _ReviewAheadDialog extends StatefulWidget {
 
   @override
   State<_ReviewAheadDialog> createState() => _ReviewAheadDialogState();
+}
+
+final class _PreviewNewCardsDialog extends StatefulWidget {
+  const _PreviewNewCardsDialog({
+    required this.initialDays,
+    required this.title,
+    required this.daysLabel,
+  });
+
+  final int initialDays;
+  final String title;
+  final String daysLabel;
+
+  @override
+  State<_PreviewNewCardsDialog> createState() => _PreviewNewCardsDialogState();
+}
+
+final class _PreviewNewCardsDialogState extends State<_PreviewNewCardsDialog> {
+  late final TextEditingController days;
+  bool _validInput = true;
+
+  @override
+  void initState() {
+    super.initState();
+    days = TextEditingController(
+      text: widget.initialDays.clamp(1, 0x7fffffff).toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    days.dispose();
+    super.dispose();
+  }
+
+  void _validate(String text) {
+    final value = int.tryParse(text);
+    setState(
+      () => _validInput = value != null && value > 0 && value <= 0x7fffffff,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(widget.title),
+      content: TextField(
+        controller: days,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(10),
+        ],
+        onChanged: _validate,
+        decoration: InputDecoration(
+          labelText: widget.daysLabel,
+          suffixText: int.tryParse(days.text) == 1 ? s.day : s.days,
+          errorText: days.text == '0' ? s.reviewAheadMinimumDays : null,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(s.cancel),
+        ),
+        FilledButton(
+          onPressed: _validInput
+              ? () => Navigator.pop(context, int.parse(days.text))
+              : null,
+          child: Text(s.create),
+        ),
+      ],
+    );
+  }
 }
 
 final class _ReviewAheadDialogState extends State<_ReviewAheadDialog> {

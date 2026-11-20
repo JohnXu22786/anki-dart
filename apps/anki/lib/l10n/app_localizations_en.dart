@@ -897,6 +897,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forgottenCardsDays => 'Days to look back';
 
   @override
+  String get previewNewCards => 'Preview new cards';
+
+  @override
+  String get previewNewCardsDays => 'Days since added';
+
+  @override
   String get customStudyNoCards =>
       'No cards matched the criteria you provided.';
 

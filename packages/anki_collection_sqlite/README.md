@@ -8,6 +8,31 @@ provides pinned stored card and note reads, card and note row mutations, and
 source-compatible first-create callbacks using shared models from
 `anki_backend_models`.
 
+## Portable package I/O boundary
+
+`CollectionSqliteStorage.createSnapshot()` flushes pending driver writes, rejects
+an active SQL transaction, and asks the selected driver for a SQLite backup as
+bytes. The native driver uses SQLite's public online backup API and an
+ephemeral temporary database; it leaves the live connection open. Hosts inject
+`CollectionMediaStorage` for their own media location; native hosts may use the
+provided flat-directory adapter. `readMedia()` validates
+the Anki filename before dispatch, and `listMedia()` returns the available
+filenames. Missing media is represented by `null`.
+
+| Target | SQLite snapshot | Media | Evidence / constraint |
+| --- | --- | --- | --- |
+| Android | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| iOS | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| Windows | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| macOS | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| Linux | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| Web | Typed unsupported snapshot | Host injected | Locked sqlite3 3.9.1 exposes no public backup API for Wasm `CommonDatabase` or IndexedDB byte export |
+
+Web snapshot calls fail with `PortableIoUnsupported('database snapshot')`;
+they do not return placeholder bytes. Web collections retain their existing
+IndexedDB persistence and `flush` behavior. The host may inject media storage
+on Web using browser storage APIs without adding `dart:io` to shared code.
+
 `CollectionSqliteInitializationCallbacks` supplies initial collection
 metadata, the localized default deck/config, and six stock note types.
 `CollectionSqliteMigrationCallbacks` implements the catalogued schema 11 to
@@ -135,8 +160,9 @@ Android to use memory for temporary tables. The adapter implements Core's `field
 The `decks` and `revlog` properties expose portable deck and review-log row
 operations on the opened collection connection through
 `anki_backend_storage`.
-Undo/redo, media indexing, backup/restore, synchronization, and encryption
-remain outside this package's current scope.
+Undo/redo, media indexing, APKG generation and restore, synchronization, and
+encryption remain outside this package's current scope. This package provides
+the lower-level SQLite snapshot and media-byte boundary for those operations.
 
 `sqlite3` publishes native bindings for Android, iOS, Windows, macOS, and
 Linux. Its WebAssembly target is tested in the package CI with

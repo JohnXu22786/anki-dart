@@ -34,6 +34,7 @@ import 'note_update.dart';
 import 'core_random_position.dart';
 import 'add_note.dart';
 import 'text_export.dart';
+import 'portable_package_io.dart';
 
 part 'legacy_collection_migrations.dart';
 
@@ -61,13 +62,24 @@ final class CollectionCustomStudyLimitDefaults {
 /// any additional options in this callback. The adapter passes [location]
 /// through unchanged and never removes or replaces an existing file.
 final class CollectionSqliteDriver {
-  const CollectionSqliteDriver({required this.openDatabase, this.flush});
+  const CollectionSqliteDriver({
+    required this.openDatabase,
+    this.flush,
+    this.snapshot,
+    this.mediaStorage,
+  });
 
   final FutureOr<CommonDatabase> Function(String location) openDatabase;
 
   /// Persists pending driver writes, when the platform has asynchronous
   /// storage such as the Web IndexedDB virtual file system.
   final FutureOr<void> Function()? flush;
+
+  /// Creates a consistent byte snapshot without closing the live database.
+  final Future<Uint8List> Function(CommonDatabase database)? snapshot;
+
+  /// Optional platform-owned collection media store.
+  final CollectionMediaStorage? mediaStorage;
 }
 
 /// SQLite connection settings aligned with Anki Core's collection opener.
@@ -175,6 +187,8 @@ final class CollectionSqliteStorage
   bool _preservingCollectionUndoHistory = false;
   int _collectionUndoGeneration = 0;
   Completer<void>? _collectionUndoOperationDone;
+  Completer<void>? _portableSnapshotDone;
+  bool _portableSnapshotStarting = false;
   late final DeckStorage _deckStorage = DeckStorage(
     _DeckStorageDatabase(this, _invalidateOperationHistoryAfterSubstoreWrite),
   );
@@ -904,6 +918,60 @@ INSERT OR REPLACE INTO cards (
     }
     if (!_database.autocommit) throw StateError('active transaction');
     await _flush();
+  }
+
+  /// Returns a portable SQLite backup of committed collection state.
+  ///
+  /// The driver uses SQLite's backup operation, so the live connection stays
+  /// open and subsequent writes do not alter the returned bytes. An active
+  /// transaction is rejected because its commit state is ambiguous.
+  Future<Uint8List> createSnapshot() async {
+    if (_closing || _connectionClosed || _closed) {
+      throw StateError('collection storage is closing');
+    }
+    final snapshot = _driver.snapshot;
+    if (snapshot == null) {
+      throw const PortableIoUnsupported('database snapshot');
+    }
+    final operationDone = await _acquireCollectionUndoOperation();
+    final snapshotDone = Completer<void>();
+    _portableSnapshotDone = snapshotDone;
+    _portableSnapshotStarting = true;
+    try {
+      if (_closing || _connectionClosed || _closed) {
+        throw StateError('collection storage is closing');
+      }
+      if (!_database.autocommit) throw StateError('active transaction');
+      await _flush();
+      if (!_database.autocommit) throw StateError('active transaction');
+      return await snapshot(_database);
+    } finally {
+      _portableSnapshotStarting = false;
+      if (identical(_portableSnapshotDone, snapshotDone)) {
+        _portableSnapshotDone = null;
+      }
+      snapshotDone.complete();
+      _releaseCollectionUndoOperation(operationDone);
+    }
+  }
+
+  /// Reads a named media object. Names are validated before reaching the host.
+  Future<Uint8List?> readMedia(String filename) {
+    final safeName = validateAnkiMediaFilename(filename);
+    final media = _driver.mediaStorage;
+    if (media == null) {
+      throw const PortableIoUnsupported('collection media read');
+    }
+    return media.read(safeName);
+  }
+
+  /// Lists media filenames available to this collection.
+  Future<Iterable<String>> listMedia() async {
+    final media = _driver.mediaStorage;
+    if (media == null) {
+      throw const PortableIoUnsupported('collection media listing');
+    }
+    return (await media.list()).map(validateAnkiMediaFilename).toList();
   }
 
   /// Adds a new note to [deckId], generating the cards Core requires.
@@ -3383,6 +3451,11 @@ WHERE queue IN (-2, -3)
 
   @override
   Future<void> beginExclusive() async {
+    if (_portableSnapshotStarting) {
+      throw StateError(
+        'cannot begin a transaction during a collection snapshot',
+      );
+    }
     _executeCached('begin exclusive');
   }
 
@@ -3580,6 +3653,7 @@ WHERE queue IN (-2, -3)
   }) async {
     if (_closed) return;
     _closing = true;
+    await _portableSnapshotDone?.future;
     await _searchQueue;
     Object? closeError;
     StackTrace? closeStack;

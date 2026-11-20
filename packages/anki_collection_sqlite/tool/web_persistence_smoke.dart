@@ -45,6 +45,12 @@ Future<void> main() async {
     }
     await first.updateNote(_note(generated.id, field: 'persisted note'));
     await first.removeNote(Int64.parseInt('9007199254740993'));
+    try {
+      await first.createSnapshot();
+      throw StateError('Web snapshot unexpectedly reported success');
+    } on PortableIoUnsupported catch (error) {
+      if (error.capability != 'database snapshot') rethrow;
+    }
     await first.close();
 
     final reopened = await CollectionSqliteStorage.open(

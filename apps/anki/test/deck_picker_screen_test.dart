@@ -1233,6 +1233,54 @@ void main() {
     },
   );
 
+  testWidgets('custom study state and exact deck survive app restoration', (
+    tester,
+  ) async {
+    final deckId = Int64.parseInt('9007199254740995');
+    final repository = _DeckRepository([
+      DeckPickerDeck(id: 8, exactId: deckId, name: 'Biology'),
+    ]);
+    await tester.pumpWidget(_app(repository, restorationScopeId: 'test'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Biology'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Custom study'),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Custom study'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Study by card state or tag'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byType(DropdownButtonFormField<CustomStudyCardState>),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('All review cards in random order').last);
+    await tester.pumpAndSettle();
+
+    await tester.restartAndRestore();
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<DropdownButtonFormField<CustomStudyCardState>>(
+            find.byType(DropdownButtonFormField<CustomStudyCardState>),
+          )
+          .initialValue,
+      CustomStudyCardState.ReviewCardsRandom,
+    );
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(repository.customStudyDecks.last, deckId);
+    expect(
+      repository.customStudyRequests.single.state,
+      CustomStudyCardState.ReviewCardsRandom,
+    );
+  });
+
   testWidgets('today limit extensions use signed int32 deltas for exact deck', (
     tester,
   ) async {
@@ -1656,7 +1704,9 @@ void main() {
 Widget _app(
   DeckPickerRepository repository, {
   ValueChanged<Int64>? onBrowseCards,
+  String? restorationScopeId,
 }) => MaterialApp(
+  restorationScopeId: restorationScopeId,
   localizationsDelegates: const [
     AppLocalizations.delegate,
     GlobalMaterialLocalizations.delegate,

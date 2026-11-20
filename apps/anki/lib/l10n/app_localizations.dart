@@ -685,6 +685,54 @@ abstract class AppLocalizations {
   /// **'Deck options'**
   String get deckOptions;
 
+  /// No description provided for @deckOptionsNewLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'New cards per day'**
+  String get deckOptionsNewLimit;
+
+  /// No description provided for @deckOptionsReviewLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Review cards per day'**
+  String get deckOptionsReviewLimit;
+
+  /// No description provided for @deckOptionsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Deck options saved'**
+  String get deckOptionsSaved;
+
+  /// No description provided for @deckOptionsSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save deck options.'**
+  String get deckOptionsSaveFailed;
+
+  /// No description provided for @deckOptionsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter whole numbers between 0 and 9999.'**
+  String get deckOptionsInvalid;
+
+  /// No description provided for @deckOptionsDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get deckOptionsDiscardTitle;
+
+  /// No description provided for @deckOptionsDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your deck option changes have not been saved.'**
+  String get deckOptionsDiscardMessage;
+
+  /// No description provided for @deckOptionsDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get deckOptionsDiscard;
+
   /// No description provided for @customStudy.
   ///
   /// In en, this message translates to:

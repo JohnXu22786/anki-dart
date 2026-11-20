@@ -2305,6 +2305,60 @@ GROUP BY did
     );
   }
 
+  /// Updates the two daily limits in the normal deck's existing preset.
+  ///
+  /// Presets are shared by decks, so every deck using this configuration sees
+  /// the change. Other configuration values are retained and the mutation is
+  /// atomic and available through collection undo/redo.
+  Future<void> updateDeckDailyLimits(
+    Int64 deckId, {
+    required int newPerDay,
+    required int reviewsPerDay,
+  }) async {
+    _validateDailyLimit('newPerDay', newPerDay);
+    _validateDailyLimit('reviewsPerDay', reviewsPerDay);
+
+    final deck = _deckStorage.getDeck(deckId);
+    if (deck == null) throw StateError('deck not found: $deckId');
+    final configId = deck.configId;
+    if (configId == null) throw StateError('normal deck required: $deckId');
+    final before = _deckConfigStorage.getDeckConfig(configId);
+    if (before == null) {
+      throw StateError('missing deck configuration: $configId');
+    }
+    if (before.inner.newPerDay == newPerDay &&
+        before.inner.reviewsPerDay == reviewsPerDay) {
+      // A preceding save may have committed the in-memory/SQLite change but
+      // failed while flushing it to the host. Let retrying Save flush that
+      // already-committed value without creating another undo step.
+      if (_database.autocommit) await _flush();
+      return;
+    }
+
+    final after = DeckConfig(
+      id: before.id,
+      name: before.name,
+      mtimeSecs: Int64(
+        (_nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch) ~/ 1000,
+      ),
+      usn: -1,
+      inner: before.inner.deepCopy()
+        ..newPerDay = newPerDay
+        ..reviewsPerDay = reviewsPerDay,
+    );
+    await runUndoableCollectionOperation(
+      apply: () async => _deckConfigStorage.updateDeckConfig(after),
+      undo: () async => _deckConfigStorage.updateDeckConfig(before),
+      redo: () async => _deckConfigStorage.updateDeckConfig(after),
+    );
+  }
+
+  static void _validateDailyLimit(String name, int value) {
+    if (value < 0 || value > 9999) {
+      throw ArgumentError.value(value, name, 'must be between 0 and 9999');
+    }
+  }
+
   /// Returns whether [deckId] or any of its descendants contains buried cards.
   bool deckHasBuriedCards(Int64 deckId) {
     final deck = _deckStorage.getDeck(deckId);

@@ -324,6 +324,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deckOptions => 'Deck options';
 
   @override
+  String get deckOptionsNewLimit => 'New cards per day';
+
+  @override
+  String get deckOptionsReviewLimit => 'Review cards per day';
+
+  @override
+  String get deckOptionsSaved => 'Deck options saved';
+
+  @override
+  String get deckOptionsSaveFailed => 'Could not save deck options.';
+
+  @override
+  String get deckOptionsInvalid => 'Enter whole numbers between 0 and 9999.';
+
+  @override
+  String get deckOptionsDiscardTitle => 'Discard changes?';
+
+  @override
+  String get deckOptionsDiscardMessage =>
+      'Your deck option changes have not been saved.';
+
+  @override
+  String get deckOptionsDiscard => 'Discard';
+
+  @override
   String get customStudy => 'Custom study';
 
   @override

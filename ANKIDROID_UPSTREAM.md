@@ -1,5 +1,50 @@
 # AnkiDroid source baseline
 
+## Deck Picker normal-deck daily limits (Unit 56)
+
+`apps/anki/lib/deck_options_editor.dart`, the `DeckPickerDailyLimitsProvider`
+route in `apps/anki/lib/deck_picker_screen.dart`,
+`CollectionDeckPickerRepository`, and
+`CollectionSqliteStorage.updateDeckDailyLimits()` implement the normal-deck
+daily new-card and review-card limit slice. The Deck Picker passes the exact
+selected deck ID through `Int64`, resolves that deck's current `configId`, and
+edits the shared preset in place; it does not copy/detach the preset or alter
+deck-local limits. Other `DeckConfig_Config` fields are deep-copied and
+preserved. The update checks Core's daily-limit range (0–9999), is atomic and
+participates in collection undo/redo. After a successful save the editor stays
+open, marks the fields clean, refreshes the Deck Picker counts, and reports
+success; a failed storage write stays visible as an error. Closing with
+unsaved changes asks before discarding.
+
+The AnkiDroid reference is pinned to 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`: `DeckPicker.kt`,
+`deckpicker/DeckPickerViewModel.kt`,
+`contextmenu/DeckPickerMenuContentProvider.kt`,
+`pages/DeckOptions.kt`, `pages/DeckOptionsDestination.kt`,
+`pages/PostRequestHandler.kt`, `libanki/BackendDeckOptions.kt`,
+`libanki/Decks.kt`, and their Deck Options tests. Normal-deck options are
+opened for the requested deck ID. `DeckOptionsDestination.toIntent()` branches
+filtered decks to `FilteredDeckOptionsFragment`; its view model edits filtered
+deck search/rebuild state, a distinct operation that this daily-limits screen
+does not handle. AnkiDroid's normal options page submits through
+`updateDeckConfigsRaw` and records the returned `OpChanges` as undoable. Exact
+SHA-256 values are in `apps/anki/ANKIDROID_SOURCE.sha256`.
+
+The options page's web UI is Anki Core at
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`: `DailyLimits.svelte` initializes
+the shared-preset tabs from the deck's current configuration and also exposes
+deck-only and today-only overrides; `SpinBoxRow.svelte` defaults to 0–9999;
+the route loads via `getDeckConfigsForUpdate`, and `SaveButton.svelte` invokes
+`DeckOptionsState.save()` without closing the options page. This slice only
+implements editing the shared preset daily values; Core's per-deck/today
+overrides, preset management, sibling limit warning, FSRS and remaining
+options are outside scope. Exact hashes are in
+`apps/anki/ANKI_CORE_SOURCE.sha256`.
+AnkiDroid's sources are GPL-3.0-or-later; Anki Core's web UI sources are
+AGPL-3.0-or-later. The Dart implementation and English strings retain their
+existing app/package licenses; no upstream implementation or translated
+resource strings were copied and root `COPYING` is unchanged.
+
 ## Deck Picker description editing (Unit 53)
 
 The shared Flutter Deck Picker connects `editDeckDescription` to a collection

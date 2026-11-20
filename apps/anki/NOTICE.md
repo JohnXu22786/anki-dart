@@ -96,3 +96,13 @@ behavior boundaries, and licenses are recorded in
 The AnkiDroid source is GPL-3.0-or-later and the Anki Core source is
 AGPL-3.0-or-later. No upstream implementation or localized strings were
 copied; root `COPYING` is unchanged.
+
+`lib/collection_text_export.dart` adapts the text-export option mapping in
+AnkiDroid 2.25.3 `BackendExporting.kt` and delegates record generation to
+`anki_collection_sqlite.CollectionSqliteStorage.exportText()`. It returns only
+in-memory text and a record count; platform file output remains outside this
+unit. The pinned AnkiDroid hash is recorded in `ANKIDROID_SOURCE.sha256`, and
+Anki Core source attribution and hashes are recorded in
+`packages/anki_collection_sqlite/NOTICE.md` and `SOURCE.sha256`. The app
+adapter is Copyright © 2026 John Tsui under `AGPL-3.0-or-later`; root
+`COPYING` remains unchanged.

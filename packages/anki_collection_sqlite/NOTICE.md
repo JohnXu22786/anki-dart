@@ -137,3 +137,12 @@ name composition, collision checks, filtered-ancestor rejection, and Core-style
 undo/redo for newly created deck rows. These sources are GNU AGPL-3.0-or-later;
 no upstream source was copied. Exact source hashes are recorded in
 `SOURCE.sha256`; root `COPYING` remains unchanged.
+
+The in-memory Notes and Cards text export follows Anki Core's
+`rslib/src/import_export/text/csv/export.rs`,
+`rslib/src/import_export/service.rs`, `proto/anki/import_export.proto`, and
+`rslib/src/text.rs` at commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`.
+The implementation generates TSV headers and records and selects notes/cards
+from the collection; it uses the shared model package for card rendering.
+Exact source hashes are checked by `tool/check_package.py` and recorded in
+`SOURCE.sha256`. The adapter is AGPL-3.0-or-later; root `COPYING` is unchanged.

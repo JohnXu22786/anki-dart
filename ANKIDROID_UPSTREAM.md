@@ -5051,3 +5051,40 @@ study dialog and tag-limit UI are Copyright © 2015 Timothy Rae and © 2025
 lukstbit respectively, and are licensed GPL-3.0-or-later. The tag dialog view
 model is Copyright © 2025 Divyansh Kushwaha and licensed GPL-3.0-or-later. No
 upstream source code was copied for this route; root `COPYING` is unchanged.
+
+## Deck Picker Custom Study Review Ahead (Unit57)
+
+The shared Deck Picker Custom Study chooser offers Review Ahead for normal
+decks. Its day input accepts 1 through 99,999, rejects leading zeroes, and
+enables Create only after the current value has an exact selected-deck match
+for `deck:<name> prop:due<=N`. Changing the value invalidates an earlier
+availability result. The preflight also applies the filtered builder's
+suspended, buried, and already-filtered card exclusions, so it cannot offer
+Create for a set that the session builder would empty. Creating a session uses
+the Core-compatible filtered search `prop:due<=N deck:<name>`, due ordering,
+rescheduling, a 99,999-card
+limit and `allow_empty: false`; the existing collection builder supplies the
+transaction, undo entry and selection of the resulting session deck. The
+last successful value is saved as `aheadDays` when preferences are available.
+
+Behavior was checked against AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875` and Anki Core commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The source hashes verified in the
+official checkouts are:
+
+- AnkiDroid `DeckPicker.kt` —
+  `9859b3f9a604b52a67193027fcdec2b2e67e6a50a1ea04f760425822a23ac242`
+- AnkiDroid `CustomStudyDialog.kt` —
+  `f05c630547dd440016e6a7b613e3bc7200d99b52fd5cb526983cc3fcc3a2459d`
+- AnkiDroid `CustomStudyViewModel.kt` —
+  `331d8bab14d22e5f1365bd6c8cff237cf0cd8c5cbc8cd2f37793c6891ce25822`
+- AnkiDroid `CustomStudyDialogTest.kt` —
+  `2a236b521058e09e2c96ac147db70995629de2c6c4d4f079ff01a0a413e26306`
+- Anki Core `rslib/src/scheduler/filtered/custom_study.rs` —
+  `8701f9bbd428ab3651e6343af9a6567a4ed28c094269b4b2dab20b5810e1732a`
+- Anki Core `proto/anki/scheduler.proto` —
+  `9ebdd150185cdaccef2a7957481361b869344e573cce4dc0be77489cac7b71e3`
+
+The AnkiDroid source files are GPL-3.0-or-later and the Core source is
+AGPL-3.0-or-later. This is an independent Dart translation; no upstream source
+text was copied. `COPYING` and the existing license records are unchanged.

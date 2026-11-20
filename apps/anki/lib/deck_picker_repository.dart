@@ -14,8 +14,10 @@ import 'package:anki_dart/anki_dart.dart'
         FilteredDeckOptions,
         SearchTermState,
         buildCustomStudySearch,
+        buildReviewAheadAvailabilitySearch,
         projectTagsDialogInitialization,
-        validateCustomStudyInput;
+        validateCustomStudyInput,
+        validateReviewAheadDays;
 import 'package:fixnum/fixnum.dart';
 import 'package:protobuf/protobuf.dart';
 
@@ -23,6 +25,7 @@ import 'collection_runtime.dart';
 import 'collection_card_browser_controller.dart';
 import 'deck_description_editor.dart';
 import 'deck_options_editor.dart';
+import 'custom_study_review_ahead_request.dart';
 import 'deck_picker_screen.dart';
 import 'note_editor_screen.dart';
 
@@ -46,6 +49,7 @@ final class CollectionDeckPickerRepository
         DeckPickerEmptyFilteredDeckProvider,
         DeckPickerDescriptionProvider,
         DeckPickerCustomStudyProvider,
+        DeckPickerReviewAheadProvider,
         DeckPickerDailyLimitsProvider,
         DeckPickerCollectionUndoProvider {
   const CollectionDeckPickerRepository(this.collections);
@@ -276,6 +280,45 @@ final class CollectionDeckPickerRepository
             ),
           ),
         allowEmpty: false,
+      ),
+    );
+  }
+
+  @override
+  Future<bool> hasReviewAheadCards(DeckPickerDeck deck, int days) async {
+    final id = _customStudyDeckId(deck);
+    final stored = _storage.decks.getDeck(id);
+    if (stored == null) throw StateError('deck not found: $id');
+    if (stored.kind is! NormalDeckKind) {
+      throw StateError('normal deck required: $id');
+    }
+    return _storage.hasCardsMatchingSearch(
+      buildReviewAheadAvailabilitySearch(deckName: stored.name, days: days),
+    );
+  }
+
+  @override
+  Future<void> createReviewAhead(DeckPickerDeck deck, int days) async {
+    validateReviewAheadDays(days);
+    final id = _customStudyDeckId(deck);
+    final stored = _storage.decks.getDeck(id);
+    if (stored == null) throw StateError('deck not found: $id');
+    if (stored.kind is! NormalDeckKind) {
+      throw StateError('normal deck required: $id');
+    }
+    final existingId =
+        _storage.decks.getDeckId('Custom Study Session') ?? Int64.ZERO;
+    final existing = existingId == Int64.ZERO
+        ? null
+        : _storage.decks.getDeck(existingId);
+    if (existing != null && existing.kind is! FilteredDeckKind) {
+      throw StateError('custom study deck already exists as a normal deck');
+    }
+    await _storage.buildFilteredDeck(
+      reviewAheadFilteredDeckRequest(
+        existingSessionId: existingId,
+        deckName: stored.name,
+        days: days,
       ),
     );
   }

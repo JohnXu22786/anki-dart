@@ -432,5 +432,11 @@
   "customStudyTooManyTags": "Select no more than 100 tags.",
   "customStudyPositiveCount": "Enter a positive card count.",
   "customStudyInclude": "Include",
-  "customStudyExclude": "Exclude"
+  "customStudyExclude": "Exclude",
+  "reviewAhead": "Review ahead",
+  "reviewAheadDays": "Days to review ahead",
+  "reviewAheadMinimumDays": "Enter at least 1 day.",
+  "customStudyNoCards": "No cards matched the criteria you provided.",
+  "day": "day",
+  "days": "days"
 }

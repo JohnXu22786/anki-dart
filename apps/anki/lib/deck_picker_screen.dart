@@ -56,6 +56,8 @@ enum DeckPickerAction {
   deleteDeck,
 }
 
+enum _CustomStudyChoice { tags, reviewAhead }
+
 /// Values entered in filtered-deck options; query semantics belong to the host.
 final class FilteredDeckRequest {
   const FilteredDeckRequest({
@@ -168,6 +170,11 @@ abstract interface class DeckPickerCustomStudyProvider {
     DeckPickerDeck deck,
     CustomStudyTagsRequest request,
   );
+}
+
+abstract interface class DeckPickerReviewAheadProvider {
+  Future<bool> hasReviewAheadCards(DeckPickerDeck deck, int days);
+  Future<void> createReviewAhead(DeckPickerDeck deck, int days);
 }
 
 final class CustomStudyTagsRequest {
@@ -755,6 +762,40 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
 
   Future<void> _customStudy(DeckPickerDeck deck) async {
     final provider = widget.repository as DeckPickerCustomStudyProvider;
+    final choice = await showDialog<_CustomStudyChoice>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.customStudy),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(
+                AppLocalizations.of(context)!.customStudyCardStateOrTag,
+              ),
+              onTap: () => Navigator.pop(context, _CustomStudyChoice.tags),
+            ),
+            if (widget.repository is DeckPickerReviewAheadProvider)
+              ListTile(
+                title: Text(AppLocalizations.of(context)!.reviewAhead),
+                onTap: () =>
+                    Navigator.pop(context, _CustomStudyChoice.reviewAhead),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+        ],
+      ),
+    );
+    if (choice == null) return;
+    if (choice == _CustomStudyChoice.reviewAhead) {
+      await _reviewAhead(deck);
+      return;
+    }
     late final List<String> tags;
     try {
       tags = await provider.customStudyTags(deck);
@@ -786,6 +827,28 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
         }
       });
     }
+  }
+
+  Future<void> _reviewAhead(DeckPickerDeck deck) async {
+    final provider = widget.repository as DeckPickerReviewAheadProvider;
+    final saved = await SharedPreferencesAsync().getInt('aheadDays');
+    if (!mounted) return;
+    final days = await showDialog<int>(
+      context: context,
+      builder: (_) => _ReviewAheadDialog(
+        initialDays: saved ?? 1,
+        hasCards: (value) => provider.hasReviewAheadCards(deck, value),
+      ),
+    );
+    if (days == null) return;
+    await _invoke(() async {
+      await provider.createReviewAhead(deck, days);
+      try {
+        await SharedPreferencesAsync().setInt('aheadDays', days);
+      } on Object {
+        // Saving a default is optional after the collection operation succeeds.
+      }
+    });
   }
 
   Future<void> _editDailyLimits(DeckPickerDeck deck) async {
@@ -1797,6 +1860,112 @@ DeckNode _toDeckNode(
         _toDeckNode(child, depth + 1, deckIndex),
     ],
   );
+}
+
+final class _ReviewAheadDialog extends StatefulWidget {
+  const _ReviewAheadDialog({required this.initialDays, required this.hasCards});
+
+  final int initialDays;
+  final Future<bool> Function(int days) hasCards;
+
+  @override
+  State<_ReviewAheadDialog> createState() => _ReviewAheadDialogState();
+}
+
+final class _ReviewAheadDialogState extends State<_ReviewAheadDialog> {
+  late final TextEditingController days;
+  int _queryGeneration = 0;
+  bool _hasCards = false;
+  bool _checking = false;
+  bool _validInput = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialDays.clamp(1, 99999);
+    days = TextEditingController(text: initial.toString());
+    _refresh(days.text);
+  }
+
+  @override
+  void dispose() {
+    days.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refresh(String text) async {
+    final value = int.tryParse(text);
+    final valid =
+        value != null &&
+        value >= 1 &&
+        value <= 99999 &&
+        value.toString() == text;
+    final generation = ++_queryGeneration;
+    setState(() {
+      _validInput = valid;
+      _hasCards = false;
+      _checking = valid;
+      _error = valid
+          ? null
+          : (value == 0
+                ? AppLocalizations.of(context)!.reviewAheadMinimumDays
+                : null);
+    });
+    if (!valid) return;
+    try {
+      final found = await widget.hasCards(value);
+      if (!mounted || generation != _queryGeneration) return;
+      setState(() {
+        _hasCards = found;
+        _checking = false;
+        _error = found
+            ? null
+            : AppLocalizations.of(context)!.customStudyNoCards;
+      });
+    } on Object {
+      if (!mounted || generation != _queryGeneration) return;
+      setState(() {
+        _checking = false;
+        _error = AppLocalizations.of(context)!.deckActionFailed;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(s.reviewAhead),
+      content: TextField(
+        controller: days,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(5),
+        ],
+        onChanged: _refresh,
+        decoration: InputDecoration(
+          labelText: s.reviewAheadDays,
+          suffixText: int.tryParse(days.text) == 1 ? s.day : s.days,
+          errorText: _error,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(s.cancel),
+        ),
+        FilledButton(
+          onPressed: !_validInput || !_hasCards || _checking
+              ? null
+              : () => Navigator.pop(context, int.parse(days.text)),
+          child: Text(s.create),
+        ),
+      ],
+    );
+  }
 }
 
 final class _CustomStudyTagsDialog extends StatefulWidget {

@@ -163,3 +163,10 @@ dart compile js tool/web_compile_smoke.dart -o /tmp/anki_collection_sqlite.js
 flushes the IndexedDB-backed file system, reopens the SQLite file, and reads
 the row back. Compile it with `dart compile js` and serve it with a matching
 `sqlite3.wasm` asset to exercise that experimental path in a browser.
+
+`CollectionSqliteStorage.exportText()` generates an in-memory Notes or Cards
+TSV export for the whole collection or a deck and its descendants. It returns
+text and a record count; it does not save or share a file. Text formatting
+follows Anki Core's pinned export headers, optional note columns, field padding,
+HTML option, and tab-delimited quoting. The source mapping is recorded in
+`NOTICE.md` and `SOURCE.sha256`.

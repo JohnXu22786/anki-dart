@@ -9,6 +9,10 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASHES = {
+    "rslib/src/import_export/text/csv/export.rs": "8dd385c117b0bacd8fd547413987bf8540a0e95b89b36011f4e79488c1f51578",
+    "rslib/src/import_export/service.rs": "24307d4034ce83acbf8601f6c40f09a5c1882ce5e43de40b414503decd98203e",
+    "proto/anki/import_export.proto": "c45135da25a61946551b56cdb6e1d6ca421028457e631c034f7cf6a5e3357ee6",
+    "rslib/src/text.rs": "2b60699e1c6ad478baf80bfa50a85e9772f40279400d62c84b071c72945b1762",
     "rslib/src/notes/mod.rs": "5df79b58906206a87c5a28a06f886227df74e6a65d061d2cb915d35b34d35893",
     "rslib/src/notetype/cardgen.rs": "291408ba325c6573203abb3770f245a0307186b7a5a1c54d0eddeb763b5b0634",
     "rslib/src/card/mod.rs": "cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9",
@@ -82,7 +86,7 @@ def main() -> int:
     manifest = {}
     for line in (ROOT / "SOURCE.sha256").read_text(encoding="utf-8").splitlines():
         match = re.fullmatch(
-            r"([0-9a-f]{64})  (rslib/src/[a-z0-9_/.]+\.(?:sql|rs)|Cargo\.lock|fsrs-[0-9.]+/LICENSE|regex-syntax-[a-z0-9_.]+/src/[a-z0-9_/.]+\.rs|lib/src/[a-z0-9_/.]+\.dart)",
+            r"([0-9a-f]{64})  (rslib/src/[a-z0-9_/.]+\.(?:sql|rs)|proto/anki/[a-z0-9_/.]+\.proto|Cargo\.lock|fsrs-[0-9.]+/LICENSE|regex-syntax-[a-z0-9_.]+/src/[a-z0-9_/.]+\.rs|lib/src/[a-z0-9_/.]+\.dart)",
             line,
         )
         if not match:

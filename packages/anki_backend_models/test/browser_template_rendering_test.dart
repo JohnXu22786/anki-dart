@@ -6,6 +6,29 @@ import 'package:fixnum/fixnum.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('renderer can select standard rather than browser template formats',
+      () {
+    final type = _notetype(
+      question: '{{Front}}',
+      answer: '{{Back}}',
+      questionBrowser: '{{Back}}',
+      answerBrowser: '{{Front}}',
+    );
+    const renderer = BrowserCardTemplateRenderer();
+    final note = Note(fields: ['standard', 'browser']);
+    final card = Card(templateIdx: 0);
+
+    expect(renderer.render(note: note, card: card, notetype: type).questionHtml,
+        'browser');
+    expect(
+        renderer.render(
+            note: note,
+            card: card,
+            notetype: type,
+            useBrowserFormats: false).questionHtml,
+        'standard');
+  });
+
   test('templateRendersWithFields evaluates negated conditionals like Core',
       () {
     expect(
@@ -251,6 +274,8 @@ void main() {
 Notetype _notetype({
   required String question,
   required String answer,
+  String? questionBrowser,
+  String? answerBrowser,
   List<String> fields = const ['Front', 'Back'],
   bool cloze = false,
 }) =>
@@ -266,8 +291,8 @@ Notetype _notetype({
           config: proto.Notetype_Template_Config(
             qFormat: question,
             aFormat: answer,
-            qFormatBrowser: question,
-            aFormatBrowser: answer,
+            qFormatBrowser: questionBrowser ?? question,
+            aFormatBrowser: answerBrowser ?? answer,
           ),
         ),
       ],

@@ -5856,3 +5856,11 @@ in `apps/anki/ANKIDROID_SOURCE.sha256`.
   See `ANKIDROID_UPSTREAM.md`, “Deck Picker Custom Study by card state or tag
   (Unit55)”, for pinned source hashes and behavioral scope. Root `COPYING` is
   unchanged.
+
+## Collection Notes/Cards text export
+
+`packages/anki_collection_sqlite` now generates collection-backed, in-memory
+Notes and Cards tab-separated text using Core's export metadata and record
+ordering. Its AGPL-3.0-or-later source mapping and pinned source hashes are
+recorded in that package's `NOTICE.md` and `SOURCE.sha256`. Root `COPYING`
+remains unchanged.

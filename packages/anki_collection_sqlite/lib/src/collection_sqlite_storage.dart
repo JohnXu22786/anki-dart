@@ -33,6 +33,7 @@ import 'deck_tree.dart';
 import 'note_update.dart';
 import 'core_random_position.dart';
 import 'add_note.dart';
+import 'text_export.dart';
 
 part 'legacy_collection_migrations.dart';
 
@@ -2933,6 +2934,125 @@ WHERE queue IN (-2, -3)
       for (final id in orderedIds)
         if (cardsById[id.toString()] case final card?) card,
     ];
+  }
+
+  /// Generates Notes or Cards text for the whole collection or a selected
+  /// deck and its descendants. This only returns memory text; file delivery is
+  /// the responsibility of the platform host.
+  Future<CollectionTextExportResult> exportText({
+    required bool cards,
+    required CollectionTextExportOptions options,
+    Int64? deckId,
+  }) async {
+    final deckIds = deckId == null
+        ? null
+        : _deckStorage
+              .deckIdWithChildren(
+                _deckStorage.getDeck(deckId) ??
+                    (throw StateError('deck not found: $deckId')),
+              )
+              .toList();
+    if (deckIds != null && deckIds.isEmpty) {
+      return generateCollectionTextExport(
+        cards: cards,
+        options: options,
+        notes: const [],
+        cardRecords: const [],
+      );
+    }
+    final selectedCards = _database
+        .select(
+          deckIds == null
+              ? 'SELECT id FROM cards ORDER BY id'
+              : 'SELECT id FROM cards WHERE did IN (${List.filled(deckIds.length, '?').join(',')}) ORDER BY id',
+          deckIds?.map(_toSqlInt64).toList() ?? const [],
+        )
+        .map((row) => _readInt64(row.columnAt(0)))
+        .toList();
+    final cardValues = await getCardsByIds(selectedCards);
+    final deckNames = {
+      for (final deck in _deckStorage.getAllDecks()) deck.id: deck.name,
+    };
+    if (cards) {
+      final noteValues = await getNotesByIds(
+        cardValues.map((card) => card.noteId).toSet(),
+      );
+      final notesById = {for (final note in noteValues) note.id: note};
+      final typeIds = noteValues
+          .map((note) => NotetypeId(note.notetypeId))
+          .toSet();
+      final types = await getNotetypesByIds(typeIds);
+      final typesById = {for (final type in types) type.id.value: type};
+      const renderer = BrowserCardTemplateRenderer();
+      final rendered = <CollectionTextExportCard>[];
+      for (final card in cardValues) {
+        final note = notesById[card.noteId];
+        final type = note == null ? null : typesById[note.notetypeId];
+        if (note == null || type == null) continue;
+        final sides = renderer.render(
+          note: note,
+          card: card,
+          notetype: type,
+          deckName: deckNames[card.deckId] ?? '',
+          useBrowserFormats: false,
+        );
+        if (!sides.isAvailable) {
+          throw StateError(
+            'Unable to render card ${card.id}: ${sides.unavailableReason}',
+          );
+        }
+        rendered.add(
+          CollectionTextExportCard(
+            id: card.id,
+            question: exportTextField(sides.questionHtml!, options.includeHtml),
+            answer: exportCardAnswer(sides.answerHtml!, options.includeHtml),
+          ),
+        );
+      }
+      return generateCollectionTextExport(
+        cards: true,
+        options: options,
+        notes: const [],
+        cardRecords: rendered,
+      );
+    }
+    final noteIds = cardValues.map((card) => card.noteId).toSet().toList()
+      ..sort((a, b) => a.compareTo(b));
+    final notes = await getNotesByIds(noteIds);
+    final noteDecks = <Int64, Int64>{};
+    final allCardsByNote = await cardsOfNotes(noteIds);
+    for (final entry in allCardsByNote.entries) {
+      final noteCards = entry.value.toList()
+        ..sort((a, b) => a.templateIdx.compareTo(b.templateIdx));
+      if (noteCards.isNotEmpty) noteDecks[entry.key] = noteCards.first.deckId;
+    }
+    final types = await getNotetypesByIds(
+      notes.map((note) => NotetypeId(note.notetypeId)).toSet(),
+    );
+    final typesById = {for (final type in types) type.id.value: type};
+    final fieldColumnCount = types.fold<int>(
+      0,
+      (max, type) => type.fields.length > max ? type.fields.length : max,
+    );
+    final records = [
+      for (final note in notes)
+        CollectionTextExportNote(
+          guid: note.guid,
+          notetypeName: typesById[note.notetypeId]?.name ?? '',
+          deckName: deckNames[noteDecks[note.id]] ?? '',
+          fields: note.fields
+              .map((field) => exportTextField(field, options.includeHtml))
+              .toList(),
+          tags: note.tags,
+        ),
+    ];
+    return generateCollectionTextExport(
+      cards: false,
+      options: options,
+      notes: records,
+      cardRecords: const [],
+      fieldColumnCount: fieldColumnCount,
+    );
   }
 
   /// Updates all persisted scheduling fields for [card].

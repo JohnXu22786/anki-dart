@@ -45,6 +45,7 @@ final class BrowserCardTemplateRenderer {
     required Card card,
     required Notetype notetype,
     String deckName = '(Deck)',
+    bool useBrowserFormats = true,
   }) {
     final template = _templateFor(notetype, card);
     if (template == null) {
@@ -75,7 +76,9 @@ final class BrowserCardTemplateRenderer {
     };
     try {
       final question = _renderSide(
-        _browserFormat(template.config.qFormatBrowser, template.config.qFormat),
+        useBrowserFormats
+            ? _browserFormat(template.config.qFormatBrowser, template.config.qFormat)
+            : template.config.qFormat,
         fields,
         nonempty,
         card.templateIdx,
@@ -86,7 +89,9 @@ final class BrowserCardTemplateRenderer {
         return const BrowserCardSides.unavailable('missing-cloze');
       }
       final answer = _renderSide(
-        _browserFormat(template.config.aFormatBrowser, template.config.aFormat),
+        useBrowserFormats
+            ? _browserFormat(template.config.aFormatBrowser, template.config.aFormat)
+            : template.config.aFormat,
         fields,
         nonempty,
         card.templateIdx,

@@ -1735,6 +1735,18 @@ abstract class AppLocalizations {
   /// **'Enter at least 1 day.'**
   String get reviewAheadMinimumDays;
 
+  /// No description provided for @forgottenCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Review forgotten cards'**
+  String get forgottenCards;
+
+  /// No description provided for @forgottenCardsDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days to look back'**
+  String get forgottenCardsDays;
+
   /// No description provided for @customStudyNoCards.
   ///
   /// In en, this message translates to:

@@ -110,6 +110,36 @@ void main() {
   );
 
   test(
+    'Deck Picker subdeck creation selects the child of the exact parent',
+    () async {
+      final storage = runtime.storage!;
+      final wideDeckId = Int64.parseInt('9007199254740995');
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: wideDeckId,
+          name: 'Wide parent',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      final repository = CollectionDeckPickerRepository(runtime);
+      final parent = DeckPickerDeck(
+        id: 12,
+        exactId: wideDeckId,
+        name: 'Wide parent',
+      );
+
+      expect(repository.isSubdeckNameAvailable(parent, 'Child'), isTrue);
+      await repository.createSubdeck(parent, 'Child');
+
+      final child = storage.decks.getDeckByName('Wide parent\x1fChild')!;
+      expect(storage.currentDeckId, child.id);
+      expect(child.kind, isA<NormalDeckKind>());
+      expect(repository.isSubdeckNameAvailable(parent, 'Child'), isFalse);
+      expect(repository.isSubdeckNameAvailable(parent, ''), isFalse);
+    },
+  );
+
+  test(
     'Deck Picker shortcut keeps the collection current deck ID exact',
     () async {
       final storage = runtime.storage!;

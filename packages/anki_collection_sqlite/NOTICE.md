@@ -128,3 +128,12 @@ and `NoteFieldsCheckResult.kt` at
 shared model/storage helpers and copies no upstream source. It is distributed
 under AGPL-3.0-or-later; root `COPYING` remains unchanged. See
 `docs/NOTE_ADD_GAP_REPORT.md` for supported behavior and host-owned validation.
+
+Deck creation behavior is independently implemented from Anki Core
+`rslib/src/decks/mod.rs`, `rslib/src/decks/name.rs`, and
+`rslib/src/decks/addupdate.rs`, pinned to
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The adapter preserves normalized
+name composition, collision checks, filtered-ancestor rejection, and Core-style
+undo/redo for newly created deck rows. These sources are GNU AGPL-3.0-or-later;
+no upstream source was copied. Exact source hashes are recorded in
+`SOURCE.sha256`; root `COPYING` remains unchanged.

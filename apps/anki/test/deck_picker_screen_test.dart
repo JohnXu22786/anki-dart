@@ -63,6 +63,52 @@ void main() {
     },
   );
 
+  testWidgets('Export deck publishes the selected exact deck ID', (
+    tester,
+  ) async {
+    final exactId = Int64.parseInt('9007199254740995');
+    final repository = _DeckRepository([
+      DeckPickerDeck(id: 42, exactId: exactId, name: 'Grammar'),
+    ]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Grammar'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export deck'));
+    await tester.pumpAndSettle();
+
+    expect(repository.exportRequests, hasLength(1));
+    expect(repository.exportRequests.single.deckId, exactId);
+    expect(repository.actions, isEmpty);
+  });
+
+  testWidgets('Export deck without a provider never uses generic action', (
+    tester,
+  ) async {
+    final repository = _BasicDeckRepository(
+      DeckPickerDeck(
+        id: 42,
+        exactId: Int64.parseInt('9007199254740995'),
+        name: 'Grammar',
+      ),
+    );
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Grammar'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export deck'));
+    await tester.pumpAndSettle();
+
+    expect(repository.actions, isEmpty);
+    expect(find.text('Deck action could not be completed'), findsOneWidget);
+  });
+
   testWidgets('description editor loads, saves both fields, and refreshes', (
     tester,
   ) async {
@@ -1716,11 +1762,45 @@ Widget _app(
   home: DeckPickerScreen(repository: repository, onBrowseCards: onBrowseCards),
 );
 
+final class _BasicDeckRepository implements DeckPickerRepository {
+  _BasicDeckRepository(this.deck);
+
+  final DeckPickerDeck deck;
+  final List<(DeckPickerAction, int)> actions = [];
+
+  @override
+  int? get currentDeckId => null;
+  @override
+  bool get scheduleRemindersEnabled => false;
+  @override
+  FilteredDeckOptions get newFilteredDeckOptions => const FilteredDeckOptions();
+  @override
+  List<FilteredDeckOrderOption> get filteredDeckOrderOptions => const [];
+  @override
+  Future<List<DeckPickerDeck>> loadDecks() async => [deck];
+  @override
+  Future<void> selectDeck(int deckId) async {}
+  @override
+  Future<void> study(int deckId) async {}
+  @override
+  Future<void> toggleDeckExpand(int deckId) async {}
+  @override
+  Future<void> performAction(DeckPickerAction action, int deckId) async =>
+      actions.add((action, deckId));
+  @override
+  Future<void> createDeck(String name) async {}
+  @override
+  Future<void> createSharedDeck() async {}
+  @override
+  Future<void> buildFilteredDeck(FilteredDeckRequest request) async {}
+}
+
 final class _DeckRepository
     implements
         DeckPickerRepository,
         DeckPickerNewNotePortProvider,
         DeckPickerExactBrowseDeckProvider,
+        DeckPickerExportDeckProvider,
         DeckPickerCreateSubdeckProvider,
         DeckPickerRenameProvider,
         DeckPickerDeleteProvider,
@@ -1735,6 +1815,7 @@ final class _DeckRepository
         DeckPickerDailyLimitsProvider,
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
+  final List<DeckPickerExportDeckRequest> exportRequests = [];
   NewNoteEditorPort? editorPort;
   @override
   bool get scheduleRemindersEnabled => false;
@@ -1897,6 +1978,9 @@ final class _DeckRepository
   Future<void> study(int deckId) async => studied.add(deckId);
   @override
   Future<void> toggleDeckExpand(int deckId) async {}
+  @override
+  Future<void> exportDeck(DeckPickerExportDeckRequest request) async =>
+      exportRequests.add(request);
   @override
   Future<void> performAction(DeckPickerAction action, int deckId) async =>
       actions.add((action, deckId));

@@ -20,14 +20,24 @@
  */
 
 import 'package:anki_dart/anki_dart.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('export request preserves the supplied deck ID', () {
-    const deckId = -17;
+  test('export request preserves the exact 64-bit deck ID', () {
+    final deckId = Int64.parseInt('9007199254740995');
 
-    final request = projectDeckPickerExportDeck(deckId: deckId);
+    final request = projectDeckPickerExportDeck(
+      exactDeckId: deckId,
+      legacyDeckId: 17,
+    );
 
     expect(request.deckId, deckId);
+  });
+
+  test('export request uses legacy int only when exact ID is absent', () {
+    final request = projectDeckPickerExportDeck(legacyDeckId: -17);
+
+    expect(request.deckId, Int64(-17));
   });
 }

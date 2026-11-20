@@ -21,6 +21,7 @@ import 'package:anki_dart/anki_dart.dart'
         validateForgottenCardsDays,
         validateReviewAheadDays,
         validatePreviewNewCardsDays;
+import 'package:anki_dart/deck_picker.dart' show DeckPickerExportDeckRequest;
 import 'package:fixnum/fixnum.dart';
 import 'package:protobuf/protobuf.dart';
 
@@ -46,6 +47,7 @@ final class CollectionDeckPickerRepository
         DeckPickerRepository,
         DeckPickerNewNotePortProvider,
         DeckPickerExactBrowseDeckProvider,
+        DeckPickerExportDeckProvider,
         DeckPickerRenameProvider,
         DeckPickerCreateSubdeckProvider,
         DeckPickerDeleteProvider,
@@ -60,9 +62,25 @@ final class CollectionDeckPickerRepository
         DeckPickerDailyLimitsProvider,
         DeckPickerExtendLimitsProvider,
         DeckPickerCollectionUndoProvider {
-  const CollectionDeckPickerRepository(this.collections);
+  const CollectionDeckPickerRepository(
+    this.collections, {
+    this.exportDeckHandler,
+  });
 
   final CollectionRuntime collections;
+  final Future<void> Function(DeckPickerExportDeckRequest request)?
+  exportDeckHandler;
+
+  @override
+  Future<void> exportDeck(DeckPickerExportDeckRequest request) {
+    final handler = exportDeckHandler;
+    if (handler == null) {
+      return Future.error(
+        UnsupportedError('Deck export service is not configured.'),
+      );
+    }
+    return handler(request);
+  }
 
   @override
   Future<NewNoteEditorPort> selectDeckAndCreateNewNotePort(

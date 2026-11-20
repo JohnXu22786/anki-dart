@@ -137,6 +137,11 @@ abstract interface class DeckPickerExactBrowseDeckProvider {
   Future<void> selectDeckForBrowse(DeckPickerDeck deck);
 }
 
+/// Platform-neutral export request route; the host owns export execution.
+abstract interface class DeckPickerExportDeckProvider {
+  Future<void> exportDeck(DeckPickerExportDeckRequest request);
+}
+
 /// Optional exact-ID route for Deck Picker rename, including validation used
 /// while the rename dialog is open.
 abstract interface class DeckPickerRenameProvider {
@@ -797,6 +802,22 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
       if (action == DeckPickerAction.browseCards &&
           widget.onBrowseCards != null) {
         await _browseCards(deck);
+      } else if (action == DeckPickerAction.exportDeck) {
+        final repository = widget.repository;
+        if (repository is DeckPickerExportDeckProvider) {
+          final provider = repository as DeckPickerExportDeckProvider;
+          final request = projectDeckPickerExportDeck(
+            exactDeckId: deck.exactId,
+            legacyDeckId: deck.id,
+          );
+          await _invoke(() => provider.exportDeck(request));
+        } else {
+          await _invoke(
+            () => Future<void>.error(
+              UnsupportedError('Deck export service is not configured.'),
+            ),
+          );
+        }
       } else if (action == DeckPickerAction.addCard &&
           widget.repository is DeckPickerNewNotePortProvider) {
         await _addNote(deck);

@@ -1747,6 +1747,18 @@ abstract class AppLocalizations {
   /// **'Days to look back'**
   String get forgottenCardsDays;
 
+  /// No description provided for @previewNewCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview new cards'**
+  String get previewNewCards;
+
+  /// No description provided for @previewNewCardsDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days since added'**
+  String get previewNewCardsDays;
+
   /// No description provided for @customStudyNoCards.
   ///
   /// In en, this message translates to:

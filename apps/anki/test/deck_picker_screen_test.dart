@@ -1308,6 +1308,36 @@ void main() {
     expect(await SharedPreferencesAsync().getInt('forgottenDays'), 7);
   });
 
+  testWidgets('preview new cards creates the selected day window', (
+    tester,
+  ) async {
+    final deckId = Int64.parseInt('9007199254740995');
+    final repository = _DeckRepository([
+      DeckPickerDeck(id: 8, exactId: deckId, name: 'Biology'),
+    ]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Biology'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Custom study'),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Custom study'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Preview new cards'));
+    await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
+    expect(find.text('Days since added'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).last, '7');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+    expect(repository.previewNewCardsRequests, [(deckId, 7)]);
+    expect(await SharedPreferencesAsync().getInt('previewDays'), 7);
+  });
+
   testWidgets('deck action menu forwards its source action and deck ID', (
     tester,
   ) async {
@@ -1583,6 +1613,7 @@ final class _DeckRepository
         DeckPickerCustomStudyProvider,
         DeckPickerReviewAheadProvider,
         DeckPickerForgottenCardsProvider,
+        DeckPickerPreviewNewCardsProvider,
         DeckPickerDailyLimitsProvider,
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
@@ -1644,6 +1675,7 @@ final class _DeckRepository
   final reviewAheadRequests = <(Int64, int)>[];
   bool forgottenCardsMatch = true;
   final forgottenCardsRequests = <(Int64, int)>[];
+  final previewNewCardsRequests = <(Int64, int)>[];
   Completer<DeckPickerDeletionResult>? pendingDelete;
   Completer<DeckPickerUnburyResult>? pendingUnbury;
   final deletedExact = <Int64>[];
@@ -1915,6 +1947,11 @@ final class _DeckRepository
   @override
   Future<void> createForgottenCards(DeckPickerDeck deck, int days) async =>
       forgottenCardsRequests.add((deck.exactId ?? Int64(deck.id), days));
+
+  @override
+  @override
+  Future<void> createPreviewNewCards(DeckPickerDeck deck, int days) async =>
+      previewNewCardsRequests.add((deck.exactId ?? Int64(deck.id), days));
 
   @override
   Future<void> createDeck(String name) async {}

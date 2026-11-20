@@ -438,6 +438,8 @@
   "reviewAheadMinimumDays": "Enter at least 1 day.",
   "forgottenCards": "Review forgotten cards",
   "forgottenCardsDays": "Days to look back",
+  "previewNewCards": "Preview new cards",
+  "previewNewCardsDays": "Days since added",
   "customStudyNoCards": "No cards matched the criteria you provided.",
   "day": "day",
   "days": "days"

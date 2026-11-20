@@ -5088,3 +5088,41 @@ official checkouts are:
 The AnkiDroid source files are GPL-3.0-or-later and the Core source is
 AGPL-3.0-or-later. This is an independent Dart translation; no upstream source
 text was copied. `COPYING` and the existing license records are unchanged.
+
+## Deck Picker Custom Study Preview New Cards (Unit59)
+
+The normal-deck Custom Study chooser includes “Preview new cards”. Its dialog
+parses a positive signed 32-bit day count (the five-digit input filter is
+specific to Review Ahead), defaults to the `previewDays` preference or 1,
+submits without an availability preflight, and saves the preference only after
+the collection operation succeeds. Cancel submits nothing. Core creates or
+updates the named Custom Study Session as a filtered deck; no matching cards
+is an error and empty sessions are not allowed. The filtered configuration
+searches `is:new added:N deck:<selected deck>`, uses added order and a 99,999
+card limit, and sets `reschedule` false. Filtered-deck construction remains an
+undoable collection operation; the preview configuration does not reschedule
+cards.
+
+The shared Flutter implementation uses the existing filtered-deck collection
+builder and exact selected deck ID. It preserves the source input bound and
+session configuration and surfaces collection failures through the Deck
+Picker action error path. The route is shared across Android, iOS, Web,
+Windows, macOS, and Linux. Source hashes verified in the official checkouts:
+
+- AnkiDroid 2.25.3 `DeckPicker.kt` —
+  `9859b3f9a604b52a67193027fcdec2b2e67e6a50a1ea04f760425822a23ac242`
+- AnkiDroid 2.25.3 `CustomStudyDialog.kt` —
+  `f05c630547dd440016e6a7b613e3bc7200d99b52fd5cb526983cc3fcc3a2459d`
+- AnkiDroid 2.25.3 `CustomStudyViewModel.kt` —
+  `331d8bab14d22e5f1365bd6c8cff237cf0cd8c5cbc8cd2f37793c6891ce25822`
+- AnkiDroid 2.25.3 `CustomStudyDialogTest.kt` —
+  `2a236b521058e09e2c96ac147db70995629de2c6c4d4f079ff01a0a413e26306`
+- Anki Core `rslib/src/scheduler/filtered/custom_study.rs` —
+  `8701f9bbd428ab3651e6343af9a6567a4ed28c094269b4b2dab20b5810e1732a`
+- Anki Core `proto/anki/scheduler.proto` —
+  `9ebdd150185cdaccef2a7957481361b869344e573cce4dc0be77489cac7b71e3`
+
+AnkiDroid source is GPL-3.0-or-later and Anki Core source is
+AGPL-3.0-or-later. The Dart implementation is an independent translation; no
+upstream implementation or translated resource string was copied. Root
+`COPYING` and existing license records are unchanged.

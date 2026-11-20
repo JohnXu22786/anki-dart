@@ -71,3 +71,14 @@ Source hashes and the full source/license notice are recorded in
 `ANKIDROID_SOURCE.sha256` and `../../ANKIIDROID_UPSTREAM.md`. The referenced
 Kotlin source is `GPL-3.0-or-later`; the Flutter adaptation and tests are
 Copyright © 2026 John Tsui under `GPL-3.0-or-later`. Root `COPYING` is unchanged.
+
+The Deck Picker Create Subdeck action in `lib/deck_picker_screen.dart` and
+`lib/deck_picker_repository.dart`, with focused widget/repository tests, follows
+AnkiDroid 2.25.3 `DeckPicker.kt`, `CreateDeckDialog.kt`,
+`deckpicker/DeckPickerViewModel.kt`, and `libanki/Decks.kt` at
+`d9bf072f814a0c37d30a694192593b31ff2df875`. AnkiDroid source is
+GPL-3.0-or-later. The Deck Picker screen and tests are Copyright © 2026 John
+Tsui under `GPL-3.0-or-later`; the repository adapter keeps its declared
+`AGPL-3.0-or-later` license. Exact source hashes and behavior mapping are
+recorded in `ANKIDROID_SOURCE.sha256` and `../../ANKIDROID_UPSTREAM.md`. Root
+`COPYING` remains unchanged.

@@ -4402,6 +4402,46 @@ The Flutter surface, newly authored English ARB resources, and tests are
 Copyright © 2026 John Tsui under `GPL-3.0-or-later`; upstream source attribution
 is retained here and in `NOTICE.md`. Root `COPYING` remains unchanged.
 
+### Create Subdeck from a Deck Picker row
+
+`DeckPickerScreen._createSubdeck()` and `CollectionDeckPickerRepository`
+implement AnkiDroid's context-menu route at `DeckPicker.kt:1051–1054` and
+`2354–2368`: the context-menu deck ID is retained as an `Int64`, the dialog
+qualifies the entered component with that exact parent's name, and successful
+creation selects the returned deck before refreshing the tree. The dialog's
+validation and submission semantics follow `CreateDeckDialog.kt:98–212` and
+`libanki/.../Decks.kt:692–707`: empty input is ignored, quote-only names are
+invalid, names are normalized component-wise by Core, existing names are
+rejected case-insensitively, and filtered ancestry fails without reporting
+success. Selection and refresh follow `DeckPicker.kt:2304–2312` and
+`DeckPickerViewModel.kt:273–280`.
+
+The storage path follows Core `rslib/src/decks/mod.rs:160–170`,
+`rslib/src/decks/name.rs:14–60,194–210`, and
+`rslib/src/decks/addupdate.rs:27–75,100–140` at pinned commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. Core normalizes Unicode to NFC,
+removes ASCII control characters, trims whitespace/colons per component,
+uses `blank` for empty components, matches existing parent casing, creates
+missing parents, and rejects a filtered parent. AnkiDroid's
+`CreateDeckDialogTest.kt:61–75,107–159` covers child composition and filtered
+parent/ancestor failures; Core's `decks/mod.rs::adding_updating` and
+`decks/name.rs::from_human, normalize` cover normalized lookup, missing
+ancestors, case matching and component cleanup.
+
+The Dart storage operation commits creation, any missing intermediate parents,
+and initial selection in one bounded transaction. Undo removes the created deck
+rows and restores the previously selected deck; redo restores the rows and
+selects the new child again. Failed validation leaves deck rows untouched.
+The UI reloads after an operation error because a flush or selection failure
+can follow a committed write, and reports the failure instead of presenting a
+successful result. The separate create-deck route retains its existing history
+behavior. Source hashes are recorded in
+`apps/anki/ANKIDROID_SOURCE.sha256` and
+`packages/anki_collection_sqlite/SOURCE.sha256`; source licenses are GPL-3.0-or-later
+for AnkiDroid and AGPL-3.0-or-later for Anki Core. The new Dart code and tests
+are covered by their package licenses; root `COPYING` is unchanged. No upstream
+implementation code or resource strings were copied.
+
 
 ## Note persistence derived fields
 

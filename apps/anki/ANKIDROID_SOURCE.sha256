@@ -94,3 +94,8 @@ a137a44186a130b5ee57156aed4a2ce00a143bba07655b3b9274889537c814ee  AnkiDroid/src/
 # Anki Core existing-note update and normalization, e64c6b1aee3e8d668fb8bbe084beada8e070d985
 5df79b58906206a87c5a28a06f886227df74e6a65d061d2cb915d35b34d35893  rslib/src/notes/mod.rs
 a29a3780e53c917b30bfc967d6a1b969929f90e94de2eceb8500031df54ea36e  rslib/src/config/bool.rs
+
+# AnkiDroid 2.25.3 Deck Picker Create Subdeck, d9bf072f814a0c37d30a694192593b31ff2df875
+0d6d0ba9f3f38547c473046ca40bb697c3984b00def2c90fc64896dc445dc3e9  AnkiDroid/src/main/java/com/ichi2/anki/dialogs/CreateDeckDialog.kt
+f6d73fb20184bdef1f801b5ea6e8e5fba5225cab457e55f9eea329a5a1c586a0  libanki/src/main/java/com/ichi2/anki/libanki/Decks.kt
+8a30360746f253377ce8d5e7dd4298c23adf228765b442e52f4d67853a440572  AnkiDroid/src/test/java/com/ichi2/anki/dialogs/CreateDeckDialogTest.kt

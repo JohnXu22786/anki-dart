@@ -131,6 +131,12 @@ abstract interface class DeckPickerRenameProvider {
   Future<void> renameDeck(DeckPickerDeck deck, String name);
 }
 
+/// Collection-backed subdeck creation that retains the parent deck's exact ID.
+abstract interface class DeckPickerCreateSubdeckProvider {
+  bool isSubdeckNameAvailable(DeckPickerDeck parent, String name);
+  Future<void> createSubdeck(DeckPickerDeck parent, String name);
+}
+
 /// Collection-backed delete route that preserves the deck's exact 64-bit ID.
 abstract interface class DeckPickerDeleteProvider {
   Future<DeckPickerDeletionResult> deleteDeck(
@@ -679,6 +685,9 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
       } else if (action == DeckPickerAction.renameDeck &&
           widget.repository is DeckPickerRenameProvider) {
         await _renameDeck(deck, s);
+      } else if (action == DeckPickerAction.createSubdeck &&
+          widget.repository is DeckPickerCreateSubdeckProvider) {
+        await _createSubdeck(deck, s);
       } else if (action == DeckPickerAction.deleteDeck &&
           widget.repository is DeckPickerDeleteProvider) {
         await _deleteDeck(deck, s);
@@ -1023,6 +1032,58 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
     );
     if (name != null) {
       await _invoke(() => provider.renameDeck(deck, name), reloadOnError: true);
+    }
+  }
+
+  Future<void> _createSubdeck(DeckPickerDeck parent, AppLocalizations s) async {
+    final provider = widget.repository as DeckPickerCreateSubdeckProvider;
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        var available = provider.isSubdeckNameAvailable(parent, '');
+        var value = '';
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: Text(s.createSubdeck),
+            content: TextFormField(
+              key: const ValueKey('subdeck-name'),
+              initialValue: value,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: s.deckName,
+                errorText:
+                    value.isEmpty ||
+                        value.replaceAll('"', '').isEmpty ||
+                        available
+                    ? null
+                    : s.deckNameExists,
+              ),
+              onChanged: (newValue) => setDialogState(() {
+                value = newValue;
+                available = provider.isSubdeckNameAvailable(parent, newValue);
+              }),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(s.cancel),
+              ),
+              FilledButton(
+                onPressed: value.isEmpty || !available
+                    ? null
+                    : () => Navigator.pop(context, value),
+                child: Text(s.create),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (name != null) {
+      await _invoke(
+        () => provider.createSubdeck(parent, name),
+        reloadOnError: true,
+      );
     }
   }
 

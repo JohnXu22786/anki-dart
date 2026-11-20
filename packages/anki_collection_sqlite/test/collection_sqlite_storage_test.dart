@@ -815,6 +815,104 @@ END
     },
   );
 
+  test(
+    'subdeck creation preserves parent IDs and validates the full path',
+    () async {
+      final database = await _openLatestCollection(path);
+      final parentId = Int64.parseInt('9007199254740995');
+      database.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: parentId,
+          name: 'Languages',
+          kind: NormalDeckKind(proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+
+      final filteredId = Int64.parseInt('9007199254740996');
+      database.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: filteredId,
+          name: 'Filtered',
+          kind: FilteredDeckKind(proto.Deck_Filtered()),
+        ),
+      );
+      await database.getOrCreateNormalDeck('Languages::travel');
+
+      final child = await database.createSubdeck(parentId, ' Spanish ');
+      expect(child.name, 'Languages::Spanish');
+      expect(database.decks.getDeck(child.id)?.id, child.id);
+      expect(database.decks.getDeckId('Languages\x1fSpanish'), child.id);
+      expect(database.currentDeckId, child.id);
+      expect(database.canUndoCollectionOperation, isTrue);
+      await expectLater(
+        database.createSubdeck(parentId, 'Spanish'),
+        throwsStateError,
+      );
+      await expectLater(
+        database.createSubdeck(Int64(999999), 'Missing'),
+        throwsStateError,
+      );
+      await expectLater(
+        database.createSubdeck(parentId, '""'),
+        throwsArgumentError,
+      );
+
+      await expectLater(
+        database.createSubdeck(filteredId, 'Child'),
+        throwsStateError,
+      );
+      expect(database.decks.getDeckByName('Filtered\x1fChild'), isNull);
+
+      final nested = await database.createSubdeck(parentId, 'TRAVEL::Asia');
+      expect(nested.name, 'Languages::travel::Asia');
+      expect(database.decks.getDeckByName('Languages\x1ftravel'), isNotNull);
+      await expectLater(
+        database.createSubdeck(parentId, 'travel::ASIA'),
+        throwsStateError,
+      );
+
+      final generatedParent = await database.createSubdeck(
+        parentId,
+        'Places::Europe',
+      );
+      expect(generatedParent.name, 'Languages::Places::Europe');
+      expect(database.decks.getDeckByName('Languages\x1fPlaces'), isNotNull);
+      await database.undoLastCollectionOperation();
+      expect(database.currentDeckId, nested.id);
+      expect(database.decks.getDeck(generatedParent.id), isNull);
+      expect(database.decks.getDeckByName('Languages\x1fPlaces'), isNull);
+      await database.redoLastCollectionOperation();
+      expect(database.currentDeckId, generatedParent.id);
+      expect(
+        database.decks.getDeck(generatedParent.id)?.name,
+        'Languages::Places::Europe',
+      );
+      await database.undoLastCollectionOperation();
+      expect(database.currentDeckId, nested.id);
+      await database.undoLastCollectionOperation();
+      expect(database.currentDeckId, child.id);
+      expect(database.decks.getDeck(nested.id), isNull);
+      expect(database.decks.getDeckByName('Languages\x1ftravel'), isNotNull);
+      await database.redoLastCollectionOperation();
+      expect(database.currentDeckId, nested.id);
+      expect(
+        database.decks.getDeck(nested.id)?.name,
+        'Languages::travel::Asia',
+      );
+      await database.undoLastCollectionOperation();
+      expect(database.currentDeckId, child.id);
+      await database.undoLastCollectionOperation();
+      expect(database.currentDeckId, Int64.ONE);
+      expect(database.decks.getDeck(child.id), isNull);
+      await database.redoLastCollectionOperation();
+
+      expect(database.currentDeckId, child.id);
+      expect(database.decks.getDeck(child.id)?.name, 'Languages::Spanish');
+
+      await database.close();
+    },
+  );
+
   test('deck hierarchy reads use the schema unicase name collation', () async {
     final database = await CollectionSqliteStorage.open(
       driver: _nativeDriver,

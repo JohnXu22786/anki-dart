@@ -29,6 +29,7 @@ final class CollectionDeckPickerRepository
         DeckPickerNewNotePortProvider,
         DeckPickerExactBrowseDeckProvider,
         DeckPickerRenameProvider,
+        DeckPickerCreateSubdeckProvider,
         DeckPickerDeleteProvider,
         DeckPickerRebuildFilteredDeckProvider,
         DeckPickerUnburyProvider,
@@ -317,6 +318,24 @@ final class CollectionDeckPickerRepository
   Future<void> renameDeck(DeckPickerDeck deck, String name) async {
     final deckId = deck.exactId ?? Int64(deck.id);
     await _storage.renameDeck(deckId, name);
+  }
+
+  @override
+  bool isSubdeckNameAvailable(DeckPickerDeck parent, String name) {
+    if (name.isEmpty || name.replaceAll('"', '').isEmpty) return false;
+    final storage = _storage;
+    final parentDeck = storage.decks.getDeck(
+      parent.exactId ?? Int64(parent.id),
+    );
+    if (parentDeck == null || parentDeck.kind is FilteredDeckKind) return true;
+    final fullName = normalizeDeckName('${parentDeck.name}::$name');
+    final nativeName = fullName.replaceAll('::', '\x1f');
+    return storage.decks.getDeckId(nativeName) == null;
+  }
+
+  @override
+  Future<void> createSubdeck(DeckPickerDeck parent, String name) async {
+    await _storage.createSubdeck(parent.exactId ?? Int64(parent.id), name);
   }
 
   @override

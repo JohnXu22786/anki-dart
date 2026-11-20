@@ -2345,6 +2345,110 @@ GROUP BY did
     return result;
   }
 
+  /// Creates a child under [parentId], rejecting missing or filtered parents
+  /// and an already-existing normalized child name. The child is selected
+  /// after it has been persisted, matching Deck Picker creation behavior.
+  Future<Deck> createSubdeck(Int64 parentId, String subdeckName) async {
+    if (subdeckName.isEmpty || subdeckName.replaceAll('"', '').isEmpty) {
+      throw ArgumentError.value(subdeckName, 'subdeckName');
+    }
+    final parent = _deckStorage.getDeck(parentId);
+    if (parent == null) throw StateError('deck not found: $parentId');
+    if (parent.kind is FilteredDeckKind) {
+      throw StateError('normal deck required: $parentId');
+    }
+
+    String validate() {
+      final currentParent = _deckStorage.getDeck(parentId);
+      if (currentParent == null) throw StateError('deck not found: $parentId');
+      if (currentParent.kind is FilteredDeckKind) {
+        throw StateError('normal deck required: $parentId');
+      }
+
+      var fullName = normalizeDeckName(currentParent.name);
+      final parentComponents = fullName.split('::');
+      for (var count = 1; count < parentComponents.length; count++) {
+        final ancestorName = parentComponents.take(count).join('::');
+        final ancestorId = _deckStorage.getDeckId(
+          ancestorName.replaceAll('::', '\x1f'),
+        );
+        final ancestor = ancestorId == null
+            ? null
+            : _deckStorage.getDeck(ancestorId);
+        if (ancestor?.kind case FilteredDeckKind()) {
+          throw StateError('filtered deck ancestor: $ancestorName');
+        }
+      }
+
+      final childComponents = subdeckName
+          .split('::')
+          .map(normalizeDeckName)
+          .toList(growable: false);
+      for (var index = 0; index < childComponents.length; index++) {
+        final candidateName = normalizeDeckName(
+          '$fullName::${childComponents[index]}',
+        );
+        final candidateId = _deckStorage.getDeckId(
+          candidateName.replaceAll('::', '\x1f'),
+        );
+        final candidate = candidateId == null
+            ? null
+            : _deckStorage.getDeck(candidateId);
+        final isFinalComponent = index == childComponents.length - 1;
+        if (candidate != null && !isFinalComponent) {
+          if (candidate.kind is FilteredDeckKind) {
+            throw StateError('filtered deck ancestor: ${candidate.name}');
+          }
+          // Core carries the stored parent spelling forward when a path
+          // component resolves case-insensitively to an existing deck.
+          fullName = candidate.name;
+        } else if (candidate != null) {
+          throw StateError('deck already exists: $candidateName');
+        } else {
+          fullName = candidateName;
+        }
+      }
+
+      return fullName;
+    }
+
+    var fullName = validate();
+    late Deck child;
+    var createdDecks = <Deck>[];
+    var previousCurrentDeckId = currentDeckId;
+    final originalIds = <Int64>{};
+    final committed = await runUndoableCollectionOperation(
+      prepare: () async {
+        fullName = validate();
+        previousCurrentDeckId = currentDeckId;
+        originalIds.addAll(_deckStorage.getAllDecks().map((deck) => deck.id));
+        return true;
+      },
+      apply: () async {
+        child = await getOrCreateNormalDeck(fullName);
+        createdDecks = _deckStorage
+            .getAllDecks()
+            .where((deck) => !originalIds.contains(deck.id))
+            .toList(growable: false);
+        await selectDeck(child.id);
+      },
+      undo: () async {
+        for (final deck in createdDecks.reversed) {
+          _deckStorage.removeDeck(deck.id);
+        }
+        await selectDeck(previousCurrentDeckId);
+      },
+      redo: () async {
+        for (final deck in createdDecks) {
+          _deckStorage.addOrUpdateDeckWithExistingId(deck);
+        }
+        await selectDeck(child.id);
+      },
+    );
+    if (!committed) throw StateError('subdeck creation was not committed');
+    return child;
+  }
+
   /// Renames a deck and its descendants, preserving their IDs and payloads.
   /// Returns false when the normalized target name is already the current name.
   /// The operation is atomic so a duplicate or filtered-ancestor failure does

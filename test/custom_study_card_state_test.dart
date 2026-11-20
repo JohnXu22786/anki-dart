@@ -25,6 +25,32 @@ import 'package:test/test.dart';
 
 void main() {
   group('Custom Study selected card state', () {
+    test('restores exact deck identity and selected card state', () {
+      const state = CustomStudySavedState(
+        selectedDeckId: '9007199254740995',
+        selectedCardStateIndex: 2,
+      );
+
+      final restored = CustomStudySavedState.fromRestorationData(
+        state.toRestorationData(),
+      );
+
+      expect(restored.requiredDeckId, '9007199254740995');
+      expect(restored.selectedCardStateIndex, 2);
+      expect(restored.selectedKind, CustomStudyCramKind.CRAM_KIND_REVIEW);
+    });
+
+    test(
+      'restores missing selection with the source default and requires deck',
+      () {
+        final restored = CustomStudySavedState.fromRestorationData(const {});
+
+        expect(restored.selectedCardStateIndex, -1);
+        expect(restored.selectedKind, CustomStudyCramKind.CRAM_KIND_NEW);
+        expect(() => restored.requiredDeckId, throwsStateError);
+      },
+    );
+
     test('maps each source selection index to its CramKind in enum order', () {
       expect(
         projectCustomStudySelectedKind(0),

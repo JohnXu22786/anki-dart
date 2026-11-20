@@ -24,6 +24,7 @@ final class AppRouter extends StatelessWidget {
   Widget build(BuildContext context) {
     const unconfigured = UnconfiguredAppServices();
     return MaterialApp(
+      restorationScopeId: 'anki-app',
       title: config.appName,
       localizationsDelegates: const [
         AppLocalizations.delegate,

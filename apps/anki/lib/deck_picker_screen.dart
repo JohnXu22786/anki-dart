@@ -4,7 +4,8 @@
  */
 
 import 'package:anki_dart/deck_picker.dart';
-import 'package:anki_dart/anki_dart.dart' show CustomStudyCardState;
+import 'package:anki_dart/anki_dart.dart'
+    show CustomStudyCardState, CustomStudySavedState;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -344,11 +345,16 @@ final class DeckPickerScreen extends StatefulWidget {
   State<DeckPickerScreen> createState() => _DeckPickerScreenState();
 }
 
-final class _DeckPickerScreenState extends State<DeckPickerScreen> {
+final class _DeckPickerScreenState extends State<DeckPickerScreen>
+    with RestorationMixin {
   late Future<List<DeckPickerDeck>> _load;
   final _filterController = TextEditingController();
   final _searchFocusNode = FocusNode();
   int? _selectedId;
+  final RestorableStringN _customStudyDeckId = RestorableStringN(null);
+  final RestorableStringN _customStudyStage = RestorableStringN(null);
+  final RestorableInt _customStudyCardStateIndex = RestorableInt(-1);
+  bool _resumingCustomStudy = false;
   String _filter = '';
   bool _showFilter = false, _showAddActions = false;
   bool _hasSearchableDeckList = false;
@@ -356,6 +362,24 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
   int _selectionGeneration = 0;
   Future<void> _selectionTail = Future<void>.value();
   List<DeckPickerDeck> _loadedDecks = const [];
+  @override
+  String? get restorationId => 'deck-picker';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_customStudyDeckId, 'custom-study-deck-id');
+    registerForRestoration(_customStudyStage, 'custom-study-stage');
+    registerForRestoration(
+      _customStudyCardStateIndex,
+      'custom-study-card-state-index',
+    );
+    if (_customStudyStage.value == 'tags') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _resumeCustomStudyTags();
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -378,6 +402,9 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
   void dispose() {
     _filterController.dispose();
     _searchFocusNode.dispose();
+    _customStudyDeckId.dispose();
+    _customStudyStage.dispose();
+    _customStudyCardStateIndex.dispose();
     super.dispose();
   }
 
@@ -811,83 +838,149 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
     }
   }
 
-  Future<void> _customStudy(DeckPickerDeck deck) async {
-    final provider = widget.repository as DeckPickerCustomStudyProvider;
-    final choice = await showDialog<_CustomStudyChoice>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.customStudy),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(
-                AppLocalizations.of(context)!.customStudyCardStateOrTag,
-              ),
-              onTap: () => Navigator.pop(context, _CustomStudyChoice.tags),
+  Future<void> _resumeCustomStudyTags() async {
+    if (!mounted || _resumingCustomStudy || _customStudyStage.value != 'tags') {
+      return;
+    }
+    _resumingCustomStudy = true;
+    try {
+      final savedDeckId = Int64.parseInt(
+        CustomStudySavedState(
+          selectedDeckId: _customStudyDeckId.value,
+          selectedCardStateIndex: _customStudyCardStateIndex.value,
+        ).requiredDeckId,
+      );
+      final decks = await _load;
+      final deck = _findDeck(decks, savedDeckId);
+      if (deck == null || !mounted) {
+        _customStudyStage.value = null;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.deckActionFailed),
             ),
-            if (widget.repository is DeckPickerReviewAheadProvider)
-              ListTile(
-                title: Text(AppLocalizations.of(context)!.reviewAhead),
-                onTap: () =>
-                    Navigator.pop(context, _CustomStudyChoice.reviewAhead),
-              ),
-            if (widget.repository is DeckPickerForgottenCardsProvider)
-              ListTile(
-                title: Text(AppLocalizations.of(context)!.forgottenCards),
-                onTap: () =>
-                    Navigator.pop(context, _CustomStudyChoice.forgotten),
-              ),
-            if (widget.repository is DeckPickerPreviewNewCardsProvider)
-              ListTile(
-                title: Text(AppLocalizations.of(context)!.previewNewCards),
-                onTap: () =>
-                    Navigator.pop(context, _CustomStudyChoice.previewNewCards),
-              ),
-            if (widget.repository is DeckPickerExtendLimitsProvider) ...[
-              ListTile(
-                title: Text(
-                  AppLocalizations.of(context)!.increaseTodaysNewLimit,
-                ),
-                onTap: () =>
-                    Navigator.pop(context, _CustomStudyChoice.extendNew),
-              ),
-              ListTile(
-                title: Text(
-                  AppLocalizations.of(context)!.increaseTodaysReviewLimit,
-                ),
-                onTap: () =>
-                    Navigator.pop(context, _CustomStudyChoice.extendReview),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.cancel),
+          );
+        }
+        return;
+      }
+      await _customStudy(deck, resumeTags: true);
+    } on Object {
+      _customStudyStage.value = null;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.deckActionFailed),
           ),
-        ],
-      ),
-    );
-    if (choice == null) return;
+        );
+      }
+    } finally {
+      _resumingCustomStudy = false;
+    }
+  }
+
+  Future<void> _customStudy(
+    DeckPickerDeck deck, {
+    bool resumeTags = false,
+  }) async {
+    final provider = widget.repository as DeckPickerCustomStudyProvider;
+    if (!resumeTags) {
+      _customStudyDeckId.value = (deck.exactId ?? Int64(deck.id)).toString();
+      _customStudyStage.value = 'choice';
+    }
+    final choice = resumeTags
+        ? _CustomStudyChoice.tags
+        : await showDialog<_CustomStudyChoice>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(AppLocalizations.of(context)!.customStudy),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    title: Text(
+                      AppLocalizations.of(context)!.customStudyCardStateOrTag,
+                    ),
+                    onTap: () =>
+                        Navigator.pop(context, _CustomStudyChoice.tags),
+                  ),
+                  if (widget.repository is DeckPickerReviewAheadProvider)
+                    ListTile(
+                      title: Text(AppLocalizations.of(context)!.reviewAhead),
+                      onTap: () => Navigator.pop(
+                        context,
+                        _CustomStudyChoice.reviewAhead,
+                      ),
+                    ),
+                  if (widget.repository is DeckPickerForgottenCardsProvider)
+                    ListTile(
+                      title: Text(AppLocalizations.of(context)!.forgottenCards),
+                      onTap: () =>
+                          Navigator.pop(context, _CustomStudyChoice.forgotten),
+                    ),
+                  if (widget.repository is DeckPickerPreviewNewCardsProvider)
+                    ListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.previewNewCards,
+                      ),
+                      onTap: () => Navigator.pop(
+                        context,
+                        _CustomStudyChoice.previewNewCards,
+                      ),
+                    ),
+                  if (widget.repository is DeckPickerExtendLimitsProvider) ...[
+                    ListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.increaseTodaysNewLimit,
+                      ),
+                      onTap: () =>
+                          Navigator.pop(context, _CustomStudyChoice.extendNew),
+                    ),
+                    ListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.increaseTodaysReviewLimit,
+                      ),
+                      onTap: () => Navigator.pop(
+                        context,
+                        _CustomStudyChoice.extendReview,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(AppLocalizations.of(context)!.cancel),
+                ),
+              ],
+            ),
+          );
+    if (choice == null) {
+      _customStudyStage.value = null;
+      return;
+    }
     if (choice == _CustomStudyChoice.reviewAhead) {
+      _customStudyStage.value = null;
       await _reviewAhead(deck);
       return;
     }
     if (choice == _CustomStudyChoice.forgotten) {
+      _customStudyStage.value = null;
       await _forgottenCards(deck);
       return;
     }
     if (choice == _CustomStudyChoice.previewNewCards) {
+      _customStudyStage.value = null;
       await _previewNewCards(deck);
       return;
     }
     if (choice == _CustomStudyChoice.extendNew ||
         choice == _CustomStudyChoice.extendReview) {
+      _customStudyStage.value = null;
       await _extendTodayLimits(deck, choice);
       return;
     }
+    _customStudyStage.value = 'tags';
     late final List<String> tags;
     try {
       tags = await provider.customStudyTags(deck);
@@ -899,13 +992,29 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
           ),
         );
       }
+      _customStudyStage.value = null;
       return;
     }
     if (!mounted) return;
+    final savedState = CustomStudySavedState(
+      selectedDeckId: _customStudyDeckId.value,
+      selectedCardStateIndex: _customStudyCardStateIndex.value,
+    );
+    final selectedDeckId = Int64.parseInt(savedState.requiredDeckId);
+    if (selectedDeckId != (deck.exactId ?? Int64(deck.id))) {
+      throw StateError('Restored Custom Study deck does not match its request');
+    }
     final request = await showDialog<CustomStudyTagsRequest>(
       context: context,
-      builder: (_) => _CustomStudyTagsDialog(tags: tags),
+      builder: (_) => _CustomStudyTagsDialog(
+        tags: tags,
+        initialSelectedIndex: _customStudyCardStateIndex.value,
+        onSelectedIndexChanged: (index) {
+          _customStudyCardStateIndex.value = index;
+        },
+      ),
     );
+    _customStudyStage.value = null;
     if (request != null) {
       await _invoke(() async {
         await provider.createCustomStudy(deck, request);
@@ -1954,6 +2063,15 @@ int _countDecks(Iterable<DeckPickerDeck> decks) =>
 bool _containsDeckId(Iterable<DeckPickerDeck> decks, int id) =>
     decks.any((deck) => deck.id == id || _containsDeckId(deck.children, id));
 
+DeckPickerDeck? _findDeck(Iterable<DeckPickerDeck> decks, Int64 exactId) {
+  for (final deck in decks) {
+    if ((deck.exactId ?? Int64(deck.id)) == exactId) return deck;
+    final child = _findDeck(deck.children, exactId);
+    if (child != null) return child;
+  }
+  return null;
+}
+
 final class _MessageState extends StatelessWidget {
   const _MessageState({
     required this.icon,
@@ -2310,14 +2428,20 @@ final class _ReviewAheadDialogState extends State<_ReviewAheadDialog> {
 }
 
 final class _CustomStudyTagsDialog extends StatefulWidget {
-  const _CustomStudyTagsDialog({required this.tags});
+  const _CustomStudyTagsDialog({
+    required this.tags,
+    required this.initialSelectedIndex,
+    required this.onSelectedIndexChanged,
+  });
   final List<String> tags;
+  final int initialSelectedIndex;
+  final ValueChanged<int> onSelectedIndexChanged;
   @override
   State<_CustomStudyTagsDialog> createState() => _CustomStudyTagsDialogState();
 }
 
 final class _CustomStudyTagsDialogState extends State<_CustomStudyTagsDialog> {
-  CustomStudyCardState state = CustomStudyCardState.NewCardsOnly;
+  late CustomStudyCardState state;
   final count = TextEditingController(text: '100');
   final included = <String>{};
   final excluded = <String>{};
@@ -2325,6 +2449,10 @@ final class _CustomStudyTagsDialogState extends State<_CustomStudyTagsDialog> {
   @override
   void initState() {
     super.initState();
+    state =
+        CustomStudyCardState.values[widget.initialSelectedIndex == -1
+            ? 0
+            : widget.initialSelectedIndex];
     SharedPreferencesAsync().getInt('amountOfCards').then((saved) {
       if (mounted && saved != null && count.text == '100') {
         count.text = saved.toString();
@@ -2369,7 +2497,10 @@ final class _CustomStudyTagsDialogState extends State<_CustomStudyTagsDialog> {
                     child: Text(s.customStudyAllCardsRandom),
                   ),
                 ],
-                onChanged: (v) => setState(() => state = v ?? state),
+                onChanged: (v) => setState(() {
+                  state = v ?? state;
+                  widget.onSelectedIndexChanged(state.index);
+                }),
               ),
               TextField(
                 controller: count,

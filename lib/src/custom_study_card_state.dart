@@ -40,6 +40,39 @@ enum CustomStudyCardState {
   final CustomStudyCramKind kind;
 }
 
+/// The SavedStateHandle values retained while Custom Study moves through its
+/// tag dialog. Deck IDs are decimal strings so 64-bit IDs survive Web restore.
+final class CustomStudySavedState {
+  const CustomStudySavedState({
+    required this.selectedDeckId,
+    this.selectedCardStateIndex = -1,
+  });
+
+  final String? selectedDeckId;
+  final int selectedCardStateIndex;
+
+  factory CustomStudySavedState.fromRestorationData(
+    Map<String, Object?> data,
+  ) => CustomStudySavedState(
+    selectedDeckId: data['selectedDeckId'] as String?,
+    selectedCardStateIndex: data['selectedCardStateIndex'] as int? ?? -1,
+  );
+
+  Map<String, Object?> toRestorationData() => {
+    if (selectedDeckId != null) 'selectedDeckId': selectedDeckId,
+    'selectedCardStateIndex': selectedCardStateIndex,
+  };
+
+  String get requiredDeckId {
+    final id = selectedDeckId;
+    if (id == null) throw StateError('Custom Study deck ID is unset');
+    return id;
+  }
+
+  CustomStudyCramKind get selectedKind =>
+      projectCustomStudySelectedKind(selectedCardStateIndex);
+}
+
 /// Projects the selected source spinner index to its scheduler kind.
 ///
 /// The host owns the persisted selection index and Android spinner. Exactly

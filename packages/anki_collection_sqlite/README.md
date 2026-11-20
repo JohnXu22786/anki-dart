@@ -16,8 +16,9 @@ bytes. The native driver uses SQLite's public online backup API and an
 ephemeral temporary database; it leaves the live connection open. Hosts inject
 `CollectionMediaStorage` for their own media location; native hosts may use the
 provided flat-directory adapter. `readMedia()` validates
-the Anki filename before dispatch, and `listMedia()` returns the available
-filenames. Missing media is represented by `null`.
+the Anki filename before dispatch and returns a byte stream, while
+`listMedia()` returns the available filenames. Missing media is represented
+by `null`; streaming avoids loading an entire media object into memory.
 
 | Target | SQLite snapshot | Media | Evidence / constraint |
 | --- | --- | --- | --- |

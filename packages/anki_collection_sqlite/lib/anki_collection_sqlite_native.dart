@@ -2,7 +2,6 @@
 // Copyright (C) 2026 John Tsui
 
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:sqlite3/sqlite3.dart';
 import 'package:sqlite3/common.dart';
@@ -17,14 +16,14 @@ final class DirectoryCollectionMediaStorage implements CollectionMediaStorage {
   final Directory directory;
 
   @override
-  Future<Uint8List?> read(String filename) async {
+  Future<Stream<List<int>>?> read(String filename) async {
     final name = validateAnkiMediaFilename(filename);
     final file = File('${directory.path}${Platform.pathSeparator}$name');
     if (await FileSystemEntity.type(file.path, followLinks: false) !=
         FileSystemEntityType.file) {
       return null;
     }
-    return file.readAsBytes();
+    return file.openRead();
   }
 
   @override

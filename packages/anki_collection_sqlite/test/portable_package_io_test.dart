@@ -92,7 +92,8 @@ void main() {
       final media = _MemoryMedia({
         '音声.mp3': Uint8List.fromList([1, 2, 3]),
       });
-      expect(await media.read(validateAnkiMediaFilename('音声.mp3')), [1, 2, 3]);
+      final stream = await media.read(validateAnkiMediaFilename('音声.mp3'));
+      expect(await stream!.expand((chunk) => chunk).toList(), [1, 2, 3]);
       expect(
         await media.read(validateAnkiMediaFilename('missing.mp3')),
         isNull,
@@ -108,7 +109,8 @@ void main() {
         '${directory.path}${Platform.pathSeparator}音声.mp3',
       ).writeAsBytes([4, 5]);
       final media = DirectoryCollectionMediaStorage(directory);
-      expect(await media.read('音声.mp3'), [4, 5]);
+      final stream = await media.read('音声.mp3');
+      expect(await stream!.expand((chunk) => chunk).toList(), [4, 5]);
       expect(await media.read('absent.mp3'), isNull);
       expect(await media.list(), ['音声.mp3']);
       await expectLater(media.read('../secret'), throwsArgumentError);
@@ -126,5 +128,8 @@ final class _MemoryMedia implements CollectionMediaStorage {
   Future<Iterable<String>> list() async => files.keys;
 
   @override
-  Future<Uint8List?> read(String filename) async => files[filename];
+  Future<Stream<List<int>>?> read(String filename) async {
+    final bytes = files[filename];
+    return bytes == null ? null : Stream.value(bytes);
+  }
 }

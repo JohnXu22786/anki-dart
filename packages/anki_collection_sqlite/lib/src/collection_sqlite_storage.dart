@@ -956,7 +956,7 @@ INSERT OR REPLACE INTO cards (
   }
 
   /// Reads a named media object. Names are validated before reaching the host.
-  Future<Uint8List?> readMedia(String filename) {
+  Future<Stream<List<int>>?> readMedia(String filename) {
     final safeName = validateAnkiMediaFilename(filename);
     final media = _driver.mediaStorage;
     if (media == null) {

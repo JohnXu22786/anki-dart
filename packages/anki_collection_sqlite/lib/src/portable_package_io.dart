@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 John Tsui
 
-import 'dart:typed_data';
+import 'dart:async';
 
 /// A driver capability that the selected platform cannot provide.
 final class PortableIoUnsupported implements Exception {
@@ -14,7 +14,7 @@ final class PortableIoUnsupported implements Exception {
 
 /// Reads and enumerates collection media without exposing platform file APIs.
 abstract interface class CollectionMediaStorage {
-  Future<Uint8List?> read(String filename);
+  Future<Stream<List<int>>?> read(String filename);
   Future<Iterable<String>> list();
 }
 

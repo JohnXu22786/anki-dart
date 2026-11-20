@@ -4,9 +4,12 @@
  */
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:anki_app/app.dart';
+import 'package:anki_app/collection_runtime_platform_native.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:anki_collection_sqlite/anki_collection_sqlite_native.dart';
 import 'package:anki_dart/profile_onboarding.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
@@ -104,6 +107,124 @@ void main() {
   });
 
   test(
+    'profile media drivers are stable, isolated, and released on switch',
+    () async {
+      final createdFor = <ProfileId>[];
+      final media = <ProfileId, _TrackedMedia>{};
+      final runtime = CollectionRuntime(
+        locationForProfile: (profile) async =>
+            'collections/${collectionProfileKey(profile)}.anki2',
+        createDriverForProfile: (profile) async {
+          createdFor.add(profile);
+          final store = _TrackedMedia();
+          media[profile] = store;
+          return CollectionSqliteDriver(
+            openDatabase: (_) => sqlite3.openInMemory(),
+            mediaStorage: store,
+          );
+        },
+      );
+      const first = ProfileId('first/profile');
+      const second = ProfileId('second');
+      expect(
+        collectionMediaDatabaseName(first),
+        collectionMediaDatabaseName(first),
+      );
+      expect(
+        collectionMediaDatabaseName(first),
+        isNot(collectionMediaDatabaseName(second)),
+      );
+
+      final firstStorage = await runtime.open(first);
+      expect(await runtime.open(first), same(firstStorage));
+      expect(createdFor, [first]);
+      final firstStore = media[first]!;
+      await runtime.switchProfile(second, () async {});
+      expect(firstStore.closeCount, 1);
+      final secondStorage = await runtime.open(second);
+      expect(secondStorage, isNot(same(firstStorage)));
+      expect(media[second], isNot(same(firstStore)));
+      await runtime.close();
+      expect(media[second]!.closeCount, 1);
+    },
+  );
+
+  test('media close failures surface and retry before reopening', () async {
+    final media = _TrackedMedia()..failNextClose = true;
+    var driverCount = 0;
+    final runtime = CollectionRuntime(
+      locationForProfile: (_) async => 'retry-media.anki2',
+      createDriverForProfile: (_) async {
+        driverCount++;
+        return CollectionSqliteDriver(
+          openDatabase: (_) => sqlite3.openInMemory(),
+          mediaStorage: media,
+        );
+      },
+    );
+    final profile = ProfileId.defaultId;
+    final firstStorage = await runtime.open(profile);
+    await expectLater(runtime.close(), throwsA(same(media.closeError)));
+    expect(runtime.storage, same(firstStorage));
+    final reopened = await runtime.open(profile);
+    expect(reopened, isNot(same(firstStorage)));
+    expect(media.closeCount, 2);
+    expect(driverCount, 2);
+    await runtime.close();
+  });
+
+  test('failed collection opening releases its profile media handle', () async {
+    final media = _TrackedMedia();
+    final runtime = CollectionRuntime(
+      locationForProfile: (_) async => 'failed-open.anki2',
+      createDriverForProfile: (_) async => CollectionSqliteDriver(
+        openDatabase: (_) => throw StateError('database initialization failed'),
+        mediaStorage: media,
+      ),
+    );
+    await expectLater(
+      runtime.open(ProfileId.defaultId),
+      throwsA(isA<StateError>()),
+    );
+    expect(media.closeCount, 1);
+    expect(runtime.storage, isNull);
+  });
+
+  test(
+    'native media directory is stable, isolated, and retained on reopen',
+    () async {
+      final root = await Directory.systemTemp.createTemp('anki-profile-media-');
+      try {
+        const firstProfile = ProfileId('native/first');
+        const secondProfile = ProfileId('native/second');
+        final firstDirectory = nativeCollectionMediaDirectoryForProfile(
+          root,
+          firstProfile,
+        );
+        expect(
+          nativeCollectionMediaDirectoryForProfile(root, firstProfile).path,
+          firstDirectory.path,
+        );
+        final secondDirectory = nativeCollectionMediaDirectoryForProfile(
+          root,
+          secondProfile,
+        );
+        expect(secondDirectory.path, isNot(firstDirectory.path));
+        await firstDirectory.create(recursive: true);
+        await File('${firstDirectory.path}${Platform.pathSeparator}stored.bin')
+            .writeAsBytes([3, 1, 4]);
+        await DirectoryCollectionMediaStorage(firstDirectory).close();
+        final reopened = DirectoryCollectionMediaStorage(firstDirectory);
+        final media = await reopened.read('stored.bin');
+        expect(await media!.expand((chunk) => chunk).toList(), [3, 1, 4]);
+        await reopened.close();
+      } finally {
+        await root.delete(recursive: true);
+      }
+    },
+  );
+
+  test(
     'open and flush errors are preserved and leave no active connection',
     () async {
       final openingError = StateError('open failed');
@@ -192,4 +313,25 @@ final class _MemoryStore implements AppKeyValueStore {
     await writeGate?.future;
     values[key] = value;
   }
+}
+
+final class _TrackedMedia implements CollectionMediaStorage {
+  int closeCount = 0;
+  bool failNextClose = false;
+  final closeError = StateError('media close failed');
+
+  @override
+  Future<void> close() async {
+    closeCount++;
+    if (failNextClose) {
+      failNextClose = false;
+      throw closeError;
+    }
+  }
+
+  @override
+  Future<Iterable<String>> list() async => const [];
+
+  @override
+  Future<Stream<List<int>>?> read(String filename) async => null;
 }

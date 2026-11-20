@@ -8,6 +8,39 @@ provides pinned stored card and note reads, card and note row mutations, and
 source-compatible first-create callbacks using shared models from
 `anki_backend_models`.
 
+## Portable package I/O boundary
+
+`CollectionSqliteStorage.createSnapshot()` flushes pending driver writes, rejects
+an active SQL transaction, and asks the selected driver for a SQLite backup as
+bytes. The native driver uses SQLite's public online backup API and an
+ephemeral temporary database; it leaves the live connection open. Hosts inject
+`CollectionMediaStorage` for their own media location; native hosts may use the
+provided flat-directory adapter. `readMedia()` validates
+the Anki filename before dispatch and returns a byte stream, while
+`listMedia()` returns the available filenames. Missing media is represented
+by `null`; streaming avoids loading an entire media object into memory.
+
+| Target | SQLite snapshot | Media | Evidence / constraint |
+| --- | --- | --- | --- |
+| Android | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| iOS | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| Windows | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| macOS | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| Linux | Supported by native driver | Native flat-directory adapter or host injected | Native sqlite3 online backup; host selects media directory |
+| Web | Supported by `VACUUM INTO` and a temporary `InMemoryFileSystem` VFS | IndexedDB media adapter | Verified in Chromium with persisted collection reopen, independent snapshot reopen, and media reopen/read/list |
+
+Web snapshots use SQLite's public `VACUUM INTO` SQL command with a registered
+public in-memory VFS, then copy and remove the temporary file bytes. The source
+database is opened with URI support so SQLite can select that destination VFS;
+the collection's IndexedDB VFS remains its own selected VFS. The host supplies
+a stable, collection-specific media database by opening
+`IndexedDbCollectionMediaStorage.openForCollection()` from
+`anki_collection_sqlite_web_media.dart` and passing it as `mediaStorage` to
+`experimentalWebCollectionSqliteDriver()`. Media Blobs are stored in a separate
+IndexedDB database and streamed back in 64 KiB chunks. The Web SQLite VFS
+remains experimental and does not guarantee crash durability for the collection
+database.
+
 `CollectionSqliteInitializationCallbacks` supplies initial collection
 metadata, the localized default deck/config, and six stock note types.
 `CollectionSqliteMigrationCallbacks` implements the catalogued schema 11 to
@@ -135,8 +168,9 @@ Android to use memory for temporary tables. The adapter implements Core's `field
 The `decks` and `revlog` properties expose portable deck and review-log row
 operations on the opened collection connection through
 `anki_backend_storage`.
-Undo/redo, media indexing, backup/restore, synchronization, and encryption
-remain outside this package's current scope.
+Undo/redo, media indexing, APKG generation and restore, synchronization, and
+encryption remain outside this package's current scope. This package provides
+the lower-level SQLite snapshot and media-byte boundary for those operations.
 
 `sqlite3` publishes native bindings for Android, iOS, Windows, macOS, and
 Linux. Its WebAssembly target is tested in the package CI with
@@ -159,10 +193,12 @@ Web-compatible API and experimental persistent-storage setup with:
 dart compile js tool/web_compile_smoke.dart -o /tmp/anki_collection_sqlite.js
 ```
 
-`tool/web_persistence_smoke.dart` is a browser smoke test that writes a row,
-flushes the IndexedDB-backed file system, reopens the SQLite file, and reads
-the row back. Compile it with `dart compile js` and serve it with a matching
-`sqlite3.wasm` asset to exercise that experimental path in a browser.
+`tool/web_persistence_smoke.dart` is a browser smoke test that writes and
+reopens the IndexedDB-backed collection, snapshots and reopens the snapshot in
+an independent Wasm database, verifies later source writes do not alter the
+snapshot, and writes/reopens/streams media through IndexedDB. Compile it with
+`dart compile js` and serve it with a matching `sqlite3.wasm` asset to exercise
+the Web path in a browser.
 
 `CollectionSqliteStorage.exportText()` generates an in-memory Notes or Cards
 TSV export for the whole collection or a deck and its descendants. It returns

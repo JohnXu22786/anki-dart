@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite_native.dart';
+import 'package:anki_dart/profile_onboarding.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
@@ -19,15 +20,34 @@ Future<CollectionRuntime> createPlatformCollectionRuntime() async {
   );
   await collectionsDirectory.create(recursive: true);
   return CollectionRuntime(
-    locationForProfile: (profileId) async {
-      final profileDirectory = Directory(
-        path.join(collectionsDirectory.path, collectionProfileKey(profileId)),
+    locationForProfile: (profileId) async => path.join(
+      collectionsDirectory.path,
+      collectionProfileKey(profileId),
+      'collection.anki2',
+    ),
+    createDriverForProfile: (profileId) async {
+      final mediaDirectory = nativeCollectionMediaDirectoryForProfile(
+        collectionsDirectory,
+        profileId,
       );
-      await profileDirectory.create(recursive: true);
-      return path.join(profileDirectory.path, 'collection.anki2');
+      await mediaDirectory.create(recursive: true);
+      return nativeCollectionSqliteDriver(
+        mediaStorage: DirectoryCollectionMediaStorage(mediaDirectory),
+      );
     },
-    createDriver: () async => nativeCollectionSqliteDriver(),
     optionsForProfile: (_) =>
         CollectionSqliteOptions(androidTempStore: Platform.isAndroid),
   );
 }
+
+/// Returns the retained native media directory belonging to [profileId].
+Directory nativeCollectionMediaDirectoryForProfile(
+  Directory collectionsDirectory,
+  ProfileId profileId,
+) => Directory(
+  path.join(
+    collectionsDirectory.path,
+    collectionProfileKey(profileId),
+    'media',
+  ),
+);

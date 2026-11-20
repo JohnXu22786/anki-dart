@@ -30,3 +30,4 @@ dependencies:
 
 dev_dependencies:
   test: ^1.25.8
+  typed_data: ^1.4.0

@@ -7,6 +7,7 @@ export 'src/deck_tree.dart' show buildCoreDeckTree;
 export 'src/search_executor.dart';
 export 'src/note_update.dart';
 export 'src/text_export.dart';
+export 'src/portable_package_io.dart';
 
 export 'package:anki_search_sql/anki_search_sql.dart'
     show CompiledSearchSqlWithSort;

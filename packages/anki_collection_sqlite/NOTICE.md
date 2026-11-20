@@ -146,3 +146,13 @@ The implementation generates TSV headers and records and selects notes/cards
 from the collection; it uses the shared model package for card rendering.
 Exact source hashes are checked by `tool/check_package.py` and recorded in
 `SOURCE.sha256`. The adapter is AGPL-3.0-or-later; root `COPYING` is unchanged.
+
+The portable collection snapshot and media boundary is original Dart code
+licensed under AGPL-3.0-or-later. Native snapshots call the public online
+backup API from the independently licensed `sqlite3` Dart package (MIT); no
+SQLite package source is copied or modified. Web snapshots use SQLite's public
+`VACUUM INTO` SQL command and the package's publicly exported
+`InMemoryFileSystem`, then remove its temporary in-memory file after copying
+the bytes. The Web media adapter uses public browser IndexedDB APIs and stores
+media values as Blobs in its own host-named database; reads use Blob slices to
+stream bounded chunks.

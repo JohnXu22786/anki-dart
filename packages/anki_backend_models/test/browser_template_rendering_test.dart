@@ -30,6 +30,21 @@ void main() {
         'standard');
   });
 
+  test('renderer can preserve Core media markers without browser prettifying',
+      () {
+    final type = _notetype(question: '{{Front}}', answer: '{{Back}}');
+    final note = Note(fields: ['front', '[sound:voice.mp3]']);
+    final sides = BrowserCardTemplateRenderer().render(
+      note: note,
+      card: Card(templateIdx: 0),
+      notetype: type,
+      useBrowserFormats: false,
+      prettifyAv: false,
+    );
+
+    expect(sides.answerHtml, '[sound:voice.mp3]');
+  });
+
   test('templateRendersWithFields evaluates negated conditionals like Core',
       () {
     expect(

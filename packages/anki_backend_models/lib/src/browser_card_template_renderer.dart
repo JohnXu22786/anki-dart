@@ -46,6 +46,7 @@ final class BrowserCardTemplateRenderer {
     required Notetype notetype,
     String deckName = '(Deck)',
     bool useBrowserFormats = true,
+    bool prettifyAv = true,
   }) {
     final template = _templateFor(notetype, card);
     if (template == null) {
@@ -100,8 +101,8 @@ final class BrowserCardTemplateRenderer {
         '',
       );
       return BrowserCardSides.available(
-        _prettifyAv(question),
-        _prettifyAv(answer),
+        prettifyAv ? _prettifyAv(question) : question,
+        prettifyAv ? _prettifyAv(answer) : answer,
       );
     } on _TemplateFailure catch (error) {
       return BrowserCardSides.unavailable(error.reason);

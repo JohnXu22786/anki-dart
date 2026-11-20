@@ -2995,6 +2995,7 @@ WHERE queue IN (-2, -3)
           notetype: type,
           deckName: deckNames[card.deckId] ?? '',
           useBrowserFormats: false,
+          prettifyAv: false,
         );
         if (!sides.isAvailable) {
           throw StateError(

@@ -150,8 +150,9 @@ Exact source hashes are checked by `tool/check_package.py` and recorded in
 The portable collection snapshot and media boundary is original Dart code
 licensed under AGPL-3.0-or-later. Native snapshots call the public online
 backup API from the independently licensed `sqlite3` Dart package (MIT); no
-SQLite package source is copied or modified. The Web adapter reports snapshot
-capability as unsupported because the locked sqlite3 3.9.1 Wasm `CommonDatabase`
-does not expose the public backup API available on the native `Database`.
-Platform media access remains supplied by the host through
-`CollectionMediaStorage`.
+SQLite package source is copied or modified. Web snapshots use SQLite's public
+`VACUUM INTO` SQL command and the package's publicly exported
+`InMemoryFileSystem`, then remove its temporary in-memory file after copying
+the bytes. The Web media adapter uses public browser IndexedDB APIs and stores
+media values as Blobs in its own host-named database; reads use Blob slices to
+stream bounded chunks.

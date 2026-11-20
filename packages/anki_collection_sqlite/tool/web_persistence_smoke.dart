@@ -1,19 +1,28 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 John Tsui
 
+import 'dart:typed_data';
+
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite_web.dart';
+import 'package:anki_collection_sqlite/anki_collection_sqlite_web_media.dart';
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:sqlite3/wasm.dart';
+import 'package:typed_data/typed_buffers.dart';
 import 'package:web/web.dart' as web;
 
 Future<void> main() async {
   try {
     const generatedNoteId = 5000000000;
     final store = 'anki-sqlite-smoke-${DateTime.now().microsecondsSinceEpoch}';
+    var mediaStorage = await IndexedDbCollectionMediaStorage.openForCollection(
+      store,
+    );
     final driver = await experimentalWebCollectionSqliteDriver(
       sqliteWasmUrl: 'sqlite3.wasm',
       indexedDbName: store,
+      mediaStorage: mediaStorage,
     );
     final first = await CollectionSqliteStorage.open(
       driver: driver,
@@ -45,13 +54,77 @@ Future<void> main() async {
     }
     await first.updateNote(_note(generated.id, field: 'persisted note'));
     await first.removeNote(Int64.parseInt('9007199254740993'));
+
+    final snapshot = await first.createSnapshot();
+    final repeatedSnapshot = await first.createSnapshot();
+    if (repeatedSnapshot.length != snapshot.length) {
+      throw StateError('Repeated Web snapshot changed database size');
+    }
+    final snapshotReader = await WasmSqlite3.loadFromUrlString('sqlite3.wasm');
+    final snapshotVfs = InMemoryFileSystem(name: 'snapshot-read-smoke');
+    snapshotReader.registerVirtualFileSystem(snapshotVfs);
+    final snapshotPath = snapshotVfs.xFullPathName('snapshot.sqlite');
+    snapshotVfs.fileData[snapshotPath] = Uint8Buffer()..addAll(snapshot);
+    final snapshotDatabase = snapshotReader.open(
+      'snapshot.sqlite',
+      vfs: snapshotVfs.name,
+    );
+    final snapshotValue = snapshotDatabase
+        .select('SELECT value FROM smoke')
+        .single['value'];
+    snapshotDatabase.close();
+    snapshotVfs.fileData.clear();
+    snapshotReader.unregisterVirtualFileSystem(snapshotVfs);
+
+    await first.executeBatch("UPDATE smoke SET value = 'changed'");
+    final changedValue = await first.queryString('SELECT value FROM smoke');
+
+    final mediaBytes = Uint8List.fromList(
+      List<int>.generate(150000, (index) => index % 251),
+    );
+    await mediaStorage.write('音声.bin', mediaBytes);
+    final mediaStream = await first.readMedia('音声.bin');
+    if (mediaStream == null) throw StateError('Web media missing after write');
+    final streamedMedia = <int>[];
+    await for (final chunk in mediaStream) {
+      if (chunk.length > 64 * 1024) {
+        throw StateError('Web media stream exceeded the chunk bound');
+      }
+      streamedMedia.addAll(chunk);
+    }
+    if (!_sameBytes(mediaBytes, streamedMedia)) {
+      throw StateError('Web media bytes did not round trip');
+    }
+    final mediaNames = (await first.listMedia()).toList();
+    if (!mediaNames.contains('音声.bin')) {
+      throw StateError('Web media listing omitted stored item');
+    }
+    if (await first.readMedia('missing.bin') != null) {
+      throw StateError('Web missing media did not return null');
+    }
     try {
-      await first.createSnapshot();
-      throw StateError('Web snapshot unexpectedly reported success');
-    } on PortableIoUnsupported catch (error) {
-      if (error.capability != 'database snapshot') rethrow;
+      await first.readMedia('../unsafe');
+      throw StateError('Web media path traversal was accepted');
+    } on ArgumentError {
+      // The shared collection boundary rejects the unsafe name.
     }
     await first.close();
+    mediaStorage.close();
+    mediaStorage = await IndexedDbCollectionMediaStorage.openForCollection(
+      store,
+    );
+    final persistedStream = await mediaStorage.read('音声.bin');
+    if (persistedStream == null) {
+      throw StateError('Web media did not persist across reopen');
+    }
+    final persistedMedia = <int>[];
+    await for (final chunk in persistedStream) {
+      persistedMedia.addAll(chunk);
+    }
+    if (!_sameBytes(mediaBytes, persistedMedia)) {
+      throw StateError('Reopened Web media bytes changed');
+    }
+    mediaStorage.close();
 
     final reopened = await CollectionSqliteStorage.open(
       driver: driver,
@@ -64,12 +137,23 @@ Future<void> main() async {
     );
     await reopened.close();
     web.document.body?.textContent =
-        value == 'persisted' && note.endsWith(':persisted note')
+        value == 'changed' &&
+            changedValue == 'changed' &&
+            snapshotValue == 'persisted' &&
+            note.endsWith(':persisted note')
         ? 'PASS'
-        : 'FAIL: $value / $note';
+        : 'FAIL: $value / $changedValue / $snapshotValue / $note';
   } catch (error) {
     web.document.body?.textContent = 'FAIL: $error';
   }
+}
+
+bool _sameBytes(List<int> left, List<int> right) {
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }
 
 Note _note(Int64 id, {String field = 'value'}) {

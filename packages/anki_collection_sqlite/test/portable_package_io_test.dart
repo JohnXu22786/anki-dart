@@ -81,6 +81,7 @@ void main() {
       '../collection.anki2',
       r'..\secret',
       'a/b',
+      List.filled(1025, 'x').join(),
     ]) {
       expect(() => validateAnkiMediaFilename(invalid), throwsArgumentError);
     }

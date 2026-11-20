@@ -2,6 +2,7 @@
 // Copyright (C) 2026 John Tsui
 
 import 'dart:async';
+import 'dart:convert';
 
 /// A driver capability that the selected platform cannot provide.
 final class PortableIoUnsupported implements Exception {
@@ -26,7 +27,9 @@ String validateAnkiMediaFilename(String filename) {
       filename.contains('/') ||
       filename.contains('\\') ||
       filename.contains(':') ||
-      filename.contains('\u0000')) {
+      filename.contains('\u0000') ||
+      filename.length > 1024 ||
+      utf8.encode(filename).length > 1024) {
     throw ArgumentError.value(filename, 'filename', 'Invalid Anki media name');
   }
   return filename;

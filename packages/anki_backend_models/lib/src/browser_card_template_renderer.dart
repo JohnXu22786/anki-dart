@@ -77,7 +77,8 @@ final class BrowserCardTemplateRenderer {
     try {
       final question = _renderSide(
         useBrowserFormats
-            ? _browserFormat(template.config.qFormatBrowser, template.config.qFormat)
+            ? _browserFormat(
+                template.config.qFormatBrowser, template.config.qFormat)
             : template.config.qFormat,
         fields,
         nonempty,
@@ -90,7 +91,8 @@ final class BrowserCardTemplateRenderer {
       }
       final answer = _renderSide(
         useBrowserFormats
-            ? _browserFormat(template.config.aFormatBrowser, template.config.aFormat)
+            ? _browserFormat(
+                template.config.aFormatBrowser, template.config.aFormat)
             : template.config.aFormat,
         fields,
         nonempty,

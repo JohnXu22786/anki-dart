@@ -6,8 +6,7 @@ import 'package:fixnum/fixnum.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('renderer can select standard rather than browser template formats',
-      () {
+  test('renderer can select standard rather than browser template formats', () {
     final type = _notetype(
       question: '{{Front}}',
       answer: '{{Back}}',
@@ -21,11 +20,13 @@ void main() {
     expect(renderer.render(note: note, card: card, notetype: type).questionHtml,
         'browser');
     expect(
-        renderer.render(
-            note: note,
-            card: card,
-            notetype: type,
-            useBrowserFormats: false).questionHtml,
+        renderer
+            .render(
+                note: note,
+                card: card,
+                notetype: type,
+                useBrowserFormats: false)
+            .questionHtml,
         'standard');
   });
 

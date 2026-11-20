@@ -1,5 +1,28 @@
 # AnkiDroid source baseline
 
+## Deck Picker description editing (Unit 53)
+
+The shared Flutter Deck Picker connects `editDeckDescription` to a collection
+backed description editor. Its behavior follows AnkiDroid 2.25.3 at commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`, specifically
+`DeckPicker.kt` (SHA-256
+`9859b3f9a604b52a67193027fcdec2b2e67e6a50a1ea04f760425822a23ac242`),
+`EditDeckDescriptionDialog.kt` (SHA-256
+`3929840f44136963430a5b1a7c5c412085bc93482d883d4e0508a34c5f375167`), and
+`EditDeckDescriptionDialogViewModel.kt` (SHA-256
+`e7fad0fcda802c7aea3a2f74742ba9e689db31b336f193737f16963525821a0c`).
+The editor loads and saves the normal deck's description and Markdown flag,
+does not enable Save when the values are unchanged, closes directly when there
+are no changes, and confirms discarding edits on Close or system Back. Save
+errors leave the editor open with an error; successful saves refresh the Deck
+Picker and show confirmation. Description updates keep the exact 64-bit deck
+ID and use the collection undo history. The upstream dialog's keyboard-aware
+back callback and snackbar invalidation of Android's toolbar menu are platform
+integration details; shared Flutter uses its native Back behavior and updates
+the collection undo generation directly. No source code was copied. The app
+and tests retain their existing GPL-3.0-or-later SPDX headers; root `COPYING`
+is unchanged.
+
 ## Core review-card scheduling states (Unit 25)
 
 `ReviewCardState`, `ReviewSchedulingContext`, and `ReviewCardSchedulingStates`

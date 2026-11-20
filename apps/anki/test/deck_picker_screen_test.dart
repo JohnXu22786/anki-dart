@@ -7,6 +7,7 @@ import 'dart:async';
 import 'dart:ui' show Tristate;
 
 import 'package:anki_app/deck_picker_screen.dart';
+import 'package:anki_app/deck_description_editor.dart';
 import 'package:anki_app/l10n/app_localizations.dart';
 import 'package:anki_app/note_editor_screen.dart';
 import 'package:anki_backend_models/anki_backend_models.dart'
@@ -52,6 +53,158 @@ void main() {
       expect(repository.actions, isEmpty);
     },
   );
+
+  testWidgets('description editor loads, saves both fields, and refreshes', (
+    tester,
+  ) async {
+    final deck = DeckPickerDeck(
+      id: 8,
+      exactId: Int64.parseInt('9007199254740995'),
+      name: 'Languages::Spanish',
+    );
+    final repository = _DeckRepository([deck])
+      ..description = 'Stored description'
+      ..markdownDescription = true;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Spanish'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit deck description'));
+    await tester.pumpAndSettle();
+
+    expect(repository.descriptionLoads, [Int64.parseInt('9007199254740995')]);
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey('deck-description-input')),
+          )
+          .controller!
+          .text,
+      'Stored description',
+    );
+    expect(
+      tester
+          .widget<CheckboxListTile>(
+            find.byKey(const ValueKey('deck-description-markdown')),
+          )
+          .value,
+      isTrue,
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('deck-description-input')),
+      'Edited **description**',
+    );
+    await tester.tap(find.byKey(const ValueKey('deck-description-markdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(repository.savedDescriptionIds, [
+      Int64.parseInt('9007199254740995'),
+    ]);
+    expect(repository.description, 'Edited **description**');
+    expect(repository.markdownDescription, isFalse);
+    expect(repository.loadCalls, 2);
+    expect(find.text('Deck description saved'), findsOneWidget);
+  });
+
+  testWidgets('description editor closes unchanged and confirms discard', (
+    tester,
+  ) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 8, name: 'Languages::Spanish'),
+    ]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Spanish'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit deck description'));
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsNothing);
+    expect(find.byType(DeckDescriptionEditor), findsNothing);
+
+    await tester.tap(find.byTooltip('More actions for Spanish'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit deck description'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('deck-description-input')),
+      'Unsaved',
+    );
+    await tester.tap(find.text('Close').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Discard'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DeckDescriptionEditor), findsNothing);
+    expect(repository.savedDescriptionIds, isEmpty);
+  });
+
+  testWidgets('description load failure is visible', (tester) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 8, name: 'Languages::Spanish'),
+    ]);
+    repository.failDescriptionLoad = true;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Spanish'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit deck description'));
+    await tester.pumpAndSettle();
+    expect(find.text('Deck action could not be completed'), findsOneWidget);
+    expect(find.byType(DeckDescriptionEditor), findsNothing);
+  });
+
+  testWidgets('description save failure keeps the editor open', (tester) async {
+    final repository = _DeckRepository([
+      const DeckPickerDeck(id: 8, name: 'Languages::Spanish'),
+    ])..failDescriptionSave = true;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('More actions for Spanish'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit deck description'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('deck-description-input')),
+      'Fails to save',
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey('deck-description-input')),
+          )
+          .controller!
+          .text,
+      'Fails to save',
+    );
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(repository.savedDescriptionIds, [Int64(8)]);
+    expect(find.text('Deck description could not be saved'), findsOneWidget);
+    expect(find.byType(DeckDescriptionEditor), findsOneWidget);
+  });
 
   testWidgets('delete uses the exact deck ID, progress, result and undo', (
     tester,
@@ -1177,6 +1330,7 @@ final class _DeckRepository
         DeckPickerDeleteProvider,
         DeckPickerUnburyProvider,
         DeckPickerEmptyFilteredDeckProvider,
+        DeckPickerDescriptionProvider,
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
   NewNoteEditorPort? editorPort;
@@ -1209,6 +1363,12 @@ final class _DeckRepository
   bool failRenameAfterUpdate = false;
   bool failDelete = false;
   bool failUnbury = false;
+  bool failDescriptionLoad = false;
+  bool failDescriptionSave = false;
+  String description = '';
+  bool markdownDescription = false;
+  final descriptionLoads = <Int64>[];
+  final savedDescriptionIds = <Int64>[];
   final emptyFilteredExact = <Int64>[];
   bool deferSelectionState = false;
   final failingSelections = <int>{};
@@ -1294,6 +1454,29 @@ final class _DeckRepository
   @override
   Future<void> performAction(DeckPickerAction action, int deckId) async =>
       actions.add((action, deckId));
+
+  @override
+  Future<DeckDescription> loadDescription(DeckPickerDeck deck) async {
+    final id = deck.exactId ?? Int64(deck.id);
+    descriptionLoads.add(id);
+    if (failDescriptionLoad) throw StateError('description load failed');
+    return DeckDescription(
+      description: description,
+      markdown: markdownDescription,
+    );
+  }
+
+  @override
+  Future<void> saveDescription(
+    DeckPickerDeck deck, {
+    required String description,
+    required bool markdownDescription,
+  }) async {
+    savedDescriptionIds.add(deck.exactId ?? Int64(deck.id));
+    if (failDescriptionSave) throw StateError('description save failed');
+    this.description = description;
+    this.markdownDescription = markdownDescription;
+  }
 
   @override
   Future<DeckPickerDeletionResult> deleteDeck(

@@ -90,6 +90,10 @@ void main() {
     );
   });
 
+  test('redundant type syntax is stripped case-insensitively like Core', () {
+    expect(exportTextField('before[[TYPE:Back]]after', true), 'beforeafter');
+  });
+
   test('card answer export removes FrontSide before stripping HTML', () {
     const answer = '<b>front</b><hr id=answer>\n<strong>back</strong>';
     expect(exportCardAnswer(answer, false), 'back');

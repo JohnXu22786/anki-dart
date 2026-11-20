@@ -4960,3 +4960,49 @@ The collection scheduling behavior is pinned to Anki Core commit
 `6aca7e9b55088f43d981eaafa8a02c5de538cf3c7e1c13640e3565de6ee4fd13`).
 No upstream source file was copied; the implementation remains in the existing
 AGPL-3.0-or-later collection and app packages.
+
+## Deck Picker Custom Study by card state or tag (Unit55)
+
+The shared Flutter Deck Picker now provides the AnkiDroid `STUDY_TAGS` route for
+normal decks: it accepts a card-state choice, positive card limit, and up to 100
+combined included/excluded tags, then creates a non-rescheduling filtered study
+deck through the existing collection builder. Included tags are ORed, excluded
+tags are individually negated, and state/deck terms are ANDed. The selectable
+tags are the selected deck notes’ tag union intersected with collection tags;
+the source tag dialog then adds hierarchy ancestors and sorts that list before
+display. The Dart host mirrors that projection and ordering.
+Normal-deck validation, exact `Int64` deck ID use, empty-match rejection, random
+ordering, and selection of the resulting deck are handled by the shared
+collection and app APIs. No match skips filtered-deck creation and therefore
+cannot create an empty-looking session. Other Custom Study choices remain out
+of scope.
+
+Behavior was checked against AnkiDroid 2.25.3 commit
+`d9bf072f814a0c37d30a694192593b31ff2df875`. The following SHA-256 hashes were
+verified directly against `/workspace/anki-android-official`:
+
+- `AnkiDroid/src/main/java/com/ichi2/anki/DeckPicker.kt` —
+  `9859b3f9a604b52a67193027fcdec2b2e67e6a50a1ea04f760425822a23ac242`
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/customstudy/CustomStudyDialog.kt` —
+  `f05c630547dd440016e6a7b613e3bc7200d99b52fd5cb526983cc3fcc3a2459d`
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/customstudy/CustomStudyViewModel.kt` —
+  `331d8bab14d22e5f1365bd6c8cff237cf0cd8c5cbc8cd2f37793c6891ce25822`
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/customstudy/TagLimitFragment.kt` —
+  `131ce123e14a63bf272f90bda95d85fc179c0d860776c1037f00dba7f9bccdba`
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsDialog.kt` —
+  `44bcb38c848ac86fcf2507e60e4ce31d51d8bc79db39c3753edb7844a5faf897`
+- `AnkiDroid/src/main/java/com/ichi2/anki/dialogs/tags/TagsDialogViewModel.kt` —
+  `d69e371036017f6f07df92c987ba9b39a4015de6c4963a1b25951957d7ade09d`
+- `AnkiDroid/src/test/java/com/ichi2/anki/dialogs/CustomStudyDialogTest.kt` —
+  `2a236b521058e09e2c96ac147db70995629de2c6c4d4f079ff01a0a413e26306`
+- `AnkiDroid/src/test/java/com/ichi2/anki/dialogs/tags/TagsDialogTest.kt` —
+  `1799fe119f858385e507a599040f2928cab32524a8e090fcde2a83c6107f379b`
+- `AnkiDroid/src/test/java/com/ichi2/anki/dialogs/tags/TagsDialogViewModelTest.kt` —
+  `7cbb3a85a679533de407e0189c04ecaaa30cde302ce90d2441485692a50f01d2`
+
+The new portable search projection is in `lib/src/custom_study_search.dart`; the
+filtered-deck collection behavior is reused from Unit52. AnkiDroid's custom
+study dialog and tag-limit UI are Copyright © 2015 Timothy Rae and © 2025
+lukstbit respectively, and are licensed GPL-3.0-or-later. The tag dialog view
+model is Copyright © 2025 Divyansh Kushwaha and licensed GPL-3.0-or-later. No
+upstream source code was copied for this route; root `COPYING` is unchanged.

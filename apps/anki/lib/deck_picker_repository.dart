@@ -10,7 +10,12 @@ import 'package:anki_backend_models/anki_backend_models.dart'
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as deck_proto;
 import 'package:anki_search_parser/anki_search_parser.dart' show deckSearch;
 import 'package:anki_dart/anki_dart.dart'
-    show FilteredDeckOptions, SearchTermState;
+    show
+        FilteredDeckOptions,
+        SearchTermState,
+        buildCustomStudySearch,
+        projectTagsDialogInitialization,
+        validateCustomStudyInput;
 import 'package:fixnum/fixnum.dart';
 import 'package:protobuf/protobuf.dart';
 
@@ -19,6 +24,10 @@ import 'collection_card_browser_controller.dart';
 import 'deck_description_editor.dart';
 import 'deck_picker_screen.dart';
 import 'note_editor_screen.dart';
+
+Int64 _customStudyDeckId(DeckPickerDeck deck) =>
+    deck.exactId ??
+    (throw StateError('exact deck ID required for Custom Study'));
 
 /// Collection-backed Deck Picker projection shared by all Flutter targets.
 /// Unsupported feature routes fail visibly until their backend units are
@@ -35,6 +44,7 @@ final class CollectionDeckPickerRepository
         DeckPickerUnburyProvider,
         DeckPickerEmptyFilteredDeckProvider,
         DeckPickerDescriptionProvider,
+        DeckPickerCustomStudyProvider,
         DeckPickerCollectionUndoProvider {
   const CollectionDeckPickerRepository(this.collections);
 
@@ -206,6 +216,65 @@ final class CollectionDeckPickerRepository
     }
     throw UnsupportedError(
       'Deck action ${action.name} is not implemented yet.',
+    );
+  }
+
+  @override
+  Future<List<String>> customStudyTags(DeckPickerDeck deck) async {
+    final id = _customStudyDeckId(deck);
+    final stored = _storage.decks.getDeck(id);
+    if (stored == null) {
+      throw StateError('deck not found: $id');
+    }
+    if (stored.kind is! NormalDeckKind) {
+      throw StateError('normal deck required: $id');
+    }
+    final projection = projectTagsDialogInitialization(
+      collectionTags: _storage.tags.allTags().map((tag) => tag.name),
+      selectedNoteTags: [await _storage.tagsForDeck(id)],
+      isCustomStudying: true,
+    );
+    projection.tags.sort();
+    return projection.tags.copyOfAllTagList();
+  }
+
+  @override
+  Future<void> createCustomStudy(
+    DeckPickerDeck deck,
+    CustomStudyTagsRequest request,
+  ) async {
+    validateCustomStudyInput(
+      cardLimit: request.cardLimit,
+      includedTags: request.includedTags,
+      excludedTags: request.excludedTags,
+    );
+    final id = _customStudyDeckId(deck);
+    final stored = _storage.decks.getDeck(id);
+    if (stored == null) {
+      throw StateError('deck not found: $id');
+    }
+    if (stored.kind is! NormalDeckKind) {
+      throw StateError('normal deck required: $id');
+    }
+    final search = buildCustomStudySearch(
+      deckName: stored.name,
+      state: request.state,
+      includedTags: request.includedTags,
+      excludedTags: request.excludedTags,
+    );
+    await _storage.buildFilteredDeck(
+      deck_proto.FilteredDeckForUpdate(
+        name: 'Custom Study Session ${DateTime.now().millisecondsSinceEpoch}',
+        config: deck_proto.Deck_Filtered(reschedule: false)
+          ..searchTerms.add(
+            deck_proto.Deck_Filtered_SearchTerm(
+              search: search,
+              limit: request.cardLimit,
+              order: deck_proto.Deck_Filtered_SearchTerm_Order.RANDOM,
+            ),
+          ),
+        allowEmpty: false,
+      ),
     );
   }
 

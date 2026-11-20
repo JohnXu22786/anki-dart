@@ -217,6 +217,95 @@ void main() {
     expect(restored.originalDeckId, Int64.ZERO);
   });
 
+  test('Deck Picker custom study keeps wide deck IDs and creates a scoped filtered deck', () async {
+    final storage = runtime.storage!;
+    final deckId = Int64.parseInt('9007199254740995');
+    final noteId = Int64.parseInt('9007199254740997');
+    final cardId = Int64.parseInt('9007199254740999');
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: deckId,
+        name: 'Custom Study Home',
+        kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+      ),
+    );
+    final notetype = (await storage.getNotetypesByIds(
+      await storage.getAllNotetypeIds(),
+    )).firstWhere((type) => type.name == 'Basic');
+    final note =
+        Note(
+            id: noteId,
+            guid: 'custom-study-note',
+            notetypeId: notetype.id.value,
+            fields: ['tagged', 'back'],
+          )
+          ..prepareForUpdate(notetype, normalizeText: false)
+          ..tags.addAll(['zeta', 'exam', 'alpha', 'topic::child']);
+    await storage.addOrUpdateNote(note);
+    for (final tag in ['zeta', 'exam', 'alpha', 'topic::child', 'elsewhere']) {
+      storage.tags.registerTag(Tag(name: tag));
+    }
+    await storage.addCardIfUnique(
+      Card(id: cardId, noteId: noteId, deckId: deckId),
+    );
+    final repo = CollectionDeckPickerRepository(runtime);
+    final projected = DeckPickerDeck(
+      id: deckId.toInt(),
+      exactId: deckId,
+      name: 'Custom Study Home',
+    );
+    expect(await repo.customStudyTags(projected), [
+      'alpha',
+      'exam',
+      'topic',
+      'topic::child',
+      'zeta',
+    ]);
+    await expectLater(
+      repo.customStudyTags(
+        DeckPickerDeck(id: deckId.toInt(), name: 'Custom Study Home'),
+      ),
+      throwsStateError,
+    );
+    await repo.createCustomStudy(
+      projected,
+      const CustomStudyTagsRequest(
+        state: CustomStudyCardState.NewCardsOnly,
+        cardLimit: 12,
+        includedTags: ['exam'],
+      ),
+    );
+    // Resolve by current selection: filtered deck creation selects its exact ID.
+    final selected = storage.decks.getDeck(storage.currentDeckId)!;
+    expect(selected.kind, isA<FilteredDeckKind>());
+    expect((await storage.getCard(cardId))!.deckId, selected.id);
+    expect(
+      (selected.kind as FilteredDeckKind).value.searchTerms.single.search,
+      '"deck:Custom Study Home" is:new (tag:exam)',
+    );
+    final config = (selected.kind as FilteredDeckKind).value;
+    expect(config.reschedule, isFalse);
+    expect(config.searchTerms.single.limit, 12);
+    expect(
+      config.searchTerms.single.order,
+      deck_proto.Deck_Filtered_SearchTerm_Order.RANDOM,
+    );
+    final deckCount = storage.decks.getAllDecks().length;
+    await expectLater(
+      repo.createCustomStudy(
+        projected,
+        const CustomStudyTagsRequest(
+          state: CustomStudyCardState.AllCardsRandom,
+          cardLimit: 12,
+          excludedTags: ['exam'],
+        ),
+      ),
+      throwsStateError,
+    );
+    expect(storage.decks.getAllDecks(), hasLength(deckCount));
+    expect(storage.currentDeckId, selected.id);
+  });
+
   test(
     'Deck Picker build maps options and rebuilds the exact filtered deck',
     () async {
@@ -241,11 +330,11 @@ void main() {
       );
       final repository = CollectionDeckPickerRepository(runtime);
       expect(repository.filteredDeckOrderOptions, hasLength(11));
-    final initialOptions = repository.newFilteredDeckOptions;
-    expect(initialOptions.filter1State.search, 'deck:Default is:due');
-    expect(initialOptions.filter1State.index, 1);
-    expect(initialOptions.filter2State?.limit, '20');
-    expect(initialOptions.filter2State?.index, 6);
+      final initialOptions = repository.newFilteredDeckOptions;
+      expect(initialOptions.filter1State.search, 'deck:Default is:due');
+      expect(initialOptions.filter1State.index, 1);
+      expect(initialOptions.filter2State?.limit, '20');
+      expect(initialOptions.filter2State?.index, 6);
       await repository.buildFilteredDeck(
         FilteredDeckRequest(
           name: 'Built filtered deck',

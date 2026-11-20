@@ -4,9 +4,11 @@
  */
 
 import 'package:anki_dart/deck_picker.dart';
+import 'package:anki_dart/anki_dart.dart' show CustomStudyCardState;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'l10n/app_localizations.dart';
 import 'note_editor_screen.dart';
@@ -157,6 +159,26 @@ abstract interface class DeckPickerEmptyFilteredDeckProvider {
 
 abstract interface class DeckPickerRebuildFilteredDeckProvider {
   Future<void> rebuildFilteredDeck(DeckPickerDeck deck);
+}
+
+abstract interface class DeckPickerCustomStudyProvider {
+  Future<List<String>> customStudyTags(DeckPickerDeck deck);
+  Future<void> createCustomStudy(
+    DeckPickerDeck deck,
+    CustomStudyTagsRequest request,
+  );
+}
+
+final class CustomStudyTagsRequest {
+  const CustomStudyTagsRequest({
+    required this.state,
+    required this.cardLimit,
+    this.includedTags = const [],
+    this.excludedTags = const [],
+  });
+  final CustomStudyCardState state;
+  final int cardLimit;
+  final List<String> includedTags, excludedTags;
 }
 
 /// Exact-ID route for loading and saving a normal deck's description.
@@ -704,12 +726,50 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen> {
         final provider =
             widget.repository as DeckPickerRebuildFilteredDeckProvider;
         await _invoke(() => provider.rebuildFilteredDeck(deck));
+      } else if (action == DeckPickerAction.customStudy &&
+          widget.repository is DeckPickerCustomStudyProvider) {
+        await _customStudy(deck);
       } else if (action == DeckPickerAction.editDescription &&
           widget.repository is DeckPickerDescriptionProvider) {
         await _editDescription(deck);
       } else {
         await _invoke(() => widget.repository.performAction(action, deck.id));
       }
+    }
+  }
+
+  Future<void> _customStudy(DeckPickerDeck deck) async {
+    final provider = widget.repository as DeckPickerCustomStudyProvider;
+    late final List<String> tags;
+    try {
+      tags = await provider.customStudyTags(deck);
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.deckActionFailed),
+          ),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    final request = await showDialog<CustomStudyTagsRequest>(
+      context: context,
+      builder: (_) => _CustomStudyTagsDialog(tags: tags),
+    );
+    if (request != null) {
+      await _invoke(() async {
+        await provider.createCustomStudy(deck, request);
+        try {
+          await SharedPreferencesAsync().setInt(
+            'amountOfCards',
+            request.cardLimit,
+          );
+        } on Object {
+          // A saved default is optional; the created session already succeeded.
+        }
+      });
     }
   }
 
@@ -1678,4 +1738,173 @@ DeckNode _toDeckNode(
         _toDeckNode(child, depth + 1, deckIndex),
     ],
   );
+}
+
+final class _CustomStudyTagsDialog extends StatefulWidget {
+  const _CustomStudyTagsDialog({required this.tags});
+  final List<String> tags;
+  @override
+  State<_CustomStudyTagsDialog> createState() => _CustomStudyTagsDialogState();
+}
+
+final class _CustomStudyTagsDialogState extends State<_CustomStudyTagsDialog> {
+  CustomStudyCardState state = CustomStudyCardState.NewCardsOnly;
+  final count = TextEditingController(text: '100');
+  final included = <String>{};
+  final excluded = <String>{};
+  String? inputError;
+  @override
+  void initState() {
+    super.initState();
+    SharedPreferencesAsync().getInt('amountOfCards').then((saved) {
+      if (mounted && saved != null && count.text == '100') {
+        count.text = saved.toString();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    count.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(s.customStudyCardStateOrTag),
+      content: SizedBox(
+        width: 440,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<CustomStudyCardState>(
+                initialValue: state,
+                items: [
+                  DropdownMenuItem(
+                    value: CustomStudyCardState.NewCardsOnly,
+                    child: Text(s.customStudyNewCardsOnly),
+                  ),
+                  DropdownMenuItem(
+                    value: CustomStudyCardState.DueCardsOnly,
+                    child: Text(s.customStudyDueCardsOnly),
+                  ),
+                  DropdownMenuItem(
+                    value: CustomStudyCardState.ReviewCardsRandom,
+                    child: Text(s.customStudyReviewCardsRandom),
+                  ),
+                  DropdownMenuItem(
+                    value: CustomStudyCardState.AllCardsRandom,
+                    child: Text(s.customStudyAllCardsRandom),
+                  ),
+                ],
+                onChanged: (v) => setState(() => state = v ?? state),
+              ),
+              TextField(
+                controller: count,
+                onChanged: (_) => setState(() => inputError = null),
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: s.customStudyCardsToStudy,
+                  errorText: inputError,
+                ),
+              ),
+              Row(
+                children: [
+                  const Spacer(),
+                  SizedBox(
+                    width: 48,
+                    child: Text(
+                      s.customStudyInclude,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 48,
+                    child: Text(
+                      s.customStudyExclude,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+              for (final tag in widget.tags)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          left: 16.0 * (tag.split('::').length - 1),
+                        ),
+                        child: Text(tag),
+                      ),
+                    ),
+                    Checkbox(
+                      semanticLabel: s.customStudyIncludeTag(tag),
+                      value: included.contains(tag),
+                      onChanged: (v) => setState(() {
+                        inputError = null;
+                        if (v == true) {
+                          included.add(tag);
+                          excluded.remove(tag);
+                        } else {
+                          included.remove(tag);
+                        }
+                      }),
+                    ),
+                    Checkbox(
+                      semanticLabel: s.customStudyExcludeTag(tag),
+                      value: excluded.contains(tag),
+                      onChanged: (v) => setState(() {
+                        inputError = null;
+                        if (v == true) {
+                          excluded.add(tag);
+                          included.remove(tag);
+                        } else {
+                          excluded.remove(tag);
+                        }
+                      }),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(s.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final limit = int.tryParse(count.text);
+            if (limit == null ||
+                limit < 1 ||
+                limit > 0x7fffffff ||
+                included.length + excluded.length > 100) {
+              setState(
+                () => inputError = included.length + excluded.length > 100
+                    ? s.customStudyTooManyTags
+                    : s.customStudyPositiveCount,
+              );
+              return;
+            }
+            Navigator.pop(
+              context,
+              CustomStudyTagsRequest(
+                state: state,
+                cardLimit: limit,
+                includedTags: included.toList(),
+                excludedTags: excluded.toList(),
+              ),
+            );
+          },
+          child: Text(s.create),
+        ),
+      ],
+    );
+  }
 }

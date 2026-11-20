@@ -19,8 +19,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+  });
+
   testWidgets(
     'Deck Picker Add Card selects its deck and opens the shared editor',
     (tester) async {
@@ -1123,6 +1131,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'custom study submits selected state, count and tag for exact deck',
+    (tester) async {
+      final deckId = Int64.parseInt('9007199254740995');
+      final repository = _DeckRepository([
+        DeckPickerDeck(id: 8, exactId: deckId, name: 'Biology'),
+      ]);
+      await tester.pumpWidget(_app(repository));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More actions for Biology'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Custom study'),
+        160,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Custom study'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '25');
+      await tester.tap(find.bySemanticsLabel('Include exam'));
+      await tester.tap(find.text('Create'));
+      await tester.pumpAndSettle();
+      expect(repository.customStudyDecks, [deckId, deckId]);
+      expect(
+        repository.customStudyRequests.single.state,
+        CustomStudyCardState.NewCardsOnly,
+      );
+      expect(repository.customStudyRequests.single.cardLimit, 25);
+      expect(repository.customStudyRequests.single.includedTags, ['exam']);
+      expect(await SharedPreferencesAsync().getInt('amountOfCards'), 25);
+    },
+  );
+
   testWidgets('deck action menu forwards its source action and deck ID', (
     tester,
   ) async {
@@ -1395,6 +1436,7 @@ final class _DeckRepository
         DeckPickerUnburyProvider,
         DeckPickerEmptyFilteredDeckProvider,
         DeckPickerDescriptionProvider,
+        DeckPickerCustomStudyProvider,
         DeckPickerCollectionUndoProvider {
   _DeckRepository(this.decks);
   NewNoteEditorPort? editorPort;
@@ -1449,6 +1491,8 @@ final class _DeckRepository
   bool failNextSubdeck = false;
   final renamedNames = <String>[];
   final filteredRequests = <FilteredDeckRequest>[];
+  final customStudyDecks = <Int64>[];
+  final customStudyRequests = <CustomStudyTagsRequest>[];
   Completer<DeckPickerDeletionResult>? pendingDelete;
   Completer<DeckPickerUnburyResult>? pendingUnbury;
   final deletedExact = <Int64>[];
@@ -1663,6 +1707,21 @@ final class _DeckRepository
       hasBuried: deck.hasBuried,
     );
     if (failRenameAfterUpdate) throw StateError('flush failed after commit');
+  }
+
+  @override
+  Future<List<String>> customStudyTags(DeckPickerDeck deck) async {
+    customStudyDecks.add(deck.exactId ?? Int64(deck.id));
+    return ['exam', 'leech'];
+  }
+
+  @override
+  Future<void> createCustomStudy(
+    DeckPickerDeck deck,
+    CustomStudyTagsRequest request,
+  ) async {
+    customStudyDecks.add(deck.exactId ?? Int64(deck.id));
+    customStudyRequests.add(request);
   }
 
   @override

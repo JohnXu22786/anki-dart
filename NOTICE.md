@@ -5829,3 +5829,13 @@ widget renderer is a pure Flutter surface across Android, iOS, Web, Windows,
 macOS, and Linux; full JavaScript and media playback parity are not included.
 Root `COPYING` remains unchanged. Source pins and SHA-256 values are recorded
 in `apps/anki/ANKIDROID_SOURCE.sha256`.
+
+- The shared Deck Picker Custom Study by card state or tag route is informed by
+  AnkiDroid 2.25.3 `CustomStudyDialog.kt` (Copyright © 2015 Timothy Rae),
+  `CustomStudyViewModel.kt` (Copyright © 2025 lukstbit), `TagLimitFragment.kt`
+  (Copyright © 2025 lukstbit), and `TagsDialogViewModel.kt` (Copyright © 2025
+  Divyansh Kushwaha), all marked `GPL-3.0-or-later`. The portable search
+  projection and Flutter flow are new implementation; no source code is copied.
+  See `ANKIDROID_UPSTREAM.md`, “Deck Picker Custom Study by card state or tag
+  (Unit55)”, for pinned source hashes and behavioral scope. Root `COPYING` is
+  unchanged.

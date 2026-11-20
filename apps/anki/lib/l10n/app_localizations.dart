@@ -1596,6 +1596,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Redo'**
   String get redoDeckUnbury;
+
+  /// No description provided for @customStudyCardStateOrTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Study by card state or tag'**
+  String get customStudyCardStateOrTag;
+
+  /// No description provided for @customStudyNewCardsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'New cards only'**
+  String get customStudyNewCardsOnly;
+
+  /// No description provided for @customStudyDueCardsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Due cards only'**
+  String get customStudyDueCardsOnly;
+
+  /// No description provided for @customStudyReviewCardsRandom.
+  ///
+  /// In en, this message translates to:
+  /// **'All review cards in random order'**
+  String get customStudyReviewCardsRandom;
+
+  /// No description provided for @customStudyAllCardsRandom.
+  ///
+  /// In en, this message translates to:
+  /// **'All cards in random order'**
+  String get customStudyAllCardsRandom;
+
+  /// No description provided for @customStudyCardsToStudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards to study'**
+  String get customStudyCardsToStudy;
+
+  /// No description provided for @customStudyIncludeTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Include {tag}'**
+  String customStudyIncludeTag(Object tag);
+
+  /// No description provided for @customStudyExcludeTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude {tag}'**
+  String customStudyExcludeTag(Object tag);
+
+  /// No description provided for @customStudyTooManyTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Select no more than 100 tags.'**
+  String get customStudyTooManyTags;
+
+  /// No description provided for @customStudyPositiveCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive card count.'**
+  String get customStudyPositiveCount;
+
+  /// No description provided for @customStudyInclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Include'**
+  String get customStudyInclude;
+
+  /// No description provided for @customStudyExclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude'**
+  String get customStudyExclude;
 }
 
 class _AppLocalizationsDelegate

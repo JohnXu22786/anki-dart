@@ -572,3 +572,4 @@ export 'src/notetype_json_type_predicates.dart';
 export 'src/card_backend_load.dart';
 export 'src/note_remove_tag.dart';
 export 'src/note_tag_wrappers.dart';
+export 'src/custom_study_search.dart';

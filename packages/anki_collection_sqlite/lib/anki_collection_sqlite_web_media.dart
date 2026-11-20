@@ -83,7 +83,7 @@ final class IndexedDbCollectionMediaStorage implements CollectionMediaStorage {
 
   /// Closes the IndexedDB connection. Reopen with [open] to access persisted
   /// objects again.
-  void close() {
+  Future<void> close() async {
     if (_closed) return;
     _closed = true;
     _database.close();

@@ -17,6 +17,9 @@ final class PortableIoUnsupported implements Exception {
 abstract interface class CollectionMediaStorage {
   Future<Stream<List<int>>?> read(String filename);
   Future<Iterable<String>> list();
+
+  /// Releases adapter handles while retaining its stored media.
+  FutureOr<void> close();
 }
 
 /// Rejects invalid names at the shared API boundary before platform access.

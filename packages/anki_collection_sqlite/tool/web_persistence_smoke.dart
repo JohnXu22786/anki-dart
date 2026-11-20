@@ -124,6 +124,26 @@ Future<void> main() async {
     if (!_sameBytes(mediaBytes, persistedMedia)) {
       throw StateError('Reopened Web media bytes changed');
     }
+    final secondProfileMedia = await IndexedDbCollectionMediaStorage.open(
+      'anki.collection.media.v1.c2Vjb25k',
+    );
+    await secondProfileMedia.write('音声.bin', Uint8List.fromList([9, 8, 7]));
+    final firstProfileRead = await mediaStorage.read('音声.bin');
+    final secondProfileRead = await secondProfileMedia.read('音声.bin');
+    if (firstProfileRead == null || secondProfileRead == null) {
+      throw StateError('Profile-specific Web media store is missing');
+    }
+    final firstProfileBytes = await firstProfileRead
+        .expand((chunk) => chunk)
+        .toList();
+    final secondProfileBytes = await secondProfileRead
+        .expand((chunk) => chunk)
+        .toList();
+    if (!_sameBytes(mediaBytes, firstProfileBytes) ||
+        !_sameBytes([9, 8, 7], secondProfileBytes)) {
+      throw StateError('Web profile media stores are not isolated');
+    }
+    await secondProfileMedia.close();
     mediaStorage.close();
 
     final reopened = await CollectionSqliteStorage.open(

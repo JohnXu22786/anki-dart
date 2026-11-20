@@ -16,6 +16,9 @@ final class DirectoryCollectionMediaStorage implements CollectionMediaStorage {
   final Directory directory;
 
   @override
+  Future<void> close() async {}
+
+  @override
   Future<Stream<List<int>>?> read(String filename) async {
     final name = validateAnkiMediaFilename(filename);
     final file = File('${directory.path}${Platform.pathSeparator}$name');

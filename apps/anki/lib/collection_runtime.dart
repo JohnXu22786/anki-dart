@@ -26,14 +26,17 @@ final class CollectionRuntime {
   // fields, so call sites can see the accepted parameter names directly.
   CollectionRuntime({
     required Future<String> Function(ProfileId) locationForProfile,
-    required Future<CollectionSqliteDriver> Function() createDriver,
+    Future<CollectionSqliteDriver> Function()? createDriver,
+    Future<CollectionSqliteDriver> Function(ProfileId)? createDriverForProfile,
     CollectionOptionsForProfile? optionsForProfile,
-  }) : _locationForProfile = locationForProfile,
-       _createDriver = createDriver,
+  }) : assert(createDriver != null || createDriverForProfile != null),
+       assert(createDriver == null || createDriverForProfile == null),
+       _locationForProfile = locationForProfile,
+       _createDriver = createDriverForProfile ?? ((_) => createDriver!()),
        _optionsForProfile = optionsForProfile ?? _defaultOptions;
 
   final Future<String> Function(ProfileId) _locationForProfile;
-  final Future<CollectionSqliteDriver> Function() _createDriver;
+  final Future<CollectionSqliteDriver> Function(ProfileId) _createDriver;
   final CollectionOptionsForProfile _optionsForProfile;
   ProfileId? _selectedProfile;
   ProfileId? _openProfile;
@@ -107,7 +110,7 @@ final class CollectionRuntime {
     }
     await _closeActive();
     final location = await _locationForProfile(profileId);
-    final driver = await _createDriver();
+    final driver = await _createDriver(profileId);
     final storage = await CollectionSqliteStorage.open(
       driver: driver,
       location: location,
@@ -151,3 +154,7 @@ Future<CollectionRuntime> createPlatformCollectionRuntime() =>
 /// escape the profile collection directory.
 String collectionProfileKey(ProfileId profileId) =>
     base64Url.encode(utf8.encode(profileId.value)).replaceAll('=', '');
+
+/// Stable, profile-isolated IndexedDB database name for collection media.
+String collectionMediaDatabaseName(ProfileId profileId) =>
+    'anki.collection.media.v1.${collectionProfileKey(profileId)}';

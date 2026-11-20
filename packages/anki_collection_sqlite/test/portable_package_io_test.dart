@@ -126,6 +126,9 @@ final class _MemoryMedia implements CollectionMediaStorage {
   final Map<String, Uint8List> files;
 
   @override
+  Future<void> close() async {}
+
+  @override
   Future<Iterable<String>> list() async => files.keys;
 
   @override

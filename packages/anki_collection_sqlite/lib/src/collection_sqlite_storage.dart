@@ -207,6 +207,7 @@ final class CollectionSqliteStorage
   );
   bool _connectionClosed = false;
   bool _closed = false;
+  bool _mediaStorageClosed = false;
   bool _closing = false;
 
   /// Executes a compiled Core-compatible search and sort plan against this
@@ -2090,38 +2091,48 @@ INSERT OR REPLACE INTO cards (
     CollectionSqliteOptions options = const CollectionSqliteOptions(),
     int Function()? nowMillis,
   }) async {
-    final database = await Future<CommonDatabase>.sync(
-      () => driver.openDatabase(location),
-    );
+    CommonDatabase? database;
     try {
-      _registerCoreFieldIndexFunction(database);
-      registerProcessTextFunction(database);
-      registerFnvHashFunction(database);
-      registerCardDataFunctions(database);
-      registerFsrsVariableFunction(database);
-      registerFsrsRetrievabilityFunctions(database);
-      registerRegexFunctions(database);
-      registerUnicaseCollation(database);
-      database.execute('pragma busy_timeout = 0');
-      database.execute('pragma locking_mode = exclusive');
-      database.execute('pragma page_size = 4096');
-      database.execute('pragma cache_size = -40960');
-      database.execute('pragma legacy_file_format = off');
-      database.execute('pragma journal_mode = wal');
+      final openedDatabase = await Future<CommonDatabase>.sync(
+        () => driver.openDatabase(location),
+      );
+      database = openedDatabase;
+      _registerCoreFieldIndexFunction(openedDatabase);
+      registerProcessTextFunction(openedDatabase);
+      registerFnvHashFunction(openedDatabase);
+      registerCardDataFunctions(openedDatabase);
+      registerFsrsVariableFunction(openedDatabase);
+      registerFsrsRetrievabilityFunctions(openedDatabase);
+      registerRegexFunctions(openedDatabase);
+      registerUnicaseCollation(openedDatabase);
+      openedDatabase.execute('pragma busy_timeout = 0');
+      openedDatabase.execute('pragma locking_mode = exclusive');
+      openedDatabase.execute('pragma page_size = 4096');
+      openedDatabase.execute('pragma cache_size = -40960');
+      openedDatabase.execute('pragma legacy_file_format = off');
+      openedDatabase.execute('pragma journal_mode = wal');
       if (options.androidTempStore) {
-        database.execute('pragma temp_store = memory');
+        openedDatabase.execute('pragma temp_store = memory');
       }
       final configureConnection = options.configureConnection;
       if (configureConnection != null) {
-        await Future<void>.sync(() => configureConnection(database));
+        await Future<void>.sync(() => configureConnection(openedDatabase));
       }
       await Future<void>.sync(() => driver.flush?.call());
-      return CollectionSqliteStorage._(database, driver, nowMillis);
+      return CollectionSqliteStorage._(openedDatabase, driver, nowMillis);
     } catch (error, stackTrace) {
       try {
-        database.close();
+        database?.close();
       } catch (_) {
         // Keep the initialization failure as the observable error.
+      }
+      try {
+        final mediaStorage = driver.mediaStorage;
+        if (mediaStorage != null) {
+          await Future<void>.sync(mediaStorage.close);
+        }
+      } catch (_) {
+        // Preserve the initialization failure; callers can retry the open.
       }
       Error.throwWithStackTrace(error, stackTrace);
     }
@@ -3716,7 +3727,19 @@ WHERE queue IN (-2, -3)
       closeError ??= error;
       closeStack ??= stackTrace;
     }
-    if (_connectionClosed && !flushFailed) _closed = true;
+    if (!_mediaStorageClosed) {
+      try {
+        final mediaStorage = _driver.mediaStorage;
+        if (mediaStorage != null) await Future<void>.sync(mediaStorage.close);
+        _mediaStorageClosed = true;
+      } catch (error, stackTrace) {
+        closeError ??= error;
+        closeStack ??= stackTrace;
+      }
+    }
+    if (_connectionClosed && !flushFailed && _mediaStorageClosed) {
+      _closed = true;
+    }
     if (closeError != null) {
       Error.throwWithStackTrace(closeError, closeStack!);
     }

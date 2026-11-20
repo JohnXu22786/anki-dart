@@ -4,6 +4,7 @@
  */
 
 import 'package:anki_collection_sqlite/anki_collection_sqlite_web.dart';
+import 'package:anki_collection_sqlite/anki_collection_sqlite_web_media.dart';
 
 import 'collection_runtime.dart';
 
@@ -14,8 +15,19 @@ Future<CollectionRuntime> createPlatformCollectionRuntime() async =>
     CollectionRuntime(
       locationForProfile: (profileId) async =>
           'profiles/${collectionProfileKey(profileId)}/collection.anki2',
-      createDriver: () => experimentalWebCollectionSqliteDriver(
-        sqliteWasmUrl: _webSqliteAsset,
-        indexedDbName: _webIndexedDbName,
-      ),
+      createDriverForProfile: (profileId) async {
+        final mediaStorage = await IndexedDbCollectionMediaStorage.open(
+          collectionMediaDatabaseName(profileId),
+        );
+        try {
+          return await experimentalWebCollectionSqliteDriver(
+            sqliteWasmUrl: _webSqliteAsset,
+            indexedDbName: _webIndexedDbName,
+            mediaStorage: mediaStorage,
+          );
+        } catch (_) {
+          await mediaStorage.close();
+          rethrow;
+        }
+      },
     );

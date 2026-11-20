@@ -40,6 +40,20 @@ const _preparedStatementCacheCapacity = 50;
 final _collectionUndoOperationZoneKey = Object();
 final _externalCollectionMutationZoneKey = Object();
 
+/// Today's new/review queue counts and extension increments for custom study.
+final class CollectionCustomStudyLimitDefaults {
+  const CollectionCustomStudyLimitDefaults({
+    required this.extendNew,
+    required this.extendReview,
+    required this.availableNew,
+    required this.availableReview,
+    required this.availableNewInChildren,
+    required this.availableReviewInChildren,
+  });
+  final int extendNew, extendReview, availableNew, availableReview;
+  final int availableNewInChildren, availableReviewInChildren;
+}
+
 /// Opens a SQLite database for the caller-selected platform and location.
 ///
 /// The driver owns platform-specific database configuration and can capture
@@ -2285,6 +2299,128 @@ GROUP BY did
       );
     });
     await _flushIfAutocommit();
+  }
+
+  /// Returns today's custom-study extension defaults and uncapped queue counts.
+  Future<CollectionCustomStudyLimitDefaults> customStudyLimitDefaults(
+    Int64 deckId,
+  ) async {
+    final deck = _deckStorage.getDeck(deckId);
+    if (deck == null) throw StateError('deck not found: $deckId');
+    if (deck.kind is! NormalDeckKind) {
+      throw StateError('normal deck required: $deckId');
+    }
+    final tree = await deckTreeForNow();
+    protoDeck.DeckTreeNode? find(protoDeck.DeckTreeNode node) {
+      if (node.deckId == deckId) return node;
+      for (final child in node.children) {
+        final match = find(child);
+        if (match != null) return match;
+      }
+      return null;
+    }
+
+    final node = find(tree);
+    if (node == null) throw StateError('deck not found in tree: $deckId');
+    var childrenNew = 0;
+    var childrenReview = 0;
+    void sumChildren(protoDeck.DeckTreeNode parent) {
+      for (final child in parent.children) {
+        childrenNew += child.newUncapped;
+        childrenReview += child.reviewUncapped;
+        sumChildren(child);
+      }
+    }
+
+    sumChildren(node);
+    final normal = (deck.kind as NormalDeckKind).value;
+    return CollectionCustomStudyLimitDefaults(
+      extendNew: normal.extendNew,
+      extendReview: normal.extendReview,
+      availableNew: node.newUncapped,
+      availableReview: node.reviewUncapped,
+      availableNewInChildren: childrenNew,
+      availableReviewInChildren: childrenReview,
+    );
+  }
+
+  /// Extends today's queue by changing studied-today counts, matching Core.
+  Future<void> extendCustomStudyLimits(
+    Int64 deckId, {
+    int newDelta = 0,
+    int reviewDelta = 0,
+  }) async {
+    if (newDelta < -0x80000000 ||
+        newDelta > 0x7fffffff ||
+        reviewDelta < -0x80000000 ||
+        reviewDelta > 0x7fffffff) {
+      throw RangeError('limit delta must fit in int32');
+    }
+    final selected = _deckStorage.getDeck(deckId);
+    if (selected == null) throw StateError('deck not found: $deckId');
+    if (selected.kind is! NormalDeckKind) {
+      throw StateError('normal deck required: $deckId');
+    }
+    if (newDelta == 0 && reviewDelta == 0) return;
+    final today = timingTodayForNow().daysElapsed;
+    final before = <Deck>[selected];
+    if (_readConfigBool('applyAllParentLimits') ?? false) {
+      final names = selected.name.split('::');
+      for (var i = 1; i < names.length; i++) {
+        final parent = _deckStorage.getDeckByName(names.take(i).join('\u001f'));
+        if (parent != null) before.add(parent);
+      }
+    }
+    final after = <Deck>[];
+    for (final deck in before) {
+      final common = deck.common.deepCopy();
+      if (common.lastDayStudied != today) {
+        common
+          ..lastDayStudied = today
+          ..newStudied = 0
+          ..reviewStudied = 0;
+      }
+      common
+        ..newStudied -= newDelta
+        ..reviewStudied -= reviewDelta;
+      var kind = deck.kind;
+      if (deck.id == deckId && (newDelta > 0 || reviewDelta > 0)) {
+        final normal = (deck.kind as NormalDeckKind).value.deepCopy();
+        if (newDelta > 0) normal.extendNew = newDelta;
+        if (reviewDelta > 0) normal.extendReview = reviewDelta;
+        kind = NormalDeckKind(normal);
+      }
+      after.add(
+        Deck(
+          id: deck.id,
+          name: deck.name,
+          mtimeSecs: Int64(
+            (_nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch) ~/
+                1000,
+          ),
+          usn: -1,
+          common: common,
+          kind: kind,
+        ),
+      );
+    }
+    await runUndoableCollectionOperation(
+      apply: () async {
+        for (final deck in after) {
+          _deckStorage.updateDeck(deck);
+        }
+      },
+      undo: () async {
+        for (final deck in before) {
+          _deckStorage.updateDeck(deck);
+        }
+      },
+      redo: () async {
+        for (final deck in after) {
+          _deckStorage.updateDeck(deck);
+        }
+      },
+    );
   }
 
   /// Updates a normal deck's description using an undoable collection write.

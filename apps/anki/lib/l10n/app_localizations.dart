@@ -1759,6 +1759,42 @@ abstract class AppLocalizations {
   /// **'Days since added'**
   String get previewNewCardsDays;
 
+  /// No description provided for @increaseTodaysNewLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase today\'s new card limit'**
+  String get increaseTodaysNewLimit;
+
+  /// No description provided for @increaseTodaysReviewLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase today\'s review card limit'**
+  String get increaseTodaysReviewLimit;
+
+  /// No description provided for @availableNewCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Available new cards'**
+  String get availableNewCards;
+
+  /// No description provided for @availableReviewCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Available review cards'**
+  String get availableReviewCards;
+
+  /// No description provided for @inSubdecks.
+  ///
+  /// In en, this message translates to:
+  /// **'in subdecks'**
+  String get inSubdecks;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
   /// No description provided for @customStudyNoCards.
   ///
   /// In en, this message translates to:

@@ -440,6 +440,12 @@
   "forgottenCardsDays": "Days to look back",
   "previewNewCards": "Preview new cards",
   "previewNewCardsDays": "Days since added",
+  "increaseTodaysNewLimit": "Increase today's new card limit",
+  "increaseTodaysReviewLimit": "Increase today's review card limit",
+  "availableNewCards": "Available new cards",
+  "availableReviewCards": "Available review cards",
+  "inSubdecks": "in subdecks",
+  "ok": "OK",
   "customStudyNoCards": "No cards matched the criteria you provided.",
   "day": "day",
   "days": "days"

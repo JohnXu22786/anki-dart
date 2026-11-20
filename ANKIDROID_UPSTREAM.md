@@ -5126,3 +5126,47 @@ AnkiDroid source is GPL-3.0-or-later and Anki Core source is
 AGPL-3.0-or-later. The Dart implementation is an independent translation; no
 upstream implementation or translated resource string was copied. Root
 `COPYING` and existing license records are unchanged.
+
+## Deck Picker Custom Study Extend Today's Limits (Unit60)
+
+AnkiDroid 2.25.3 exposes paired “Increase today's new card limit” and
+“Increase today's review card limit” actions for a normal deck. `CustomStudyDefaults`
+returns that deck's saved positive increment and uncapped queue counts, with
+child-deck counts reported separately. The menu's availability predicate is
+currently always usable in the pinned source (with a TODO about child queues);
+the actions are not gated on a positive count. The input defaults to the saved
+increment, accepts a signed int32, and disallows zero submission.
+
+Core processes each action in a collection transaction. It calls
+`extend_limits()` to subtract the requested delta from the studied-today count
+for the selected deck and, when `applyAllParentLimits` is enabled, its parents.
+Positive deltas also update the corresponding deck `extend_new` or
+`extend_review` value for subsequent defaults; zero and negative deltas do not
+persist an increment. The two actions are separate oneof requests. The Dart
+implementation maps each choice to one queue delta, preserves the exact Int64
+deck ID, obtains current uncapped counts from the shared deck tree, and records
+all changed deck rows as one undoable operation. The implementation is shared
+by Android, iOS, Web, Windows, macOS, and Linux. It does not modify the stored
+per-deck daily limit editor or persist UI preferences.
+
+Pinned source files and verified SHA-256:
+
+- AnkiDroid 2.25.3 `DeckPicker.kt` at
+  `d9bf072f814a0c37d30a694192593b31ff2df875` —
+  `9859b3f9a604b52a67193027fcdec2b2e67e6a50a1ea04f760425822a23ac242`
+- AnkiDroid 2.25.3 `dialogs/customstudy/CustomStudyDialog.kt` at the same
+  commit — `f05c630547dd440016e6a7b613e3bc7200d99b52fd5cb526983cc3fcc3a2459d`
+- AnkiDroid 2.25.3 `dialogs/customstudy/CustomStudyViewModel.kt` at the same
+  commit — `331d8bab14d22e5f1365bd6c8cff237cf0cd8c5cbc8cd2f37793c6891ce25822`
+- AnkiDroid 2.25.3 `test/java/com/ichi2/anki/dialogs/CustomStudyDialogTest.kt`
+  at the same commit —
+  `2a236b521058e09e2c96ac147db70995629de2c6c4d4f079ff01a0a413e26306`
+- Anki Core `rslib/src/scheduler/filtered/custom_study.rs` at
+  `e64c6b1aee3e8d668fb8bbe084beada8e070d985` —
+  `8701f9bbd428ab3651e6343af9a6567a4ed28c094269b4b2dab20b5810e1732a`
+- Anki Core `proto/anki/scheduler.proto` at the same commit —
+  `9ebdd150185cdaccef2a7957481361b869344e573cce4dc0be77489cac7b71e3`
+
+AnkiDroid source is GPL-3.0-or-later and Anki Core source is
+AGPL-3.0-or-later. The implementation follows those behaviors in the shared
+Dart collection and UI architecture; no upstream source file was copied.

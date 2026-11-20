@@ -10,12 +10,22 @@ import 'package:test/test.dart';
 void main() {
   late CollectionSqliteStorage storage;
   late Database database;
+  late int failFlushCount;
+  late int flushCount;
 
   setUp(() async {
+    failFlushCount = 0;
+    flushCount = 0;
     storage = await CollectionSqliteStorage.open(
       driver: CollectionSqliteDriver(
         openDatabase: (_) => database = sqlite3.openInMemory(),
-        flush: () {},
+        flush: () {
+          flushCount++;
+          if (failFlushCount > 0) {
+            failFlushCount--;
+            throw StateError('injected flush failure');
+          }
+        },
       ),
       location: ':memory:',
     );
@@ -112,5 +122,33 @@ void main() {
       storage.deckConfigs.getDeckConfig(configId)!.inner.writeToBuffer(),
       before.inner.writeToBuffer(),
     );
+  });
+
+  test('retrying a committed limit save flushes unchanged values', () async {
+    final deckId = Int64.parseInt('9007199254740995');
+    failFlushCount = 1;
+
+    await expectLater(
+      storage.updateDeckDailyLimits(deckId, newPerDay: 42, reviewsPerDay: 250),
+      throwsStateError,
+    );
+    expect(storage.canUndoCollectionOperation, isTrue);
+    expect(
+      storage.deckConfigs
+          .getDeckConfig(Int64.parseInt('9007199254740997'))!
+          .inner
+          .newPerDay,
+      42,
+    );
+    final flushesBeforeRetry = flushCount;
+
+    await storage.updateDeckDailyLimits(
+      deckId,
+      newPerDay: 42,
+      reviewsPerDay: 250,
+    );
+
+    expect(flushCount, flushesBeforeRetry + 1);
+    expect(storage.canUndoCollectionOperation, isTrue);
   });
 }

@@ -2328,6 +2328,10 @@ GROUP BY did
     }
     if (before.inner.newPerDay == newPerDay &&
         before.inner.reviewsPerDay == reviewsPerDay) {
+      // A preceding save may have committed the in-memory/SQLite change but
+      // failed while flushing it to the host. Let retrying Save flush that
+      // already-committed value without creating another undo step.
+      if (_database.autocommit) await _flush();
       return;
     }
 

@@ -799,6 +799,54 @@ abstract class AppLocalizations {
   /// **'Export'**
   String get export;
 
+  /// No description provided for @exportUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This export format is not supported yet.'**
+  String get exportUnsupported;
+
+  /// No description provided for @exportReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export ready'**
+  String get exportReadyTitle;
+
+  /// No description provided for @exportSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get exportSave;
+
+  /// No description provided for @exportShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get exportShare;
+
+  /// No description provided for @exportDeliveryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not deliver the export. Try again.'**
+  String get exportDeliveryFailed;
+
+  /// No description provided for @exportTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'This export is too large to keep ready. Try a smaller deck.'**
+  String get exportTooLarge;
+
+  /// No description provided for @exportPendingStoreFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many exports are waiting. Finish or close a pending export and try again.'**
+  String get exportPendingStoreFull;
+
+  /// No description provided for @exportShareTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'This export is too large to share from Linux. Use Save instead.'**
+  String get exportShareTooLarge;
+
   /// No description provided for @includeScheduling.
   ///
   /// In en, this message translates to:

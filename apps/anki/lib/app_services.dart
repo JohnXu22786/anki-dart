@@ -4,9 +4,12 @@
  */
 
 import 'package:anki_dart/profile_onboarding.dart';
+import 'package:anki_collection_sqlite/anki_collection_sqlite.dart'
+    show CollectionTextExportResult;
 import 'package:anki_dart/anki_dart.dart'
     show BrowserColumn, BrowserRowId, BrowserSavedSearch, BrowserSortType;
-import 'package:anki_dart/deck_picker.dart' show DeckPickerExportDeckRequest;
+import 'package:anki_dart/deck_picker.dart'
+    show DeckPickerExportDeckRequest, DeckPickerExportFormat;
 
 import 'app_contracts.dart';
 import 'card_browser_screen.dart';
@@ -14,7 +17,9 @@ import 'collection_card_browser_controller.dart';
 import 'collection_runtime.dart';
 import 'deck_picker_screen.dart';
 import 'deck_picker_repository.dart';
+import 'collection_text_export.dart';
 import 'profile_manager.dart';
+import 'text_export_delivery.dart';
 
 export 'app_contracts.dart';
 
@@ -28,7 +33,9 @@ final class AppServices {
     required this.profiles,
     CollectionRuntime? collections,
     DeckPickerRepository? deckPicker,
-    Future<void> Function(DeckPickerExportDeckRequest request)? exportDeck,
+    Future<TextExportArtifact> Function(DeckPickerExportDeckRequest request)?
+    exportDeck,
+    TextExportDelivery? exportDelivery,
     CardBrowserController? cardBrowser,
     ProfileId Function()? generateProfileId,
   }) : collectionRuntimeConfigured = collections != null,
@@ -39,7 +46,9 @@ final class AppServices {
                ? const UnavailableDeckPickerRepository()
                : CollectionDeckPickerRepository(
                    collections,
-                   exportDeckHandler: exportDeck,
+                   exportDeckHandler:
+                       exportDeck ??
+                       ((request) => _generateTextExport(collections, request)),
                  )),
        cardBrowser =
            cardBrowser ??
@@ -50,15 +59,36 @@ final class AppServices {
          profiles,
          generateProfileId: generateProfileId,
          profileSwitch: collections?.switchProfile,
-       );
+       ),
+       exportDelivery = exportDelivery ?? const PlatformTextExportDelivery();
 
   final StartupService startup;
   final ProfileRepository profiles;
   final bool collectionRuntimeConfigured;
   final CollectionRuntime collections;
   final DeckPickerRepository deckPicker;
+  final TextExportDelivery exportDelivery;
   final CardBrowserController cardBrowser;
   final ProfileManager profileManager;
+}
+
+Future<TextExportArtifact> _generateTextExport(
+  CollectionRuntime collections,
+  DeckPickerExportDeckRequest request,
+) async {
+  if (request.format != DeckPickerExportFormat.notes &&
+      request.format != DeckPickerExportFormat.cards) {
+    throw UnsupportedError('This export format is not supported yet.');
+  }
+  final storage = collections.storage;
+  if (storage == null || !collections.isInitialized) {
+    throw StateError('The active profile collection is not open.');
+  }
+  final CollectionTextExportResult result = await generateDeckPickerTextExport(
+    storage,
+    request,
+  );
+  return createDeckPickerTextExportArtifact(request, result);
 }
 
 /// Explicit failure boundary until a collection-backed browser controller is

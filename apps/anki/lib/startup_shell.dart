@@ -245,6 +245,7 @@ final class _StartupShellState extends State<StartupShell> {
     if (_showDeckPicker) {
       return DeckPickerScreen(
         repository: widget.services.deckPicker,
+        exportDelivery: widget.services.exportDelivery,
         onClose: () => setState(() => _showDeckPicker = false),
         onBrowseCards: (deckId) => setState(() {
           _browserLaunchDeckId = deckId;

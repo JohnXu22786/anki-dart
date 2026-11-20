@@ -34,6 +34,7 @@ import 'custom_study_forgotten_cards_request.dart';
 import 'custom_study_preview_new_cards_request.dart';
 import 'deck_picker_screen.dart';
 import 'note_editor_screen.dart';
+import 'text_export_delivery.dart';
 
 Int64 _customStudyDeckId(DeckPickerDeck deck) =>
     deck.exactId ??
@@ -68,11 +69,13 @@ final class CollectionDeckPickerRepository
   });
 
   final CollectionRuntime collections;
-  final Future<void> Function(DeckPickerExportDeckRequest request)?
+  final Future<TextExportArtifact> Function(
+    DeckPickerExportDeckRequest request,
+  )?
   exportDeckHandler;
 
   @override
-  Future<void> exportDeck(DeckPickerExportDeckRequest request) {
+  Future<TextExportArtifact> exportDeck(DeckPickerExportDeckRequest request) {
     final handler = exportDeckHandler;
     if (handler == null) {
       return Future.error(

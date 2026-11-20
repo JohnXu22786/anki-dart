@@ -15,6 +15,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'l10n/app_localizations.dart';
 import 'deck_picker_export_dialog.dart';
+import 'text_export_delivery.dart';
+import 'text_export_ready_dialog.dart';
 import 'note_editor_screen.dart';
 import 'deck_description_editor.dart';
 import 'deck_options_editor.dart';
@@ -142,7 +144,7 @@ abstract interface class DeckPickerExactBrowseDeckProvider {
 
 /// Platform-neutral export request route; the host owns export execution.
 abstract interface class DeckPickerExportDeckProvider {
-  Future<void> exportDeck(DeckPickerExportDeckRequest request);
+  Future<TextExportArtifact> exportDeck(DeckPickerExportDeckRequest request);
 }
 
 /// Optional exact-ID route for Deck Picker rename, including validation used
@@ -342,11 +344,13 @@ final class UnavailableDeckPickerRepository implements DeckPickerRepository {
 final class DeckPickerScreen extends StatefulWidget {
   const DeckPickerScreen({
     required this.repository,
+    this.exportDelivery = const PlatformTextExportDelivery(),
     this.onClose,
     this.onBrowseCards,
     super.key,
   });
   final DeckPickerRepository repository;
+  final TextExportDelivery exportDelivery;
   final VoidCallback? onClose;
   final ValueChanged<Int64>? onBrowseCards;
   @override
@@ -362,12 +366,14 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
   final RestorableStringN _customStudyDeckId = RestorableStringN(null);
   final RestorableStringN _customStudyStage = RestorableStringN(null);
   final RestorableInt _customStudyCardStateIndex = RestorableInt(-1);
+  final RestorableStringN _pendingTextExportId = RestorableStringN(null);
   bool _resumingCustomStudy = false;
   String _filter = '';
   bool _showFilter = false, _showAddActions = false;
   bool _hasSearchableDeckList = false;
   int _loadGeneration = 0;
   int _selectionGeneration = 0;
+  bool _showingPendingTextExport = false;
   Future<void> _selectionTail = Future<void>.value();
   List<DeckPickerDeck> _loadedDecks = const [];
   @override
@@ -381,6 +387,12 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
       _customStudyCardStateIndex,
       'custom-study-card-state-index',
     );
+    registerForRestoration(_pendingTextExportId, 'pending-text-export-id');
+    if (_pendingTextExportId.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _presentPendingTextExport();
+      });
+    }
     if (_customStudyStage.value == 'tags') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _resumeCustomStudyTags();
@@ -413,6 +425,7 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
     _customStudyDeckId.dispose();
     _customStudyStage.dispose();
     _customStudyCardStateIndex.dispose();
+    _pendingTextExportId.dispose();
     super.dispose();
   }
 
@@ -816,7 +829,7 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
               decks: _loadedDecks,
               selectedDeckId: deck.exactId ?? Int64(deck.id),
               onExport: (request) =>
-                  unawaited(_invoke(() => provider.exportDeck(request))),
+                  unawaited(_runDeckExport(provider, request)),
             ),
           );
         } else {
@@ -1782,6 +1795,89 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
           ),
         );
       }
+    }
+  }
+
+  Future<void> _runDeckExport(
+    DeckPickerExportDeckProvider provider,
+    DeckPickerExportDeckRequest request,
+  ) async {
+    try {
+      final artifact = await provider.exportDeck(request);
+      if (!mounted) return;
+      _pendingTextExportId.value = await PendingTextExportStore.instance.put(
+        artifact,
+      );
+      await _presentPendingTextExport();
+    } on UnsupportedError {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.exportUnsupported),
+          ),
+        );
+      }
+    } on PendingTextExportTooLargeException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.exportTooLarge)),
+        );
+      }
+    } on PendingTextExportStoreFullException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.exportPendingStoreFull),
+          ),
+        );
+      }
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.deckActionFailed),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _presentPendingTextExport() async {
+    final id = _pendingTextExportId.value;
+    if (!mounted || id == null || _showingPendingTextExport) return;
+    final TextExportArtifact? artifact;
+    try {
+      artifact = await PendingTextExportStore.instance.get(id);
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.deckActionFailed),
+          ),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    if (artifact == null) {
+      _pendingTextExportId.value = null;
+      return;
+    }
+    final readyArtifact = artifact;
+    final delivery = widget.exportDelivery;
+    _showingPendingTextExport = true;
+    try {
+      await showDialog<bool>(
+        context: context,
+        builder: (context) =>
+            TextExportReadyDialog(artifact: readyArtifact, delivery: delivery),
+      );
+      await PendingTextExportStore.instance.remove(id);
+      if (mounted && _pendingTextExportId.value == id) {
+        _pendingTextExportId.value = null;
+      }
+    } finally {
+      _showingPendingTextExport = false;
     }
   }
 

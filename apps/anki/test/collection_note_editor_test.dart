@@ -188,6 +188,100 @@ void main() {
   });
 
   test(
+    'Deck Picker build maps options and rebuilds the exact filtered deck',
+    () async {
+      final storage = runtime.storage!;
+      final homeId = Int64.parseInt('9007199254740995');
+      final cardId = Int64.parseInt('9007199254740997');
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: homeId,
+          name: 'Filtered search home',
+          kind: NormalDeckKind(deck_proto.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      await storage.addOrUpdateCard(
+        Card(
+          id: cardId,
+          deckId: homeId,
+          ctype: CardType.review,
+          queue: CardQueue.review,
+          due: 12,
+        ),
+      );
+      final repository = CollectionDeckPickerRepository(runtime);
+      expect(repository.filteredDeckOrderOptions, hasLength(11));
+    final initialOptions = repository.newFilteredDeckOptions;
+    expect(initialOptions.filter1State.search, 'deck:Default is:due');
+    expect(initialOptions.filter1State.index, 1);
+    expect(initialOptions.filter2State?.limit, '20');
+    expect(initialOptions.filter2State?.index, 6);
+      await repository.buildFilteredDeck(
+        FilteredDeckRequest(
+          name: 'Built filtered deck',
+          search1: '(deck:Default is:due) OR cid:$cardId',
+          limit1: '20',
+          order1: 6,
+          search2: '',
+          limit2: '20',
+          order2: 0,
+          secondFilterEnabled: false,
+          shouldReschedule: false,
+          delayAgain: '60',
+          delayHard: '600',
+          delayGood: '0',
+          allowEmpty: false,
+        ),
+      );
+      final filtered = storage.decks.getDeckByName('Built filtered deck')!;
+      expect(filtered.kind, isA<FilteredDeckKind>());
+      final filteredConfig = (filtered.kind as FilteredDeckKind).value;
+      expect(filteredConfig.reschedule, isFalse);
+      expect(filteredConfig.searchTerms.single.limit, 20);
+      expect(filteredConfig.searchTerms.single.order.value, 6);
+      expect(filteredConfig.previewAgainSecs, 60);
+      expect((await storage.getCard(cardId))!.deckId, filtered.id);
+
+      await storage.undoLastCollectionOperation();
+      expect(storage.decks.getDeck(filtered.id), isNull);
+      expect((await storage.getCard(cardId))!.deckId, homeId);
+      await storage.redoLastCollectionOperation();
+      expect((await storage.getCard(cardId))!.deckId, filtered.id);
+
+      await repository.rebuildFilteredDeck(
+        DeckPickerDeck(
+          id: 8,
+          exactId: filtered.id,
+          name: filtered.name,
+          filtered: true,
+        ),
+      );
+      expect(storage.currentDeckId, filtered.id);
+      expect((await storage.getCard(cardId))!.deckId, filtered.id);
+      await expectLater(
+        repository.buildFilteredDeck(
+          const FilteredDeckRequest(
+            name: 'Invalid limit',
+            search1: 'cid:1',
+            limit1: '-1',
+            order1: 6,
+            search2: '',
+            limit2: '20',
+            order2: 0,
+            secondFilterEnabled: false,
+            shouldReschedule: false,
+            delayAgain: '60',
+            delayHard: '600',
+            delayGood: '0',
+            allowEmpty: true,
+          ),
+        ),
+        throwsArgumentError,
+      );
+    },
+  );
+
+  test(
     'deck rename moves descendants and preserves selection and IDs',
     () async {
       final storage = runtime.storage!;

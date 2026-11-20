@@ -18,6 +18,8 @@ dependencies:
     path: ../anki_collection_schema
   anki_search_sql:
     path: ../anki_search_sql
+  anki_search_parser:
+    path: ../anki_search_parser
   anki_scheduler_timing:
     path: ../anki_scheduler_timing
   fixnum: ^1.1.0

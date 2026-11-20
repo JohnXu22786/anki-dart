@@ -247,6 +247,236 @@ void main() {
   );
 
   test(
+    'filtered deck build and rebuild preserve exact signed 64-bit IDs',
+    () async {
+      final cardId = Int64.parseInt('9007199254740995');
+      final home = await _addDeck(
+        'Search home',
+        id: Int64.parseInt('9007199254740997'),
+      );
+      final filtered = await _addDeck(
+        'Filtered exact IDs',
+        id: Int64.parseInt('9007199254740999'),
+        filtered: true,
+      );
+      await _addCard(
+        cardId,
+        home.id,
+        CardType.review,
+        CardQueue.review,
+        due: 42,
+      );
+      final config = deck_proto.Deck_Filtered(
+        reschedule: false,
+        searchTerms: [
+          deck_proto.Deck_Filtered_SearchTerm(
+            search: 'cid:$cardId',
+            limit: 10,
+            order: deck_proto.Deck_Filtered_SearchTerm_Order.DUE,
+          ),
+        ],
+      );
+
+      final built = await storage.buildFilteredDeck(
+        deck_proto.FilteredDeckForUpdate(
+          id: filtered.id,
+          name: 'Filtered exact IDs',
+          config: config,
+        ),
+      );
+      expect(built.cardsMoved, 1);
+      expect(built.deckId, filtered.id);
+      var moved = (await storage.getCard(cardId))!;
+      expect(moved.deckId, built.deckId);
+      expect(moved.originalDeckId, home.id);
+      expect(moved.originalDue, 42);
+      expect(moved.queue, CardQueue.review);
+
+      await storage.undoLastCollectionOperation();
+      expect(storage.decks.getDeck(filtered.id), isNotNull);
+      expect((await storage.getCard(cardId))!.deckId, home.id);
+      await storage.redoLastCollectionOperation();
+      expect(storage.decks.getDeck(filtered.id), isNotNull);
+      expect((await storage.getCard(cardId))!.deckId, filtered.id);
+
+      final rebuilt = await storage.buildFilteredDeck(
+        deck_proto.FilteredDeckForUpdate(
+          id: built.deckId,
+          name: 'Filtered exact IDs',
+          config: config,
+          allowEmpty: true,
+        ),
+      );
+      expect(rebuilt.deckId, built.deckId);
+      expect(rebuilt.cardsMoved, 1);
+      moved = (await storage.getCard(cardId))!;
+      expect(moved.deckId, built.deckId);
+      expect(moved.originalDeckId, home.id);
+    },
+  );
+
+  test(
+    'filtered build rejects empty and invalid searches without partial writes',
+    () async {
+      deck_proto.Deck_Filtered config(String search) =>
+          deck_proto.Deck_Filtered(
+            searchTerms: [
+              deck_proto.Deck_Filtered_SearchTerm(
+                search: search,
+                limit: 10,
+                order: deck_proto.Deck_Filtered_SearchTerm_Order.DUE,
+              ),
+            ],
+          );
+
+      await expectLater(
+        storage.buildFilteredDeck(
+          deck_proto.FilteredDeckForUpdate(
+            name: 'No results',
+            config: config('cid:123456789'),
+          ),
+        ),
+        throwsStateError,
+      );
+      expect(storage.decks.getDeckByName('No results'), isNull);
+
+      await expectLater(
+        storage.buildFilteredDeck(
+          deck_proto.FilteredDeckForUpdate(
+            name: 'Invalid search',
+            config: config('('),
+            allowEmpty: true,
+          ),
+        ),
+        throwsA(anything),
+      );
+      expect(storage.decks.getDeckByName('Invalid search'), isNull);
+
+      await expectLater(
+        storage.buildFilteredDeck(
+          deck_proto.FilteredDeckForUpdate(
+            name: 'Oversized limit',
+            config: deck_proto.Deck_Filtered(
+              searchTerms: [
+                deck_proto.Deck_Filtered_SearchTerm(
+                  search: 'cid:123456789',
+                  limit: 0xffffffff,
+                  order: deck_proto.Deck_Filtered_SearchTerm_Order.DUE,
+                ),
+              ],
+            ),
+            allowEmpty: true,
+          ),
+        ),
+        throwsRangeError,
+      );
+      expect(storage.decks.getDeckByName('Oversized limit'), isNull);
+    },
+  );
+
+  test(
+    'filtered build applies each term limit and excludes unavailable cards',
+    () async {
+      final home = await _addDeck('Filter rules home');
+      final previous = await _addDeck('Previous filtered', filtered: true);
+      for (final (id, due) in [(701, 40), (702, 50), (703, 60)]) {
+        await _addCard(
+          Int64(id),
+          home.id,
+          CardType.review,
+          CardQueue.review,
+          due: due,
+        );
+      }
+      await _addCard(
+        Int64(704),
+        home.id,
+        CardType.review,
+        CardQueue.suspended,
+        due: 1,
+      );
+      await _addCard(
+        Int64(705),
+        home.id,
+        CardType.review,
+        CardQueue.schedBuried,
+        due: 2,
+      );
+      await _addCard(
+        Int64(706),
+        previous.id,
+        CardType.review,
+        CardQueue.review,
+        due: 3,
+        originalDeckId: home.id,
+        originalDue: 3,
+      );
+      final result = await storage.buildFilteredDeck(
+        deck_proto.FilteredDeckForUpdate(
+          name: 'Two term deck',
+          allowEmpty: false,
+          config: deck_proto.Deck_Filtered(
+            reschedule: true,
+            searchTerms: [
+              deck_proto.Deck_Filtered_SearchTerm(
+                search: 'cid:701 OR cid:702 OR cid:704 OR cid:705 OR cid:706',
+                limit: 1,
+                order: deck_proto.Deck_Filtered_SearchTerm_Order.DUE,
+              ),
+              deck_proto.Deck_Filtered_SearchTerm(
+                search: 'cid:703',
+                limit: 1,
+                order: deck_proto.Deck_Filtered_SearchTerm_Order.DUE,
+              ),
+            ],
+          ),
+        ),
+      );
+      expect(result.cardsMoved, 2);
+      expect((await storage.getCard(Int64(701)))!.deckId, result.deckId);
+      expect((await storage.getCard(Int64(701)))!.queue, CardQueue.review);
+      expect((await storage.getCard(Int64(702)))!.deckId, home.id);
+      expect((await storage.getCard(Int64(703)))!.deckId, result.deckId);
+      expect((await storage.getCard(Int64(704)))!.deckId, home.id);
+      expect((await storage.getCard(Int64(705)))!.deckId, home.id);
+      expect((await storage.getCard(Int64(706)))!.deckId, previous.id);
+    },
+  );
+
+  test(
+    'filtered build rejects blank and case-insensitive duplicate names',
+    () async {
+      await _addDeck('Existing Filter Name');
+      final config = deck_proto.Deck_Filtered(
+        searchTerms: [
+          deck_proto.Deck_Filtered_SearchTerm(
+            search: 'cid:999',
+            limit: 10,
+            order: deck_proto.Deck_Filtered_SearchTerm_Order.DUE,
+          ),
+        ],
+      );
+      await expectLater(
+        storage.buildFilteredDeck(
+          deck_proto.FilteredDeckForUpdate(name: '   ', config: config),
+        ),
+        throwsArgumentError,
+      );
+      await expectLater(
+        storage.buildFilteredDeck(
+          deck_proto.FilteredDeckForUpdate(
+            name: 'existing filter name',
+            config: config,
+            allowEmpty: true,
+          ),
+        ),
+        throwsStateError,
+      );
+      expect(storage.decks.getDeckByName('existing filter name'), isNull);
+    },
+  );
+
+  test(
     'filtered deck empty rolls back and reconciles a committed flush failure',
     () async {
       final filtered = await _addDeck('Filtered failure', filtered: true);

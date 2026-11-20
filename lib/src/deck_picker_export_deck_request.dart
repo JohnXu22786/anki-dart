@@ -20,17 +20,22 @@
  * see ANKIDROID_UPSTREAM.md.
  */
 
+import 'package:fixnum/fixnum.dart';
+
 /// The host-facing request to export one deck from the Deck Picker.
 final class DeckPickerExportDeckRequest {
   const DeckPickerExportDeckRequest({required this.deckId});
 
-  /// The caller-supplied deck ID, retained unchanged for host flow publication.
-  final int deckId;
+  /// Exact deck identity retained for host flow publication.
+  final Int64 deckId;
 }
 
 /// Projects the source Deck Picker action to its host-facing request payload.
 ///
+/// Uses [exactDeckId] whenever supplied. [legacyDeckId] is widened to `Int64`
+/// only for callers that do not provide an exact ID.
 /// The host owns flow publication, coroutine scheduling, and export execution.
 DeckPickerExportDeckRequest projectDeckPickerExportDeck({
-  required int deckId,
-}) => DeckPickerExportDeckRequest(deckId: deckId);
+  required int legacyDeckId,
+  Int64? exactDeckId,
+}) => DeckPickerExportDeckRequest(deckId: exactDeckId ?? Int64(legacyDeckId));

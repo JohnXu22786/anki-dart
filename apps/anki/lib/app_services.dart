@@ -6,6 +6,7 @@
 import 'package:anki_dart/profile_onboarding.dart';
 import 'package:anki_dart/anki_dart.dart'
     show BrowserColumn, BrowserRowId, BrowserSavedSearch, BrowserSortType;
+import 'package:anki_dart/deck_picker.dart' show DeckPickerExportDeckRequest;
 
 import 'app_contracts.dart';
 import 'card_browser_screen.dart';
@@ -27,6 +28,7 @@ final class AppServices {
     required this.profiles,
     CollectionRuntime? collections,
     DeckPickerRepository? deckPicker,
+    Future<void> Function(DeckPickerExportDeckRequest request)? exportDeck,
     CardBrowserController? cardBrowser,
     ProfileId Function()? generateProfileId,
   }) : collectionRuntimeConfigured = collections != null,
@@ -35,7 +37,10 @@ final class AppServices {
            deckPicker ??
            (collections == null
                ? const UnavailableDeckPickerRepository()
-               : CollectionDeckPickerRepository(collections)),
+               : CollectionDeckPickerRepository(
+                   collections,
+                   exportDeckHandler: exportDeck,
+                 )),
        cardBrowser =
            cardBrowser ??
            (collections == null

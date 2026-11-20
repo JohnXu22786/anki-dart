@@ -5,6 +5,7 @@
 
 /// Focused public exports for the portable deck tree and filter UI.
 export 'src/deck_filters.dart';
+export 'src/deck_picker_export_deck_request.dart';
 export 'src/deck_node.dart';
 export 'src/display_deck_node.dart';
 export 'src/filtered_deck_options.dart'

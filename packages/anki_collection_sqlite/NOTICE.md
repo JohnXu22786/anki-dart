@@ -156,3 +156,10 @@ SQLite package source is copied or modified. Web snapshots use SQLite's public
 the bytes. The Web media adapter uses public browser IndexedDB APIs and stores
 media values as Blobs in its own host-named database; reads use Blob slices to
 stream bounded chunks.
+
+`src/apkg_package_builder.dart` writes the ZIP container and APKG package
+metadata in Dart. It uses `archive` 4.7.1 (MIT) for ZIP encoding,
+`pure_zstd` 1.1.0 (MIT) for current-format Zstandard frames, and `crypto`
+3.0.8 (BSD-3-Clause) for media SHA-1 values. Their license texts are retained
+under `LICENSES/`. The package names and metadata are defined by the pinned
+Anki Core protocol; no Core implementation code is copied.

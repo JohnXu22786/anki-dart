@@ -17,6 +17,7 @@ export 'src/collection_config.dart';
 export 'src/base91.dart';
 export 'src/stock_notetype.dart';
 export 'src/revlog.dart';
+export 'src/fsrs_memory_state.dart';
 export 'src/field_checksum.dart';
 export 'src/field_is_empty.dart';
 export 'src/unicode_casefold.dart';

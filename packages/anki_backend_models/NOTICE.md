@@ -64,9 +64,10 @@ The `Tag` value model follows `rslib/src/tags/mod.rs` at the pinned Anki Core co
 calculation from `rslib/src/scheduler/states/review.rs`, including the review
 fuzz rules from `states/fuzz.rs` and the `LearningSteps` failure-delay inputs
 from `states/steps.rs`. It accepts scheduler configuration, deterministic fuzz,
-and FSRS-provided next intervals/memory as inputs; FSRS calculation, review
-queue construction, persistence and answer execution remain host-owned. The
-adaptation follows Anki Core commit
+and FSRS-provided next intervals/memory as inputs; FSRS parameter training,
+next-state calculation, queue construction, persistence, and answer execution
+remain host-owned. The per-card memory-state calculation is described below.
+The adaptation follows Anki Core commit
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985`; exact source hashes are recorded in
 `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and contributors and is
 licensed under AGPL-3.0-or-later. This package and the adaptation retain the
@@ -79,6 +80,23 @@ at the same pinned commit. Learning step arrays, review intervals, deterministic
 fuzz, and FSRS next intervals/memory are explicit inputs. Queue construction,
 answer persistence, FSRS calculation, and collection mutation remain outside
 this package slice. The source files' hashes are recorded in `SOURCE.sha256`.
+
+`computeFsrsMemoryState()` ports Core's per-card review-log projection,
+truncated-history SM-2 starting-state inference, and memory-state calculation
+from `rslib/src/scheduler/fsrs/memory_state.rs` and
+`rslib/src/scheduler/fsrs/params.rs` at the pinned Anki Core commit. It follows
+the `fsrs` 5.2.0 dependency pinned by that commit's `Cargo.lock` (crate SHA-256
+`cab5f80c16d1d07e492a6828478ecb9f379f142ba6f19fa3b7955edd180ddc2e`), including
+parameter defaults and legacy lengths, decay selection, parameter clipping,
+FSRS recurrence, and its Float32 behavior. The mapped FSRS source files and Core
+files are listed in `SOURCE.sha256`; the crate archive is recorded in
+`THIRD_PARTY_SOURCE.sha256`. Anki Core remains Copyright Ankitects Pty Ltd and
+contributors, licensed under AGPL-3.0-or-later. The adapted FSRS algorithm
+source is Copyright Open Spaced Repetition and licensed under BSD-3-Clause;
+its license text is included at `LICENSES/BSD-3-Clause-FSRS.txt`. This is only
+the deterministic per-card calculation: FSRS parameter training, bulk updates,
+collection and revlog queries, transactions, rescheduling, queue construction,
+and review-session orchestration remain host-owned.
 
 
 The platform-neutral browser card-template renderer also follows Anki Core's

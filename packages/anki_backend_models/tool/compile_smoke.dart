@@ -2,6 +2,7 @@
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/notes.pbenum.dart' as notes;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
+import 'package:anki_backend_protocol/anki/deck_config.pbenum.dart' as deck;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
@@ -135,10 +136,61 @@ void main() {
     ],
   );
   final mixed = interspersedQueues([1, 2], [11]);
+  final sortedQueueCandidates = sortNewQueueCandidates(
+    [
+      MainQueueSortCandidate(
+        id: Int64.parseInt('9007199254740997'),
+        noteId: Int64(1),
+        templateIndex: 0,
+        mtime: Int64.ZERO,
+      ),
+      MainQueueSortCandidate(
+        id: Int64.parseInt('-9007199254740997'),
+        noteId: Int64(2),
+        templateIndex: 0,
+        mtime: Int64.ZERO,
+      ),
+      MainQueueSortCandidate(
+        id: Int64(1),
+        noteId: Int64(3),
+        templateIndex: 0,
+        mtime: Int64.ZERO,
+      ),
+    ],
+    deck.DeckConfig_Config_NewCardSortOrder.NEW_CARD_SORT_ORDER_RANDOM_CARD,
+    daysElapsed: 2,
+  );
+  final mainQueue = composeMainQueue(
+    reviews: const [],
+    dayLearning: [
+      ReviewQueueEntry(
+        id: Int64(21),
+        mtime: Int64.ZERO,
+        kind: ReviewQueueEntryKind.learning,
+      ),
+    ],
+    newCards: [
+      MainQueueSortCandidate(
+        id: Int64(22),
+        noteId: Int64(4),
+        templateIndex: 0,
+        mtime: Int64.ZERO,
+      ),
+    ],
+    sortOrder:
+        deck.DeckConfig_Config_NewCardSortOrder.NEW_CARD_SORT_ORDER_NO_SORT,
+    daysElapsed: 2,
+    dayLearningMix: deck.DeckConfig_Config_ReviewMix.REVIEW_MIX_AFTER_REVIEWS,
+    newReviewMix: deck.DeckConfig_Config_ReviewMix.REVIEW_MIX_AFTER_REVIEWS,
+  );
   if (queue.intradayNow.single.id != Int64(11) ||
       mixed.join(',') != '1,11,2' ||
       ReviewQueueEntry.fromCard(Card(queue: CardQueue.dayLearn)).kind !=
-          ReviewQueueEntryKind.review) {
+          ReviewQueueEntryKind.review ||
+      sortedQueueCandidates.map((entry) => entry.id.toString()).join(',') !=
+          '9007199254740997,-9007199254740997,1' ||
+      mainQueue.map((entry) => entry.kind).join(',') !=
+          'MainQueueEntryKind.interdayLearning,MainQueueEntryKind.newCard') {
     throw StateError('review-queue primitives differ on JavaScript');
   }
   final admitted = admitQueueCandidates(

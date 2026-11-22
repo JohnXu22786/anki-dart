@@ -55,6 +55,7 @@ SOURCE_HASHES = {
     "rslib/src/scheduler/queue/builder/gathering.rs": "f98edfafb21148077cb7ec89ccb7e5060cce2d474b329ee54ba1c9fa7d8d102a",
     "rslib/src/scheduler/queue/builder/burying.rs": "47d3beb27b6442b77e1b5709befbbf0fef506aa51dfb65f9dd57fabda48ea80e",
     "rslib/src/scheduler/queue/builder/mod.rs": "c4421df5bd8065ea679b0de41fb400450821e9f8a98c7d8da40e0b95e5fb9103",
+    "rslib/src/scheduler/queue/builder/sorting.rs": "d7edb269c27552f2d51f67f698d70e60ba12aaad965bfb26e6b7586abdec6a9c",
     "rslib/src/scheduler/queue/mod.rs": "ad36a76e8abd51840f9a9d2d029f04a9bede5fe55f4cb9a695c3718c26184ac8",
     "rslib/src/decks/limits.rs": "d8de3c382f4f4e130699dd18bbc46b6a93664fc97ef8d45448479b4fb165af27",
     "rslib/src/scheduler/states/fuzz.rs": "30a33e2e522ebcb56ca434a897f66209fcb4284065115ee031def73097343105",

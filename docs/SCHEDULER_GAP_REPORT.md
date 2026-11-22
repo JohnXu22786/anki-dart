@@ -37,6 +37,19 @@ and scheduler execution remain outside this slice. Pinned source hashes and
 AGPL attribution are recorded in `packages/anki_backend_models/NOTICE.md` and
 `SOURCE.sha256`.
 
+### Unit 75 — new-card sorting and main-queue composition
+
+`anki_backend_models.sortNewQueueCandidates()` implements Core's five
+new-card sort orders over already gathered candidates, including salted FNV
+ordering from exact signed 64-bit card/note IDs. `composeMainQueue()` maps
+reviews and interday learning to their distinct main-queue entry kinds, then
+applies Core's interday-learning/review mix and new-card/main-queue mix as
+separate stages. Candidate gather order and both mix policies are explicit
+inputs; sorting ties preserve input order. Intraday learning, SQL gathering and
+sorting, queue counts, scheduler configuration lookup, load balancing, and
+scheduler execution remain outside this pure slice. Pinned source hashes and
+AGPL attribution are recorded in the package notice and `SOURCE.sha256`.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -49,7 +62,7 @@ AGPL attribution are recorded in `packages/anki_backend_models/NOTICE.md` and
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining queue work: SQL candidate queries and sorting, daily counts, load
+- Remaining queue work: SQL candidate queries, daily counts, load
   balancing, and collection-backed scheduler configuration reads.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.

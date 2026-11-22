@@ -73,6 +73,22 @@ SOURCE_HASHES = {
     "regex-syntax-0.8.6/src/unicode_tables/property_names.rs": "8c93985d1bcb01735667a3c4cb92f7e260d267326bde9d7f048bc77cd7e07855",
     "lib/src/unicode_case_folding.dart": "b2ced23e7e9e64b8d05967232d2153d1976d9a0da764f67ce4bd85be869feb74",
     "lib/src/unicode_property_aliases.dart": "6eb765474bff5dbb4f3a1062243286f2f6ba43396186d13dfb16ce7e6657fd44",
+    "rslib/src/dbcheck.rs": "a3a7afb7ebb7a8c1bb67f11c3011fa813478dce8bfbee1b55457dcf89816b44f",
+    "rslib/src/storage/card/mod.rs": "423e00d89092a4f1ab8e03923bfa8db455748043276c7bd647e2704bfcf7da95",
+    "rslib/src/storage/card/fix_due_new.sql": "cb38265f96e2e8fdc8da84f2fb9dc9cb721ef724cae75dcda8bab3480eb4415d",
+    "rslib/src/storage/card/fix_due_other.sql": "33895097788018a48bb8bd202188712dde6e0db20bd546db35487172d0ceb891",
+    "rslib/src/storage/card/fix_odue.sql": "d8807f2619ad78594e12def2edced4dabfac47bbf41c4d30fe6ab0de02d2e390",
+    "rslib/src/storage/card/fix_ivl.sql": "09aa021c488285d02644781a661ff575e3dcfc298aa2232d7a30b40434939f40",
+    "rslib/src/storage/card/fix_mod.sql": "6992804429890149710e556eaecf1b40aada0b14633fca63a6a20cefe989047f",
+    "rslib/src/storage/card/fix_ordinal.sql": "ba9c113aba808070cc101ccd7db40c0bdde1a3a45480649f17d3808b4eed4e76",
+    "rslib/src/storage/dbcheck/mod.rs": "2f5d00d1b6980aa59fe9d9033f154ceba13c6324df452a8d2034567199bf1a56",
+    "rslib/src/storage/dbcheck/invalid_ids_count.sql": "16f2a538243c6e7408a5c75c1d8177df53f1edbe8f318a21aae027f446c93a0a",
+    "rslib/src/storage/dbcheck/invalid_ids_create.sql": "b5d0c42be6c037bc6b3e3df7bf5e70c8fc82ce7365f223bd463c427b3ac0092a",
+    "rslib/src/storage/dbcheck/invalid_ids_update.sql": "d17b7ad6009ebc37a119a02370efefe12a3839adc23734b4bc1a3ae59381573f",
+    "rslib/src/storage/revlog/mod.rs": "df60cf36cf4328939d67c467015c67ad1a564c69369e70f212e40485b25c4f22",
+    "rslib/src/decks/tree.rs": "0ab80ff9af9ebe7e9c06e6901e358f526ea938c2c315189c9528267c8c510b93",
+    "rslib/src/decks/addupdate.rs": "724f8c20a37b54e05890be486d949fa932dd4aabaa0b9edd70ee9ad49c891fc2",
+    "rslib/src/scheduler/fsrs/memory_state.rs": "e5b494807a5bd94e09e80829399669808cbd6377786dce6567ab557b18d1a799",
 }
 
 

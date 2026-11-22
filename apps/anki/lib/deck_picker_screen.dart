@@ -5,6 +5,12 @@
 
 import 'dart:async';
 
+import 'package:anki_collection_sqlite/anki_collection_sqlite.dart'
+    show
+        CollectionIntegrityException,
+        DatabaseCheckProgress,
+        DatabaseCheckResult,
+        DatabaseCheckStage;
 import 'package:anki_dart/deck_picker.dart';
 import 'package:anki_dart/anki_dart.dart'
     show CustomStudyCardState, CustomStudySavedState;
@@ -135,6 +141,13 @@ abstract interface class DeckPickerNewNotePortProvider {
   /// The Deck Picker keyboard shortcut follows AnkiDroid's `deckId = null`
   /// behavior and lets the collection choose its current/default deck.
   Future<NewNoteEditorPort> createNewNotePortForCurrentDeck();
+}
+
+/// Runs the shared collection database check and forwards its live progress.
+abstract interface class DeckPickerDatabaseCheckProvider {
+  Future<DatabaseCheckResult> checkDatabase({
+    required void Function(DatabaseCheckProgress progress) onProgress,
+  });
 }
 
 /// Optional source route that selects a deck without narrowing its 64-bit ID.
@@ -374,6 +387,7 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
   int _loadGeneration = 0;
   int _selectionGeneration = 0;
   bool _showingPendingTextExport = false;
+  bool _checkingDatabase = false;
   Future<void> _selectionTail = Future<void>.value();
   List<DeckPickerDeck> _loadedDecks = const [];
   @override
@@ -479,6 +493,176 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
     _load = _requestDecks();
   });
 
+  Future<void> _checkDatabase() async {
+    if (widget.repository is! DeckPickerDatabaseCheckProvider ||
+        _checkingDatabase) {
+      return;
+    }
+    final provider = widget.repository as DeckPickerDatabaseCheckProvider;
+    final progressNotifier = ValueNotifier<DatabaseCheckProgress?>(null);
+    setState(() {
+      _checkingDatabase = true;
+    });
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          final strings = AppLocalizations.of(dialogContext)!;
+          return PopScope(
+            canPop: false,
+            child: AlertDialog(
+              title: Text(strings.databaseCheckProgressTitle),
+              content: ValueListenableBuilder<DatabaseCheckProgress?>(
+                valueListenable: progressNotifier,
+                builder: (context, progress, _) => Row(
+                  children: [
+                    const SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Text(
+                        progress == null
+                            ? strings.databaseCheckProgressTitle
+                            : _databaseCheckStageLabel(strings, progress),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    try {
+      late final DatabaseCheckResult result;
+      try {
+        result = await provider.checkDatabase(
+          onProgress: (progress) {
+            progressNotifier.value = progress;
+          },
+        );
+      } catch (error) {
+        if (!mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
+        final strings = AppLocalizations.of(context)!;
+        final message = error is CollectionIntegrityException
+            ? strings.databaseCheckCorrupt
+            : strings.databaseCheckFailed(error.toString());
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(strings.checkDatabase),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(strings.close),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      await _showDatabaseCheckResult(result);
+      _reload();
+    } finally {
+      progressNotifier.dispose();
+      if (mounted) {
+        setState(() {
+          _checkingDatabase = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showDatabaseCheckResult(DatabaseCheckResult result) async {
+    final strings = AppLocalizations.of(context)!;
+    final messages = <String>[];
+    void add(int count, String Function(int) message) {
+      if (count > 0) messages.add(message(count));
+    }
+
+    add(result.notetypesRecovered, strings.databaseCheckNotetypesRecovered);
+    add(result.newCardPositionsFixed, strings.databaseCheckNewCardsFixed);
+    add(
+      result.invalidCardPropertiesFixed + result.filteredCardsFixed,
+      strings.databaseCheckCardPropertiesFixed,
+    );
+    add(
+      result.cardLastReviewTimesFixed,
+      strings.databaseCheckLastReviewTimeFixed,
+    );
+    add(result.orphanedCardsRemoved, strings.databaseCheckOrphanCardsRemoved);
+    add(
+      result.missingDecksRecovered + result.missingDeckNamesRecovered,
+      strings.databaseCheckDecksRecovered,
+    );
+    add(
+      result.noteFieldCountMismatches,
+      strings.databaseCheckNoteFieldCountsFixed,
+    );
+    add(result.noteTagsFixed, strings.databaseCheckNoteTagsFixed);
+    add(
+      result.futureNoteModificationTimesFixed,
+      strings.databaseCheckFutureNoteModificationTimesFixed,
+    );
+    add(
+      result.missingCardsRegenerated,
+      strings.databaseCheckMissingCardsRegenerated,
+    );
+    add(
+      result.duplicateCardOrdinalsRemoved,
+      strings.databaseCheckDuplicateCardsRemoved,
+    );
+    add(
+      result.cardsWithoutTemplateRemoved,
+      strings.databaseCheckCardsWithoutTemplateRemoved,
+    );
+    add(result.revlogRowsFixed, strings.databaseCheckRevlogFixed);
+    add(result.invalidUtf8NotesFixed, strings.databaseCheckInvalidUtf8Fixed);
+    add(result.invalidIdsFixed, strings.databaseCheckInvalidIdsFixed);
+    if (result.nextNewPositionFixed) {
+      messages.add(strings.databaseCheckNextPositionFixed);
+    }
+    if (!result.isComplete) messages.addAll(result.unsupportedRepairCategories);
+    if (messages.isEmpty) messages.add(strings.databaseCheckRebuilt);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(strings.checkDatabase),
+        content: SingleChildScrollView(child: Text(messages.join('\n'))),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(strings.close),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _databaseCheckStageLabel(
+    AppLocalizations strings,
+    DatabaseCheckProgress progress,
+  ) => switch (progress.stage) {
+    DatabaseCheckStage.integrity => strings.databaseCheckStageIntegrity,
+    DatabaseCheckStage.optimize => strings.databaseCheckStageOptimize,
+    DatabaseCheckStage.cards => strings.databaseCheckStageCards,
+    DatabaseCheckStage.notes =>
+      progress.total > 0
+          ? strings.databaseCheckNotesProgress(progress.current, progress.total)
+          : strings.databaseCheckStageNotes,
+    DatabaseCheckStage.history => strings.databaseCheckStageHistory,
+  };
+
   @override
   Widget build(BuildContext context) {
     final s = AppLocalizations.of(context)!;
@@ -531,6 +715,20 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
               onPressed: _reload,
               icon: const Icon(Icons.refresh),
             ),
+            if (widget.repository is DeckPickerDatabaseCheckProvider)
+              PopupMenuButton<String>(
+                tooltip: s.checkDatabase,
+                onSelected: (value) {
+                  if (value == 'check-database') _checkDatabase();
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'check-database',
+                    enabled: !_checkingDatabase,
+                    child: Text(s.checkDatabase),
+                  ),
+                ],
+              ),
           ],
         ),
         body: FutureBuilder<List<DeckPickerDeck>>(

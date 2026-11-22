@@ -206,6 +206,12 @@ snapshot, and writes/reopens/streams media through IndexedDB. Compile it with
 the Web path in a browser. The smoke also exports a real APKG in the browser
 and checks both SQLite database versions and the portable media package.
 
+`tool/database_check_web_smoke.dart` exercises the shared database-check
+operation against the IndexedDB Web driver. It verifies the orphan-card repair
+and incomplete-result contract in the browser. The operation also ports the
+currently supported Core card, deck, note-field, revlog, position, and ID
+repairs; other Core note/card repairs and app UI integration remain open.
+
 `CollectionSqliteStorage.exportText()` generates an in-memory Notes or Cards
 TSV export for the whole collection or a deck and its descendants. It returns
 text and a record count; it does not save or share a file. Text formatting

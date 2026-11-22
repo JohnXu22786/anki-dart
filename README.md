@@ -803,16 +803,29 @@ adapt the progress and completion-message branches from
 An absent progress event returns no update; a present event keeps its stage and
 includes its raw current/total amount only for a positive total. Nonempty
 problems are joined in order with one line feed; an empty list requests the
-localized rebuilt message once. Integrity repair, generated progress objects,
-task/cancellation handling, collection access, localization, dialog, lifecycle,
-and UI remain host-side. Focused source-derived cases are in
+localized rebuilt message once. The shared SQLite package now emits live note
+progress, checks SQLite integrity, optimizes the database, and repairs card
+properties, orphan cards, missing deck IDs and parent names, invalid
+filtered-card state, note field counts and future modification times, revlog
+properties, duplicate card ordinals, cards without normal templates, invalid
+UTF-8, missing-card regeneration, expanded-tag preservation, the next new-card
+position, and invalid IDs in one rollback-capable repair transaction. The
+storage operation reports a complete result only when its repair transaction
+commits. The Flutter Deck Picker exposes the action, live progress, localized
+repair summary, and error dialogs across supported Flutter targets. Its progress
+flow is non-cancelable, matching AnkiDroid; async task supervision and native
+lifecycle integration remain host-side. App localization currently supports
+English only.
+Focused source-derived cases are in
 [`test/database_check_projection_test.dart`](test/database_check_projection_test.dart);
 no direct pinned `DatabaseCheck.kt` test was found. The source declares
 Copyright (c) 2022 Ankitects Pty Ltd and the repository's GPL-3.0-or-later
 license applies. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under GPL-3.0-or-later; root `COPYING` remains byte-identical. See
 [ANKIDROID_UPSTREAM.md](ANKIDROID_UPSTREAM.md) and [NOTICE.md](NOTICE.md) for
-source and coverage details.
+source and coverage details. The pinned Core repair sequence and current
+shared-backend boundary are mapped in
+[`docs/DATABASE_CHECK_PORTING_MAP.md`](docs/DATABASE_CHECK_PORTING_MAP.md).
 
 `collectionFixIntegrity()` in
 [`lib/src/collection_fix_integrity.dart`](lib/src/collection_fix_integrity.dart)

@@ -446,10 +446,18 @@ event produces no update; a present event preserves its stage and only emits
 the raw current/total amount when total is positive. Nonempty problem messages
 are joined in source order with one line feed; otherwise the localized rebuilt
 message callback is called once and its result or failure passes through
-unchanged. The host retains integrity repair, generated progress objects,
-async task/cancellation/progress context, collection access, localization,
-message dialog, lifecycle, and UI. No direct pinned `DatabaseCheck.kt` test was
-found; focused Dart cases are source-derived. The Kotlin file identifies
+unchanged. Shared storage behavior in
+`packages/anki_collection_sqlite/lib/src/database_check.dart` is adapted from
+Anki Core `rslib/src/dbcheck.rs` and its storage SQL at commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It repairs card/deck/history rows,
+notes, missing notetypes and cards, invalid UTF-8, tag state, positions, and
+IDs in one rollback-capable operation. It reports a complete result only after
+the transaction commits. Async task supervision and native lifecycle remain
+host-side. The Flutter Deck Picker connects the shared operation with live
+progress and localized result/error dialogs; its progress flow is
+non-cancelable, and app localization currently supports English only. No
+direct pinned `DatabaseCheck.kt` test was found; focused Dart cases are
+source-derived. The Kotlin file identifies
 Copyright (c) 2022 Ankitects Pty Ltd; the root project license is
 GPL-3.0-or-later. The Dart adaptation and tests are Copyright © 2026 John Tsui
 under the same license. Root `COPYING` remains unchanged.

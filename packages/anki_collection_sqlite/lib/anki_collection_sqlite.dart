@@ -15,4 +15,8 @@ export 'package:anki_search_sql/anki_search_sql.dart'
     show CompiledSearchSqlWithSort;
 
 export 'package:anki_collection_schema/anki_collection_schema.dart'
-    show CollectionOpenCallbacks, CollectionOpenResult, openOrCreateCollection;
+    show
+        CollectionIntegrityException,
+        CollectionOpenCallbacks,
+        CollectionOpenResult,
+        openOrCreateCollection;

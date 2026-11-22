@@ -29,7 +29,7 @@ dependencies:
   web: ^1.1.2
   archive: ^4.7.1
   crypto: ^3.0.7
-  html: ^0.15.6
+  html: ^0.15.5
 
 dev_dependencies:
   test: ^1.25.8

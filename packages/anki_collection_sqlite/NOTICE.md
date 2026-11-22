@@ -17,6 +17,18 @@ against the repository's AnkiDroid 2.25.3 baseline at commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. Schema and migration SQL remain in
 the separately licensed `anki_collection_schema` package.
 
+New-card candidates adapt Anki Core's `rslib/src/storage/card/new_cards.sql`
+and `for_each_new_card_in_deck()` plus `NewCardSorting::write()` in
+`rslib/src/storage/card/mod.rs` at commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The caller supplies one exact deck
+ID, gather sort mode, and (for random modes) an unsigned 32-bit salt. The query
+returns Core's six candidate fields, preserves signed 64-bit IDs and mtime,
+validates template ordinal as u32, and leaves SQLite ordering intact. Source
+hashes are recorded in `SOURCE.sha256`; this is an independent adaptation and
+copies no upstream SQL or Rust code. Active-deck selection, gather-priority,
+limits, post-gather sorting, queue composition and scheduler execution remain
+outside this unit. Root `COPYING` is unchanged.
+
 Intraday learning candidates adapt Anki Core's
 `rslib/src/storage/card/intraday_due.sql` and
 `for_each_intraday_card_in_active_decks()` in `rslib/src/storage/card/mod.rs`

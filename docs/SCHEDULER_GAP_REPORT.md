@@ -67,6 +67,20 @@ persistence, and UI remain outside this boundary. Core source hashes and AGPL
 provenance are recorded in `packages/anki_collection_sqlite/NOTICE.md` and
 `SOURCE.sha256`.
 
+### Unit 77 — per-deck new-card candidates
+
+`CollectionSqliteStorage.newCardCandidates()` reads queue-zero cards from one
+explicit deck and returns Core's six new-card candidate fields. Caller-supplied
+sorting supports lowest due position (`due ASC, ord ASC`), highest due position
+(`due DESC, ord ASC`), random notes (`fnvhash(nid, salt), ord ASC`), and random
+cards (`fnvhash(id, salt)`). Random modes require a u32 salt; IDs and mtime stay
+signed 64-bit, ordinal is validated as u32, and SQLite row order is preserved.
+This unit does not choose active decks, prioritize gathering across decks,
+admit daily limits, sort the post-gather queue, compose queues, or execute the
+scheduler. Those remain separate scheduler work. Pinned source hashes and AGPL
+attribution are recorded in `packages/anki_collection_sqlite/NOTICE.md` and
+`SOURCE.sha256`.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -79,8 +93,8 @@ provenance are recorded in `packages/anki_collection_sqlite/NOTICE.md` and
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining queue work: SQL candidate queries, daily counts, load
-  balancing, and collection-backed scheduler configuration reads.
+- Remaining queue work: review candidate queries, daily counts, load balancing,
+  and collection-backed scheduler configuration reads.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

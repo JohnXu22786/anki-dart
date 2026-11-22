@@ -43,6 +43,22 @@ for an unreadable due value. It does not copy upstream SQL or Rust code. The
 SQL source hash is recorded in `SOURCE.sha256`. This adapter code and its tests
 are licensed under AGPL-3.0-or-later; root `COPYING` remains unchanged.
 
+Review and interday-learning candidates adapt Anki Core's
+`rslib/src/storage/card/due_cards.sql`,
+`for_each_due_card_in_active_decks()`, and `review_order_sql()` in
+`rslib/src/storage/card/mod.rs` at the same pinned revision. The caller supplies
+ordered active deck IDs, queue kind, review order, FSRS state, and all scheduler
+timing values. The query returns the eight Core candidate fields, keeps signed
+64-bit IDs and mtime exact, converts due with Core's i32/default-zero behavior,
+and validates reps as u32. It preserves supplied deck ordering for Deck sorts,
+uses Core's FSRS and non-FSRS expressions, and appends `fnvhash(id, mod)` as a
+deterministic tie-breaker. Duplicate deck IDs are removed without changing
+first-seen rank, and typed decimal literals avoid SQLite's bind-variable limit.
+It does not derive active decks, inspect collection configuration, or execute
+scheduler admission, mixing, counts, load-balancing, persistence, or UI. Source
+hashes are pinned in `SOURCE.sha256`; this independent adaptation is licensed
+under AGPL-3.0-or-later, and root `COPYING` remains unchanged.
+
 The batch notetype loader adapts Core's `rslib/src/storage/notetype/mod.rs`,
 `get_notetype.sql`, `get_fields.sql`, and `get_templates.sql` at the same
 revision. Their SHA-256 digests are checked by `tool/check_package.py` and

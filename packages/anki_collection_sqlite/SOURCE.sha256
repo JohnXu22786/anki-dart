@@ -1,5 +1,6 @@
 423e00d89092a4f1ab8e03923bfa8db455748043276c7bd647e2704bfcf7da95  rslib/src/storage/card/mod.rs
 69d06e4cc1de7fc4618bf1d90948ef8812dbf851fc9cee2ef9e52272cbad8e4a  rslib/src/storage/card/intraday_due.sql
+fa2ebd2b3a1290fd00b173e67bbb2ce1146c4a1ecc16e74c84d80dcba31dd6a3  rslib/src/storage/card/due_cards.sql
 de3e7ee9078249f1a1aeae370e16b667c83ff527584448b2767a908b6c741918  rslib/src/storage/card/get_card.sql
 aacbb588af4cf902eeb54d15cecc37a35b410441d67839f48929fea9fd515a89  rslib/src/storage/card/data.rs
 9348f8862b5a3b5213017b6783a1199782587717be6a5c77d89e6150eefdc8bb  rslib/src/storage/card/update_card.sql

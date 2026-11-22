@@ -95,4 +95,29 @@ void main() {
       !rendered.questionHtml!.contains('hint83fe48607f0f3a66')) {
     throw StateError('browser template rendering differs on JavaScript');
   }
+  final training = computeFsrsTrainingItems(
+    revlogsByCard: [
+      [
+        RevlogEntry(
+          id: RevlogId(Int64(100000000)),
+          cardId: Int64(1),
+          buttonChosen: 1,
+          reviewKind: RevlogReviewKind.learning,
+        ),
+        RevlogEntry(
+          id: RevlogId(Int64(200000000)),
+          cardId: Int64(1),
+          buttonChosen: 4,
+          reviewKind: RevlogReviewKind.review,
+        ),
+      ],
+    ],
+    nextDayAt: Int64(300000),
+    ignoreRevlogsBefore: Int64.ZERO,
+  );
+  if (training.reviewCount != 2 ||
+      training.items.length != 1 ||
+      training.items.single.reviews.last.rating != 4) {
+    throw StateError('FSRS training-item projection differs on JavaScript');
+  }
 }

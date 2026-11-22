@@ -26,6 +26,17 @@ candidate queries and sorting, daily due-count calculation, load balancing,
 collection-backed limit construction, and scheduler execution remain outside
 this pure slice. It copies no upstream implementation.
 
+`sortNewQueueCandidates()` and `composeMainQueue()` adapt new-card sorting,
+main-queue entry conversion, and the two-stage review/interday-learning/new
+composition from `rslib/src/scheduler/queue/builder/sorting.rs`,
+`rslib/src/scheduler/queue/builder/mod.rs`, and
+`rslib/src/scheduler/queue/entry.rs`. The sort uses Core's signed 64-bit
+little-endian FNV hashing with elapsed days as salt, and stable input-order tie
+handling. Gathered review and day-learning order, sort policy, and both mix
+policies are caller supplied. Queue gathering, intraday learning, SQL access,
+counts, scheduling configuration reads, and scheduler execution remain outside
+this pure slice. It copies no upstream implementation.
+
 This package ports Anki Core Card and Note domain values, protobuf conversions,
 field checksum, field normalization, Note::fix_field_count, note preparation,
 and HTML/media-aware field text behavior from `rslib/src/card/mod.rs`,

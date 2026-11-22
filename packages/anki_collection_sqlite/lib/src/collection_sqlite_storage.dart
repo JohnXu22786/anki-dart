@@ -3,6 +3,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
@@ -17,6 +18,8 @@ import 'package:anki_scheduler_timing/anki_scheduler_timing.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
 import 'package:anki_search_parser/anki_search_parser.dart' as searchParser;
 import 'package:fixnum/fixnum.dart';
+import 'package:crypto/crypto.dart';
+import 'package:html/parser.dart' as html_parser;
 import 'package:protobuf/protobuf.dart';
 import 'package:sqlite3/common.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unorm;
@@ -35,8 +38,11 @@ import 'core_random_position.dart';
 import 'add_note.dart';
 import 'text_export.dart';
 import 'portable_package_io.dart';
+import 'apkg_package_builder.dart';
+import 'apkg_exporter.dart';
 
 part 'legacy_collection_migrations.dart';
+part 'apkg_export_operation.dart';
 
 const _preparedStatementCacheCapacity = 50;
 final _collectionUndoOperationZoneKey = Object();
@@ -66,6 +72,7 @@ final class CollectionSqliteDriver {
     required this.openDatabase,
     this.flush,
     this.snapshot,
+    this.exportFromSnapshot,
     this.mediaStorage,
   });
 
@@ -77,6 +84,15 @@ final class CollectionSqliteDriver {
 
   /// Creates a consistent byte snapshot without closing the live database.
   final Future<Uint8List> Function(CommonDatabase database)? snapshot;
+
+  /// Clones [source] into an independent SQLite connection and runs [build]
+  /// against that copy. Implementations must discard the copy after [build],
+  /// including when it throws.
+  final Future<Uint8List> Function(
+    CommonDatabase source,
+    Future<Uint8List> Function(CommonDatabase copy) build,
+  )?
+  exportFromSnapshot;
 
   /// Optional platform-owned collection media store.
   final CollectionMediaStorage? mediaStorage;
@@ -169,11 +185,17 @@ final class FilteredDeckBuildResult {
 
 final class CollectionSqliteStorage
     implements CollectionOpenDatabase, CollectionSchemaMigrationDatabase {
-  CollectionSqliteStorage._(this._database, this._driver, this._nowMillis);
+  CollectionSqliteStorage._(
+    this._database,
+    this._driver,
+    this._nowMillis,
+    this._options,
+  );
 
   final CommonDatabase _database;
   final CollectionSqliteDriver _driver;
   final int Function()? _nowMillis;
+  final CollectionSqliteOptions _options;
   final Map<String, CommonPreparedStatement> _statementCache = {};
   Future<void> _searchQueue = Future<void>.value();
   Future<void> _existingNoteUpdateQueue = Future<void>.value();
@@ -946,6 +968,43 @@ INSERT OR REPLACE INTO cards (
       await _flush();
       if (!_database.autocommit) throw StateError('active transaction');
       return await snapshot(_database);
+    } finally {
+      _portableSnapshotStarting = false;
+      if (identical(_portableSnapshotDone, snapshotDone)) {
+        _portableSnapshotDone = null;
+      }
+      snapshotDone.complete();
+      _releaseCollectionUndoOperation(operationDone);
+    }
+  }
+
+  /// Runs [build] against a detached database copy while blocking collection
+  /// mutations and returning only the complete result.
+  Future<Uint8List> exportFromSnapshot(
+    Future<Uint8List> Function(CommonDatabase copy) build,
+  ) async {
+    if (_closing || _connectionClosed || _closed) {
+      throw StateError('collection storage is closing');
+    }
+    final exportSnapshot = _driver.exportFromSnapshot;
+    if (exportSnapshot == null) {
+      throw const PortableIoUnsupported('detached database export');
+    }
+    final operationDone = await _acquireCollectionUndoOperation();
+    final snapshotDone = Completer<void>();
+    _portableSnapshotDone = snapshotDone;
+    _portableSnapshotStarting = true;
+    try {
+      if (_closing || _connectionClosed || _closed) {
+        throw StateError('collection storage is closing');
+      }
+      if (!_database.autocommit) throw StateError('active transaction');
+      await _flush();
+      if (!_database.autocommit) throw StateError('active transaction');
+      return await exportSnapshot(_database, (copy) async {
+        await _configureApkgClone(copy, _options);
+        return build(copy);
+      });
     } finally {
       _portableSnapshotStarting = false;
       if (identical(_portableSnapshotDone, snapshotDone)) {
@@ -2119,7 +2178,12 @@ INSERT OR REPLACE INTO cards (
         await Future<void>.sync(() => configureConnection(openedDatabase));
       }
       await Future<void>.sync(() => driver.flush?.call());
-      return CollectionSqliteStorage._(openedDatabase, driver, nowMillis);
+      return CollectionSqliteStorage._(
+        openedDatabase,
+        driver,
+        nowMillis,
+        options,
+      );
     } catch (error, stackTrace) {
       try {
         database?.close();

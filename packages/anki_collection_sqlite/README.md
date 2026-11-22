@@ -168,9 +168,14 @@ Android to use memory for temporary tables. The adapter implements Core's `field
 The `decks` and `revlog` properties expose portable deck and review-log row
 operations on the opened collection connection through
 `anki_backend_storage`.
-Undo/redo, media indexing, APKG generation and restore, synchronization, and
-encryption remain outside this package's current scope. This package provides
-the lower-level SQLite snapshot and media-byte boundary for those operations.
+Undo/redo, media indexing, APKG restore, synchronization, and encryption remain
+outside this package's current scope. `CollectionSqliteStorage.exportApkg()`
+creates an option-adjusted detached collection, writes current and schema-11
+SQLite databases, gathers referenced media through the injected portable media
+adapter, and returns a complete APKG byte buffer. Native and Web drivers
+provide isolated export copies; the operation never mutates the live
+collection. Callers remain responsible for choosing the destination and
+publishing or sharing the returned bytes.
 
 `sqlite3` publishes native bindings for Android, iOS, Windows, macOS, and
 Linux. Its WebAssembly target is tested in the package CI with
@@ -198,7 +203,8 @@ reopens the IndexedDB-backed collection, snapshots and reopens the snapshot in
 an independent Wasm database, verifies later source writes do not alter the
 snapshot, and writes/reopens/streams media through IndexedDB. Compile it with
 `dart compile js` and serve it with a matching `sqlite3.wasm` asset to exercise
-the Web path in a browser.
+the Web path in a browser. The smoke also exports a real APKG in the browser
+and checks both SQLite database versions and the portable media package.
 
 `CollectionSqliteStorage.exportText()` generates an in-memory Notes or Cards
 TSV export for the whole collection or a deck and its descendants. It returns

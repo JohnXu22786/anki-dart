@@ -55,5 +55,21 @@ Future<CollectionSqliteDriver> experimentalWebCollectionSqliteDriver({
         sqlite.unregisterVirtualFileSystem(snapshotVfs);
       }
     },
+    exportFromSnapshot: (CommonDatabase database, build) async {
+      final vfsName = 'anki-export-${_snapshotVfsSerial++}';
+      final filename = 'collection-export-${_snapshotVfsSerial++}.sqlite';
+      final exportVfs = InMemoryFileSystem(name: vfsName);
+      sqlite.registerVirtualFileSystem(exportVfs);
+      CommonDatabase? copy;
+      try {
+        database.execute("VACUUM INTO 'file:$filename?vfs=$vfsName'");
+        copy = sqlite.open('file:$filename?vfs=$vfsName', uri: true);
+        return await build(copy);
+      } finally {
+        copy?.close();
+        exportVfs.fileData.clear();
+        sqlite.unregisterVirtualFileSystem(exportVfs);
+      }
+    },
   );
 }

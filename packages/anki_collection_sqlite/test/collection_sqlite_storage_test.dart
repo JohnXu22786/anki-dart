@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 John Tsui
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as config_proto;
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as proto;
@@ -12,6 +15,8 @@ import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3/common.dart';
+import 'package:pure_zstd/pure_zstd.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -26,6 +31,697 @@ void main() {
   tearDown(() async {
     await directory.delete(recursive: true);
   });
+
+  test(
+    'exports a readable current and schema-11 APKG without changing live DB',
+    () async {
+      final database = await _openLatestCollection(path);
+      final before = await database.queryInt('select ver from col');
+      final sourceConf =
+          jsonDecode(await database.queryString('SELECT conf FROM col'))
+              as Map<String, dynamic>;
+      final sourceCreationOffset = sourceConf['creationOffset'];
+      final profileConf = {
+        ...sourceConf,
+        'activeDecks': [88],
+        'curDeck': 99,
+        'profileOnly': true,
+      };
+      await database.executeBatch(
+        "UPDATE col SET conf = '${jsonEncode(profileConf).replaceAll("'", "''")}'",
+      );
+
+      final bytes = await database.exportApkg(
+        options: const ApkgExportOptions(withMedia: false),
+      );
+      final archive = ZipDecoder().decodeBytes(bytes);
+      final current = zstdDecode(
+        Uint8List.fromList(
+          archive.findFile('collection.anki21b')!.content as List<int>,
+        ),
+      );
+      final compatibility = archive.findFile('collection.anki2')!;
+      final currentPath = '${directory.path}/export-current.anki2';
+      final compatibilityPath = '${directory.path}/export-legacy.anki2';
+      await File(currentPath).writeAsBytes(current);
+      await File(
+        compatibilityPath,
+      ).writeAsBytes(compatibility.content as List<int>);
+      final currentDb = sqlite3.open(currentPath);
+      final compatibilityDb = sqlite3.open(compatibilityPath);
+      expect(currentDb.select('select ver from col').single['ver'], 18);
+      expect(compatibilityDb.select('select ver from col').single['ver'], 11);
+      final exportedConf =
+          jsonDecode(
+                currentDb.select('SELECT conf FROM col').single['conf']
+                    as String,
+              )
+              as Map<String, dynamic>;
+      expect(exportedConf['activeDecks'], [1]);
+      expect(exportedConf['curDeck'], 1);
+      expect(exportedConf['profileOnly'], isNull);
+      expect(exportedConf['creationOffset'], sourceCreationOffset);
+      expect(
+        compatibilityDb.select('SELECT conf FROM col').single['conf'],
+        isNot(contains('profileOnly')),
+      );
+      currentDb.close();
+      compatibilityDb.close();
+      expect(await database.queryInt('select ver from col'), before);
+      expect(
+        jsonDecode(await database.queryString('SELECT conf FROM col')),
+        profileConf,
+      );
+      await database.close();
+    },
+  );
+
+  test('deck selection includes descendants and excludes sibling notes', () async {
+    final mediaStore = _MemoryMediaStorage({
+      ' clip.mp3': [8],
+      'a:b': [6],
+      'latex-060219fbf3ddb74306abddaf4504276ad793b029.png': [9],
+      'photo.png': [1, 2, 3],
+      'private.pdf': [7],
+      'z%20.png': [4, 5],
+    });
+    final initial = await _openLatestCollection(path);
+    var notetypeRandom = BigInt.one;
+    await initial.addInitialStockNoteTypes(
+      names: _InitialText().stockNotetypeNames,
+      randomU64: () {
+        final value = notetypeRandom;
+        notetypeRandom += BigInt.one;
+        return value;
+      },
+      now: DateTime.now(),
+    );
+    final now = DateTime.now().millisecondsSinceEpoch - 60000;
+    final noteId = now;
+    final siblingNoteId = now + 1;
+    final selectedCardId = now + 2;
+    final siblingCardId = now + 3;
+    final notetypeId = await initial.queryInt(
+      "select id from notetypes where name = 'Basic'",
+    );
+    await initial.close();
+    final seed = sqlite3.open(path);
+    seed.createCollation(
+      name: 'unicase',
+      function: (left, right) =>
+          (left ?? '').toLowerCase().compareTo((right ?? '').toLowerCase()),
+    );
+    final rootKind = proto.Deck_KindContainer(
+      normal: proto.Deck_Normal(configId: Int64.ONE),
+    ).writeToBuffer();
+    for (final deck in [
+      (2, 'Root'),
+      (3, 'Root\x1fChild'),
+      (4, 'Root\x1fSibling'),
+    ]) {
+      seed.execute(
+        'insert into decks (id, name, mtime_secs, usn, common, kind) '
+        'values (?, ?, 0, -1, ?, ?)',
+        [deck.$1, deck.$2, proto.Deck_Common().writeToBuffer(), rootKind],
+      );
+    }
+    seed.execute(
+      'insert into notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, '
+      'flags, data) values (?, ?, ?, 0, -1, ?, ?, 0, 0, 0, ?)',
+      [
+        noteId,
+        'selected',
+        notetypeId,
+        'marked leech kept',
+        '<img src="photo.png"><img src="z%20.png">'
+            '<img src="a:b">'
+            '<div data="private.pdf"></div>'
+            '<img src="../unsafe.png">'
+            '<img src="missing.png">'
+            '[sound: clip.mp3][\$]<b>hello</b>&nbsp; world[/\$]\x1fback',
+        '',
+      ],
+    );
+    seed.execute(
+      'insert into notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, '
+      'flags, data) values (?, ?, ?, 0, -1, ?, ?, 0, 0, 0, ?)',
+      [siblingNoteId, 'sibling', notetypeId, '', 'other\x1fback', ''],
+    );
+    seed.execute(
+      'insert into cards (id, nid, did, ord, mod, usn, type, queue, due, '
+      'ivl, factor, reps, lapses, `left`, odue, odid, flags, data) '
+      'values (?, ?, 3, 0, 0, -1, 2, 2, 10, 5, 2500, 1, 0, 0, 0, 0, 4, ?)',
+      [selectedCardId, noteId, '{}'],
+    );
+    seed.execute(
+      'insert into cards (id, nid, did, ord, mod, usn, type, queue, due, '
+      'ivl, factor, reps, lapses, `left`, odue, odid, flags, data) '
+      'values (?, ?, 4, 0, 0, -1, 2, 2, 10, 5, 2500, 1, 0, 0, 0, 0, 4, ?)',
+      [siblingCardId, siblingNoteId, '{}'],
+    );
+    seed.execute(
+      'insert into revlog (id, cid, usn, ease, ivl, lastIvl, factor, time, type) '
+      'values (?, ?, -1, 3, 10, 5, 2500, 1000, 1)',
+      [now + 4, selectedCardId],
+    );
+    seed.execute(
+      'insert into revlog (id, cid, usn, ease, ivl, lastIvl, factor, time, type) '
+      'values (?, ?, -1, 3, 10, 5, 2500, 1000, 1)',
+      [now + 5, siblingCardId],
+    );
+    for (final tag in ['marked', 'leech', 'kept', 'other', 'stale']) {
+      seed.execute('INSERT INTO tags (tag, usn) VALUES (?, -1)', [tag]);
+    }
+    for (final key in ['curDeck', '_nt_9_lastDeck', 'profileOnly']) {
+      seed.execute(
+        'INSERT INTO config (key, usn, mtime_secs, val) VALUES (?, -1, 0, ?)',
+        [key, utf8.encode('"private"')],
+      );
+    }
+
+    seed.close();
+    final database = await _openLatestCollection(
+      path,
+      driver: _driverWithMedia(mediaStore),
+    );
+    final apkg = await database.exportApkg(
+      limit: ApkgExportLimit(deckId: Int64(3)),
+    );
+    final archive = ZipDecoder().decodeBytes(apkg);
+    final currentBytes = zstdDecode(
+      Uint8List.fromList(
+        archive.findFile('collection.anki21b')!.content as List<int>,
+      ),
+    );
+    final currentPath = '${directory.path}/selected-export.db';
+    await File(currentPath).writeAsBytes(currentBytes);
+    final exported = sqlite3.open(currentPath);
+    exported.createCollation(
+      name: 'unicase',
+      function: (left, right) =>
+          (left ?? '').toLowerCase().compareTo((right ?? '').toLowerCase()),
+    );
+    expect(exported.select('select id from notes').map((row) => row['id']), [
+      noteId,
+    ]);
+    expect(exported.select('select id from cards').map((row) => row['id']), [
+      selectedCardId,
+    ]);
+    expect(exported.select('select flags from cards').single['flags'], 0);
+    expect(exported.select('select tags from notes').single['tags'], 'kept');
+    expect(
+      exported.select('SELECT DISTINCT ntid FROM fields').single['ntid'],
+      notetypeId,
+    );
+    expect(exported.select('select count(*) from tags').single[0], 0);
+    expect(exported.select('select count(*) from config').single[0], 0);
+    expect(exported.select('select count(*) from revlog').single[0], 0);
+    expect(exported.select('select count(*) from decks').single[0], 2);
+    expect(archive.findFile('0'), isNotNull);
+    expect(
+      zstdDecode(
+        Uint8List.fromList(archive.findFile('0')!.content as List<int>),
+      ),
+      [8],
+    );
+    expect(
+      zstdDecode(
+        Uint8List.fromList(archive.findFile('1')!.content as List<int>),
+      ),
+      [9],
+    );
+    expect(
+      zstdDecode(
+        Uint8List.fromList(archive.findFile('2')!.content as List<int>),
+      ),
+      [1, 2, 3],
+    );
+    expect(
+      zstdDecode(
+        Uint8List.fromList(archive.findFile('3')!.content as List<int>),
+      ),
+      [4, 5],
+    );
+    expect(archive.findFile('4'), isNull);
+    exported.close();
+
+    final legacyApkg = await database.exportApkg(
+      limit: ApkgExportLimit(deckId: Int64(3)),
+      options: const ApkgExportOptions(
+        withScheduling: true,
+        withDeckConfigs: true,
+        legacy: true,
+      ),
+    );
+    final legacyArchive = ZipDecoder().decodeBytes(legacyApkg);
+    final legacyCurrentPath = '${directory.path}/legacy-current.db';
+    final legacyCompatibilityPath = '${directory.path}/legacy-compat.db';
+    await File(legacyCurrentPath).writeAsBytes(
+      legacyArchive.findFile('collection.anki21')!.content as List<int>,
+    );
+    await File(legacyCompatibilityPath).writeAsBytes(
+      legacyArchive.findFile('collection.anki2')!.content as List<int>,
+    );
+    final legacyCurrent = sqlite3.open(legacyCurrentPath);
+    final legacyCompatibility = sqlite3.open(legacyCompatibilityPath);
+    legacyCurrent.createCollation(
+      name: 'unicase',
+      function: (left, right) =>
+          (left ?? '').toLowerCase().compareTo((right ?? '').toLowerCase()),
+    );
+    legacyCompatibility.createCollation(
+      name: 'unicase',
+      function: (left, right) =>
+          (left ?? '').toLowerCase().compareTo((right ?? '').toLowerCase()),
+    );
+    expect(legacyCurrent.select('select ver from col').single['ver'], 18);
+    expect(legacyCompatibility.select('select ver from col').single['ver'], 11);
+    expect(legacyCurrent.select('select count(*) from revlog').single[0], 1);
+    expect(legacyCurrent.select('select flags from cards').single['flags'], 4);
+    expect(
+      jsonDecode(
+        utf8.decode(legacyArchive.findFile('media')!.content as List<int>),
+      ),
+      {
+        '0': ' clip.mp3',
+        '1': 'latex-060219fbf3ddb74306abddaf4504276ad793b029.png',
+        '2': 'photo.png',
+        '3': 'z%20.png',
+      },
+    );
+    expect(legacyArchive.findFile('0')!.content, [8]);
+    expect(legacyArchive.findFile('1')!.content, [9]);
+    expect(legacyArchive.findFile('2')!.content, [1, 2, 3]);
+    expect(legacyArchive.findFile('3')!.content, [4, 5]);
+    legacyCurrent.close();
+    legacyCompatibility.close();
+    await database.close();
+  });
+
+  test(
+    'large APKG selections exceed the common SQLite bind-variable limit',
+    () async {
+      final initial = await _openLatestCollection(path);
+      var random = BigInt.one;
+      await initial.addInitialStockNoteTypes(
+        names: _InitialText().stockNotetypeNames,
+        randomU64: () {
+          final value = random;
+          random += BigInt.one;
+          return value;
+        },
+        now: DateTime.now(),
+      );
+      final notetypeId = await initial.queryInt(
+        "SELECT id FROM notetypes WHERE name = 'Basic'",
+      );
+      await initial.close();
+
+      final seed = sqlite3.open(path);
+      const count = 1100;
+      final baseId = DateTime.now().millisecondsSinceEpoch - 100000;
+      final insertNote = seed.prepare(
+        'INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, '
+        'flags, data) VALUES (?, ?, ?, 0, -1, ?, ?, 0, 0, 0, ?)',
+      );
+      final insertCard = seed.prepare(
+        'INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, '
+        'ivl, factor, reps, lapses, `left`, odue, odid, flags, data) '
+        'VALUES (?, ?, 1, 0, 0, -1, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, ?)',
+      );
+      try {
+        for (var index = 0; index < count; index++) {
+          final noteId = baseId + index;
+          final cardId = baseId + count + index;
+          insertNote.execute([
+            noteId,
+            'large-$index',
+            notetypeId,
+            '',
+            'front-$index\x1fback',
+            '',
+          ]);
+          insertCard.execute([cardId, noteId, index, '{}']);
+        }
+      } finally {
+        insertNote.close();
+        insertCard.close();
+        seed.close();
+      }
+
+      final database = await _openLatestCollection(path);
+      await expectLater(
+        database.exportApkg(
+          limit: ApkgExportLimit(deckIds: [Int64.ONE, Int64(999999)]),
+          options: const ApkgExportOptions(withMedia: false),
+        ),
+        throwsArgumentError,
+      );
+      final bytes = await database.exportApkg(
+        limit: ApkgExportLimit(
+          noteIds: [
+            for (var index = 0; index < count; index++) Int64(baseId + index),
+          ],
+        ),
+        options: const ApkgExportOptions(withMedia: false),
+      );
+      final archive = ZipDecoder().decodeBytes(bytes, verify: true);
+      final current = zstdDecode(
+        Uint8List.fromList(
+          archive.findFile('collection.anki21b')!.content as List<int>,
+        ),
+      );
+      final exportPath = '${directory.path}/large-selection.db';
+      await File(exportPath).writeAsBytes(current);
+      final exported = sqlite3.open(exportPath);
+      exported.createCollation(
+        name: 'unicase',
+        function: (left, right) =>
+            (left ?? '').toLowerCase().compareTo((right ?? '').toLowerCase()),
+      );
+      expect(exported.select('SELECT count(*) FROM notes').single[0], count);
+      expect(exported.select('SELECT count(*) FROM cards').single[0], count);
+      expect(
+        exported.select('SELECT DISTINCT did FROM cards').single['did'],
+        1,
+      );
+      expect(exported.select('SELECT count(*) FROM decks').single[0], 0);
+      exported.close();
+      await database.close();
+    },
+  );
+
+  test('export waiting for snapshot lock rejects a concurrent close', () async {
+    final flushStarted = Completer<void>();
+    final releaseFlush = Completer<void>();
+    var holdFlush = false;
+    final driver = CollectionSqliteDriver(
+      openDatabase: (location) => sqlite3.open(location),
+      flush: () async {
+        if (!holdFlush) return;
+        if (!flushStarted.isCompleted) flushStarted.complete();
+        await releaseFlush.future;
+      },
+      snapshot: _snapshotDatabase,
+      exportFromSnapshot: (source, build) async {
+        final copy = sqlite3.openInMemory();
+        try {
+          await (source as Database).backup(copy).drain<void>();
+          return await build(copy);
+        } finally {
+          copy.close();
+        }
+      },
+    );
+    final database = await _openLatestCollection(path, driver: driver);
+    holdFlush = true;
+
+    final snapshot = database.createSnapshot();
+    await flushStarted.future;
+    final pendingExport = database.exportFromSnapshot(
+      (_) async => Uint8List(0),
+    );
+    final close = database.close();
+    releaseFlush.complete();
+
+    await snapshot;
+    await expectLater(pendingExport, throwsA(isA<StateError>()));
+    await close;
+  });
+
+  test(
+    'scheduling-off export converts filtered deck and retains its card',
+    () async {
+      final initial = await _openLatestCollection(path);
+      var random = BigInt.one;
+      await initial.addInitialStockNoteTypes(
+        names: _InitialText().stockNotetypeNames,
+        randomU64: () {
+          final value = random;
+          random += BigInt.one;
+          return value;
+        },
+        now: DateTime.now(),
+      );
+      final notetypeId = await initial.queryInt(
+        "SELECT id FROM notetypes WHERE name = 'Basic'",
+      );
+      await initial.close();
+
+      final noteId = DateTime.now().millisecondsSinceEpoch - 30000;
+      final cardId = noteId + 1;
+      final seed = sqlite3.open(path);
+      seed.createCollation(
+        name: 'unicase',
+        function: (left, right) =>
+            (left ?? '').toLowerCase().compareTo((right ?? '').toLowerCase()),
+      );
+      seed.execute(
+        'INSERT INTO decks (id, name, mtime_secs, usn, common, kind) '
+        'VALUES (1, ?, 0, -1, ?, ?)',
+        [
+          'Default',
+          proto.Deck_Common().writeToBuffer(),
+          proto.Deck_KindContainer(
+            normal: proto.Deck_Normal(configId: Int64.ONE),
+          ).writeToBuffer(),
+        ],
+      );
+      seed.execute(
+        'INSERT INTO decks (id, name, mtime_secs, usn, common, kind) '
+        'VALUES (2, ?, 0, -1, ?, ?)',
+        [
+          'Home',
+          proto.Deck_Common().writeToBuffer(),
+          proto.Deck_KindContainer(
+            normal: proto.Deck_Normal(configId: Int64.ONE),
+          ).writeToBuffer(),
+        ],
+      );
+      seed.execute(
+        'INSERT INTO decks (id, name, mtime_secs, usn, common, kind) '
+        'VALUES (3, ?, 0, -1, ?, ?)',
+        [
+          'Default\x1fFiltered',
+          proto.Deck_Common(newStudied: 5).writeToBuffer(),
+          proto.Deck_KindContainer(
+            filtered: proto.Deck_Filtered(),
+          ).writeToBuffer(),
+        ],
+      );
+      seed.execute(
+        'INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, '
+        'flags, data) VALUES (?, ?, ?, 0, -1, ?, ?, 0, 0, 0, ?)',
+        [
+          noteId,
+          'filtered-card',
+          notetypeId,
+          'marked leech kept',
+          'front\x1fback',
+          '',
+        ],
+      );
+      seed.execute(
+        'INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, '
+        'ivl, factor, reps, lapses, `left`, odue, odid, flags, data) '
+        'VALUES (?, ?, 3, 0, 0, -1, 2, 2, 100, 15, 2500, 2, 1, 0, 44, 2, 4, ?)',
+        [cardId, noteId, '{}'],
+      );
+      seed.close();
+
+      final database = await _openLatestCollection(path);
+      final apkg = await database.exportApkg(
+        limit: ApkgExportLimit(deckId: Int64(3)),
+        options: const ApkgExportOptions(withMedia: false),
+      );
+      final archive = ZipDecoder().decodeBytes(apkg);
+      final current = zstdDecode(
+        Uint8List.fromList(
+          archive.findFile('collection.anki21b')!.content as List<int>,
+        ),
+      );
+      final exportPath = '${directory.path}/filtered-export.db';
+      await File(exportPath).writeAsBytes(current);
+      final exported = sqlite3.open(exportPath);
+      exported.createCollation(
+        name: 'unicase',
+        function: (left, right) =>
+            (left ?? '').toLowerCase().compareTo((right ?? '').toLowerCase()),
+      );
+      final card = exported
+          .select('SELECT did, odid, due, flags, reps FROM cards')
+          .single;
+      expect(card['did'], 3);
+      expect(card['odid'], 0);
+      expect(card['due'], 1);
+      expect(card['flags'], 0);
+      expect(card['reps'], 0);
+      expect(exported.select('SELECT id FROM decks').map((row) => row['id']), [
+        3,
+      ]);
+      final deckKind = proto.Deck_KindContainer.fromBuffer(
+        exported.select('SELECT kind FROM decks WHERE id = 3').single['kind']
+            as List<int>,
+      );
+      expect(deckKind.hasNormal(), isTrue);
+      expect(
+        proto.Deck_Common.fromBuffer(
+          exported
+                  .select('SELECT common FROM decks WHERE id = 3')
+                  .single['common']
+              as List<int>,
+        ).newStudied,
+        0,
+      );
+      expect(exported.select('SELECT tags FROM notes').single['tags'], 'kept');
+      exported.close();
+      await database.close();
+    },
+  );
+
+  test(
+    'scheduling-on export restores filtered card when home deck is absent',
+    () async {
+      final initial = await _openLatestCollection(path);
+      var random = BigInt.one;
+      await initial.addInitialStockNoteTypes(
+        names: _InitialText().stockNotetypeNames,
+        randomU64: () {
+          final value = random;
+          random += BigInt.one;
+          return value;
+        },
+        now: DateTime.now(),
+      );
+      final notetypeId = await initial.queryInt(
+        "SELECT id FROM notetypes WHERE name = 'Basic'",
+      );
+      await initial.close();
+
+      final noteId = DateTime.now().millisecondsSinceEpoch - 30000;
+      final cardId = noteId + 1;
+      final seed = sqlite3.open(path);
+      seed.createCollation(
+        name: 'unicase',
+        function: (left, right) =>
+            (left ?? '').toLowerCase().compareTo((right ?? '').toLowerCase()),
+      );
+      seed.execute(
+        'INSERT INTO decks (id, name, mtime_secs, usn, common, kind) '
+        'VALUES (2, ?, 0, -1, ?, ?)',
+        [
+          'Home',
+          proto.Deck_Common().writeToBuffer(),
+          proto.Deck_KindContainer(
+            normal: proto.Deck_Normal(configId: Int64.ONE),
+          ).writeToBuffer(),
+        ],
+      );
+      seed.execute(
+        'INSERT INTO decks (id, name, mtime_secs, usn, common, kind) '
+        'VALUES (3, ?, 0, -1, ?, ?)',
+        [
+          'Filtered',
+          proto.Deck_Common().writeToBuffer(),
+          proto.Deck_KindContainer(
+            filtered: proto.Deck_Filtered(),
+          ).writeToBuffer(),
+        ],
+      );
+      seed.execute(
+        'INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, '
+        'flags, data) VALUES (?, ?, ?, 0, -1, ?, ?, 0, 0, 0, ?)',
+        [
+          noteId,
+          'missing-home-deck',
+          notetypeId,
+          'marked',
+          'front\x1fback',
+          '',
+        ],
+      );
+      seed.execute(
+        'INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, '
+        'ivl, factor, reps, lapses, `left`, odue, odid, flags, data) '
+        'VALUES (?, ?, 3, 0, 0, -1, 2, 2, 100, 15, 2500, 2, 1, 0, 44, 2, 4, ?)',
+        [cardId, noteId, '{}'],
+      );
+      seed.execute(
+        'INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, '
+        'flags, data) VALUES (?, ?, ?, 0, -1, ?, ?, 0, 0, 0, ?)',
+        [
+          noteId + 3,
+          'missing-home-deck',
+          notetypeId,
+          'marked',
+          'front2\x1fback2',
+          '',
+        ],
+      );
+      seed.execute(
+        'INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, '
+        'ivl, factor, reps, lapses, `left`, odue, odid, flags, data) '
+        'VALUES (?, ?, 3, 0, 0, -1, 2, 2, 101, 15, 2500, 2, 1, 0, 55, 99, 2, ?)',
+        [cardId + 4, noteId + 3, '{}'],
+      );
+      seed.execute(
+        'INSERT INTO revlog (id, cid, usn, ease, ivl, lastIvl, factor, time, '
+        'type) VALUES (?, ?, -1, 3, 15, 10, 2500, 3000, 1)',
+        [noteId + 2, cardId],
+      );
+      seed.close();
+
+      final database = await _openLatestCollection(path);
+      final apkg = await database.exportApkg(
+        limit: ApkgExportLimit(cardIds: [Int64(cardId), Int64(cardId + 4)]),
+        options: const ApkgExportOptions(
+          withScheduling: true,
+          withMedia: false,
+        ),
+      );
+      final archive = ZipDecoder().decodeBytes(apkg);
+      final current = zstdDecode(
+        Uint8List.fromList(
+          archive.findFile('collection.anki21b')!.content as List<int>,
+        ),
+      );
+      final exportPath = '${directory.path}/filtered-scheduled-export.db';
+      await File(exportPath).writeAsBytes(current);
+      final exported = sqlite3.open(exportPath);
+      exported.createCollation(
+        name: 'unicase',
+        function: (left, right) =>
+            (left ?? '').toLowerCase().compareTo((right ?? '').toLowerCase()),
+      );
+
+      final cards = exported.select(
+        'SELECT id, did, odid, due, queue, flags FROM cards ORDER BY id',
+      );
+      expect(cards.length, 2);
+      expect(cards[0]['did'], 3);
+      expect(cards[0]['odid'], 0);
+      expect(cards[0]['due'], 44);
+      expect(cards[0]['queue'], 2);
+      expect(cards[0]['flags'], 4);
+      expect(cards[1]['did'], 3);
+      expect(cards[1]['odid'], 0);
+      expect(cards[1]['due'], 55);
+      expect(cards[1]['queue'], 2);
+      expect(cards[1]['flags'], 2);
+      expect(
+        exported.select('SELECT id FROM decks').map((row) => row['id']).toSet(),
+        {2, 3},
+      );
+      expect(exported.select('SELECT id FROM revlog').length, 1);
+      final kind = proto.Deck_KindContainer.fromBuffer(
+        exported.select('SELECT kind FROM decks WHERE id = 3').single['kind']
+            as List<int>,
+      );
+      expect(kind.hasNormal(), isTrue);
+      exported.close();
+      await database.close();
+    },
+  );
 
   test('creates schema 11 and current-schema reopen is a no-op', () async {
     final database = await CollectionSqliteStorage.open(
@@ -1410,9 +2106,12 @@ CREATE TABLE tags (
   );
 }
 
-Future<CollectionSqliteStorage> _openLatestCollection(String path) async {
+Future<CollectionSqliteStorage> _openLatestCollection(
+  String path, {
+  CollectionSqliteDriver? driver,
+}) async {
   final database = await CollectionSqliteStorage.open(
-    driver: _nativeDriver,
+    driver: driver ?? _nativeDriver,
     location: path,
     options: _schemaOptions,
   );
@@ -1424,9 +2123,71 @@ Future<CollectionSqliteStorage> _openLatestCollection(String path) async {
   return database;
 }
 
+CollectionSqliteDriver _driverWithMedia(CollectionMediaStorage mediaStorage) =>
+    CollectionSqliteDriver(
+      openDatabase: (location) => sqlite3.open(location),
+      snapshot: _snapshotDatabase,
+      mediaStorage: mediaStorage,
+      exportFromSnapshot: (source, build) async {
+        final copy = sqlite3.openInMemory();
+        try {
+          await (source as Database).backup(copy).drain<void>();
+          return await build(copy);
+        } finally {
+          copy.close();
+        }
+      },
+    );
+
+final class _MemoryMediaStorage implements CollectionMediaStorage {
+  const _MemoryMediaStorage(this.files);
+
+  final Map<String, List<int>> files;
+
+  @override
+  Future<void> close() async {}
+
+  @override
+  Future<Iterable<String>> list() async => files.keys;
+
+  @override
+  Future<Stream<List<int>>?> read(String filename) async {
+    final bytes = files[filename];
+    return bytes == null ? null : Stream.value(bytes);
+  }
+}
+
 final CollectionSqliteDriver _nativeDriver = CollectionSqliteDriver(
   openDatabase: (location) => sqlite3.open(location),
+  snapshot: _snapshotDatabase,
+  exportFromSnapshot: (source, build) async {
+    final copy = sqlite3.openInMemory();
+    try {
+      await (source as Database).backup(copy).drain<void>();
+      return await build(copy);
+    } finally {
+      copy.close();
+    }
+  },
 );
+
+Future<Uint8List> _snapshotDatabase(CommonDatabase source) async {
+  final directory = await Directory.systemTemp.createTemp(
+    'anki-test-snapshot-',
+  );
+  final path = '${directory.path}/snapshot.db';
+  Database? copy;
+  try {
+    copy = sqlite3.open(path);
+    await (source as Database).backup(copy).drain<void>();
+    copy.close();
+    copy = null;
+    return await File(path).readAsBytes();
+  } finally {
+    copy?.close();
+    await directory.delete(recursive: true);
+  }
+}
 
 final CollectionSqliteOptions _schemaOptions = CollectionSqliteOptions(
   configureConnection: (database) => database.createCollation(

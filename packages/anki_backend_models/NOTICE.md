@@ -104,6 +104,16 @@ deterministic memory state and raw interval; interval limits, fuzz, and
 short-term queue decisions stay with `ReviewCardState.nextStates()` and its
 caller-supplied context.
 
+`computeFsrsTrainingItems()` ports Core's training-mode revlog filtering and
+FSRS-item projection from `rslib/src/scheduler/fsrs/params.rs`. It accepts
+already grouped per-card histories and explicit cutoff/day-boundary timestamps,
+then returns ordered review prefixes and Core's filtered-review count. This is
+data preparation only: FSRS parameter optimization, collection queries,
+progress reporting, and collection/card updates remain outside the package.
+Training-item projections use the same pinned Core source and FSRS 5.2.0
+provenance recorded above; no upstream implementation is copied into product
+files.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

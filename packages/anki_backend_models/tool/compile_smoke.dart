@@ -120,4 +120,25 @@ void main() {
       training.items.single.reviews.last.rating != 4) {
     throw StateError('FSRS training-item projection differs on JavaScript');
   }
+  final queue = LearningQueue(
+    nowSecs: 100,
+    learningCutoffSecs: 100,
+    learnAheadSecs: 30,
+    nextDayAtSecs: 200,
+    entries: [
+      LearningQueueEntry(
+        due: Int64(100),
+        id: Int64(11),
+        mtime: Int64.ZERO,
+        reps: 1,
+      ),
+    ],
+  );
+  final mixed = interspersedQueues([1, 2], [11]);
+  if (queue.intradayNow.single.id != Int64(11) ||
+      mixed.join(',') != '1,11,2' ||
+      ReviewQueueEntry.fromCard(Card(queue: CardQueue.dayLearn)).kind !=
+          ReviewQueueEntryKind.review) {
+    throw StateError('review-queue primitives differ on JavaScript');
+  }
 }

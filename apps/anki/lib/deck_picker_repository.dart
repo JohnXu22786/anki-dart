@@ -513,7 +513,23 @@ final class CollectionDeckPickerRepository
   bool get canRedoCollectionOperation => _storage.canRedoCollectionOperation;
 
   @override
+  String? get collectionUndoLabel => _storage.collectionUndoLabel;
+
+  @override
+  String? get collectionRedoLabel => _storage.collectionRedoLabel;
+
+  @override
+  bool get collectionUndoIsCustom => _storage.collectionUndoIsCustom;
+
+  @override
+  bool get collectionRedoIsCustom => _storage.collectionRedoIsCustom;
+
+  @override
   int get collectionUndoGeneration => _storage.collectionUndoGeneration;
+
+  @override
+  bool get collectionUndoHasEntryAtCurrentGeneration =>
+      _storage.collectionUndoHasEntryAtCurrentGeneration;
 
   @override
   Future<void> undoLastCollectionOperation() =>
@@ -612,7 +628,7 @@ final class CollectionDeckPickerRepository
   @override
   Future<void> createDeck(String name) async {
     if (name.trim().isEmpty) throw ArgumentError.value(name, 'name');
-    await _storage.getOrCreateNormalDeck(name);
+    await _storage.getOrCreateNormalDeckUndoable(name);
   }
 
   @override

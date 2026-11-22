@@ -316,10 +316,40 @@ final class DeckPickerUnburyResult {
 abstract interface class DeckPickerCollectionUndoProvider {
   bool get canUndoCollectionOperation;
   bool get canRedoCollectionOperation;
+  String? get collectionUndoLabel;
+  String? get collectionRedoLabel;
+  bool get collectionUndoIsCustom;
+  bool get collectionRedoIsCustom;
   int get collectionUndoGeneration;
+  bool get collectionUndoHasEntryAtCurrentGeneration;
   Future<void> undoLastCollectionOperation();
   Future<void> redoLastCollectionOperation();
 }
+
+String _localizedDeckPickerUndoLabel(
+  AppLocalizations strings,
+  String? key, {
+  bool isCustom = false,
+}) => isCustom
+    ? strings.collectionUndoCustomOperation(key ?? '')
+    : switch (key) {
+        'updateNote' => strings.collectionUndoLabelEditNote,
+        'suspendCards' => strings.collectionUndoLabelSuspendCards,
+        'buryCards' => strings.collectionUndoLabelBuryCards,
+        'deleteCards' => strings.collectionUndoLabelDeleteCards,
+        'unburyCards' => strings.collectionUndoLabelUnburyCards,
+        'emptyFilteredDeck' => strings.collectionUndoLabelEmptyFilteredDeck,
+        'buildFilteredDeck' => strings.collectionUndoLabelBuildFilteredDeck,
+        'extendStudyLimits' => strings.collectionUndoLabelExtendStudyLimits,
+        'changeDeckDescription' =>
+          strings.collectionUndoLabelChangeDeckDescription,
+        'changeDeckDailyLimits' => strings.collectionUndoLabelChangeDeckLimits,
+        'createDeck' => strings.collectionUndoLabelCreateDeck,
+        'deleteDeck' => strings.collectionUndoLabelDeleteDeck,
+        'renameDeck' => strings.collectionUndoLabelRenameDeck,
+        null || '' => strings.browserCollectionAction,
+        _ => strings.browserCollectionAction,
+      };
 
 /// Explicit placeholder while a platform/backend collection service is not connected.
 final class UnavailableDeckPickerRepository implements DeckPickerRepository {
@@ -1388,6 +1418,10 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
 
   Future<void> _editDailyLimits(DeckPickerDeck deck) async {
     final provider = widget.repository as DeckPickerDailyLimitsProvider;
+    final undoHistory = widget.repository is DeckPickerCollectionUndoProvider
+        ? widget.repository as DeckPickerCollectionUndoProvider
+        : null;
+    final undoGenerationBefore = undoHistory?.collectionUndoGeneration;
     try {
       final limits = await provider.loadDailyLimits(deck);
       if (!mounted) return;
@@ -1414,11 +1448,23 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
           onSaved: () {
             if (!mounted) return;
             _reload();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(AppLocalizations.of(context)!.deckOptionsSaved),
-              ),
-            );
+            if (undoHistory != null &&
+                undoGenerationBefore != undoHistory.collectionUndoGeneration &&
+                undoHistory.collectionUndoHasEntryAtCurrentGeneration &&
+                undoHistory.canUndoCollectionOperation) {
+              _showCollectionUndoSnackbar(
+                undoHistory,
+                generation: undoHistory.collectionUndoGeneration,
+                completionMessage: AppLocalizations.of(context)!
+                    .deckOptionsSaved,
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(AppLocalizations.of(context)!.deckOptionsSaved),
+                ),
+              );
+            }
           },
         ),
       );
@@ -1432,6 +1478,10 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
 
   Future<void> _editDescription(DeckPickerDeck deck) async {
     final provider = widget.repository as DeckPickerDescriptionProvider;
+    final undoHistory = widget.repository is DeckPickerCollectionUndoProvider
+        ? widget.repository as DeckPickerCollectionUndoProvider
+        : null;
+    final undoGenerationBefore = undoHistory?.collectionUndoGeneration;
     try {
       final initial = await provider.loadDescription(deck);
       if (!mounted) return;
@@ -1449,11 +1499,23 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
       );
       if (saved == true && mounted) {
         _reload();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.deckDescriptionSaved),
-          ),
-        );
+        if (undoHistory != null &&
+            undoGenerationBefore != undoHistory.collectionUndoGeneration &&
+            undoHistory.collectionUndoHasEntryAtCurrentGeneration &&
+            undoHistory.canUndoCollectionOperation) {
+          _showCollectionUndoSnackbar(
+            undoHistory,
+            generation: undoHistory.collectionUndoGeneration,
+            completionMessage: AppLocalizations.of(context)!
+                .deckDescriptionSaved,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.deckDescriptionSaved),
+            ),
+          );
+        }
       }
     } on Object {
       if (!mounted) return;
@@ -1498,12 +1560,19 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
       if (undo != null &&
           result.cardsUnburied > 0 &&
           undo.canUndoCollectionOperation &&
+          undo.collectionUndoHasEntryAtCurrentGeneration &&
           undo.collectionUndoGeneration == result.collectionUndoGeneration) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             action: SnackBarAction(
-              label: s.undoDeckUnbury,
+              label: s.collectionOperationUndo(
+                _localizedDeckPickerUndoLabel(
+                  s,
+                  undo.collectionUndoLabel,
+                  isCustom: undo.collectionUndoIsCustom,
+                ),
+              ),
               onPressed: () =>
                   _undoDeckUnbury(undo, result.collectionUndoGeneration),
             ),
@@ -1540,7 +1609,13 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
         SnackBar(
           content: Text(AppLocalizations.of(context)!.deckUnburyUndone),
           action: SnackBarAction(
-            label: AppLocalizations.of(context)!.redoDeckUnbury,
+            label: AppLocalizations.of(context)!.collectionOperationRedo(
+              _localizedDeckPickerUndoLabel(
+                AppLocalizations.of(context)!,
+                provider.collectionRedoLabel,
+                isCustom: provider.collectionRedoIsCustom,
+              ),
+            ),
             onPressed: () => _redoDeckUnbury(provider, redoGeneration),
           ),
         ),
@@ -1572,7 +1647,13 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
           content: Text(AppLocalizations.of(context)!.deckUnburyRedone),
           action: provider.canUndoCollectionOperation
               ? SnackBarAction(
-                  label: AppLocalizations.of(context)!.undoDeckUnbury,
+                  label: AppLocalizations.of(context)!.collectionOperationUndo(
+                    _localizedDeckPickerUndoLabel(
+                      AppLocalizations.of(context)!,
+                      provider.collectionUndoLabel,
+                      isCustom: provider.collectionUndoIsCustom,
+                    ),
+                  ),
                   onPressed: () => _undoDeckUnbury(provider, undoGeneration),
                 )
               : null,
@@ -1623,6 +1704,7 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
           ? undoProvider as DeckPickerCollectionUndoProvider
           : null;
       if (undo != null &&
+          undo.collectionUndoHasEntryAtCurrentGeneration &&
           undo.canUndoCollectionOperation &&
           undo.collectionUndoGeneration == result.collectionUndoGeneration) {
         final generation = result.collectionUndoGeneration;
@@ -1630,7 +1712,13 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
           SnackBar(
             content: Text(message),
             action: SnackBarAction(
-              label: s.undoDeckDeletion,
+              label: s.collectionOperationUndo(
+                _localizedDeckPickerUndoLabel(
+                  s,
+                  undo.collectionUndoLabel,
+                  isCustom: undo.collectionUndoIsCustom,
+                ),
+              ),
               onPressed: () => _undoDeckDeletion(undo, generation),
             ),
           ),
@@ -1666,7 +1754,13 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
         SnackBar(
           content: Text(AppLocalizations.of(context)!.deckDeletionUndone),
           action: SnackBarAction(
-            label: AppLocalizations.of(context)!.redoDeckDeletion,
+            label: AppLocalizations.of(context)!.collectionOperationRedo(
+              _localizedDeckPickerUndoLabel(
+                AppLocalizations.of(context)!,
+                provider.collectionRedoLabel,
+                isCustom: provider.collectionRedoIsCustom,
+              ),
+            ),
             onPressed: () => _redoDeckDeletion(provider, redoGeneration),
           ),
         ),
@@ -1692,9 +1786,22 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
       await provider.redoLastCollectionOperation();
       if (!mounted) return;
       _reload();
+      final strings = AppLocalizations.of(context)!;
+      final label = _localizedDeckPickerUndoLabel(
+        strings,
+        provider.collectionUndoLabel,
+        isCustom: provider.collectionUndoIsCustom,
+      );
+      final undoGeneration = provider.collectionUndoGeneration;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.deckDeletionRedone),
+          content: Text(strings.deckDeletionRedone),
+          action: provider.canUndoCollectionOperation
+              ? SnackBarAction(
+                  label: strings.collectionOperationUndo(label),
+                  onPressed: () => _undoDeckDeletion(provider, undoGeneration),
+                )
+              : null,
         ),
       );
     } on Object {
@@ -1931,30 +2038,11 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
 
   Future<void> _createDeck() async {
     final s = AppLocalizations.of(context)!;
-    final ctl = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(s.createDeck),
-        content: TextField(
-          key: const ValueKey('deck-name'),
-          controller: ctl,
-          autofocus: true,
-          decoration: InputDecoration(labelText: s.deckName),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(s.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, ctl.text),
-            child: Text(s.create),
-          ),
-        ],
-      ),
+      builder: (_) =>
+          _CreateDeckDialog(title: s.createDeck, nameLabel: s.deckName),
     );
-    ctl.dispose();
     if (name != null) await _invoke(() => widget.repository.createDeck(name));
   }
 
@@ -1964,6 +2052,10 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
     }
+    final undoHistory = widget.repository is DeckPickerCollectionUndoProvider
+        ? widget.repository as DeckPickerCollectionUndoProvider
+        : null;
+    final undoGenerationBefore = undoHistory?.collectionUndoGeneration;
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => FilteredDeckOptionsScreen(
@@ -1973,7 +2065,18 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
         ),
       ),
     );
-    if (mounted) _reload();
+    if (mounted) {
+      _reload();
+      if (undoHistory != null &&
+          undoGenerationBefore != undoHistory.collectionUndoGeneration &&
+          undoHistory.collectionUndoHasEntryAtCurrentGeneration &&
+          undoHistory.canUndoCollectionOperation) {
+        _showCollectionUndoSnackbar(
+          undoHistory,
+          generation: undoHistory.collectionUndoGeneration,
+        );
+      }
+    }
   }
 
   Future<void> _invoke(
@@ -1981,18 +2084,160 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
     bool reloadOnError = false,
   }) async {
     setState(() => _showAddActions = false);
+    final undoProvider = widget.repository;
+    final history = undoProvider is DeckPickerCollectionUndoProvider
+        ? undoProvider as DeckPickerCollectionUndoProvider
+        : null;
+    final generation = history?.collectionUndoGeneration;
     try {
       await action();
-      if (mounted) _reload();
+      if (!mounted) return;
+      _reload();
+      if (history != null &&
+          generation != history.collectionUndoGeneration &&
+          history.collectionUndoHasEntryAtCurrentGeneration &&
+          history.canUndoCollectionOperation) {
+        _showCollectionUndoSnackbar(
+          history,
+          generation: history.collectionUndoGeneration,
+        );
+      }
     } on Object {
       if (mounted) {
-        if (reloadOnError) _reload();
+        if (reloadOnError ||
+            (history != null &&
+                generation != history.collectionUndoGeneration)) {
+          _reload();
+        }
+        if (history != null &&
+            generation != history.collectionUndoGeneration &&
+            history.collectionUndoHasEntryAtCurrentGeneration &&
+            history.canUndoCollectionOperation) {
+          _showCollectionUndoSnackbar(
+            history,
+            generation: history.collectionUndoGeneration,
+            failedAfterCommit: true,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.deckActionFailed),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _showCollectionUndoSnackbar(
+    DeckPickerCollectionUndoProvider provider, {
+    required int generation,
+    bool failedAfterCommit = false,
+    String? completionMessage,
+  }) {
+    if (!provider.canUndoCollectionOperation ||
+        provider.collectionUndoGeneration != generation) {
+      return;
+    }
+    final strings = AppLocalizations.of(context)!;
+    final label = _localizedDeckPickerUndoLabel(
+      strings,
+      provider.collectionUndoLabel,
+      isCustom: provider.collectionUndoIsCustom,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          failedAfterCommit
+              ? strings.deckActionFailed
+              : completionMessage ??
+                    strings.collectionOperationCompleted(label),
+        ),
+        action: SnackBarAction(
+          label: strings.collectionOperationUndo(label),
+          onPressed: () => _undoCollectionOperation(provider, generation),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _undoCollectionOperation(
+    DeckPickerCollectionUndoProvider provider,
+    int generation,
+  ) async {
+    if (!provider.canUndoCollectionOperation ||
+        provider.collectionUndoGeneration != generation) {
+      return;
+    }
+    try {
+      await provider.undoLastCollectionOperation();
+      if (!mounted) return;
+      _reload();
+      if (provider.canRedoCollectionOperation) {
+        final redoGeneration = provider.collectionUndoGeneration;
+        final strings = AppLocalizations.of(context)!;
+        final label = _localizedDeckPickerUndoLabel(
+          strings,
+          provider.collectionRedoLabel,
+          isCustom: provider.collectionRedoIsCustom,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.deckActionFailed),
+            content: Text(strings.collectionOperationUndone(label)),
+            action: SnackBarAction(
+              label: strings.collectionOperationRedo(label),
+              onPressed: () =>
+                  _redoCollectionOperation(provider, redoGeneration),
+            ),
           ),
         );
       }
+    } on Object {
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
+    }
+  }
+
+  Future<void> _redoCollectionOperation(
+    DeckPickerCollectionUndoProvider provider,
+    int generation,
+  ) async {
+    if (!provider.canRedoCollectionOperation ||
+        provider.collectionUndoGeneration != generation) {
+      return;
+    }
+    try {
+      await provider.redoLastCollectionOperation();
+      if (!mounted) return;
+      _reload();
+      if (provider.canUndoCollectionOperation) {
+        final undoGeneration = provider.collectionUndoGeneration;
+        final strings = AppLocalizations.of(context)!;
+        final label = _localizedDeckPickerUndoLabel(
+          strings,
+          provider.collectionUndoLabel,
+          isCustom: provider.collectionUndoIsCustom,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(strings.collectionOperationCompleted(label)),
+            action: SnackBarAction(
+              label: strings.collectionOperationUndo(label),
+              onPressed: () =>
+                  _undoCollectionOperation(provider, undoGeneration),
+            ),
+          ),
+        );
+      }
+    } on Object {
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.deckActionFailed)),
+      );
     }
   }
 
@@ -2105,6 +2350,47 @@ final class _DeckPickerScreenState extends State<DeckPickerScreen>
       }
     }
   }
+}
+
+final class _CreateDeckDialog extends StatefulWidget {
+  const _CreateDeckDialog({required this.title, required this.nameLabel});
+
+  final String title;
+  final String nameLabel;
+
+  @override
+  State<_CreateDeckDialog> createState() => _CreateDeckDialogState();
+}
+
+final class _CreateDeckDialogState extends State<_CreateDeckDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.title),
+    content: TextField(
+      key: const ValueKey('deck-name'),
+      controller: _controller,
+      autofocus: true,
+      decoration: InputDecoration(labelText: widget.nameLabel),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: Text(AppLocalizations.of(context)!.cancel),
+      ),
+      FilledButton(
+        onPressed: () => Navigator.pop(context, _controller.text),
+        child: Text(AppLocalizations.of(context)!.create),
+      ),
+    ],
+  );
 }
 
 final class FilteredDeckOptionsScreen extends StatefulWidget {

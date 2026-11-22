@@ -28,7 +28,7 @@ void main() {
     );
     _activeStorage = storage;
     await storage.executeBatch('''
-      CREATE TABLE col (mod INTEGER NOT NULL);
+      CREATE TABLE col (id INTEGER PRIMARY KEY, mod INTEGER NOT NULL);
       CREATE TABLE config (key TEXT PRIMARY KEY, usn INTEGER, mtime_secs INTEGER, val BLOB);
       CREATE TABLE decks (id INTEGER PRIMARY KEY, name TEXT, mtime_secs INTEGER, usn INTEGER, common BLOB, kind BLOB);
       CREATE TABLE deck_config (id INTEGER PRIMARY KEY, name TEXT, mtime_secs INTEGER, usn INTEGER, config BLOB);
@@ -37,7 +37,7 @@ void main() {
       CREATE TABLE revlog (id INTEGER PRIMARY KEY, cid INTEGER, usn INTEGER, ease INTEGER, ivl INTEGER, lastIvl INTEGER, factor INTEGER, time INTEGER, type INTEGER);
       CREATE TABLE graves (usn INTEGER, oid INTEGER, type INTEGER, UNIQUE(oid, type));
     ''');
-    database.execute('INSERT INTO col VALUES (123)');
+    database.execute('INSERT INTO col VALUES (1, 123)');
     database.execute(
       'INSERT INTO decks (id, name, mtime_secs, usn, common, kind) VALUES (1, ?, 0, 0, ?, ?)',
       [

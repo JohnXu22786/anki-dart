@@ -6170,12 +6170,29 @@ GPL forwarding wrapper, not the browser implementation. See
 [the pinned upstream mapping](ANKIIDROID_UPSTREAM.md#collectionstudiedtoday-host-forwarding)
 and [NOTICE.md](NOTICE.md).
 
+## Collection undo journal
+
+`CollectionSqliteStorage` keeps existing-note edits and callback-backed
+collection operations in one bounded 30-entry journal, preserving their
+global undo/redo order. Undoable SQLite transactions capture inverse row
+changesets for collection tables with primary keys; deck deletion keeps its
+explicit inverse for Core's keyless graves table. Eligible same-note edits
+coalesce within Core's 60-second window, and custom restore points can merge
+subsequent actions. Card Browser and Deck Picker expose localized operation
+labels with undo/redo actions, including deck creation and rename. Reviewer
+feedback remains a projection until its
+app action is added by the Scheduler/review-session unit. See
+[`NOTE_UPDATE_GAP_REPORT.md`](docs/NOTE_UPDATE_GAP_REPORT.md) for scope.
+
 ## Collection custom undo entries
 
 [`collectionAddCustomUndoEntry()` and `collectionMergeUndoEntries()`](lib/src/collection_custom_undo_entry_operations.dart) forward the exact custom undo name and
 target step once to their host callbacks and return the host's integer or
 generic result unchanged. Callback errors propagate unchanged. Undo storage,
-merging, and generated operation changes remain host-side. The adapters map
+merging, and generated operation changes remain host-side for these adapters.
+`CollectionSqliteStorage.addCustomUndoEntry()` adds a named restore point, and
+`mergeUndoEntries()` folds newer SQLite changesets or callbacks into that
+target step. The adapters map
 `Collection.addCustomUndoEntry(name)` and `Collection.mergeUndoEntries(target)`
 from AnkiDroid 2.25.3 `Collection.kt:1181,1192`, pinned to commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. No direct pinned test or Dart

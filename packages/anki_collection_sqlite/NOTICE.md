@@ -106,14 +106,27 @@ checked by `tool/check_package.py` and recorded in `SOURCE.sha256`.
 The operation exposes an old-note and prior `col.mod` snapshot matching
 `UndoableNoteChange::Updated` plus `UndoableCollectionChange::Modified` data,
 along with newly registered tag names matching `UndoableTagChange::Added`.
-The package records up to 30 in-memory undo steps and replays their note,
-generated-card, tag, `nextPos` config, and collection-time changes. Successive
-same-note updates coalesce within Core's 60-second window when they only change
-the note and collection-modification rows. Writes through the adapter's async
-mutation methods clear this scoped history; direct substore writes and enclosing
-transactions must call `discardExistingNoteUpdateUndoHistory()`. This is
-not yet a generic journal for other collection operations, and the application
-does not yet present this history through an undo/redo affordance.
+The package combines note edits and collection operations in one bounded
+30-entry in-memory undo journal. Note steps replay the note, generated-card,
+tag, `nextPos` config, and collection-time changes. Undoable collection
+transactions capture SQLite changesets for primary-key tables and expose
+Core-derived row categories and mutation variants for card, note, deck, deck
+config, tag, revlog, config, collection, notetype, and custom rows. Captured
+changesets provide inverses for operations without an explicit host callback;
+existing callbacks remain the complete inverse where operations also change
+non-SQL state. Deck deletion records card, note, and deck grave variants for
+Core's keyless graves table. Custom restore points merge newer undo steps into
+their named target.
+Successive same-note updates coalesce within Core's 60-second window when they
+only change the note and collection-modification rows. Operations with no
+tracked SQL changes preserve their caller's inverse callbacks and optional
+label. Writes through adapter mutation methods clear this journal; direct
+substore writes and enclosing transactions must call
+`discardExistingNoteUpdateUndoHistory()`. Core's queue answer/answer-undo
+variants are Scheduler/review-session behavior and are not claimed by this
+unit. Reviewer feedback remains a projection until the later unit adds its UI
+call site. The app exposes localized labeled collection actions in the Card
+Browser and Deck Picker, including normal-deck creation and rename.
 
 `CollectionSqliteStorage.addNoteToDeck()` maps Anki Core's new-note operation
 from `rslib/src/notes/mod.rs`, `rslib/src/notetype/cardgen.rs`,

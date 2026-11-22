@@ -24,6 +24,71 @@ import 'package:test/test.dart';
 
 void main() {
   group('Reviewer undo/redo feedback message', () {
+    test(
+      'exposes status and actions from the shared Reviewer journal',
+      () async {
+        var status = const UndoStatus(
+          undo: 'Suspend Cards',
+          redo: null,
+          lastStep: 3,
+        );
+        final actions = <String>[];
+        final reviewer = ReviewerUndoRedoActions(
+          readStatus: () => status,
+          undo: () async {
+            actions.add('undo');
+            status = const UndoStatus(
+              undo: null,
+              redo: 'Suspend Cards',
+              lastStep: 4,
+            );
+            return 'Suspend Cards';
+          },
+          redo: () async {
+            actions.add('redo');
+            return 'Suspend Cards';
+          },
+          nothingToUndoMessage: 'nothing to undo',
+          nothingToRedoMessage: 'nothing to redo',
+          undoMessage: (operation) => 'undid $operation',
+          redoMessage: (operation) => 'redid $operation',
+        );
+
+        expect(reviewer.canUndo, isTrue);
+        expect(reviewer.undoLabel, 'Suspend Cards');
+        expect(await reviewer.undoWithFeedback(), 'undid Suspend Cards');
+        expect(reviewer.canUndo, isFalse);
+        expect(reviewer.canRedo, isTrue);
+        expect(reviewer.redoLabel, 'Suspend Cards');
+        expect(actions, ['undo']);
+      },
+    );
+
+    test(
+      'runs the selected Reviewer action and localizes its operation',
+      () async {
+        final calls = <String>[];
+        final message = await performReviewerUndoRedoAction(
+          isUndo: false,
+          undo: () async {
+            calls.add('undo');
+            return 'wrong action';
+          },
+          redo: () async {
+            calls.add('redo');
+            return 'Suspend Cards';
+          },
+          nothingToUndoMessage: 'nothing to undo',
+          nothingToRedoMessage: 'nothing to redo',
+          undoMessage: (operation) => 'undid $operation',
+          redoMessage: (operation) => 'redid $operation',
+        );
+
+        expect(message, 'redid Suspend Cards');
+        expect(calls, ['redo']);
+      },
+    );
+
     test('uses host nothing-to-undo message for an empty undo operation', () {
       final calls = <String>[];
       expect(

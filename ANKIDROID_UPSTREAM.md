@@ -4574,7 +4574,7 @@ submits query text and structured search requests through the injected
 History restoration/management and the structured-filter editor use the optional
 controller capabilities described in the Unit 24 section. The screen also wires
 row selection, sort, preview, edit, and bulk actions through typed callbacks,
-and exposes Unit 36's note-update-only collection undo action when available.
+and exposes the current top note-update collection undo action when available.
 Wide layouts use a heading row and dynamic columns; narrow layouts show labeled
 card rows. The controller owns history/filter persistence, query execution,
 collection IO, sort persistence, and navigation. Widget tests are in
@@ -4911,14 +4911,25 @@ existing-note updates in an in-memory history of up to 30 undo steps and
 replays note, added cards, added tags, `nextPos` config, and `col.mod` on
 undo/redo. Successive same-note edits coalesce within Core's 60-second window
 when they change only note and collection-modification rows. Mutations
-through the storage's asynchronous adapter methods clear this scoped history.
-Direct writes through
-the exposed deck/config/tag stores or an enclosing transaction must call
-`discardExistingNoteUpdateUndoHistory()`. Unit 36 exposes this scoped history as
-a shared Card Browser undo action after an existing-note edit. It does not add
-editor undo/redo controls or a generic collection journal for unrelated
-operation types. Unit 44 adds a separate bounded history with Card Browser
-undo/redo for bulk suspend, bury, and delete. Focused source-derived cases live in
+through the storage's asynchronous adapter methods clear the shared journal.
+Direct writes through exposed substores or an enclosing transaction must call
+`discardExistingNoteUpdateUndoHistory()`. Unit 36 exposes note-edit undo from
+the shared Card Browser, and Unit 44 adds Card Browser undo/redo for bulk
+suspend, bury, and delete. Unit 69 places these note edits and callback-backed
+collection operations in one bounded journal, so undo and redo follow their
+global operation order. Undoable SQLite transactions capture row-level
+changesets from collection tables with a primary key and expose Core-derived
+categories and variants for card, note, deck, deck config, tag, revlog, config,
+collection, notetype, and custom rows. Captured changesets supply inverses when
+an operation has no explicit host callback; existing callbacks remain the
+complete inverse for operations with non-SQL state. Deck deletion also records
+Core's card, note, and deck grave variants for the keyless graves table. Note
+edits use their Core-derived note snapshot and 60-second coalescing rule. The
+journal supports named custom restore points, explicit merging into a target,
+bounded history, localized operation labels, and redo invalidation. Core's
+queue answer/answer-undo variants belong to the later Scheduler/review-session
+unit; Unit 69 does not claim Reviewer UI integration because the app call site
+does not exist yet. Focused source-derived cases live in
 `packages/anki_collection_sqlite/test/existing_note_update_test.dart` and
 `core_random_position_test.dart`. Dart changes remain AGPL-3.0-or-later; no
 upstream source file or UI resource is copied, and root `COPYING` remains
@@ -4944,13 +4955,16 @@ uses the collection's `normalizeNoteText` setting (defaulting to enabled).
 `CollectionSqliteStorage.updateExistingNote()` applies a SQLite savepoint,
 canonifies tags, marks the note locally modified (`usn = -1` with the update
 timestamp), generates missing normal/Cloze cards using the collection's Core-
-matched generation rules, and updates `col.mod`. It records up to 30
-note-update-only undo/redo steps in memory and coalesces eligible same-note
-edits within Core's 60-second window. Unit 36 exposes note-update undo in the
-shared Card Browser collection menu, matching AnkiDroid's collection-level
-undo placement. This note-update history remains separate from Unit 44's bounded journal
-for Card Browser bulk operations; editor undo/redo controls remain follow-up
-work.
+matched generation rules, and updates `col.mod`. It records note changes in
+the same bounded 30-entry journal as callback-backed collection operations,
+coalescing eligible same-note edits within Core's 60-second window. Unit 36
+exposes note-update undo in the shared Card Browser collection menu; Unit 69
+unifies its ordering with Unit 44's Card Browser bulk-operation journal. The
+callback-backed entries keep caller-provided inverses and optional labels;
+captured SQL changesets provide typed row inverses where applicable. The
+storage exposes a shared Reviewer status/feedback projection, while wiring it
+to a Reviewer app action remains part of the later Scheduler/review-session
+unit. Editor undo/redo controls are also not implemented.
 AnkiDroid's `noteFieldsCheck()` is only called
 on its new-note branch, so the existing-note update does not add
 empty-first-field, duplicate, or cloze checks.

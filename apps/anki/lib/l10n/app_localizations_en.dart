@@ -841,6 +841,95 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browserBulkActionUndone => 'Browser action undone';
 
   @override
+  String get browserCollectionAction => 'collection action';
+
+  @override
+  String get collectionUndoLabelEditNote => 'edit note';
+
+  @override
+  String get collectionUndoLabelSuspendCards => 'suspend cards';
+
+  @override
+  String get collectionUndoLabelBuryCards => 'bury cards';
+
+  @override
+  String get collectionUndoLabelDeleteCards => 'delete cards';
+
+  @override
+  String get collectionUndoLabelUnburyCards => 'unbury cards';
+
+  @override
+  String get collectionUndoLabelEmptyFilteredDeck => 'empty filtered deck';
+
+  @override
+  String get collectionUndoLabelBuildFilteredDeck => 'build filtered deck';
+
+  @override
+  String get collectionUndoLabelExtendStudyLimits =>
+      'extend today\'s study limits';
+
+  @override
+  String get collectionUndoLabelChangeDeckDescription =>
+      'change deck description';
+
+  @override
+  String get collectionUndoLabelChangeDeckLimits => 'change deck limits';
+
+  @override
+  String get collectionUndoLabelCreateDeck => 'create deck';
+
+  @override
+  String get collectionUndoLabelDeleteDeck => 'delete deck';
+
+  @override
+  String get collectionUndoLabelRenameDeck => 'rename deck';
+
+  @override
+  String browserCollectionOperationCompleted(String action) {
+    return '$action completed';
+  }
+
+  @override
+  String browserCollectionOperationUndone(String action) {
+    return '$action undone';
+  }
+
+  @override
+  String browserCollectionOperationUndo(String action) {
+    return 'Undo $action';
+  }
+
+  @override
+  String browserCollectionOperationRedo(String action) {
+    return 'Redo $action';
+  }
+
+  @override
+  String collectionOperationCompleted(String action) {
+    return '$action completed';
+  }
+
+  @override
+  String collectionOperationUndone(String action) {
+    return '$action undone';
+  }
+
+  @override
+  String collectionOperationUndo(String action) {
+    return 'Undo $action';
+  }
+
+  @override
+  String collectionOperationRedo(String action) {
+    return 'Redo $action';
+  }
+
+  @override
+  String collectionUndoCustomOperation(String operation) {
+    return 'Custom: $operation';
+  }
+
+  @override
   String get browserUndoBulkAction => 'Undo';
 
   @override

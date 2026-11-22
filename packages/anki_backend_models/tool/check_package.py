@@ -60,10 +60,18 @@ SOURCE_HASHES = {
     "rslib/src/scheduler/states/fuzz.rs": "30a33e2e522ebcb56ca434a897f66209fcb4284065115ee031def73097343105",
     "rslib/src/scheduler/states/mod.rs": "f4247b73f39403a1f8eb423d52bec91bf3e7f6a005f1b93767a24a0a0ee8f7a9",
     "rslib/src/scheduler/states/steps.rs": "3baf0c2c125599998929dfb292e91d07202458977d67f906a27b632776eaf4fa",
+    "rslib/src/scheduler/fsrs/memory_state.rs": "e5b494807a5bd94e09e80829399669808cbd6377786dce6567ab557b18d1a799",
+    "rslib/src/scheduler/fsrs/params.rs": "fd04b48ca637f9e197eea84de809767fade3e1a449114cc851891300b0068d29",
+    "fsrs-5.2.0/src/model.rs": "2d86e7463e1a76dbee47bf787707d2e74f3576d996f96ffe79c7e922c6ca4633",
+    "fsrs-5.2.0/src/inference.rs": "8576fff074614a702a04ed02c459422eb2d9ca284ea9a66143d7b32abcc6c09f",
+    "fsrs-5.2.0/src/parameter_clipper.rs": "8b9f3f62b7ad02cf54a4bf1263fc8c6e6615b481082440bf660acb557901b113",
+    "fsrs-5.2.0/src/parameter_initialization.rs": "a48564d946c3bb2a67524d96b98d38dafb2f6dbdd6a0dcc9ac5c5b3a627b10d6",
+    "fsrs-5.2.0/src/simulation.rs": "5436a78c825ce863edf8e234731a499c328e14413b2e09433d67a093fc6a5e69",
 }
 THIRD_PARTY_HASHES = {
     "htmlescape-0.3.1.crate": "e9025058dae765dee5070ec375f591e2ba14638c63feff74f13805a72e523163",
     "htmlescape-0.3.1/src/entities.rs": "a332c354a31bc57150f24987eb23324d3b87e8a33dda0ca553474d5c955b20d7",
+    "fsrs-5.2.0.crate": "cab5f80c16d1d07e492a6828478ecb9f379f142ba6f19fa3b7955edd180ddc2e",
 }
 
 def main() -> int:
@@ -82,7 +90,7 @@ def main() -> int:
     if source_record.is_file():
         for line in source_record.read_text(encoding="utf-8").splitlines():
             match = re.fullmatch(
-                r"([0-9a-f]{64})  ((?:rslib/src/[a-z_/]+\.(?:rs|css|tex)|proto/anki/[a-z_/]+\.proto))", line
+                r"([0-9a-f]{64})  ((?:rslib/src/[a-z_/]+\.(?:rs|css|tex)|proto/anki/[a-z_/]+\.proto|fsrs-5\.2\.0/src/[a-z_]+\.rs))", line
             )
             if not match:
                 errors.append(f"SOURCE.sha256: invalid entry {line!r}")
@@ -108,6 +116,9 @@ def main() -> int:
         errors.append("THIRD_PARTY_SOURCE.sha256: third-party source digest manifest is missing")
     if not (ROOT / "LICENSES" / "Apache-2.0.txt").is_file():
         errors.append("LICENSES/Apache-2.0.txt: htmlescape data license text is missing")
+    fsrs_license = ROOT / "LICENSES" / "BSD-3-Clause-FSRS.txt"
+    if not fsrs_license.is_file() or "Copyright (c) 2023, Open Spaced Repetition" not in fsrs_license.read_text(encoding="utf-8"):
+        errors.append("LICENSES/BSD-3-Clause-FSRS.txt: fsrs 5.2.0 BSD-3-Clause license text is missing")
 
     unicode_manifest = ROOT / "UNICODE_CASEFOLD.sha256"
     expected_unicode_record = (

@@ -43,3 +43,10 @@ f4247b73f39403a1f8eb423d52bec91bf3e7f6a005f1b93767a24a0a0ee8f7a9  rslib/src/sche
 411b1ded66ef2b9927ba85f17416301f5afd66108bd1864ea0d0b4578bc54808  rslib/src/scheduler/states/relearning.rs
 72fa01fa70e0247c63f91d908698d1db9bc0d063e6b3c7a20b206d308e1af810  rslib/src/scheduler/states/new.rs
 939d8157473cd445183f7b6f7179c87499667cb1057f47d728a6b4c03806c2c1  rslib/src/scheduler/states/normal.rs
+e5b494807a5bd94e09e80829399669808cbd6377786dce6567ab557b18d1a799  rslib/src/scheduler/fsrs/memory_state.rs
+fd04b48ca637f9e197eea84de809767fade3e1a449114cc851891300b0068d29  rslib/src/scheduler/fsrs/params.rs
+2d86e7463e1a76dbee47bf787707d2e74f3576d996f96ffe79c7e922c6ca4633  fsrs-5.2.0/src/model.rs
+8576fff074614a702a04ed02c459422eb2d9ca284ea9a66143d7b32abcc6c09f  fsrs-5.2.0/src/inference.rs
+8b9f3f62b7ad02cf54a4bf1263fc8c6e6615b481082440bf660acb557901b113  fsrs-5.2.0/src/parameter_clipper.rs
+a48564d946c3bb2a67524d96b98d38dafb2f6dbdd6a0dcc9ac5c5b3a627b10d6  fsrs-5.2.0/src/parameter_initialization.rs
+5436a78c825ce863edf8e234731a499c328e14413b2e09433d67a093fc6a5e69  fsrs-5.2.0/src/simulation.rs

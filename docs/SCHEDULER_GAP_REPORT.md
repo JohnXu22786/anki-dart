@@ -26,7 +26,12 @@ operation.
   graduation intervals, deterministic fuzz, and FSRS next states are supplied
   explicitly. Source hashes and AGPL attribution are in the package notice and
   `SOURCE.sha256`.
-- FSRS parameter training, next-state calculation, and memory-state derivation.
+- FSRS parameter training and next-state calculation.
+- FSRS memory-state derivation now has a pure per-card model in
+  `anki_backend_models.computeFsrsMemoryState()`. It takes ordered revlogs,
+  parameters, historical retention, cutoff, and the next-day timestamp as
+  explicit inputs. Parameter training, collection queries, bulk writes,
+  transactions, and rescheduling remain host-owned.
 - Queue building, daily counts, load balancing, and collection-backed scheduler
   configuration reads.
 - Answer persistence, revlog mutation, undo, and collection transactions.

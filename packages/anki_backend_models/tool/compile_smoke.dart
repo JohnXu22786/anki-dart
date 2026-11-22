@@ -141,4 +141,37 @@ void main() {
           ReviewQueueEntryKind.review) {
     throw StateError('review-queue primitives differ on JavaScript');
   }
+  final admitted = admitQueueCandidates(
+    QueueAdmissionInput(
+      time: const QueueAdmissionTime(
+        nowSecs: 100,
+        daysElapsed: 2,
+        nextDayAtSecs: 200,
+      ),
+      rootDeckId: 1,
+      newCardsIgnoreReviewLimit: false,
+      intradayCandidatesForBuryState: [
+        QueueCandidate<int, int, int>(
+          cardId: 12,
+          noteId: 5,
+          currentDeckId: 2,
+          originalDeckId: 2,
+          buryMode: const QueueBuryMode(buryReviews: true),
+        ),
+      ],
+      reviewCandidates: [
+        QueueCandidate<int, int, int>(
+          cardId: 13,
+          noteId: 5,
+          currentDeckId: 2,
+          originalDeckId: 2,
+          buryMode: const QueueBuryMode(),
+        ),
+      ],
+      parentDeckIds: const {2: 1},
+    ),
+  );
+  if (admitted.reviews.isNotEmpty) {
+    throw StateError('queue admission differs on JavaScript');
+  }
 }

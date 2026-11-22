@@ -20,6 +20,23 @@ operation.
 
 ## Remaining scheduler work
 
+### Unit 74 — queue candidate admission
+
+`anki_backend_models.admitQueueCandidates()` admits caller-supplied day-learning
+(interday learning), review, and new-card sequences in Core gather order. It
+accepts Unit73's already gathered intraday candidates as bury-state seeds while
+leaving those cards in Unit73's existing queue output. It applies separate
+root and non-root current/parent deck limits, accumulates each note's bury modes
+as siblings are encountered, and preserves the distinct sorted and by-deck new
+gather stop behavior. It also models Core's configurable review-to-new limit
+coupling for root and each deck/ancestor. Scheduler timestamps, candidate order,
+deck ancestry and limits, limit-coupling policy, and per-candidate bury modes
+are explicit inputs. Collection candidate
+queries and sorting, intraday learning selection, due counts, load balancing,
+and scheduler execution remain outside this slice. Pinned source hashes and
+AGPL attribution are recorded in `packages/anki_backend_models/NOTICE.md` and
+`SOURCE.sha256`.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -32,8 +49,8 @@ operation.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Queue building, daily counts, load balancing, and collection-backed scheduler
-  configuration reads.
+- Remaining queue work: SQL candidate queries and sorting, daily counts, load
+  balancing, and collection-backed scheduler configuration reads.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

@@ -38,6 +38,7 @@ import 'core_random_position.dart';
 import 'add_note.dart';
 import 'text_export.dart';
 import 'portable_package_io.dart';
+import 'intraday_learning_candidate.dart';
 import 'apkg_package_builder.dart';
 import 'apkg_exporter.dart';
 
@@ -3883,6 +3884,39 @@ WHERE queue IN (-2, -3)
       )
       .map(_cardFromRow)
       .toList(growable: false);
+
+  /// Returns due learning and preview-repeat cards in the supplied active
+  /// decks, preserving SQLite's natural query order.
+  Future<List<IntradayLearningCandidate>> intradayLearningCandidates({
+    required Iterable<Int64> activeDeckIds,
+    required Int64 learnCutoffSecs,
+  }) async {
+    final deckIds = activeDeckIds.toList(growable: false);
+    if (deckIds.isEmpty) return const [];
+
+    // Deck IDs are typed integers, so their decimal literals are safe here and
+    // avoid SQLite's bind-parameter limit for large active-deck sets.
+    final deckIdList = deckIds.map((id) => id.toString()).join(', ');
+    final rows = _database.select(
+      'SELECT id, nid, due, cast(mod AS integer) AS mtime_secs, did, odid, reps '
+      'FROM cards WHERE did IN ($deckIdList) '
+      'AND queue IN (1, 4) AND due <= ?',
+      [_toSqlInt64(learnCutoffSecs)],
+    );
+    return rows
+        .map(
+          (row) => IntradayLearningCandidate(
+            id: _readInt64(row['id']),
+            noteId: _readInt64(row['nid']),
+            due: _optionalInt32(row['due']) ?? 0,
+            mtimeSecs: _readInt64(row['mtime_secs']),
+            currentDeckId: _readInt64(row['did']),
+            originalDeckId: _readInt64(row['odid']),
+            reps: _requiredUnsigned(row['reps'], 32, 'reps'),
+          ),
+        )
+        .toList(growable: false);
+  }
 
   /// Loads cards grouped by requested note IDs using bounded SQLite queries.
   /// Notes without cards are present with an empty list.

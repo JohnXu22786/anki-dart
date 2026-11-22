@@ -20,6 +20,7 @@ export 'src/revlog.dart';
 export 'src/fsrs_memory_state.dart';
 export 'src/fsrs_training_items.dart';
 export 'src/review_queue.dart';
+export 'src/queue_admission.dart';
 export 'src/field_checksum.dart';
 export 'src/field_is_empty.dart';
 export 'src/unicode_casefold.dart';

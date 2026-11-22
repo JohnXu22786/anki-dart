@@ -11,6 +11,20 @@ values. Collection-backed due selection, scheduler execution and counts,
 load balancing, answer persistence and undo, and Reviewer UI remain outside
 this boundary for later units.
 
+`admitQueueCandidates()` also adapts Core's queue-builder gathering and limit
+behavior from `rslib/src/scheduler/queue/builder/{gathering.rs,burying.rs,mod.rs}`,
+`rslib/src/scheduler/queue/mod.rs`, and `rslib/src/decks/limits.rs`. It accepts
+ordered, already gathered candidates, explicit scheduler timestamps, current
+and parent deck capacities, and per-note bury modes. Previously gathered
+intraday cards seed bury state without being added to this result. It admits
+interday learning before reviews and new cards, shares review limits between
+interday learning and reviews, accumulates sibling bury modes in source
+encounter order, and preserves the sorted and by-deck new-card traversal stop
+behavior. SQL
+candidate queries and sorting, daily due-count calculation, load balancing,
+collection-backed limit construction, and scheduler execution remain outside
+this pure slice. It copies no upstream implementation.
+
 This package ports Anki Core Card and Note domain values, protobuf conversions,
 field checksum, field normalization, Note::fix_field_count, note preparation,
 and HTML/media-aware field text behavior from `rslib/src/card/mod.rs`,

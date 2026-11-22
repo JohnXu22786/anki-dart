@@ -2,6 +2,7 @@
 import 'dart:typed_data';
 
 import 'card.dart';
+import 'fsrs_memory_state.dart';
 
 const double _initialEaseFactor = 2.5;
 const double _minimumEaseFactor = 1.3;
@@ -50,6 +51,8 @@ class ReviewSchedulingContext {
     this.minimumLapseInterval = 1,
     this.fuzzFactor,
     this.fsrsNextStates,
+    this.fsrsParams,
+    this.fsrsDesiredRetention,
     this.relearningAgainDelaySecs,
     this.relearningRemainingSteps = 0,
     this.fsrsAllowShortTerm = false,
@@ -70,6 +73,12 @@ class ReviewSchedulingContext {
   final int minimumLapseInterval;
   final double? fuzzFactor;
   final FsrsReviewNextStates? fsrsNextStates;
+
+  /// Exact FSRS parameter set used when [fsrsNextStates] is not precomputed.
+  final List<double>? fsrsParams;
+
+  /// Desired FSRS retention used with [fsrsParams].
+  final double? fsrsDesiredRetention;
   final int? relearningAgainDelaySecs;
   final int relearningRemainingSteps;
   final bool fsrsAllowShortTerm;
@@ -81,6 +90,30 @@ class ReviewSchedulingContext {
   final List<double> relearningStepsMinutes;
   final int graduatingIntervalGood;
   final int graduatingIntervalEasy;
+
+  ReviewSchedulingContext _withFsrsNextStates(FsrsReviewNextStates states) =>
+      ReviewSchedulingContext(
+        hardMultiplier: hardMultiplier,
+        easyMultiplier: easyMultiplier,
+        intervalMultiplier: intervalMultiplier,
+        maximumReviewInterval: maximumReviewInterval,
+        leechThreshold: leechThreshold,
+        lapseMultiplier: lapseMultiplier,
+        minimumLapseInterval: minimumLapseInterval,
+        fuzzFactor: fuzzFactor,
+        fsrsNextStates: states,
+        fsrsParams: fsrsParams,
+        fsrsDesiredRetention: fsrsDesiredRetention,
+        relearningAgainDelaySecs: relearningAgainDelaySecs,
+        relearningRemainingSteps: relearningRemainingSteps,
+        fsrsAllowShortTerm: fsrsAllowShortTerm,
+        fsrsShortTermWithStepsEnabled: fsrsShortTermWithStepsEnabled,
+        relearningStepsEmpty: relearningStepsEmpty,
+        learningStepsMinutes: learningStepsMinutes,
+        relearningStepsMinutes: relearningStepsMinutes,
+        graduatingIntervalGood: graduatingIntervalGood,
+        graduatingIntervalEasy: graduatingIntervalEasy,
+      );
 }
 
 /// A review-card state as used by Anki Core's scheduling-state calculation.
@@ -107,6 +140,36 @@ class ReviewCardState {
 
   /// Calculate Again/Hard/Good/Easy outcomes using Core's review rules.
   ReviewCardSchedulingStates nextStates(ReviewSchedulingContext context) {
+    if (context.fsrsNextStates == null &&
+        context.fsrsParams != null &&
+        context.fsrsDesiredRetention != null) {
+      final calculated = computeFsrsNextStates(
+        currentMemoryState: memoryState,
+        daysElapsed: elapsedDays,
+        desiredRetention: context.fsrsDesiredRetention!,
+        params: context.fsrsParams!,
+      );
+      context = context._withFsrsNextStates(
+        FsrsReviewNextStates(
+          again: FsrsReviewNextState(
+            interval: calculated.again.interval,
+            memoryState: calculated.again.memoryState,
+          ),
+          hard: FsrsReviewNextState(
+            interval: calculated.hard.interval,
+            memoryState: calculated.hard.memoryState,
+          ),
+          good: FsrsReviewNextState(
+            interval: calculated.good.interval,
+            memoryState: calculated.good.memoryState,
+          ),
+          easy: FsrsReviewNextState(
+            interval: calculated.easy.interval,
+            memoryState: calculated.easy.memoryState,
+          ),
+        ),
+      );
+    }
     final intervals = _passingReviewIntervals(context);
     final again = _answerAgain(context);
     return ReviewCardSchedulingStates(

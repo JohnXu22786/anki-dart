@@ -9,6 +9,12 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASHES = {
+    "rslib/src/import_export/package/apkg/export.rs": "aaf20e1c5a1ad69b6635bd6ce8fbbfed4a4cd68791e1f60e9a994a54a1416536",
+    "rslib/src/import_export/gather.rs": "3dcc158bd61263d47e7668cd44e3a7fe28f55f9b6b9249d9fdc67fe039cbc7c7",
+    "rslib/src/import_export/package/media.rs": "29f28c10b3f291d45e3f439749a98a85e938a94bf3b9ac90f8bf44b1178b80cd",
+    "rslib/src/scheduler/new.rs": "9fe6f04a1612e0040b7f2396fccfbd7d20420c4055d586c5cf4b9cbb2a7f7cde",
+    "rslib/src/latex.rs": "3c4b8b1ee50d452c56c7cf850ceb2556a643a808933d84c530f2b48fa06fb3d1",
+    "rslib/src/notetype/mod.rs": "4f133ddf970d954e80cf3352d5bd91bf73418a1d71eaa1fb863218569d4198cb",
     "rslib/src/import_export/text/csv/export.rs": "8dd385c117b0bacd8fd547413987bf8540a0e95b89b36011f4e79488c1f51578",
     "rslib/src/import_export/service.rs": "24307d4034ce83acbf8601f6c40f09a5c1882ce5e43de40b414503decd98203e",
     "proto/anki/import_export.proto": "c45135da25a61946551b56cdb6e1d6ca421028457e631c034f7cf6a5e3357ee6",

@@ -67,5 +67,19 @@ CollectionSqliteDriver nativeCollectionSqliteDriver({
         await directory.delete(recursive: true);
       }
     },
+    exportFromSnapshot: (CommonDatabase database, build) async {
+      final source = database as Database;
+      final directory = await Directory.systemTemp.createTemp('anki-export-');
+      final path = '${directory.path}${Platform.pathSeparator}collection.db';
+      Database? copy;
+      try {
+        copy = sqlite.open(path);
+        await source.backup(copy).drain<void>();
+        return await build(copy);
+      } finally {
+        copy?.close();
+        await directory.delete(recursive: true);
+      }
+    },
   );
 }

@@ -159,7 +159,24 @@ stream bounded chunks.
 
 `src/apkg_package_builder.dart` writes the ZIP container and APKG package
 metadata in Dart. It uses `archive` 4.7.1 (MIT) for ZIP encoding,
-`pure_zstd` 1.1.0 (MIT) for current-format Zstandard frames, and `crypto`
-3.0.8 (BSD-3-Clause) for media SHA-1 values. Their license texts are retained
-under `LICENSES/`. The package names and metadata are defined by the pinned
-Anki Core protocol; no Core implementation code is copied.
+`crypto` 3.0.8 (BSD-3-Clause) for media SHA-1 values, and a portable Dart
+encoder in `src/zstd_frame.dart` for valid raw-block Zstandard frames. The
+`pure_zstd` 1.1.0 MIT package is used only by tests to decode and verify those
+frames. The exporter uses `html` 0.15.7 (MIT) to decode HTML entities for
+media filenames and LaTeX hashes; `csslib` 1.0.2 (BSD-3-Clause) is its
+transitive dependency. Third-party license texts are retained under
+`LICENSES/`. The package names and metadata are defined by the pinned Anki
+Core protocol; no Core implementation code is copied.
+
+The shared APKG exporter follows the implementation and data rules in Anki
+Core `rslib/src/import_export/package/apkg/export.rs`,
+`rslib/src/import_export/gather.rs`,
+`rslib/src/import_export/package/media.rs`,
+`rslib/src/scheduler/new.rs`, `rslib/src/scheduler/filtered/card.rs`,
+`rslib/src/storage/card/data.rs`, `rslib/src/latex.rs`,
+`rslib/src/notetype/mod.rs`, and `rslib/src/text.rs`, pinned to
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The implementation is original
+Dart code; the pinned source hashes are recorded in `SOURCE.sha256` and
+validated by `tool/check_package.py`. It uses host-provided detached SQLite
+copies and portable media reads, so shared export code does not depend on
+`dart:io`.

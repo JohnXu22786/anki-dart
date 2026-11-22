@@ -9,10 +9,10 @@ import 'package:anki_backend_protocol/anki/import_export.pbenum.dart'
     as protocol_enum;
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
-import 'package:pure_zstd/pure_zstd.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
 import 'portable_package_io.dart';
+import 'zstd_frame.dart';
 
 /// Builds the ZIP container used by Anki's APKG package formats.
 ///
@@ -50,7 +50,7 @@ final class ApkgPackageBuilder {
       archive.addFile(
         ArchiveFile.bytes(
           '$index',
-          legacy ? entry.value : zstdEncode(entry.value),
+          legacy ? entry.value : encodeZstandardFrame(entry.value),
         ),
       );
     }
@@ -85,12 +85,15 @@ final class ApkgPackageBuilder {
       );
     } else {
       archive.addFile(
-        ArchiveFile.bytes('collection.anki21b', zstdEncode(collectionDatabase)),
+        ArchiveFile.bytes(
+          'collection.anki21b',
+          encodeZstandardFrame(collectionDatabase),
+        ),
       );
       archive.addFile(
         ArchiveFile.bytes(
           'media',
-          zstdEncode(
+          encodeZstandardFrame(
             Uint8List.fromList(
               protocol.MediaEntries(
                 entries: [

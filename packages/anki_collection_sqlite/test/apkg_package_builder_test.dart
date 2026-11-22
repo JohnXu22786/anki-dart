@@ -6,12 +6,39 @@ import 'dart:typed_data';
 
 import 'package:anki_backend_protocol/anki/import_export.pb.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:anki_collection_sqlite/src/zstd_frame.dart';
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:pure_zstd/pure_zstd.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test(
+    'portable Zstandard frames decode across content and block boundaries',
+    () {
+      for (final length in [
+        0,
+        1,
+        255,
+        256,
+        65791,
+        65792,
+        131072,
+        131073,
+        262401,
+      ]) {
+        final input = Uint8List.fromList(
+          List<int>.generate(length, (index) => index % 251),
+        );
+        expect(
+          zstdDecode(encodeZstandardFrame(input)),
+          input,
+          reason: '$length bytes',
+        );
+      }
+    },
+  );
+
   const database = [0x53, 0x51, 0x4c, 0x69, 0x74, 0x65];
   const compatibilityDatabase = [0x53, 0x51, 0x4c, 0x31, 0x31];
 

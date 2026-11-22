@@ -29,8 +29,9 @@ dependencies:
   web: ^1.1.2
   archive: ^4.7.1
   crypto: ^3.0.7
-  pure_zstd: ^1.1.0
+  html: ^0.15.6
 
 dev_dependencies:
   test: ^1.25.8
   typed_data: ^1.4.0
+  pure_zstd: ^1.1.0

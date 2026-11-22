@@ -50,6 +50,23 @@ sorting, queue counts, scheduler configuration lookup, load balancing, and
 scheduler execution remain outside this pure slice. Pinned source hashes and
 AGPL attribution are recorded in the package notice and `SOURCE.sha256`.
 
+### Unit 76 — collection-backed intraday learning candidates
+
+`CollectionSqliteStorage.intradayLearningCandidates()` reads candidate rows
+from the collection for caller-supplied active deck IDs and `learnCutoff`
+seconds. It selects only cards in those decks with queue code 1 (Learning) or
+4 (PreviewRepeat) and `due <= learnCutoff`, projecting card ID, note ID, due
+seconds, integer-cast modification seconds, current deck ID, original deck ID,
+and reps. IDs and modification seconds retain signed 64-bit precision; due is
+an i32 with Core's default-zero handling when its row conversion fails, and
+reps is checked as u32. Each matching database row is returned once in
+SQLite's natural query order; empty deck input returns an empty list.
+Intraday sort and learn-ahead filtering, Unit74 bury-state resolution, review
+and interday/new queries, counts, active deck construction, scheduler runtime,
+persistence, and UI remain outside this boundary. Core source hashes and AGPL
+provenance are recorded in `packages/anki_collection_sqlite/NOTICE.md` and
+`SOURCE.sha256`.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,

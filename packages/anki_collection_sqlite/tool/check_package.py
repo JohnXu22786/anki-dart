@@ -75,6 +75,7 @@ SOURCE_HASHES = {
     "lib/src/unicode_property_aliases.dart": "6eb765474bff5dbb4f3a1062243286f2f6ba43396186d13dfb16ce7e6657fd44",
     "rslib/src/dbcheck.rs": "a3a7afb7ebb7a8c1bb67f11c3011fa813478dce8bfbee1b55457dcf89816b44f",
     "rslib/src/storage/card/mod.rs": "423e00d89092a4f1ab8e03923bfa8db455748043276c7bd647e2704bfcf7da95",
+    "rslib/src/storage/card/intraday_due.sql": "69d06e4cc1de7fc4618bf1d90948ef8812dbf851fc9cee2ef9e52272cbad8e4a",
     "rslib/src/storage/card/fix_due_new.sql": "cb38265f96e2e8fdc8da84f2fb9dc9cb721ef724cae75dcda8bab3480eb4415d",
     "rslib/src/storage/card/fix_due_other.sql": "33895097788018a48bb8bd202188712dde6e0db20bd546db35487172d0ceb891",
     "rslib/src/storage/card/fix_odue.sql": "d8807f2619ad78594e12def2edced4dabfac47bbf41c4d30fe6ab0de02d2e390",

@@ -17,6 +17,17 @@ against the repository's AnkiDroid 2.25.3 baseline at commit
 `d9bf072f814a0c37d30a694192593b31ff2df875`. Schema and migration SQL remain in
 the separately licensed `anki_collection_schema` package.
 
+Intraday learning candidates adapt Anki Core's
+`rslib/src/storage/card/intraday_due.sql` and
+`for_each_intraday_card_in_active_decks()` in `rslib/src/storage/card/mod.rs`
+at the same pinned revision. The query accepts active deck IDs and a learning
+cutoff from its caller and returns the source seven-column projection. Card,
+note, and deck IDs and mtime remain exact signed 64-bit values; due and reps
+use Core's i32 and u32 representations, including its default-zero conversion
+for an unreadable due value. It does not copy upstream SQL or Rust code. The
+SQL source hash is recorded in `SOURCE.sha256`. This adapter code and its tests
+are licensed under AGPL-3.0-or-later; root `COPYING` remains unchanged.
+
 The batch notetype loader adapts Core's `rslib/src/storage/notetype/mod.rs`,
 `get_notetype.sql`, `get_fields.sql`, and `get_templates.sql` at the same
 revision. Their SHA-256 digests are checked by `tool/check_package.py` and

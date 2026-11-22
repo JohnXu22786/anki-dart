@@ -63,10 +63,12 @@ The `Tag` value model follows `rslib/src/tags/mod.rs` at the pinned Anki Core co
 `ReviewCardState.nextStates()` ports the review-state transition and interval
 calculation from `rslib/src/scheduler/states/review.rs`, including the review
 fuzz rules from `states/fuzz.rs` and the `LearningSteps` failure-delay inputs
-from `states/steps.rs`. It accepts scheduler configuration, deterministic fuzz,
-and FSRS-provided next intervals/memory as inputs; FSRS parameter training,
-next-state calculation, queue construction, persistence, and answer execution
-remain host-owned. The per-card memory-state calculation is described below.
+from `states/steps.rs`. It accepts scheduler configuration and deterministic
+fuzz. Hosts may supply FSRS next intervals/memory directly, or provide the
+current memory state, elapsed days, desired retention, and exact parameters for
+the pure FSRS 5.2.0 per-rating calculation. Queue construction, persistence,
+parameter training, and answer execution remain host-owned. The per-card
+memory-state calculation is described below.
 The adaptation follows Anki Core commit
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985`; exact source hashes are recorded in
 `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and contributors and is
@@ -95,8 +97,12 @@ contributors, licensed under AGPL-3.0-or-later. The adapted FSRS algorithm
 source is Copyright Open Spaced Repetition and licensed under BSD-3-Clause;
 its license text is included at `LICENSES/BSD-3-Clause-FSRS.txt`. This is only
 the deterministic per-card calculation: FSRS parameter training, bulk updates,
-collection and revlog queries, transactions, rescheduling, queue construction,
-and review-session orchestration remain host-owned.
+collection and revlog queries, transactions, bulk rescheduling, queue
+construction, and review-session orchestration remain host-owned. The
+`computeFsrsNextStates()` and `computeFsrsNextInterval()` APIs compute only the
+deterministic memory state and raw interval; interval limits, fuzz, and
+short-term queue decisions stay with `ReviewCardState.nextStates()` and its
+caller-supplied context.
 
 
 The platform-neutral browser card-template renderer also follows Anki Core's

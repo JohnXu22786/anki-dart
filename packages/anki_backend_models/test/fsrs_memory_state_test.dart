@@ -35,6 +35,196 @@ FsrsMemoryState? _compute(
 
 void main() {
   group('FSRS memory state', () {
+    test('computes all new-card rating states with pinned FSRS defaults', () {
+      final states = computeFsrsNextStates(
+        currentMemoryState: null,
+        daysElapsed: 0,
+        desiredRetention: 0.9,
+        params: const [],
+      );
+
+      // FSRS 5.2.0 initializes stability from w[0..3] and computes difficulty
+      // from the rating-specific initial-difficulty equation.
+      expect(states.again.memoryState.stability, closeTo(0.212, 0.000001));
+      expect(states.hard.memoryState.stability, closeTo(1.2931, 0.0001));
+      expect(states.good.memoryState.stability, closeTo(2.3065, 0.0001));
+      expect(states.easy.memoryState.stability, closeTo(8.2956, 0.0001));
+      expect(states.again.memoryState.difficulty, closeTo(6.4133, 0.0001));
+      expect(states.easy.memoryState.difficulty, closeTo(1.0, 0.0001));
+      expect(
+        states.again.interval,
+        closeTo(states.again.memoryState.stability, 0.0001),
+      );
+      expect(states.easy.interval, greaterThan(states.good.interval));
+    });
+
+    test(
+      'uses explicit elapsed days, retention and pre-existing memory state',
+      () {
+        final parameters = [
+          0.6845422,
+          1.6790825,
+          4.7349424,
+          10.042885,
+          7.4410233,
+          0.64219797,
+          1.071918,
+          0.0025195254,
+          1.432437,
+          0.1544,
+          0.8692766,
+          2.0696752,
+          0.0953,
+          0.2975,
+          2.4691248,
+          0.19542035,
+          3.201072,
+          0.18046261,
+          0.121442534,
+        ];
+        final afterTwentyOneDays = computeFsrsNextStates(
+          currentMemoryState: FsrsMemoryState(
+            stability: 21,
+            difficulty: 8,
+          ),
+          daysElapsed: 21,
+          desiredRetention: 0.9,
+          params: parameters,
+        );
+        final sameDay = computeFsrsNextStates(
+          currentMemoryState: FsrsMemoryState(
+            stability: 21,
+            difficulty: 8,
+          ),
+          daysElapsed: 0,
+          desiredRetention: 0.9,
+          params: parameters,
+        );
+
+        expect(
+          afterTwentyOneDays.again.memoryState.stability,
+          greaterThan(sameDay.again.memoryState.stability),
+        );
+        expect(
+          afterTwentyOneDays.good.interval,
+          closeTo(afterTwentyOneDays.good.memoryState.stability, 0.001),
+        );
+        expect(
+          afterTwentyOneDays.easy.memoryState.difficulty,
+          lessThan(afterTwentyOneDays.again.memoryState.difficulty),
+        );
+        expect(
+          computeFsrsNextStates(
+            currentMemoryState: FsrsMemoryState(
+              stability: 21,
+              difficulty: 8,
+            ),
+            daysElapsed: 21,
+            desiredRetention: 1,
+            params: parameters,
+          ).good.interval,
+          0,
+        );
+        expect(
+          computeFsrsNextInterval(
+            stability: 1,
+            desiredRetention: 0,
+            params: parameters,
+          ).isInfinite,
+          isTrue,
+        );
+      },
+    );
+
+    test('matches the fsrs 5.2.0 next interval fixture', () {
+      final parameters = List<double>.filled(21, 0)
+        ..[0] = 0.212
+        ..[1] = 1.2931
+        ..[2] = 2.3065
+        ..[3] = 8.2956
+        ..[4] = 6.4133
+        ..[5] = 0.8334
+        ..[6] = 3.0194
+        ..[7] = 0.001
+        ..[8] = 1.8722
+        ..[9] = 0.1666
+        ..[10] = 0.796
+        ..[11] = 1.4835
+        ..[12] = 0.0614
+        ..[13] = 0.2629
+        ..[14] = 1.6483
+        ..[15] = 0.6014
+        ..[16] = 1.8729
+        ..[17] = 0.5425
+        ..[18] = 0.0912
+        ..[19] = 0.0658
+        ..[20] = 0.1542;
+
+      expect(
+        computeFsrsNextInterval(
+          stability: 121.01552,
+          desiredRetention: 0.9,
+          params: parameters,
+        ),
+        closeTo(121.01551, 0.0001),
+      );
+    });
+
+    test(
+      'review projections can compute FSRS states while legacy inputs remain',
+      () {
+        const params = <double>[];
+        final computed = ReviewCardState(
+          scheduledDays: 10,
+          elapsedDays: 12,
+          memoryState: FsrsMemoryState(stability: 10, difficulty: 6),
+        ).nextStates(
+          const ReviewSchedulingContext(
+            fsrsParams: params,
+            fsrsDesiredRetention: 0.9,
+          ),
+        );
+        final direct = computeFsrsNextStates(
+          currentMemoryState: FsrsMemoryState(
+            stability: 10,
+            difficulty: 6,
+          ),
+          daysElapsed: 12,
+          desiredRetention: 0.9,
+          params: params,
+        );
+
+        expect(
+          computed.again.review.memoryState!.stability,
+          direct.again.memoryState.stability,
+        );
+        expect(
+          computed.hard.review.memoryState!.difficulty,
+          direct.hard.memoryState.difficulty,
+        );
+        expect(
+          computed.good.review.memoryState!.stability,
+          direct.good.memoryState.stability,
+        );
+        expect(
+          computed.easy.review.memoryState!.difficulty,
+          direct.easy.memoryState.difficulty,
+        );
+        expect(
+          computed.good.review.scheduledDays,
+          direct.good.interval.round(),
+        );
+        expect(
+          ReviewCardState(scheduledDays: 10)
+              .nextStates(const ReviewSchedulingContext())
+              .good
+              .review
+              .memoryState,
+          isNull,
+        );
+      },
+    );
+
     test('uses pinned Core fallback for a truncated review history', () {
       final inferred = _compute([
         _entry(

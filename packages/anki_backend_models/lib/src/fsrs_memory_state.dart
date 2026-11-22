@@ -24,6 +24,96 @@ double fsrsDecayFromParams(List<double> params) => _f32(
               : params[20],
     );
 
+/// One FSRS result for a prospective answer rating.
+class FsrsCalculatedState {
+  const FsrsCalculatedState({
+    required this.memoryState,
+    required this.interval,
+  });
+
+  final FsrsMemoryState memoryState;
+  final double interval;
+}
+
+/// FSRS results in Again, Hard, Good, Easy rating order.
+class FsrsCalculatedNextStates {
+  const FsrsCalculatedNextStates({
+    required this.again,
+    required this.hard,
+    required this.good,
+    required this.easy,
+  });
+
+  final FsrsCalculatedState again;
+  final FsrsCalculatedState hard;
+  final FsrsCalculatedState good;
+  final FsrsCalculatedState easy;
+}
+
+/// Computes the raw interval for an existing stability and desired retention.
+///
+/// This matches FSRS 5.2.0's `next_interval()` calculation and does not apply
+/// scheduler fuzz or interval limits.
+double computeFsrsNextInterval({
+  required double stability,
+  required double desiredRetention,
+  required List<double> params,
+}) =>
+    _nextInterval(_parameters(params), stability, desiredRetention);
+
+/// Computes the FSRS 5.2.0 memory state and interval for all four ratings.
+///
+/// [currentMemoryState] is null for a new card. [daysElapsed] is the explicit
+/// elapsed-day input used by Core; this function reads no clock or storage.
+/// Returned intervals are raw FSRS intervals; scheduler interval limits, fuzz,
+/// and short-term queue decisions remain the caller's responsibility.
+FsrsCalculatedNextStates computeFsrsNextStates({
+  required FsrsMemoryState? currentMemoryState,
+  required int daysElapsed,
+  required double desiredRetention,
+  required List<double> params,
+}) {
+  final weights = _parameters(params);
+  final current = currentMemoryState == null
+      ? const _Memory(0, 0)
+      : _Memory(
+          _f32(currentMemoryState.stability),
+          _f32(currentMemoryState.difficulty),
+        );
+  final isNew = currentMemoryState == null;
+  final elapsed = daysElapsed.toUnsigned(32);
+  FsrsCalculatedState calculate(int rating) {
+    final next = _step(weights, current, elapsed, rating, isNew ? 0 : 1);
+    if (!next.stability.isFinite || !next.difficulty.isFinite) {
+      throw const InvalidModelValue('invalid FSRS memory state');
+    }
+    final interval = _nextInterval(weights, next.stability, desiredRetention);
+    return FsrsCalculatedState(
+      memoryState: FsrsMemoryState(
+        stability: next.stability,
+        difficulty: next.difficulty,
+      ),
+      interval: interval,
+    );
+  }
+
+  return FsrsCalculatedNextStates(
+    again: calculate(1),
+    hard: calculate(2),
+    good: calculate(3),
+    easy: calculate(4),
+  );
+}
+
+double _nextInterval(List<double> weights, double stability, double retention) {
+  final decay = _f32(-weights[20]);
+  final factor = _sub(_exp(_mul(_div(1, decay), _log(0.9))), 1);
+  return _mul(
+    _div(stability, factor),
+    _sub(_pow(_f32(retention), _div(1, decay)), 1),
+  );
+}
+
 /// Computes a card's current FSRS memory state from its ordered review history.
 ///
 /// [revlogs] must be the card's entries in ascending timestamp order, as returned

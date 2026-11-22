@@ -1,5 +1,16 @@
 # Source and license notice
 
+The shared review-queue primitives adapt `QueueEntry`, intraday learning
+ordering, cutoff selection and learning-card requeue behavior from
+`rslib/src/scheduler/queue/{entry.rs,learning.rs}`, and the two-list selection
+ratio from `rslib/src/scheduler/queue/builder/intersperser.rs`, at the pinned
+Anki Core commit below. Source digests are recorded in `SOURCE.sha256`. This
+package slice is limited to deterministic entry mapping, sorting, cutoff
+selection, requeue mechanics and queue interspersing with caller-supplied time
+values. Collection-backed due selection, scheduler execution and counts,
+load balancing, answer persistence and undo, and Reviewer UI remain outside
+this boundary for later units.
+
 This package ports Anki Core Card and Note domain values, protobuf conversions,
 field checksum, field normalization, Note::fix_field_count, note preparation,
 and HTML/media-aware field text behavior from `rslib/src/card/mod.rs`,

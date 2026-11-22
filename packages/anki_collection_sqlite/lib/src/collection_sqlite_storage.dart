@@ -39,6 +39,7 @@ import 'add_note.dart';
 import 'text_export.dart';
 import 'portable_package_io.dart';
 import 'intraday_learning_candidate.dart';
+import 'due_card_candidate.dart';
 import 'new_card_candidate.dart';
 import 'apkg_package_builder.dart';
 import 'apkg_exporter.dart';
@@ -3874,6 +3875,111 @@ WHERE queue IN (-2, -3)
     card.flags,
     _cardDataJson(card),
   ];
+
+  /// Returns due review or interday-learning cards in the explicitly supplied
+  /// active decks, in Core's selected review order. Timing and FSRS state are
+  /// caller inputs; this query does not inspect collection configuration.
+  Future<List<DueCardCandidate>> dueCardCandidates({
+    required Iterable<Int64> activeDeckIds,
+    required DueCardKind kind,
+    required ReviewCardOrder reviewOrder,
+    required bool fsrsEnabled,
+    required int daysElapsed,
+    required Int64 now,
+    required Int64 nextDayAt,
+  }) async {
+    _requiredUnsigned(daysElapsed, 32, 'daysElapsed');
+    final deckIds = <Int64>[];
+    final seenDeckIds = <String>{};
+    for (final deckId in activeDeckIds) {
+      if (seenDeckIds.add(deckId.toString())) deckIds.add(deckId);
+    }
+    if (deckIds.isEmpty) return const [];
+
+    // The CTE preserves the caller's deck order for Core's Deck subclause.
+    // Typed Int64 decimal literals avoid SQLite's bound-variable limit.
+    final activeDeckValues = deckIds.indexed
+        .map((entry) => '(${entry.$2}, ${entry.$1 + 1})')
+        .join(', ');
+    final orderBy = _dueCardReviewOrderSql(
+      reviewOrder: reviewOrder,
+      fsrsEnabled: fsrsEnabled,
+      daysElapsed: daysElapsed,
+      now: now,
+      nextDayAt: nextDayAt,
+    );
+    final queue = kind == DueCardKind.review ? 2 : 3;
+    final rows = _database.select(
+      'WITH active_decks(id, deck_order) AS (VALUES $activeDeckValues) '
+      'SELECT c.id, c.nid, c.due, cast(c.ivl AS integer) AS ivl, '
+      'cast(c.mod AS integer) AS mtime_secs, c.did, c.odid, c.reps '
+      'FROM cards c WHERE c.did IN '
+      '(SELECT id FROM active_decks) AND c.queue = ? AND c.due <= ? '
+      'ORDER BY $orderBy',
+      [queue, BigInt.from(daysElapsed)],
+    );
+    return rows
+        .map(
+          (row) => DueCardCandidate(
+            id: _readInt64(row['id']),
+            noteId: _readInt64(row['nid']),
+            due: _optionalInt32(row['due']) ?? 0,
+            interval: _readInt64(row['ivl']),
+            mtimeSecs: _readInt64(row['mtime_secs']),
+            currentDeckId: _readInt64(row['did']),
+            originalDeckId: _readInt64(row['odid']),
+            reps: _requiredUnsigned(row['reps'], 32, 'reps'),
+            kind: kind,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  String _dueCardReviewOrderSql({
+    required ReviewCardOrder reviewOrder,
+    required bool fsrsEnabled,
+    required int daysElapsed,
+    required Int64 now,
+    required Int64 nextDayAt,
+  }) {
+    final primaryOrder = switch (reviewOrder) {
+      ReviewCardOrder.day => 'c.due',
+      ReviewCardOrder.dayThenDeck =>
+        'c.due, (SELECT deck_order FROM active_decks ad WHERE ad.id = c.did)',
+      ReviewCardOrder.deckThenDay =>
+        '(SELECT deck_order FROM active_decks ad WHERE ad.id = c.did), c.due',
+      ReviewCardOrder.intervalsAscending => 'c.ivl ASC',
+      ReviewCardOrder.intervalsDescending => 'c.ivl DESC',
+      ReviewCardOrder.easeAscending =>
+        fsrsEnabled
+            ? "extract_fsrs_variable(c.data, 'd') DESC"
+            : 'c.factor ASC',
+      ReviewCardOrder.easeDescending =>
+        fsrsEnabled
+            ? "extract_fsrs_variable(c.data, 'd') ASC"
+            : 'c.factor DESC',
+      ReviewCardOrder.retrievabilityAscending =>
+        'extract_fsrs_retrievability(c.data, '
+            'case when c.odue != 0 then c.odue else c.due end, c.ivl, '
+            '$daysElapsed, ${nextDayAt.toString()}, ${now.toString()}) ASC',
+      ReviewCardOrder.retrievabilityDescending =>
+        'extract_fsrs_retrievability(c.data, '
+            'case when c.odue != 0 then c.odue else c.due end, c.ivl, '
+            '$daysElapsed, ${nextDayAt.toString()}, ${now.toString()}) DESC',
+      ReviewCardOrder.random => '',
+      ReviewCardOrder.added => 'c.nid ASC, c.ord ASC',
+      ReviewCardOrder.reverseAdded => 'c.nid DESC, c.ord ASC',
+      ReviewCardOrder.relativeOverdueness when fsrsEnabled =>
+        'extract_fsrs_relative_retrievability(c.data, '
+            'case when c.odue != 0 then c.odue else c.due end, c.ivl, '
+            '$daysElapsed, ${nextDayAt.toString()}, ${now.toString()}) ASC',
+      ReviewCardOrder.relativeOverdueness =>
+        '-(1 + cast($daysElapsed-c.due+0.001 as real)/c.ivl) ASC',
+    };
+    return primaryOrder.isEmpty
+        ? 'fnvhash(c.id, c.mod)'
+        : '$primaryOrder, fnvhash(c.id, c.mod)';
+  }
 
   /// Returns all stored cards for [noteId], in SQLite's natural query order.
   Future<List<Card>> allCardsOfNote(NoteId noteId) async => _database

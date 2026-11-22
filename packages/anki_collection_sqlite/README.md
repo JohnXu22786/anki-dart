@@ -66,6 +66,14 @@ u32 salt. The six-field candidate projection preserves exact signed 64-bit
 values and SQLite row order. Active-deck derivation, limits, later sorting, and
 scheduler execution remain caller-owned.
 
+`dueCardCandidates()` reads review or interday-learning candidates from
+caller-supplied active deck IDs, queue kind, Core review order, FSRS state, and
+explicit scheduler timing values. It applies Core's inclusive due-day cutoff,
+all review ordering modes, caller deck order for Deck sorts, and the deterministic
+`fnvhash(id, mod)` tie-breaker. Candidate IDs and mtime remain exact signed
+64-bit values; due uses Core's i32/default-zero conversion and reps is validated
+as u32. It does not inspect collection configuration or choose active decks.
+
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and
 `getAllNoteIds`. Missing single rows return `null`; collection queries return

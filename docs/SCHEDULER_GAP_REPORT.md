@@ -96,6 +96,24 @@ source hashes and AGPL attribution are recorded in
 `packages/anki_collection_sqlite/NOTICE.md` and
 `packages/anki_collection_sqlite/SOURCE.sha256`.
 
+### Unit 79 — active-deck due review and interday-learning candidates
+
+`CollectionSqliteStorage.dueCardCandidates()` reads review or interday-learning
+cards from exactly the supplied active-deck IDs and applies Core's queue and
+inclusive due-day cutoff. It returns Core's eight candidate fields, preserving
+signed 64-bit IDs and mtime, applying i32/default-zero due conversion, and
+validating reps as u32. The caller supplies deck order, queue kind, review
+order, FSRS state, and scheduler timing. All Core review orders are represented,
+including Deck/Day composites ranked by caller deck order, FSRS-specific ease
+ordering, retrievability, relative overdueness, and the `fnvhash(id, mod)`
+tie-breaker. Empty and duplicate deck inputs are handled without duplicate
+candidates, and large sets use exact typed decimal literals instead of SQLite
+bind variables. Active-deck derivation, configuration lookup, review/new
+admission limits, gather stopping, queue mixing/sorting, counts, load balancing,
+scheduler runtime, persistence, and UI remain outside this unit. Pinned source
+hashes and AGPL provenance are recorded in the package notice and
+`packages/anki_collection_sqlite/SOURCE.sha256`.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -108,8 +126,8 @@ source hashes and AGPL attribution are recorded in
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining queue work: review candidate queries, daily counts, load balancing,
-  and collection-backed scheduler configuration reads.
+- Remaining queue work: daily counts, load balancing, and collection-backed
+  scheduler configuration reads.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

@@ -11,6 +11,7 @@ export 'src/portable_package_io.dart';
 export 'src/apkg_package_builder.dart';
 export 'src/apkg_exporter.dart';
 export 'src/intraday_learning_candidate.dart';
+export 'src/due_card_candidate.dart';
 export 'src/new_card_candidate.dart';
 
 export 'package:anki_search_sql/anki_search_sql.dart'

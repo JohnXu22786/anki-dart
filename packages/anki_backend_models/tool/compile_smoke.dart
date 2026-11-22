@@ -149,6 +149,7 @@ void main() {
         nextDayAtSecs: 200,
       ),
       rootDeckId: 1,
+      newCardsIgnoreReviewLimit: false,
       intradayCandidatesForBuryState: [
         QueueCandidate<int, int, int>(
           cardId: 12,

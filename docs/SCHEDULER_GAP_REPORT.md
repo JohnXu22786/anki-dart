@@ -28,8 +28,10 @@ accepts Unit73's already gathered intraday candidates as bury-state seeds while
 leaving those cards in Unit73's existing queue output. It applies separate
 root and non-root current/parent deck limits, accumulates each note's bury modes
 as siblings are encountered, and preserves the distinct sorted and by-deck new
-gather stop behavior. Scheduler timestamps, candidate order, deck ancestry and
-limits, and per-candidate bury modes are explicit inputs. Collection candidate
+gather stop behavior. It also models Core's configurable review-to-new limit
+coupling for root and each deck/ancestor. Scheduler timestamps, candidate order,
+deck ancestry and limits, limit-coupling policy, and per-candidate bury modes
+are explicit inputs. Collection candidate
 queries and sorting, intraday learning selection, due counts, load balancing,
 and scheduler execution remain outside this slice. Pinned source hashes and
 AGPL attribution are recorded in `packages/anki_backend_models/NOTICE.md` and

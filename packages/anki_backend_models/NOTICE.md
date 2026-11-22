@@ -20,7 +20,8 @@ intraday cards seed bury state without being added to this result. It admits
 interday learning before reviews and new cards, shares review limits between
 interday learning and reviews, accumulates sibling bury modes in source
 encounter order, and preserves the sorted and by-deck new-card traversal stop
-behavior. SQL
+behavior. It also applies Core's configurable review-to-new limit coupling at
+the root and each deck/parent when review cards are admitted. SQL
 candidate queries and sorting, daily due-count calculation, load balancing,
 collection-backed limit construction, and scheduler execution remain outside
 this pure slice. It copies no upstream implementation.

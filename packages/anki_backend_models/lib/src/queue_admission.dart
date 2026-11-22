@@ -74,6 +74,7 @@ class QueueAdmissionInput<CardIdT, NoteIdT, DeckIdT> {
     this.newCandidatesByDeck = const {},
     this.newDeckOrder = const [],
     this.newGatherPath = NewCardGatherPath.sorted,
+    required this.newCardsIgnoreReviewLimit,
     this.rootReviewLimit,
     this.rootNewLimit,
     this.deckLimits = const {},
@@ -94,6 +95,9 @@ class QueueAdmissionInput<CardIdT, NoteIdT, DeckIdT> {
       newCandidatesByDeck;
   final List<DeckIdT> newDeckOrder;
   final NewCardGatherPath newGatherPath;
+
+  /// Core's global switch that disables review-to-new daily-limit coupling.
+  final bool newCardsIgnoreReviewLimit;
   final int? rootReviewLimit;
   final int? rootNewLimit;
 
@@ -140,6 +144,32 @@ QueueAdmissionResult<CardIdT, NoteIdT, DeckIdT>
   };
   var rootReview = input.rootReviewLimit;
   var rootNew = input.rootNewLimit;
+  if (!input.newCardsIgnoreReviewLimit) {
+    for (final deckId in remainingNew.keys) {
+      remainingNew[deckId] = _minLimit(
+        remainingNew[deckId],
+        remainingReview[deckId],
+      );
+    }
+    rootNew = _minLimit(rootNew, rootReview);
+  }
+
+  void decrementReviewAndParents(DeckIdT deckId) {
+    _decrementReviewAndParents(
+      deckId,
+      remainingReview,
+      remainingNew,
+      input.parentDeckIds,
+      input.rootDeckId,
+      capNewToReview: !input.newCardsIgnoreReviewLimit,
+    );
+    if (rootReview != null) {
+      rootReview = rootReview! - 1;
+      if (!input.newCardsIgnoreReviewLimit) {
+        rootNew = _minLimit(rootNew, rootReview);
+      }
+    }
+  }
 
   void encounter(QueueCandidate<CardIdT, NoteIdT, DeckIdT> candidate) {
     final previous = seenNotes[candidate.noteId];
@@ -174,13 +204,7 @@ QueueAdmissionResult<CardIdT, NoteIdT, DeckIdT>
     final shouldBury = buried(candidate, (mode) => mode.buryInterdayLearning);
     if (!shouldBury) {
       admittedDayLearning.add(candidate);
-      _decrementDeckAndParents(
-        candidate.currentDeckId,
-        remainingReview,
-        input.parentDeckIds,
-        input.rootDeckId,
-      );
-      if (rootReview != null) rootReview--;
+      decrementReviewAndParents(candidate.currentDeckId);
     }
   }
 
@@ -197,13 +221,7 @@ QueueAdmissionResult<CardIdT, NoteIdT, DeckIdT>
     final shouldBury = buried(candidate, (mode) => mode.buryReviews);
     if (!shouldBury) {
       admittedReviews.add(candidate);
-      _decrementDeckAndParents(
-        candidate.currentDeckId,
-        remainingReview,
-        input.parentDeckIds,
-        input.rootDeckId,
-      );
-      if (rootReview != null) rootReview--;
+      decrementReviewAndParents(candidate.currentDeckId);
     }
   }
 
@@ -227,7 +245,7 @@ QueueAdmissionResult<CardIdT, NoteIdT, DeckIdT>
           input.parentDeckIds,
           input.rootDeckId,
         );
-        if (rootNew != null) rootNew--;
+        if (rootNew != null) rootNew = rootNew! - 1;
       }
     }
   } else {
@@ -261,7 +279,7 @@ QueueAdmissionResult<CardIdT, NoteIdT, DeckIdT>
             input.parentDeckIds,
             input.rootDeckId,
           );
-          if (rootNew != null) rootNew--;
+          if (rootNew != null) rootNew = rootNew! - 1;
         }
       }
     }
@@ -302,4 +320,32 @@ void _decrementDeckAndParents<DeckIdT>(
     if (remaining != null && remaining > 0) limits[current] = remaining - 1;
     current = parents[current];
   }
+}
+
+void _decrementReviewAndParents<DeckIdT>(
+  DeckIdT deckId,
+  Map<DeckIdT, int?> remainingReview,
+  Map<DeckIdT, int?> remainingNew,
+  Map<DeckIdT, DeckIdT?> parents,
+  DeckIdT rootDeckId, {
+  required bool capNewToReview,
+}) {
+  DeckIdT? current = deckId;
+  final visited = <DeckIdT>{};
+  while (current != null && current != rootDeckId && visited.add(current)) {
+    final review = remainingReview[current];
+    if (review != null && review > 0) {
+      remainingReview[current] = review - 1;
+      if (capNewToReview) {
+        remainingNew[current] = _minLimit(remainingNew[current], review - 1);
+      }
+    }
+    current = parents[current];
+  }
+}
+
+int? _minLimit(int? one, int? two) {
+  if (one == null) return two;
+  if (two == null) return one;
+  return one < two ? one : two;
 }

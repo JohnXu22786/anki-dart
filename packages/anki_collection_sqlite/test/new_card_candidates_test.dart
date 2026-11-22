@@ -172,6 +172,132 @@ void main() {
     );
   });
 
+  test('queries new cards from exactly the supplied active decks', () async {
+    await _insertCards(storage, [
+      _card(id: 1, noteId: 10, deckId: 7, queue: 0, due: 4),
+      _card(id: 2, noteId: 11, deckId: 8, queue: 0, due: 2),
+      _card(id: 3, noteId: 12, deckId: 9, queue: 0, due: 1),
+      _card(id: 4, noteId: 13, deckId: 8, queue: 1, due: 0),
+    ]);
+
+    final result = await storage.activeNewCardCandidates(
+      activeDeckIds: [Int64(8), Int64(7)],
+      sorting: NewCardCandidateSorting.lowestPosition,
+    );
+
+    expect(result.map((candidate) => candidate.id), [Int64(2), Int64(1)]);
+  });
+
+  test('active-deck query preserves every gather ordering mode', () async {
+    await _insertCards(storage, [
+      _card(id: 1, noteId: 10, deckId: 7, due: 2, ordinal: 2),
+      _card(id: 2, noteId: 10, deckId: 8, due: 2, ordinal: 0),
+      _card(id: 3, noteId: 11, deckId: 7, due: 1, ordinal: 1),
+    ]);
+    const salt = 0x12345678;
+
+    Future<List<Int64>> query(
+      NewCardCandidateSorting sorting, [
+      int? salt,
+    ]) async => (await storage.activeNewCardCandidates(
+      activeDeckIds: [Int64(7), Int64(8)],
+      sorting: sorting,
+      salt: salt,
+    )).map((candidate) => candidate.id).toList();
+
+    expect(await query(NewCardCandidateSorting.lowestPosition), [
+      Int64(3),
+      Int64(2),
+      Int64(1),
+    ]);
+    expect(await query(NewCardCandidateSorting.highestPosition), [
+      Int64(2),
+      Int64(1),
+      Int64(3),
+    ]);
+    final randomCards = await query(NewCardCandidateSorting.randomCards, salt);
+    final cardIds = [BigInt.from(1), BigInt.from(2), BigInt.from(3)]
+      ..sort(
+        (a, b) => fnvHashSqlArguments([
+          a,
+          BigInt.from(salt),
+        ]).compareTo(fnvHashSqlArguments([b, BigInt.from(salt)])),
+      );
+    expect(
+      randomCards.map((id) => id.toString()),
+      cardIds.map((id) => id.toString()),
+    );
+
+    final randomNotes = await query(NewCardCandidateSorting.randomNotes, salt);
+    final noteOrder = [BigInt.from(10), BigInt.from(10), BigInt.from(11)];
+    final expectedRandomNotes = [0, 1, 2]
+      ..sort((a, b) {
+        final byHash = fnvHashSqlArguments([
+          noteOrder[a],
+          BigInt.from(salt),
+        ]).compareTo(fnvHashSqlArguments([noteOrder[b], BigInt.from(salt)]));
+        return byHash != 0 ? byHash : [2, 0, 1][a].compareTo([2, 0, 1][b]);
+      });
+    expect(
+      randomNotes,
+      expectedRandomNotes.map((index) => [Int64(1), Int64(2), Int64(3)][index]),
+    );
+  });
+
+  test(
+    'empty and oversized active-deck sets return unique ordered rows',
+    () async {
+      await _insertCards(storage, [
+        _card(id: 1, noteId: 10, deckId: 1201, due: 2),
+        _card(id: 2, noteId: 11, deckId: 1200, due: 1),
+        _card(id: 3, noteId: 12, deckId: 1202, due: 0),
+      ]);
+      expect(
+        await storage.activeNewCardCandidates(
+          activeDeckIds: const [],
+          sorting: NewCardCandidateSorting.lowestPosition,
+        ),
+        isEmpty,
+      );
+
+      final deckIds = [
+        for (var id = 1; id <= 1200; id++) Int64(id),
+        Int64(1201),
+        Int64(1201),
+      ];
+      final result = await storage.activeNewCardCandidates(
+        activeDeckIds: deckIds,
+        sorting: NewCardCandidateSorting.lowestPosition,
+      );
+      expect(result.map((candidate) => candidate.id), [Int64(2), Int64(1)]);
+    },
+  );
+
+  test('active-deck query maps exact Core candidate fields', () async {
+    await _insertCards(storage, [
+      _card(
+        id: BigInt.parse('9007199254740993'),
+        noteId: BigInt.parse('9007199254740995'),
+        deckId: 7,
+        ordinal: 4,
+        mtime: BigInt.parse('9007199254740997'),
+        originalDeckId: BigInt.parse('9223372036854775807'),
+      ),
+    ]);
+
+    final candidate = (await storage.activeNewCardCandidates(
+      activeDeckIds: [Int64(7)],
+      sorting: NewCardCandidateSorting.lowestPosition,
+    )).single;
+
+    expect(candidate.id.toString(), '9007199254740993');
+    expect(candidate.noteId.toString(), '9007199254740995');
+    expect(candidate.templateOrdinal, 4);
+    expect(candidate.mtimeSecs.toString(), '9007199254740997');
+    expect(candidate.currentDeckId, Int64(7));
+    expect(candidate.originalDeckId.toString(), '9223372036854775807');
+  });
+
   test(
     'requires salt only for random modes and validates u32 ordinal',
     () async {

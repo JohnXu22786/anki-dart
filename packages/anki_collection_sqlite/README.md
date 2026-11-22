@@ -58,12 +58,13 @@ search arguments as supplied. Core's deterministic `field_at_index` and
 `process_text` SQLite functions are registered on each connection; the other
 search-specific functions and collations remain separate migration units.
 
-`newCardCandidates()` queries queue-zero cards from one caller-selected deck
-using Core's lowest-position, highest-position, random-note, or random-card
-gather ordering. Random modes require the caller's u32 salt. The six-field
-candidate projection preserves exact signed 64-bit values and SQLite row order;
-active-deck selection, limits, later sorting, and scheduler execution remain
-caller-owned.
+`newCardCandidates()` queries queue-zero cards from one caller-selected deck,
+and `activeNewCardCandidates()` queries those cards from an explicitly
+supplied active-deck set. Both use Core's lowest-position, highest-position,
+random-note, or random-card gather ordering; random modes require the caller's
+u32 salt. The six-field candidate projection preserves exact signed 64-bit
+values and SQLite row order. Active-deck derivation, limits, later sorting, and
+scheduler execution remain caller-owned.
 
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and

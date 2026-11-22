@@ -3968,6 +3968,62 @@ WHERE queue IN (-2, -3)
         .toList(growable: false);
   }
 
+  /// Returns new-card candidates from exactly the supplied active deck IDs,
+  /// in Core's requested gather order. Random modes require a stable unsigned
+  /// 32-bit [salt]. Deck selection, candidate limits, and later queue sorting
+  /// belong to the scheduler caller.
+  Future<List<NewCardCandidate>> activeNewCardCandidates({
+    required Iterable<Int64> activeDeckIds,
+    required NewCardCandidateSorting sorting,
+    int? salt,
+  }) async {
+    final orderBy = switch (sorting) {
+      NewCardCandidateSorting.lowestPosition => 'due ASC, ord ASC',
+      NewCardCandidateSorting.highestPosition => 'due DESC, ord ASC',
+      NewCardCandidateSorting.randomNotes => 'fnvhash(nid, ?), ord ASC',
+      NewCardCandidateSorting.randomCards => 'fnvhash(id, ?)',
+    };
+    final random =
+        sorting == NewCardCandidateSorting.randomNotes ||
+        sorting == NewCardCandidateSorting.randomCards;
+    if (random && salt == null) {
+      throw ArgumentError.value(salt, 'salt', 'required for random sorting');
+    }
+    if (!random && salt != null) {
+      throw ArgumentError.value(salt, 'salt', 'only valid for random sorting');
+    }
+    if (salt != null && (salt < 0 || salt > 0xffffffff)) {
+      throw RangeError.range(salt, 0, 0xffffffff, 'salt');
+    }
+
+    final deckIds = activeDeckIds.toSet().toList(growable: false);
+    if (deckIds.isEmpty) return const [];
+
+    // Int64 values have an exact, safe decimal representation in SQL. This
+    // avoids SQLite's bind-variable limit while keeping deck IDs typed.
+    final deckIdList = deckIds.map((id) => id.toString()).join(', ');
+    final arguments = <Object?>[];
+    if (salt != null) arguments.add(BigInt.from(salt));
+    final rows = _database.select(
+      'SELECT id, nid, ord, cast(mod AS integer), did, odid '
+      'FROM cards WHERE did IN ($deckIdList) AND queue = 0 '
+      'ORDER BY $orderBy',
+      arguments,
+    );
+    return rows
+        .map(
+          (row) => NewCardCandidate(
+            id: _readInt64(row.columnAt(0)),
+            noteId: _readInt64(row.columnAt(1)),
+            templateOrdinal: _requiredUnsigned(row.columnAt(2), 32, 'ord'),
+            mtimeSecs: _readInt64(row.columnAt(3)),
+            currentDeckId: _readInt64(row.columnAt(4)),
+            originalDeckId: _readInt64(row.columnAt(5)),
+          ),
+        )
+        .toList(growable: false);
+  }
+
   /// Loads cards grouped by requested note IDs using bounded SQLite queries.
   /// Notes without cards are present with an empty list.
   Future<Map<NoteId, List<Card>>> cardsOfNotes(Iterable<NoteId> noteIds) async {

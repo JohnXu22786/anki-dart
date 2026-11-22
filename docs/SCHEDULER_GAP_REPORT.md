@@ -75,11 +75,26 @@ sorting supports lowest due position (`due ASC, ord ASC`), highest due position
 (`due DESC, ord ASC`), random notes (`fnvhash(nid, salt), ord ASC`), and random
 cards (`fnvhash(id, salt)`). Random modes require a u32 salt; IDs and mtime stay
 signed 64-bit, ordinal is validated as u32, and SQLite row order is preserved.
-This unit does not choose active decks, prioritize gathering across decks,
-admit daily limits, sort the post-gather queue, compose queues, or execute the
-scheduler. Those remain separate scheduler work. Pinned source hashes and AGPL
-attribution are recorded in `packages/anki_collection_sqlite/NOTICE.md` and
-`SOURCE.sha256`.
+This per-deck entry point does not choose active decks, prioritize gathering
+across decks, admit daily limits, sort the post-gather queue, compose queues, or
+execute the scheduler. Those remain separate scheduler work. Pinned source
+hashes and AGPL attribution are recorded in
+`packages/anki_collection_sqlite/NOTICE.md` and `SOURCE.sha256`.
+
+### Unit 78 — active-deck new-card candidates
+
+`CollectionSqliteStorage.activeNewCardCandidates()` reads queue-zero cards
+from exactly the caller-supplied active deck IDs and returns the same six Core
+new-card fields in the selected gather order. It supports lowest and highest
+due position, random-note order with ordinal tie-breaking, and random-card
+order using the caller's u32 salt. Empty input returns no rows; duplicate deck
+IDs do not duplicate cards, and large active-deck sets avoid SQLite's
+bind-variable limit while preserving SQL order. The method does not derive
+active decks, prioritize gathering across decks, apply admission or daily
+limits, sort the gathered queue, compose queues, or run the scheduler. Pinned
+source hashes and AGPL attribution are recorded in
+`packages/anki_collection_sqlite/NOTICE.md` and
+`packages/anki_collection_sqlite/SOURCE.sha256`.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and

@@ -24,6 +24,7 @@ SOURCE_HASHES = {
     "rslib/src/card/mod.rs": "cfe294e1c65394f0b5c627b1e029b9d88bdf63de6fb3a29ba5a0253cd3f61ba9",
     "rslib/src/storage/card/add_card.sql": "10cee83538f091c54fa48837555a01ab224d6931bbd563ab210b3afc1d59e196",
     "rslib/src/storage/card/new_cards.sql": "0f5ca4827be84cd68f986c1abb34a61040a43f83f81ecc8829e23b2ae8bab35d",
+    "rslib/src/storage/card/active_new_cards.sql": "8eb543c83161dd2c9379d588eea51479e8574ea3145d1ce048c375eb0a7d9062",
     "rslib/src/notes/undo.rs": "2e3d4f5a74b6fef4b92922f7b9f18e69896bb60ff2860bcc5f6b224108ff802a",
     "rslib/src/undo/mod.rs": "86a0c509712b0fba52754d3ab9eca9d1fb386276b76fb5e5fcf359a26ad85392",
     "rslib/src/timestamp.rs": "31929938c48febe39f445fa61e8aa0d134e0c93b6bdec5aad8250f5f931720b5",

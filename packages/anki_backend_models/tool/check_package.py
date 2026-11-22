@@ -58,6 +58,7 @@ SOURCE_HASHES = {
     "rslib/src/scheduler/queue/builder/sorting.rs": "d7edb269c27552f2d51f67f698d70e60ba12aaad965bfb26e6b7586abdec6a9c",
     "rslib/src/scheduler/queue/mod.rs": "ad36a76e8abd51840f9a9d2d029f04a9bede5fe55f4cb9a695c3718c26184ac8",
     "rslib/src/decks/limits.rs": "d8de3c382f4f4e130699dd18bbc46b6a93664fc97ef8d45448479b4fb165af27",
+    "rslib/src/scheduler/states/load_balancer.rs": "cad7e0a3805c189440bdeaaba9705f0be5af05c32d96c3d7c86f0c55f5959f91",
     "rslib/src/scheduler/states/fuzz.rs": "30a33e2e522ebcb56ca434a897f66209fcb4284065115ee031def73097343105",
     "rslib/src/scheduler/states/mod.rs": "f4247b73f39403a1f8eb423d52bec91bf3e7f6a005f1b93767a24a0a0ee8f7a9",
     "rslib/src/scheduler/states/steps.rs": "3baf0c2c125599998929dfb292e91d07202458977d67f906a27b632776eaf4fa",

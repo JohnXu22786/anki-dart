@@ -151,6 +151,17 @@ Training-item projections use the same pinned Core source and FSRS 5.2.0
 provenance recorded above; no upstream implementation is copied into product
 files.
 
+`EasyDay`, `parseEasyDaysPercentages()`, and
+`calculateEasyDaysModifiers()` adapt Core's easy-day classification,
+percentage parsing, and review-load normalization from
+`rslib/src/scheduler/states/load_balancer.rs` at the pinned Anki Core commit.
+The modifier calculation takes explicit weekdays and review counts and
+preserves Core's Float32 arithmetic and zip behavior. It does not read deck
+configuration or storage and does not implement interval weighting, sibling
+dispersion, or scheduler integration required for full load balancing. The
+source file's hash is recorded in `SOURCE.sha256`; Anki Core is Copyright
+Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

@@ -121,10 +121,39 @@ abstract interface class CardBrowserNoteUpdateUndoController {
 abstract interface class CardBrowserCollectionUndoController {
   bool get canUndoCollectionOperation;
   bool get canRedoCollectionOperation;
+  String? get collectionUndoLabel;
+  String? get collectionRedoLabel;
+  bool get collectionUndoIsCustom;
+  bool get collectionRedoIsCustom;
   int get collectionUndoGeneration;
+  bool get collectionUndoHasEntryAtCurrentGeneration;
   Future<void> undoLastCollectionOperation();
   Future<void> redoLastCollectionOperation();
 }
+
+String _localizedCollectionUndoLabel(
+  AppLocalizations strings,
+  String label, {
+  bool isCustom = false,
+}) => isCustom
+    ? strings.collectionUndoCustomOperation(label)
+    : switch (label) {
+        'updateNote' => strings.collectionUndoLabelEditNote,
+        'suspendCards' => strings.collectionUndoLabelSuspendCards,
+        'buryCards' => strings.collectionUndoLabelBuryCards,
+        'deleteCards' => strings.collectionUndoLabelDeleteCards,
+        'unburyCards' => strings.collectionUndoLabelUnburyCards,
+        'emptyFilteredDeck' => strings.collectionUndoLabelEmptyFilteredDeck,
+        'buildFilteredDeck' => strings.collectionUndoLabelBuildFilteredDeck,
+        'extendStudyLimits' => strings.collectionUndoLabelExtendStudyLimits,
+        'changeDeckDescription' =>
+          strings.collectionUndoLabelChangeDeckDescription,
+        'changeDeckDailyLimits' => strings.collectionUndoLabelChangeDeckLimits,
+        'createDeck' => strings.collectionUndoLabelCreateDeck,
+        'deleteDeck' => strings.collectionUndoLabelDeleteDeck,
+        'renameDeck' => strings.collectionUndoLabelRenameDeck,
+        _ => strings.browserCollectionAction,
+      };
 
 /// Optional mode capability for controllers backed by a collection browser.
 abstract interface class CardBrowserModeController {
@@ -1282,7 +1311,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       final committed =
           actionError == null ||
           (undoController != null &&
-              undoController.collectionUndoGeneration != generationBefore);
+              undoController.collectionUndoGeneration != generationBefore &&
+              undoController.collectionUndoHasEntryAtCurrentGeneration);
       if (!committed) {
         Error.throwWithStackTrace(actionError, StackTrace.current);
       }
@@ -1296,7 +1326,8 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
       if (actionError != null) _showActionError(actionError);
       if (undoController != null &&
           undoController.canUndoCollectionOperation &&
-          undoController.collectionUndoGeneration != generationBefore) {
+          undoController.collectionUndoGeneration != generationBefore &&
+          undoController.collectionUndoHasEntryAtCurrentGeneration) {
         _showCollectionHistorySnackbar(undoController, redo: false);
       }
     });
@@ -1313,19 +1344,42 @@ final class _CardBrowserScreenState extends State<CardBrowserScreen> {
         : controller.canUndoCollectionOperation;
     if (!canAct) return;
     final expectedGeneration = controller.collectionUndoGeneration;
+    final operation = redo
+        ? controller.collectionRedoLabel
+        : controller.collectionUndoLabel;
+    final isCustom = redo
+        ? controller.collectionRedoIsCustom
+        : controller.collectionUndoIsCustom;
+    final localizedOperation = operation == null
+        ? strings.browserCollectionAction
+        : _localizedCollectionUndoLabel(strings, operation, isCustom: isCustom);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           retryAfterFailure
               ? strings.browserActionFailed
               : redo
-              ? strings.browserBulkActionUndone
-              : strings.browserBulkActionCompleted,
+              ? strings.browserCollectionOperationUndone(localizedOperation)
+              : strings.browserCollectionOperationCompleted(localizedOperation),
         ),
         action: SnackBarAction(
           label: redo
-              ? strings.browserRedoBulkAction
-              : strings.browserUndoBulkAction,
+              ? strings.browserCollectionOperationRedo(
+                  _localizedCollectionUndoLabel(
+                    strings,
+                    controller.collectionRedoLabel ??
+                        strings.browserCollectionAction,
+                    isCustom: controller.collectionRedoIsCustom,
+                  ),
+                )
+              : strings.browserCollectionOperationUndo(
+                  _localizedCollectionUndoLabel(
+                    strings,
+                    controller.collectionUndoLabel ??
+                        strings.browserCollectionAction,
+                    isCustom: controller.collectionUndoIsCustom,
+                  ),
+                ),
           onPressed: () => redo
               ? _redoLastCollectionOperation(expectedGeneration)
               : _undoLastCollectionOperation(expectedGeneration),

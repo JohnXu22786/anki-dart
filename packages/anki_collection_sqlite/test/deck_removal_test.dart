@@ -200,6 +200,24 @@ void main() {
       await storage.removeDeckAndChildren(id);
       expect(storage.decks.getDeck(id), isNull);
       expect(storage.currentDeckId, Int64.ONE);
+      expect(storage.collectionUndoLabel, 'deleteDeck');
+      expect(
+        storage.collectionUndoChanges.where(
+          (change) =>
+              change.table == 'graves' &&
+              change.kind == CollectionUndoChangeKind.deck &&
+              change.variant == CollectionUndoChangeVariant.graveAdded,
+        ),
+        hasLength(1),
+      );
+      expect(
+        storage.collectionUndoChanges.map((change) => change.kind),
+        containsAll({
+          CollectionUndoChangeKind.card,
+          CollectionUndoChangeKind.note,
+          CollectionUndoChangeKind.deck,
+        }),
+      );
       await storage.undoLastCollectionOperation();
       expect(storage.decks.getDeck(id)!.id, id);
       expect(
@@ -212,11 +230,88 @@ void main() {
       );
       expect(storage.hasDeckDeletionGrave(id), isFalse);
       expect(storage.currentDeckId, id);
+      expect(
+        storage.collectionRedoChanges
+            .where((change) => change.table == 'graves')
+            .map((change) => change.variant),
+        contains(CollectionUndoChangeVariant.graveRemoved),
+      );
       await storage.redoLastCollectionOperation();
       expect(storage.decks.getDeck(id), isNull);
       expect(await storage.getCard(Int64.parseInt('9007199254740999')), isNull);
       expect(storage.hasDeckDeletionGrave(id), isTrue);
       expect(storage.currentDeckId, Int64.ONE);
+    },
+  );
+
+  test(
+    'undoable normal-deck creation restores ancestors with stable IDs',
+    () async {
+      final created = await storage.getOrCreateNormalDeckUndoable(
+        'Created::Nested',
+      );
+      final ancestorId = storage.decks.getDeckId('Created');
+      expect(created.name, 'Created::Nested');
+      expect(ancestorId, isNotNull);
+      expect(storage.collectionUndoLabel, 'createDeck');
+
+      await storage.undoLastCollectionOperation();
+      expect(storage.decks.getDeckId('Created'), isNull);
+      expect(storage.decks.getDeckId('Created\x1fNested'), isNull);
+
+      await storage.redoLastCollectionOperation();
+      expect(storage.decks.getDeckId('Created'), ancestorId);
+      expect(storage.decks.getDeckId('Created\x1fNested'), created.id);
+    },
+  );
+
+  test(
+    'concurrent creation of one deck returns the serialized result',
+    () async {
+      final results = await Future.wait([
+        storage.getOrCreateNormalDeckUndoable('Concurrent::Nested'),
+        storage.getOrCreateNormalDeckUndoable('Concurrent::Nested'),
+      ]);
+
+      expect(results[0].id, results[1].id);
+      expect(storage.decks.getDeckId('Concurrent'), isNotNull);
+      expect(storage.decks.getDeckId('Concurrent\x1fNested'), results[0].id);
+      expect(storage.collectionUndoLabel, 'createDeck');
+      await storage.undoLastCollectionOperation();
+      expect(storage.decks.getDeckId('Concurrent'), isNull);
+      expect(storage.canUndoCollectionOperation, isFalse);
+    },
+  );
+
+  test(
+    'deck rename journals the renamed tree and newly created ancestors',
+    () async {
+      final source = await storage.getOrCreateNormalDeck('Source::Child');
+      final originalParentId = storage.decks.getDeckId('Source');
+      expect(
+        await storage.renameDeck(source.id, 'Renamed::Parent::Child'),
+        isTrue,
+      );
+      final renamedParentId = storage.decks.getDeckId('Renamed');
+      final renamedNestedParentId = storage.decks.getDeckId(
+        'Renamed\x1fParent',
+      );
+      expect(storage.collectionUndoLabel, 'renameDeck');
+      expect(storage.decks.getDeck(source.id)!.name, 'Renamed::Parent::Child');
+
+      await storage.undoLastCollectionOperation();
+      expect(storage.decks.getDeck(source.id)!.name, 'Source::Child');
+      expect(storage.decks.getDeckId('Source'), originalParentId);
+      expect(storage.decks.getDeckId('Renamed'), isNull);
+      expect(storage.decks.getDeckId('Renamed\x1fParent'), isNull);
+
+      await storage.redoLastCollectionOperation();
+      expect(storage.decks.getDeck(source.id)!.name, 'Renamed::Parent::Child');
+      expect(storage.decks.getDeckId('Renamed'), renamedParentId);
+      expect(
+        storage.decks.getDeckId('Renamed\x1fParent'),
+        renamedNestedParentId,
+      );
     },
   );
 

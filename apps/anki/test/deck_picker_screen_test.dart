@@ -316,6 +316,7 @@ void main() {
     expect(repository.markdownDescription, isFalse);
     expect(repository.loadCalls, 2);
     expect(find.text('Deck description saved'), findsOneWidget);
+    expect(find.text('Undo change deck description'), findsOneWidget);
   });
 
   testWidgets('Deck Options loads and saves daily limits for exact deck', (
@@ -358,6 +359,7 @@ void main() {
     ]);
     expect(repository.loadCalls, 2);
     expect(find.text('Deck options saved'), findsOneWidget);
+    expect(find.text('Undo change deck limits'), findsOneWidget);
     expect(find.byType(DeckOptionsEditor), findsOneWidget);
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
@@ -542,6 +544,69 @@ void main() {
     },
   );
 
+  testWidgets('create deck exposes localized undo and redo actions', (
+    tester,
+  ) async {
+    final repository = _DeckRepository(const []);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('deck-picker-add')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create deck'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('deck-name')), 'Created');
+    await tester.tap(find.widgetWithText(FilledButton, 'Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('create deck completed'), findsOneWidget);
+    expect(find.text('Undo create deck'), findsOneWidget);
+    await tester.tap(find.text('Undo create deck'));
+    await tester.pumpAndSettle();
+    expect(repository.undoCalls, 1);
+    expect(find.text('Redo create deck'), findsOneWidget);
+  });
+
+  testWidgets('redo invalidation alone does not offer an older undo', (
+    tester,
+  ) async {
+    final repository = _DeckRepository(const []);
+    repository.canUndoCollectionOperation = true;
+    repository.collectionUndoLabel = 'renameDeck';
+    repository.collectionUndoGeneration = 4;
+    repository.noOpCreateDeck = true;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('deck-picker-add')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create deck'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('deck-name')), 'Existing');
+    await tester.tap(find.widgetWithText(FilledButton, 'Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Undo rename deck'), findsNothing);
+    expect(repository.canUndoCollectionOperation, isTrue);
+    expect(repository.collectionUndoHasEntryAtCurrentGeneration, isFalse);
+  });
+
+  testWidgets('create deck preserves the localized wrapper for custom labels', (
+    tester,
+  ) async {
+    final repository = _DeckRepository(const [])..customCreateDeck = true;
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('deck-picker-add')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create deck'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('deck-name')), 'Created');
+    await tester.tap(find.widgetWithText(FilledButton, 'Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Custom: Review batch completed'), findsOneWidget);
+    expect(find.text('Undo Custom: Review batch'), findsOneWidget);
+  });
+
   testWidgets('delete uses the exact deck ID, progress, result and undo', (
     tester,
   ) async {
@@ -582,13 +647,13 @@ void main() {
       find.text('Cards deleted from Languages::Spanish: 12'),
       findsOneWidget,
     );
-    expect(find.text('Undo'), findsOneWidget);
+    expect(find.text('Undo delete deck'), findsOneWidget);
 
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo delete deck'));
     await tester.pumpAndSettle();
     expect(find.text('Spanish'), findsOneWidget);
     expect(find.text('Deck deletion undone'), findsOneWidget);
-    expect(find.text('Redo'), findsOneWidget);
+    expect(find.text('Redo delete deck'), findsOneWidget);
   });
 
   testWidgets('unbury uses the exact deck ID and offers undo and redo', (
@@ -628,15 +693,15 @@ void main() {
       find.text('Cards unburied from Languages::Spanish: 3'),
       findsOneWidget,
     );
-    expect(find.text('Undo'), findsOneWidget);
-    await tester.tap(find.text('Undo'));
+    expect(find.text('Undo unbury cards'), findsOneWidget);
+    await tester.tap(find.text('Undo unbury cards'));
     await tester.pumpAndSettle();
     expect(repository.undoCalls, 1);
     expect(find.text('Deck unbury undone'), findsOneWidget);
-    await tester.tap(find.text('Redo'));
+    await tester.tap(find.text('Redo unbury cards'));
     await tester.pumpAndSettle();
     expect(find.text('Deck unbury redone'), findsOneWidget);
-    expect(find.text('Undo'), findsOneWidget);
+    expect(find.text('Undo unbury cards'), findsOneWidget);
   });
 
   testWidgets('unbury failure dismisses progress and reports an error', (
@@ -714,7 +779,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Storage could not be synced.'), findsOneWidget);
-    expect(find.text('Undo'), findsOneWidget);
+    expect(find.text('Undo delete deck'), findsOneWidget);
     expect(repository.canUndoCollectionOperation, isTrue);
   });
 
@@ -1704,6 +1769,13 @@ void main() {
         Int64.parseInt('9007199254740995'),
       ]);
       expect(repository.loadCalls, 2);
+      expect(find.text('Undo empty filtered deck'), findsOneWidget);
+      await tester.tap(find.text('Undo empty filtered deck'));
+      await tester.pumpAndSettle();
+      expect(find.text('Redo empty filtered deck'), findsOneWidget);
+      await tester.tap(find.text('Redo empty filtered deck'));
+      await tester.pumpAndSettle();
+      expect(find.text('Undo empty filtered deck'), findsOneWidget);
     },
   );
 
@@ -1745,6 +1817,7 @@ void main() {
     expect(repository.renamedNames, ['Biology::Genetics']);
     expect(repository.loadCalls, 2);
     expect(repository.decks.first.name, 'Biology::Genetics');
+    expect(find.text('Undo rename deck'), findsOneWidget);
   });
 
   testWidgets('canceling rename makes no repository call', (tester) async {
@@ -2015,6 +2088,8 @@ class _DeckRepository
   bool pendingLoad = false;
   bool failLoad = false;
   bool failRenameAfterUpdate = false;
+  bool noOpCreateDeck = false;
+  bool customCreateDeck = false;
   bool failDelete = false;
   bool failUnbury = false;
   bool failDescriptionLoad = false;
@@ -2056,7 +2131,17 @@ class _DeckRepository
   @override
   bool canRedoCollectionOperation = false;
   @override
+  String? collectionUndoLabel;
+  @override
+  String? collectionRedoLabel;
+  @override
   int collectionUndoGeneration = 0;
+  @override
+  bool collectionUndoHasEntryAtCurrentGeneration = true;
+  @override
+  bool collectionUndoIsCustom = false;
+  @override
+  bool collectionRedoIsCustom = false;
   bool advanceUndoGenerationAfterDelete = false;
   int undoCalls = 0;
   final dailyLimitLoads = <Int64>[];
@@ -2190,6 +2275,11 @@ class _DeckRepository
     if (failDescriptionSave) throw StateError('description save failed');
     this.description = description;
     this.markdownDescription = markdownDescription;
+    canUndoCollectionOperation = true;
+    canRedoCollectionOperation = false;
+    collectionUndoLabel = 'changeDeckDescription';
+    collectionRedoLabel = null;
+    collectionUndoGeneration++;
   }
 
   @override
@@ -2211,6 +2301,11 @@ class _DeckRepository
     ));
     newLimit = newPerDay;
     reviewLimit = reviewsPerDay;
+    canUndoCollectionOperation = true;
+    canRedoCollectionOperation = false;
+    collectionUndoLabel = 'changeDeckDailyLimits';
+    collectionRedoLabel = null;
+    collectionUndoGeneration++;
   }
 
   @override
@@ -2235,6 +2330,8 @@ class _DeckRepository
     currentDeckId = 1;
     canUndoCollectionOperation = true;
     canRedoCollectionOperation = false;
+    collectionUndoLabel = 'deleteDeck';
+    collectionRedoLabel = null;
     collectionUndoGeneration++;
     if (advanceUndoGenerationAfterDelete) collectionUndoGeneration++;
     return result.collectionUndoGeneration == 0
@@ -2262,6 +2359,8 @@ class _DeckRepository
             ));
     canUndoCollectionOperation = true;
     canRedoCollectionOperation = false;
+    collectionUndoLabel = 'unburyCards';
+    collectionRedoLabel = null;
     collectionUndoGeneration++;
     return result;
   }
@@ -2269,6 +2368,11 @@ class _DeckRepository
   @override
   Future<void> emptyFilteredDeck(DeckPickerDeck deck) async {
     emptyFilteredExact.add(deck.exactId ?? Int64(deck.id));
+    canUndoCollectionOperation = true;
+    canRedoCollectionOperation = false;
+    collectionUndoLabel = 'emptyFilteredDeck';
+    collectionRedoLabel = null;
+    collectionUndoGeneration++;
   }
 
   @override
@@ -2278,6 +2382,8 @@ class _DeckRepository
     currentDeckId = _deletedDeck?.id;
     canUndoCollectionOperation = false;
     canRedoCollectionOperation = true;
+    collectionRedoLabel = collectionUndoLabel;
+    collectionUndoLabel = null;
     collectionUndoGeneration++;
   }
 
@@ -2288,6 +2394,8 @@ class _DeckRepository
     currentDeckId = 1;
     canUndoCollectionOperation = true;
     canRedoCollectionOperation = false;
+    collectionUndoLabel = collectionRedoLabel;
+    collectionRedoLabel = null;
     collectionUndoGeneration++;
   }
 
@@ -2318,6 +2426,11 @@ class _DeckRepository
       collapsed: deck.collapsed,
       hasBuried: deck.hasBuried,
     );
+    canUndoCollectionOperation = true;
+    canRedoCollectionOperation = false;
+    collectionUndoLabel = 'renameDeck';
+    collectionRedoLabel = null;
+    collectionUndoGeneration++;
     if (failRenameAfterUpdate) throw StateError('flush failed after commit');
   }
 
@@ -2358,7 +2471,23 @@ class _DeckRepository
       previewNewCardsRequests.add((deck.exactId ?? Int64(deck.id), days));
 
   @override
-  Future<void> createDeck(String name) async {}
+  Future<void> createDeck(String name) async {
+    if (noOpCreateDeck) {
+      canRedoCollectionOperation = false;
+      collectionRedoLabel = null;
+      collectionUndoGeneration++;
+      collectionUndoHasEntryAtCurrentGeneration = false;
+      return;
+    }
+    canUndoCollectionOperation = true;
+    canRedoCollectionOperation = false;
+    collectionUndoLabel = customCreateDeck ? 'Review batch' : 'createDeck';
+    collectionUndoIsCustom = customCreateDeck;
+    collectionRedoLabel = null;
+    collectionUndoGeneration++;
+    collectionUndoHasEntryAtCurrentGeneration = true;
+  }
+
   @override
   Future<void> createSharedDeck() async {}
   @override

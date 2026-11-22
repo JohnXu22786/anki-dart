@@ -1266,16 +1266,76 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Browser action completed'), findsOneWidget);
-    expect(find.text('Undo'), findsOneWidget);
-    await tester.tap(find.text('Undo'));
+    expect(find.text('suspend cards completed'), findsOneWidget);
+    expect(find.text('Undo suspend cards'), findsOneWidget);
+    await tester.tap(find.text('Undo suspend cards'));
     await tester.pumpAndSettle();
     expect(controller.undoCalls, 1);
-    expect(find.text('Browser action undone'), findsOneWidget);
-    expect(find.text('Redo'), findsOneWidget);
-    await tester.tap(find.text('Redo'));
+    expect(find.text('suspend cards undone'), findsOneWidget);
+    expect(find.text('Redo suspend cards'), findsOneWidget);
+    await tester.tap(find.text('Redo suspend cards'));
     await tester.pumpAndSettle();
     expect(controller.redoCalls, 1);
+  });
+
+  testWidgets('redo invalidation alone does not offer an older undo', (
+    tester,
+  ) async {
+    final controller = _UndoBulkController(_sample())
+      ..canUndo = true
+      ..canRedo = true
+      ..invalidateRedoWithoutEntry = true;
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SnackBar), findsNothing);
+    expect(controller.canUndoCollectionOperation, isTrue);
+    expect(controller.collectionUndoHasEntryAtCurrentGeneration, isFalse);
+  });
+
+  testWidgets('custom undo labels keep their name in localized feedback', (
+    tester,
+  ) async {
+    final controller = _UndoBulkController(_sample())
+      ..operationLabel = 'Review batch'
+      ..customUndo = true;
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Custom: suspend cards completed'), findsNothing);
+    expect(find.text('Custom: Review batch completed'), findsOneWidget);
+    expect(find.text('Undo Custom: Review batch'), findsOneWidget);
+  });
+
+  testWidgets('unknown undo labels use localized generic feedback', (
+    tester,
+  ) async {
+    final controller = _UndoBulkController(_sample())
+      ..operationLabel = 'host custom operation';
+    await tester.pumpWidget(_app(controller, const Size(1000, 800)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const ValueKey('browser-row-41')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Actions for selected cards'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('collection action completed'), findsOneWidget);
+    expect(find.text('Undo collection action'), findsOneWidget);
+    expect(find.text('host custom operation'), findsNothing);
   });
 
   testWidgets('an older bulk undo snackbar cannot undo a newer operation', (
@@ -1295,7 +1355,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('browser-bulk-bury')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Undo').first);
+    await tester.tap(find.byType(SnackBarAction).first);
     await tester.pumpAndSettle();
 
     expect(controller.undoCalls, 0);
@@ -1315,7 +1375,7 @@ void main() {
     await tester.pumpAndSettle();
 
     controller.failUndo = true;
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo suspend cards'));
     await tester.pumpAndSettle();
     expect(
       find.text('The browser action could not be completed'),
@@ -1323,7 +1383,7 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(find.text('Undo'), findsOneWidget);
+    expect(find.text('Undo suspend cards'), findsOneWidget);
   });
 
   testWidgets('failed bulk redo leaves a reachable retry action', (
@@ -1338,11 +1398,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo suspend cards'));
     await tester.pumpAndSettle();
 
     controller.failRedo = true;
-    await tester.tap(find.text('Redo'));
+    await tester.tap(find.text('Redo suspend cards'));
     await tester.pumpAndSettle();
     expect(
       find.text('The browser action could not be completed'),
@@ -1350,7 +1410,7 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(find.text('Redo'), findsOneWidget);
+    expect(find.text('Redo suspend cards'), findsOneWidget);
   });
 
   testWidgets('post-commit undo failure refreshes collection rows', (
@@ -1368,13 +1428,13 @@ void main() {
 
     final searchesBeforeUndo = controller.queries.length;
     controller.failUndoAfterCommit = true;
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo suspend cards'));
     await tester.pumpAndSettle();
 
     expect(controller.queries, hasLength(searchesBeforeUndo + 1));
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(find.text('Redo'), findsOneWidget);
+    expect(find.text('Redo suspend cards'), findsOneWidget);
   });
 
   testWidgets('post-commit redo failure refreshes collection rows', (
@@ -1389,18 +1449,18 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('browser-bulk-suspend')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo suspend cards'));
     await tester.pumpAndSettle();
 
     final searchesBeforeRedo = controller.queries.length;
     controller.failRedoAfterCommit = true;
-    await tester.tap(find.text('Redo'));
+    await tester.tap(find.text('Redo suspend cards'));
     await tester.pumpAndSettle();
 
     expect(controller.queries, hasLength(searchesBeforeRedo + 1));
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(find.text('Undo'), findsOneWidget);
+    expect(find.text('Undo suspend cards'), findsOneWidget);
   });
 
   testWidgets('post-commit error still leaves the undo snackbar reachable', (
@@ -1422,8 +1482,8 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(find.text('Undo'), findsOneWidget);
-    await tester.tap(find.text('Undo'));
+    expect(find.text('Undo suspend cards'), findsOneWidget);
+    await tester.tap(find.text('Undo suspend cards'));
     await tester.pumpAndSettle();
     expect(controller.undoCalls, 1);
   });
@@ -1856,15 +1916,20 @@ final class _UndoBulkController extends _Controller
   _UndoBulkController(super.snapshot);
 
   int generation = 0;
+  String operationLabel = 'suspendCards';
   int undoCalls = 0;
   int redoCalls = 0;
   bool canUndo = false;
   bool canRedo = false;
+  bool hasCurrentEntry = false;
+  bool customUndo = false;
+  bool customRedo = false;
   bool failAfterCommit = false;
   bool failUndo = false;
   bool failRedo = false;
   bool failUndoAfterCommit = false;
   bool failRedoAfterCommit = false;
+  bool invalidateRedoWithoutEntry = false;
 
   @override
   bool get canUndoCollectionOperation => canUndo;
@@ -1873,15 +1938,37 @@ final class _UndoBulkController extends _Controller
   bool get canRedoCollectionOperation => canRedo;
 
   @override
+  String? get collectionUndoLabel => canUndo ? operationLabel : null;
+
+  @override
+  String? get collectionRedoLabel => canRedo ? operationLabel : null;
+
+  @override
   int get collectionUndoGeneration => generation;
+
+  @override
+  bool get collectionUndoHasEntryAtCurrentGeneration => hasCurrentEntry;
+
+  @override
+  bool get collectionUndoIsCustom => customUndo;
+
+  @override
+  bool get collectionRedoIsCustom => customRedo;
 
   @override
   Future<void> performBulkAction(
     CardBrowserBulkAction action,
     List<BrowserRowId> rows,
   ) async {
+    if (invalidateRedoWithoutEntry) {
+      canRedo = false;
+      hasCurrentEntry = false;
+      generation++;
+      return;
+    }
     await super.performBulkAction(action, rows);
     canUndo = true;
+    hasCurrentEntry = true;
     generation++;
     if (failAfterCommit) throw StateError('flush failure after commit');
   }
@@ -1891,6 +1978,7 @@ final class _UndoBulkController extends _Controller
     if (failUndo) throw StateError('injected undo failure');
     undoCalls++;
     canUndo = false;
+    hasCurrentEntry = false;
     canRedo = true;
     generation++;
     if (failUndoAfterCommit) {
@@ -1903,6 +1991,7 @@ final class _UndoBulkController extends _Controller
     if (failRedo) throw StateError('injected redo failure');
     redoCalls++;
     canUndo = true;
+    hasCurrentEntry = true;
     canRedo = false;
     generation++;
     if (failRedoAfterCommit) {

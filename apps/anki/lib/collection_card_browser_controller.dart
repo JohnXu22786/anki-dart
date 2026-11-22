@@ -1383,7 +1383,23 @@ final class CollectionCardBrowserController
   bool get canRedoCollectionOperation => _storage.canRedoCollectionOperation;
 
   @override
+  String? get collectionUndoLabel => _storage.collectionUndoLabel;
+
+  @override
+  String? get collectionRedoLabel => _storage.collectionRedoLabel;
+
+  @override
+  bool get collectionUndoIsCustom => _storage.collectionUndoIsCustom;
+
+  @override
+  bool get collectionRedoIsCustom => _storage.collectionRedoIsCustom;
+
+  @override
   int get collectionUndoGeneration => _storage.collectionUndoGeneration;
+
+  @override
+  bool get collectionUndoHasEntryAtCurrentGeneration =>
+      _storage.collectionUndoHasEntryAtCurrentGeneration;
 
   @override
   Future<void> undoLastCollectionOperation() =>
@@ -1416,6 +1432,10 @@ final class CollectionCardBrowserController
       late int operationTimeMillis;
       late Int64 mtimeAfter;
       final committed = await storage.runUndoableCollectionOperation(
+        operation: CollectionUndoOperation.deleteCards,
+        // Core's graveyard table has no primary key, so append its typed
+        // Core card/note grave variants alongside the captured table rows.
+        captureSqlChanges: true,
         prepare: () async {
           operationTimeMillis = DateTime.now().toUtc().millisecondsSinceEpoch;
           mtimeAfter = Int64(operationTimeMillis);
@@ -1493,6 +1513,22 @@ final class CollectionCardBrowserController
           }
           storage.restoreCollectionModifiedAt(mtimeAfter);
         },
+        collectAdditionalChanges: () => [
+          for (final card in cards)
+            if (existingCardGraves[card.id] != true)
+              CollectionUndoChange.graveAdded(
+                kind: CollectionUndoChangeKind.card,
+                objectId: card.id,
+                graveType: 0,
+              ),
+          for (final note in notes)
+            if (existingNoteGraves[note.id] != true)
+              CollectionUndoChange.graveAdded(
+                kind: CollectionUndoChangeKind.note,
+                objectId: note.id,
+                graveType: 1,
+              ),
+        ],
       );
       if (!committed) return;
       await updateSelection(const []);
@@ -1512,6 +1548,12 @@ final class CollectionCardBrowserController
     }
 
     await storage.runUndoableCollectionOperation(
+      operation: switch (action) {
+        CardBrowserBulkAction.suspend => CollectionUndoOperation.suspendCards,
+        CardBrowserBulkAction.bury => CollectionUndoOperation.buryCards,
+        CardBrowserBulkAction.delete => CollectionUndoOperation.deleteCards,
+      },
+      captureSqlChanges: action != CardBrowserBulkAction.delete,
       prepare: () async {
         operationTimeMillis = DateTime.now().toUtc().millisecondsSinceEpoch;
         modifiedAt = Int64(operationTimeMillis ~/ 1000);

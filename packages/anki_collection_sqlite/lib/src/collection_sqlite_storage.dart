@@ -119,6 +119,91 @@ final class CollectionSqliteOptions {
   final FutureOr<void> Function(CommonDatabase database)? configureConnection;
 }
 
+/// Collection row category represented by a Core-transaction SQLite change.
+enum CollectionUndoChangeKind {
+  card,
+  note,
+  noteTags,
+  deck,
+  deckConfig,
+  tag,
+  revlog,
+  queue,
+  config,
+  collection,
+  notetype,
+  custom,
+}
+
+/// The source-derived mutation represented by a typed collection change.
+enum CollectionUndoChangeVariant {
+  added,
+  updated,
+  removed,
+  graveAdded,
+  graveRemoved,
+  tagsUpdated,
+  cardAnswered,
+  cardAnswerUndone,
+  modified,
+  schemaModified,
+  custom,
+}
+
+/// A supported collection operation. Names are stable localization keys for
+/// host UI code and mirror the operation identity kept by the journal.
+enum CollectionUndoOperation {
+  updateNote,
+  deleteCards,
+  suspendCards,
+  buryCards,
+  unburyCards,
+  deleteDeck,
+  emptyFilteredDeck,
+  buildFilteredDeck,
+  extendStudyLimits,
+  changeDeckDescription,
+  changeDeckDailyLimits,
+  createDeck,
+  renameDeck,
+  custom,
+}
+
+/// Typed row-level inverse metadata captured for a collection transaction.
+final class CollectionUndoChange {
+  const CollectionUndoChange({
+    required this.kind,
+    required this.variant,
+    required this.table,
+    required this.columns,
+    required this.operation,
+    required this.before,
+    required this.after,
+  });
+
+  factory CollectionUndoChange.graveAdded({
+    required CollectionUndoChangeKind kind,
+    required Int64 objectId,
+    required int graveType,
+  }) => CollectionUndoChange(
+    kind: kind,
+    variant: CollectionUndoChangeVariant.graveAdded,
+    table: 'graves',
+    columns: const ['oid', 'type', 'usn'],
+    operation: SqliteUpdateKind.insert,
+    before: null,
+    after: [objectId, graveType, -1],
+  );
+
+  final CollectionUndoChangeKind kind;
+  final CollectionUndoChangeVariant variant;
+  final String table;
+  final List<String> columns;
+  final SqliteUpdateKind operation;
+  final List<Object?>? before;
+  final List<Object?>? after;
+}
+
 /// Name and deleted-card count returned by a collection deck removal.
 final class DeckRemovalResult {
   const DeckRemovalResult({
@@ -200,15 +285,13 @@ final class CollectionSqliteStorage
   final Map<String, CommonPreparedStatement> _statementCache = {};
   Future<void> _searchQueue = Future<void>.value();
   Future<void> _existingNoteUpdateQueue = Future<void>.value();
-  final List<_ExistingNoteUpdateUndoStep> _noteUpdateUndoSteps = [];
-  final List<_ExistingNoteUpdateUndoStep> _noteUpdateRedoSteps = [];
-  int _noteUpdateUndoCounter = 0;
-  int _noteUpdateHistoryGeneration = 0;
   final List<_CollectionUndoStep> _collectionUndoSteps = [];
   final List<_CollectionUndoStep> _collectionRedoSteps = [];
+  int _noteUpdateUndoCounter = 0;
+  int _collectionUndoStepCounter = 0;
   int _collectionUndoExternalMutationGeneration = 0;
-  bool _preservingCollectionUndoHistory = false;
   int _collectionUndoGeneration = 0;
+  int _collectionUndoLastEntryGeneration = -1;
   Completer<void>? _collectionUndoOperationDone;
   Completer<void>? _portableSnapshotDone;
   bool _portableSnapshotStarting = false;
@@ -344,107 +427,135 @@ final class CollectionSqliteStorage
   /// normalization setting, and adds any newly required cards in the same
   /// savepoint as the note update. Existing cards are left untouched. The
   /// returned undo record contains Core's old-note snapshot, and this storage
-  /// retains a bounded history for this operation only. It is not a generic
-  /// collection undo/redo stack.
+  /// records its inverse in the same bounded collection journal used by
+  /// callback-backed collection operations.
   Future<ExistingNoteUpdateResult> updateExistingNote(Note edited) =>
       _serializeNoteUpdate(() async {
-        late ExistingNoteUpdateResult result;
-        late int operationTimeMillis;
-        late int historyGenerationAtStart;
         final operationDone = await _acquireCollectionUndoOperation();
-        _noteUpdateRedoSteps.clear();
-        _noteUpdateUndoCounter++;
-        historyGenerationAtStart = _noteUpdateHistoryGeneration;
-        _preservingCollectionUndoHistory = true;
+        _collectionUndoStepCounter++;
+        Session? session;
         try {
-          operationTimeMillis =
+          session = _createCollectionUndoSession();
+          final operationTimeMillis =
               _nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch;
-          result = await runZoned(
+          final historyGenerationAtStart =
+              _collectionUndoExternalMutationGeneration;
+          final result = await runZoned(
             () => _updateExistingNote(
               edited,
               operationTimeMillis: operationTimeMillis,
             ),
             zoneValues: {_collectionUndoOperationZoneKey: this},
           );
-        } catch (_) {
-          discardExistingNoteUpdateUndoHistory();
-          rethrow;
+          if (result.changed) {
+            final typedChanges = _collectionUndoChangesFromChangeset(
+              session.changeset(),
+            );
+            _noteUpdateUndoCounter++;
+            final record = result.undoRecord!;
+            final afterMillis = _readInt64(
+              _database.select('SELECT mod FROM col').single['mod'],
+            );
+            final step = _ExistingNoteUpdateUndoStep(
+              before: record.oldNote,
+              after: result.note,
+              addedCards: result.addedCards,
+              addedTags: record.addedTags,
+              collectionMtimeBefore: record.collectionMtimeMillis,
+              collectionMtimeAfter: afterMillis,
+              nextCardPositionConfigBefore: record.nextCardPositionConfigBefore,
+              nextCardPositionConfigAfter: record.nextCardPositionConfigAfter,
+              operationTimestampSecs: operationTimeMillis ~/ 1000,
+            );
+            if (_collectionUndoExternalMutationGeneration !=
+                historyGenerationAtStart) {
+              return result;
+            }
+            final coalesceTimeSecs =
+                (_nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch) ~/
+                1000;
+            final prior = _collectionUndoSteps.isEmpty
+                ? null
+                : _collectionUndoSteps.last;
+            _collectionRedoSteps.clear();
+            if (prior?.noteUpdate?.canCoalesceWith(
+                  step,
+                  coalesceTimeSecs: coalesceTimeSecs,
+                ) ??
+                false) {
+              final merged = prior!.noteUpdate!.coalesceAfter(step);
+              final mergedChanges = _mergeCollectionUndoChanges(
+                prior.changes.toList(),
+                typedChanges,
+              );
+              _collectionUndoSteps[_collectionUndoSteps.length -
+                  1] = _noteUpdateJournalStep(
+                merged,
+                counter: prior.counter,
+                changes: mergedChanges,
+              );
+            } else {
+              _collectionUndoSteps.add(
+                _noteUpdateJournalStep(step, changes: typedChanges),
+              );
+              if (_collectionUndoSteps.length > 30) {
+                _collectionUndoSteps.removeAt(0);
+              }
+            }
+            _collectionUndoGeneration++;
+            _collectionUndoLastEntryGeneration = _collectionUndoGeneration;
+            await _flushIfAutocommit(preserveNoteUpdateHistory: true);
+          } else if (_collectionRedoSteps.isNotEmpty) {
+            // Core starts a normal undoable step before it knows whether the
+            // operation changes anything, so even a semantic no-op invalidates
+            // redo history.
+            _collectionRedoSteps.clear();
+            _collectionUndoGeneration++;
+          }
+          return result;
         } finally {
-          _preservingCollectionUndoHistory = false;
+          session?.delete();
           _releaseCollectionUndoOperation(operationDone);
         }
-        if (result.changed) {
-          _collectionUndoSteps.clear();
-          _collectionRedoSteps.clear();
-          final record = result.undoRecord!;
-          final afterMillis = _readInt64(
-            _database.select('SELECT mod FROM col').single['mod'],
-          );
-          final step = _ExistingNoteUpdateUndoStep(
-            before: record.oldNote,
-            after: result.note,
-            addedCards: result.addedCards,
-            addedTags: record.addedTags,
-            collectionMtimeBefore: record.collectionMtimeMillis,
-            collectionMtimeAfter: afterMillis,
-            nextCardPositionConfigBefore: record.nextCardPositionConfigBefore,
-            nextCardPositionConfigAfter: record.nextCardPositionConfigAfter,
-            operationTimestampSecs: operationTimeMillis ~/ 1000,
-          );
-          try {
-            await _flushIfAutocommit(preserveNoteUpdateHistory: true);
-          } catch (_) {
-            discardExistingNoteUpdateUndoHistory();
-            rethrow;
-          }
-          if (_noteUpdateHistoryGeneration != historyGenerationAtStart) {
-            return result;
-          }
-          final coalesceTimeSecs =
-              (_nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch) ~/
-              1000;
-          if (_noteUpdateUndoSteps.isNotEmpty &&
-              _noteUpdateUndoSteps.last.canCoalesceWith(
-                step,
-                coalesceTimeSecs: coalesceTimeSecs,
-              )) {
-            _noteUpdateUndoSteps[_noteUpdateUndoSteps.length - 1] =
-                _noteUpdateUndoSteps.last.coalesceAfter(step);
-          } else {
-            _noteUpdateUndoSteps.add(step);
-            if (_noteUpdateUndoSteps.length > 30) {
-              _noteUpdateUndoSteps.removeAt(0);
-            }
-          }
-        }
-        return result;
       });
 
-  /// Status for this storage's existing-note-update history only.
+  /// Compatibility view for the most recent note update in the shared journal.
   ExistingNoteUpdateUndoStatus get existingNoteUpdateUndoStatus =>
       ExistingNoteUpdateUndoStatus(
-        canUndo: _noteUpdateUndoSteps.isNotEmpty,
-        canRedo: _noteUpdateRedoSteps.isNotEmpty,
+        canUndo:
+            _collectionUndoSteps.isNotEmpty &&
+            _collectionUndoSteps.last.noteUpdate != null,
+        canRedo:
+            _collectionRedoSteps.isNotEmpty &&
+            _collectionRedoSteps.last.noteUpdate != null,
         lastStep: _noteUpdateUndoCounter,
       );
+
+  _CollectionUndoStep _noteUpdateJournalStep(
+    _ExistingNoteUpdateUndoStep step, {
+    int? counter,
+    List<CollectionUndoChange> changes = const [],
+  }) => _CollectionUndoStep(
+    label: CollectionUndoOperation.updateNote.name,
+    counter: counter ?? _collectionUndoStepCounter,
+    noteUpdate: step,
+    actions: [
+      _CollectionUndoAction(
+        undo: () async => _applyExistingNoteUpdateUndoStep(step, undo: true),
+        redo: () async => _applyExistingNoteUpdateUndoStep(step, undo: false),
+        changes: changes,
+      ),
+    ],
+  );
 
   /// Invalidates the scoped history after direct substore writes or a caller
   /// transaction that changes collection state outside this adapter.
   void discardExistingNoteUpdateUndoHistory() {
     if (identical(Zone.current[_collectionUndoOperationZoneKey], this)) return;
-    _clearExistingNoteUpdateUndoHistory();
-    if (_preservingCollectionUndoHistory) {
-      _collectionUndoExternalMutationGeneration++;
-    }
+    _collectionUndoExternalMutationGeneration++;
     _collectionUndoSteps.clear();
     _collectionRedoSteps.clear();
     _collectionUndoGeneration++;
-  }
-
-  void _clearExistingNoteUpdateUndoHistory() {
-    _noteUpdateHistoryGeneration++;
-    _noteUpdateUndoSteps.clear();
-    _noteUpdateRedoSteps.clear();
   }
 
   void _invalidateOperationHistoryAfterSubstoreWrite() {
@@ -452,65 +563,22 @@ final class CollectionSqliteStorage
   }
 
   /// Reverts the latest successful [updateExistingNote] operation.
-  Future<void> undoLastExistingNoteUpdate() => _serializeNoteUpdate(
-    () => _withCollectionUndoOperation(() async {
-      if (_noteUpdateUndoSteps.isEmpty) {
-        throw StateError('no existing-note update to undo');
-      }
-      _noteUpdateUndoCounter++;
-      final step = _noteUpdateUndoSteps.removeLast();
-      _preservingCollectionUndoHistory = true;
-      try {
-        runZoned(
-          () => _applyExistingNoteUpdateUndoStep(step, undo: true),
-          zoneValues: {_collectionUndoOperationZoneKey: this},
-        );
-        _noteUpdateRedoSteps.add(step);
-        await _flushIfAutocommit(preserveNoteUpdateHistory: true);
-      } catch (_) {
-        discardExistingNoteUpdateUndoHistory();
-        rethrow;
-      } finally {
-        _preservingCollectionUndoHistory = false;
-      }
-    }),
-  );
+  Future<void> undoLastExistingNoteUpdate() => _serializeNoteUpdate(() async {
+    if (_collectionUndoSteps.isEmpty ||
+        _collectionUndoSteps.last.noteUpdate == null) {
+      throw StateError('no existing-note update to undo');
+    }
+    await undoLastCollectionOperation();
+  });
 
   /// Reapplies the latest undone [updateExistingNote] operation.
-  Future<void> redoLastExistingNoteUpdate() => _serializeNoteUpdate(
-    () => _withCollectionUndoOperation(() async {
-      if (_noteUpdateRedoSteps.isEmpty) {
-        throw StateError('no existing-note update to redo');
-      }
-      _noteUpdateUndoCounter++;
-      final step = _noteUpdateRedoSteps.removeLast();
-      _preservingCollectionUndoHistory = true;
-      try {
-        runZoned(
-          () => _applyExistingNoteUpdateUndoStep(step, undo: false),
-          zoneValues: {_collectionUndoOperationZoneKey: this},
-        );
-        _noteUpdateUndoSteps.add(step);
-        await _flushIfAutocommit(preserveNoteUpdateHistory: true);
-      } catch (_) {
-        discardExistingNoteUpdateUndoHistory();
-        rethrow;
-      } finally {
-        _preservingCollectionUndoHistory = false;
-      }
-    }),
-  );
-
-  Future<T> _withCollectionUndoOperation<T>(
-    Future<T> Function() operation,
-  ) async {
-    final operationDone = await _acquireCollectionUndoOperation();
-    try {
-      return await operation();
-    } finally {
-      _releaseCollectionUndoOperation(operationDone);
+  Future<void> redoLastExistingNoteUpdate() => _serializeNoteUpdate(() async {
+    if (_collectionRedoSteps.isEmpty ||
+        _collectionRedoSteps.last.noteUpdate == null) {
+      throw StateError('no existing-note update to redo');
     }
-  }
+    await redoLastCollectionOperation();
+  });
 
   Future<T> _withExternalCollectionMutation<T>(
     FutureOr<T> Function() mutation,
@@ -1182,23 +1250,96 @@ INSERT OR REPLACE INTO cards (
 
   bool get canUndoCollectionOperation => _collectionUndoSteps.isNotEmpty;
   bool get canRedoCollectionOperation => _collectionRedoSteps.isNotEmpty;
+  String? get collectionUndoLabel =>
+      _collectionUndoSteps.isEmpty ? null : _collectionUndoSteps.last.label;
+  String? get collectionRedoLabel =>
+      _collectionRedoSteps.isEmpty ? null : _collectionRedoSteps.last.label;
+  bool get collectionUndoIsCustom =>
+      _collectionUndoSteps.isNotEmpty && _collectionUndoSteps.last.isCustom;
+  bool get collectionRedoIsCustom =>
+      _collectionRedoSteps.isNotEmpty && _collectionRedoSteps.last.isCustom;
+  List<CollectionUndoChange> get collectionUndoChanges =>
+      _collectionUndoSteps.isEmpty
+      ? const []
+      : List.unmodifiable(_collectionUndoSteps.last.changes);
+  List<CollectionUndoChange> get collectionRedoChanges =>
+      _collectionRedoSteps.isEmpty
+      ? const []
+      : List.unmodifiable(
+          _inverseCollectionUndoChanges(_collectionRedoSteps.last.changes),
+        );
+  int get collectionUndoLastStep => _collectionUndoStepCounter;
   int get collectionUndoGeneration => _collectionUndoGeneration;
+  bool get collectionUndoHasEntryAtCurrentGeneration =>
+      _collectionUndoLastEntryGeneration == _collectionUndoGeneration;
+
+  /// Adds a named empty step that later operations can be merged into.
+  int addCustomUndoEntry(String name) {
+    if (name.isEmpty)
+      throw ArgumentError.value(name, 'name', 'must not be empty');
+    _collectionUndoStepCounter++;
+    _collectionRedoSteps.clear();
+    _collectionUndoSteps.add(
+      _CollectionUndoStep(
+        label: name,
+        counter: _collectionUndoStepCounter,
+        actions: [],
+        isCustom: true,
+      ),
+    );
+    if (_collectionUndoSteps.length > 30) _collectionUndoSteps.removeAt(0);
+    _collectionUndoGeneration++;
+    _collectionUndoLastEntryGeneration = _collectionUndoGeneration;
+    return _collectionUndoStepCounter;
+  }
+
+  /// Merges newer undo entries into [target], matching Core's custom-step
+  /// restore-point behavior. The target keeps its operation label and counter.
+  void mergeUndoEntries(int target) {
+    final targetIndex = _collectionUndoSteps.indexWhere(
+      (step) => step.counter == target,
+    );
+    if (targetIndex < 0) {
+      throw ArgumentError.value(target, 'target', 'undo step was not found');
+    }
+    final merged = _collectionUndoSteps.sublist(targetIndex + 1);
+    final targetStep = _collectionUndoSteps[targetIndex];
+    for (final step in merged) {
+      targetStep.actions.addAll(step.actions);
+    }
+    if (merged.isNotEmpty) {
+      _collectionUndoSteps.removeRange(
+        targetIndex + 1,
+        _collectionUndoSteps.length,
+      );
+    }
+    _collectionUndoStepCounter = target;
+    _collectionUndoGeneration++;
+    _collectionUndoLastEntryGeneration = _collectionUndoGeneration;
+  }
 
   /// Commits one collection operation and retains its exact inverse in the
   /// same bounded, process-local history used by Card Browser bulk actions.
   Future<bool> runUndoableCollectionOperation({
+    String label = 'Collection operation',
+    CollectionUndoOperation? operation,
+    bool captureSqlChanges = true,
+    List<CollectionUndoChange> additionalChanges = const [],
+    List<CollectionUndoChange> Function()? collectAdditionalChanges,
     Future<bool> Function()? prepare,
     required Future<void> Function() apply,
-    required Future<void> Function() undo,
-    required Future<void> Function() redo,
+    Future<void> Function()? undo,
+    Future<void> Function()? redo,
     void Function(int generation)? onCommitted,
   }) async {
     final operationDone = await _acquireCollectionUndoOperation();
+    _collectionUndoStepCounter++;
     try {
       await beginExclusive();
       final externalMutationGeneration =
           _collectionUndoExternalMutationGeneration;
-      _preservingCollectionUndoHistory = true;
+      final session = captureSqlChanges ? _createCollectionUndoSession() : null;
+      Changeset? changeset;
       late final bool prepared;
       try {
         prepared = await runZoned(() async {
@@ -1207,10 +1348,8 @@ INSERT OR REPLACE INTO cards (
             return false;
           }
           await apply();
+          changeset = session?.changeset();
           _executeCached('commit');
-          // Bulk operations supersede the editor's narrower undo history
-          // while retaining the just-committed collection operation.
-          _clearExistingNoteUpdateUndoHistory();
           return true;
         }, zoneValues: {_collectionUndoOperationZoneKey: this});
       } catch (error, stackTrace) {
@@ -1221,16 +1360,63 @@ INSERT OR REPLACE INTO cards (
         }
         Error.throwWithStackTrace(error, stackTrace);
       } finally {
-        _preservingCollectionUndoHistory = false;
+        session?.delete();
       }
-      if (!prepared) return false;
+      if (!prepared) {
+        if (_collectionRedoSteps.isNotEmpty) {
+          _collectionRedoSteps.clear();
+          _collectionUndoGeneration++;
+        }
+        return false;
+      }
+      final hasChangeset = changeset?.isNotEmpty == true;
+      final capturedChanges = hasChangeset
+          ? _collectionUndoChangesFromChangeset(changeset!)
+          : const <CollectionUndoChange>[];
+      final extraChanges = [
+        ...additionalChanges,
+        ...?collectAdditionalChanges?.call(),
+      ];
+      final hasCallbacks = undo != null && redo != null;
+      if (captureSqlChanges &&
+          !hasChangeset &&
+          extraChanges.isEmpty &&
+          !hasCallbacks) {
+        if (_collectionRedoSteps.isNotEmpty) {
+          _collectionRedoSteps.clear();
+          _collectionUndoGeneration++;
+        }
+        return true;
+      }
+      if (!hasChangeset && !hasCallbacks && extraChanges.isEmpty) return true;
       if (externalMutationGeneration ==
           _collectionUndoExternalMutationGeneration) {
         _collectionRedoSteps.clear();
-        _collectionUndoSteps.add(_CollectionUndoStep(undo: undo, redo: redo));
+        _collectionUndoSteps.add(
+          _CollectionUndoStep(
+            label: operation == CollectionUndoOperation.custom
+                ? label
+                : operation?.name ?? _operationKeyFromLegacyLabel(label),
+            counter: _collectionUndoStepCounter,
+            isCustom: operation == CollectionUndoOperation.custom,
+            actions: [
+              _CollectionUndoAction(
+                undo: undo,
+                redo: redo,
+                undoChangeset: hasChangeset ? -changeset! : null,
+                redoChangeset: hasChangeset ? changeset : null,
+                changes: List.unmodifiable([
+                  ...capturedChanges,
+                  ...extraChanges,
+                ]),
+              ),
+            ],
+          ),
+        );
         if (_collectionUndoSteps.length > 30) _collectionUndoSteps.removeAt(0);
       }
       _collectionUndoGeneration++;
+      _collectionUndoLastEntryGeneration = _collectionUndoGeneration;
       onCommitted?.call(_collectionUndoGeneration);
       await _flush();
       return true;
@@ -1241,6 +1427,266 @@ INSERT OR REPLACE INTO cards (
       operationDone.complete();
     }
   }
+
+  /// Starts a Core-compatible SQLite session over collection tables with a
+  /// declared primary key. The session captures row-level inverses for notes,
+  /// cards, decks, tags, revlogs, collection configuration, and custom rows
+  /// changed by the operation, including trigger effects.
+  Session _createCollectionUndoSession() {
+    final session = Session(_database);
+    try {
+      final tables = _database.select(
+        "SELECT name FROM sqlite_master WHERE type = 'table' "
+        "AND name NOT LIKE 'sqlite_%' ORDER BY name",
+      );
+      for (final row in tables) {
+        final name = row['name'] as String;
+        final quotedName = '"${name.replaceAll('"', '""')}"';
+        final columns = _database.select('PRAGMA table_info($quotedName)');
+        if (columns.any((column) => (column['pk'] as int) > 0)) {
+          session.attach(name);
+        }
+      }
+      return session;
+    } on Object {
+      session.delete();
+      rethrow;
+    }
+  }
+
+  List<CollectionUndoChange> _collectionUndoChangesFromChangeset(
+    Changeset changeset,
+  ) {
+    final changes = <CollectionUndoChange>[];
+    for (final change in changeset) {
+      final table = change.table;
+      final kind = switch (table) {
+        'cards' => CollectionUndoChangeKind.card,
+        'notes' => CollectionUndoChangeKind.note,
+        'decks' => CollectionUndoChangeKind.deck,
+        'deck_config' => CollectionUndoChangeKind.deckConfig,
+        'tags' => CollectionUndoChangeKind.tag,
+        'revlog' => CollectionUndoChangeKind.revlog,
+        'config' => CollectionUndoChangeKind.config,
+        'col' => CollectionUndoChangeKind.collection,
+        'notetypes' ||
+        'fields' ||
+        'templates' => CollectionUndoChangeKind.notetype,
+        _ => CollectionUndoChangeKind.custom,
+      };
+      final variant = switch (change.operation) {
+        SqliteUpdateKind.insert => CollectionUndoChangeVariant.added,
+        SqliteUpdateKind.update =>
+          table == 'col'
+              ? CollectionUndoChangeVariant.modified
+              : CollectionUndoChangeVariant.updated,
+        SqliteUpdateKind.delete => CollectionUndoChangeVariant.removed,
+      };
+      final before = change.oldValues == null
+          ? null
+          : List<Object?>.unmodifiable(change.oldValues!);
+      final after = change.newValues == null
+          ? null
+          : List<Object?>.unmodifiable(change.newValues!);
+      changes.add(
+        CollectionUndoChange(
+          kind: kind,
+          variant: variant,
+          table: table,
+          columns: _collectionColumnsForTable(table),
+          operation: change.operation,
+          before: before,
+          after: after,
+        ),
+      );
+      if (table == 'notes' &&
+          _changesetColumnChanged(
+            table,
+            'tags',
+            change.oldValues,
+            change.newValues,
+          )) {
+        changes.add(
+          CollectionUndoChange(
+            kind: CollectionUndoChangeKind.noteTags,
+            variant: CollectionUndoChangeVariant.tagsUpdated,
+            table: table,
+            columns: _collectionColumnsForTable(table),
+            operation: change.operation,
+            before: before,
+            after: after,
+          ),
+        );
+      }
+      if (table == 'col' &&
+          _changesetColumnChanged(
+            table,
+            'scm',
+            change.oldValues,
+            change.newValues,
+          )) {
+        changes.add(
+          CollectionUndoChange(
+            kind: CollectionUndoChangeKind.collection,
+            variant: CollectionUndoChangeVariant.schemaModified,
+            table: table,
+            columns: _collectionColumnsForTable(table),
+            operation: change.operation,
+            before: before,
+            after: after,
+          ),
+        );
+      }
+    }
+    return List.unmodifiable(changes);
+  }
+
+  List<String> _collectionColumnsForTable(String table) {
+    final quotedTable = '"${table.replaceAll('"', '""')}"';
+    return List.unmodifiable(
+      _database
+          .select('PRAGMA table_info($quotedTable)')
+          .map((row) => row['name'] as String),
+    );
+  }
+
+  bool _changesetColumnChanged(
+    String table,
+    String column,
+    List<Object?>? before,
+    List<Object?>? after,
+  ) {
+    if (before == null || after == null) return false;
+    final quotedTable = '"${table.replaceAll('"', '""')}"';
+    final columns = _database.select('PRAGMA table_info($quotedTable)');
+    final index = columns.indexWhere((row) => row['name'] == column);
+    return index >= 0 &&
+        index < before.length &&
+        index < after.length &&
+        before[index] != after[index];
+  }
+
+  List<CollectionUndoChange> _mergeCollectionUndoChanges(
+    List<CollectionUndoChange> earlier,
+    List<CollectionUndoChange> later,
+  ) {
+    final merged = [...earlier];
+    for (final change in later) {
+      final key = _collectionUndoChangeKey(change);
+      final index = key == null
+          ? -1
+          : merged.indexWhere(
+              (existing) => _collectionUndoChangeKey(existing) == key,
+            );
+      if (index < 0) {
+        merged.add(change);
+        continue;
+      }
+      final previous = merged[index];
+      final before = previous.before;
+      final after = change.after;
+      if (before == null && after == null) {
+        merged.removeAt(index);
+        continue;
+      }
+      final variant = previous.kind == CollectionUndoChangeKind.noteTags
+          ? CollectionUndoChangeVariant.tagsUpdated
+          : before == null
+          ? CollectionUndoChangeVariant.added
+          : after == null
+          ? CollectionUndoChangeVariant.removed
+          : CollectionUndoChangeVariant.updated;
+      final operation = switch (variant) {
+        CollectionUndoChangeVariant.added => SqliteUpdateKind.insert,
+        CollectionUndoChangeVariant.removed => SqliteUpdateKind.delete,
+        _ => SqliteUpdateKind.update,
+      };
+      merged[index] = CollectionUndoChange(
+        kind: previous.kind,
+        variant: variant,
+        table: previous.table,
+        columns: previous.columns,
+        operation: operation,
+        before: before,
+        after: after,
+      );
+    }
+    return List.unmodifiable(merged);
+  }
+
+  List<CollectionUndoChange> _inverseCollectionUndoChanges(
+    Iterable<CollectionUndoChange> changes,
+  ) => [
+    for (final change in changes.toList().reversed)
+      CollectionUndoChange(
+        kind: change.kind,
+        variant: switch (change.variant) {
+          CollectionUndoChangeVariant.added =>
+            CollectionUndoChangeVariant.removed,
+          CollectionUndoChangeVariant.removed =>
+            CollectionUndoChangeVariant.added,
+          CollectionUndoChangeVariant.graveAdded =>
+            CollectionUndoChangeVariant.graveRemoved,
+          CollectionUndoChangeVariant.graveRemoved =>
+            CollectionUndoChangeVariant.graveAdded,
+          CollectionUndoChangeVariant.cardAnswered =>
+            CollectionUndoChangeVariant.cardAnswerUndone,
+          CollectionUndoChangeVariant.cardAnswerUndone =>
+            CollectionUndoChangeVariant.cardAnswered,
+          CollectionUndoChangeVariant.updated ||
+          CollectionUndoChangeVariant.tagsUpdated ||
+          CollectionUndoChangeVariant.modified ||
+          CollectionUndoChangeVariant.schemaModified ||
+          CollectionUndoChangeVariant.custom => change.variant,
+        },
+        table: change.table,
+        columns: change.columns,
+        operation: switch (change.operation) {
+          SqliteUpdateKind.insert => SqliteUpdateKind.delete,
+          SqliteUpdateKind.delete => SqliteUpdateKind.insert,
+          SqliteUpdateKind.update => SqliteUpdateKind.update,
+        },
+        before: change.after,
+        after: change.before,
+      ),
+  ];
+
+  String? _collectionUndoChangeKey(CollectionUndoChange change) {
+    final values = change.before ?? change.after;
+    if (values == null) return null;
+    final table = '"${change.table.replaceAll('"', '""')}"';
+    final schema = _database.select('PRAGMA table_info($table)');
+    final keys = <(String, int)>[
+      for (var index = 0; index < schema.length; index++)
+        if ((schema[index]['pk'] as int) > 0)
+          (schema[index]['name'] as String, index),
+    ];
+    if (keys.isEmpty) return null;
+    return [
+      change.kind.name,
+      change.table,
+      for (final (name, index) in keys) '$name=${values[index]}',
+    ].join('|');
+  }
+
+  String _operationKeyFromLegacyLabel(String label) => switch (label) {
+    'Edit Note' => CollectionUndoOperation.updateNote.name,
+    'Delete Cards' => CollectionUndoOperation.deleteCards.name,
+    'Suspend Cards' => CollectionUndoOperation.suspendCards.name,
+    'Bury Cards' => CollectionUndoOperation.buryCards.name,
+    'Unbury Cards' => CollectionUndoOperation.unburyCards.name,
+    'Delete Deck' => CollectionUndoOperation.deleteDeck.name,
+    'Empty Filtered Deck' => CollectionUndoOperation.emptyFilteredDeck.name,
+    'Build Filtered Deck' => CollectionUndoOperation.buildFilteredDeck.name,
+    "Extend Today's Study Limits" =>
+      CollectionUndoOperation.extendStudyLimits.name,
+    'Change Deck Description' =>
+      CollectionUndoOperation.changeDeckDescription.name,
+    'Change Deck Daily Limits' =>
+      CollectionUndoOperation.changeDeckDailyLimits.name,
+    'Create Deck' => CollectionUndoOperation.createDeck.name,
+    _ => label,
+  };
 
   Future<Completer<void>> _acquireCollectionUndoOperation() {
     if (identical(Zone.current[_collectionUndoOperationZoneKey], this)) {
@@ -1281,8 +1727,14 @@ INSERT OR REPLACE INTO cards (
       final externalMutationGeneration =
           _collectionUndoExternalMutationGeneration;
       final step = _collectionUndoSteps.removeLast();
+      _collectionUndoStepCounter++;
+      if (step.noteUpdate != null) _noteUpdateUndoCounter++;
       try {
-        await _replayCollectionOperation(step.undo);
+        await _replayCollectionOperation(() async {
+          for (final action in step.actions.reversed) {
+            await _applyCollectionUndoAction(action, undo: true);
+          }
+        });
       } catch (_) {
         if (externalMutationGeneration ==
             _collectionUndoExternalMutationGeneration) {
@@ -1292,6 +1744,7 @@ INSERT OR REPLACE INTO cards (
       }
       if (externalMutationGeneration ==
           _collectionUndoExternalMutationGeneration) {
+        step.counter = _collectionUndoStepCounter;
         _collectionRedoSteps.add(step);
       }
       _collectionUndoGeneration++;
@@ -1305,7 +1758,6 @@ INSERT OR REPLACE INTO cards (
     Future<void> Function() action,
   ) async {
     await beginExclusive();
-    _preservingCollectionUndoHistory = true;
     try {
       await runZoned(() async {
         await action();
@@ -1316,8 +1768,6 @@ INSERT OR REPLACE INTO cards (
         _executeCached('rollback');
       } catch (_) {}
       Error.throwWithStackTrace(error, stackTrace);
-    } finally {
-      _preservingCollectionUndoHistory = false;
     }
   }
 
@@ -1331,8 +1781,14 @@ INSERT OR REPLACE INTO cards (
       final externalMutationGeneration =
           _collectionUndoExternalMutationGeneration;
       final step = _collectionRedoSteps.removeLast();
+      _collectionUndoStepCounter++;
+      if (step.noteUpdate != null) _noteUpdateUndoCounter++;
       try {
-        await _replayCollectionOperation(step.redo);
+        await _replayCollectionOperation(() async {
+          for (final action in step.actions) {
+            await _applyCollectionUndoAction(action, undo: false);
+          }
+        });
       } catch (_) {
         if (externalMutationGeneration ==
             _collectionUndoExternalMutationGeneration) {
@@ -1342,6 +1798,7 @@ INSERT OR REPLACE INTO cards (
       }
       if (externalMutationGeneration ==
           _collectionUndoExternalMutationGeneration) {
+        step.counter = _collectionUndoStepCounter;
         _collectionUndoSteps.add(step);
       }
       _collectionUndoGeneration++;
@@ -1349,6 +1806,30 @@ INSERT OR REPLACE INTO cards (
     } finally {
       _releaseCollectionUndoOperation(operationDone);
     }
+  }
+
+  Future<void> _applyCollectionUndoAction(
+    _CollectionUndoAction action, {
+    required bool undo,
+  }) async {
+    // Explicit actions may include state outside captured SQLite tables
+    // (such as the current deck selection). They define the complete logical
+    // replay when supplied; changesets are the automatic fallback.
+    final callback = undo ? action.undo : action.redo;
+    if (callback != null) {
+      await callback();
+      return;
+    }
+    final changeset = undo ? action.undoChangeset : action.redoChangeset;
+    if (changeset != null) {
+      changeset.applyTo(_database);
+      return;
+    }
+    throw StateError(
+      undo
+          ? 'collection undo entry has no inverse'
+          : 'collection redo entry has no forward action',
+    );
   }
 
   Future<void> _flushAfterCommittedUndoRedo() async {
@@ -1398,6 +1879,8 @@ INSERT OR REPLACE INTO cards (
     var committedUndoGeneration = 0;
     try {
       committed = await runUndoableCollectionOperation(
+        operation: CollectionUndoOperation.deleteDeck,
+        captureSqlChanges: true,
         prepare: () async {
           final currentTarget = _deckStorage.getDeck(deckId);
           if (currentTarget == null) {
@@ -1585,6 +2068,29 @@ INSERT OR REPLACE INTO cards (
           if (currentDeckWasDeleted) await selectDeck(Int64.ONE);
           restoreCollectionModifiedAt(afterMtime);
         },
+        collectAdditionalChanges: () => [
+          for (final deck in decks)
+            if (deck.id != Int64.ONE && deckGraves[deck.id] != true)
+              CollectionUndoChange.graveAdded(
+                kind: CollectionUndoChangeKind.deck,
+                objectId: deck.id,
+                graveType: 2,
+              ),
+          for (final card in cardsToDelete)
+            if (cardGraves[card.id] != true)
+              CollectionUndoChange.graveAdded(
+                kind: CollectionUndoChangeKind.card,
+                objectId: card.id,
+                graveType: 0,
+              ),
+          for (final note in notes)
+            if (noteGraves[note.id] != true)
+              CollectionUndoChange.graveAdded(
+                kind: CollectionUndoChangeKind.note,
+                objectId: note.id,
+                graveType: 1,
+              ),
+        ],
         onCommitted: (generation) => committedUndoGeneration = generation,
       );
     } catch (error, stackTrace) {
@@ -1666,6 +2172,8 @@ INSERT OR REPLACE INTO cards (
 
     try {
       final changed = await runUndoableCollectionOperation(
+        operation: CollectionUndoOperation.unburyCards,
+        captureSqlChanges: true,
         prepare: () async {
           final current = _deckStorage.getDeck(deckId);
           if (current == null) throw StateError('deck not found: $deckId');
@@ -1793,6 +2301,8 @@ INSERT OR REPLACE INTO cards (
 
     try {
       final changed = await runUndoableCollectionOperation(
+        operation: CollectionUndoOperation.emptyFilteredDeck,
+        captureSqlChanges: true,
         prepare: () async {
           final current = _deckStorage.getDeck(deckId);
           if (current == null) throw StateError('deck not found: $deckId');
@@ -1918,6 +2428,8 @@ INSERT OR REPLACE INTO cards (
     Deck? deckAfter;
     FilteredDeckBuildResult? result;
     await runUndoableCollectionOperation(
+      operation: CollectionUndoOperation.buildFilteredDeck,
+      captureSqlChanges: true,
       prepare: () async {
         if (existing != null) {
           final rows = _database.select(
@@ -2550,6 +3062,8 @@ GROUP BY did
       );
     }
     await runUndoableCollectionOperation(
+      operation: CollectionUndoOperation.extendStudyLimits,
+      captureSqlChanges: true,
       apply: () async {
         for (final deck in after) {
           _deckStorage.updateDeck(deck);
@@ -2596,6 +3110,8 @@ GROUP BY did
     );
 
     await runUndoableCollectionOperation(
+      operation: CollectionUndoOperation.changeDeckDescription,
+      captureSqlChanges: true,
       apply: () async => _deckStorage.updateDeck(after),
       undo: () async => _deckStorage.updateDeck(before),
       redo: () async => _deckStorage.updateDeck(after),
@@ -2644,6 +3160,8 @@ GROUP BY did
         ..reviewsPerDay = reviewsPerDay,
     );
     await runUndoableCollectionOperation(
+      operation: CollectionUndoOperation.changeDeckDailyLimits,
+      captureSqlChanges: true,
       apply: () async => _deckConfigStorage.updateDeckConfig(after),
       undo: () async => _deckConfigStorage.updateDeckConfig(before),
       redo: () async => _deckConfigStorage.updateDeckConfig(after),
@@ -2694,6 +3212,44 @@ GROUP BY did
     }
     if (result == null) throw StateError('default deck not found');
     return result;
+  }
+
+  /// Gets or creates a normal deck through the shared collection journal.
+  /// Newly created ancestors and the requested deck are replayed with their
+  /// original IDs; requesting an existing path is a no-op journal step.
+  Future<Deck> getOrCreateNormalDeckUndoable(String name) async {
+    final normalized = normalizeDeckName(name);
+    if (normalized.isEmpty) throw ArgumentError.value(name, 'name');
+    final requestedId = _deckStorage.getDeckId(
+      normalized.replaceAll('::', '\x1f'),
+    );
+    Deck? result = requestedId == null
+        ? null
+        : _deckStorage.getDeck(requestedId);
+    await runUndoableCollectionOperation(
+      operation: CollectionUndoOperation.createDeck,
+      captureSqlChanges: true,
+      prepare: () async {
+        final components = normalized.split('::');
+        var prefix = '';
+        for (final component in components) {
+          prefix = prefix.isEmpty ? component : '$prefix::$component';
+          if (_deckStorage.getDeckId(prefix.replaceAll('::', '\x1f')) == null) {
+            return true;
+          }
+        }
+        return false;
+      },
+      apply: () async => result = await getOrCreateNormalDeck(normalized),
+    );
+    final resolved =
+        result ??
+        _deckStorage.getDeck(
+          _deckStorage.getDeckId(normalized.replaceAll('::', '\x1f')) ??
+              Int64.ZERO,
+        );
+    if (resolved == null) throw StateError('created deck was not found');
+    return resolved;
   }
 
   /// Creates a child under [parentId], rejecting missing or filtered parents
@@ -2769,6 +3325,8 @@ GROUP BY did
     var previousCurrentDeckId = currentDeckId;
     final originalIds = <Int64>{};
     final committed = await runUndoableCollectionOperation(
+      operation: CollectionUndoOperation.createDeck,
+      captureSqlChanges: true,
       prepare: () async {
         fullName = validate();
         previousCurrentDeckId = currentDeckId;
@@ -2866,9 +3424,10 @@ GROUP BY did
       }
     }
 
-    await _withExternalCollectionMutation(() async {
-      _database.execute('begin');
-      try {
+    await runUndoableCollectionOperation(
+      operation: CollectionUndoOperation.renameDeck,
+      captureSqlChanges: true,
+      apply: () async {
         var ancestorName = '';
         for (final component in components.take(components.length - 1)) {
           ancestorName = ancestorName.isEmpty
@@ -2899,13 +3458,8 @@ GROUP BY did
             ),
           );
         }
-        _database.execute('commit');
-      } catch (_) {
-        if (!_database.autocommit) _database.execute('rollback');
-        rethrow;
-      }
-    });
-    await _flushIfAutocommit(preserveNoteUpdateHistory: true);
+      },
+    );
     return true;
   }
 
@@ -3872,10 +4426,38 @@ WHERE queue IN (-2, -3)
 }
 
 final class _CollectionUndoStep {
-  const _CollectionUndoStep({required this.undo, required this.redo});
+  _CollectionUndoStep({
+    required this.label,
+    required this.counter,
+    required this.actions,
+    this.noteUpdate,
+    this.isCustom = false,
+  });
 
-  final Future<void> Function() undo;
-  final Future<void> Function() redo;
+  final String label;
+  int counter;
+  final List<_CollectionUndoAction> actions;
+  final _ExistingNoteUpdateUndoStep? noteUpdate;
+  final bool isCustom;
+
+  Iterable<CollectionUndoChange> get changes =>
+      actions.expand((action) => action.changes);
+}
+
+final class _CollectionUndoAction {
+  const _CollectionUndoAction({
+    this.undo,
+    this.redo,
+    this.undoChangeset,
+    this.redoChangeset,
+    this.changes = const [],
+  });
+
+  final Future<void> Function()? undo;
+  final Future<void> Function()? redo;
+  final Changeset? undoChangeset;
+  final Changeset? redoChangeset;
+  final List<CollectionUndoChange> changes;
 }
 
 final class _CollectionNoteStorageDatabase implements NoteStorageDatabase {

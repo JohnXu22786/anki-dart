@@ -92,15 +92,21 @@ tag canonicalization, modified metadata, normal/cloze card generation, and
 collection timestamp update in one savepoint. Its result reports the updated
 note, newly generated cards, and an `UpdatedNoteUndoRecord` containing the old
 note, prior collection modification timestamp, and tag names newly registered
-by the operation. The package records up to 30 undo steps in an in-memory
-history, coalescing successive card/tag/config-free edits to the same note
-within Core's 60-second window. It can undo or redo the note, generated cards,
-tags, `nextPos` config, and collection timestamp. Writes through the adapter's
-async mutation methods clear this scoped history. Direct writes through the
-exposed deck, deck-config, or tag stores and enclosing transactions must call
-`discardExistingNoteUpdateUndoHistory()`.
-This note-specific history remains separate from the collection-operation
-history used by browser bulk actions and deck removal.
+by the operation. Note edits and callback-backed collection operations share
+one bounded, in-memory 30-entry journal. It coalesces successive
+card/tag/config-free edits to the same note within Core's 60-second window and
+replays the note, generated cards, tags, `nextPos` config, and collection
+timestamp. Undoable SQL transactions capture inverse SQLite changesets for
+primary-key collection tables, with typed row categories exposed for card,
+note, deck, tag, revlog, config, collection, notetype, and custom rows. Deck
+deletion keeps its explicit callback inverse for Core's keyless graves table.
+Custom restore points can merge subsequent undo steps. Writes through the adapter's
+async mutation methods clear the journal. Direct writes through exposed
+substores and enclosing transactions must call
+`discardExistingNoteUpdateUndoHistory()`. Queue answer/answer-undo variants
+belong to the later Scheduler/review-session unit; Reviewer feedback remains a
+projection until its app call site is added there. Deck Picker normal-deck
+creation and rename are also recorded with stable localized labels.
 Sync/import callers should continue using the low-level `addOrUpdateNote` and
 raw card operations where their replacement semantics are intended.
 

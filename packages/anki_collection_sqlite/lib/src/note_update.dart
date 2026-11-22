@@ -77,8 +77,9 @@ Note copyNote(Note note) => Note(
   checksum: note.checksum,
 );
 
-/// Availability of the note-update-only history in one open SQLite storage.
-/// This does not report generic collection undo/redo support.
+/// Compatibility view of note-update availability in the collection journal.
+/// The note-specific actions are available only when a note edit is the top
+/// undo or redo entry.
 final class ExistingNoteUpdateUndoStatus {
   const ExistingNoteUpdateUndoStatus({
     required this.canUndo,

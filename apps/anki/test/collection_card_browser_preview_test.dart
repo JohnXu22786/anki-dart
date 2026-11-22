@@ -532,6 +532,25 @@ void main() {
       ]);
       expect(await storage.getNote(note.id), isNull);
       expect(storage.revlog.getRevlogEntry(revlog.id), isNull);
+      final deletionChanges = storage.collectionUndoChanges;
+      expect(
+        deletionChanges.where(
+          (change) =>
+              change.table == 'graves' &&
+              change.kind == CollectionUndoChangeKind.card &&
+              change.variant == CollectionUndoChangeVariant.graveAdded,
+        ),
+        hasLength(cards.length),
+      );
+      expect(
+        deletionChanges.where(
+          (change) =>
+              change.table == 'graves' &&
+              change.kind == CollectionUndoChangeKind.note &&
+              change.variant == CollectionUndoChangeVariant.graveAdded,
+        ),
+        hasLength(1),
+      );
 
       await controller.undoLastCollectionOperation();
       expect(
@@ -544,7 +563,17 @@ void main() {
         restoredReview.toProto().writeToBuffer(),
         revlog.toProto().writeToBuffer(),
       );
+      expect(storage.hasDeletionGrave(note.id, note: true), isFalse);
+      for (final card in cards) {
+        expect(storage.hasDeletionGrave(card.id, note: false), isFalse);
+      }
       expect(storage.currentDeckId, currentDeck);
+
+      await controller.redoLastCollectionOperation();
+      expect(storage.hasDeletionGrave(note.id, note: true), isTrue);
+      for (final card in cards) {
+        expect(storage.hasDeletionGrave(card.id, note: false), isTrue);
+      }
     },
   );
 

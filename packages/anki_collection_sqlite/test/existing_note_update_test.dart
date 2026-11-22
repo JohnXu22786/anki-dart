@@ -49,7 +49,7 @@ void main() {
         usn INTEGER, tags TEXT, flds TEXT, sfld TEXT, csum INTEGER,
         flags INTEGER DEFAULT 0, data TEXT DEFAULT ''
       );
-      CREATE TABLE col (mod INTEGER NOT NULL);
+      CREATE TABLE col (id INTEGER PRIMARY KEY, mod INTEGER NOT NULL);
       CREATE TABLE cards (
         id INTEGER PRIMARY KEY, nid INTEGER, did INTEGER, ord INTEGER,
         mod INTEGER, usn INTEGER, type INTEGER, queue INTEGER, due INTEGER,
@@ -83,7 +83,7 @@ void main() {
         config BLOB
       );
     ''');
-    await storage.executeBatch('INSERT INTO col VALUES (500)');
+    await storage.executeBatch('INSERT INTO col VALUES (1, 500)');
     await _saveNotetype(storage, _normalNotetype());
     database.execute('INSERT INTO config VALUES (?, 0, 1, ?)', [
       'normalize_note_text',
@@ -197,8 +197,32 @@ void main() {
     await storage.updateExistingNote(_note(fields: ['second edit', 'back']));
 
     expect(storage.existingNoteUpdateUndoStatus.lastStep, 2);
+    expect(
+      storage.collectionUndoChanges
+          .where((change) => change.table == 'notes')
+          .map((change) => change.variant),
+      [
+        CollectionUndoChangeVariant.updated,
+        CollectionUndoChangeVariant.tagsUpdated,
+      ],
+    );
+    final coalescedNoteChange = storage.collectionUndoChanges.firstWhere(
+      (change) => change.table == 'notes',
+    );
+    expect(coalescedNoteChange.columns, contains('flds'));
+    expect(coalescedNoteChange.before, isNotNull);
+    expect(coalescedNoteChange.after, isNotNull);
     await storage.undoLastExistingNoteUpdate();
     expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
+    expect(
+      storage.collectionRedoChanges
+          .where((change) => change.table == 'notes')
+          .map((change) => change.variant),
+      containsAll({
+        CollectionUndoChangeVariant.updated,
+        CollectionUndoChangeVariant.tagsUpdated,
+      }),
+    );
     await storage.redoLastExistingNoteUpdate();
     expect((await storage.getNote(Int64(42)))!.fields, ['second edit', 'back']);
     expect(storage.existingNoteUpdateUndoStatus.lastStep, 4);
@@ -273,6 +297,21 @@ void main() {
     await storage.updateExistingNote(_note(fields: ['second', 'back']));
     expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
     expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+    await expectLater(storage.redoLastExistingNoteUpdate(), throwsStateError);
+  });
+
+  test('a semantic no-op after undo clears note-update redo history', () async {
+    await storage.updateExistingNote(_note(fields: ['first', 'back']));
+    await storage.undoLastExistingNoteUpdate();
+    expect(storage.canRedoCollectionOperation, isTrue);
+    final generation = storage.collectionUndoGeneration;
+    final step = storage.collectionUndoLastStep;
+
+    await storage.updateExistingNote(_note(fields: ['front', 'back']));
+
+    expect(storage.canRedoCollectionOperation, isFalse);
+    expect(storage.collectionUndoGeneration, generation + 1);
+    expect(storage.collectionUndoLastStep, step + 1);
     await expectLater(storage.redoLastExistingNoteUpdate(), throwsStateError);
   });
 
@@ -844,6 +883,7 @@ void main() {
       )
     ''');
     await storage.runUndoableCollectionOperation(
+      captureSqlChanges: false,
       apply: () async {},
       undo: () async {},
       redo: () async {},
@@ -859,6 +899,7 @@ void main() {
 
   test('public note updates invalidate collection operation undo', () async {
     await storage.runUndoableCollectionOperation(
+      captureSqlChanges: false,
       apply: () async {},
       undo: () async {},
       redo: () async {},
@@ -902,7 +943,7 @@ void main() {
     expect(storage.canUndoCollectionOperation, isFalse);
   });
 
-  test('bulk operation supersedes existing note edit undo history', () async {
+  test('bulk operation follows note edit in shared undo order', () async {
     await storage.updateExistingNote(_note(fields: ['edited', 'back']));
     expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
 
@@ -914,7 +955,275 @@ void main() {
 
     expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
     expect(storage.canUndoCollectionOperation, isTrue);
+    await storage.undoLastCollectionOperation();
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
   });
+
+  test('note edits and callback operations share one undo order', () async {
+    await storage.updateExistingNote(_note(fields: ['first edit', 'back']));
+    await storage.runUndoableCollectionOperation(
+      label: 'Change collection setting',
+      captureSqlChanges: false,
+      apply: () async => database.execute('UPDATE col SET mod = 700'),
+      undo: () async => database.execute('UPDATE col SET mod = 500'),
+      redo: () async => database.execute('UPDATE col SET mod = 700'),
+    );
+    expect(storage.collectionUndoLabel, 'Change collection setting');
+
+    await storage.undoLastCollectionOperation();
+    expect(storage.collectionRedoLabel, 'Change collection setting');
+    expect(await storage.queryInt('SELECT mod FROM col'), 500);
+    expect(storage.collectionUndoLabel, 'updateNote');
+    await storage.undoLastCollectionOperation();
+    expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
+    expect(storage.canRedoCollectionOperation, isTrue);
+
+    await storage.redoLastCollectionOperation();
+    expect((await storage.getNote(Int64(42)))!.fields, ['first edit', 'back']);
+    await storage.redoLastCollectionOperation();
+    expect(await storage.queryInt('SELECT mod FROM col'), 700);
+  });
+
+  test(
+    'captured SQL changes still run explicit undo callbacks for related state',
+    () async {
+      database.execute('UPDATE col SET mod = 0 WHERE id = 1');
+      var selectedDeckId = 0;
+      await storage.runUndoableCollectionOperation(
+        label: 'Select Deck and Update Collection',
+        apply: () async {
+          database.execute('UPDATE col SET mod = 1 WHERE id = 1');
+          selectedDeckId = 42;
+        },
+        undo: () async {
+          database.execute('UPDATE col SET mod = 0 WHERE id = 1');
+          selectedDeckId = 0;
+        },
+        redo: () async {
+          database.execute('UPDATE col SET mod = 1 WHERE id = 1');
+          selectedDeckId = 42;
+        },
+      );
+
+      await storage.undoLastCollectionOperation();
+      expect(await storage.queryInt('SELECT mod FROM col'), 0);
+      expect(selectedDeckId, 0);
+
+      await storage.redoLastCollectionOperation();
+      expect(await storage.queryInt('SELECT mod FROM col'), 1);
+      expect(selectedDeckId, 42);
+    },
+  );
+
+  test(
+    'collection journal captures typed SQLite row inverses automatically',
+    () async {
+      database.execute('''
+        INSERT INTO cards (
+          id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+          lapses, left, odue, odid, flags, data
+        ) VALUES
+          (1, 42, 1, 0, 100, 0, 0, 0, 1, 0, 2500, 0, 0, 0, 0, 0, 0, ''),
+          (2, 42, 1, 1, 100, 0, 0, 0, 2, 0, 2500, 0, 0, 0, 0, 0, 0, '')
+      ''');
+      await storage.runUndoableCollectionOperation(
+        label: 'Update collection rows',
+        apply: () async {
+          database.execute('UPDATE cards SET queue = -1 WHERE id = 2');
+          database.execute('UPDATE cards SET reps = 1 WHERE id = 1');
+          database.execute('UPDATE notes SET flds = ? WHERE id = 42', [
+            'changed by operation',
+          ]);
+          database.execute('UPDATE col SET mod = 700');
+        },
+      );
+
+      expect(
+        await storage.queryInt('SELECT queue FROM cards WHERE id = 2'),
+        -1,
+      );
+      expect((await storage.getNote(Int64(42)))!.fields, [
+        'changed by operation',
+      ]);
+      expect(await storage.queryInt('SELECT mod FROM col'), 700);
+      expect(
+        storage.collectionUndoChanges.map((change) => change.kind),
+        containsAll({
+          CollectionUndoChangeKind.card,
+          CollectionUndoChangeKind.note,
+          CollectionUndoChangeKind.collection,
+        }),
+      );
+      final cardChange = storage.collectionUndoChanges.firstWhere(
+        (change) => change.table == 'cards',
+      );
+      expect(cardChange.variant, CollectionUndoChangeVariant.updated);
+      expect(cardChange.columns, contains('queue'));
+      final noteChange = storage.collectionUndoChanges.firstWhere(
+        (change) => change.table == 'notes',
+      );
+      expect(noteChange.variant, CollectionUndoChangeVariant.updated);
+      expect(noteChange.columns, contains('flds'));
+      final collectionChange = storage.collectionUndoChanges.firstWhere(
+        (change) => change.table == 'col',
+      );
+      expect(collectionChange.variant, CollectionUndoChangeVariant.modified);
+
+      await storage.undoLastCollectionOperation();
+      expect(await storage.queryInt('SELECT queue FROM cards WHERE id = 2'), 0);
+      expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
+      expect(await storage.queryInt('SELECT mod FROM col'), 500);
+      expect(await storage.queryInt('SELECT reps FROM cards WHERE id = 1'), 0);
+
+      await storage.redoLastCollectionOperation();
+      expect(
+        await storage.queryInt('SELECT queue FROM cards WHERE id = 2'),
+        -1,
+      );
+      expect((await storage.getNote(Int64(42)))!.fields, [
+        'changed by operation',
+      ]);
+      expect(await storage.queryInt('SELECT mod FROM col'), 700);
+    },
+  );
+
+  test('custom restore point merges later typed row changes', () async {
+    database.execute('''
+      INSERT INTO cards (
+        id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps,
+        lapses, left, odue, odid, flags, data
+      ) VALUES (1, 42, 1, 0, 100, 0, 0, 0, 1, 0, 2500, 0, 0, 0, 0, 0, 0, '')
+    ''');
+    final target = storage.addCustomUndoEntry('Review batch');
+    await storage.runUndoableCollectionOperation(
+      label: 'Update card',
+      apply: () async =>
+          database.execute('UPDATE cards SET queue = -1 WHERE id = 1'),
+    );
+    await storage.runUndoableCollectionOperation(
+      label: 'Update note',
+      apply: () async => database.execute(
+        'UPDATE notes SET flds = ? WHERE id = 42',
+        ['changed by merged operation'],
+      ),
+    );
+
+    storage.mergeUndoEntries(target);
+    expect(storage.collectionUndoLabel, 'Review batch');
+    expect(storage.collectionUndoLastStep, target);
+    expect(
+      storage.collectionUndoChanges.map((change) => change.kind),
+      containsAll({
+        CollectionUndoChangeKind.card,
+        CollectionUndoChangeKind.note,
+      }),
+    );
+
+    await storage.undoLastCollectionOperation();
+    expect(await storage.queryInt('SELECT queue FROM cards WHERE id = 1'), 0);
+    expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
+    await storage.redoLastCollectionOperation();
+    expect(await storage.queryInt('SELECT queue FROM cards WHERE id = 1'), -1);
+    expect((await storage.getNote(Int64(42)))!.fields, [
+      'changed by merged operation',
+    ]);
+  });
+
+  test(
+    'captured no-op collection transaction creates no history entry',
+    () async {
+      final generation = storage.collectionUndoGeneration;
+      await storage.runUndoableCollectionOperation(
+        apply: () async =>
+            database.execute('UPDATE notes SET flds = flds WHERE id = 42'),
+      );
+
+      expect(storage.canUndoCollectionOperation, isFalse);
+      expect(storage.canRedoCollectionOperation, isFalse);
+      expect(storage.collectionUndoGeneration, generation);
+
+      final originalMod = await storage.queryInt('SELECT mod FROM col');
+      await storage.runUndoableCollectionOperation(
+        apply: () async => database.execute(
+          'UPDATE col SET mod = ? WHERE id = 1',
+          [originalMod + 1],
+        ),
+        undo: () async => database.execute(
+          'UPDATE col SET mod = ? WHERE id = 1',
+          [originalMod],
+        ),
+        redo: () async => database.execute(
+          'UPDATE col SET mod = ? WHERE id = 1',
+          [originalMod + 1],
+        ),
+      );
+      await storage.undoLastCollectionOperation();
+      expect(storage.canRedoCollectionOperation, isTrue);
+      final undoGeneration = storage.collectionUndoGeneration;
+
+      await storage.runUndoableCollectionOperation(
+        apply: () async =>
+            database.execute('UPDATE col SET mod = mod WHERE id = 1'),
+      );
+      expect(storage.canRedoCollectionOperation, isFalse);
+      expect(storage.canUndoCollectionOperation, isFalse);
+      expect(storage.collectionUndoGeneration, undoGeneration + 1);
+
+      await storage.runUndoableCollectionOperation(
+        apply: () async => database.execute(
+          'UPDATE col SET mod = ? WHERE id = 1',
+          [originalMod + 2],
+        ),
+        undo: () async => database.execute(
+          'UPDATE col SET mod = ? WHERE id = 1',
+          [originalMod + 1],
+        ),
+        redo: () async => database.execute(
+          'UPDATE col SET mod = ? WHERE id = 1',
+          [originalMod + 2],
+        ),
+      );
+      await storage.undoLastCollectionOperation();
+      expect(storage.canRedoCollectionOperation, isTrue);
+      final cancelGeneration = storage.collectionUndoGeneration;
+      final stepCounter = storage.collectionUndoLastStep;
+      expect(
+        await storage.runUndoableCollectionOperation(
+          prepare: () async => false,
+          apply: () async => throw StateError('canceled operation was applied'),
+        ),
+        isFalse,
+      );
+      expect(storage.canRedoCollectionOperation, isFalse);
+      expect(storage.canUndoCollectionOperation, isFalse);
+      expect(storage.collectionUndoGeneration, cancelGeneration + 1);
+      expect(storage.collectionUndoLastStep, stepCounter + 1);
+    },
+  );
+
+  test(
+    'callback-only host operations remain undoable without SQL rows',
+    () async {
+      var hostValue = 0;
+      await storage.runUndoableCollectionOperation(
+        operation: CollectionUndoOperation.custom,
+        label: 'host state change',
+        apply: () async => hostValue = 1,
+        undo: () async => hostValue = 0,
+        redo: () async => hostValue = 1,
+      );
+
+      expect(hostValue, 1);
+      expect(storage.canUndoCollectionOperation, isTrue);
+      expect(storage.collectionUndoLabel, 'host state change');
+      expect(storage.collectionUndoIsCustom, isTrue);
+      expect(storage.collectionUndoChanges, isEmpty);
+      await storage.undoLastCollectionOperation();
+      expect(hostValue, 0);
+      await storage.redoLastCollectionOperation();
+      expect(hostValue, 1);
+    },
+  );
 
   test('post-commit flush failure retains the committed undo step', () async {
     flushHook = () async => throw StateError('injected flush failure');
@@ -933,6 +1242,24 @@ void main() {
     expect(storage.canUndoCollectionOperation, isTrue);
     await storage.undoLastCollectionOperation();
     expect(await storage.queryInt('SELECT mod FROM col'), 500);
+  });
+
+  test('note flush failure retains the committed journal entry', () async {
+    flushHook = () async => throw StateError('injected flush failure');
+
+    await expectLater(
+      storage.updateExistingNote(_note(fields: ['committed edit', 'back'])),
+      throwsA(isA<StateError>()),
+    );
+    flushHook = null;
+
+    expect((await storage.getNote(Int64(42)))!.fields, [
+      'committed edit',
+      'back',
+    ]);
+    expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
+    await storage.undoLastExistingNoteUpdate();
+    expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
   });
 
   test(
@@ -970,9 +1297,9 @@ void main() {
       await firstFlushStarted.future;
       final concurrent = _note(fields: ['concurrent change', 'back'])
         ..prepareForUpdate(_normalNotetype(), normalizeText: true);
-      await storage.updateNote(concurrent);
+      final externalUpdate = storage.updateNote(concurrent);
       releaseFirstFlush.complete();
-      await update;
+      await Future.wait([update, externalUpdate]);
 
       expect((await storage.getNote(Int64(42)))!.fields, [
         'concurrent change',
@@ -983,7 +1310,7 @@ void main() {
   );
 
   test(
-    'failed undo rolls back SQLite rows and consumes the popped undo entry',
+    'failed undo rolls back SQLite rows and retains the journal entry',
     () async {
       final result = await storage.updateExistingNote(
         _note(fields: ['edited', 'back'], tags: ['old', 'new-tag']),
@@ -998,7 +1325,7 @@ void main() {
         throwsA(anything),
       );
 
-      expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
+      expect(storage.existingNoteUpdateUndoStatus.canUndo, isTrue);
       expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
       expect((await storage.getNote(Int64(42)))!.fields, ['edited', 'back']);
       expect(await storage.getCard(result.addedCards.single.id), isNotNull);
@@ -1006,11 +1333,13 @@ void main() {
       expect(await storage.queryInt('SELECT mod FROM col'), 9007199254740993);
 
       expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
-      await expectLater(storage.undoLastExistingNoteUpdate(), throwsStateError);
+      database.execute('DROP TRIGGER reject_card_delete');
+      await storage.undoLastExistingNoteUpdate();
+      expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
     },
   );
 
-  test('failed edit clears older undo and redo entries', () async {
+  test('failed edit preserves older redo entries', () async {
     await storage.updateExistingNote(_note(fields: ['first edit', 'back']));
     await storage.undoLastExistingNoteUpdate();
     expect(storage.existingNoteUpdateUndoStatus.canRedo, isTrue);
@@ -1025,8 +1354,11 @@ void main() {
     );
 
     expect(storage.existingNoteUpdateUndoStatus.canUndo, isFalse);
-    expect(storage.existingNoteUpdateUndoStatus.canRedo, isFalse);
+    expect(storage.existingNoteUpdateUndoStatus.canRedo, isTrue);
     expect((await storage.getNote(Int64(42)))!.fields, ['front', 'back']);
+    database.execute('DROP TRIGGER reject_note_update');
+    await storage.redoLastExistingNoteUpdate();
+    expect((await storage.getNote(Int64(42)))!.fields, ['first edit', 'back']);
   });
 
   test(

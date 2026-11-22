@@ -1591,6 +1591,144 @@ abstract class AppLocalizations {
   /// **'Browser action undone'**
   String get browserBulkActionUndone;
 
+  /// No description provided for @browserCollectionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'collection action'**
+  String get browserCollectionAction;
+
+  /// No description provided for @collectionUndoLabelEditNote.
+  ///
+  /// In en, this message translates to:
+  /// **'edit note'**
+  String get collectionUndoLabelEditNote;
+
+  /// No description provided for @collectionUndoLabelSuspendCards.
+  ///
+  /// In en, this message translates to:
+  /// **'suspend cards'**
+  String get collectionUndoLabelSuspendCards;
+
+  /// No description provided for @collectionUndoLabelBuryCards.
+  ///
+  /// In en, this message translates to:
+  /// **'bury cards'**
+  String get collectionUndoLabelBuryCards;
+
+  /// No description provided for @collectionUndoLabelDeleteCards.
+  ///
+  /// In en, this message translates to:
+  /// **'delete cards'**
+  String get collectionUndoLabelDeleteCards;
+
+  /// No description provided for @collectionUndoLabelUnburyCards.
+  ///
+  /// In en, this message translates to:
+  /// **'unbury cards'**
+  String get collectionUndoLabelUnburyCards;
+
+  /// No description provided for @collectionUndoLabelEmptyFilteredDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'empty filtered deck'**
+  String get collectionUndoLabelEmptyFilteredDeck;
+
+  /// No description provided for @collectionUndoLabelBuildFilteredDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'build filtered deck'**
+  String get collectionUndoLabelBuildFilteredDeck;
+
+  /// No description provided for @collectionUndoLabelExtendStudyLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'extend today\'s study limits'**
+  String get collectionUndoLabelExtendStudyLimits;
+
+  /// No description provided for @collectionUndoLabelChangeDeckDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'change deck description'**
+  String get collectionUndoLabelChangeDeckDescription;
+
+  /// No description provided for @collectionUndoLabelChangeDeckLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'change deck limits'**
+  String get collectionUndoLabelChangeDeckLimits;
+
+  /// No description provided for @collectionUndoLabelCreateDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'create deck'**
+  String get collectionUndoLabelCreateDeck;
+
+  /// No description provided for @collectionUndoLabelDeleteDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'delete deck'**
+  String get collectionUndoLabelDeleteDeck;
+
+  /// No description provided for @collectionUndoLabelRenameDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'rename deck'**
+  String get collectionUndoLabelRenameDeck;
+
+  /// No description provided for @browserCollectionOperationCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{action} completed'**
+  String browserCollectionOperationCompleted(String action);
+
+  /// No description provided for @browserCollectionOperationUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'{action} undone'**
+  String browserCollectionOperationUndone(String action);
+
+  /// No description provided for @browserCollectionOperationUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo {action}'**
+  String browserCollectionOperationUndo(String action);
+
+  /// No description provided for @browserCollectionOperationRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo {action}'**
+  String browserCollectionOperationRedo(String action);
+
+  /// No description provided for @collectionOperationCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{action} completed'**
+  String collectionOperationCompleted(String action);
+
+  /// No description provided for @collectionOperationUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'{action} undone'**
+  String collectionOperationUndone(String action);
+
+  /// No description provided for @collectionOperationUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo {action}'**
+  String collectionOperationUndo(String action);
+
+  /// No description provided for @collectionOperationRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo {action}'**
+  String collectionOperationRedo(String action);
+
+  /// No description provided for @collectionUndoCustomOperation.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom: {operation}'**
+  String collectionUndoCustomOperation(String operation);
+
   /// No description provided for @browserUndoBulkAction.
   ///
   /// In en, this message translates to:

@@ -478,6 +478,17 @@ void main() {
       );
       seed.execute(
         'INSERT INTO decks (id, name, mtime_secs, usn, common, kind) '
+        'VALUES (1, ?, 0, -1, ?, ?)',
+        [
+          'Default',
+          proto.Deck_Common().writeToBuffer(),
+          proto.Deck_KindContainer(
+            normal: proto.Deck_Normal(configId: Int64.ONE),
+          ).writeToBuffer(),
+        ],
+      );
+      seed.execute(
+        'INSERT INTO decks (id, name, mtime_secs, usn, common, kind) '
         'VALUES (2, ?, 0, -1, ?, ?)',
         [
           'Home',
@@ -491,7 +502,7 @@ void main() {
         'INSERT INTO decks (id, name, mtime_secs, usn, common, kind) '
         'VALUES (3, ?, 0, -1, ?, ?)',
         [
-          'Filtered',
+          'Default\x1fFiltered',
           proto.Deck_Common(newStudied: 5).writeToBuffer(),
           proto.Deck_KindContainer(
             filtered: proto.Deck_Filtered(),

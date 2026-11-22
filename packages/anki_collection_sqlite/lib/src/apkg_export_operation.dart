@@ -169,9 +169,6 @@ void _pruneApkgCollection(
       deckIds.add(originalDeckId);
     }
   }
-  // Core omits Default without scheduling so import does not replace the
-  // receiver's defaults; cards may still refer to the implicit ID 1 deck.
-  if (!withScheduling) deckIds.remove(Int64.ONE);
   final decksByName = <String, Int64>{
     for (final row in decks) row['name'] as String: _readInt64(row['id']),
   };
@@ -191,6 +188,9 @@ void _pruneApkgCollection(
       }
     }
   }
+  // Core omits Default after gathering parent decks, so a selected subdeck
+  // cannot reintroduce it; cards may still refer to the implicit ID 1 deck.
+  if (!withScheduling) deckIds.remove(Int64.ONE);
 
   final validDeckIds = decks.map((row) => _readInt64(row['id'])).toSet();
   final filteredDeckIds = <Int64>{};

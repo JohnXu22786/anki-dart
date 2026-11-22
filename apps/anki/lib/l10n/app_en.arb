@@ -72,6 +72,53 @@
   "clearSearch": "Clear search",
   "closeSearch": "Close search",
   "refreshDecks": "Refresh decks",
+  "checkDatabase": "Check Database",
+  "databaseCheckProgressTitle": "Checking database",
+  "databaseCheckStageIntegrity": "Checking database integrity",
+  "databaseCheckStageOptimize": "Optimizing database",
+  "databaseCheckStageCards": "Checking cards",
+  "databaseCheckStageNotes": "Checking notes",
+  "databaseCheckStageHistory": "Checking review history",
+  "databaseCheckNotesProgress": "Processing notes {current} of {total}",
+  "databaseCheckRebuilt": "Database rebuilt",
+  "databaseCheckCorrupt": "The collection database is corrupt.",
+  "databaseCheckFailed": "Database check failed: {error}",
+  "databaseCheckNotetypesRecovered": "Recovered {count} missing note type(s)",
+  "databaseCheckNewCardsFixed": "Corrected due positions for {count} new card(s)",
+  "databaseCheckCardPropertiesFixed": "Repaired {count} card property value(s)",
+  "databaseCheckLastReviewTimeFixed": "Restored last review time on {count} card(s)",
+  "databaseCheckOrphanCardsRemoved": "Removed {count} card(s) with missing notes",
+  "databaseCheckDecksRecovered": "Recovered {count} missing deck(s)",
+  "databaseCheckNoteFieldCountsFixed": "Repaired field counts on {count} note(s)",
+  "@databaseCheckNoteFieldCountsFixed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "databaseCheckNoteTagsFixed": "Normalized tags on {count} note(s)",
+  "@databaseCheckNoteTagsFixed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "databaseCheckFutureNoteModificationTimesFixed": "Corrected future modification times on {count} note(s)",
+  "@databaseCheckFutureNoteModificationTimesFixed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "databaseCheckDuplicateCardsRemoved": "Removed {count} duplicate card(s)",
+  "databaseCheckCardsWithoutTemplateRemoved": "Removed {count} card(s) without templates",
+  "databaseCheckRevlogFixed": "Repaired {count} review log row(s)",
+  "databaseCheckInvalidUtf8Fixed": "Replaced invalid UTF-8 in {count} note(s)",
+  "databaseCheckInvalidIdsFixed": "Repaired {count} invalid ID(s)",
+  "databaseCheckNextPositionFixed": "Corrected the next new card position",
   "loadingDecks": "Loading decks…",
   "decksUnavailable": "Decks are unavailable until a collection service is connected.",
   "browserDatabaseCheckRequired": "Please use the Check Database action, then try again.",
@@ -84,6 +131,14 @@
     "placeholders": {
       "name": {
         "type": "String"
+      }
+    }
+  },
+  "databaseCheckMissingCardsRegenerated": "Regenerated {count} missing card(s)",
+  "@databaseCheckMissingCardsRegenerated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },

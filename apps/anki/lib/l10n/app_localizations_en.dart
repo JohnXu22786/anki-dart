@@ -175,6 +175,117 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refreshDecks => 'Refresh decks';
 
   @override
+  String get checkDatabase => 'Check Database';
+
+  @override
+  String get databaseCheckProgressTitle => 'Checking database';
+
+  @override
+  String get databaseCheckStageIntegrity => 'Checking database integrity';
+
+  @override
+  String get databaseCheckStageOptimize => 'Optimizing database';
+
+  @override
+  String get databaseCheckStageCards => 'Checking cards';
+
+  @override
+  String get databaseCheckStageNotes => 'Checking notes';
+
+  @override
+  String get databaseCheckStageHistory => 'Checking review history';
+
+  @override
+  String databaseCheckNotesProgress(Object current, Object total) {
+    return 'Processing notes $current of $total';
+  }
+
+  @override
+  String get databaseCheckRebuilt => 'Database rebuilt';
+
+  @override
+  String get databaseCheckCorrupt => 'The collection database is corrupt.';
+
+  @override
+  String databaseCheckFailed(Object error) {
+    return 'Database check failed: $error';
+  }
+
+  @override
+  String databaseCheckNotetypesRecovered(Object count) {
+    return 'Recovered $count missing note type(s)';
+  }
+
+  @override
+  String databaseCheckNewCardsFixed(Object count) {
+    return 'Corrected due positions for $count new card(s)';
+  }
+
+  @override
+  String databaseCheckCardPropertiesFixed(Object count) {
+    return 'Repaired $count card property value(s)';
+  }
+
+  @override
+  String databaseCheckLastReviewTimeFixed(Object count) {
+    return 'Restored last review time on $count card(s)';
+  }
+
+  @override
+  String databaseCheckOrphanCardsRemoved(Object count) {
+    return 'Removed $count card(s) with missing notes';
+  }
+
+  @override
+  String databaseCheckDecksRecovered(Object count) {
+    return 'Recovered $count missing deck(s)';
+  }
+
+  @override
+  String databaseCheckNoteFieldCountsFixed(int count) {
+    return 'Repaired field counts on $count note(s)';
+  }
+
+  @override
+  String databaseCheckNoteTagsFixed(int count) {
+    return 'Normalized tags on $count note(s)';
+  }
+
+  @override
+  String databaseCheckFutureNoteModificationTimesFixed(int count) {
+    return 'Corrected future modification times on $count note(s)';
+  }
+
+  @override
+  String databaseCheckDuplicateCardsRemoved(Object count) {
+    return 'Removed $count duplicate card(s)';
+  }
+
+  @override
+  String databaseCheckCardsWithoutTemplateRemoved(Object count) {
+    return 'Removed $count card(s) without templates';
+  }
+
+  @override
+  String databaseCheckRevlogFixed(Object count) {
+    return 'Repaired $count review log row(s)';
+  }
+
+  @override
+  String databaseCheckInvalidUtf8Fixed(Object count) {
+    return 'Replaced invalid UTF-8 in $count note(s)';
+  }
+
+  @override
+  String databaseCheckInvalidIdsFixed(Object count) {
+    return 'Repaired $count invalid ID(s)';
+  }
+
+  @override
+  String get databaseCheckNextPositionFixed =>
+      'Corrected the next new card position';
+
+  @override
   String get loadingDecks => 'Loading decks…';
 
   @override
@@ -200,6 +311,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String studyDeck(String name) {
     return 'Study $name';
+  }
+
+  @override
+  String databaseCheckMissingCardsRegenerated(int count) {
+    return 'Regenerated $count missing card(s)';
   }
 
   @override

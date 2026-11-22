@@ -62,7 +62,8 @@ final class CollectionDeckPickerRepository
         DeckPickerPreviewNewCardsProvider,
         DeckPickerDailyLimitsProvider,
         DeckPickerExtendLimitsProvider,
-        DeckPickerCollectionUndoProvider {
+        DeckPickerCollectionUndoProvider,
+        DeckPickerDatabaseCheckProvider {
   const CollectionDeckPickerRepository(
     this.collections, {
     this.exportDeckHandler,
@@ -73,6 +74,11 @@ final class CollectionDeckPickerRepository
     DeckPickerExportDeckRequest request,
   )?
   exportDeckHandler;
+
+  @override
+  Future<DatabaseCheckResult> checkDatabase({
+    required void Function(DatabaseCheckProgress progress) onProgress,
+  }) => _storage.checkDatabase(onProgress: onProgress);
 
   @override
   Future<TextExportArtifact> exportDeck(DeckPickerExportDeckRequest request) {

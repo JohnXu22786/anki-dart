@@ -16,6 +16,8 @@ import 'package:anki_app/note_editor_screen.dart';
 import 'package:anki_backend_models/anki_backend_models.dart'
     show normalizeDeckName;
 import 'package:anki_dart/anki_dart.dart';
+import 'package:anki_collection_sqlite/anki_collection_sqlite.dart'
+    show DatabaseCheckProgress, DatabaseCheckResult, DatabaseCheckStage;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,6 +37,49 @@ void main() {
     PendingTextExportStore.instance = PendingTextExportStore(
       openDatabase: () => factory.openDatabase('pending'),
     );
+  });
+
+  testWidgets('database check shows progress and a repair summary', (
+    tester,
+  ) async {
+    final repository = _DatabaseCheckDeckRepository([
+      DeckPickerDeck(id: 1, name: 'Default'),
+    ])..databaseCheckCompleter = Completer<DatabaseCheckResult>();
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Check Database').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Check Database').last);
+    await tester.pump();
+
+    expect(repository.databaseCheckCalls, 1);
+    expect(find.text('Checking cards'), findsOneWidget);
+    repository.progressListener!(
+      const DatabaseCheckProgress(DatabaseCheckStage.history),
+    );
+    await tester.pump();
+    expect(find.text('Checking review history'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.text('Checking review history'), findsOneWidget);
+    repository.databaseCheckCompleter!.complete(_databaseCheckResult());
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Recovered 1 missing note type(s)'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Removed 2 card(s) with missing notes'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Regenerated 3 missing card(s)'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    expect(repository.loadCalls, 2);
   });
 
   testWidgets(
@@ -1920,7 +1965,7 @@ final class _BasicDeckRepository implements DeckPickerRepository {
   Future<void> buildFilteredDeck(FilteredDeckRequest request) async {}
 }
 
-final class _DeckRepository
+class _DeckRepository
     implements
         DeckPickerRepository,
         DeckPickerNewNotePortProvider,
@@ -2320,6 +2365,50 @@ final class _DeckRepository
   Future<void> buildFilteredDeck(FilteredDeckRequest request) async =>
       filteredRequests.add(request);
 }
+
+final class _DatabaseCheckDeckRepository extends _DeckRepository
+    implements DeckPickerDatabaseCheckProvider {
+  _DatabaseCheckDeckRepository(super.decks);
+
+  int databaseCheckCalls = 0;
+  Completer<DatabaseCheckResult>? databaseCheckCompleter;
+  void Function(DatabaseCheckProgress progress)? progressListener;
+
+  @override
+  Future<DatabaseCheckResult> checkDatabase({
+    required void Function(DatabaseCheckProgress progress) onProgress,
+  }) async {
+    databaseCheckCalls++;
+    progressListener = onProgress;
+    onProgress(const DatabaseCheckProgress(DatabaseCheckStage.cards));
+    final result = _databaseCheckResult();
+    return databaseCheckCompleter?.future ?? result;
+  }
+}
+
+DatabaseCheckResult _databaseCheckResult() => const DatabaseCheckResult(
+  orphanedCardsRemoved: 2,
+  invalidCardPropertiesFixed: 0,
+  newCardPositionsFixed: 0,
+  missingDecksRecovered: 0,
+  filteredCardsFixed: 0,
+  revlogRowsFixed: 0,
+  missingDeckNamesRecovered: 0,
+  invalidIdsFixed: 0,
+  cardLastReviewTimesFixed: 0,
+  notesVisited: 0,
+  noteFieldCountMismatches: 0,
+  noteTagsFixed: 0,
+  futureNoteModificationTimesFixed: 0,
+  duplicateCardOrdinalsRemoved: 0,
+  cardsWithoutTemplateRemoved: 0,
+  notetypesRecovered: 1,
+  invalidUtf8NotesFixed: 0,
+  missingCardsRegenerated: 3,
+  nextNewPositionFixed: false,
+  tagRegistryChanged: false,
+  unsupportedRepairCategories: [],
+);
 
 final class _FakeDeckPickerNewNotePort implements NewNoteEditorPort {
   int loadCalls = 0;

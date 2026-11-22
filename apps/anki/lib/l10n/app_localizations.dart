@@ -403,6 +403,162 @@ abstract class AppLocalizations {
   /// **'Refresh decks'**
   String get refreshDecks;
 
+  /// No description provided for @checkDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Database'**
+  String get checkDatabase;
+
+  /// No description provided for @databaseCheckProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking database'**
+  String get databaseCheckProgressTitle;
+
+  /// No description provided for @databaseCheckStageIntegrity.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking database integrity'**
+  String get databaseCheckStageIntegrity;
+
+  /// No description provided for @databaseCheckStageOptimize.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimizing database'**
+  String get databaseCheckStageOptimize;
+
+  /// No description provided for @databaseCheckStageCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking cards'**
+  String get databaseCheckStageCards;
+
+  /// No description provided for @databaseCheckStageNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking notes'**
+  String get databaseCheckStageNotes;
+
+  /// No description provided for @databaseCheckStageHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking review history'**
+  String get databaseCheckStageHistory;
+
+  /// No description provided for @databaseCheckNotesProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing notes {current} of {total}'**
+  String databaseCheckNotesProgress(Object current, Object total);
+
+  /// No description provided for @databaseCheckRebuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'Database rebuilt'**
+  String get databaseCheckRebuilt;
+
+  /// No description provided for @databaseCheckCorrupt.
+  ///
+  /// In en, this message translates to:
+  /// **'The collection database is corrupt.'**
+  String get databaseCheckCorrupt;
+
+  /// No description provided for @databaseCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Database check failed: {error}'**
+  String databaseCheckFailed(Object error);
+
+  /// No description provided for @databaseCheckNotetypesRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered {count} missing note type(s)'**
+  String databaseCheckNotetypesRecovered(Object count);
+
+  /// No description provided for @databaseCheckNewCardsFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Corrected due positions for {count} new card(s)'**
+  String databaseCheckNewCardsFixed(Object count);
+
+  /// No description provided for @databaseCheckCardPropertiesFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Repaired {count} card property value(s)'**
+  String databaseCheckCardPropertiesFixed(Object count);
+
+  /// No description provided for @databaseCheckLastReviewTimeFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored last review time on {count} card(s)'**
+  String databaseCheckLastReviewTimeFixed(Object count);
+
+  /// No description provided for @databaseCheckOrphanCardsRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {count} card(s) with missing notes'**
+  String databaseCheckOrphanCardsRemoved(Object count);
+
+  /// No description provided for @databaseCheckDecksRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered {count} missing deck(s)'**
+  String databaseCheckDecksRecovered(Object count);
+
+  /// No description provided for @databaseCheckNoteFieldCountsFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Repaired field counts on {count} note(s)'**
+  String databaseCheckNoteFieldCountsFixed(int count);
+
+  /// No description provided for @databaseCheckNoteTagsFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Normalized tags on {count} note(s)'**
+  String databaseCheckNoteTagsFixed(int count);
+
+  /// No description provided for @databaseCheckFutureNoteModificationTimesFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Corrected future modification times on {count} note(s)'**
+  String databaseCheckFutureNoteModificationTimesFixed(int count);
+
+  /// No description provided for @databaseCheckDuplicateCardsRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {count} duplicate card(s)'**
+  String databaseCheckDuplicateCardsRemoved(Object count);
+
+  /// No description provided for @databaseCheckCardsWithoutTemplateRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {count} card(s) without templates'**
+  String databaseCheckCardsWithoutTemplateRemoved(Object count);
+
+  /// No description provided for @databaseCheckRevlogFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Repaired {count} review log row(s)'**
+  String databaseCheckRevlogFixed(Object count);
+
+  /// No description provided for @databaseCheckInvalidUtf8Fixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced invalid UTF-8 in {count} note(s)'**
+  String databaseCheckInvalidUtf8Fixed(Object count);
+
+  /// No description provided for @databaseCheckInvalidIdsFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Repaired {count} invalid ID(s)'**
+  String databaseCheckInvalidIdsFixed(Object count);
+
+  /// No description provided for @databaseCheckNextPositionFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Corrected the next new card position'**
+  String get databaseCheckNextPositionFixed;
+
   /// No description provided for @loadingDecks.
   ///
   /// In en, this message translates to:
@@ -450,6 +606,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Study {name}'**
   String studyDeck(String name);
+
+  /// No description provided for @databaseCheckMissingCardsRegenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerated {count} missing card(s)'**
+  String databaseCheckMissingCardsRegenerated(int count);
 
   /// No description provided for @deckCounts.
   ///

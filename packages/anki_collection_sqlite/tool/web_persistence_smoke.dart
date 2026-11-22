@@ -53,6 +53,9 @@ Future<void> main() async {
       INSERT INTO notes VALUES (
         $generatedNoteId, 'timestamp', 9, 1, 0, '', '', '', 0, 0, ''
       );
+      CREATE TABLE cards (id INTEGER PRIMARY KEY, nid INTEGER);
+      INSERT INTO cards VALUES (1, $generatedNoteId);
+      INSERT INTO cards VALUES (2, -1);
     ''');
     await first.addOrUpdateNote(_note(Int64.parseInt('9007199254740993')));
     final generated = _note(Int64.ZERO, field: 'before');

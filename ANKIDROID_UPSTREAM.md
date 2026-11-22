@@ -837,9 +837,17 @@ returns no progress update; a present event copies the stage and creates an
 amount from the unmodified current/total values only when total is positive.
 Problem messages are joined in order with exactly one line feed when present;
 otherwise the host-localized rebuilt message is requested once and passed
-through unchanged. `Collection.fixIntegrity()`, generated progress objects,
-async task/cancellation/progress context, collection access, localization,
-message dialog, lifecycle, and UI remain host-side. No direct pinned
+through unchanged. `CollectionSqliteStorage.checkDatabase()` now provides a
+shared storage repair operation sourced from Anki Core
+`rslib/src/dbcheck.rs` at `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It checks
+integrity, optimizes, and repairs supported card/deck/note-field/revlog/
+position/ID categories, including invalid UTF-8, card regeneration and tag
+state, in a rollback-capable transaction. The storage result is complete after
+the repair commits. The Flutter Deck Picker starts the shared operation, shows
+live progress, and presents localized result and error dialogs across Flutter
+targets. Its progress flow is non-cancelable, matching AnkiDroid. Async task
+supervision and native lifecycle remain host-side; app localization currently
+supports English only. No direct pinned
 `DatabaseCheck.kt` test was found; focused Dart cases in
 `test/database_check_projection_test.dart` are source-derived. The Kotlin file
 identifies Copyright (c) 2022 Ankitects Pty Ltd. The Dart adaptation and tests
@@ -2232,9 +2240,12 @@ rolled back.
 
 ## Remaining coverage gaps
 
-The host still owns database integrity repair and its generated progress event,
-async task/cancellation/progress UI, collection access, localization, completion
-dialog, lifecycle, and UI; only the progress/result projections are mapped here.
+Database integrity repair is implemented in the shared SQLite package, and the
+Flutter Deck Picker exposes its progress, localized result, and error flow on
+all Flutter targets. Async task supervision and native lifecycle integration
+remain host-side; English is the only app localization currently available.
+Progress/result projections are mapped here, and the implementation boundary
+is recorded in `docs/DATABASE_CHECK_PORTING_MAP.md`.
 
 Card Template Editor state values and transitions are mapped above, but the host integration remains outside this Dart port: actual MutableStateFlow publication, Timber diagnostics, ReportableException construction/conversion, Android lifecycle, template loading/saving, rendering, and UI. No direct pinned ViewModel tests were found; the Dart tests are source-derived.
 

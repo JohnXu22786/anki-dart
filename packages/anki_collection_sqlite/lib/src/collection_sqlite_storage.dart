@@ -43,6 +43,7 @@ import 'apkg_exporter.dart';
 
 part 'legacy_collection_migrations.dart';
 part 'apkg_export_operation.dart';
+part 'database_check.dart';
 
 const _preparedStatementCacheCapacity = 50;
 final _collectionUndoOperationZoneKey = Object();

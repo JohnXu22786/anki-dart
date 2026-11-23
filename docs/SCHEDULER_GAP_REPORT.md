@@ -259,6 +259,21 @@ answer call-site wiring, cache mutation after an answer, transaction
 persistence/undo, Reviewer UI, and full cross-platform review integration
 remain incomplete.
 
+### Unit 95 — collection-backed load-balanced interval decision
+
+`CollectionSqliteStorage.findLoadBalancedIntervalForNow()` resolves one
+`CollectionLoadBalancerContext` for the optional injected `now` and forwards
+its cache and `nextDayAt`, together with the caller-selected deck-config ID,
+nullable note ID, current interval, bounds, and nullable fuzz seed, to the
+existing pure `anki_backend_models.findLoadBalancedInterval()` helper. The
+collection method returns the helper's nullable decision unchanged and does
+not apply it or mutate card, cache, or database state. This closes composition
+of the collection timing/cache context with the pure interval decision. The
+caller still selects the relevant card and preset context and applies the
+answer; scheduler answer-state transitions, cache mutation during answer,
+transaction persistence/undo, scheduler execution, and Reviewer UI remain
+open.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -271,14 +286,15 @@ remain incomplete.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: wiring the current collection context into review
-  answers and scheduler execution, cache mutation after answers, persisted
-  scheduling changes, transactions/undo, and orchestration. Collection-backed
-  due-card history and the Unit94 timing-plus-cache context are available; Unit90
-  groups caller-preloaded history, and `CollectionSqliteStorage.deckTree()`
-  provides queue-count aggregation. Unit89 adds the pure preloaded-context
-  interval decision, but these helpers do not complete scheduler integration or
-  full cross-platform review integration.
+- Remaining scheduler work: wiring the current collection context and Unit95
+  interval decision into review answers and scheduler execution, answer-state
+  transitions, cache mutation after answers, persisted scheduling changes,
+  transactions/undo, and orchestration. Collection-backed due-card history and
+  the Unit94 timing-plus-cache context are available; Unit90 groups
+  caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides
+  queue-count aggregation. Unit89 adds the pure preloaded-context interval
+  decision, but these helpers do not complete scheduler integration or full
+  cross-platform review integration.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

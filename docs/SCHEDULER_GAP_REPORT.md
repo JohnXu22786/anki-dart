@@ -227,8 +227,17 @@ a caller-provided deck-to-config map, and the stored config map, it groups
 card/note pairs into 99-day preset caches and projects easy-day settings for
 all configs. Cards without a deck mapping are skipped as in Core; presets with
 no mapped cards have no day-cache entry. Database queries, deriving the day
-window and deck-to-config mapping, post-construction cache mutation, scheduler
+window and deck-to-config mapping, persisted scheduling changes, scheduler
 call-site integration, answer persistence, Reviewer UI, and full cross-platform
+review integration remain incomplete.
+
+### Unit 91 — load-balancer cache mutation
+
+`LoadBalancerCache.addCard()` updates one existing preset/day bucket when its
+indices are in range. `removeCard()` searches all preset buckets and days by
+card ID; a day retains note membership while another card for that note remains.
+These are in-memory cache updates only. Persisted scheduling changes, storage
+queries, scheduler call-site wiring, answer/reviewer UI, and full cross-platform
 review integration remain incomplete.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
@@ -245,8 +254,8 @@ review integration remain incomplete.
   transactions, and rescheduling remain host-owned.
 - Remaining scheduler work: card-history reads and day/date window
   construction, full timezone input construction, producing the deck-to-config
-  map, post-construction cache mutation, preset storage/configuration
-  integration,
+  map, preset storage/configuration integration and scheduler call-site
+  wiring,
   collection storage, and scheduler orchestration. Collection-backed due-card
   history input is available in Unit 83; Unit90 groups that preloaded history,
   and `CollectionSqliteStorage.deckTree()` provides queue-count aggregation.

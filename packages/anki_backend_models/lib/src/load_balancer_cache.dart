@@ -75,4 +75,31 @@ final class LoadBalancerCache {
 
   /// Parsed seven-day easy-day settings for each stored config.
   final Map<DeckConfigId, List<EasyDay>> easyDaysByPreset;
+
+  /// Adds a card to its preset's cached day when both indices exist.
+  ///
+  /// Unknown presets and intervals outside the 99-day cache are ignored, as
+  /// in Core's `LoadBalancer::add_card()`.
+  void addCard(
+    CardId cardId,
+    NoteId noteId,
+    DeckConfigId configId,
+    int interval,
+  ) {
+    final days = daysByPreset[configId];
+    if (days == null || interval < 0 || interval >= days.length) return;
+    days[interval].add(cardId, noteId);
+  }
+
+  /// Removes the first matching card from every cached preset/day bucket.
+  ///
+  /// Note membership remains on a day while any other cached card there has
+  /// the same note ID, matching `LoadBalancerDay.remove()`.
+  void removeCard(CardId cardId) {
+    for (final days in daysByPreset.values) {
+      for (final day in days) {
+        day.remove(cardId);
+      }
+    }
+  }
 }

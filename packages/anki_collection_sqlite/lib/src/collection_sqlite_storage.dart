@@ -3681,6 +3681,54 @@ WHERE queue IN (-2, -3)
     return deck;
   }
 
+  /// Calculates the four answer-button states for a stored normal-deck new
+  /// card using its stored position and resolved deck scheduler config.
+  ///
+  /// The stored due value is clamped to zero before constructing Core's
+  /// [NewCardState]. [baseContext] supplies dynamic scheduler inputs; the
+  /// normalized deck config and collection FSRS short-term flags are
+  /// projected without replacing caller-owned context fields. Missing config
+  /// rows use Core defaults. This read-only path does not read revlogs, FSRS
+  /// memory history, or load-balancer cache/history, and does not persist
+  /// answer results.
+  Future<LearningCardSchedulingStates> newCardSchedulingStatesForCard({
+    required CardId cardId,
+    required ReviewSchedulingContext baseContext,
+  }) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+    if (card.ctype != CardType.newCard) {
+      throw StateError('card is not a new card: $cardId');
+    }
+
+    final deck = _deckStorage.getDeck(card.deckId);
+    if (deck == null) throw StateError('deck not found: ${card.deckId}');
+    if (deck.kind is FilteredDeckKind) {
+      throw StateError('filtered deck is not supported: ${card.deckId}');
+    }
+    final deckConfigId = deck.configId;
+    if (deckConfigId == null || deckConfigId == Int64.ZERO) {
+      throw StateError('deck has no config ID: ${deck.id}');
+    }
+    final storedConfig = _deckConfigStorage.getDeckConfig(deckConfigId);
+    final config =
+        storedConfig ??
+        DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
+    final fsrsEnabled = readCollectionConfig('fsrs') == true;
+    final context = baseContext
+        .withDeckConfig(config)
+        .withFsrsShortTermSettings(
+          allowShortTerm: allowsFsrsShortTerm(
+            fsrsEnabled: fsrsEnabled,
+            params: config.fsrsParams,
+          ),
+          shortTermWithStepsEnabled:
+              readCollectionConfig('fsrs_short_term_with_steps_enabled') ==
+              true,
+        );
+    return NewCardState(position: max(card.due, 0)).nextStates(context);
+  }
+
   /// Returns the union of note tags in [deckId] and its descendants.
   ///
   /// The host combines these with the collection tag table to preserve

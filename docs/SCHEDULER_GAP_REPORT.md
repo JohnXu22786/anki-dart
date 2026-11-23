@@ -407,10 +407,11 @@ Units 103–109 close stored ordinary Review card retrieval, all four read-only
 answer-state calculations with collection-backed config selection, missing
 FSRS memory-state derivation, and FSRS answer outcomes for stored normal-deck
 Review cards. Unit 110 closes the two FSRS short-term settings for that same
-path. Remaining scheduler gaps include new/learning/relearning card state
-assembly, filtered-deck preview/rescheduling, answer application, cache
-updates, card/revlog persistence, transactions/undo, application call-site
-wiring, and Reviewer UI.
+path. Unit 111 closes stored normal-deck New answer-state calculation only.
+Remaining scheduler gaps include Learning and Relearning state assembly,
+filtered-deck preview/rescheduling, answer application, cache updates,
+card/revlog persistence, transactions/undo, application call-site wiring, and
+Reviewer UI.
 
 ### Unit 106 — collection config in stored Review answer states
 
@@ -479,6 +480,24 @@ answer states. New/learning/relearning card state assembly,
 filtered-deck preview/rescheduling, answer application and persistence, cache
 mutation, transactions/undo, app call-site wiring, and Reviewer UI remain open.
 
+### Unit 111 — stored normal-deck New answer states
+
+`CollectionSqliteStorage.newCardSchedulingStatesForCard()` reads a stored New
+card in its assigned normal deck, clamps its stored due position to zero, and
+resolves the deck config with Core defaults when its row is missing. It
+projects the normalized deck steps, graduation intervals, and multipliers onto
+the caller's context, derives the two FSRS short-term flags from collection
+config, and delegates all four buttons to `NewCardState.nextStates()`. Other
+caller-owned dynamic context fields remain unchanged. This path does not read
+revlogs, derive FSRS memory/outcomes, or load load-balancer history/cache. It is
+read-only and reports missing card/deck, non-New card, filtered deck, and
+missing config ID errors.
+
+This closes stored normal-deck New answer-state calculation only. Learning and
+Relearning state retrieval/assembly, filtered-deck preview/rescheduling,
+answer application and persistence, cache mutation, transactions/undo, app
+call-site wiring, and Reviewer UI remain open.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -491,10 +510,12 @@ mutation, transactions/undo, app call-site wiring, and Reviewer UI remain open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: non-review/filtered-deck state assembly,
-  answer-call-site wiring, persisted scheduling changes, transactions/undo,
+- Remaining scheduler work: Learning/Relearning and filtered-deck state
+  assembly, answer-call-site wiring, persisted scheduling changes, transactions/undo,
   and orchestration. Stored normal-deck Review state retrieval and
-  collection-backed FSRS answer-state calculation are closed by Units 103–110.
+  collection-backed FSRS Review answer-state calculation are closed by Units
+  103–110; stored normal-deck New answer-state calculation is closed by Unit
+  111.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

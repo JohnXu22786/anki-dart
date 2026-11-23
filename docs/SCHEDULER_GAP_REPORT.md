@@ -274,6 +274,18 @@ answer; scheduler answer-state transitions, cache mutation during answer,
 transaction persistence/undo, scheduler execution, and Reviewer UI remain
 open.
 
+### Unit 96 — ReviewState load-balancer interval hook
+
+`ReviewSchedulingContext` now accepts an optional resolver for the fixed
+preset/note/seed load-balancer context. Passing ReviewState intervals call it
+after interval multipliers and final minimum/maximum handling; a nullable
+result falls back to the existing deterministic fuzz path. Early reviews skip
+the resolver and retain their rounded/clamped calculation. The hook is carried
+through FSRS next-state derivation and preserves the sequential Hard/Good/Easy
+minimums. Collection/scheduler construction of the resolver, answer-time cache
+mutation, card/revlog persistence, transactions/undo, application call-site
+wiring, and Reviewer UI remain open.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -286,15 +298,17 @@ open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: wiring the current collection context and Unit95
-  interval decision into review answers and scheduler execution, answer-state
+- Remaining scheduler work: constructing and wiring the current collection
+  context and Unit95 interval decision into review answers and scheduler
+  execution, answer-state
   transitions, cache mutation after answers, persisted scheduling changes,
   transactions/undo, and orchestration. Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides
   queue-count aggregation. Unit89 adds the pure preloaded-context interval
-  decision, but these helpers do not complete scheduler integration or full
-  cross-platform review integration.
+  decision, and Unit96 adds the pure ReviewState interval hook, but these
+  helpers do not complete collection call-site or full cross-platform review
+  integration.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

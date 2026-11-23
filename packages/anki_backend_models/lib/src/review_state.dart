@@ -50,6 +50,7 @@ class ReviewSchedulingContext {
     this.lapseMultiplier = 0.0,
     this.minimumLapseInterval = 1,
     this.fuzzFactor,
+    this.loadBalancedIntervalResolver,
     this.fsrsNextStates,
     this.fsrsParams,
     this.fsrsDesiredRetention,
@@ -72,6 +73,14 @@ class ReviewSchedulingContext {
   final double lapseMultiplier;
   final int minimumLapseInterval;
   final double? fuzzFactor;
+
+  /// Resolves a review interval against a fixed load-balancer context.
+  ///
+  /// Called only for passing review intervals that use Core's fuzz path, after
+  /// interval multipliers and final minimum/maximum bounds are applied. A null
+  /// result falls back to [fuzzFactor].
+  final int? Function(double interval, int minimum, int maximum)?
+      loadBalancedIntervalResolver;
   final FsrsReviewNextStates? fsrsNextStates;
 
   /// Exact FSRS parameter set used when [fsrsNextStates] is not precomputed.
@@ -101,6 +110,7 @@ class ReviewSchedulingContext {
         lapseMultiplier: lapseMultiplier,
         minimumLapseInterval: minimumLapseInterval,
         fuzzFactor: fuzzFactor,
+        loadBalancedIntervalResolver: loadBalancedIntervalResolver,
         fsrsNextStates: states,
         fsrsParams: fsrsParams,
         fsrsDesiredRetention: fsrsDesiredRetention,
@@ -381,9 +391,17 @@ class ReviewCardState {
         ? _f32(interval * _f32(ctx.intervalMultiplier))
         : interval;
     final bounds = _minAndMax(minimum, ctx);
-    return fuzz
-        ? _withReviewFuzz(adjusted, bounds.$1, bounds.$2, ctx)
-        : _asU32(adjusted.roundToDouble()).clamp(bounds.$1, bounds.$2).toInt();
+    if (!fuzz) {
+      return _asU32(adjusted.roundToDouble())
+          .clamp(bounds.$1, bounds.$2)
+          .toInt();
+    }
+    final balanced = ctx.loadBalancedIntervalResolver?.call(
+      adjusted,
+      bounds.$1,
+      bounds.$2,
+    );
+    return balanced ?? _withReviewFuzz(adjusted, bounds.$1, bounds.$2, ctx);
   }
 
   (int, int) _minAndMax(int minimum, ReviewSchedulingContext ctx) {

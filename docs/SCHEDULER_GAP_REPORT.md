@@ -354,10 +354,10 @@ returns `ReviewCardState.nextStates()` unchanged and does not derive current
 review state or FSRS inputs. `nextStates()` may calculate FSRS answer outcomes
 from the supplied context. The method does not persist cards or revlogs or
 mutate the cache. This closes read-only answer-state calculation composition
-for a supplied review state only. Core card-state derivation, fetching current
-states for filtered-deck preview/rescheduling and non-review card types, actual
-answer command application, cache-update call-site wiring, persistence,
-transactions/undo, and Reviewer UI remain open.
+for a supplied review state only. Stored current-state retrieval, filtered-deck
+preview/rescheduling, non-review card types, actual answer command application,
+cache-update call-site wiring, persistence, transactions/undo, and Reviewer UI
+remain open.
 
 ### Unit 103 — collection-backed current normal-deck review state
 
@@ -369,8 +369,23 @@ that same `daysElapsed` into `ReviewCardState.fromCard()`. Missing cards,
 missing decks, non-review cards, and filtered decks return clear state errors.
 This provides current review-state retrieval for normal decks only. Filtered
 preview/rescheduling state, new/learning/relearning states, FSRS memory-state
-derivation, complete `get_scheduling_states()` composition, answer application,
-answer persistence and cache updates, transaction/undo behavior, and Reviewer
+derivation, answer application, answer persistence and cache updates,
+transaction/undo behavior, and Reviewer UI remain open.
+
+### Unit 104 — stored normal-deck Review answer states
+
+`CollectionSqliteStorage.reviewCardSchedulingStatesForCardForNow()` reads one
+stored card, validates that it is an ordinary Review card in a normal deck,
+and projects its current state using one collection timing snapshot. It then
+calculates all four answer-button states from the caller's base
+`ReviewSchedulingContext`. When load balancing is enabled, card/home-deck
+selection and the resolver cache use that same card and timing snapshot; when
+disabled, the method skips load-balancer config and history reads. The supplied
+nullable fuzz seed and scheduler inputs remain caller-owned, and the method is
+read-only: it does not derive FSRS memory state or apply or persist answers.
+This closes whole stored normal-deck Review answer-state calculation only.
+Filtered preview/rescheduling, new/learning/relearning states, FSRS derivation,
+answer application, cache updates, persistence, transactions/undo, and Reviewer
 UI remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
@@ -385,10 +400,7 @@ UI remain open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: wiring the current collection context, Unit95
-  interval decision, Unit97 reusable resolver, and Unit98 assembled review
-  scheduling context into review answers and scheduler execution, answer-state transitions, app answer-call-site wiring,
-  persisted scheduling changes,
+- Remaining scheduler work: app answer-call-site wiring, persisted scheduling changes,
   transactions/undo, and orchestration. Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

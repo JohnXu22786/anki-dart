@@ -1154,6 +1154,147 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
     );
   });
 
+  group('reviewCardSchedulingStatesForCardForNow', () {
+    const creationSecs = 1_700_000_000;
+    final now = DateTime.fromMillisecondsSinceEpoch(
+      (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+      isUtc: true,
+    );
+    const base = ReviewSchedulingContext(
+      intervalMultiplier: 1.2,
+      hardMultiplier: 1.4,
+      fuzzFactor: 0.25,
+      fsrsParams: [0.1, 0.2, 0.3],
+    );
+
+    setUp(() async {
+      await _prepareTimingCollection(storage, creationSecs);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(Int64(10), 'A', buryReviews: true),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, Int64(10)));
+      await _insertReviewContextCard(
+        storage,
+        cardId: 1,
+        noteId: Int64(100),
+        deckId: 7,
+        due: 7,
+        interval: 30,
+        factor: 2450,
+        lapses: 2,
+        data: '{"s":3.25,"d":4.5}',
+      );
+    });
+
+    test(
+      'disabled calculation uses base states and skips load-balancer reads',
+      () async {
+        // An enabled cache read would reject this unrelated malformed history row.
+        await storage.executeBatch('''
+INSERT INTO cards (id, nid, did, queue, due) VALUES (2, 200, 7, 0, 4294967296);
+''');
+
+        final result = await storage.reviewCardSchedulingStatesForCardForNow(
+          cardId: Int64(1),
+          baseContext: base,
+          loadBalancerEnabled: false,
+          fuzzSeed: null,
+          now: now,
+        );
+
+        final current = await storage.currentReviewCardStateForNow(
+          cardId: Int64(1),
+          now: now,
+        );
+        _expectReviewSchedulingStatesEqual(result, current.nextStates(base));
+      },
+    );
+
+    test(
+      'enabled calculation composes the stored state with Unit101 context',
+      () async {
+        final result = await storage.reviewCardSchedulingStatesForCardForNow(
+          cardId: Int64(1),
+          baseContext: base,
+          loadBalancerEnabled: true,
+          fuzzSeed: BigInt.from(42),
+          now: now,
+        );
+
+        final current = await storage.currentReviewCardStateForNow(
+          cardId: Int64(1),
+          now: now,
+        );
+        final composed = await storage
+            .reviewSchedulingContextWithCardLoadBalancerForNow(
+              baseContext: base,
+              cardId: Int64(1),
+              loadBalancerEnabled: true,
+              fuzzSeed: BigInt.from(42),
+              now: now,
+            );
+
+        _expectReviewSchedulingStatesEqual(
+          result,
+          current.nextStates(composed),
+        );
+        expect(composed.intervalMultiplier, base.intervalMultiplier);
+        expect(composed.hardMultiplier, base.hardMultiplier);
+        expect(composed.fuzzFactor, base.fuzzFactor);
+        expect(composed.fsrsParams, same(base.fsrsParams));
+        expect(result.current.review.scheduledDays, 30);
+        expect(result.current.review.elapsedDays, 35);
+        expect(result.current.review.easeFactor, closeTo(2.45, 1e-6));
+        expect(result.current.review.lapses, 2);
+        expect(result.current.review.memoryState!.stability, 3.25);
+        expect(result.current.review.memoryState!.difficulty, 4.5);
+      },
+    );
+
+    test(
+      'missing, non-review, and filtered cards preserve Unit103 errors',
+      () async {
+        storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck(8));
+        await _insertReviewContextCard(
+          storage,
+          cardId: 3,
+          noteId: Int64(300),
+          deckId: 7,
+          ctype: 0,
+        );
+        await _insertReviewContextCard(
+          storage,
+          cardId: 4,
+          noteId: Int64(400),
+          deckId: 8,
+        );
+
+        for (final input in [
+          (cardId: Int64(999), message: 'card not found'),
+          (cardId: Int64(3), message: 'not a review card'),
+          (cardId: Int64(4), message: 'filtered deck'),
+        ]) {
+          await expectLater(
+            storage.reviewCardSchedulingStatesForCardForNow(
+              cardId: input.cardId,
+              baseContext: base,
+              loadBalancerEnabled: false,
+              fuzzSeed: null,
+              now: now,
+            ),
+            throwsA(
+              isA<StateError>().having(
+                (error) => error.message,
+                'message',
+                contains(input.message),
+              ),
+            ),
+          );
+        }
+      },
+    );
+  });
+
   group('CollectionLoadBalancerContext.addAnsweredReviewCard', () {
     final preset = Int64(10);
 

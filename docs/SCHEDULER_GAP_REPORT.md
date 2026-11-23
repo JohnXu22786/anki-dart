@@ -162,6 +162,14 @@ sibling search and modifier derivation, random weighted selection, and
 scheduler orchestration remain incomplete. This helper does not integrate the
 load balancer into the scheduler.
 
+### Unit 85 — load-balancer day sibling state
+
+`LoadBalancerDay` tracks caller-supplied card/note pairs and the set of notes
+present on one day, porting Core's in-memory add, remove, and sibling-membership
+operations. Removing a card clears its note membership only after the last card
+for that note is removed. Cross-day sibling search, day/time derivation, random
+weighted selection, and scheduler integration remain incomplete.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,

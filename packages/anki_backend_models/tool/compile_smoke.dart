@@ -6,6 +6,17 @@ import 'package:anki_backend_protocol/anki/deck_config.pbenum.dart' as deck;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  final loadBalancerDay = LoadBalancerDay()
+    ..add(CardId.parseInt('9223372036854775807'),
+        NoteId.parseInt('9007199254740993'));
+  if (!loadBalancerDay.hasSibling(NoteId.parseInt('9007199254740993'))) {
+    throw StateError('load-balancer day state differs on JavaScript');
+  }
+  loadBalancerDay.remove(CardId.parseInt('9223372036854775807'));
+  if (loadBalancerDay.hasSibling(NoteId.parseInt('9007199254740993'))) {
+    throw StateError('load-balancer day removal differs on JavaScript');
+  }
+
   final easyDays = parseEasyDaysPercentages(
     const [1.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0],
   );

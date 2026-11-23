@@ -255,6 +255,18 @@ preserving note membership while other cards for that note remain. These
 methods do not persist scheduling changes or connect the cache to a scheduler
 or Reviewer. The existing pinned source hash covers this adaptation.
 
+`ReviewCardState.fromCard()` adapts the Review arm of
+`CardStateUpdater::normal_study_state()` from
+`rslib/src/scheduler/answering/current.rs` at Anki Core commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The caller supplies Core's already
+resolved effective due value and collection day from the same timing snapshot;
+filtered-deck due resolution remains caller-owned. The projection preserves the
+stored review interval, ease factor, lapses, and memory state, and follows Core's
+signed integer casts and nonnegative elapsed-day clamp. The source SHA-256 is
+recorded in `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and
+contributors and licensed under AGPL-3.0-or-later. This adaptation retains the
+same license; root `COPYING` is unchanged.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

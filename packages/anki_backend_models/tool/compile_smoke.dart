@@ -85,6 +85,23 @@ void main() {
   if (card.id.toInt() + note.id.toInt() != 3) {
     throw StateError('model package JS smoke compilation failed');
   }
+  final reviewCard = Card(
+    ctype: CardType.review,
+    interval: 10,
+    easeFactorRaw: 2345,
+    lapses: 2,
+  );
+  final currentReviewState = ReviewCardState.fromCard(
+    reviewCard,
+    effectiveDue: 105,
+    daysElapsed: 100,
+  );
+  if (currentReviewState.elapsedDays != 5 ||
+      currentReviewState.easeFactor != reviewCard.easeFactor ||
+      currentReviewState.lapses != 2 ||
+      currentReviewState.leeched) {
+    throw StateError('review card state projection differs on JavaScript');
+  }
   final reviewStates = ReviewCardState(
     scheduledDays: 10,
     elapsedDays: 14,

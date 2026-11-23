@@ -63,3 +63,9 @@ current review state. The caller supplies Core's already-resolved effective due
 value and collection `daysElapsed` from the same timing snapshot. The pure
 projection preserves the stored interval, ease factor, lapses, and FSRS memory
 state; it does not read collection data or resolve filtered-deck due values.
+
+`LearningCardState.fromCard()` projects an already-loaded Learn card using the
+current step delay and elapsed seconds supplied by the caller from the matching
+Core scheduler snapshot. It preserves the card's remaining step count and FSRS
+memory state. The pure projection does not calculate timing, fuzz, the current
+delay, filtered-deck wrappers, or the current Review state.

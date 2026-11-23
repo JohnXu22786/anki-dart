@@ -584,6 +584,32 @@ class LearningCardState {
   final int elapsedSecs;
   final FsrsMemoryState? memoryState;
 
+  /// Projects a stored Learn [card] into its current learning state.
+  ///
+  /// [scheduledSecs] is the current step delay already resolved by Core, and
+  /// [elapsedSecs] comes from the same scheduler timing snapshot. This pure
+  /// projection preserves both supplied second values and the card's remaining
+  /// steps and memory state. It does not calculate timing, fuzz, or the current
+  /// delay, resolve filtered-deck wrappers, or produce the current Review
+  /// state; those values depend on scheduler and collection context outside
+  /// this API.
+  factory LearningCardState.fromCard(
+    Card card, {
+    required int scheduledSecs,
+    required int elapsedSecs,
+  }) {
+    if (card.ctype != CardType.learn) {
+      throw const InvalidModelValue('card is not a learning card');
+    }
+
+    return LearningCardState(
+      remainingSteps: card.remainingSteps,
+      scheduledSecs: scheduledSecs,
+      elapsedSecs: elapsedSecs,
+      memoryState: card.memoryState,
+    );
+  }
+
   LearningCardSchedulingStates nextStates(ReviewSchedulingContext ctx) =>
       _learningStates(this, ctx, false);
 }

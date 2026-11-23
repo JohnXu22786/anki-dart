@@ -8,8 +8,8 @@ Anki Core commit below. Source digests are recorded in `SOURCE.sha256`. This
 package slice is limited to deterministic entry mapping, sorting, cutoff
 selection, requeue mechanics and queue interspersing with caller-supplied time
 values. Collection-backed due selection, scheduler execution and counts,
-load balancing, answer persistence and undo, and Reviewer UI remain outside
-this boundary for later units.
+full load-balancer context assembly, answer persistence and undo, and Reviewer
+UI remain outside this boundary for later units.
 
 `admitQueueCandidates()` also adapts Core's queue-builder gathering and limit
 behavior from `rslib/src/scheduler/queue/builder/{gathering.rs,burying.rs,mod.rs}`,
@@ -212,6 +212,21 @@ validates Core's nonzero u32 interval domain. Full timezone/date scheduling
 context, preset storage/configuration, load-balancer orchestration, and
 scheduler wiring remain outside this helper. The pinned source hash above also
 covers this adaptation; root `COPYING` is unchanged.
+
+`findLoadBalancedInterval()` composes Core's pure
+`LoadBalancer::find_interval()` behavior from
+`rslib/src/scheduler/states/load_balancer.rs` with
+`constrained_fuzz_bounds()` from `rslib/src/scheduler/states/fuzz.rs`, at the
+pinned Anki Core commit. It accepts preloaded 99-day caches and seven-day
+easy-day values keyed by deck-config ID, an absolute `nextDayAt` timestamp,
+the selected config and nullable note ID, interval bounds, and an optional
+unsigned 64-bit fuzz seed. The selected preset supplies review counts and
+easy-day weighting; sibling days are searched across all presets. The existing
+source digests cover both upstream files; no source hash or root `COPYING`
+entry changes. Card-history reads and input assembly, preset/deck resolution,
+timezone/date input construction, cache mutation, collection storage,
+scheduler wiring, answer/reviewer UI, and full cross-platform review
+integration remain outside this helper.
 
 
 The platform-neutral browser card-template renderer also follows Anki Core's

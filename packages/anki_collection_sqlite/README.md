@@ -174,6 +174,19 @@ errors. Learning/relearning state assembly, filtered-deck preview/rescheduling,
 answer application and persistence, transactions/undo, and Reviewer UI remain
 outside this entry point.
 
+`learningCardSchedulingStatesForCard()` reads a stored Learn card in its
+assigned normal deck and requires `scheduledSecs` and `elapsedSecs` already
+resolved from the same scheduler snapshot. It does not infer timing from the
+stored queue, due value, or timestamps. The method projects stored remaining
+steps and FSRS memory through `LearningCardState.fromCard()`, resolves the
+deck's learning/relearning config (using Core defaults for a missing row), and
+applies the two collection FSRS short-term flags while preserving caller-owned
+context fields. It does not read revlogs or load-balancer history/cache, or
+persist answers. Missing cards/decks/config IDs, non-Learn cards, and filtered
+decks are reported as state errors. Relearning state assembly, filtered-deck
+preview/rescheduling, answer application and persistence, transactions/undo,
+and Reviewer UI remain outside this entry point.
+
 `reviewCardSchedulingStatesWithCardLoadBalancerForNow()` remains available for
 callers that already resolved `ReviewCardState`; those state and base-context
 inputs must come from the same host snapshot. It composes only the

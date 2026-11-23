@@ -170,6 +170,17 @@ operations. Removing a card clears its note membership only after the last card
 for that note is removed. Cross-day sibling search, day/time derivation, random
 weighted selection, and scheduler integration remain incomplete.
 
+### Unit 86 — cross-preset sibling-day search
+
+`calculateSiblingModifiers()` searches the 99 day buckets supplied for every
+deck-config preset and finds all days containing the nullable selected note.
+It deduplicates day indices across presets, sorts them deterministically, and
+delegates the five-day factors to Unit 82's `calculateSiblingDayModifiers()`.
+Each preset bucket is validated to contain exactly Core's 99 cached days.
+Sibling search across presets is now available as a pure model helper; date and
+weekday derivation, weighted random selection, and scheduler orchestration
+remain incomplete. This does not implement full load balancing.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -182,9 +193,9 @@ weighted selection, and scheduler integration remain incomplete.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: random weighted interval selection, sibling
-  search and modifier derivation, day/date derivation, deck-to-config
-  resolution, and scheduler orchestration. Collection-backed due-card history
+- Remaining scheduler work: random weighted interval selection, day/date and
+  weekday derivation, deck-to-config resolution, and scheduler orchestration.
+  Collection-backed due-card history
   input is available in Unit 83; `CollectionSqliteStorage.deckTree()` provides
   queue-count aggregation. The query and pure interval-weight/easy-day helpers
   do not complete full load balancing.

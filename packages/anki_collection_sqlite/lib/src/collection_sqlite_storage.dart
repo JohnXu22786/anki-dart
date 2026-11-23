@@ -4072,6 +4072,35 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Selects an interval using the collection cache and timing for [now].
+  ///
+  /// This reads the current collection context once and delegates the pure
+  /// decision to [findLoadBalancedInterval]. It does not query or mutate cards
+  /// beyond the history read used to build that context, and does not change
+  /// cache or collection state.
+  Future<int?> findLoadBalancedIntervalForNow({
+    required DeckConfigId deckConfigId,
+    required NoteId? noteId,
+    required double interval,
+    required int minimum,
+    required int maximum,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+  }) async {
+    final context = await loadBalancerContextForNow(now: now);
+    return findLoadBalancedInterval(
+      daysByPreset: context.cache.daysByPreset,
+      easyDaysByPreset: context.cache.easyDaysByPreset,
+      nextDayAt: context.nextDayAt,
+      deckConfigId: deckConfigId,
+      noteId: noteId,
+      interval: interval,
+      minimum: minimum,
+      maximum: maximum,
+      fuzzSeed: fuzzSeed,
+    );
+  }
+
   String _dueCardReviewOrderSql({
     required ReviewCardOrder reviewOrder,
     required bool fsrsEnabled,

@@ -88,10 +88,15 @@ derive the mapping from stored normal decks using Core's `Deck::config_id()`
 behavior, omitting filtered decks and retaining normal-deck config IDs even
 when no config row exists. `loadBalancerContextForNow()` resolves collection
 timing once and returns its `daysElapsed`, absolute `nextDayAt` timestamp, and
-the cache built for that same day as one immutable result. This provides the
-collection-side timing and cache inputs together; scheduler call-site wiring,
-schedule persistence, answer flows, and Reviewer UI remain outside this
-adapter.
+the cache built for that same day as one immutable result.
+`findLoadBalancedIntervalForNow()` builds that context once using its optional
+injected `now` and passes the selected preset, nullable note, current interval,
+bounds, and optional fuzz seed to the pure
+`anki_backend_models.findLoadBalancedInterval()` decision. It returns that
+nullable result unchanged and does not apply the answer or mutate cards or the
+cache. Choosing the card and preset context, answer-state transitions, cache
+mutation during an answer, transaction persistence/undo, scheduler call-site
+wiring, and Reviewer UI remain outside this adapter.
 
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and

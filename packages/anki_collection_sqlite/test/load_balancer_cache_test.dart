@@ -208,6 +208,209 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
       expect(context.cache.daysByPreset[preset]![1].cardCount, 1);
     },
   );
+
+  test(
+    'collection interval decision composes the selected cached context',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      final preset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+      await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (1, 100, 16, 7, 0);
+''');
+
+      final context = await storage.loadBalancerContextForNow(now: now);
+      final result = await storage.findLoadBalancedIntervalForNow(
+        deckConfigId: preset,
+        noteId: Int64(100),
+        interval: 5,
+        minimum: 1,
+        maximum: 20,
+        fuzzSeed: BigInt.zero,
+        now: now,
+      );
+      final expected = findLoadBalancedInterval(
+        daysByPreset: context.cache.daysByPreset,
+        easyDaysByPreset: context.cache.easyDaysByPreset,
+        nextDayAt: context.nextDayAt,
+        deckConfigId: preset,
+        noteId: Int64(100),
+        interval: 5,
+        minimum: 1,
+        maximum: 20,
+        fuzzSeed: BigInt.zero,
+      );
+
+      expect(result, expected);
+      expect(
+        context.cache.daysByPreset[preset]![4].hasSibling(Int64(100)),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'collection interval decision returns null for a missing preset',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      final presentPreset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(presentPreset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(
+        _normalDeck(7, presentPreset),
+      );
+
+      expect(
+        await storage.findLoadBalancedIntervalForNow(
+          deckConfigId: Int64(99),
+          noteId: null,
+          interval: 5,
+          minimum: 1,
+          maximum: 20,
+          fuzzSeed: BigInt.zero,
+          now: now,
+        ),
+        isNull,
+      );
+    },
+  );
+
+  test(
+    'collection interval decision forwards nullable note and seed',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      final preset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+
+      final context = await storage.loadBalancerContextForNow(now: now);
+      expect(
+        await storage.findLoadBalancedIntervalForNow(
+          deckConfigId: preset,
+          noteId: null,
+          interval: 5,
+          minimum: 1,
+          maximum: 20,
+          fuzzSeed: BigInt.zero,
+          now: now,
+        ),
+        findLoadBalancedInterval(
+          daysByPreset: context.cache.daysByPreset,
+          easyDaysByPreset: context.cache.easyDaysByPreset,
+          nextDayAt: context.nextDayAt,
+          deckConfigId: preset,
+          noteId: null,
+          interval: 5,
+          minimum: 1,
+          maximum: 20,
+          fuzzSeed: BigInt.zero,
+        ),
+      );
+      expect(
+        await storage.findLoadBalancedIntervalForNow(
+          deckConfigId: preset,
+          noteId: null,
+          interval: 5,
+          minimum: 1,
+          maximum: 20,
+          fuzzSeed: null,
+          now: now,
+        ),
+        isNull,
+      );
+    },
+  );
+
+  test(
+    'injected now determines the collection day used for the decision',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final firstNow = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      final nextDayNow = firstNow.add(const Duration(days: 1));
+      await _prepareTimingCollection(storage, creationSecs);
+      final preset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+      await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (1, 100, 13, 7, 0);
+''');
+
+      final firstContext = await storage.loadBalancerContextForNow(
+        now: firstNow,
+      );
+      final nextDayContext = await storage.loadBalancerContextForNow(
+        now: nextDayNow,
+      );
+      expect(nextDayContext.daysElapsed, firstContext.daysElapsed + 1);
+      expect(nextDayContext.nextDayAt, greaterThan(firstContext.nextDayAt));
+      expect(firstContext.cache.daysByPreset[preset]![1].cardCount, 1);
+      expect(nextDayContext.cache.daysByPreset[preset]![0].cardCount, 1);
+      expect(nextDayContext.cache.daysByPreset[preset]![1].cardCount, 0);
+
+      final result = await storage.findLoadBalancedIntervalForNow(
+        deckConfigId: preset,
+        noteId: null,
+        interval: 5,
+        minimum: 1,
+        maximum: 20,
+        fuzzSeed: BigInt.zero,
+        now: nextDayNow,
+      );
+      expect(
+        result,
+        findLoadBalancedInterval(
+          daysByPreset: nextDayContext.cache.daysByPreset,
+          easyDaysByPreset: nextDayContext.cache.easyDaysByPreset,
+          nextDayAt: nextDayContext.nextDayAt,
+          deckConfigId: preset,
+          noteId: null,
+          interval: 5,
+          minimum: 1,
+          maximum: 20,
+          fuzzSeed: BigInt.zero,
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _prepareTimingCollection(
+  CollectionSqliteStorage storage,
+  int creationSecs,
+) async {
+  await storage.executeBatch('''
+CREATE TABLE col (crt INTEGER NOT NULL, conf TEXT NOT NULL);
+CREATE TABLE config (key TEXT PRIMARY KEY, usn INTEGER, mtime_secs INTEGER, val BLOB);
+INSERT INTO col VALUES ($creationSecs, '{}');
+''');
 }
 
 DeckConfig _config(Int64 id, String name) =>

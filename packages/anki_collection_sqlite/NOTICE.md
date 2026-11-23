@@ -59,6 +59,15 @@ scheduler admission, mixing, counts, load-balancing, persistence, or UI. Source
 hashes are pinned in `SOURCE.sha256`; this independent adaptation is licensed
 under AGPL-3.0-or-later, and root `COPYING` remains unchanged.
 
+`getAllCardsDueInRange()` adapts `SqliteStorage::get_all_cards_due_in_range()`
+from `rslib/src/storage/card/mod.rs` at the same pinned revision. It selects
+the source four-field card projection for the caller's half-open due-day range,
+then groups rows into one bucket per day without changing SQLite query order.
+All queue and deck states are included, and identifiers retain signed 64-bit
+precision. The source file hash is already recorded in `SOURCE.sha256`; this
+original Dart implementation and its tests are covered by the package's AGPL
+license. Root `COPYING` remains unchanged.
+
 The batch notetype loader adapts Core's `rslib/src/storage/notetype/mod.rs`,
 `get_notetype.sql`, `get_fields.sql`, and `get_templates.sql` at the same
 revision. Their SHA-256 digests are checked by `tool/check_package.py` and

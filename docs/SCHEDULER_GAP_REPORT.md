@@ -138,6 +138,17 @@ ascending order for deterministic output. Sibling discovery, card-history reads,
 derivation, random weighted selection, and scheduler integration remain
 outside; units 80–82 do not implement full load balancing.
 
+### Unit 83 — collection-backed load-balancer due-card history
+
+`CollectionSqliteStorage.getAllCardsDueInRange()` ports Core's card-history
+input query for caller-supplied `[minDay, maxDay)` bounds. It returns one bucket
+per day, includes cards from every queue and deck, preserves SQLite row order
+within each bucket, and retains signed 64-bit card, note, and deck IDs. The
+query does not derive the day range or combine history with interval weights.
+Easy-day configuration and weekday derivation, sibling discovery and modifier
+inputs, random weighted selection, load-balancer orchestration, and scheduler
+execution remain incomplete.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -151,10 +162,11 @@ outside; units 80–82 do not implement full load balancing.
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
 - Remaining scheduler work: random weighted interval selection, sibling
-  search, card-history reads, day/date derivation, and collection-backed
-  scheduler configuration. `CollectionSqliteStorage.deckTree()` already
-  provides the documented queue-count aggregation; the pure interval-weight
-  and easy-day modifier helpers do not complete full load balancing.
+  search and modifier derivation, day/date derivation, easy-day configuration
+  lookup, and scheduler orchestration. Collection-backed due-card history
+  input is available in Unit 83; `CollectionSqliteStorage.deckTree()` provides
+  queue-count aggregation. The query and pure interval-weight/easy-day helpers
+  do not complete full load balancing.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

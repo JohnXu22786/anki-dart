@@ -30,6 +30,7 @@ export 'src/sibling_modifiers.dart';
 export 'src/load_balancer_day.dart';
 export 'src/interval_to_weekday.dart';
 export 'src/load_balancer.dart';
+export 'src/load_balancer_cache.dart';
 export 'src/field_checksum.dart';
 export 'src/field_is_empty.dart';
 export 'src/unicode_casefold.dart';

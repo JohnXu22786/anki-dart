@@ -4018,6 +4018,28 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Builds Core's initial load-balancer cache from stored collection decks.
+  ///
+  /// The deck-to-config mapping follows Core's `Deck::config_id()`: normal
+  /// decks map to their stored config ID, including IDs without a matching
+  /// config row, while filtered decks are omitted. Cards whose deck is absent
+  /// from the mapping are skipped by [LoadBalancerCache.fromHistory].
+  /// [today] is the caller-derived collection day; history still uses Core's
+  /// 99-day half-open window and all stored configs are loaded.
+  Future<LoadBalancerCache> buildLoadBalancerCacheFromCollection({
+    required int today,
+  }) {
+    final deckConfigByDeck = <DeckId, DeckConfigId>{};
+    for (final deck in _deckStorage.getAllDecks()) {
+      final configId = deck.configId;
+      if (configId != null) deckConfigByDeck[deck.id] = configId;
+    }
+    return buildLoadBalancerCache(
+      today: today,
+      deckConfigByDeck: deckConfigByDeck,
+    );
+  }
+
   String _dueCardReviewOrderSql({
     required ReviewCardOrder reviewOrder,
     required bool fsrsEnabled,

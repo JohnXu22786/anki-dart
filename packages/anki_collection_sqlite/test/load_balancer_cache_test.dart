@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_models/anki_backend_models.dart';
+import 'package:anki_backend_protocol/anki/decks.pb.dart' as protoDeck;
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -25,6 +26,14 @@ CREATE TABLE deck_config (
   mtime_secs INTEGER NOT NULL,
   usn INTEGER NOT NULL,
   config BLOB NOT NULL
+);
+CREATE TABLE decks (
+  id INTEGER PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL COLLATE NOCASE,
+  mtime_secs INTEGER NOT NULL,
+  usn INTEGER NOT NULL,
+  common BLOB NOT NULL,
+  kind BLOB NOT NULL
 );
 ''');
   });
@@ -93,7 +102,87 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
     expect(cache.daysByPreset, isEmpty);
     expect(cache.easyDaysByPreset[preset], hasLength(7));
   });
+
+  test(
+    'derives normal deck presets and groups history while skipping filtered decks',
+    () async {
+      final presetA = Int64(10);
+      final presetB = Int64(20);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(presetA, 'A'),
+      );
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(presetB, 'B'),
+      );
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(Int64(30), 'Unused'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, presetA));
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(8, presetA));
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(9, presetB));
+      storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck(10));
+      await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (1, 100, 10, 7, 0),
+  (2, 100, 11, 8, 1),
+  (3, 200, 11, 9, 2),
+  (4, 300, 10, 10, 0),
+  (5, 400, 10, 999, 0);
+''');
+
+      final cache = await storage.buildLoadBalancerCacheFromCollection(
+        today: 10,
+      );
+
+      expect(cache.daysByPreset.keys, containsAll([presetA, presetB]));
+      expect(cache.daysByPreset[presetA]![0].cardCount, 1);
+      expect(cache.daysByPreset[presetA]![1].cardCount, 1);
+      expect(cache.daysByPreset[presetA]![1].hasSibling(Int64(100)), isTrue);
+      expect(cache.daysByPreset[presetB]![1].cardCount, 1);
+      expect(cache.daysByPreset, isNot(contains(Int64(30))));
+      expect(cache.daysByPreset, isNot(contains(Int64(0))));
+      expect(
+        cache.easyDaysByPreset.keys,
+        containsAll([presetA, presetB, Int64(30)]),
+      );
+    },
+  );
+
+  test('normal deck with absent config stays mapped as in Core', () async {
+    final missingPreset = Int64(99);
+    storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, missingPreset));
+    await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (1, 100, 10, 7, 0),
+  (2, 200, 10, 999, 0);
+''');
+
+    final cache = await storage.buildLoadBalancerCacheFromCollection(today: 10);
+
+    expect(cache.daysByPreset.keys, [missingPreset]);
+    expect(cache.daysByPreset[missingPreset]![0].cardCount, 1);
+    expect(cache.easyDaysByPreset, isEmpty);
+  });
+
+  test('empty decks and configs produce an empty cache', () async {
+    final cache = await storage.buildLoadBalancerCacheFromCollection(today: 10);
+
+    expect(cache.daysByPreset, isEmpty);
+    expect(cache.easyDaysByPreset, isEmpty);
+  });
 }
 
 DeckConfig _config(Int64 id, String name) =>
     DeckConfig(id: id, name: name, inner: DeckConfig.defaults().inner);
+
+Deck _normalDeck(int id, Int64 configId) => Deck(
+  id: Int64(id),
+  name: 'Deck $id',
+  kind: NormalDeckKind(protoDeck.Deck_Normal(configId: configId)),
+);
+
+Deck _filteredDeck(int id) => Deck(
+  id: Int64(id),
+  name: 'Filtered $id',
+  kind: FilteredDeckKind(protoDeck.Deck_Filtered()),
+);

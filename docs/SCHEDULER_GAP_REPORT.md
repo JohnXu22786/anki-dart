@@ -246,10 +246,14 @@ review integration remain incomplete.
 due-card history range, loads all stored deck configs, and combines them with
 the caller-supplied collection day and deck-to-config map through
 `LoadBalancerCache.fromHistory()`. It preserves the source query's all-queue
-history and groups each day by preset. Deriving the collection day and mapping
-decks to configs, scheduler call-site integration, persisted scheduling
-changes, answer/reviewer UI, and full cross-platform review integration remain
-incomplete.
+history and groups each day by preset. Unit 93 adds
+`buildLoadBalancerCacheFromCollection()`, which derives the mapping from all
+stored normal decks using Core's `Deck::config_id()` behavior; filtered decks
+are omitted, while normal-deck config IDs with no matching stored config are
+preserved. Missing deck mappings are skipped by the history grouping. The
+caller-mapping API remains available. Day/timezone derivation, scheduler
+call-site wiring, persisted schedule changes, answer flows, Reviewer UI, and
+full cross-platform review integration remain incomplete.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -264,9 +268,7 @@ incomplete.
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
 - Remaining scheduler work: day/date window and collection-timezone input
-  construction, producing the deck-to-config
-  map, preset storage/configuration integration and scheduler call-site
-  wiring,
+  construction, scheduler call-site wiring,
   collection storage, and scheduler orchestration. Collection-backed due-card
   history query and Unit92 cache assembly are available; Unit90 groups the
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

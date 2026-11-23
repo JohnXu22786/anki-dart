@@ -252,6 +252,11 @@ setup in Core `LoadBalancer::new()` from
 `rslib/src/scheduler/states/load_balancer.rs`. It reads the existing due-card
 history query for the caller's 99-day range, loads all stored deck configs, and
 delegates per-preset grouping to `LoadBalancerCache.fromHistory()`. The caller
-provides the collection day and deck-to-config map. This adapter does not
-derive scheduler timing, resolve decks, or execute a scheduler; the same
-pinned Core load-balancer digest already in `SOURCE.sha256` covers the code.
+provides the collection day and may provide the deck-to-config map directly.
+The collection convenience entry point derives the map using Core
+`Deck::config_id()` from `rslib/src/decks/mod.rs`: it includes every normal
+deck's config ID, including IDs without a matching config row, and omits
+filtered decks. Cards whose deck has no mapping are skipped during history
+grouping. This adapter does not derive scheduler timing or execute a scheduler.
+Both deck-model and load-balancer source hashes are recorded in `SOURCE.sha256`
+and validated by `tool/check_package.py`.

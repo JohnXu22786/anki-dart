@@ -82,9 +82,13 @@ as signed 32-bit values. Bounds follow Core's u32 contract and spans are capped
 at the 99-day load-balancer window to keep allocation bounded. The
 `buildLoadBalancerCache()` adapter combines that history with stored deck
 configs and a caller-supplied deck-to-config map, then returns the shared
-99-day preset cache. The caller still derives `today` and the deck mapping;
-weekday derivation, sibling selection, scheduler execution, and Reviewer UI
-remain outside this adapter.
+99-day preset cache. The caller derives `today`, and can choose the
+`buildLoadBalancerCacheFromCollection()` convenience method to have the adapter
+derive the mapping from stored normal decks using Core's `Deck::config_id()`
+behavior, omitting filtered decks and retaining normal-deck config IDs even
+when no config row exists.
+Weekday derivation, scheduler call-site wiring, schedule persistence, answer
+flows, and Reviewer UI remain outside this adapter.
 
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and

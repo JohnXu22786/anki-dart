@@ -156,8 +156,9 @@ files.
 percentage parsing, and review-load normalization from
 `rslib/src/scheduler/states/load_balancer.rs` at the pinned Anki Core commit.
 The modifier calculation takes explicit weekdays and review counts and
-preserves Core's Float32 arithmetic and zip behavior. It does not read deck
-configuration or storage.
+preserves Core's Float32 arithmetic and zip behavior. `buildEasyDaysPercentages()`
+projects the stored config map to parsed easy-day values while preserving each
+config ID; it does not resolve decks to configs or access storage.
 
 `IntervalLoadCandidate` and `calculateIntervalLoadWeight()` adapt Core's
 per-interval formula from the same source. They take the target interval,

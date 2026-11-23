@@ -135,7 +135,7 @@ assigned deck, requires that deck to be normal, and projects its state using
 one `timingTodayForNow()` snapshot. The normal-deck due day is clamped to
 `min(card.due, daysElapsed)` before projection. Missing cards, missing decks,
 non-review cards, and filtered decks produce state errors. Filtered-deck
-preview/rescheduling state, new/learning/relearning state, FSRS derivation,
+preview/rescheduling state, learning/relearning state, FSRS derivation,
 whole `get_scheduling_states()` composition, answer application and
 persistence/cache/undo, and Reviewer UI remain outside this method.
 
@@ -159,8 +159,20 @@ an answer or persist cards/revlogs/cache state. It derives the two FSRS
 short-term settings from the global FSRS flags and the same resolved deck
 config while preserving other caller-owned dynamic inputs. Filtered-deck
 preview/rescheduling,
-new/learning/relearning answer states, answer application and persistence,
+learning/relearning answer states, answer application and persistence,
 transactions/undo, and Reviewer UI remain outside this entry point.
+
+`newCardSchedulingStatesForCard()` reads a stored new card in a normal deck,
+clamps its due position to zero, resolves the deck config (using Core defaults
+for a missing row), projects its steps and graduation settings, and derives
+the two FSRS short-term flags from collection config. It preserves caller-owned
+dynamic context fields and delegates all four buttons to
+`NewCardState.nextStates()`. It does not read revlogs or load-balancer history,
+derive FSRS memory/outcomes, or persist answers. Missing cards/decks, non-new
+cards, filtered decks, and missing deck config IDs are reported as state
+errors. Learning/relearning state assembly, filtered-deck preview/rescheduling,
+answer application and persistence, transactions/undo, and Reviewer UI remain
+outside this entry point.
 
 `reviewCardSchedulingStatesWithCardLoadBalancerForNow()` remains available for
 callers that already resolved `ReviewCardState`; those state and base-context

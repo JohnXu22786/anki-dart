@@ -296,8 +296,21 @@ interval and minimum/maximum bounds to the existing pure
 nullable decision unchanged. Creating or reusing the callback performs no
 collection reads, timing calculation, cache copy, or mutation. This closes
 reusable resolver construction from a collection snapshot. Host
-`ReviewSchedulingContext` assembly, answer/scheduler call-site wiring,
-answer-time cache mutation, persistence/undo, and Reviewer UI remain open.
+answer/scheduler call-site wiring, answer-time cache mutation, persistence/undo,
+and Reviewer UI remain open.
+
+### Unit 98 — collection-backed review scheduling context assembly
+
+`ReviewSchedulingContext.withLoadBalancedIntervalResolver()` copies every
+existing scheduler input unchanged and attaches the collection resolver.
+`CollectionSqliteStorage.reviewSchedulingContextWithLoadBalancerForNow()`
+accepts the host-composed scheduling context and Core-resolved preset, nullable
+note, nullable fuzz seed, and optional `now`; it resolves one collection timing
+and load-balancer cache snapshot, then fixes those values in the resolver.
+That callback reuses its snapshot for all answer intervals. Collection-backed
+`ReviewSchedulingContext` assembly is closed. Card/preset/note/bury resolution,
+the application `get_scheduling_states` call site, answer persistence,
+answer-time cache updates, transactions/undo, and Reviewer UI remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -311,9 +324,9 @@ answer-time cache mutation, persistence/undo, and Reviewer UI remain open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: wiring the current collection
-  context, Unit95 interval decision, and Unit97 reusable resolver into review
-  answers and scheduler execution, answer-state transitions, cache mutation
+- Remaining scheduler work: wiring the current collection context, Unit95
+  interval decision, Unit97 reusable resolver, and Unit98 assembled review
+  scheduling context into review answers and scheduler execution, answer-state transitions, cache mutation
   after answers, persisted scheduling changes,
   transactions/undo, and orchestration. Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups

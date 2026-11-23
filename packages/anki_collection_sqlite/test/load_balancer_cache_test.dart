@@ -405,6 +405,93 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
   );
 
   test(
+    'review scheduling context uses one injected collection snapshot',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      final preset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+      await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (1, 100, 13, 7, 0),
+  (2, 100, 14, 7, 0),
+  (3, 200, 15, 7, 0);
+''');
+      const base = ReviewSchedulingContext(
+        hardMultiplier: 1.4,
+        easyMultiplier: 1.6,
+        intervalMultiplier: 1.1,
+        maximumReviewInterval: 300,
+        leechThreshold: 10,
+        lapseMultiplier: 0.25,
+        minimumLapseInterval: 2,
+        fuzzFactor: 0.31,
+        fsrsParams: [0.1, 0.2],
+        fsrsDesiredRetention: 0.9,
+        fsrsAllowShortTerm: true,
+        learningStepsMinutes: [1, 10],
+      );
+      final noteId = Int64(100);
+      final fuzzSeed = BigInt.from(0x123456789abcdef0);
+
+      final assembled = await storage
+          .reviewSchedulingContextWithLoadBalancerForNow(
+            baseContext: base,
+            deckConfigId: preset,
+            noteId: noteId,
+            fuzzSeed: fuzzSeed,
+            now: now,
+          );
+
+      expect(assembled.hardMultiplier, base.hardMultiplier);
+      expect(assembled.easyMultiplier, base.easyMultiplier);
+      expect(assembled.intervalMultiplier, base.intervalMultiplier);
+      expect(assembled.maximumReviewInterval, base.maximumReviewInterval);
+      expect(assembled.leechThreshold, base.leechThreshold);
+      expect(assembled.lapseMultiplier, base.lapseMultiplier);
+      expect(assembled.minimumLapseInterval, base.minimumLapseInterval);
+      expect(assembled.fuzzFactor, base.fuzzFactor);
+      expect(assembled.fsrsParams, same(base.fsrsParams));
+      expect(assembled.fsrsDesiredRetention, base.fsrsDesiredRetention);
+      expect(assembled.fsrsAllowShortTerm, base.fsrsAllowShortTerm);
+      expect(assembled.learningStepsMinutes, same(base.learningStepsMinutes));
+
+      final expectedContext = await storage.loadBalancerContextForNow(now: now);
+      for (final input in [
+        (interval: 5.0, minimum: 1, maximum: 20),
+        (interval: 9.0, minimum: 4, maximum: 30),
+        (interval: 12.0, minimum: 10, maximum: 14),
+      ]) {
+        expect(
+          assembled.loadBalancedIntervalResolver!(
+            input.interval,
+            input.minimum,
+            input.maximum,
+          ),
+          findLoadBalancedInterval(
+            daysByPreset: expectedContext.cache.daysByPreset,
+            easyDaysByPreset: expectedContext.cache.easyDaysByPreset,
+            nextDayAt: expectedContext.nextDayAt,
+            deckConfigId: preset,
+            noteId: noteId,
+            interval: input.interval,
+            minimum: input.minimum,
+            maximum: input.maximum,
+            fuzzSeed: fuzzSeed,
+          ),
+        );
+      }
+    },
+  );
+
+  test(
     'context resolver returns the pure helper nullable results unchanged',
     () async {
       const creationSecs = 1_700_000_000;

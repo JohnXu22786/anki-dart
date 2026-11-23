@@ -99,10 +99,13 @@ cache. A caller resolving several answer-button intervals can instead call
 preset, nullable note, and nullable fuzz seed. The returned
 `ReviewLoadBalancerIntervalResolver` reuses that context's existing cache and
 `nextDayAt` for every interval, without another collection read or snapshot
-copy. Choosing the card and preset context, assembling
-`ReviewSchedulingContext`, answer-state transitions, cache mutation during an
-answer, transaction persistence/undo, scheduler call-site wiring, and Reviewer
-UI remain outside this adapter.
+copy. `reviewSchedulingContextWithLoadBalancerForNow()` assembles a
+`ReviewSchedulingContext` from caller-supplied ordinary scheduler inputs and
+Core-resolved preset, nullable note, nullable fuzz seed, and optional clock.
+It preserves those inputs and attaches a resolver from one timing/cache
+snapshot. Card and preset selection, answer-state transitions, cache mutation
+during an answer, transaction persistence/undo, scheduler call-site wiring,
+and Reviewer UI remain outside this adapter.
 
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and

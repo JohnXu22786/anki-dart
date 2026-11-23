@@ -4094,6 +4094,29 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Attaches a fixed collection load-balancer resolver to [baseContext].
+  ///
+  /// The supplied preset, note, fuzz seed, and [now] are used unchanged. One
+  /// collection timing/cache context is resolved and captured by the returned
+  /// callback, which then reuses that snapshot for each review interval.
+  Future<ReviewSchedulingContext>
+  reviewSchedulingContextWithLoadBalancerForNow({
+    required ReviewSchedulingContext baseContext,
+    required DeckConfigId deckConfigId,
+    required NoteId? noteId,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+  }) async {
+    final loadBalancerContext = await loadBalancerContextForNow(now: now);
+    return baseContext.withLoadBalancedIntervalResolver(
+      loadBalancerContext.reviewIntervalResolver(
+        deckConfigId: deckConfigId,
+        noteId: noteId,
+        fuzzSeed: fuzzSeed,
+      ),
+    );
+  }
+
   /// Selects an interval using the collection cache and timing for [now].
   ///
   /// This reads the current collection context once and delegates the pure

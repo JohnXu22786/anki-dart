@@ -41,6 +41,9 @@ multipliers and bounds are applied. A null decision falls back to ordinary
 deterministic fuzz; early reviews bypass the resolver. The collection package
 can construct this callback from an existing timing/cache snapshot, fixing the
 preset, note, and answer seed while each interval supplies its own value and
-bounds. Host `ReviewSchedulingContext` assembly, scheduler call-site wiring,
-answer-time cache updates, persistence, transactions, and Reviewer UI remain
-outside this package.
+bounds. `ReviewSchedulingContext.withLoadBalancedIntervalResolver()` returns a
+copy that preserves all existing scheduling fields while attaching the
+resolver. Collection-backed assembly is provided by
+`CollectionSqliteStorage.reviewSchedulingContextWithLoadBalancerForNow()`;
+scheduler call-site wiring, answer-time cache updates, persistence,
+transactions, and Reviewer UI remain outside these shared packages.

@@ -3,6 +3,70 @@ import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('load-balancer augmentation preserves every scheduler input', () {
+    final resolver = (double interval, int minimum, int maximum) => maximum;
+    final memory = FsrsMemoryState(stability: 3, difficulty: 5);
+    final fsrs = FsrsReviewNextStates(
+      again: FsrsReviewNextState(interval: 1, memoryState: memory),
+      hard: FsrsReviewNextState(interval: 2, memoryState: memory),
+      good: FsrsReviewNextState(interval: 3, memoryState: memory),
+      easy: FsrsReviewNextState(interval: 4, memoryState: memory),
+    );
+    final params = List<double>.filled(21, 0.25);
+    final learningSteps = <double>[1.5, 10];
+    final relearningSteps = <double>[5.5];
+    final base = ReviewSchedulingContext(
+      hardMultiplier: 1.4,
+      easyMultiplier: 1.7,
+      intervalMultiplier: 1.2,
+      maximumReviewInterval: 321,
+      leechThreshold: 9,
+      lapseMultiplier: 0.5,
+      minimumLapseInterval: 3,
+      fuzzFactor: 0.42,
+      loadBalancedIntervalResolver: (double i, int min, int max) => min,
+      fsrsNextStates: fsrs,
+      fsrsParams: params,
+      fsrsDesiredRetention: 0.87,
+      relearningAgainDelaySecs: 77,
+      relearningRemainingSteps: 2,
+      fsrsAllowShortTerm: true,
+      fsrsShortTermWithStepsEnabled: true,
+      relearningStepsEmpty: false,
+      learningStepsMinutes: learningSteps,
+      relearningStepsMinutes: relearningSteps,
+      graduatingIntervalGood: 7,
+      graduatingIntervalEasy: 11,
+    );
+
+    final augmented = base.withLoadBalancedIntervalResolver(resolver);
+
+    expect(augmented.hardMultiplier, base.hardMultiplier);
+    expect(augmented.easyMultiplier, base.easyMultiplier);
+    expect(augmented.intervalMultiplier, base.intervalMultiplier);
+    expect(augmented.maximumReviewInterval, base.maximumReviewInterval);
+    expect(augmented.leechThreshold, base.leechThreshold);
+    expect(augmented.lapseMultiplier, base.lapseMultiplier);
+    expect(augmented.minimumLapseInterval, base.minimumLapseInterval);
+    expect(augmented.fuzzFactor, base.fuzzFactor);
+    expect(augmented.loadBalancedIntervalResolver, same(resolver));
+    expect(augmented.fsrsNextStates, same(fsrs));
+    expect(augmented.fsrsParams, same(params));
+    expect(augmented.fsrsDesiredRetention, base.fsrsDesiredRetention);
+    expect(augmented.relearningAgainDelaySecs, base.relearningAgainDelaySecs);
+    expect(augmented.relearningRemainingSteps, base.relearningRemainingSteps);
+    expect(augmented.fsrsAllowShortTerm, base.fsrsAllowShortTerm);
+    expect(
+      augmented.fsrsShortTermWithStepsEnabled,
+      base.fsrsShortTermWithStepsEnabled,
+    );
+    expect(augmented.relearningStepsEmpty, base.relearningStepsEmpty);
+    expect(augmented.learningStepsMinutes, same(learningSteps));
+    expect(augmented.relearningStepsMinutes, same(relearningSteps));
+    expect(augmented.graduatingIntervalGood, base.graduatingIntervalGood);
+    expect(augmented.graduatingIntervalEasy, base.graduatingIntervalEasy);
+  });
+
   group('learning card scheduling states', () {
     test('Again resets to first step, Hard stays, and Good advances', () {
       final state = LearningCardState(

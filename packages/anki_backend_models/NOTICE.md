@@ -239,6 +239,13 @@ map. Cache mutation, scheduler integration, and Reviewer behavior remain
 outside this helper. The existing pinned source hash covers this adaptation;
 root `COPYING` is unchanged.
 
+`LoadBalancerCache.addCard()` and `removeCard()` adapt Core's in-memory cache
+bookkeeping from the same `LoadBalancer` implementation. Addition updates a
+known preset/day bucket only; removal searches every preset and cached day,
+preserving note membership while other cards for that note remain. These
+methods do not persist scheduling changes or connect the cache to a scheduler
+or Reviewer. The existing pinned source hash covers this adaptation.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

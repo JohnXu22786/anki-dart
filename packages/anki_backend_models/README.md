@@ -25,9 +25,10 @@ seed. `LoadBalancerCache.fromHistory()` groups the already-read, ordered
 99-day card history by a caller-supplied deck-to-config map and projects
 easy-day settings for all stored configs, matching Core's constructor cache
 assembly. Card-history database reads, date-window derivation, producing the
-deck-to-config map, post-construction cache mutation, collection storage,
-scheduler wiring, answer/reviewer UI, and full cross-platform review
-integration remain outside this package.
+deck-to-config map, persisted scheduling changes, collection storage,
+scheduler wiring, answer/reviewer UI, and full cross-platform review integration
+remain outside this package. `LoadBalancerCache.addCard()` and `removeCard()`
+update only the in-memory day buckets, matching Core's cache bookkeeping.
 
 Pinned Anki Core source digests and license attribution are recorded in
 `SOURCE.sha256` and `NOTICE.md`.

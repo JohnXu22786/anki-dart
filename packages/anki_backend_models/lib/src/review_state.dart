@@ -144,7 +144,11 @@ class ReviewSchedulingContext {
     );
   }
 
-  ReviewSchedulingContext _withFsrsNextStates(FsrsReviewNextStates states) =>
+  /// Returns this context with precomputed FSRS answer outcomes attached.
+  ///
+  /// All other scheduling inputs remain unchanged, so a collection host can
+  /// supply exact FSRS results without dropping caller-owned settings.
+  ReviewSchedulingContext withFsrsNextStates(FsrsReviewNextStates states) =>
       _copyWith(fsrsNextStates: states);
 
   ReviewSchedulingContext _copyWith({
@@ -250,7 +254,7 @@ class ReviewCardState {
         desiredRetention: context.fsrsDesiredRetention!,
         params: context.fsrsParams!,
       );
-      context = context._withFsrsNextStates(
+      context = context.withFsrsNextStates(
         FsrsReviewNextStates(
           again: FsrsReviewNextState(
             interval: calculated.again.interval,

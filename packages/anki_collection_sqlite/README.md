@@ -145,14 +145,17 @@ card and calculates its four answer-button states from a caller-supplied base
 clock. It resolves the stored card's assigned normal deck and config, then
 projects the normalized config's scheduler fields onto the supplied context.
 A missing config row uses Core-compatible defaults; a normal deck with config ID
-zero is invalid. Caller-provided fuzz, FSRS values, runtime flags, and other
-dynamic inputs remain intact. When load balancing is enabled, the resolver uses
-the same config (including `buryReviews` and its preset ID) and the same timing
-snapshot as the answer states. When disabled, the config is still read, but
-load-balancer history/cache is not. Missing, non-review, missing-deck, and
-filtered-deck errors match `currentReviewCardStateForNow()`. This entry point
-does not derive FSRS inputs or memory state, apply an answer, or persist
-cards/revlogs/cache state. Filtered-deck preview/rescheduling,
+zero is invalid. Caller-provided fuzz, runtime flags, and other dynamic inputs
+remain intact. When collection FSRS is enabled, the method reuses or derives
+the card's memory state and precomputes all four outcomes from the resolved
+parameters, effective desired retention, and last-review time. When load
+balancing is enabled, the resolver uses the same config (including
+`buryReviews` and its preset ID) and the same timing snapshot as the answer
+states. When disabled, the config is still read, but load-balancer
+history/cache is not. Missing, non-review, missing-deck, and filtered-deck
+errors match `currentReviewCardStateForNow()`. This entry point does not apply
+an answer or persist cards/revlogs/cache state. Feature-flag settings,
+short-term option derivation, filtered-deck preview/rescheduling,
 new/learning/relearning answer states, answer application and persistence,
 transactions/undo, and Reviewer UI remain outside this entry point.
 

@@ -1192,6 +1192,207 @@ CREATE TABLE revlog (
       );
     });
 
+    test(
+      'FSRS outcomes use resolved params, deck retention, and next-day elapsed days',
+      () async {
+        await storage.writeCollectionConfig('fsrs', true);
+        final params = List<double>.filled(21, 0.25);
+        final config = _config(Int64(10), 'A')
+          ..inner.fsrsParams6.addAll(params)
+          ..inner.desiredRetention = 0.91;
+        storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+        storage.decks.addOrUpdateDeckWithExistingId(
+          Deck(
+            id: Int64(7),
+            name: 'Deck 7',
+            kind: NormalDeckKind(
+              protoDeck.Deck_Normal(
+                configId: Int64(10),
+                desiredRetention: 0.88,
+              ),
+            ),
+          ),
+        );
+
+        final timing = storage.timingTodayForNow(now: now);
+        final lastReviewSecs = timing.nextDayAt.toInt() - 20 * 86400;
+        await storage.executeBatch('''
+UPDATE cards SET data = '{"s":3.25,"d":4.5,"lrt":$lastReviewSecs}' WHERE id = 1;
+''');
+        const context = ReviewSchedulingContext(
+          hardMultiplier: 1.4,
+          fuzzFactor: 0.25,
+          fsrsParams: [0.1, 0.2, 0.3],
+          fsrsDesiredRetention: 0.95,
+          fsrsAllowShortTerm: true,
+          fsrsShortTermWithStepsEnabled: true,
+        );
+        final result = await storage.reviewCardSchedulingStatesForCardForNow(
+          cardId: Int64(1),
+          baseContext: context,
+          loadBalancerEnabled: false,
+          fuzzSeed: null,
+          now: now,
+        );
+        final expected = computeFsrsNextStates(
+          currentMemoryState: FsrsMemoryState(stability: 3.25, difficulty: 4.5),
+          daysElapsed: 20,
+          desiredRetention: 0.88,
+          params: params,
+        );
+
+        _expectFsrsReviewOutcomes(
+          result,
+          expected,
+          context: context,
+          config: config,
+        );
+        expect(result.current.review.elapsedDays, isNot(20));
+      },
+    );
+
+    test(
+      'stored last-review time takes precedence over revlog lookup',
+      () async {
+        await storage.writeCollectionConfig('fsrs', true);
+        final config = _config(Int64(10), 'A');
+        storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+        final timing = storage.timingTodayForNow(now: now);
+        final storedTime = timing.nextDayAt.toInt() - 19 * 86400;
+        await storage.executeBatch('''
+UPDATE cards SET data = '{"s":3.25,"d":4.5,"lrt":$storedTime}' WHERE id = 1;
+INSERT INTO revlog (id, cid, usn, ease, ivl, lastIvl, factor, time, type)
+VALUES (${(timing.nextDayAt.toInt() - 4 * 86400) * 1000}, 1, 0, 3, 1, 0, 2500, 0, 1);
+''');
+
+        final result = await storage.reviewCardSchedulingStatesForCardForNow(
+          cardId: Int64(1),
+          baseContext: const ReviewSchedulingContext(),
+          loadBalancerEnabled: false,
+          fuzzSeed: null,
+          now: now,
+        );
+        final expected = computeFsrsNextStates(
+          currentMemoryState: FsrsMemoryState(stability: 3.25, difficulty: 4.5),
+          daysElapsed: 19,
+          desiredRetention: _config(Int64(10), 'A').inner.desiredRetention,
+          params: config.fsrsParams,
+        );
+
+        _expectFsrsReviewOutcomes(
+          result,
+          expected,
+          context: const ReviewSchedulingContext(),
+          config: config,
+        );
+      },
+    );
+
+    test(
+      'missing stored time uses revlog query and no time defaults to zero',
+      () async {
+        await storage.writeCollectionConfig('fsrs', true);
+        final config = _config(Int64(10), 'A');
+        storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+        final timing = storage.timingTodayForNow(now: now);
+        await storage.executeBatch('''
+INSERT INTO revlog (id, cid, usn, ease, ivl, lastIvl, factor, time, type)
+VALUES (${(timing.nextDayAt.toInt() - 6 * 86400) * 1000}, 1, 0, 3, 1, 0, 2500, 0, 1);
+''');
+
+        final withRevlog = await storage
+            .reviewCardSchedulingStatesForCardForNow(
+              cardId: Int64(1),
+              baseContext: const ReviewSchedulingContext(),
+              loadBalancerEnabled: false,
+              fuzzSeed: null,
+              now: now,
+            );
+        _expectFsrsReviewOutcomes(
+          withRevlog,
+          computeFsrsNextStates(
+            currentMemoryState: FsrsMemoryState(
+              stability: 3.25,
+              difficulty: 4.5,
+            ),
+            daysElapsed: 6,
+            desiredRetention: config.inner.desiredRetention,
+            params: config.fsrsParams,
+          ),
+          context: const ReviewSchedulingContext(),
+          config: config,
+        );
+
+        await storage.executeBatch('DELETE FROM revlog;');
+        final withoutTime = await storage
+            .reviewCardSchedulingStatesForCardForNow(
+              cardId: Int64(1),
+              baseContext: const ReviewSchedulingContext(),
+              loadBalancerEnabled: false,
+              fuzzSeed: null,
+              now: now,
+            );
+        _expectFsrsReviewOutcomes(
+          withoutTime,
+          computeFsrsNextStates(
+            currentMemoryState: FsrsMemoryState(
+              stability: 3.25,
+              difficulty: 4.5,
+            ),
+            daysElapsed: 0,
+            desiredRetention: config.inner.desiredRetention,
+            params: config.fsrsParams,
+          ),
+          context: const ReviewSchedulingContext(),
+          config: config,
+        );
+
+        await storage.executeBatch('''
+UPDATE cards SET data = '{"s":3.25,"d":4.5,"lrt":${timing.nextDayAt.toInt() + 1}}' WHERE id = 1;
+''');
+        final futureTime = await storage
+            .reviewCardSchedulingStatesForCardForNow(
+              cardId: Int64(1),
+              baseContext: const ReviewSchedulingContext(),
+              loadBalancerEnabled: false,
+              fuzzSeed: null,
+              now: now,
+            );
+        _expectFsrsReviewOutcomes(
+          futureTime,
+          computeFsrsNextStates(
+            currentMemoryState: FsrsMemoryState(
+              stability: 3.25,
+              difficulty: 4.5,
+            ),
+            daysElapsed: 0,
+            desiredRetention: config.inner.desiredRetention,
+            params: config.fsrsParams,
+          ),
+          context: const ReviewSchedulingContext(),
+          config: config,
+        );
+      },
+    );
+
+    test(
+      'FSRS-disabled calculation does not add FSRS answer outcomes',
+      () async {
+        final result = await storage.reviewCardSchedulingStatesForCardForNow(
+          cardId: Int64(1),
+          baseContext: const ReviewSchedulingContext(),
+          loadBalancerEnabled: false,
+          fuzzSeed: null,
+          now: now,
+        );
+
+        expect(result.again.review.memoryState, isNull);
+        expect(result.hard.review.memoryState, isNull);
+        expect(result.good.review.memoryState, isNull);
+        expect(result.easy.review.memoryState, isNull);
+      },
+    );
+
     test('stored deck config changes answer state calculation', () async {
       final configured = _config(Int64(10), 'A', buryReviews: true)
         ..inner.hardMultiplier = 1.1
@@ -1820,6 +2021,59 @@ RevlogEntry _revlog(
   interval: interval,
   easeFactor: 2500,
   reviewKind: reviewKind,
+);
+
+void _expectFsrsReviewOutcomes(
+  ReviewCardSchedulingStates actual,
+  FsrsCalculatedNextStates expected, {
+  required ReviewSchedulingContext context,
+  required DeckConfig config,
+}) {
+  for (final (actualState, expectedState) in [
+    (actual.again.review, expected.again),
+    (actual.hard.review, expected.hard),
+    (actual.good.review, expected.good),
+    (actual.easy.review, expected.easy),
+  ]) {
+    expect(actualState.memoryState, isNotNull);
+    expect(
+      actualState.memoryState!.stability,
+      closeTo(expectedState.memoryState.stability, 1e-5),
+    );
+    expect(
+      actualState.memoryState!.difficulty,
+      closeTo(expectedState.memoryState.difficulty, 1e-5),
+    );
+  }
+  _expectReviewSchedulingStatesEqual(
+    actual,
+    actual.current.review.nextStates(
+      context
+          .withDeckConfig(config)
+          .withFsrsNextStates(_asReviewFsrsNextStates(expected)),
+    ),
+  );
+}
+
+FsrsReviewNextStates _asReviewFsrsNextStates(
+  FsrsCalculatedNextStates calculated,
+) => FsrsReviewNextStates(
+  again: FsrsReviewNextState(
+    interval: calculated.again.interval,
+    memoryState: calculated.again.memoryState,
+  ),
+  hard: FsrsReviewNextState(
+    interval: calculated.hard.interval,
+    memoryState: calculated.hard.memoryState,
+  ),
+  good: FsrsReviewNextState(
+    interval: calculated.good.interval,
+    memoryState: calculated.good.memoryState,
+  ),
+  easy: FsrsReviewNextState(
+    interval: calculated.easy.interval,
+    memoryState: calculated.easy.memoryState,
+  ),
 );
 
 Future<void> _clearReviewContextCardMemory(

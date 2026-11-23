@@ -23,6 +23,7 @@ export 'src/review_queue.dart';
 export 'src/queue_admission.dart';
 export 'src/queue_sorting.dart';
 export 'src/easy_day_load.dart';
+export 'src/interval_load_weight.dart';
 export 'src/field_checksum.dart';
 export 'src/field_is_empty.dart';
 export 'src/unicode_casefold.dart';

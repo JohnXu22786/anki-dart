@@ -19,6 +19,12 @@ void main() {
       easyModifiers[1] != 0.00009999999747378752) {
     throw StateError('easy-day load modifiers differ on JavaScript');
   }
+  final intervalWeight = calculateIntervalLoadWeight(
+    const IntervalLoadCandidate(targetInterval: 10, reviewCount: 5),
+  );
+  if ((intervalWeight - 0.000031420597224496305).abs() > 1e-12) {
+    throw StateError('interval load weight differs on JavaScript');
+  }
   final card = Card(id: Int64(1));
   final note = Note(id: Int64(2));
   if (card.id.toInt() + note.id.toInt() != 3) {

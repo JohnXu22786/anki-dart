@@ -157,10 +157,16 @@ percentage parsing, and review-load normalization from
 `rslib/src/scheduler/states/load_balancer.rs` at the pinned Anki Core commit.
 The modifier calculation takes explicit weekdays and review counts and
 preserves Core's Float32 arithmetic and zip behavior. It does not read deck
-configuration or storage and does not implement interval weighting, sibling
-dispersion, or scheduler integration required for full load balancing. The
-source file's hash is recorded in `SOURCE.sha256`; Anki Core is Copyright
-Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later.
+configuration or storage.
+
+`IntervalLoadCandidate` and `calculateIntervalLoadWeight()` adapt Core's
+per-interval formula from the same source. They take the target interval,
+review count, sibling modifier, and easy-day modifier explicitly, and preserve
+the formula's Float32 arithmetic. Random weighted selection, sibling search
+and modifier derivation, card-history reads, configuration lookup, and
+scheduler integration remain outside this port. The source file's hash is
+recorded in `SOURCE.sha256`; Anki Core is Copyright Ankitects Pty Ltd and
+contributors and licensed under AGPL-3.0-or-later.
 
 
 The platform-neutral browser card-template renderer also follows Anki Core's

@@ -74,6 +74,15 @@ all review ordering modes, caller deck order for Deck sorts, and the determinist
 64-bit values; due uses Core's i32/default-zero conversion and reps is validated
 as u32. It does not inspect collection configuration or choose active decks.
 
+`getAllCardsDueInRange()` supplies load-balancer card history for a caller's
+half-open day range. It returns a bucket for each day, includes all queue and
+deck states, and preserves SQLite's natural row order within each bucket. Card,
+note, and deck IDs remain signed 64-bit values, and stored due days are checked
+as signed 32-bit values. Bounds follow Core's u32 contract and spans are capped
+at the 99-day load-balancer window to keep allocation bounded. Easy-day
+configuration, weekday derivation, sibling discovery, weighted selection, and
+scheduler execution remain outside this query.
+
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and
 `getAllNoteIds`. Missing single rows return `null`; collection queries return

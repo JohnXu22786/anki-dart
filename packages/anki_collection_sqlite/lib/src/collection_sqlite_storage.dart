@@ -40,6 +40,7 @@ import 'text_export.dart';
 import 'portable_package_io.dart';
 import 'intraday_learning_candidate.dart';
 import 'due_card_candidate.dart';
+import 'due_card_history_card.dart';
 import 'new_card_candidate.dart';
 import 'apkg_package_builder.dart';
 import 'apkg_exporter.dart';
@@ -3933,6 +3934,59 @@ WHERE queue IN (-2, -3)
           ),
         )
         .toList(growable: false);
+  }
+
+  /// Returns stored cards due in the half-open day range `[minDay, maxDay)`.
+  ///
+  /// The result has one bucket per day, including empty days. Cards retain
+  /// SQLite's natural query order within each bucket. Queue and deck state are
+  /// intentionally not filtered because Core's load-balancer history query
+  /// includes every card due in the requested range.
+  Future<List<List<DueCardHistoryCard>>> getAllCardsDueInRange({
+    required int minDay,
+    required int maxDay,
+  }) async {
+    if (minDay < 0 || minDay > 0xffffffff) {
+      throw RangeError.range(minDay, 0, 0xffffffff, 'minDay');
+    }
+    if (maxDay < 0 || maxDay > 0xffffffff) {
+      throw RangeError.range(maxDay, 0, 0xffffffff, 'maxDay');
+    }
+    if (maxDay <= minDay) {
+      throw ArgumentError.value(
+        maxDay,
+        'maxDay',
+        'must be greater than minDay',
+      );
+    }
+    final dayCount = maxDay - minDay;
+    // The only Core caller requests LOAD_BALANCE_DAYS (99). Keep this public
+    // query bounded to that source window instead of allocating an enormous
+    // vector for an otherwise valid u32 span.
+    if (dayCount > 99) {
+      throw RangeError.range(dayCount, 1, 99, 'dayCount');
+    }
+
+    final buckets = List<List<DueCardHistoryCard>>.generate(
+      dayCount,
+      (_) => <DueCardHistoryCard>[],
+    );
+    final rows = _database.select(
+      'SELECT id, nid, did, due FROM cards WHERE due >= ? AND due < ?',
+      [minDay, maxDay],
+    );
+    for (final row in rows) {
+      final dueDay = _requiredSigned(row['due'], 32, 'due');
+      buckets[dueDay - minDay].add(
+        DueCardHistoryCard(
+          id: _readInt64(row['id']),
+          noteId: _readInt64(row['nid']),
+          deckId: _readInt64(row['did']),
+          dueDay: dueDay,
+        ),
+      );
+    }
+    return buckets;
   }
 
   String _dueCardReviewOrderSql({

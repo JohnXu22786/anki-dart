@@ -144,7 +144,9 @@ outside; units 80–82 do not implement full load balancing.
 input query for caller-supplied `[minDay, maxDay)` bounds. It returns one bucket
 per day, includes cards from every queue and deck, preserves SQLite row order
 within each bucket, and retains signed 64-bit card, note, and deck IDs. The
-query does not derive the day range or combine history with interval weights.
+query enforces Core's u32 bounds and caps its span at the 99-day
+`LOAD_BALANCE_DAYS` window; it does not derive the day range or combine history
+with interval weights.
 Easy-day configuration and weekday derivation, sibling discovery and modifier
 inputs, random weighted selection, load-balancer orchestration, and scheduler
 execution remain incomplete.

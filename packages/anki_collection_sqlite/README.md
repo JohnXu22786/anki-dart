@@ -78,7 +78,8 @@ as u32. It does not inspect collection configuration or choose active decks.
 half-open day range. It returns a bucket for each day, includes all queue and
 deck states, and preserves SQLite's natural row order within each bucket. Card,
 note, and deck IDs remain signed 64-bit values, and stored due days are checked
-as signed 32-bit values. Invalid and overflowing ranges are rejected. Easy-day
+as signed 32-bit values. Bounds follow Core's u32 contract and spans are capped
+at the 99-day load-balancer window to keep allocation bounded. Easy-day
 configuration, weekday derivation, sibling discovery, weighted selection, and
 scheduler execution remain outside this query.
 

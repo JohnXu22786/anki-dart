@@ -69,41 +69,51 @@ void main() {
     },
   );
 
-  test(
-    'preserves signed int64 identifiers and rejects invalid ranges',
-    () async {
-      await storage.executeBatch('''
+  test('preserves signed int64 identifiers and validates u32 ranges', () async {
+    await storage.executeBatch('''
       INSERT INTO cards (id, nid, due, did, queue) VALUES
         (9007199254740993, -9007199254740995, 2147483646,
          9007199254740999, 2);
     ''');
 
-      final buckets = await storage.getAllCardsDueInRange(
-        minDay: 2147483646,
-        maxDay: 2147483647,
-      );
-      final card = buckets.single.single;
-      expect(card.id, Int64.parseInt('9007199254740993'));
-      expect(card.noteId, Int64.parseInt('-9007199254740995'));
-      expect(card.deckId, Int64.parseInt('9007199254740999'));
-      expect(card.dueDay, 2147483646);
+    final buckets = await storage.getAllCardsDueInRange(
+      minDay: 2147483646,
+      maxDay: 2147483647,
+    );
+    final card = buckets.single.single;
+    expect(card.id, Int64.parseInt('9007199254740993'));
+    expect(card.noteId, Int64.parseInt('-9007199254740995'));
+    expect(card.deckId, Int64.parseInt('9007199254740999'));
+    expect(card.dueDay, 2147483646);
 
-      await expectLater(
-        storage.getAllCardsDueInRange(minDay: 4, maxDay: 4),
-        throwsArgumentError,
-      );
-      await expectLater(
-        storage.getAllCardsDueInRange(minDay: 5, maxDay: 4),
-        throwsArgumentError,
-      );
-      await expectLater(
-        storage.getAllCardsDueInRange(minDay: -0x80000001, maxDay: 1),
-        throwsRangeError,
-      );
-      await expectLater(
-        storage.getAllCardsDueInRange(minDay: -0x80000000, maxDay: 0x7fffffff),
-        throwsRangeError,
-      );
-    },
-  );
+    await storage.executeBatch('''
+        INSERT INTO cards (id, nid, due, did, queue)
+        VALUES (11, 110, 2147483648, 1100, 2);
+      ''');
+    await expectLater(
+      storage.getAllCardsDueInRange(minDay: 2147483648, maxDay: 2147483649),
+      throwsFormatException,
+    );
+
+    await expectLater(
+      storage.getAllCardsDueInRange(minDay: 4, maxDay: 4),
+      throwsArgumentError,
+    );
+    await expectLater(
+      storage.getAllCardsDueInRange(minDay: 5, maxDay: 4),
+      throwsArgumentError,
+    );
+    await expectLater(
+      storage.getAllCardsDueInRange(minDay: -1, maxDay: 1),
+      throwsRangeError,
+    );
+    await expectLater(
+      storage.getAllCardsDueInRange(minDay: 0, maxDay: 0x100000000),
+      throwsRangeError,
+    );
+    await expectLater(
+      storage.getAllCardsDueInRange(minDay: 0, maxDay: 100),
+      throwsRangeError,
+    );
+  });
 }

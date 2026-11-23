@@ -3946,11 +3946,11 @@ WHERE queue IN (-2, -3)
     required int minDay,
     required int maxDay,
   }) async {
-    if (minDay < -0x80000000 || minDay > 0x7fffffff) {
-      throw RangeError.range(minDay, -0x80000000, 0x7fffffff, 'minDay');
+    if (minDay < 0 || minDay > 0xffffffff) {
+      throw RangeError.range(minDay, 0, 0xffffffff, 'minDay');
     }
-    if (maxDay < -0x80000000 || maxDay > 0x7fffffff) {
-      throw RangeError.range(maxDay, -0x80000000, 0x7fffffff, 'maxDay');
+    if (maxDay < 0 || maxDay > 0xffffffff) {
+      throw RangeError.range(maxDay, 0, 0xffffffff, 'maxDay');
     }
     if (maxDay <= minDay) {
       throw ArgumentError.value(
@@ -3960,10 +3960,11 @@ WHERE queue IN (-2, -3)
       );
     }
     final dayCount = maxDay - minDay;
-    // Core performs this subtraction using signed 32-bit day values. Reject
-    // spans that would overflow that source calculation before allocating.
-    if (dayCount > 0x7fffffff) {
-      throw RangeError.range(dayCount, 1, 0x7fffffff, 'dayCount');
+    // The only Core caller requests LOAD_BALANCE_DAYS (99). Keep this public
+    // query bounded to that source window instead of allocating an enormous
+    // vector for an otherwise valid u32 span.
+    if (dayCount > 99) {
+      throw RangeError.range(dayCount, 1, 99, 'dayCount');
     }
 
     final buckets = List<List<DueCardHistoryCard>>.generate(

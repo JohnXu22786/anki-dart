@@ -69,3 +69,9 @@ current step delay and elapsed seconds supplied by the caller from the matching
 Core scheduler snapshot. It preserves the card's remaining step count and FSRS
 memory state. The pure projection does not calculate timing, fuzz, the current
 delay, filtered-deck wrappers, or the current Review state.
+
+`FilteredPreviewState` and `FilteredPreviewSchedulingStates` calculate the
+current filtered-preview state and Again/Hard/Good/Easy outcomes from explicit
+u32 second delays. Current state remains unfinished at zero seconds; zero-delay
+answer outcomes and Easy are finished. Collection lookup, delay configuration,
+filtered-deck search/limits, and rescheduling remain outside this pure model.

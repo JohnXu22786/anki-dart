@@ -307,3 +307,15 @@ Missing selected cloze ordinals and Core-reported template errors are
 represented as unavailable rows because this slice does not port Core's
 localized template-rendering error catalogue. Incomplete handlebars that Core
 tokenizes as literal text are preserved verbatim, matching Core's lexer.
+
+`FilteredPreviewState` and `FilteredPreviewSchedulingStates` adapt Core's
+filtered preview current state and answer delays from
+`rslib/src/scheduler/states/preview_filter.rs`, with current-state construction
+from `rslib/src/scheduler/answering/current.rs`, at the pinned Anki Core
+commit. Caller-supplied u32 delays remain explicit; zero-delay answer outcomes
+and Easy finish the preview, while the current preview state stays unfinished
+even at zero seconds. Collection lookup, filtered-deck delay resolution,
+search/limits, and rescheduling remain outside this pure transition. Source
+hashes are recorded in `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and
+contributors and licensed under AGPL-3.0-or-later; this adaptation retains the
+same license.

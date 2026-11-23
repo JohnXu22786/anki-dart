@@ -535,6 +535,18 @@ clearly. This closes stored normal-deck Relearn state assembly only; filtered
 deck preview/rescheduling, answer application, cache mutation, transactions,
 app call-site wiring, and Reviewer UI remain open.
 
+### Unit 115 — pure filtered-preview current and answer states
+
+`FilteredPreviewState` and `FilteredPreviewSchedulingStates` model Core's
+current filtered-preview state and its Again/Hard/Good/Easy outcomes using
+explicit caller-supplied unsigned 32-bit delay seconds. The current state is
+unfinished even at a zero-second delay; for answer outcomes, zero seconds
+finishes the preview, and Easy always finishes. This closes the pure Preview
+transition calculation only. Filtered-deck collection lookup, preview-delay
+configuration, search and limits, rescheduling wrappers, normal-state
+assembly, answer application, persistence, transactions/undo, application
+call-site wiring, and Reviewer UI remain open.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,

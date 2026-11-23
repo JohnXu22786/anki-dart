@@ -568,6 +568,61 @@ class ReviewCardSchedulingStates {
   final ReviewCardTransition easy;
 }
 
+/// A filtered-deck preview scheduling state, measured in seconds.
+class FilteredPreviewState {
+  FilteredPreviewState({required int scheduledSecs, required this.finished})
+      : scheduledSecs = scheduledSecs.toUnsigned(32);
+
+  /// Creates the current preview state. Core marks the current state
+  /// unfinished even when its scheduled delay is zero.
+  factory FilteredPreviewState.current({required int scheduledSecs}) =>
+      FilteredPreviewState(scheduledSecs: scheduledSecs, finished: false);
+
+  /// Creates an answer outcome from a delay; zero means the preview is done.
+  factory FilteredPreviewState.fromDelay(int seconds) {
+    final scheduledSecs = seconds.toUnsigned(32);
+    return FilteredPreviewState(
+      scheduledSecs: scheduledSecs,
+      finished: scheduledSecs == 0,
+    );
+  }
+
+  final int scheduledSecs;
+  final bool finished;
+
+  /// Calculates all answer outcomes from caller-resolved filtered-preview
+  /// delays. Easy always completes the preview.
+  FilteredPreviewSchedulingStates nextStates({
+    required int againDelaySecs,
+    required int hardDelaySecs,
+    required int goodDelaySecs,
+  }) =>
+      FilteredPreviewSchedulingStates(
+        current: this,
+        again: FilteredPreviewState.fromDelay(againDelaySecs),
+        hard: FilteredPreviewState.fromDelay(hardDelaySecs),
+        good: FilteredPreviewState.fromDelay(goodDelaySecs),
+        easy: FilteredPreviewState.fromDelay(0),
+      );
+}
+
+/// Current filtered preview state and its four answer-button outcomes.
+class FilteredPreviewSchedulingStates {
+  const FilteredPreviewSchedulingStates({
+    required this.current,
+    required this.again,
+    required this.hard,
+    required this.good,
+    required this.easy,
+  });
+
+  final FilteredPreviewState current;
+  final FilteredPreviewState again;
+  final FilteredPreviewState hard;
+  final FilteredPreviewState good;
+  final FilteredPreviewState easy;
+}
+
 /// The learning portion of a Core scheduling state.
 class LearningCardState {
   LearningCardState({

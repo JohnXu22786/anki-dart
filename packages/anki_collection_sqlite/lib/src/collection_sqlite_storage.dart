@@ -3656,6 +3656,43 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Reads the current state for a Review card in a filtered deck that
+  /// reschedules cards.
+  ///
+  /// Core uses the card's nonzero original due day, falling back to its stored
+  /// due day, without clamping it to today's collection day. Both the due
+  /// resolution and elapsed-day calculation use the supplied timing snapshot.
+  /// This is a read-only projection of the unwrapped Review state; it does not
+  /// read deck config, revlogs, or load-balancer history.
+  Future<ReviewCardState> currentReschedulingFilteredReviewCardStateForNow({
+    required CardId cardId,
+    DateTime? now,
+  }) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+    if (card.ctype != CardType.review) {
+      throw StateError('card is not a review card: $cardId');
+    }
+
+    final deck = _deckStorage.getDeck(card.deckId);
+    if (deck == null) throw StateError('deck not found: ${card.deckId}');
+    final kind = deck.kind;
+    if (kind is! FilteredDeckKind) {
+      throw StateError('filtered deck required: ${card.deckId}');
+    }
+    if (!kind.value.reschedule) {
+      throw StateError('filtered deck does not reschedule cards: ${deck.id}');
+    }
+
+    final timing = timingTodayForNow(now: now);
+    final effectiveDue = card.originalDue != 0 ? card.originalDue : card.due;
+    return ReviewCardState.fromCard(
+      card,
+      effectiveDue: effectiveDue,
+      daysElapsed: timing.daysElapsed,
+    );
+  }
+
   ReviewCardState _currentReviewCardStateForCardAtTiming(
     Card card,
     SchedTimingToday timing,

@@ -558,6 +558,22 @@ deck search/gathering, rescheduling, normal-state resolution, answer
 application, cache updates, persistence, transactions/undo, application
 call-site wiring, and Reviewer UI remain open.
 
+### Unit 117 — current Review state in rescheduling filtered decks
+
+`CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`
+reads a stored Review card and requires its assigned deck to be a filtered deck
+with rescheduling enabled. It resolves effective due to nonzero
+`originalDue`, otherwise stored `due`, without normal-deck clamping, and
+projects the current state with `ReviewCardState.fromCard()` using one
+caller-supplied `timingTodayForNow()` snapshot. This read-only path does not
+read deck config, revlogs, FSRS history, or load-balancer cache/history. It
+rejects missing cards/decks, non-Review cards, normal decks, and filtered decks
+that do not reschedule. This closes only current unwrapped Review-state
+projection for rescheduling filtered cards; answer-state composition, full
+filtered `ReschedulingFilterState` wrapping, other card types, filtered
+rescheduling execution, answer application/persistence, transactions/undo,
+app call-site wiring, and Reviewer UI remain open.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -577,7 +593,8 @@ call-site wiring, and Reviewer UI remain open.
   collection-backed FSRS Review answer-state calculation are closed by Units
   103–110; stored normal-deck New answer-state calculation is closed by Unit
   111; Units 113–114 close stored normal-deck Learn and Relearn answer-state
-  calculation.
+  calculation. Unit117 closes current unwrapped Review-state projection for
+  rescheduling filtered cards only.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

@@ -170,6 +170,44 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
     expect(cache.daysByPreset, isEmpty);
     expect(cache.easyDaysByPreset, isEmpty);
   });
+
+  test(
+    'current load-balancer context uses one injected timing snapshot',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await storage.executeBatch('''
+CREATE TABLE col (crt INTEGER NOT NULL, conf TEXT NOT NULL);
+CREATE TABLE config (key TEXT PRIMARY KEY, usn INTEGER, mtime_secs INTEGER, val BLOB);
+INSERT INTO col VALUES ($creationSecs, '{}');
+''');
+      final preset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+      storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck(8));
+      await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (1, 100, 12, 7, 0),
+  (2, 200, 13, 7, 1),
+  (3, 300, 12, 8, 0),
+  (4, 400, 12, 99, 0);
+''');
+
+      final timing = storage.timingTodayForNow(now: now);
+      final context = await storage.loadBalancerContextForNow(now: now);
+
+      expect(context.daysElapsed, timing.daysElapsed);
+      expect(context.nextDayAt, TimestampSecs(timing.nextDayAt));
+      expect(context.cache.daysByPreset.keys, [preset]);
+      expect(context.cache.daysByPreset[preset]![0].cardCount, 1);
+      expect(context.cache.daysByPreset[preset]![1].cardCount, 1);
+    },
+  );
 }
 
 DeckConfig _config(Int64 id, String name) =>

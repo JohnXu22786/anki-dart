@@ -67,6 +67,19 @@ final class CollectionCustomStudyLimitDefaults {
   final int availableNewInChildren, availableReviewInChildren;
 }
 
+/// Current collection timing and load-balancer inputs from one day snapshot.
+final class CollectionLoadBalancerContext {
+  const CollectionLoadBalancerContext({
+    required this.daysElapsed,
+    required this.nextDayAt,
+    required this.cache,
+  });
+
+  final int daysElapsed;
+  final TimestampSecs nextDayAt;
+  final LoadBalancerCache cache;
+}
+
 /// Opens a SQLite database for the caller-selected platform and location.
 ///
 /// The driver owns platform-specific database configuration and can capture
@@ -4037,6 +4050,25 @@ WHERE queue IN (-2, -3)
     return buildLoadBalancerCache(
       today: today,
       deckConfigByDeck: deckConfigByDeck,
+    );
+  }
+
+  /// Builds the current collection timing and load-balancer cache together.
+  ///
+  /// Timing is resolved once from [now] (or the current time) and supplies both
+  /// [CollectionLoadBalancerContext.daysElapsed] and [nextDayAt]. The cache is
+  /// built from the same collection day using Core's deck mapping behavior.
+  Future<CollectionLoadBalancerContext> loadBalancerContextForNow({
+    DateTime? now,
+  }) async {
+    final timing = timingTodayForNow(now: now);
+    final cache = await buildLoadBalancerCacheFromCollection(
+      today: timing.daysElapsed,
+    );
+    return CollectionLoadBalancerContext(
+      daysElapsed: timing.daysElapsed,
+      nextDayAt: TimestampSecs(timing.nextDayAt),
+      cache: cache,
     );
   }
 

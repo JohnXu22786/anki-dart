@@ -48,6 +48,16 @@ resolver. Collection-backed assembly is provided by
 scheduler call-site wiring, answer-time cache updates, persistence,
 transactions, and Reviewer UI remain outside these shared packages.
 
+`ReviewSchedulingContext.withDeckConfig()` projects review multipliers,
+interval limits, leech/lapse settings, learning steps, and graduation intervals
+from a caller-resolved `DeckConfig`. The config must already have Core-compatible
+normalization/defaulting applied. Projection does not select or load a config,
+derive fuzz or FSRS inputs, or replace caller-supplied dynamic scheduling
+inputs. The source adaptation follows Core's `CardStateUpdater::state_context()`
+and `learn_steps()` / `relearn_steps()`; collection-backed config selection,
+FSRS derivation, non-review state assembly, answer application/persistence,
+transactions/undo, and Reviewer UI remain outside this method.
+
 `ReviewCardState.fromCard()` projects an already-loaded review card into its
 current review state. The caller supplies Core's already-resolved effective due
 value and collection `daysElapsed` from the same timing snapshot. The pure

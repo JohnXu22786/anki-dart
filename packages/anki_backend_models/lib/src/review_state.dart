@@ -79,8 +79,7 @@ class ReviewSchedulingContext {
   /// Called only for passing review intervals that use Core's fuzz path, after
   /// interval multipliers and final minimum/maximum bounds are applied. A null
   /// result falls back to [fuzzFactor].
-  final int? Function(double interval, int minimum, int maximum)?
-      loadBalancedIntervalResolver;
+  final ReviewLoadBalancerIntervalResolver? loadBalancedIntervalResolver;
   final FsrsReviewNextStates? fsrsNextStates;
 
   /// Exact FSRS parameter set used when [fsrsNextStates] is not precomputed.
@@ -125,6 +124,13 @@ class ReviewSchedulingContext {
         graduatingIntervalEasy: graduatingIntervalEasy,
       );
 }
+
+/// Resolves one interval against a fixed load-balancer context.
+typedef ReviewLoadBalancerIntervalResolver = int? Function(
+  double interval,
+  int minimum,
+  int maximum,
+);
 
 /// A review-card state as used by Anki Core's scheduling-state calculation.
 class ReviewCardState {

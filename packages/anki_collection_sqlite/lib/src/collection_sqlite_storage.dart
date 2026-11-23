@@ -78,6 +78,28 @@ final class CollectionLoadBalancerContext {
   final int daysElapsed;
   final TimestampSecs nextDayAt;
   final LoadBalancerCache cache;
+
+  /// Creates a resolver that reuses this context's timing and cache snapshot.
+  ///
+  /// The selected preset, note, and fuzz seed are fixed for every interval
+  /// resolved by the returned callback. Creating the callback does not read or
+  /// mutate collection state.
+  ReviewLoadBalancerIntervalResolver reviewIntervalResolver({
+    required DeckConfigId deckConfigId,
+    required NoteId? noteId,
+    required BigInt? fuzzSeed,
+  }) =>
+      (double interval, int minimum, int maximum) => findLoadBalancedInterval(
+        daysByPreset: cache.daysByPreset,
+        easyDaysByPreset: cache.easyDaysByPreset,
+        nextDayAt: nextDayAt,
+        deckConfigId: deckConfigId,
+        noteId: noteId,
+        interval: interval,
+        minimum: minimum,
+        maximum: maximum,
+        fuzzSeed: fuzzSeed,
+      );
 }
 
 /// Opens a SQLite database for the caller-selected platform and location.

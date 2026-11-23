@@ -136,9 +136,18 @@ the base context without collection reads. It returns
 `ReviewCardState.nextStates()` unchanged and does not derive current review
 state or FSRS inputs. `nextStates()` may calculate FSRS answer outcomes from
 the supplied context. The method does not persist cards or revlogs or mutate
-the cache. Fetching current state, applying an answer, cache-update call-site
-wiring, transactions/undo, and Reviewer UI remain outside this read-only entry
-point.
+the cache. Fetching current state as part of the app answer flow, applying an
+answer, cache-update call-site wiring, transactions/undo, and Reviewer UI
+remain outside this read-only entry point.
+
+`currentReviewCardStateForNow()` reads a stored review card and its currently
+assigned deck, requires that deck to be normal, and projects its state using
+one `timingTodayForNow()` snapshot. The normal-deck due day is clamped to
+`min(card.due, daysElapsed)` before projection. Missing cards, missing decks,
+non-review cards, and filtered decks produce state errors. Filtered-deck
+preview/rescheduling state, new/learning/relearning state, FSRS derivation,
+whole `get_scheduling_states()` composition, answer application and
+persistence/cache/undo, and Reviewer UI remain outside this method.
 
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and

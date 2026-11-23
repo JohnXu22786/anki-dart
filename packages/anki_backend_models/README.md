@@ -34,3 +34,10 @@ only the in-memory day buckets, matching Core's cache bookkeeping.
 
 Pinned Anki Core source digests and license attribution are recorded in
 `SOURCE.sha256` and `NOTICE.md`.
+
+`ReviewSchedulingContext.loadBalancedIntervalResolver` lets review interval
+calculation prefer an interval from a fixed load-balancer context after Core's
+multipliers and bounds are applied. A null decision falls back to ordinary
+deterministic fuzz; early reviews bypass the resolver. The collection still
+owns context construction and answer-time cache updates, and scheduler wiring,
+persistence, transactions, and Reviewer UI remain outside this package.

@@ -260,6 +260,161 @@ void main() {
       expect(states.easy.review.scheduledDays, 46);
     });
 
+    test('balanced interval resolver receives adjusted intervals and bounds',
+        () {
+      final calls = <(double, int, int)>[];
+      final states = ReviewCardState(
+        scheduledDays: 10,
+        elapsedDays: 10,
+      ).nextStates(ReviewSchedulingContext(
+        intervalMultiplier: 1.5,
+        fuzzFactor: 0.99,
+        loadBalancedIntervalResolver: (interval, minimum, maximum) {
+          calls.add((interval, minimum, maximum));
+          return minimum;
+        },
+      ));
+
+      expect(
+        calls.map((call) => call.$1).toList(),
+        [18, 37.5, 48.75],
+      );
+      expect(calls.map((call) => call.$2).toList(), [11, 12, 13]);
+      expect(calls.every((call) => call.$3 == 36500), isTrue);
+      expect(
+        [
+          states.hard.review.scheduledDays,
+          states.good.review.scheduledDays,
+          states.easy.review.scheduledDays,
+        ],
+        [11, 12, 13],
+      );
+    });
+
+    test('null balanced interval falls back to deterministic review fuzz', () {
+      final state = ReviewCardState(scheduledDays: 10, elapsedDays: 10);
+      final fallback = state.nextStates(ReviewSchedulingContext(
+        fuzzFactor: 0.99,
+        loadBalancedIntervalResolver: (_, __, ___) => null,
+      ));
+      final ordinary = state.nextStates(
+        const ReviewSchedulingContext(fuzzFactor: 0.99),
+      );
+
+      expect(
+        [
+          fallback.hard.review.scheduledDays,
+          fallback.good.review.scheduledDays,
+          fallback.easy.review.scheduledDays,
+        ],
+        [
+          ordinary.hard.review.scheduledDays,
+          ordinary.good.review.scheduledDays,
+          ordinary.easy.review.scheduledDays,
+        ],
+      );
+    });
+
+    test('absent balanced interval resolver preserves existing fuzz output',
+        () {
+      final state = ReviewCardState(scheduledDays: 10, elapsedDays: 14);
+      final withoutResolver = state.nextStates(
+        const ReviewSchedulingContext(fuzzFactor: 0.4),
+      );
+      final direct = state.nextStates(ReviewSchedulingContext(
+        fuzzFactor: 0.4,
+        loadBalancedIntervalResolver: null,
+      ));
+
+      expect(
+        [
+          direct.hard.review.scheduledDays,
+          direct.good.review.scheduledDays,
+          direct.easy.review.scheduledDays,
+        ],
+        [
+          withoutResolver.hard.review.scheduledDays,
+          withoutResolver.good.review.scheduledDays,
+          withoutResolver.easy.review.scheduledDays,
+        ],
+      );
+    });
+
+    test('early review bypasses balanced interval resolver', () {
+      var calls = 0;
+      final states = ReviewCardState(
+        scheduledDays: 10,
+        elapsedDays: 5,
+      ).nextStates(ReviewSchedulingContext(
+        fuzzFactor: 0.99,
+        loadBalancedIntervalResolver: (_, __, ___) {
+          calls++;
+          return 1;
+        },
+      ));
+
+      expect(calls, 0);
+      expect(
+        [
+          states.hard.review.scheduledDays,
+          states.good.review.scheduledDays,
+          states.easy.review.scheduledDays,
+        ],
+        [6, 13, 14],
+      );
+    });
+
+    test('supplied FSRS intervals use balanced sequential minima', () {
+      final memory = FsrsMemoryState(stability: 2, difficulty: 5);
+      final states = ReviewCardState(scheduledDays: 10).nextStates(
+        ReviewSchedulingContext(
+          fuzzFactor: 0.99,
+          fsrsNextStates: FsrsReviewNextStates(
+            again: FsrsReviewNextState(interval: 1, memoryState: memory),
+            hard: FsrsReviewNextState(interval: 12, memoryState: memory),
+            good: FsrsReviewNextState(interval: 12, memoryState: memory),
+            easy: FsrsReviewNextState(interval: 12, memoryState: memory),
+          ),
+          loadBalancedIntervalResolver: (_, minimum, __) => minimum,
+        ),
+      );
+
+      expect(
+        [
+          states.hard.review.scheduledDays,
+          states.good.review.scheduledDays,
+          states.easy.review.scheduledDays,
+        ],
+        [11, 12, 13],
+      );
+    });
+
+    test('computed FSRS state derivation preserves balanced interval resolver',
+        () {
+      var calls = 0;
+      final states = ReviewCardState(scheduledDays: 10).nextStates(
+        ReviewSchedulingContext(
+          fsrsParams: const [],
+          fsrsDesiredRetention: 0.9,
+          fuzzFactor: 0.99,
+          loadBalancedIntervalResolver: (_, minimum, __) {
+            calls++;
+            return minimum;
+          },
+        ),
+      );
+
+      expect(calls, 3);
+      expect(
+        [
+          states.hard.review.scheduledDays,
+          states.good.review.scheduledDays,
+          states.easy.review.scheduledDays,
+        ],
+        [1, 2, 3],
+      );
+    });
+
     test('passing ratings update ease and clear absent FSRS memory', () {
       final states = ReviewCardState(
         scheduledDays: 10,

@@ -101,9 +101,11 @@ The `Tag` value model follows `rslib/src/tags/mod.rs` at the pinned Anki Core co
 calculation from `rslib/src/scheduler/states/review.rs`, including the review
 fuzz rules from `states/fuzz.rs` and the `LearningSteps` failure-delay inputs
 from `states/steps.rs`. It accepts scheduler configuration and deterministic
-fuzz. Hosts may supply FSRS next intervals/memory directly, or provide the
-current memory state, elapsed days, desired retention, and exact parameters for
-the pure FSRS 5.2.0 per-rating calculation. Queue construction, persistence,
+fuzz. Passing review intervals may also use an optional load-balancer interval
+resolver after multipliers and bounds; a null result uses ordinary fuzz, and
+early reviews bypass the resolver. Hosts may supply FSRS next intervals/memory
+directly, or provide the current memory state, elapsed days, desired retention,
+and exact parameters for the pure FSRS 5.2.0 per-rating calculation. Queue construction, persistence,
 parameter training, and answer execution remain host-owned. The per-card
 memory-state calculation is described below.
 The adaptation follows Anki Core commit
@@ -111,6 +113,12 @@ The adaptation follows Anki Core commit
 `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and contributors and is
 licensed under AGPL-3.0-or-later. This package and the adaptation retain the
 same license; root `COPYING` is unchanged.
+
+The resolver integrates the pure `ReviewState` interval path with the existing
+`LoadBalancer::find_interval()` port without constructing collection context
+or applying the chosen interval to persisted card state. Collection/scheduler
+context assembly, answer-time cache mutation, persistence, transactions/undo,
+application call-site wiring, and Reviewer UI remain outside this unit.
 
 `LearningCardState`, `NewCardState`, and `RelearningCardState` port Core's pure
 Again/Hard/Good/Easy state calculations from

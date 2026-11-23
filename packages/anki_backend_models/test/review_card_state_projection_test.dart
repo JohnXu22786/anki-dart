@@ -3,6 +3,57 @@ import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('LearningCardState.fromCard', () {
+    test('projects the stored learning step count and supplied timings', () {
+      final state = LearningCardState.fromCard(
+        Card(
+          ctype: CardType.learn,
+          remainingStepsRaw: 1004,
+        ),
+        scheduledSecs: 23,
+        elapsedSecs: 7,
+      );
+
+      expect(state.remainingSteps, 4);
+      expect(state.scheduledSecs, 23);
+      expect(state.elapsedSecs, 7);
+    });
+
+    test('preserves boundary values in the unsigned second ranges', () {
+      final state = LearningCardState.fromCard(
+        Card(ctype: CardType.learn, remainingStepsRaw: 0xffffffff),
+        scheduledSecs: 0xffffffff,
+        elapsedSecs: 0,
+      );
+
+      expect(state.remainingSteps, 295);
+      expect(state.scheduledSecs, 0xffffffff);
+      expect(state.elapsedSecs, 0);
+    });
+
+    test('preserves the stored FSRS memory state', () {
+      final memory = FsrsMemoryState(stability: 12.3456, difficulty: 6.7891);
+      final state = LearningCardState.fromCard(
+        Card(ctype: CardType.learn, memoryState: memory),
+        scheduledSecs: 60,
+        elapsedSecs: 12,
+      );
+
+      expect(state.memoryState, same(memory));
+    });
+
+    test('rejects cards whose stored type is not learn', () {
+      expect(
+        () => LearningCardState.fromCard(
+          Card(ctype: CardType.review),
+          scheduledSecs: 60,
+          elapsedSecs: 12,
+        ),
+        throwsA(isA<InvalidModelValue>()),
+      );
+    });
+  });
+
   group('ReviewCardState.fromCard', () {
     test('matches Core for future, current-day, and past due dates', () {
       final card = _reviewCard(interval: 10);

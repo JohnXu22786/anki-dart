@@ -267,6 +267,17 @@ recorded in `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and
 contributors and licensed under AGPL-3.0-or-later. This adaptation retains the
 same license; root `COPYING` is unchanged.
 
+`LearningCardState.fromCard()` adapts the Learn arm of
+`CardStateUpdater::normal_study_state()` from
+`rslib/src/scheduler/answering/current.rs` at Anki Core commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. It projects the stored remaining
+step count and memory state while preserving the caller's Core-resolved current
+step delay and elapsed seconds. Step timing, fuzz, filtered-deck resolution, and
+current Review state remain outside this pure projection. The source SHA-256 is
+recorded in `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and
+contributors and licensed under AGPL-3.0-or-later. This adaptation retains the
+same license; root `COPYING` is unchanged.
+
 `ReviewSchedulingContext.withDeckConfig()` adapts the scheduler-field
 projection in `CardStateUpdater::state_context()` and its `learn_steps()` /
 `relearn_steps()` helpers from `rslib/src/scheduler/answering/mod.rs`, using

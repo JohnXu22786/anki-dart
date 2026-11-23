@@ -21,8 +21,11 @@ Core's interval offset to an absolute Unix timestamp, then projects the result
 to the machine's local Monday-based weekday. `findLoadBalancedInterval()`
 composes those pure helpers over caller-supplied 99-day preset caches,
 seven-day easy-day settings, timestamp, selected preset, and optional note and
-seed. Card-history reads and input assembly, preset/deck resolution,
-timezone/date input construction, cache mutation, collection storage,
+seed. `LoadBalancerCache.fromHistory()` groups the already-read, ordered
+99-day card history by a caller-supplied deck-to-config map and projects
+easy-day settings for all stored configs, matching Core's constructor cache
+assembly. Card-history database reads, date-window derivation, producing the
+deck-to-config map, post-construction cache mutation, collection storage,
 scheduler wiring, answer/reviewer UI, and full cross-platform review
 integration remain outside this package.
 

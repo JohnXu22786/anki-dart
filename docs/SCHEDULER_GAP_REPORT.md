@@ -219,6 +219,18 @@ preset/deck resolution, timezone/date input construction, cache mutation,
 collection storage, scheduler wiring, answer/reviewer UI, and full
 cross-platform review integration remain incomplete.
 
+### Unit 90 — initial load-balancer cache construction
+
+`anki_backend_models.LoadBalancerCache.fromHistory()` ports the pure grouping
+portion of Core `LoadBalancer::new()`. Given 99 ordered card-history buckets,
+a caller-provided deck-to-config map, and the stored config map, it groups
+card/note pairs into 99-day preset caches and projects easy-day settings for
+all configs. Cards without a deck mapping are skipped as in Core; presets with
+no mapped cards have no day-cache entry. Database queries, deriving the day
+window and deck-to-config mapping, post-construction cache mutation, scheduler
+call-site integration, answer persistence, Reviewer UI, and full cross-platform
+review integration remain incomplete.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -231,14 +243,15 @@ cross-platform review integration remain incomplete.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: card-history reads and load-balancer input
-  assembly, full day/date and timezone input construction, deck-to-config
-  resolution, cache mutation, preset storage/configuration integration,
+- Remaining scheduler work: card-history reads and day/date window
+  construction, full timezone input construction, producing the deck-to-config
+  map, post-construction cache mutation, preset storage/configuration
+  integration,
   collection storage, and scheduler orchestration. Collection-backed due-card
-  history input is available in Unit 83; `CollectionSqliteStorage.deckTree()`
-  provides queue-count aggregation. Unit89 adds the pure preloaded-context
-  interval decision, but does not complete scheduler integration or full
-  cross-platform review integration.
+  history input is available in Unit 83; Unit90 groups that preloaded history,
+  and `CollectionSqliteStorage.deckTree()` provides queue-count aggregation.
+  Unit89 adds the pure preloaded-context interval decision, but these helpers do
+  not complete scheduler integration or full cross-platform review integration.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

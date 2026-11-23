@@ -51,20 +51,24 @@ void main() {
   if (weightedInterval != 20) {
     throw StateError('seeded weighted selection differs on JavaScript');
   }
-  final intervalDays = List<LoadBalancerDay>.generate(
-    99,
-    (_) => LoadBalancerDay(),
-  );
+  final history = List<List<LoadBalancerHistoryCard>>.generate(99, (_) => []);
   for (var day = 4; day <= 6; day++) {
     for (var card = 0; card < 10; card++) {
-      intervalDays[day].add(CardId(day * 100 + card), NoteId(day * 100 + card));
+      history[day].add((
+        CardId(day * 100 + card),
+        NoteId(day * 100 + card),
+        DeckId(7),
+      ));
     }
   }
+  final loadBalancerCache = LoadBalancerCache.fromHistory(
+    cardsByDay: history,
+    deckConfigByDeck: {DeckId(7): DeckConfigId(1)},
+    configs: {DeckConfigId(1): DeckConfig.defaults()},
+  );
   int? chooseLoadBalancedInterval() => findLoadBalancedInterval(
-        daysByPreset: {Int64(1): intervalDays},
-        easyDaysByPreset: {
-          Int64(1): List<EasyDay>.filled(7, EasyDay.normal),
-        },
+        daysByPreset: loadBalancerCache.daysByPreset,
+        easyDaysByPreset: loadBalancerCache.easyDaysByPreset,
         nextDayAt: TimestampSecs(0),
         deckConfigId: Int64(1),
         noteId: null,

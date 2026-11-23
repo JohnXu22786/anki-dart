@@ -228,6 +228,17 @@ timezone/date input construction, cache mutation, collection storage,
 scheduler wiring, answer/reviewer UI, and full cross-platform review
 integration remain outside this helper.
 
+`LoadBalancerCache.fromHistory()` adapts the cache-construction portion of
+Core's `LoadBalancer::new()` from the same pinned `load_balancer.rs`. It groups
+the caller's ordered 99 buckets of `(card ID, note ID, deck ID)` rows by the
+provided deck-to-config map, skips rows without a mapping, creates preset
+buckets only for presets with mapped cards, and projects easy-day settings for
+every supplied config. It performs no database reads or date calculation; the
+caller still supplies the history, day range, deck mapping, and stored config
+map. Cache mutation, scheduler integration, and Reviewer behavior remain
+outside this helper. The existing pinned source hash covers this adaptation;
+root `COPYING` is unchanged.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

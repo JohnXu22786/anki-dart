@@ -151,9 +151,24 @@ class ReviewSchedulingContext {
   ReviewSchedulingContext withFsrsNextStates(FsrsReviewNextStates states) =>
       _copyWith(fsrsNextStates: states);
 
+  /// Returns this context with collection-derived FSRS short-term settings.
+  ///
+  /// All other scheduling inputs, including FSRS outputs and parameters,
+  /// remain unchanged.
+  ReviewSchedulingContext withFsrsShortTermSettings({
+    required bool allowShortTerm,
+    required bool shortTermWithStepsEnabled,
+  }) =>
+      _copyWith(
+        fsrsAllowShortTerm: allowShortTerm,
+        fsrsShortTermWithStepsEnabled: shortTermWithStepsEnabled,
+      );
+
   ReviewSchedulingContext _copyWith({
     ReviewLoadBalancerIntervalResolver? loadBalancedIntervalResolver,
     FsrsReviewNextStates? fsrsNextStates,
+    bool? fsrsAllowShortTerm,
+    bool? fsrsShortTermWithStepsEnabled,
   }) =>
       ReviewSchedulingContext(
         hardMultiplier: hardMultiplier,
@@ -171,8 +186,9 @@ class ReviewSchedulingContext {
         fsrsDesiredRetention: fsrsDesiredRetention,
         relearningAgainDelaySecs: relearningAgainDelaySecs,
         relearningRemainingSteps: relearningRemainingSteps,
-        fsrsAllowShortTerm: fsrsAllowShortTerm,
-        fsrsShortTermWithStepsEnabled: fsrsShortTermWithStepsEnabled,
+        fsrsAllowShortTerm: fsrsAllowShortTerm ?? this.fsrsAllowShortTerm,
+        fsrsShortTermWithStepsEnabled:
+            fsrsShortTermWithStepsEnabled ?? this.fsrsShortTermWithStepsEnabled,
         relearningStepsEmpty: relearningStepsEmpty,
         learningStepsMinutes: learningStepsMinutes,
         relearningStepsMinutes: relearningStepsMinutes,

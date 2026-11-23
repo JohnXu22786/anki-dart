@@ -226,10 +226,10 @@ portion of Core `LoadBalancer::new()`. Given 99 ordered card-history buckets,
 a caller-provided deck-to-config map, and the stored config map, it groups
 card/note pairs into 99-day preset caches and projects easy-day settings for
 all configs. Cards without a deck mapping are skipped as in Core; presets with
-no mapped cards have no day-cache entry. Database queries, deriving the day
-window and deck-to-config mapping, persisted scheduling changes, scheduler
-call-site integration, answer persistence, Reviewer UI, and full cross-platform
-review integration remain incomplete.
+no mapped cards have no day-cache entry. Deriving the day window and
+deck-to-config mapping, persisted scheduling changes, scheduler call-site
+integration, answer persistence, Reviewer UI, and full cross-platform review
+integration remain incomplete.
 
 ### Unit 91 — load-balancer cache mutation
 
@@ -239,6 +239,17 @@ card ID; a day retains note membership while another card for that note remains.
 These are in-memory cache updates only. Persisted scheduling changes, storage
 queries, scheduler call-site wiring, answer/reviewer UI, and full cross-platform
 review integration remain incomplete.
+
+### Unit 92 — collection-backed load-balancer cache
+
+`CollectionSqliteStorage.buildLoadBalancerCache()` reads the existing 99-day
+due-card history range, loads all stored deck configs, and combines them with
+the caller-supplied collection day and deck-to-config map through
+`LoadBalancerCache.fromHistory()`. It preserves the source query's all-queue
+history and groups each day by preset. Deriving the collection day and mapping
+decks to configs, scheduler call-site integration, persisted scheduling
+changes, answer/reviewer UI, and full cross-platform review integration remain
+incomplete.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -252,13 +263,14 @@ review integration remain incomplete.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: card-history reads and day/date window
-  construction, full timezone input construction, producing the deck-to-config
+- Remaining scheduler work: day/date window and collection-timezone input
+  construction, producing the deck-to-config
   map, preset storage/configuration integration and scheduler call-site
   wiring,
   collection storage, and scheduler orchestration. Collection-backed due-card
-  history input is available in Unit 83; Unit90 groups that preloaded history,
-  and `CollectionSqliteStorage.deckTree()` provides queue-count aggregation.
+  history query and Unit92 cache assembly are available; Unit90 groups the
+  caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides
+  queue-count aggregation.
   Unit89 adds the pure preloaded-context interval decision, but these helpers do
   not complete scheduler integration or full cross-platform review integration.
 - Answer persistence, revlog mutation, undo, and collection transactions.

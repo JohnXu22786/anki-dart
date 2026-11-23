@@ -24,11 +24,13 @@ seven-day easy-day settings, timestamp, selected preset, and optional note and
 seed. `LoadBalancerCache.fromHistory()` groups the already-read, ordered
 99-day card history by a caller-supplied deck-to-config map and projects
 easy-day settings for all stored configs, matching Core's constructor cache
-assembly. Card-history database reads, date-window derivation, producing the
-deck-to-config map, persisted scheduling changes, collection storage,
-scheduler wiring, answer/reviewer UI, and full cross-platform review integration
-remain outside this package. `LoadBalancerCache.addCard()` and `removeCard()`
-update only the in-memory day buckets, matching Core's cache bookkeeping.
+assembly. `CollectionSqliteStorage.buildLoadBalancerCache()` reads the
+caller-selected 99-day history range and stored configs, then delegates to this
+pure model. The collection day and deck-to-config map remain caller inputs;
+weekday/timezone derivation, persisted scheduling changes, scheduler wiring,
+answer/reviewer UI, and full cross-platform review integration remain outside
+this model package. `LoadBalancerCache.addCard()` and `removeCard()` update
+only the in-memory day buckets, matching Core's cache bookkeeping.
 
 Pinned Anki Core source digests and license attribution are recorded in
 `SOURCE.sha256` and `NOTICE.md`.

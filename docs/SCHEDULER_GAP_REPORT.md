@@ -194,6 +194,18 @@ stream match rand_core 0.9.3 and rand_chacha 0.9.0 for nullable unsigned
 orchestration, preset storage/configuration integration, date and weekday
 derivation, and scheduler wiring remain incomplete.
 
+### Unit 88 — load-balancer weekday projection
+
+`anki_backend_models.intervalToWeekday()` ports Core's interval-to-weekday
+projection from the pinned load-balancer source. It applies the interval's
+whole-second offset to the absolute `nextDayAt` timestamp and then projects the
+target timestamp into the machine's local timezone to return a Monday-based
+weekday index. It validates the nonzero u32 interval domain and rejects
+unrepresentable target timestamps. Full timezone/date scheduling context,
+preset storage/configuration integration, load-balancer orchestration, and
+scheduler wiring remain open; this helper does not implement full load
+balancing.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -206,7 +218,7 @@ derivation, and scheduler wiring remain incomplete.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: day/date and weekday derivation,
+- Remaining scheduler work: full day/date and timezone scheduling context,
   deck-to-config resolution, preset storage/configuration integration, and
   scheduler orchestration. Collection-backed due-card history
   input is available in Unit 83; `CollectionSqliteStorage.deckTree()` provides

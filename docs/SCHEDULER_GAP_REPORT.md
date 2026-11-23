@@ -535,6 +535,21 @@ clearly. This closes stored normal-deck Relearn state assembly only; filtered
 deck preview/rescheduling, answer application, cache mutation, transactions,
 app call-site wiring, and Reviewer UI remain open.
 
+### Unit 118 — current New state in rescheduling filtered decks
+
+`CollectionSqliteStorage.currentReschedulingFilteredNewCardState()` reads a
+stored New card assigned to a filtered deck with rescheduling enabled. It
+resolves position from nonzero `originalDue`, otherwise stored `due`, and
+clamps negative positions to zero before creating `NewCardState`. This
+read-only projection returns only the current New state and does not read deck
+config, revlogs, or load-balancer cache/history, or calculate answer outcomes.
+It rejects missing cards/decks, non-New cards, normal decks, and
+non-rescheduling filtered decks. This closes only current unwrapped New-state
+projection for rescheduling filtered cards; answer-state composition, full
+filtered `ReschedulingFilterState` wrapping, other card types, filtered
+rescheduling execution, answer application/persistence, transactions/undo,
+app call-site wiring, and Reviewer UI remain open.
+
 ### Unit 115 — pure filtered-preview current and answer states
 
 `FilteredPreviewState` and `FilteredPreviewSchedulingStates` model Core's
@@ -594,7 +609,8 @@ app call-site wiring, and Reviewer UI remain open.
   103–110; stored normal-deck New answer-state calculation is closed by Unit
   111; Units 113–114 close stored normal-deck Learn and Relearn answer-state
   calculation. Unit117 closes current unwrapped Review-state projection for
-  rescheduling filtered cards only.
+  rescheduling filtered cards only. Unit118 closes only the current unwrapped
+  New-state projection for rescheduling filtered cards.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

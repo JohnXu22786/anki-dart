@@ -139,6 +139,75 @@ INSERT INTO col VALUES (1700000000, '{}');
       );
     });
   });
+
+  group('currentReschedulingFilteredNewCardState', () {
+    test('uses nonzero original due without clamping to today', () async {
+      await _insertNewCard(storage, due: 5, originalDue: 40);
+
+      final state = await storage.currentReschedulingFilteredNewCardState(
+        cardId: Int64(1),
+      );
+
+      expect(state.position, 40);
+    });
+
+    test('falls back to stored due when original due is zero', () async {
+      await _insertNewCard(storage, due: 7, originalDue: 0);
+
+      final state = await storage.currentReschedulingFilteredNewCardState(
+        cardId: Int64(1),
+      );
+
+      expect(state.position, 7);
+    });
+
+    test('clamps negative effective due to zero', () async {
+      await _insertNewCard(storage, due: -7, originalDue: 0);
+
+      final state = await storage.currentReschedulingFilteredNewCardState(
+        cardId: Int64(1),
+      );
+
+      expect(state.position, 0);
+    });
+
+    test('rejects missing card or deck and invalid card/deck kinds', () async {
+      await expectLater(
+        storage.currentReschedulingFilteredNewCardState(cardId: Int64(404)),
+        _stateError('card not found'),
+      );
+
+      await _insertNewCard(storage, due: 7, originalDue: 0);
+      await storage.executeBatch('UPDATE cards SET did = 404 WHERE id = 1');
+      await expectLater(
+        storage.currentReschedulingFilteredNewCardState(cardId: Int64(1)),
+        _stateError('deck not found'),
+      );
+
+      await storage.executeBatch(
+        'UPDATE cards SET did = 7, type = 2 WHERE id = 1',
+      );
+      await expectLater(
+        storage.currentReschedulingFilteredNewCardState(cardId: Int64(1)),
+        _stateError('not a new card'),
+      );
+
+      await storage.executeBatch('UPDATE cards SET type = 0 WHERE id = 1');
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+      await expectLater(
+        storage.currentReschedulingFilteredNewCardState(cardId: Int64(1)),
+        _stateError('filtered deck required'),
+      );
+
+      storage.decks.addOrUpdateDeckWithExistingId(
+        _filteredDeck(reschedule: false),
+      );
+      await expectLater(
+        storage.currentReschedulingFilteredNewCardState(cardId: Int64(1)),
+        _stateError('does not reschedule'),
+      );
+    });
+  });
 }
 
 Deck _filteredDeck({bool reschedule = true}) => Deck(
@@ -162,6 +231,18 @@ INSERT INTO cards (
   id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses,
   left, odue, odid, flags, data
 ) VALUES (1, 2, 7, 0, 1, 0, 2, 2, $due, 30, 2450, 4, 6, 0,
+          $originalDue, 0, 0, '');
+''');
+
+Future<void> _insertNewCard(
+  CollectionSqliteStorage storage, {
+  required int due,
+  required int originalDue,
+}) => storage.executeBatch('''
+INSERT INTO cards (
+  id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses,
+  left, odue, odid, flags, data
+) VALUES (1, 2, 7, 0, 1, 0, 0, 0, $due, 0, 2500, 0, 0, 0,
           $originalDue, 0, 0, '');
 ''');
 

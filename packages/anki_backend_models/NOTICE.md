@@ -163,11 +163,10 @@ config ID; it does not resolve decks to configs or access storage.
 `IntervalLoadCandidate` and `calculateIntervalLoadWeight()` adapt Core's
 per-interval formula from the same source. They take the target interval,
 review count, sibling modifier, and easy-day modifier explicitly, and preserve
-the formula's Float32 arithmetic. Random weighted selection, sibling search,
-card-history reads, configuration lookup, and scheduler integration remain
-outside this port. The source file's hash is
-recorded in `SOURCE.sha256`; Anki Core is Copyright Ankitects Pty Ltd and
-contributors and licensed under AGPL-3.0-or-later.
+the formula's Float32 arithmetic. Sibling search, card-history reads,
+configuration lookup, and scheduler integration remain outside this port. The
+source file's hash is recorded in `SOURCE.sha256`; Anki Core is Copyright
+Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later.
 
 `calculateSiblingDayModifiers()` adapts Core's sibling-day neighborhood
 factors from the same `load_balancer.rs` source. It accepts an inclusive
@@ -178,18 +177,31 @@ searches the 99 day buckets from every supplied deck-config preset for a
 nullable note ID, deduplicates matching day indices, then applies the
 neighborhood factors through `calculateSiblingDayModifiers()`. Each preset
 must contain exactly 99 buckets. These helpers do not derive calendar days,
-read card history, perform load-weighted selection, or integrate the scheduler;
-they do not implement full load balancing. The existing source hash in
-`SOURCE.sha256` also covers these helpers, and root `COPYING` remains unchanged.
+read card history, or integrate the scheduler. Weighted selection is provided
+separately by `selectWeightedInterval()` below. The helpers do not implement
+full load balancing. The existing source hash in `SOURCE.sha256` also covers
+these helpers, and root `COPYING` remains unchanged.
 
 `LoadBalancerDay` ports Core's private per-day card/note collection and
 membership lookup methods from the same source. It accepts explicit signed
 64-bit card and note IDs, tracks note membership while cards are added and
 removed, and keeps its collections private. Cross-day sibling search (added by
-`calculateSiblingModifiers()` above), time and date derivation, random weighted
-selection, and scheduler integration remain outside this helper; it does not
-implement full load balancing. The existing
-`load_balancer.rs` source hash in `SOURCE.sha256` covers this helper as well.
+`calculateSiblingModifiers()` above), time and date derivation, and scheduler
+integration remain outside this helper; it does not implement full load
+balancing. The existing `load_balancer.rs` source hash in `SOURCE.sha256`
+covers this helper as well.
+
+`selectWeightedInterval()` adapts Core's `select_weighted_interval()` from the
+same `rslib/src/scheduler/states/load_balancer.rs` source. It reuses the
+Float32 weight helper above and reproduces `WeightedIndex<f32>` selection with
+rand 0.9.4, rand_chacha 0.9.0, and rand_core 0.9.3, including
+`StdRng::seed_from_u64()`'s PCG32 seed expansion and ChaCha12 stream. StdRng is
+version-sensitive; the Dart behavior is pinned to those versions. The crate
+archives and SHA-256 values are listed in `THIRD_PARTY_SOURCE.sha256`. Rand is
+licensed under MIT or Apache-2.0; applicable license texts are included in
+`LICENSES/`. This helper selects among caller-supplied candidates only; load
+balancer orchestration, preset storage/configuration, date and weekday
+derivation, and scheduler wiring remain outside this package.
 
 
 The platform-neutral browser card-template renderer also follows Anki Core's

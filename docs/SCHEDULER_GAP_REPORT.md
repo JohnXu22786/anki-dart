@@ -419,9 +419,10 @@ Reviewer UI.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: resolved deck-config selection/projection into the
-  collection-backed answer path, FSRS derivation, non-review/filtered-deck state
-  assembly, answer-call-site wiring, persisted scheduling changes,
+- Remaining scheduler work: collection-backed resolved deck-config selection
+  and use of `ReviewSchedulingContext.withDeckConfig()` by the answer path,
+  FSRS derivation, non-review/filtered-deck state assembly, answer-call-site
+  wiring, persisted scheduling changes,
   transactions/undo, and orchestration. Stored normal-deck Review state
   retrieval and answer-state calculation are closed by Units 103–104.
   Collection-backed due-card history and

@@ -542,9 +542,20 @@ current filtered-preview state and its Again/Hard/Good/Easy outcomes using
 explicit caller-supplied unsigned 32-bit delay seconds. The current state is
 unfinished even at a zero-second delay; for answer outcomes, zero seconds
 finishes the preview, and Easy always finishes. This closes the pure Preview
-transition calculation only. Filtered-deck collection lookup, preview-delay
-configuration, search and limits, rescheduling wrappers, normal-state
-assembly, answer application, persistence, transactions/undo, application
+transition calculation.
+
+### Unit 116 — collection-backed filtered-preview states
+
+`CollectionSqliteStorage.filteredPreviewSchedulingStatesForCard()` confirms
+the stored card and its assigned deck, requires a non-rescheduling filtered
+deck, and passes its stored Again/Hard/Good delays to Unit115's pure model.
+Core's current state uses the Again delay while remaining unfinished even when
+that delay is zero. The method returns all four answer outcomes without
+resolving scheduler timing or mutating collection state. Missing cards/decks,
+normal decks, and filtered decks configured to reschedule fail clearly. This
+closes stored non-rescheduling filtered-preview delay assembly only; filtered
+deck search/gathering, rescheduling, normal-state resolution, answer
+application, cache updates, persistence, transactions/undo, application
 call-site wiring, and Reviewer UI remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
@@ -559,9 +570,10 @@ call-site wiring, and Reviewer UI remain open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: Relearning and filtered-deck state
-  assembly, answer-call-site wiring, persisted scheduling changes, transactions/undo,
-  and orchestration. Stored normal-deck Review state retrieval and
+- Remaining scheduler work: filtered-deck rescheduling and normal-state
+  resolution, answer-call-site wiring, persisted scheduling changes,
+  transactions/undo, and orchestration. Stored non-rescheduling filtered
+  Preview-delay assembly is closed by Unit116. Stored normal-deck Review state retrieval and
   collection-backed FSRS Review answer-state calculation are closed by Units
   103–110; stored normal-deck New answer-state calculation is closed by Unit
   111; Units 113–114 close stored normal-deck Learn and Relearn answer-state

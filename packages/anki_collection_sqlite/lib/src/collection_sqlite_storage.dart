@@ -3837,6 +3837,41 @@ WHERE queue IN (-2, -3)
     ).nextStates(context);
   }
 
+  /// Calculates current and Again/Hard/Good/Easy Preview states for a stored
+  /// card assigned to a non-rescheduling filtered deck.
+  ///
+  /// The deck's stored preview delays are passed directly to the pure
+  /// [FilteredPreviewState] transition model. Core treats the current state as
+  /// unfinished even when Again's configured delay is zero. This read-only
+  /// assembly does not resolve scheduler timing, mutate collection state, or
+  /// support filtered decks that reschedule cards.
+  Future<FilteredPreviewSchedulingStates>
+  filteredPreviewSchedulingStatesForCard({required CardId cardId}) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+
+    final deck = _deckStorage.getDeck(card.deckId);
+    if (deck == null) throw StateError('deck not found: ${card.deckId}');
+    final kind = deck.kind;
+    if (kind is! FilteredDeckKind) {
+      throw StateError('filtered deck required: ${card.deckId}');
+    }
+    if (kind.value.reschedule) {
+      throw StateError(
+        'filtered deck rescheduling is not supported: ${deck.id}',
+      );
+    }
+
+    final againDelaySecs = kind.value.previewAgainSecs;
+    return FilteredPreviewState.current(
+      scheduledSecs: againDelaySecs,
+    ).nextStates(
+      againDelaySecs: againDelaySecs,
+      hardDelaySecs: kind.value.previewHardSecs,
+      goodDelaySecs: kind.value.previewGoodSecs,
+    );
+  }
+
   /// Returns the union of note tags in [deckId] and its descendants.
   ///
   /// The host combines these with the collection tag table to preserve

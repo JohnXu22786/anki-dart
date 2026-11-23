@@ -6,6 +6,16 @@ import 'package:anki_backend_protocol/anki/deck_config.pbenum.dart' as deck;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  final previewStates = FilteredPreviewState.current(scheduledSecs: 0)
+      .nextStates(againDelaySecs: 30, hardDelaySecs: 0, goodDelaySecs: 90);
+  if (previewStates.current.finished ||
+      previewStates.again.scheduledSecs != 30 ||
+      previewStates.hard.finished != true ||
+      previewStates.good.finished ||
+      previewStates.easy.finished != true) {
+    throw StateError('filtered preview transitions differ on JavaScript');
+  }
+
   final loadBalancerDay = LoadBalancerDay()
     ..add(CardId.parseInt('9223372036854775807'),
         NoteId.parseInt('9007199254740993'));

@@ -66,6 +66,7 @@ SOURCE_HASHES = {
     "rslib/src/scheduler/states/relearning.rs": "411b1ded66ef2b9927ba85f17416301f5afd66108bd1864ea0d0b4578bc54808",
     "rslib/src/scheduler/states/new.rs": "72fa01fa70e0247c63f91d908698d1db9bc0d063e6b3c7a20b206d308e1af810",
     "rslib/src/scheduler/states/normal.rs": "939d8157473cd445183f7b6f7179c87499667cb1057f47d728a6b4c03806c2c1",
+    "rslib/src/scheduler/states/preview_filter.rs": "ecc8a41bb4ed62be853e58dacc9ab0d296fbce27404ff408e3a7fa3148dde98f",
     "rslib/src/scheduler/answering/current.rs": "1d8a18daf1ff3bf6e4252fbe58c3ff79ced4da8bbf75093b783b0dbd32ddbf4e",
     "rslib/src/scheduler/answering/mod.rs": "7f921fb18f6ea7adecb8c6a2d6cc53abfd9cae1f1dc15104b9704ec874ee5873",
     "rslib/src/scheduler/states/review.rs": "57ed79be2d29e6185ecf7c0444e3f21929ce5b86b1e8d5b60aacf90c9fdb494d",
@@ -111,6 +112,8 @@ def main() -> int:
             if not match:
                 errors.append(f"SOURCE.sha256: invalid entry {line!r}")
                 continue
+            if match.group(2) in actual:
+                errors.append(f"SOURCE.sha256: duplicate entry for {match.group(2)}")
             actual[match.group(2)] = match.group(1)
         if actual != SOURCE_HASHES:
             errors.append("SOURCE.sha256: entries do not match the pinned upstream file hashes")

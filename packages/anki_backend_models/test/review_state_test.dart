@@ -3,6 +3,53 @@ import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('filtered preview scheduling states', () {
+    test('current zero-delay state stays unfinished', () {
+      final current = FilteredPreviewState.current(scheduledSecs: 0);
+
+      expect(current.scheduledSecs, 0);
+      expect(current.finished, isFalse);
+    });
+
+    test('answer delays finish only when zero and Easy always finishes', () {
+      // Core's PreviewState::next_states() delegates Again/Hard/Good delays
+      // to delay_or_return(), while Easy calls it with zero.
+      final states = FilteredPreviewState.current(scheduledSecs: 45).nextStates(
+        againDelaySecs: 0,
+        hardDelaySecs: 120,
+        goodDelaySecs: 0,
+      );
+
+      expect(states.current.scheduledSecs, 45);
+      expect(states.current.finished, isFalse);
+      expect(states.again.scheduledSecs, 0);
+      expect(states.again.finished, isTrue);
+      expect(states.hard.scheduledSecs, 120);
+      expect(states.hard.finished, isFalse);
+      expect(states.good.scheduledSecs, 0);
+      expect(states.good.finished, isTrue);
+      expect(states.easy.scheduledSecs, 0);
+      expect(states.easy.finished, isTrue);
+    });
+
+    test('delays use Core unsigned 32-bit range', () {
+      final states =
+          FilteredPreviewState.current(scheduledSecs: 0x100000001).nextStates(
+        againDelaySecs: 0xffffffff,
+        hardDelaySecs: 0x100000000,
+        goodDelaySecs: -1,
+      );
+
+      expect(states.current.scheduledSecs, 1);
+      expect(states.again.scheduledSecs, 0xffffffff);
+      expect(states.again.finished, isFalse);
+      expect(states.hard.scheduledSecs, 0);
+      expect(states.hard.finished, isTrue);
+      expect(states.good.scheduledSecs, 0xffffffff);
+      expect(states.good.finished, isFalse);
+    });
+  });
+
   test('load-balancer augmentation preserves every scheduler input', () {
     final resolver = (double interval, int minimum, int maximum) => maximum;
     final memory = FsrsMemoryState(stability: 3, difficulty: 5);

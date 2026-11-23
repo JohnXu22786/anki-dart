@@ -39,6 +39,7 @@ EXPECTED = {
     "rslib/src/storage/revlog/get.sql": "2eb279e429df394461840030f14d4ebfafa77e0e5495d02ed31f54fd7c2b2585",
     "rslib/src/storage/revlog/add.sql": "38f0917145b2afd05aa2afe6b188dcc8392a520bcad843665e6369427908f809",
     "rslib/src/storage/revlog/fix_props.sql": "3bb638e6c02e93d0828699472be3e90d86ad654e60a6a89b8a650aae2f2ac602",
+    "rslib/src/storage/revlog/time_of_last_review.sql": "f655a2ed2a14c79c93c7d0544e0eb5a8497161e0872d7edfe349f0524fca80e8",
     "rslib/src/storage/schema11.sql": "e88e234221969efba452a83de8c415b1a7b7cffc93dc8f15e7de410749845d4f",
     "rslib/src/storage/upgrades/schema17_upgrade.sql": "1b19ef470568138987a6790d32d2a2e3b03cd5f6321a54ec3387239fd37da67a",
     "rslib/src/deckconfig/mod.rs": "1b85b99ae9188b5f8d2ccb6a23930bc636f86c1a775a564cd24d1017fcebcfac",
@@ -59,7 +60,7 @@ def main() -> int:
     if source_file.is_file():
         for line in source_file.read_text(encoding="utf-8").splitlines():
             match = re.fullmatch(
-                r"([0-9a-f]{64})  (rslib/src/(?:decks/(?:name|service)\.rs|deckconfig/mod\.rs|(?:storage/sync\.rs|storage/(?:note|deck|deckconfig|tag)/[a-z_-]+\.(?:rs|sql)|storage/revlog/(?:mod\.rs|get\.sql|add\.sql|fix_props\.sql)|storage/schema11\.sql)|storage/upgrades/schema(?:14|15|17)_upgrade\.sql))",
+                r"([0-9a-f]{64})  (rslib/src/(?:decks/(?:name|service)\.rs|deckconfig/mod\.rs|(?:storage/sync\.rs|storage/(?:note|deck|deckconfig|tag)/[a-z_-]+\.(?:rs|sql)|storage/revlog/(?:mod\.rs|get\.sql|add\.sql|fix_props\.sql|time_of_last_review\.sql)|storage/schema11\.sql)|storage/upgrades/schema(?:14|15|17)_upgrade\.sql))",
                 line,
             )
             if match is None:

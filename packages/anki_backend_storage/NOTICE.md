@@ -26,7 +26,7 @@ USN clauses follow `rslib/src/storage/sync.rs`. Schema-17 tags table shape and
 pinned source digests are recorded in `SOURCE.sha256`.
 
 Revlog row reads, inserts, collision allocation, searched-card queries, export
-filtering, sync-USN clearing, and invalid-property repair follow
-`rslib/src/storage/revlog/mod.rs` and its SQL templates. The revlog table shape
-is from `rslib/src/storage/schema11.sql`; all pinned source digests are recorded
-in `SOURCE.sha256`.
+filtering, sync-USN clearing, invalid-property repair, and last-review
+timestamps follow `rslib/src/storage/revlog/mod.rs` and its SQL templates. The
+revlog table shape is from `rslib/src/storage/schema11.sql`; all pinned source
+digests are recorded in `SOURCE.sha256`.

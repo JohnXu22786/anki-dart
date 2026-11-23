@@ -15,9 +15,9 @@ updates, expanded state, and pending-sync USN selection. Tag parsing and
 service-level tree/rename policy, configuration policy, and collection
 transaction policy remain separate. `RevlogStorage` ports revlog row insertion,
 collision allocation, reads and search-result queries, export filtering,
-pending-USN clearing, and invalid-property repair. `CollectionSqliteStorage`
-adapts these row stores to its native or Web-compatible common database
-connection.
+pending-USN clearing, invalid-property repair, and Core-compatible last-review
+timestamps. `CollectionSqliteStorage` adapts these row stores to its native or
+Web-compatible common database connection.
 
 Run `python3 tool/check_package.py` to verify pinned source hashes and package
 license metadata.

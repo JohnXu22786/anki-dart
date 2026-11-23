@@ -99,7 +99,23 @@ class ReviewSchedulingContext {
   final int graduatingIntervalGood;
   final int graduatingIntervalEasy;
 
+  /// Returns this context with a collection-backed interval resolver attached.
+  ///
+  /// All scheduler inputs remain unchanged; the resolver is the only field
+  /// replaced. This lets a host compose collection timing/cache state without
+  /// rebuilding or accidentally dropping caller-supplied scheduling inputs.
+  ReviewSchedulingContext withLoadBalancedIntervalResolver(
+    ReviewLoadBalancerIntervalResolver resolver,
+  ) =>
+      _copyWith(loadBalancedIntervalResolver: resolver);
+
   ReviewSchedulingContext _withFsrsNextStates(FsrsReviewNextStates states) =>
+      _copyWith(fsrsNextStates: states);
+
+  ReviewSchedulingContext _copyWith({
+    ReviewLoadBalancerIntervalResolver? loadBalancedIntervalResolver,
+    FsrsReviewNextStates? fsrsNextStates,
+  }) =>
       ReviewSchedulingContext(
         hardMultiplier: hardMultiplier,
         easyMultiplier: easyMultiplier,
@@ -109,8 +125,9 @@ class ReviewSchedulingContext {
         lapseMultiplier: lapseMultiplier,
         minimumLapseInterval: minimumLapseInterval,
         fuzzFactor: fuzzFactor,
-        loadBalancedIntervalResolver: loadBalancedIntervalResolver,
-        fsrsNextStates: states,
+        loadBalancedIntervalResolver:
+            loadBalancedIntervalResolver ?? this.loadBalancedIntervalResolver,
+        fsrsNextStates: fsrsNextStates ?? this.fsrsNextStates,
         fsrsParams: fsrsParams,
         fsrsDesiredRetention: fsrsDesiredRetention,
         relearningAgainDelaySecs: relearningAgainDelaySecs,

@@ -82,6 +82,10 @@ THIRD_PARTY_HASHES = {
     "htmlescape-0.3.1.crate": "e9025058dae765dee5070ec375f591e2ba14638c63feff74f13805a72e523163",
     "htmlescape-0.3.1/src/entities.rs": "a332c354a31bc57150f24987eb23324d3b87e8a33dda0ca553474d5c955b20d7",
     "fsrs-5.2.0.crate": "cab5f80c16d1d07e492a6828478ecb9f379f142ba6f19fa3b7955edd180ddc2e",
+    "rand-0.9.4.crate": "44c5af06bb1b7d3216d91932aed5265164bf384dc89cd6ba05cf59a35f5f76ea",
+    "rand_chacha-0.9.0.crate": "d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb",
+    "rand_core-0.9.3.crate": "99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38",
+    "ppv-lite86-0.2.21.crate": "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9",
 }
 
 def main() -> int:
@@ -121,11 +125,17 @@ def main() -> int:
                 continue
             third_party_actual[match.group(2)] = match.group(1)
         if third_party_actual != THIRD_PARTY_HASHES:
-            errors.append("THIRD_PARTY_SOURCE.sha256: htmlescape 0.3.1 hashes are incorrect")
+            errors.append("THIRD_PARTY_SOURCE.sha256: third-party crate hashes are incorrect")
     else:
         errors.append("THIRD_PARTY_SOURCE.sha256: third-party source digest manifest is missing")
     if not (ROOT / "LICENSES" / "Apache-2.0.txt").is_file():
         errors.append("LICENSES/Apache-2.0.txt: htmlescape data license text is missing")
+    rand_apache = ROOT / "LICENSES" / "Apache-2.0-Rand.txt"
+    if not rand_apache.is_file() or "END OF TERMS AND CONDITIONS" not in rand_apache.read_text(encoding="utf-8"):
+        errors.append("LICENSES/Apache-2.0-Rand.txt: rand crate Apache-2.0 license text is missing")
+    rand_mit = ROOT / "LICENSES" / "MIT-Rand.txt"
+    if not rand_mit.is_file() or "Copyright 2018 Developers of the Rand project" not in rand_mit.read_text(encoding="utf-8"):
+        errors.append("LICENSES/MIT-Rand.txt: rand crate MIT license text is missing")
     fsrs_license = ROOT / "LICENSES" / "BSD-3-Clause-FSRS.txt"
     if not fsrs_license.is_file() or "Copyright (c) 2023, Open Spaced Repetition" not in fsrs_license.read_text(encoding="utf-8"):
         errors.append("LICENSES/BSD-3-Clause-FSRS.txt: fsrs 5.2.0 BSD-3-Clause license text is missing")

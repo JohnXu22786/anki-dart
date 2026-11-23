@@ -124,19 +124,20 @@ implements the documented queue-count aggregation. Unit 81 adds
 `IntervalLoadCandidate` and `calculateIntervalLoadWeight()`, which compute
 Core's per-interval weight from explicit target interval, review count, sibling
 modifier, and easy-day modifier using float32 arithmetic. Random weighted
-selection, sibling search and modifier derivation, card-history reads, easy-day
-configuration lookup, weekday/timezone derivation, and scheduler integration
-remain outside the shared model unit. Pinned source hashes and AGPL provenance
-are recorded in the package notice and
+selection was outside Unit 81's scope and is now provided by Unit 87.
+Card-history reads, easy-day configuration lookup, weekday/timezone derivation,
+and scheduler integration remain outside the shared model unit. Pinned source
+hashes and AGPL provenance are recorded in the package notice and
 `packages/anki_backend_models/SOURCE.sha256`.
 
 Unit 82 adds `calculateSiblingDayModifiers()`, a pure helper that applies the
 Core five-day sibling neighborhood to explicit sibling day indices over an
 inclusive window in Core's 99-day cache, preserving float32 factors and
 multiplication rounding. It deduplicates indices and processes them in
-ascending order for deterministic output. Sibling discovery, card-history reads, day/date
-derivation, random weighted selection, and scheduler integration remain
-outside; units 80–82 do not implement full load balancing.
+ascending order for deterministic output. Unit 82 did not include weighted
+selection, which Unit 87 now provides. Sibling discovery, card-history reads,
+day/date derivation, and scheduler integration remain outside; units 80–82 do
+not implement full load balancing.
 
 ### Unit 83 — collection-backed load-balancer due-card history
 
@@ -148,9 +149,9 @@ query enforces Core's u32 bounds and caps its span at the 99-day
 `LOAD_BALANCE_DAYS` window; it does not derive the day range or combine history
 with interval weights.
 Parsed easy-day values from the stored config map are available in Unit 84;
-deck-to-config resolution and weekday derivation, sibling discovery and
-modifier inputs, random weighted selection, load-balancer orchestration, and
-scheduler execution remain incomplete.
+weighted selection is now available in Unit 87. Deck-to-config resolution and
+weekday derivation, sibling discovery and modifier inputs, load-balancer
+orchestration, and scheduler execution remain incomplete.
 
 ### Unit 84 — load-balancer preset config projection
 
@@ -158,17 +159,18 @@ scheduler execution remain incomplete.
 ID to its parsed seven-day `EasyDay` values, using the existing Core-compatible
 empty-list default and invalid-length error behavior. It is a pure projection
 over the stored config map: deck-to-config resolution, weekday/date derivation,
-sibling search and modifier derivation, random weighted selection, and
-scheduler orchestration remain incomplete. This helper does not integrate the
-load balancer into the scheduler.
+sibling search and modifier derivation, and scheduler orchestration remain
+incomplete. Unit 87 now supplies weighted selection separately. This helper
+does not integrate the load balancer into the scheduler.
 
 ### Unit 85 — load-balancer day sibling state
 
 `LoadBalancerDay` tracks caller-supplied card/note pairs and the set of notes
 present on one day, porting Core's in-memory add, remove, and sibling-membership
 operations. Removing a card clears its note membership only after the last card
-for that note is removed. Cross-day sibling search, day/time derivation, random
-weighted selection, and scheduler integration remain incomplete.
+for that note is removed. Cross-day sibling search, day/time derivation, and
+scheduler integration remain incomplete; weighted selection is now available
+in Unit 87.
 
 ### Unit 86 — cross-preset sibling-day search
 
@@ -177,9 +179,20 @@ deck-config preset and finds all days containing the nullable selected note.
 It deduplicates day indices across presets, sorts them deterministically, and
 delegates the five-day factors to Unit 82's `calculateSiblingDayModifiers()`.
 Each preset bucket is validated to contain exactly Core's 99 cached days.
-Sibling search across presets is now available as a pure model helper; date and
-weekday derivation, weighted random selection, and scheduler orchestration
-remain incomplete. This does not implement full load balancing.
+Sibling search across presets is now available as a pure model helper. Unit 87
+also supplies weighted random selection; date and weekday derivation and
+scheduler orchestration remain incomplete. This does not implement full load
+balancing.
+
+### Unit 87 — seeded weighted interval selection
+
+`anki_backend_models.selectWeightedInterval()` now selects from ordered
+`IntervalLoadCandidate` values using Core's Float32 weights and the pinned
+rand 0.9.4 `WeightedIndex<f32>` behavior. Its seed expansion and ChaCha12
+stream match rand_core 0.9.3 and rand_chacha 0.9.0 for nullable unsigned
+64-bit seeds on VM and Web. This is a pure shared helper; load-balancer
+orchestration, preset storage/configuration integration, date and weekday
+derivation, and scheduler wiring remain incomplete.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -193,12 +206,13 @@ remain incomplete. This does not implement full load balancing.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: random weighted interval selection, day/date and
-  weekday derivation, deck-to-config resolution, and scheduler orchestration.
-  Collection-backed due-card history
+- Remaining scheduler work: day/date and weekday derivation,
+  deck-to-config resolution, preset storage/configuration integration, and
+  scheduler orchestration. Collection-backed due-card history
   input is available in Unit 83; `CollectionSqliteStorage.deckTree()` provides
-  queue-count aggregation. The query and pure interval-weight/easy-day helpers
-  do not complete full load balancing.
+  queue-count aggregation. The query and pure easy-day, interval-weight,
+  sibling, and seeded weighted-selection helpers do not complete full load
+  balancing.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

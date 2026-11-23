@@ -14,9 +14,13 @@ inclusive interval window within Core's 99-day load-balancer cache.
 `calculateSiblingModifiers()` searches all caller-supplied preset buckets for
 the selected note, deduplicates sibling days, and applies those factors.
 `LoadBalancerDay` tracks caller-supplied card/note pairs and note membership
-for one day. Card-history reads, day/date derivation, deck-to-config resolution,
-random weighted selection, and scheduler integration remain outside this
-package; these helpers do not implement full load balancing.
+for one day. `selectWeightedInterval()` provides Core's seeded weighted
+selection over caller-ordered candidates, matching the pinned rand 0.9.4,
+rand_chacha 0.9.0, and rand_core 0.9.3 behavior. Card-history reads,
+load-balancer orchestration, day/date and weekday derivation, deck-to-config
+resolution, preset storage/configuration integration, and scheduler wiring
+remain outside this package; these helpers do not implement full load
+balancing.
 
 Pinned Anki Core source digests and license attribution are recorded in
 `SOURCE.sha256` and `NOTICE.md`.

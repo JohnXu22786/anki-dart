@@ -36,6 +36,16 @@ void main() {
   if ((intervalWeight - 0.000031420597224496305).abs() > 1e-12) {
     throw StateError('interval load weight differs on JavaScript');
   }
+  final weightedInterval = selectWeightedInterval(
+    const [
+      IntervalLoadCandidate(targetInterval: 10, reviewCount: 0),
+      IntervalLoadCandidate(targetInterval: 20, reviewCount: 0),
+    ],
+    BigInt.parse('8000000000000000', radix: 16),
+  );
+  if (weightedInterval != 20) {
+    throw StateError('seeded weighted selection differs on JavaScript');
+  }
   final card = Card(id: Int64(1));
   final note = Note(id: Int64(2));
   if (card.id.toInt() + note.id.toInt() != 3) {

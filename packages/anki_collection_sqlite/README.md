@@ -105,7 +105,8 @@ Core-resolved preset, nullable note, nullable fuzz seed, and optional clock.
 It preserves those inputs and attaches a resolver from one timing/cache
 snapshot. Card and preset selection, answer-state transitions, transaction
 persistence/undo, scheduler call-site wiring, and Reviewer UI remain outside
-this adapter. The post-success in-memory cache-add helper is available on
+this context-assembly method. The post-success in-memory cache-add helper is
+available on
 `CollectionLoadBalancerContext` once the host has the resulting card and
 resolved home config.
 
@@ -125,6 +126,19 @@ in-memory cache. It adds only review-queue cards with a present home config ID;
 unknown presets and uncached intervals remain no-ops. The host still owns the
 application answer call site, interval application, persistence/undo, and
 Reviewer UI.
+
+`reviewCardSchedulingStatesWithCardLoadBalancerForNow()` accepts a supplied
+`ReviewCardState`, base `ReviewSchedulingContext`, card ID, load-balancer flag,
+nullable fuzz seed, and optional clock. The supplied review state and base
+scheduling settings must come from the same host snapshot. When enabled, the
+method composes the card-specific context above once; when disabled, it uses
+the base context without collection reads. It returns
+`ReviewCardState.nextStates()` unchanged and does not derive current review
+state or FSRS inputs. `nextStates()` may calculate FSRS answer outcomes from
+the supplied context. The method does not persist cards or revlogs or mutate
+the cache. Fetching current state, applying an answer, cache-update call-site
+wiring, transactions/undo, and Reviewer UI remain outside this read-only entry
+point.
 
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and

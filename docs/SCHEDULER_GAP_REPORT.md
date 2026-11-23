@@ -342,6 +342,22 @@ answer call site, transaction ordering and persistence, error/rollback
 coordination, removal semantics where separately needed, undo, and Reviewer UI
 remain open.
 
+### Unit 101 — collection composition of review answer states
+
+`CollectionSqliteStorage.reviewCardSchedulingStatesWithCardLoadBalancerForNow()`
+accepts a caller-resolved `ReviewCardState`, base `ReviewSchedulingContext`,
+card ID, load-balancer enablement, nullable fuzz seed, and optional clock. The
+review state and base scheduler settings must come from the same host snapshot.
+When enabled, it composes Unit 99's card-specific context once; when disabled,
+it calls `nextStates()` with the base context without collection reads. It
+returns `ReviewCardState.nextStates()` unchanged and does not derive current
+review state or FSRS inputs. `nextStates()` may calculate FSRS answer outcomes
+from the supplied context. The method does not persist cards or revlogs or
+mutate the cache. This closes read-only answer-state calculation composition
+for a supplied review state only. Core card-state derivation, fetching current
+states, actual answer command application, cache-update call-site wiring,
+persistence, transactions/undo, and Reviewer UI remain open.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,

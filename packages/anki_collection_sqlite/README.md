@@ -139,6 +139,16 @@ preview/rescheduling state, learning/relearning state, FSRS derivation,
 whole `get_scheduling_states()` composition, answer application and
 persistence/cache/undo, and Reviewer UI remain outside this method.
 
+`filteredPreviewSchedulingStatesForCard()` reads the stored card's assigned
+deck, requires a non-rescheduling filtered deck, and assembles the current
+Preview state plus all four answer outcomes from that deck's stored Again,
+Hard, and Good delays. The current state remains unfinished at zero seconds;
+zero-delay answers and Easy finish the preview. This is a read-only projection:
+it does not resolve scheduler timing, apply answers, or persist card state.
+Filtered-deck search/gathering, rescheduling, normal-state resolution, answer
+application, cache updates, transactions/undo, app call-site wiring, and
+Reviewer UI remain separate work.
+
 `reviewCardSchedulingStatesForCardForNow()` reads a stored normal-deck Review
 card and calculates its four answer-button states from a caller-supplied base
 `ReviewSchedulingContext`, load-balancer flag, nullable fuzz seed, and optional

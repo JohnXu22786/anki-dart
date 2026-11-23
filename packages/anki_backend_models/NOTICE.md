@@ -173,18 +173,22 @@ contributors and licensed under AGPL-3.0-or-later.
 factors from the same `load_balancer.rs` source. It accepts an inclusive
 interval window and caller-supplied sibling day indices in the 99-day cache.
 It deduplicates and processes indices in ascending order, and preserves Core's
-Float32 factor and multiplication rounding. Sibling discovery across presets, day/date derivation,
-card-history reads, load-weighted selection, and scheduler integration remain
-outside this helper; this is not full load balancing. The existing source hash
-in `SOURCE.sha256` also covers this helper's source, and root `COPYING` remains
-unchanged.
+Float32 factor and multiplication rounding. `calculateSiblingModifiers()`
+searches the 99 day buckets from every supplied deck-config preset for a
+nullable note ID, deduplicates matching day indices, then applies the
+neighborhood factors through `calculateSiblingDayModifiers()`. Each preset
+must contain exactly 99 buckets. These helpers do not derive calendar days,
+read card history, perform load-weighted selection, or integrate the scheduler;
+they do not implement full load balancing. The existing source hash in
+`SOURCE.sha256` also covers these helpers, and root `COPYING` remains unchanged.
 
 `LoadBalancerDay` ports Core's private per-day card/note collection and
 membership lookup methods from the same source. It accepts explicit signed
 64-bit card and note IDs, tracks note membership while cards are added and
-removed, and keeps its collections private. Cross-day sibling search, time and
-date derivation, random weighted selection, and scheduler integration remain
-outside this helper; it does not implement full load balancing. The existing
+removed, and keeps its collections private. Cross-day sibling search (added by
+`calculateSiblingModifiers()` above), time and date derivation, random weighted
+selection, and scheduler integration remain outside this helper; it does not
+implement full load balancing. The existing
 `load_balancer.rs` source hash in `SOURCE.sha256` covers this helper as well.
 
 

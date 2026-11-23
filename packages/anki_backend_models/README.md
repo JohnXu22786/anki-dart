@@ -10,11 +10,13 @@ parsed seven-day values without resolving decks to configurations.
 the per-interval weight formula, including its float32 arithmetic and explicit
 sibling and easy-day modifier inputs. `calculateSiblingDayModifiers()` applies
 Core's five-day neighborhood factors to explicit sibling day indices in an
-inclusive interval window within Core's 99-day load-balancer cache. Random
-weighted selection, cross-day sibling search, card-history reads, day/date
-derivation, deck-to-config resolution, and scheduler integration remain outside
-this package. `LoadBalancerDay` tracks caller-supplied card/note pairs and note
-membership for one day; these helpers do not implement full load balancing.
+inclusive interval window within Core's 99-day load-balancer cache.
+`calculateSiblingModifiers()` searches all caller-supplied preset buckets for
+the selected note, deduplicates sibling days, and applies those factors.
+`LoadBalancerDay` tracks caller-supplied card/note pairs and note membership
+for one day. Card-history reads, day/date derivation, deck-to-config resolution,
+random weighted selection, and scheduler integration remain outside this
+package; these helpers do not implement full load balancing.
 
 Pinned Anki Core source digests and license attribution are recorded in
 `SOURCE.sha256` and `NOTICE.md`.

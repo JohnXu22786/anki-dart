@@ -18,7 +18,10 @@ void main() {
     );
     await storage.executeBatch('''
 CREATE TABLE cards (
-  id INTEGER PRIMARY KEY, nid INTEGER, due INTEGER, did INTEGER, queue INTEGER
+  id INTEGER PRIMARY KEY, nid INTEGER, did INTEGER, ord INTEGER, mod INTEGER,
+  usn INTEGER, type INTEGER, queue INTEGER, due INTEGER, ivl INTEGER,
+  factor INTEGER, reps INTEGER, lapses INTEGER, left INTEGER, odue INTEGER,
+  odid INTEGER, flags INTEGER, data TEXT
 );
 CREATE TABLE deck_config (
   id INTEGER PRIMARY KEY NOT NULL,
@@ -492,6 +495,247 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
   );
 
   test(
+    'disabled load balancing returns base without looking up the card',
+    () async {
+      const base = ReviewSchedulingContext(hardMultiplier: 1.4);
+
+      final result = await storage
+          .reviewSchedulingContextWithCardLoadBalancerForNow(
+            baseContext: base,
+            cardId: Int64(999),
+            loadBalancerEnabled: false,
+            fuzzSeed: null,
+          );
+
+      expect(result, same(base));
+    },
+  );
+
+  test(
+    'normal home deck supplies note only when bury reviews is enabled',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      final preset = Int64(10);
+      final noteId = Int64(100);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A', buryReviews: true),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+      await _insertReviewContextCard(
+        storage,
+        cardId: 1,
+        noteId: noteId,
+        deckId: 7,
+      );
+      await _insertReviewContextCard(
+        storage,
+        cardId: 2,
+        noteId: noteId,
+        deckId: 7,
+        due: 14,
+      );
+      await _insertReviewContextCard(
+        storage,
+        cardId: 3,
+        noteId: Int64(200),
+        deckId: 7,
+        due: 15,
+      );
+
+      final buried = await storage
+          .reviewSchedulingContextWithCardLoadBalancerForNow(
+            baseContext: const ReviewSchedulingContext(intervalMultiplier: 1.2),
+            cardId: Int64(1),
+            loadBalancerEnabled: true,
+            fuzzSeed: BigInt.from(42),
+            now: now,
+          );
+      final context = await storage.loadBalancerContextForNow(now: now);
+      expect(
+        buried.loadBalancedIntervalResolver!(5, 1, 20),
+        findLoadBalancedInterval(
+          daysByPreset: context.cache.daysByPreset,
+          easyDaysByPreset: context.cache.easyDaysByPreset,
+          nextDayAt: context.nextDayAt,
+          deckConfigId: preset,
+          noteId: noteId,
+          interval: 5,
+          minimum: 1,
+          maximum: 20,
+          fuzzSeed: BigInt.from(42),
+        ),
+      );
+
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A', buryReviews: false),
+      );
+      final notBuried = await storage
+          .reviewSchedulingContextWithCardLoadBalancerForNow(
+            baseContext: const ReviewSchedulingContext(intervalMultiplier: 1.2),
+            cardId: Int64(1),
+            loadBalancerEnabled: true,
+            fuzzSeed: BigInt.from(42),
+            now: now,
+          );
+      final updatedContext = await storage.loadBalancerContextForNow(now: now);
+      expect(
+        notBuried.loadBalancedIntervalResolver!(5, 1, 20),
+        findLoadBalancedInterval(
+          daysByPreset: updatedContext.cache.daysByPreset,
+          easyDaysByPreset: updatedContext.cache.easyDaysByPreset,
+          nextDayAt: updatedContext.nextDayAt,
+          deckConfigId: preset,
+          noteId: null,
+          interval: 5,
+          minimum: 1,
+          maximum: 20,
+          fuzzSeed: BigInt.from(42),
+        ),
+      );
+      expect(notBuried.intervalMultiplier, 1.2);
+    },
+  );
+
+  test('filtered card uses original home deck config', () async {
+    const creationSecs = 1_700_000_000;
+    final now = DateTime.fromMillisecondsSinceEpoch(
+      (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+      isUtc: true,
+    );
+    await _prepareTimingCollection(storage, creationSecs);
+    final preset = Int64(10);
+    final noteId = Int64(100);
+    storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+      _config(preset, 'Home', buryReviews: true),
+    );
+    storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+    storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck(8));
+    await _insertReviewContextCard(
+      storage,
+      cardId: 1,
+      noteId: noteId,
+      deckId: 8,
+      originalDeckId: 7,
+    );
+    await _insertReviewContextCard(
+      storage,
+      cardId: 2,
+      noteId: noteId,
+      deckId: 7,
+      due: 14,
+    );
+
+    final assembled = await storage
+        .reviewSchedulingContextWithCardLoadBalancerForNow(
+          baseContext: const ReviewSchedulingContext(),
+          cardId: Int64(1),
+          loadBalancerEnabled: true,
+          fuzzSeed: BigInt.from(24),
+          now: now,
+        );
+    final context = await storage.loadBalancerContextForNow(now: now);
+    expect(
+      assembled.loadBalancedIntervalResolver!(5, 1, 20),
+      findLoadBalancedInterval(
+        daysByPreset: context.cache.daysByPreset,
+        easyDaysByPreset: context.cache.easyDaysByPreset,
+        nextDayAt: context.nextDayAt,
+        deckConfigId: preset,
+        noteId: noteId,
+        interval: 5,
+        minimum: 1,
+        maximum: 20,
+        fuzzSeed: BigInt.from(24),
+      ),
+    );
+  });
+
+  test(
+    'filtered card without original deck leaves base context unchanged',
+    () async {
+      final preset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck(8));
+      await _insertReviewContextCard(
+        storage,
+        cardId: 1,
+        noteId: Int64(100),
+        deckId: 8,
+      );
+      const base = ReviewSchedulingContext(fuzzFactor: 0.25);
+
+      final result = await storage
+          .reviewSchedulingContextWithCardLoadBalancerForNow(
+            baseContext: base,
+            cardId: Int64(1),
+            loadBalancerEnabled: true,
+            fuzzSeed: BigInt.from(24),
+          );
+
+      expect(result, same(base));
+    },
+  );
+
+  test(
+    'missing config row keeps home config ID and supplies no sibling note',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      final missingPreset = Int64(99);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        _normalDeck(7, missingPreset),
+      );
+      await _insertReviewContextCard(
+        storage,
+        cardId: 1,
+        noteId: Int64(100),
+        deckId: 7,
+      );
+
+      final result = await storage
+          .reviewSchedulingContextWithCardLoadBalancerForNow(
+            baseContext: const ReviewSchedulingContext(),
+            cardId: Int64(1),
+            loadBalancerEnabled: true,
+            fuzzSeed: BigInt.from(24),
+            now: now,
+          );
+
+      expect(result.loadBalancedIntervalResolver, isNotNull);
+      expect(result.loadBalancedIntervalResolver!(5, 1, 20), isNull);
+    },
+  );
+
+  test('missing card throws not-found before context assembly', () async {
+    await expectLater(
+      storage.reviewSchedulingContextWithCardLoadBalancerForNow(
+        baseContext: const ReviewSchedulingContext(),
+        cardId: Int64(999),
+        loadBalancerEnabled: true,
+        fuzzSeed: null,
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          'card not found: 999',
+        ),
+      ),
+    );
+  });
+
+  test(
     'context resolver returns the pure helper nullable results unchanged',
     () async {
       const creationSecs = 1_700_000_000;
@@ -662,8 +906,29 @@ INSERT INTO col VALUES ($creationSecs, '{}');
 ''');
 }
 
-DeckConfig _config(Int64 id, String name) =>
-    DeckConfig(id: id, name: name, inner: DeckConfig.defaults().inner);
+DeckConfig _config(Int64 id, String name, {bool buryReviews = false}) {
+  final inner = DeckConfig.defaults().inner..buryReviews = buryReviews;
+  return DeckConfig(id: id, name: name, inner: inner);
+}
+
+Future<void> _insertReviewContextCard(
+  CollectionSqliteStorage storage, {
+  required int cardId,
+  required Int64 noteId,
+  required int deckId,
+  int due = 13,
+  int originalDeckId = 0,
+}) async {
+  await storage.executeBatch('''
+INSERT INTO cards (
+  id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses,
+  left, odue, odid, flags, data
+) VALUES (
+  $cardId, $noteId, $deckId, 0, 0, 0, 2, 2, $due, 5, 2500, 1, 0,
+  0, 0, $originalDeckId, 0, ''
+);
+''');
+}
 
 Deck _normalDeck(int id, Int64 configId) => Deck(
   id: Int64(id),

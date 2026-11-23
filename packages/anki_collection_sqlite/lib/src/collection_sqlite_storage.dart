@@ -4117,6 +4117,52 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Assembles a review context using the stored card's home-deck config.
+  ///
+  /// When [loadBalancerEnabled] is false, [baseContext] is returned without
+  /// reading card, deck, config, timing, or cache state. When enabled, the
+  /// card's [Card.originalDeckId] is preferred when nonzero, matching Core's
+  /// home-deck resolution for filtered cards. A filtered home deck has no
+  /// config ID and leaves the base context unchanged. A missing config row
+  /// keeps the deck's config ID and uses a null note ID, matching Core's
+  /// default `bury_reviews == false` behavior.
+  ///
+  /// The resolver uses the supplied [fuzzSeed] unchanged and captures one
+  /// timing/cache snapshot for [now]. This method does not write card or
+  /// scheduling state.
+  Future<ReviewSchedulingContext>
+  reviewSchedulingContextWithCardLoadBalancerForNow({
+    required ReviewSchedulingContext baseContext,
+    required CardId cardId,
+    required bool loadBalancerEnabled,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+  }) async {
+    if (!loadBalancerEnabled) return baseContext;
+
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+
+    final homeDeckId = card.originalDeckId == Int64.ZERO
+        ? card.deckId
+        : card.originalDeckId;
+    final homeDeck = _deckStorage.getDeck(homeDeckId);
+    if (homeDeck == null) throw StateError('deck not found: $homeDeckId');
+    final deckConfigId = homeDeck.configId;
+    if (deckConfigId == null) return baseContext;
+
+    final config = _deckConfigStorage.getDeckConfig(deckConfigId);
+    final noteId = config?.inner.buryReviews == true ? card.noteId : null;
+    final loadBalancerContext = await loadBalancerContextForNow(now: now);
+    return baseContext.withLoadBalancedIntervalResolver(
+      loadBalancerContext.reviewIntervalResolver(
+        deckConfigId: deckConfigId,
+        noteId: noteId,
+        fuzzSeed: fuzzSeed,
+      ),
+    );
+  }
+
   /// Selects an interval using the collection cache and timing for [now].
   ///
   /// This reads the current collection context once and delegates the pure

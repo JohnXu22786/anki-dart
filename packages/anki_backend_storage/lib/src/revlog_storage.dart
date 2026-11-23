@@ -53,6 +53,16 @@ class RevlogStorage {
   List<RevlogEntry> getRevlogEntriesForCard(Int64 cardId) =>
       _query('WHERE cid = ?', [cardId]);
 
+  /// Returns the Core-compatible timestamp of the card's latest review.
+  /// Cramming rows with no ease factor are excluded, and the ID's
+  /// millisecond timestamp is truncated to whole seconds as in Core.
+  TimestampSecs? timeOfLastReview(Int64 cardId) {
+    final rows = db.select(_timeOfLastReviewSql, [cardId]);
+    return rows.isEmpty
+        ? null
+        : _int64(rows.single['timestamp_secs'], 'timestamp_secs');
+  }
+
   /// Returns entries for searched cards on/after [after] in seconds.
   List<RevlogEntry> getRevlogEntriesForSearchedCardsAfterStamp(
     TimestampSecs after,
@@ -190,6 +200,15 @@ SELECT id,
   time,
   type
 FROM revlog''';
+
+  static const _timeOfLastReviewSql = '''
+SELECT id / 1000 AS timestamp_secs
+FROM revlog
+WHERE cid = ?
+  AND ease BETWEEN 1 AND 4
+  AND (type != 3 OR factor != 0)
+ORDER BY id DESC
+LIMIT 1''';
 
   static const _addSql = '''
 INSERT OR IGNORE INTO revlog (

@@ -90,6 +90,62 @@ CREATE TABLE revlog (
         [Int64(3000), Int64(5000), Int64(1000)]);
   });
 
+  test('last review time follows Core review and cramming filters', () {
+    // Older qualifying rows establish that the query chooses the latest one.
+    _insert(sqlite, _entry(id: 1000, cardId: 10, ease: 1));
+    _insert(sqlite, _entry(id: 2000, cardId: 10, ease: 4));
+    _insert(sqlite, _entry(id: 3000, cardId: 10, ease: 0));
+    _insert(sqlite, _entry(id: 4000, cardId: 10, ease: 5));
+    _insert(
+      sqlite,
+      _entry(
+        id: 5000,
+        cardId: 10,
+        ease: 3,
+        factor: 0,
+        kind: RevlogReviewKind.filtered,
+      ),
+    );
+    _insert(
+      sqlite,
+      _entry(
+        id: 6000,
+        cardId: 10,
+        ease: 3,
+        factor: 1,
+        kind: RevlogReviewKind.filtered,
+      ),
+    );
+    _insert(sqlite, _entry(id: 7000, cardId: 11));
+
+    expect(storage.timeOfLastReview(Int64(10)), TimestampSecs(6));
+    expect(storage.timeOfLastReview(Int64(11)), TimestampSecs(7));
+  });
+
+  test('last review time is null when there is no qualifying review', () {
+    _insert(sqlite, _entry(id: 1000, cardId: 10, ease: 0));
+    _insert(
+      sqlite,
+      _entry(
+        id: 2000,
+        cardId: 10,
+        ease: 2,
+        factor: 0,
+        kind: RevlogReviewKind.filtered,
+      ),
+    );
+
+    expect(storage.timeOfLastReview(Int64(10)), isNull);
+    expect(storage.timeOfLastReview(Int64(99)), isNull);
+  });
+
+  test('last review time retains integer precision for large revlog IDs', () {
+    final id = Int64.parseInt('9007199254740993');
+    _insert(sqlite, _entry(id: id, cardId: 10));
+
+    expect(storage.timeOfLastReview(Int64(10)), TimestampSecs(9007199254740));
+  });
+
   test(
       'row decoding keeps wide IDs and applies Core nullable and width defaults',
       () {

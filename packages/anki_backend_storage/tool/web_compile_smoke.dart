@@ -78,6 +78,10 @@ void main() {
   if (revlogDb.queryParameters.single != Int64.parseInt('9007199254740000')) {
     throw StateError('revlog cutoff lost 64-bit precision on the web target');
   }
+  if (revlog.timeOfLastReview(cardId) != Int64.parseInt('9007199254740') ||
+      revlogDb.queryParameters.single != cardId) {
+    throw StateError('last review timestamp lost 64-bit precision on the web');
+  }
 
   final tagDb = _TagDatabase();
   final tagStorage = TagStorage(tagDb);
@@ -194,6 +198,11 @@ final class _RevlogDatabase implements RevlogStorageDatabase {
   List<Map<String, Object?>> select(String sql,
       [List<Object?> parameters = const []]) {
     queryParameters = parameters;
+    if (sql.contains('SELECT id / 1000 AS timestamp_secs')) {
+      return [
+        {'timestamp_secs': BigInt.parse('9007199254740')},
+      ];
+    }
     return const [];
   }
 

@@ -16,6 +16,11 @@ void main() {
   if (loadBalancerDay.hasSibling(NoteId.parseInt('9007199254740993'))) {
     throw StateError('load-balancer day removal differs on JavaScript');
   }
+  if (intervalToWeekday(1, TimestampSecs(0)) !=
+      DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal().weekday -
+          1) {
+    throw StateError('interval weekday projection differs on JavaScript');
+  }
 
   final easyDays = parseEasyDaysPercentages(
     const [1.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0],

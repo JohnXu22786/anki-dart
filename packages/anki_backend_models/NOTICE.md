@@ -203,6 +203,16 @@ licensed under MIT or Apache-2.0; applicable license texts are included in
 balancer orchestration, preset storage/configuration, date and weekday
 derivation, and scheduler wiring remain outside this package.
 
+`intervalToWeekday()` adapts Core's `interval_to_weekday()` from the same
+`rslib/src/scheduler/states/load_balancer.rs` source. It applies the
+`(interval - 1) * 86,400` second offset to the absolute Unix timestamp before
+projecting it to the machine's local timezone and returning a Monday-based
+weekday index. It accepts the scheduler's absolute `nextDayAt` timestamp and
+validates Core's nonzero u32 interval domain. Full timezone/date scheduling
+context, preset storage/configuration, load-balancer orchestration, and
+scheduler wiring remain outside this helper. The pinned source hash above also
+covers this adaptation; root `COPYING` is unchanged.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

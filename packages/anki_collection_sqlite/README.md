@@ -107,6 +107,19 @@ snapshot. Card and preset selection, answer-state transitions, cache mutation
 during an answer, transaction persistence/undo, scheduler call-site wiring,
 and Reviewer UI remain outside this adapter.
 
+`reviewSchedulingContextWithCardLoadBalancerForNow()` accepts a stored card ID,
+base scheduler context, load-balancer enablement, nullable answer fuzz seed,
+and optional clock. When disabled it returns the base context without reading
+the card or collection timing/cache. When enabled it uses the card's original
+deck ID when present, otherwise its current deck ID, then selects the stored
+deck config. Filtered home decks leave the context unchanged. The config's
+`buryReviews` flag controls whether the card note ID is passed to the resolver;
+a missing config row retains its config ID and behaves as bury disabled. The
+method composes this selection with one timing/cache snapshot and does not
+write scheduling state. The host still owns the application answer call site,
+interval application, answer-time cache updates, persistence/undo, and Reviewer
+UI.
+
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and
 `getAllNoteIds`. Missing single rows return `null`; collection queries return

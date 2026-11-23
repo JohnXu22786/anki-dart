@@ -312,6 +312,24 @@ That callback reuses its snapshot for all answer intervals. Collection-backed
 the application `get_scheduling_states` call site, answer persistence,
 answer-time cache updates, transactions/undo, and Reviewer UI remain open.
 
+### Unit 99 — collection card and home-deck review context selection
+
+`CollectionSqliteStorage.reviewSchedulingContextWithCardLoadBalancerForNow()`
+accepts a card ID, base `ReviewSchedulingContext`, load-balancer enablement,
+nullable answer fuzz seed, and optional clock. Disabled load balancing returns
+the base context before any card, deck, config, timing, or cache lookup. When
+enabled, it reads the card, selects `originalDeckId` when nonzero or `deckId`
+otherwise, and uses that home deck's config ID. A filtered home deck has no
+config ID and leaves the base context unchanged. For a normal deck, the note ID
+is supplied only when the stored config has `buryReviews` enabled; a missing
+config row retains its config ID and behaves as bury disabled. The method then
+attaches Unit 98's resolver from one timing/cache snapshot with the caller's
+fuzz seed and preserves all base scheduling inputs. Missing cards fail as a
+not-found state error. This closes storage-backed card/home-deck/config/bury
+selection only. The app `get_scheduling_states`/answer call site, per-answer
+interval application, answer-time cache mutation, card/revlog persistence,
+transactions/undo, and Reviewer UI remain open.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,

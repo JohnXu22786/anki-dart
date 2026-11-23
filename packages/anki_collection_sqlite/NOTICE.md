@@ -260,3 +260,13 @@ filtered decks. Cards whose deck has no mapping are skipped during history
 grouping. This adapter does not derive scheduler timing or execute a scheduler.
 Both deck-model and load-balancer source hashes are recorded in `SOURCE.sha256`
 and validated by `tool/check_package.py`.
+
+`CollectionSqliteStorage.reviewSchedulingContextWithCardLoadBalancerForNow()`
+adapts the card/home-deck/config selection in Core's
+`Collection::get_scheduling_states()` from
+`rslib/src/scheduler/answering/mod.rs`. It resolves the card's original deck
+when present, uses the home deck's config ID, and selects the note for sibling
+balancing only when that config enables `bury_reviews`. The missing-config
+fallback follows Core's false default. The exact source file is pinned at
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`; its SHA-256 is recorded in
+`SOURCE.sha256` and validated by `tool/check_package.py`.

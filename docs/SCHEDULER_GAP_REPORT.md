@@ -403,13 +403,14 @@ other non-config context fields. It does not select or read a deck config,
 normalize stored protobuf values, derive FSRS inputs, or assemble non-review
 states.
 
-Units 103–108 close stored ordinary Review card retrieval, all four read-only
-answer-state calculations with collection-backed config selection, and missing
-FSRS memory-state derivation for a stored normal-deck Review card. Remaining
-scheduler gaps include full FSRS answer outcomes, new/learning/relearning card
-state assembly, filtered-deck preview/rescheduling, answer application, cache
-updates, card/revlog persistence, transactions/undo, application call-site
-wiring, and Reviewer UI.
+Units 103–109 close stored ordinary Review card retrieval, all four read-only
+answer-state calculations with collection-backed config selection, missing
+FSRS memory-state derivation, and FSRS answer outcomes for stored normal-deck
+Review cards. Remaining scheduler gaps include feature-flag settings,
+short-term option derivation, new/learning/relearning card state assembly,
+filtered-deck preview/rescheduling, answer application, cache updates,
+card/revlog persistence, transactions/undo, application call-site wiring, and
+Reviewer UI.
 
 ### Unit 106 — collection config in stored Review answer states
 
@@ -440,9 +441,26 @@ parameters and answer outputs remain unchanged; FSRS answer intervals and
 complete answer-state parity are not part of this unit.
 
 This closes collection-backed memory-state derivation for stored normal-deck
-Review cards. FSRS answer outcomes derived from that state, non-review/filtered
-state assembly, answer application, cache updates, persistence, transactions,
-and Reviewer UI remain open.
+Review cards. FSRS answer outcomes derived from that state and
+non-review/filtered state assembly remain open.
+
+### Unit 109 — derive FSRS answer outcomes for stored Review cards
+
+When collection FSRS is enabled, `reviewCardSchedulingStatesForCardForNow()`
+uses the resolved deck config's FSRS parameters and the assigned deck's
+effective desired retention to calculate all four Core-style FSRS outcomes.
+It reuses the current or history-derived memory state and derives elapsed days
+from the same timing snapshot's `nextDayAt` and the stored last-review time,
+falling back to `RevlogStorage.timeOfLastReview()` and then zero when no time is
+available. It attaches those values as precomputed outputs on a copied
+`ReviewSchedulingContext`, preserving the caller's other scheduler inputs and
+preventing due-based elapsed days from replacing the explicit FSRS interval.
+
+This closes collection-backed FSRS answer interval and memory-state derivation
+for stored normal-deck Review cards. Feature-flag settings, short-term option
+derivation, non-review/filtered-deck states, answer application and persistence,
+cache mutation, transactions/undo, app call-site wiring, and Reviewer UI remain
+open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -450,17 +468,16 @@ and Reviewer UI remain open.
   graduation intervals, deterministic fuzz, and FSRS next states are supplied
   explicitly. Source hashes and AGPL attribution are in the package notice and
   `SOURCE.sha256`.
-- FSRS parameter training and next-state calculation.
+- FSRS parameter training.
 - FSRS memory-state derivation has a pure per-card model in
   `anki_backend_models.computeFsrsMemoryState()`. It takes ordered revlogs,
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: full FSRS answer outcomes, non-review/filtered-deck state
-  assembly, answer-call-site wiring, persisted scheduling changes,
-  transactions/undo, and orchestration. Stored normal-deck Review state
-  retrieval and answer-state calculation with collection-backed config
-  selection are closed by Units 103–106.
+- Remaining scheduler work: non-review/filtered-deck state assembly,
+  answer-call-site wiring, persisted scheduling changes, transactions/undo,
+  and orchestration. Stored normal-deck Review state retrieval and
+  collection-backed FSRS answer-state calculation are closed by Units 103–109.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

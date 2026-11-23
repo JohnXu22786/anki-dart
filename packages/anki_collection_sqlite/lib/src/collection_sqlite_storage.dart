@@ -4284,8 +4284,9 @@ WHERE queue IN (-2, -3)
         storedConfig ??
         DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
     final timing = timingTodayForNow(now: now);
+    final fsrsEnabled = readCollectionConfig('fsrs') == true;
     var state = _currentReviewCardStateForCardAtTiming(card, timing);
-    if (readCollectionConfig('fsrs') == true &&
+    if (fsrsEnabled &&
         card.memoryState == null &&
         card.ctype != CardType.newCard) {
       final revlogs = _revlogStorage.getRevlogEntriesForCard(card.id)
@@ -4309,6 +4310,40 @@ WHERE queue IN (-2, -3)
       }
     }
     var context = baseContext.withDeckConfig(config);
+    if (fsrsEnabled) {
+      final lastReviewTime =
+          card.lastReviewTimeSecs ?? _revlogStorage.timeOfLastReview(card.id);
+      final elapsedSeconds = lastReviewTime == null
+          ? 0
+          : (timing.nextDayAt - lastReviewTime.toInt()).toInt();
+      final daysElapsed = elapsedSeconds <= 0 ? 0 : elapsedSeconds ~/ 86400;
+      final calculated = computeFsrsNextStates(
+        currentMemoryState: state.memoryState,
+        daysElapsed: daysElapsed,
+        desiredRetention: deck.effectiveDesiredRetention(config.inner),
+        params: config.fsrsParams,
+      );
+      context = context.withFsrsNextStates(
+        FsrsReviewNextStates(
+          again: FsrsReviewNextState(
+            interval: calculated.again.interval,
+            memoryState: calculated.again.memoryState,
+          ),
+          hard: FsrsReviewNextState(
+            interval: calculated.hard.interval,
+            memoryState: calculated.hard.memoryState,
+          ),
+          good: FsrsReviewNextState(
+            interval: calculated.good.interval,
+            memoryState: calculated.good.memoryState,
+          ),
+          easy: FsrsReviewNextState(
+            interval: calculated.easy.interval,
+            memoryState: calculated.easy.memoryState,
+          ),
+        ),
+      );
+    }
     if (loadBalancerEnabled) {
       final loadBalancerContext = await _loadBalancerContextForTiming(
         timing,

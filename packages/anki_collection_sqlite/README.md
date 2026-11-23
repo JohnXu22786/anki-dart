@@ -149,6 +149,18 @@ Filtered-deck search/gathering, rescheduling, normal-state resolution, answer
 application, cache updates, transactions/undo, app call-site wiring, and
 Reviewer UI remain separate work.
 
+`currentReschedulingFilteredReviewCardStateForNow()` reads a stored Review
+card assigned to a filtered deck with rescheduling enabled. It resolves the
+effective due day to nonzero `originalDue`, falling back to stored `due`, and
+uses that day without normal-deck clamping alongside one
+`timingTodayForNow()` snapshot. It returns only the current unwrapped Review
+state and reads no deck config, revlogs, FSRS history, or load-balancer
+cache/history. Missing cards/decks, non-Review cards, normal decks, and
+non-rescheduling filtered decks produce state errors. Filtered rescheduling
+execution, other filtered card types, answer-state composition/application,
+persistence, transactions/undo, app call-site wiring, and Reviewer UI remain
+separate work.
+
 `reviewCardSchedulingStatesForCardForNow()` reads a stored normal-deck Review
 card and calculates its four answer-button states from a caller-supplied base
 `ReviewSchedulingContext`, load-balancer flag, nullable fuzz seed, and optional

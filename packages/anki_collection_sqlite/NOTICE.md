@@ -270,3 +270,13 @@ balancing only when that config enables `bury_reviews`. The missing-config
 fallback follows Core's false default. The exact source file is pinned at
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985`; its SHA-256 is recorded in
 `SOURCE.sha256` and validated by `tool/check_package.py`.
+
+`CollectionLoadBalancerContext.addAnsweredReviewCard()` follows the successful
+answer cache-update step in Core `Collection::answer_card_inner()` from
+`rslib/src/scheduler/answering/mod.rs`. It accepts the post-answer card and
+already-resolved home config ID, then updates only the in-memory
+`LoadBalancerCache` when the resulting queue is Review and the config ID is
+present. Unknown presets and intervals outside the cache are ignored by the
+shared cache method. The collection answer call site, persistence, transaction
+and rollback behavior remain host-owned. This source is pinned in
+`SOURCE.sha256` and validated by `tool/check_package.py`.

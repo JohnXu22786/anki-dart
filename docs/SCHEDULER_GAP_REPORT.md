@@ -330,6 +330,18 @@ selection only. The app `get_scheduling_states`/answer call site, per-answer
 interval application, answer-time cache mutation, card/revlog persistence,
 transactions/undo, and Reviewer UI remain open.
 
+### Unit 100 — post-answer load-balancer cache addition
+
+`CollectionLoadBalancerContext.addAnsweredReviewCard()` accepts the
+successfully updated card and the already-resolved home deck config ID. It adds
+the card's ID, note ID, and post-answer interval to the existing in-memory
+`LoadBalancerCache` only when the resulting queue is Review and the config ID
+is present. Unknown presets and intervals outside the cache retain Unit 91's
+no-op behavior. This closes the post-success cache-add helper only; the app
+answer call site, transaction ordering and persistence, error/rollback
+coordination, removal semantics where separately needed, undo, and Reviewer UI
+remain open.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -344,8 +356,8 @@ transactions/undo, and Reviewer UI remain open.
   transactions, and rescheduling remain host-owned.
 - Remaining scheduler work: wiring the current collection context, Unit95
   interval decision, Unit97 reusable resolver, and Unit98 assembled review
-  scheduling context into review answers and scheduler execution, answer-state transitions, cache mutation
-  after answers, persisted scheduling changes,
+  scheduling context into review answers and scheduler execution, answer-state transitions, app answer-call-site wiring,
+  persisted scheduling changes,
   transactions/undo, and orchestration. Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

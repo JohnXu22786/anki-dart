@@ -103,9 +103,11 @@ copy. `reviewSchedulingContextWithLoadBalancerForNow()` assembles a
 `ReviewSchedulingContext` from caller-supplied ordinary scheduler inputs and
 Core-resolved preset, nullable note, nullable fuzz seed, and optional clock.
 It preserves those inputs and attaches a resolver from one timing/cache
-snapshot. Card and preset selection, answer-state transitions, cache mutation
-during an answer, transaction persistence/undo, scheduler call-site wiring,
-and Reviewer UI remain outside this adapter.
+snapshot. Card and preset selection, answer-state transitions, transaction
+persistence/undo, scheduler call-site wiring, and Reviewer UI remain outside
+this adapter. The post-success in-memory cache-add helper is available on
+`CollectionLoadBalancerContext` once the host has the resulting card and
+resolved home config.
 
 `reviewSchedulingContextWithCardLoadBalancerForNow()` accepts a stored card ID,
 base scheduler context, load-balancer enablement, nullable answer fuzz seed,
@@ -116,9 +118,13 @@ deck config. Filtered home decks leave the context unchanged. The config's
 `buryReviews` flag controls whether the card note ID is passed to the resolver;
 a missing config row retains its config ID and behaves as bury disabled. The
 method composes this selection with one timing/cache snapshot and does not
-write scheduling state. The host still owns the application answer call site,
-interval application, answer-time cache updates, persistence/undo, and Reviewer
-UI.
+write scheduling state. After a successful answer, a host that already has the
+resulting card and resolved home config can call
+`CollectionLoadBalancerContext.addAnsweredReviewCard()` to update the context's
+in-memory cache. It adds only review-queue cards with a present home config ID;
+unknown presets and uncached intervals remain no-ops. The host still owns the
+application answer call site, interval application, persistence/undo, and
+Reviewer UI.
 
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and

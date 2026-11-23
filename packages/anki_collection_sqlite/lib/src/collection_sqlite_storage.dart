@@ -3783,6 +3783,60 @@ WHERE queue IN (-2, -3)
     ).nextStates(context);
   }
 
+  /// Calculates the four answer-button states for a stored normal-deck Relearn
+  /// card using caller-resolved step delay and elapsed time.
+  ///
+  /// [scheduledSecs] and [elapsedSecs] must come from the same scheduler
+  /// timing snapshot; neither is inferred from queue, due, or timestamps. The
+  /// stored remaining steps and paired review state are projected by
+  /// [RelearningCardState.fromCard]. The normalized deck config and collection
+  /// FSRS short-term flags are composed with [baseContext], preserving
+  /// caller-owned dynamic values. Missing config rows use Core defaults. This
+  /// read-only path does not read revlogs or load-balancer cache/history and
+  /// does not persist answer results.
+  Future<LearningCardSchedulingStates> relearningCardSchedulingStatesForCard({
+    required CardId cardId,
+    required int scheduledSecs,
+    required int elapsedSecs,
+    required ReviewSchedulingContext baseContext,
+  }) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+    if (card.ctype != CardType.relearn) {
+      throw StateError('card is not a Relearn card: $cardId');
+    }
+
+    final deck = _deckStorage.getDeck(card.deckId);
+    if (deck == null) throw StateError('deck not found: ${card.deckId}');
+    if (deck.kind is FilteredDeckKind) {
+      throw StateError('filtered deck is not supported: ${card.deckId}');
+    }
+    final deckConfigId = deck.configId;
+    if (deckConfigId == null || deckConfigId == Int64.ZERO) {
+      throw StateError('deck has no config ID: ${deck.id}');
+    }
+    final storedConfig = _deckConfigStorage.getDeckConfig(deckConfigId);
+    final config =
+        storedConfig ??
+        DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
+    final context = baseContext
+        .withDeckConfig(config)
+        .withFsrsShortTermSettings(
+          allowShortTerm: allowsFsrsShortTerm(
+            fsrsEnabled: readCollectionConfig('fsrs') == true,
+            params: config.fsrsParams,
+          ),
+          shortTermWithStepsEnabled:
+              readCollectionConfig('fsrs_short_term_with_steps_enabled') ==
+              true,
+        );
+    return RelearningCardState.fromCard(
+      card,
+      scheduledSecs: scheduledSecs,
+      elapsedSecs: elapsedSecs,
+    ).nextStates(context);
+  }
+
   /// Returns the union of note tags in [deckId] and its descendants.
   ///
   /// The host combines these with the collection tag table to preserve

@@ -126,7 +126,10 @@ Again/Hard/Good/Easy state calculations from
 at the same pinned commit. Learning step arrays, review intervals, deterministic
 fuzz, and FSRS next intervals/memory are explicit inputs. Queue construction,
 answer persistence, FSRS calculation, and collection mutation remain outside
-this package slice. The source files' hashes are recorded in `SOURCE.sha256`.
+this package slice. `RelearningCardState.fromCard()` additionally projects the
+stored Relearn card's paired current learning/review states from explicit
+Core-resolved timing while preserving the interval, ease, lapses, and memory
+fields. The source files' hashes are recorded in `SOURCE.sha256`.
 
 `computeFsrsMemoryState()` ports Core's per-card review-log projection,
 truncated-history SM-2 starting-state inference, and memory-state calculation

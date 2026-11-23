@@ -68,6 +68,42 @@ void main() {
   });
 
   group('learning card scheduling states', () {
+    test('projects stored Relearn learning and review states', () {
+      final card = Card(
+        ctype: CardType.relearn,
+        interval: 17,
+        easeFactorRaw: 2380,
+        lapses: 4,
+        remainingStepsRaw: 2003,
+        memoryState: FsrsMemoryState(stability: 2.5, difficulty: 6.25),
+      );
+
+      final states = RelearningCardState.fromCard(
+        card,
+        scheduledSecs: 361,
+        elapsedSecs: 42,
+      );
+
+      expect(states.learning.remainingSteps, 3);
+      expect(states.learning.scheduledSecs, 361);
+      expect(states.learning.elapsedSecs, 42);
+      expect(states.learning.memoryState!.stability, 2.5);
+      expect(states.review.scheduledDays, 17);
+      expect(states.review.elapsedDays, 17);
+      expect(states.review.easeFactor, closeTo(2.38, 0.00001));
+      expect(states.review.lapses, 4);
+      expect(states.review.leeched, isFalse);
+      expect(states.review.memoryState!.difficulty, 6.25);
+      expect(
+        () => RelearningCardState.fromCard(
+          Card(ctype: CardType.learn),
+          scheduledSecs: 0,
+          elapsedSecs: 0,
+        ),
+        throwsA(isA<InvalidModelValue>()),
+      );
+    });
+
     test('Again resets to first step, Hard stays, and Good advances', () {
       final state = LearningCardState(
         remainingSteps: 1,

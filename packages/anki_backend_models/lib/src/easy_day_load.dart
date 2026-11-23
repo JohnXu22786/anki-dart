@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'dart:typed_data';
 
+import 'deck_config.dart';
+
 /// Core's easy-day classification for one weekday's configured percentage.
 enum EasyDay {
   minimum,
@@ -39,6 +41,22 @@ List<EasyDay> parseEasyDaysPercentages(List<double> percentages) {
     percentages.map(EasyDay.fromPercentage),
   );
 }
+
+/// Projects each stored deck configuration into its seven typed easy days.
+///
+/// Empty percentage lists use Core's seven-normal-day default; malformed
+/// nonempty lists preserve [parseEasyDaysPercentages]'s format error.
+Map<DeckConfigId, List<EasyDay>> buildEasyDaysPercentages(
+  Map<DeckConfigId, DeckConfig> configs,
+) =>
+    Map.fromEntries(
+      configs.entries.map(
+        (entry) => MapEntry(
+          entry.key,
+          parseEasyDaysPercentages(entry.value.inner.easyDaysPercentages),
+        ),
+      ),
+    );
 
 /// Computes Core's easy-day modifiers for caller-supplied weekday indices and
 /// review counts. Inputs are intentionally explicit; this helper does not

@@ -147,9 +147,20 @@ within each bucket, and retains signed 64-bit card, note, and deck IDs. The
 query enforces Core's u32 bounds and caps its span at the 99-day
 `LOAD_BALANCE_DAYS` window; it does not derive the day range or combine history
 with interval weights.
-Easy-day configuration and weekday derivation, sibling discovery and modifier
-inputs, random weighted selection, load-balancer orchestration, and scheduler
-execution remain incomplete.
+Parsed easy-day values from the stored config map are available in Unit 84;
+deck-to-config resolution and weekday derivation, sibling discovery and
+modifier inputs, random weighted selection, load-balancer orchestration, and
+scheduler execution remain incomplete.
+
+### Unit 84 — load-balancer preset config projection
+
+`anki_backend_models.buildEasyDaysPercentages()` maps each stored deck-config
+ID to its parsed seven-day `EasyDay` values, using the existing Core-compatible
+empty-list default and invalid-length error behavior. It is a pure projection
+over the stored config map: deck-to-config resolution, weekday/date derivation,
+sibling search and modifier derivation, random weighted selection, and
+scheduler orchestration remain incomplete. This helper does not integrate the
+load balancer into the scheduler.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -164,8 +175,8 @@ execution remain incomplete.
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
 - Remaining scheduler work: random weighted interval selection, sibling
-  search and modifier derivation, day/date derivation, easy-day configuration
-  lookup, and scheduler orchestration. Collection-backed due-card history
+  search and modifier derivation, day/date derivation, deck-to-config
+  resolution, and scheduler orchestration. Collection-backed due-card history
   input is available in Unit 83; `CollectionSqliteStorage.deckTree()` provides
   queue-count aggregation. The query and pure interval-weight/easy-day helpers
   do not complete full load balancing.

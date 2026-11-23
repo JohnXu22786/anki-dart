@@ -515,7 +515,25 @@ filtered decks fail clearly.
 This closes stored normal-deck Learn answer-state calculation only. Relearning
 state assembly, filtered-deck preview/rescheduling, answer application and
 persistence, cache mutation, transactions/undo, app call-site wiring, and
-Reviewer UI remain open.
+Reviewer UI remain open until Unit 114 below.
+
+### Unit 114 — stored normal-deck Relearn answer states
+
+`RelearningCardState.fromCard()` projects a stored Relearn card into Core's
+paired current learning and review states. It uses caller-resolved
+`scheduledSecs` and `elapsedSecs`, and preserves the stored remaining steps,
+interval, ease, lapses, and FSRS memory. It rejects cards of other types.
+
+`CollectionSqliteStorage.relearningCardSchedulingStatesForCard()` resolves the
+stored card's normal deck config, uses Core defaults when the config row is
+missing, and composes that config and the collection FSRS short-term flags with
+the caller's scheduler context. It delegates Again/Hard/Good/Easy to the
+existing pure Relearn transitions. It does not infer timing, read revlogs or
+load-balancer history/cache, mutate stored state, or support filtered decks.
+Missing cards/decks/config IDs, non-Relearn cards, and filtered decks fail
+clearly. This closes stored normal-deck Relearn state assembly only; filtered
+deck preview/rescheduling, answer application, cache mutation, transactions,
+app call-site wiring, and Reviewer UI remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -534,7 +552,8 @@ Reviewer UI remain open.
   and orchestration. Stored normal-deck Review state retrieval and
   collection-backed FSRS Review answer-state calculation are closed by Units
   103–110; stored normal-deck New answer-state calculation is closed by Unit
-  111; Unit 113 closes stored normal-deck Learn answer-state calculation.
+  111; Units 113–114 close stored normal-deck Learn and Relearn answer-state
+  calculation.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

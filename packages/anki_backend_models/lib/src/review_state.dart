@@ -620,6 +620,39 @@ class RelearningCardState {
   final LearningCardState learning;
   final ReviewCardState review;
 
+  /// Projects a stored Relearn [card] into Core's paired current states.
+  ///
+  /// [scheduledSecs] and [elapsedSecs] must come from the same Core-resolved
+  /// scheduler timing snapshot. This projection preserves the card's remaining
+  /// steps, stored review interval/ease/lapses/memory, and the supplied timing;
+  /// it does not derive timing or answer states from collection history.
+  factory RelearningCardState.fromCard(
+    Card card, {
+    required int scheduledSecs,
+    required int elapsedSecs,
+  }) {
+    if (card.ctype != CardType.relearn) {
+      throw const InvalidModelValue('card is not a relearning card');
+    }
+
+    return RelearningCardState(
+      learning: LearningCardState(
+        remainingSteps: card.remainingSteps,
+        scheduledSecs: scheduledSecs,
+        elapsedSecs: elapsedSecs,
+        memoryState: card.memoryState,
+      ),
+      review: ReviewCardState(
+        scheduledDays: card.interval,
+        elapsedDays: card.interval,
+        easeFactor: card.easeFactor,
+        lapses: card.lapses,
+        leeched: false,
+        memoryState: card.memoryState,
+      ),
+    );
+  }
+
   LearningCardSchedulingStates nextStates(ReviewSchedulingContext ctx) =>
       _learningStates(learning, ctx, true, review: review);
 }

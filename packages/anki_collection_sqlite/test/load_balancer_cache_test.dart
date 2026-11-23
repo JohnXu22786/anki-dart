@@ -893,6 +893,71 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
       );
     },
   );
+
+  group('CollectionLoadBalancerContext.addAnsweredReviewCard', () {
+    final preset = Int64(10);
+
+    test('adds a review card to its preset, interval, and note bucket', () {
+      final context = _loadBalancerContextWithCache(preset);
+      final card = Card(
+        id: Int64(2),
+        noteId: Int64(20),
+        queue: CardQueue.review,
+        interval: 7,
+      );
+
+      context.addAnsweredReviewCard(card, preset);
+
+      final day = context.cache.daysByPreset[preset]![7];
+      expect(day.cardCount, 1);
+      expect(day.hasSibling(Int64(20)), isTrue);
+    });
+
+    test('does not add a card whose resulting queue is not review', () {
+      final context = _loadBalancerContextWithCache(preset);
+      final card = Card(
+        id: Int64(2),
+        noteId: Int64(20),
+        queue: CardQueue.learn,
+        interval: 7,
+      );
+
+      context.addAnsweredReviewCard(card, preset);
+
+      expect(context.cache.daysByPreset[preset]![7].cardCount, 0);
+    });
+
+    test('does not add a review card when the home config ID is absent', () {
+      final context = _loadBalancerContextWithCache(preset);
+      final card = Card(
+        id: Int64(2),
+        noteId: Int64(20),
+        queue: CardQueue.review,
+        interval: 7,
+      );
+
+      context.addAnsweredReviewCard(card, null);
+
+      expect(context.cache.daysByPreset[preset]![7].cardCount, 0);
+    });
+
+    test('does not add a review card outside the cached interval range', () {
+      final context = _loadBalancerContextWithCache(preset);
+      final card = Card(
+        id: Int64(2),
+        noteId: Int64(20),
+        queue: CardQueue.review,
+        interval: 99,
+      );
+
+      context.addAnsweredReviewCard(card, preset);
+
+      final day = context.cache.daysByPreset[preset]![0];
+      expect(day.cardCount, 1);
+      expect(day.hasSibling(Int64(10)), isTrue);
+      expect(day.hasSibling(Int64(20)), isFalse);
+    });
+  });
 }
 
 Future<void> _prepareTimingCollection(
@@ -941,3 +1006,19 @@ Deck _filteredDeck(int id) => Deck(
   name: 'Filtered $id',
   kind: FilteredDeckKind(protoDeck.Deck_Filtered()),
 );
+
+CollectionLoadBalancerContext _loadBalancerContextWithCache(
+  DeckConfigId preset,
+) {
+  final history = List.generate(99, (_) => <LoadBalancerHistoryCard>[]);
+  history[0].add((Int64(1), Int64(10), Int64(7)));
+  return CollectionLoadBalancerContext(
+    daysElapsed: 0,
+    nextDayAt: Int64.ZERO,
+    cache: LoadBalancerCache.fromHistory(
+      cardsByDay: history,
+      deckConfigByDeck: {Int64(7): preset},
+      configs: {preset: DeckConfig.defaults()},
+    ),
+  );
+}

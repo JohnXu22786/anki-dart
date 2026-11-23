@@ -79,6 +79,17 @@ final class CollectionLoadBalancerContext {
   final TimestampSecs nextDayAt;
   final LoadBalancerCache cache;
 
+  /// Adds a successfully answered review [card] to its home preset's cache.
+  ///
+  /// The caller supplies the already-resolved home deck config ID. Cards that
+  /// did not finish in the review queue, or have no home config, are ignored.
+  /// Unknown presets and intervals outside the cache are ignored by
+  /// [LoadBalancerCache.addCard]. This only updates the in-memory cache.
+  void addAnsweredReviewCard(Card card, DeckConfigId? homeDeckConfigId) {
+    if (card.queue != CardQueue.review || homeDeckConfigId == null) return;
+    cache.addCard(card.id, card.noteId, homeDeckConfigId, card.interval);
+  }
+
   /// Creates a resolver that reuses this context's timing and cache snapshot.
   ///
   /// The selected preset, note, and fuzz seed are fixed for every interval

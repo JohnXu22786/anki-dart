@@ -246,3 +246,12 @@ Dart code; the pinned source hashes are recorded in `SOURCE.sha256` and
 validated by `tool/check_package.py`. It uses host-provided detached SQLite
 copies and portable media reads, so shared export code does not depend on
 `dart:io`.
+
+`CollectionSqliteStorage.buildLoadBalancerCache()` adapts the storage-backed
+setup in Core `LoadBalancer::new()` from
+`rslib/src/scheduler/states/load_balancer.rs`. It reads the existing due-card
+history query for the caller's 99-day range, loads all stored deck configs, and
+delegates per-preset grouping to `LoadBalancerCache.fromHistory()`. The caller
+provides the collection day and deck-to-config map. This adapter does not
+derive scheduler timing, resolve decks, or execute a scheduler; the same
+pinned Core load-balancer digest already in `SOURCE.sha256` covers the code.

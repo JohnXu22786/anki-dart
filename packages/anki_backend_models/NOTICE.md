@@ -223,8 +223,9 @@ the selected config and nullable note ID, interval bounds, and an optional
 unsigned 64-bit fuzz seed. The selected preset supplies review counts and
 easy-day weighting; sibling days are searched across all presets. The existing
 source digests cover both upstream files; no source hash or root `COPYING`
-entry changes. Card-history reads and input assembly, preset/deck resolution,
-timezone/date input construction, cache mutation, collection storage,
+entry changes. The collection adapter's `buildLoadBalancerCache()` now reads
+and groups card history using caller-supplied day and deck mapping. Timezone
+input construction, preset/deck mapping resolution, persisted scheduling,
 scheduler wiring, answer/reviewer UI, and full cross-platform review
 integration remain outside this helper.
 

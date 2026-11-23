@@ -3989,6 +3989,35 @@ WHERE queue IN (-2, -3)
     return buckets;
   }
 
+  /// Builds Core's initial load-balancer cache from collection card history.
+  ///
+  /// [today] is the caller-derived collection day, and
+  /// [deckConfigByDeck] is the caller-resolved mapping from deck IDs to preset
+  /// IDs. The method reads cards in Core's 99-day half-open range, loads all
+  /// stored deck configs, and delegates the grouping to
+  /// [LoadBalancerCache.fromHistory]. It does not derive either input.
+  Future<LoadBalancerCache> buildLoadBalancerCache({
+    required int today,
+    required Map<DeckId, DeckConfigId> deckConfigByDeck,
+  }) async {
+    final history = await getAllCardsDueInRange(
+      minDay: today,
+      maxDay: today + 99,
+    );
+    final historyRows = history
+        .map(
+          (day) => day
+              .map((card) => (card.id, card.noteId, card.deckId))
+              .toList(growable: false),
+        )
+        .toList(growable: false);
+    return LoadBalancerCache.fromHistory(
+      cardsByDay: historyRows,
+      deckConfigByDeck: deckConfigByDeck,
+      configs: _deckConfigStorage.getDeckConfigMap(),
+    );
+  }
+
   String _dueCardReviewOrderSql({
     required ReviewCardOrder reviewOrder,
     required bool fsrsEnabled,

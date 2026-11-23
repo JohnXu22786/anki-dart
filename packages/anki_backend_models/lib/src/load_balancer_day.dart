@@ -9,6 +9,9 @@ class LoadBalancerDay {
   final List<(CardId, NoteId)> _cards = [];
   final Set<NoteId> _notes = {};
 
+  /// Number of cards scheduled for this day.
+  int get cardCount => _cards.length;
+
   /// Adds [cardId] and records [noteId] as present on this day.
   void add(CardId cardId, NoteId noteId) {
     _cards.add((cardId, noteId));

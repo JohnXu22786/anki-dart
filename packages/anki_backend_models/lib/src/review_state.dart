@@ -828,7 +828,7 @@ int _withReviewFuzz(
   if (fuzzFactor == null) {
     return _asU32(interval.roundToDouble()).clamp(minimum, maximum).toInt();
   }
-  final bounds = _constrainedFuzzBounds(interval, minimum, maximum);
+  final bounds = constrainedFuzzBounds(interval, minimum, maximum);
   final width = (1 + bounds.$2 - bounds.$1).toUnsigned(32);
   return _asU32(
     _f32(
@@ -838,7 +838,15 @@ int _withReviewFuzz(
   ).clamp(minimum, maximum).toInt();
 }
 
-(int, int) _constrainedFuzzBounds(double interval, int minimum, int maximum) {
+/// Computes Core's inclusive fuzz interval bounds after applying limits.
+///
+/// The interval and intermediate arithmetic use Float32 precision, and a
+/// collapsed range is widened by one day when Core's limits permit it.
+(int, int) constrainedFuzzBounds(
+  double interval,
+  int minimum,
+  int maximum,
+) {
   minimum = minimum.clamp(0, maximum).toInt();
   final bounded = _f32(
     _f32(interval).clamp(minimum.toDouble(), maximum.toDouble()),

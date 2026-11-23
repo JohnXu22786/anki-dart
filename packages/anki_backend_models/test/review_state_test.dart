@@ -394,6 +394,9 @@ void main() {
     });
 
     test('Core fuzz boundary fixtures match the source endpoints', () {
+      expect(constrainedFuzzBounds(5, 1, 20), (4, 6));
+      expect(constrainedFuzzBounds(5, 5, 5), (5, 5));
+      expect(constrainedFuzzBounds(5, 10, 5), (5, 5));
       final state = ReviewCardState(
         scheduledDays: 1,
         elapsedDays: 1,

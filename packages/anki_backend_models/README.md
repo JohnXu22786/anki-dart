@@ -18,10 +18,13 @@ for one day. `selectWeightedInterval()` provides Core's seeded weighted
 selection over caller-ordered candidates, matching the pinned rand 0.9.4,
 rand_chacha 0.9.0, and rand_core 0.9.3 behavior. `intervalToWeekday()` applies
 Core's interval offset to an absolute Unix timestamp, then projects the result
-to the machine's local Monday-based weekday. Load-balancer orchestration, full
-timezone/date scheduling context, deck-to-config resolution, preset
-storage/configuration integration, and scheduler wiring remain outside this
-package; these helpers do not implement full load balancing.
+to the machine's local Monday-based weekday. `findLoadBalancedInterval()`
+composes those pure helpers over caller-supplied 99-day preset caches,
+seven-day easy-day settings, timestamp, selected preset, and optional note and
+seed. Card-history reads and input assembly, preset/deck resolution,
+timezone/date input construction, cache mutation, collection storage,
+scheduler wiring, answer/reviewer UI, and full cross-platform review
+integration remain outside this package.
 
 Pinned Anki Core source digests and license attribution are recorded in
 `SOURCE.sha256` and `NOTICE.md`.

@@ -206,6 +206,19 @@ preset storage/configuration integration, load-balancer orchestration, and
 scheduler wiring remain open; this helper does not implement full load
 balancing.
 
+### Unit 89 — pure load-balancer interval decision
+
+`anki_backend_models.findLoadBalancedInterval()` composes Core's pinned
+`LoadBalancer::find_interval()` path with the existing constrained fuzz-bound,
+easy-day, weekday, sibling, load-weight, and seeded-selection helpers. It
+accepts caller-preloaded 99-day caches and seven-day easy-day values keyed by
+preset, plus the absolute `nextDayAt` timestamp, selected preset, nullable
+note, interval bounds, and optional seed. Its decision is pure and does not
+read or mutate collection state. Card-history reads/input assembly,
+preset/deck resolution, timezone/date input construction, cache mutation,
+collection storage, scheduler wiring, answer/reviewer UI, and full
+cross-platform review integration remain incomplete.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -218,13 +231,14 @@ balancing.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: full day/date and timezone scheduling context,
-  deck-to-config resolution, preset storage/configuration integration, and
-  scheduler orchestration. Collection-backed due-card history
-  input is available in Unit 83; `CollectionSqliteStorage.deckTree()` provides
-  queue-count aggregation. The query and pure easy-day, interval-weight,
-  sibling, and seeded weighted-selection helpers do not complete full load
-  balancing.
+- Remaining scheduler work: card-history reads and load-balancer input
+  assembly, full day/date and timezone input construction, deck-to-config
+  resolution, cache mutation, preset storage/configuration integration,
+  collection storage, and scheduler orchestration. Collection-backed due-card
+  history input is available in Unit 83; `CollectionSqliteStorage.deckTree()`
+  provides queue-count aggregation. Unit89 adds the pure preloaded-context
+  interval decision, but does not complete scheduler integration or full
+  cross-platform review integration.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

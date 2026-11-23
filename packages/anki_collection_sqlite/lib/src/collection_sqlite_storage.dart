@@ -3648,6 +3648,26 @@ WHERE queue IN (-2, -3)
   }) async {
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
+    _validateNormalReviewCard(card);
+    return _currentReviewCardStateForCardAtTiming(
+      card,
+      timingTodayForNow(now: now),
+    );
+  }
+
+  ReviewCardState _currentReviewCardStateForCardAtTiming(
+    Card card,
+    SchedTimingToday timing,
+  ) {
+    return ReviewCardState.fromCard(
+      card,
+      effectiveDue: min(card.due, timing.daysElapsed),
+      daysElapsed: timing.daysElapsed,
+    );
+  }
+
+  void _validateNormalReviewCard(Card card) {
+    final cardId = card.id;
     if (card.ctype != CardType.review) {
       throw StateError('card is not a review card: $cardId');
     }
@@ -3657,13 +3677,6 @@ WHERE queue IN (-2, -3)
     if (deck.kind is FilteredDeckKind) {
       throw StateError('filtered deck is not supported: ${card.deckId}');
     }
-
-    final timing = timingTodayForNow(now: now);
-    return ReviewCardState.fromCard(
-      card,
-      effectiveDue: min(card.due, timing.daysElapsed),
-      daysElapsed: timing.daysElapsed,
-    );
   }
 
   /// Returns the union of note tags in [deckId] and its descendants.
@@ -4126,6 +4139,12 @@ WHERE queue IN (-2, -3)
     DateTime? now,
   }) async {
     final timing = timingTodayForNow(now: now);
+    return _loadBalancerContextForTiming(timing);
+  }
+
+  Future<CollectionLoadBalancerContext> _loadBalancerContextForTiming(
+    SchedTimingToday timing,
+  ) async {
     final cache = await buildLoadBalancerCacheFromCollection(
       today: timing.daysElapsed,
     );
@@ -4184,7 +4203,21 @@ WHERE queue IN (-2, -3)
 
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
+    return _reviewSchedulingContextWithCardAtTiming(
+      baseContext: baseContext,
+      card: card,
+      fuzzSeed: fuzzSeed,
+      now: now,
+    );
+  }
 
+  Future<ReviewSchedulingContext> _reviewSchedulingContextWithCardAtTiming({
+    required ReviewSchedulingContext baseContext,
+    required Card card,
+    required BigInt? fuzzSeed,
+    SchedTimingToday? timing,
+    DateTime? now,
+  }) async {
     final homeDeckId = card.originalDeckId == Int64.ZERO
         ? card.deckId
         : card.originalDeckId;
@@ -4195,7 +4228,8 @@ WHERE queue IN (-2, -3)
 
     final config = _deckConfigStorage.getDeckConfig(deckConfigId);
     final noteId = config?.inner.buryReviews == true ? card.noteId : null;
-    final loadBalancerContext = await loadBalancerContextForNow(now: now);
+    final snapshot = timing ?? timingTodayForNow(now: now);
+    final loadBalancerContext = await _loadBalancerContextForTiming(snapshot);
     return baseContext.withLoadBalancedIntervalResolver(
       loadBalancerContext.reviewIntervalResolver(
         deckConfigId: deckConfigId,
@@ -4203,6 +4237,40 @@ WHERE queue IN (-2, -3)
         fuzzSeed: fuzzSeed,
       ),
     );
+  }
+
+  /// Calculates the four answer-button states for a stored normal-deck review
+  /// card from one caller-selected collection timing snapshot.
+  ///
+  /// [baseContext] contains host-resolved scheduler settings and remains the
+  /// source of all non-load-balancer inputs. When enabled, the card's state and
+  /// its load-balancer resolver use the same [now] and collection day; when
+  /// disabled, no load-balancer history or config is read. Missing cards,
+  /// non-review cards, missing decks, and cards assigned to filtered decks
+  /// preserve [currentReviewCardStateForNow] errors. This is read-only and does
+  /// not derive FSRS memory state or persist answer results.
+  Future<ReviewCardSchedulingStates> reviewCardSchedulingStatesForCardForNow({
+    required CardId cardId,
+    required ReviewSchedulingContext baseContext,
+    required bool loadBalancerEnabled,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+  }) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+
+    _validateNormalReviewCard(card);
+    final timing = timingTodayForNow(now: now);
+    final state = _currentReviewCardStateForCardAtTiming(card, timing);
+    final context = loadBalancerEnabled
+        ? await _reviewSchedulingContextWithCardAtTiming(
+            baseContext: baseContext,
+            card: card,
+            fuzzSeed: fuzzSeed,
+            timing: timing,
+          )
+        : baseContext;
+    return state.nextStates(context);
   }
 
   /// Calculates answer-button states for a caller-resolved review [state].

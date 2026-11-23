@@ -4258,10 +4258,12 @@ WHERE queue IN (-2, -3)
   /// deck config. A missing config row uses Core-compatible defaults; config ID
   /// zero is invalid. When enabled, the card state and load-balancer resolver
   /// share one [now] and collection-day snapshot. When disabled, deck config is
-  /// still read but load-balancer history is not. Missing cards, non-review
-  /// cards, missing decks, and filtered decks preserve
+  /// still read but load-balancer history is not. When collection FSRS is
+  /// enabled, a missing stored memory state is derived from the card's revlogs
+  /// using the resolved deck config and the same timing snapshot. Missing
+  /// cards, non-review cards, missing decks, and filtered decks preserve
   /// [currentReviewCardStateForNow] errors. This is read-only and does not
-  /// derive FSRS memory state or persist answer results.
+  /// persist answer results.
   Future<ReviewCardSchedulingStates> reviewCardSchedulingStatesForCardForNow({
     required CardId cardId,
     required ReviewSchedulingContext baseContext,
@@ -4282,7 +4284,30 @@ WHERE queue IN (-2, -3)
         storedConfig ??
         DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
     final timing = timingTodayForNow(now: now);
-    final state = _currentReviewCardStateForCardAtTiming(card, timing);
+    var state = _currentReviewCardStateForCardAtTiming(card, timing);
+    if (readCollectionConfig('fsrs') == true &&
+        card.memoryState == null &&
+        card.ctype != CardType.newCard) {
+      final revlogs = _revlogStorage.getRevlogEntriesForCard(card.id)
+        ..sort((a, b) => a.id.value.compareTo(b.id.value));
+      final memoryState = computeFsrsMemoryState(
+        revlogs: revlogs,
+        nextDayAt: TimestampSecs(timing.nextDayAt),
+        params: config.fsrsParams,
+        historicalRetention: config.inner.historicalRetention,
+        ignoreRevlogsBefore: _ignoreRevlogsBefore(config),
+      );
+      if (memoryState != null) {
+        state = ReviewCardState(
+          scheduledDays: state.scheduledDays,
+          elapsedDays: state.elapsedDays,
+          easeFactor: state.easeFactor,
+          lapses: state.lapses,
+          leeched: state.leeched,
+          memoryState: memoryState,
+        );
+      }
+    }
     var context = baseContext.withDeckConfig(config);
     if (loadBalancerEnabled) {
       final loadBalancerContext = await _loadBalancerContextForTiming(
@@ -5096,6 +5121,24 @@ WHERE queue IN (-2, -3)
     }
     return statement;
   }
+}
+
+Int64 _ignoreRevlogsBefore(DeckConfig config) {
+  final value = config.inner.ignoreRevlogsBeforeDate;
+  if (value.isEmpty) return Int64.ZERO;
+
+  final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(value);
+  if (match == null) throw FormatException('Error parsing date: $value');
+  final year = int.parse(match[1]!);
+  final month = int.parse(match[2]!);
+  final day = int.parse(match[3]!);
+  final utcMidnight = DateTime.utc(year, month, day);
+  if (utcMidnight.year != year ||
+      utcMidnight.month != month ||
+      utcMidnight.day != day) {
+    throw FormatException('Error parsing date: $value');
+  }
+  return Int64(utcMidnight.millisecondsSinceEpoch);
 }
 
 final class _CollectionUndoStep {

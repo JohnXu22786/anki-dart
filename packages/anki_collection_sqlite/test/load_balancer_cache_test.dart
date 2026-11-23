@@ -344,6 +344,168 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
   );
 
   test(
+    'context resolver matches pure decisions across intervals and bounds',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      final preset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+      await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (1, 100, 13, 7, 0),
+  (2, 100, 14, 7, 0),
+  (3, 200, 15, 7, 0);
+''');
+
+      final context = await storage.loadBalancerContextForNow(now: now);
+      final noteId = Int64(100);
+      final fuzzSeed = BigInt.from(0x123456789abcdef0);
+      final resolver = context.reviewIntervalResolver(
+        deckConfigId: preset,
+        noteId: noteId,
+        fuzzSeed: fuzzSeed,
+      );
+      // The resolver is assignable directly to the existing scheduling hook.
+      final schedulingContext = ReviewSchedulingContext(
+        loadBalancedIntervalResolver: resolver,
+      );
+
+      for (final input in [
+        (interval: 5.0, minimum: 1, maximum: 20),
+        (interval: 9.0, minimum: 4, maximum: 30),
+        (interval: 12.0, minimum: 10, maximum: 14),
+      ]) {
+        expect(
+          schedulingContext.loadBalancedIntervalResolver!(
+            input.interval,
+            input.minimum,
+            input.maximum,
+          ),
+          findLoadBalancedInterval(
+            daysByPreset: context.cache.daysByPreset,
+            easyDaysByPreset: context.cache.easyDaysByPreset,
+            nextDayAt: context.nextDayAt,
+            deckConfigId: preset,
+            noteId: noteId,
+            interval: input.interval,
+            minimum: input.minimum,
+            maximum: input.maximum,
+            fuzzSeed: fuzzSeed,
+          ),
+        );
+      }
+    },
+  );
+
+  test(
+    'context resolver returns the pure helper nullable results unchanged',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      final preset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+      await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (1, 100, 13, 7, 0);
+''');
+      final context = await storage.loadBalancerContextForNow(now: now);
+
+      final missingPresetResolver = context.reviewIntervalResolver(
+        deckConfigId: Int64(99),
+        noteId: null,
+        fuzzSeed: BigInt.zero,
+      );
+      final nullSeedResolver = context.reviewIntervalResolver(
+        deckConfigId: preset,
+        noteId: null,
+        fuzzSeed: null,
+      );
+      final schedulingContext = ReviewSchedulingContext(
+        loadBalancedIntervalResolver: missingPresetResolver,
+      );
+
+      expect(schedulingContext.loadBalancedIntervalResolver!(5, 1, 20), isNull);
+      expect(nullSeedResolver(5, 1, 20), isNull);
+    },
+  );
+
+  test(
+    'context resolver keeps its original collection and timing snapshot',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final firstNow = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      final nextDayNow = firstNow.add(const Duration(days: 1));
+      await _prepareTimingCollection(storage, creationSecs);
+      final preset = Int64(10);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(preset, 'A'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, preset));
+      await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (1, 100, 13, 7, 0);
+''');
+
+      final originalContext = await storage.loadBalancerContextForNow(
+        now: firstNow,
+      );
+      final resolver = originalContext.reviewIntervalResolver(
+        deckConfigId: preset,
+        noteId: Int64(100),
+        fuzzSeed: BigInt.from(42),
+      );
+      final originalDecision = resolver(5, 1, 20);
+
+      await storage.executeBatch('''
+INSERT INTO cards (id, nid, due, did, queue) VALUES
+  (2, 200, 13, 7, 0);
+''');
+      final changedContext = await storage.loadBalancerContextForNow(
+        now: nextDayNow,
+      );
+
+      expect(changedContext.daysElapsed, originalContext.daysElapsed + 1);
+      expect(changedContext.nextDayAt, greaterThan(originalContext.nextDayAt));
+      expect(
+        changedContext.cache.daysByPreset[preset]![0].cardCount,
+        greaterThan(originalContext.cache.daysByPreset[preset]![0].cardCount),
+      );
+      expect(resolver(5, 1, 20), originalDecision);
+      expect(
+        resolver(5, 1, 20),
+        findLoadBalancedInterval(
+          daysByPreset: originalContext.cache.daysByPreset,
+          easyDaysByPreset: originalContext.cache.easyDaysByPreset,
+          nextDayAt: originalContext.nextDayAt,
+          deckConfigId: preset,
+          noteId: Int64(100),
+          interval: 5,
+          minimum: 1,
+          maximum: 20,
+          fuzzSeed: BigInt.from(42),
+        ),
+      );
+    },
+  );
+
+  test(
     'injected now determines the collection day used for the decision',
     () async {
       const creationSecs = 1_700_000_000;

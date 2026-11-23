@@ -282,9 +282,22 @@ after interval multipliers and final minimum/maximum handling; a nullable
 result falls back to the existing deterministic fuzz path. Early reviews skip
 the resolver and retain their rounded/clamped calculation. The hook is carried
 through FSRS next-state derivation and preserves the sequential Hard/Good/Easy
-minimums. Collection/scheduler construction of the resolver, answer-time cache
+minimums. Collection construction of a reusable resolver, answer-time cache
 mutation, card/revlog persistence, transactions/undo, application call-site
 wiring, and Reviewer UI remain open.
+
+### Unit 97 — reusable review interval resolver from collection context
+
+`CollectionLoadBalancerContext.reviewIntervalResolver()` captures the
+context's existing cache and `nextDayAt` and fixes the selected deck-config ID,
+nullable note ID, and nullable fuzz seed. Each callback call forwards only its
+interval and minimum/maximum bounds to the existing pure
+`anki_backend_models.findLoadBalancedInterval()` helper and returns its
+nullable decision unchanged. Creating or reusing the callback performs no
+collection reads, timing calculation, cache copy, or mutation. This closes
+reusable resolver construction from a collection snapshot. Host
+`ReviewSchedulingContext` assembly, answer/scheduler call-site wiring,
+answer-time cache mutation, persistence/undo, and Reviewer UI remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -298,10 +311,10 @@ wiring, and Reviewer UI remain open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: constructing and wiring the current collection
-  context and Unit95 interval decision into review answers and scheduler
-  execution, answer-state
-  transitions, cache mutation after answers, persisted scheduling changes,
+- Remaining scheduler work: wiring the current collection
+  context, Unit95 interval decision, and Unit97 reusable resolver into review
+  answers and scheduler execution, answer-state transitions, cache mutation
+  after answers, persisted scheduling changes,
   transactions/undo, and orchestration. Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

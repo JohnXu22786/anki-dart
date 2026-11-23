@@ -2,6 +2,7 @@
 import 'dart:typed_data';
 
 import 'card.dart';
+import 'deck_config.dart';
 import 'fsrs_memory_state.dart';
 
 const double _initialEaseFactor = 2.5;
@@ -108,6 +109,40 @@ class ReviewSchedulingContext {
     ReviewLoadBalancerIntervalResolver resolver,
   ) =>
       _copyWith(loadBalancedIntervalResolver: resolver);
+
+  /// Returns this context with scheduler settings from a resolved deck config.
+  ///
+  /// [deckConfig] must already have Core-compatible defaults and validation
+  /// applied. This method only projects its normalized scheduling values; it
+  /// does not normalize, default, or reinterpret stored config values. Dynamic
+  /// inputs such as fuzz, FSRS outcomes/parameters, and the load-balancer
+  /// resolver remain supplied by the caller.
+  ReviewSchedulingContext withDeckConfig(DeckConfig deckConfig) {
+    final config = deckConfig.inner;
+    return ReviewSchedulingContext(
+      hardMultiplier: config.hardMultiplier,
+      easyMultiplier: config.easyMultiplier,
+      intervalMultiplier: config.intervalMultiplier,
+      maximumReviewInterval: config.maximumReviewInterval,
+      leechThreshold: config.leechThreshold,
+      lapseMultiplier: config.lapseMultiplier,
+      minimumLapseInterval: config.minimumLapseInterval,
+      fuzzFactor: fuzzFactor,
+      loadBalancedIntervalResolver: loadBalancedIntervalResolver,
+      fsrsNextStates: fsrsNextStates,
+      fsrsParams: fsrsParams,
+      fsrsDesiredRetention: fsrsDesiredRetention,
+      relearningAgainDelaySecs: relearningAgainDelaySecs,
+      relearningRemainingSteps: relearningRemainingSteps,
+      fsrsAllowShortTerm: fsrsAllowShortTerm,
+      fsrsShortTermWithStepsEnabled: fsrsShortTermWithStepsEnabled,
+      relearningStepsEmpty: config.relearnSteps.isEmpty,
+      learningStepsMinutes: config.learnSteps.toList(growable: false),
+      relearningStepsMinutes: config.relearnSteps.toList(growable: false),
+      graduatingIntervalGood: config.graduatingIntervalGood,
+      graduatingIntervalEasy: config.graduatingIntervalEasy,
+    );
+  }
 
   ReviewSchedulingContext _withFsrsNextStates(FsrsReviewNextStates states) =>
       _copyWith(fsrsNextStates: states);

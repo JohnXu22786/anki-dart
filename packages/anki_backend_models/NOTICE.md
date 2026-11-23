@@ -267,6 +267,17 @@ recorded in `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and
 contributors and licensed under AGPL-3.0-or-later. This adaptation retains the
 same license; root `COPYING` is unchanged.
 
+`ReviewSchedulingContext.withDeckConfig()` adapts the scheduler-field
+projection in `CardStateUpdater::state_context()` and its `learn_steps()` /
+`relearn_steps()` helpers from `rslib/src/scheduler/answering/mod.rs`, using
+Core-normalized `DeckConfig` values. The existing `rslib/src/deckconfig/mod.rs`
+source digest records the Core defaulting/validation provenance. The adaptation
+copies step values into the context and retains caller-owned runtime inputs; it
+does not implement config normalization or collection selection. Source
+digests are recorded in `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd
+and contributors and licensed under AGPL-3.0-or-later; the adaptation retains
+the same license.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

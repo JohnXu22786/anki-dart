@@ -388,6 +388,25 @@ Filtered preview/rescheduling, new/learning/relearning states, FSRS derivation,
 answer application, cache updates, persistence, transactions/undo, and Reviewer
 UI remain open.
 
+### Unit 105 — resolved deck config projection into review context
+
+`ReviewSchedulingContext.withDeckConfig()` projects the already Core-normalized
+resolved config's review multipliers, interval bounds, leech/lapse settings,
+learning/relearning step minutes, and graduation intervals. It derives the
+empty-relearning-steps flag from the normalized config's relearning steps and
+preserves caller-owned fuzz, load-balancer resolver, FSRS inputs/outcomes, and
+other non-config context fields. It does not select or read a deck config,
+normalize stored protobuf values, derive FSRS inputs, or assemble non-review
+states.
+
+Units 103–104 close stored ordinary Review card retrieval and all four
+read-only answer-state calculations for a stored normal-deck Review card.
+Remaining scheduler gaps include collection-backed resolved config selection,
+FSRS memory-state derivation for that path, new/learning/relearning card state
+assembly, filtered-deck preview/rescheduling, answer application, cache updates,
+card/revlog persistence, transactions/undo, application call-site wiring, and
+Reviewer UI.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -400,8 +419,13 @@ UI remain open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: app answer-call-site wiring, persisted scheduling changes,
-  transactions/undo, and orchestration. Collection-backed due-card history and
+- Remaining scheduler work: collection-backed resolved deck-config selection
+  and use of `ReviewSchedulingContext.withDeckConfig()` by the answer path,
+  FSRS derivation, non-review/filtered-deck state assembly, answer-call-site
+  wiring, persisted scheduling changes,
+  transactions/undo, and orchestration. Stored normal-deck Review state
+  retrieval and answer-state calculation are closed by Units 103–104.
+  Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides
   queue-count aggregation. Unit89 adds the pure preloaded-context interval

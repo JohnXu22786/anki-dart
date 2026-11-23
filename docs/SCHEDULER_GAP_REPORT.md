@@ -355,8 +355,23 @@ review state or FSRS inputs. `nextStates()` may calculate FSRS answer outcomes
 from the supplied context. The method does not persist cards or revlogs or
 mutate the cache. This closes read-only answer-state calculation composition
 for a supplied review state only. Core card-state derivation, fetching current
-states, actual answer command application, cache-update call-site wiring,
-persistence, transactions/undo, and Reviewer UI remain open.
+states for filtered-deck preview/rescheduling and non-review card types, actual
+answer command application, cache-update call-site wiring, persistence,
+transactions/undo, and Reviewer UI remain open.
+
+### Unit 103 — collection-backed current normal-deck review state
+
+`CollectionSqliteStorage.currentReviewCardStateForNow()` reads the stored card
+and its currently assigned deck, requires an ordinary Review card in a normal
+deck, and resolves `timingTodayForNow()` once. It applies Core's normal-deck due
+rule by clamping the stored due day to `min(card.due, daysElapsed)` and passes
+that same `daysElapsed` into `ReviewCardState.fromCard()`. Missing cards,
+missing decks, non-review cards, and filtered decks return clear state errors.
+This provides current review-state retrieval for normal decks only. Filtered
+preview/rescheduling state, new/learning/relearning states, FSRS memory-state
+derivation, complete `get_scheduling_states()` composition, answer application,
+answer persistence and cache updates, transaction/undo behavior, and Reviewer
+UI remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and

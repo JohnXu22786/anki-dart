@@ -3635,6 +3635,37 @@ WHERE queue IN (-2, -3)
     return rows.isEmpty ? null : _cardFromRow(rows.first);
   }
 
+  /// Reads the current scheduling state for a review card in a normal deck.
+  ///
+  /// The card's assigned deck must be a stored normal deck. The card's due
+  /// day is clamped to Core's current collection day before projecting, and
+  /// both that day and elapsed-day calculation use one timing snapshot. This
+  /// is a read-only projection; it does not resolve filtered-deck preview
+  /// state or derive FSRS memory state.
+  Future<ReviewCardState> currentReviewCardStateForNow({
+    required CardId cardId,
+    DateTime? now,
+  }) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+    if (card.ctype != CardType.review) {
+      throw StateError('card is not a review card: $cardId');
+    }
+
+    final deck = _deckStorage.getDeck(card.deckId);
+    if (deck == null) throw StateError('deck not found: ${card.deckId}');
+    if (deck.kind is FilteredDeckKind) {
+      throw StateError('filtered deck is not supported: ${card.deckId}');
+    }
+
+    final timing = timingTodayForNow(now: now);
+    return ReviewCardState.fromCard(
+      card,
+      effectiveDue: min(card.due, timing.daysElapsed),
+      daysElapsed: timing.daysElapsed,
+    );
+  }
+
   /// Returns the union of note tags in [deckId] and its descendants.
   ///
   /// The host combines these with the collection tag table to preserve

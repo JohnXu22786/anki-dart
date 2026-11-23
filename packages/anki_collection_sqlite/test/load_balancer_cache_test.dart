@@ -213,6 +213,155 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
   );
 
   test(
+    'current review state clamps future due and preserves stored review data',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, Int64(10)));
+      await _insertReviewContextCard(
+        storage,
+        cardId: 1,
+        noteId: Int64(100),
+        deckId: 7,
+        due: 40,
+        interval: 30,
+        factor: 2450,
+        lapses: 6,
+        data: '{"s":3.25,"d":4.5}',
+      );
+
+      final state = await storage.currentReviewCardStateForNow(
+        cardId: Int64(1),
+        now: now,
+      );
+
+      expect(state.scheduledDays, 30);
+      expect(state.elapsedDays, 30);
+      expect(state.easeFactor, closeTo(2.45, 1e-6));
+      expect(state.lapses, 6);
+      expect(state.memoryState!.stability, 3.25);
+      expect(state.memoryState!.difficulty, 4.5);
+    },
+  );
+
+  test(
+    'current review state uses overdue days from the injected timing',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, Int64(10)));
+      await _insertReviewContextCard(
+        storage,
+        cardId: 1,
+        noteId: Int64(100),
+        deckId: 7,
+        due: 7,
+        interval: 30,
+      );
+
+      final state = await storage.currentReviewCardStateForNow(
+        cardId: Int64(1),
+        now: now,
+      );
+
+      expect(state.scheduledDays, 30);
+      expect(state.elapsedDays, 35);
+    },
+  );
+
+  test('current review state rejects missing cards and decks', () async {
+    const creationSecs = 1_700_000_000;
+    final now = DateTime.fromMillisecondsSinceEpoch(
+      (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+      isUtc: true,
+    );
+    await _prepareTimingCollection(storage, creationSecs);
+    await _insertReviewContextCard(
+      storage,
+      cardId: 1,
+      noteId: Int64(100),
+      deckId: 7,
+    );
+
+    await expectLater(
+      storage.currentReviewCardStateForNow(cardId: Int64(999), now: now),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('card not found'),
+        ),
+      ),
+    );
+    await expectLater(
+      storage.currentReviewCardStateForNow(cardId: Int64(1), now: now),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('deck not found'),
+        ),
+      ),
+    );
+  });
+
+  test(
+    'current review state rejects filtered decks and non-review cards',
+    () async {
+      const creationSecs = 1_700_000_000;
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+        isUtc: true,
+      );
+      await _prepareTimingCollection(storage, creationSecs);
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, Int64(10)));
+      storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck(8));
+      await _insertReviewContextCard(
+        storage,
+        cardId: 1,
+        noteId: Int64(100),
+        deckId: 8,
+      );
+      await _insertReviewContextCard(
+        storage,
+        cardId: 2,
+        noteId: Int64(200),
+        deckId: 7,
+        ctype: 0,
+      );
+
+      await expectLater(
+        storage.currentReviewCardStateForNow(cardId: Int64(1), now: now),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('filtered deck'),
+          ),
+        ),
+      );
+      await expectLater(
+        storage.currentReviewCardStateForNow(cardId: Int64(2), now: now),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('not a review card'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
     'collection interval decision composes the selected cached context',
     () async {
       const creationSecs = 1_700_000_000;
@@ -1114,14 +1263,19 @@ Future<void> _insertReviewContextCard(
   required int deckId,
   int due = 13,
   int originalDeckId = 0,
+  int interval = 5,
+  int factor = 2500,
+  int lapses = 0,
+  int ctype = 2,
+  String data = '',
 }) async {
   await storage.executeBatch('''
 INSERT INTO cards (
   id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses,
   left, odue, odid, flags, data
 ) VALUES (
-  $cardId, $noteId, $deckId, 0, 0, 0, 2, 2, $due, 5, 2500, 1, 0,
-  0, 0, $originalDeckId, 0, ''
+  $cardId, $noteId, $deckId, 0, 0, 0, $ctype, 2, $due, $interval, $factor, 1, $lapses,
+  0, 0, $originalDeckId, 0, '$data'
 );
 ''');
 }

@@ -6,6 +6,19 @@ import 'package:anki_backend_protocol/anki/deck_config.pbenum.dart' as deck;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  final easyDays = parseEasyDaysPercentages(
+    const [1.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0],
+  );
+  final easyModifiers = calculateEasyDaysModifiers(
+    easyDays,
+    const [0, 1, 2],
+    const [0, 2, 3],
+  );
+  if (easyModifiers.length != 3 ||
+      easyModifiers[0] != 1.0 ||
+      easyModifiers[1] != 0.00009999999747378752) {
+    throw StateError('easy-day load modifiers differ on JavaScript');
+  }
   final card = Card(id: Int64(1));
   final note = Note(id: Int64(2));
   if (card.id.toInt() + note.id.toInt() != 3) {

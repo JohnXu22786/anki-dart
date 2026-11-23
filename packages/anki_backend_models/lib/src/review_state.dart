@@ -171,6 +171,39 @@ class ReviewCardState {
   final bool leeched;
   final FsrsMemoryState? memoryState;
 
+  /// Projects a stored review [card] into its current scheduling state.
+  ///
+  /// [effectiveDue] must already be resolved using Core's normal or filtered
+  /// deck rules, and [daysElapsed] must come from the same collection timing
+  /// snapshot. This projection reads no collection data and does not resolve
+  /// filtered-deck due values itself.
+  factory ReviewCardState.fromCard(
+    Card card, {
+    required int effectiveDue,
+    required int daysElapsed,
+  }) {
+    if (card.ctype != CardType.review) {
+      throw const InvalidModelValue('card is not a review card');
+    }
+
+    // Core casts these stored values to i32 before calculating elapsed days.
+    // Keep the intermediate arithmetic in that signed 32-bit domain too.
+    final scheduledDays = card.interval.toSigned(32);
+    final dueOffset =
+        (effectiveDue.toSigned(32) - daysElapsed.toSigned(32)).toSigned(32);
+    final elapsedDays =
+        (scheduledDays - dueOffset).toSigned(32).clamp(0, 0x7fffffff);
+
+    return ReviewCardState(
+      scheduledDays: card.interval,
+      elapsedDays: elapsedDays,
+      easeFactor: card.easeFactor,
+      lapses: card.lapses,
+      leeched: false,
+      memoryState: card.memoryState,
+    );
+  }
+
   /// Calculate Again/Hard/Good/Easy outcomes using Core's review rules.
   ReviewCardSchedulingStates nextStates(ReviewSchedulingContext context) {
     if (context.fsrsNextStates == null &&

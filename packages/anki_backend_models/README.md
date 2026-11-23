@@ -47,3 +47,9 @@ resolver. Collection-backed assembly is provided by
 `CollectionSqliteStorage.reviewSchedulingContextWithLoadBalancerForNow()`;
 scheduler call-site wiring, answer-time cache updates, persistence,
 transactions, and Reviewer UI remain outside these shared packages.
+
+`ReviewCardState.fromCard()` projects an already-loaded review card into its
+current review state. The caller supplies Core's already-resolved effective due
+value and collection `daysElapsed` from the same timing snapshot. The pure
+projection preserves the stored interval, ease factor, lapses, and FSRS memory
+state; it does not read collection data or resolve filtered-deck due values.

@@ -66,6 +66,7 @@ SOURCE_HASHES = {
     "rslib/src/scheduler/states/relearning.rs": "411b1ded66ef2b9927ba85f17416301f5afd66108bd1864ea0d0b4578bc54808",
     "rslib/src/scheduler/states/new.rs": "72fa01fa70e0247c63f91d908698d1db9bc0d063e6b3c7a20b206d308e1af810",
     "rslib/src/scheduler/states/normal.rs": "939d8157473cd445183f7b6f7179c87499667cb1057f47d728a6b4c03806c2c1",
+    "rslib/src/scheduler/answering/current.rs": "1d8a18daf1ff3bf6e4252fbe58c3ff79ced4da8bbf75093b783b0dbd32ddbf4e",
     "rslib/src/scheduler/states/review.rs": "57ed79be2d29e6185ecf7c0444e3f21929ce5b86b1e8d5b60aacf90c9fdb494d",
     "rslib/src/scheduler/states/fuzz.rs": "30a33e2e522ebcb56ca434a897f66209fcb4284065115ee031def73097343105",
     "rslib/src/scheduler/states/mod.rs": "f4247b73f39403a1f8eb423d52bec91bf3e7f6a005f1b93767a24a0a0ee8f7a9",

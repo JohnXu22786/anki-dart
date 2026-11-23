@@ -179,6 +179,14 @@ outside this helper; this is not full load balancing. The existing source hash
 in `SOURCE.sha256` also covers this helper's source, and root `COPYING` remains
 unchanged.
 
+`LoadBalancerDay` ports Core's private per-day card/note collection and
+membership lookup methods from the same source. It accepts explicit signed
+64-bit card and note IDs, tracks note membership while cards are added and
+removed, and keeps its collections private. Cross-day sibling search, time and
+date derivation, random weighted selection, and scheduler integration remain
+outside this helper; it does not implement full load balancing. The existing
+`load_balancer.rs` source hash in `SOURCE.sha256` covers this helper as well.
+
 
 The platform-neutral browser card-template renderer also follows Anki Core's
 `rslib/src/template.rs`, `rslib/src/template_filters.rs`, `rslib/src/cloze.rs`,

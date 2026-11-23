@@ -250,10 +250,14 @@ history and groups each day by preset. Unit 93 adds
 `buildLoadBalancerCacheFromCollection()`, which derives the mapping from all
 stored normal decks using Core's `Deck::config_id()` behavior; filtered decks
 are omitted, while normal-deck config IDs with no matching stored config are
-preserved. Missing deck mappings are skipped by the history grouping. The
-caller-mapping API remains available. Day/timezone derivation, scheduler
-call-site wiring, persisted schedule changes, answer flows, Reviewer UI, and
-full cross-platform review integration remain incomplete.
+preserved. Missing deck mappings are skipped by the history grouping. Unit 94
+adds `loadBalancerContextForNow()`, which calls the existing
+`timingTodayForNow()` path once and returns `daysElapsed`, its absolute
+`nextDayAt` timestamp, and a cache built for that same day in one immutable
+collection result. The caller-mapping API remains available. Actual review
+answer call-site wiring, cache mutation after an answer, transaction
+persistence/undo, Reviewer UI, and full cross-platform review integration
+remain incomplete.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -267,14 +271,14 @@ full cross-platform review integration remain incomplete.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: day/date window and collection-timezone input
-  construction, scheduler call-site wiring,
-  collection storage, and scheduler orchestration. Collection-backed due-card
-  history query and Unit92 cache assembly are available; Unit90 groups the
-  caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides
-  queue-count aggregation.
-  Unit89 adds the pure preloaded-context interval decision, but these helpers do
-  not complete scheduler integration or full cross-platform review integration.
+- Remaining scheduler work: wiring the current collection context into review
+  answers and scheduler execution, cache mutation after answers, persisted
+  scheduling changes, transactions/undo, and orchestration. Collection-backed
+  due-card history and the Unit94 timing-plus-cache context are available; Unit90
+  groups caller-preloaded history, and `CollectionSqliteStorage.deckTree()`
+  provides queue-count aggregation. Unit89 adds the pure preloaded-context
+  interval decision, but these helpers do not complete scheduler integration or
+  full cross-platform review integration.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

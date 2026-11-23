@@ -86,9 +86,12 @@ configs and a caller-supplied deck-to-config map, then returns the shared
 `buildLoadBalancerCacheFromCollection()` convenience method to have the adapter
 derive the mapping from stored normal decks using Core's `Deck::config_id()`
 behavior, omitting filtered decks and retaining normal-deck config IDs even
-when no config row exists.
-Weekday derivation, scheduler call-site wiring, schedule persistence, answer
-flows, and Reviewer UI remain outside this adapter.
+when no config row exists. `loadBalancerContextForNow()` resolves collection
+timing once and returns its `daysElapsed`, absolute `nextDayAt` timestamp, and
+the cache built for that same day as one immutable result. This provides the
+collection-side timing and cache inputs together; scheduler call-site wiring,
+schedule persistence, answer flows, and Reviewer UI remain outside this
+adapter.
 
 The storage reader methods are `getCard`, `allCardsOfNote`,
 `allCardIdsOfNoteInTemplateOrder`, `getNote`, `getNoteWithoutFields`, and

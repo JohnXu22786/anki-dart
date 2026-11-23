@@ -403,11 +403,11 @@ other non-config context fields. It does not select or read a deck config,
 normalize stored protobuf values, derive FSRS inputs, or assemble non-review
 states.
 
-Units 103–106 close stored ordinary Review card retrieval and all four
-read-only answer-state calculations with collection-backed config selection
-for a stored normal-deck Review card. Remaining scheduler gaps include FSRS
-memory-state derivation for that path, new/learning/relearning card state
-assembly, filtered-deck preview/rescheduling, answer application, cache
+Units 103–108 close stored ordinary Review card retrieval, all four read-only
+answer-state calculations with collection-backed config selection, and missing
+FSRS memory-state derivation for a stored normal-deck Review card. Remaining
+scheduler gaps include full FSRS answer outcomes, new/learning/relearning card
+state assembly, filtered-deck preview/rescheduling, answer application, cache
 updates, card/revlog persistence, transactions/undo, application call-site
 wiring, and Reviewer UI.
 
@@ -423,7 +423,26 @@ error. Load balancing reuses the resolved config for preset and `buryReviews`
 selection and shares one timing snapshot with current-state projection. The
 disabled path reads scheduler config but does not load cache/history. Config
 selection and projection are closed for this stored normal-deck Review answer
-path; FSRS derivation and non-review/filtered-deck state assembly remain open.
+path; Unit 108 adds missing FSRS memory derivation, while FSRS answer outcomes
+and non-review/filtered-deck state assembly remain open.
+
+### Unit 108 — derive missing FSRS memory from review history
+
+When collection FSRS is enabled and a stored normal-deck Review card has no
+memory state, `reviewCardSchedulingStatesForCardForNow()` reads that card's
+revlogs through `RevlogStorage`, orders them by revlog ID, and derives the
+current memory state with `computeFsrsMemoryState()`. It uses the resolved deck
+config's FSRS parameters, historical retention, and UTC-midnight ignore-before
+cutoff, plus the existing timing snapshot's `nextDayAt`. Existing memory state
+is reused, and a history with no qualifying reviews leaves the state null.
+Disabled FSRS does not read revlog history. The caller's supplied FSRS
+parameters and answer outputs remain unchanged; FSRS answer intervals and
+complete answer-state parity are not part of this unit.
+
+This closes collection-backed memory-state derivation for stored normal-deck
+Review cards. FSRS answer outcomes derived from that state, non-review/filtered
+state assembly, answer application, cache updates, persistence, transactions,
+and Reviewer UI remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -432,12 +451,12 @@ path; FSRS derivation and non-review/filtered-deck state assembly remain open.
   explicitly. Source hashes and AGPL attribution are in the package notice and
   `SOURCE.sha256`.
 - FSRS parameter training and next-state calculation.
-- FSRS memory-state derivation now has a pure per-card model in
+- FSRS memory-state derivation has a pure per-card model in
   `anki_backend_models.computeFsrsMemoryState()`. It takes ordered revlogs,
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: FSRS derivation, non-review/filtered-deck state
+- Remaining scheduler work: full FSRS answer outcomes, non-review/filtered-deck state
   assembly, answer-call-site wiring, persisted scheduling changes,
   transactions/undo, and orchestration. Stored normal-deck Review state
   retrieval and answer-state calculation with collection-backed config

@@ -406,11 +406,11 @@ states.
 Units 103–109 close stored ordinary Review card retrieval, all four read-only
 answer-state calculations with collection-backed config selection, missing
 FSRS memory-state derivation, and FSRS answer outcomes for stored normal-deck
-Review cards. Remaining scheduler gaps include feature-flag settings,
-short-term option derivation, new/learning/relearning card state assembly,
-filtered-deck preview/rescheduling, answer application, cache updates,
-card/revlog persistence, transactions/undo, application call-site wiring, and
-Reviewer UI.
+Review cards. Unit 110 closes the two FSRS short-term settings for that same
+path. Remaining scheduler gaps include new/learning/relearning card state
+assembly, filtered-deck preview/rescheduling, answer application, cache
+updates, card/revlog persistence, transactions/undo, application call-site
+wiring, and Reviewer UI.
 
 ### Unit 106 — collection config in stored Review answer states
 
@@ -457,10 +457,27 @@ available. It attaches those values as precomputed outputs on a copied
 preventing due-based elapsed days from replacing the explicit FSRS interval.
 
 This closes collection-backed FSRS answer interval and memory-state derivation
-for stored normal-deck Review cards. Feature-flag settings, short-term option
-derivation, non-review/filtered-deck states, answer application and persistence,
-cache mutation, transactions/undo, app call-site wiring, and Reviewer UI remain
-open.
+for stored normal-deck Review cards. FSRS feature-flag settings, short-term
+option derivation, non-review/filtered-deck states, answer application and
+persistence, cache mutation, transactions/undo, app call-site wiring, and
+Reviewer UI remain open.
+
+### Unit 110 — derive FSRS short-term settings for stored Review answers
+
+The stored normal-deck Review answer-state path reads the global
+`fsrs_short_term_with_steps_enabled` boolean and derives `fsrsAllowShortTerm`
+from the global FSRS enablement and the already-resolved deck config: disabled
+FSRS forces false, empty FSRS params use Core's default-params true fallback,
+and parameter sets of at least 19 values enable the option only when entries 17
+and 18 are both positive. It projects those two settings onto a copy of the
+caller's `ReviewSchedulingContext`, preserving its FSRS outputs, parameters,
+fuzz, and load-balancer resolver. Both values are read alongside the existing
+FSRS setting and use the same resolved config as answer-state calculation.
+
+This closes the two FSRS short-term settings for stored normal-deck Review
+answer states. New/learning/relearning card state assembly,
+filtered-deck preview/rescheduling, answer application and persistence, cache
+mutation, transactions/undo, app call-site wiring, and Reviewer UI remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -477,7 +494,7 @@ open.
 - Remaining scheduler work: non-review/filtered-deck state assembly,
   answer-call-site wiring, persisted scheduling changes, transactions/undo,
   and orchestration. Stored normal-deck Review state retrieval and
-  collection-backed FSRS answer-state calculation are closed by Units 103–109.
+  collection-backed FSRS answer-state calculation are closed by Units 103–110.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

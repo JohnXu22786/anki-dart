@@ -271,6 +271,16 @@ fallback follows Core's false default. The exact source file is pinned at
 `e64c6b1aee3e8d668fb8bbe084beada8e070d985`; its SHA-256 is recorded in
 `SOURCE.sha256` and validated by `tool/check_package.py`.
 
+The stored Review answer-state path also derives Core's two FSRS short-term
+settings from `rslib/src/scheduler/answering/mod.rs::card_state_updater()` at
+the same pinned commit. `fsrs_short_term_with_steps_enabled` is read from the
+global boolean config key defined in `rslib/src/config/mod.rs`; short-term
+eligibility follows Core's FSRS-enabled, parameter-length, and positive-index
+checks with its empty-parameter default fallback. Both upstream source files'
+SHA-256 digests are recorded in `SOURCE.sha256` and validated by
+`tool/check_package.py`. This remains limited to stored normal-deck Review
+answer states and does not implement other card states or answer application.
+
 `CollectionLoadBalancerContext.addAnsweredReviewCard()` follows the successful
 answer cache-update step in Core `Collection::answer_card_inner()` from
 `rslib/src/scheduler/answering/mod.rs`. It accepts the post-answer card and

@@ -27,6 +27,7 @@ import 'package:unorm_dart/unorm_dart.dart' as unorm;
 import 'card_data_functions.dart';
 import 'fnvhash.dart';
 import 'fsrs_retrievability_functions.dart';
+import 'fsrs_short_term_settings.dart';
 import 'fsrs_variable_function.dart';
 import 'process_text.dart';
 import 'regex_functions.dart';
@@ -4285,6 +4286,13 @@ WHERE queue IN (-2, -3)
         DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
     final timing = timingTodayForNow(now: now);
     final fsrsEnabled = readCollectionConfig('fsrs') == true;
+    final fsrsShortTermWithStepsEnabled =
+        readCollectionConfig('fsrs_short_term_with_steps_enabled') == true;
+    final fsrsParams = config.fsrsParams;
+    final fsrsAllowShortTerm = allowsFsrsShortTerm(
+      fsrsEnabled: fsrsEnabled,
+      params: fsrsParams,
+    );
     var state = _currentReviewCardStateForCardAtTiming(card, timing);
     if (fsrsEnabled &&
         card.memoryState == null &&
@@ -4309,7 +4317,12 @@ WHERE queue IN (-2, -3)
         );
       }
     }
-    var context = baseContext.withDeckConfig(config);
+    var context = baseContext
+        .withDeckConfig(config)
+        .withFsrsShortTermSettings(
+          allowShortTerm: fsrsAllowShortTerm,
+          shortTermWithStepsEnabled: fsrsShortTermWithStepsEnabled,
+        );
     if (fsrsEnabled) {
       final lastReviewTime =
           card.lastReviewTimeSecs ?? _revlogStorage.timeOfLastReview(card.id);

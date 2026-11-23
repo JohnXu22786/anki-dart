@@ -1252,6 +1252,164 @@ UPDATE cards SET data = '{"s":3.25,"d":4.5,"lrt":$lastReviewSecs}' WHERE id = 1;
     );
 
     test(
+      'FSRS short-term settings use global flags and resolved parameter bounds',
+      () async {
+        await storage.writeCollectionConfig('fsrs', true);
+        await storage.writeCollectionConfig(
+          'fsrs_short_term_with_steps_enabled',
+          true,
+        );
+        await storage.executeBatch(
+          '''UPDATE cards SET data = '{"s":0.01,"d":10}' WHERE id = 1;''',
+        );
+        final cases = <({List<double> params, bool allowShortTerm})>[
+          (params: const [], allowShortTerm: true),
+          (params: List<double>.filled(19, 0.25), allowShortTerm: true),
+          (
+            params: [...List<double>.filled(17, 0.25), 0.0, 0.25],
+            allowShortTerm: false,
+          ),
+          (
+            params: [...List<double>.filled(18, 0.25), -0.1],
+            allowShortTerm: false,
+          ),
+          (
+            params: [...List<double>.filled(17, 0.25), 0.25, 0.0],
+            allowShortTerm: false,
+          ),
+        ];
+
+        for (final testCase in cases) {
+          final config = _config(Int64(10), 'A')
+            ..inner.fsrsParams6.addAll(testCase.params)
+            ..inner.relearnSteps.add(1);
+          storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+          final supplied = ReviewSchedulingContext(
+            fsrsParams: const [0.1, 0.2, 0.3],
+            fsrsAllowShortTerm: !testCase.allowShortTerm,
+            fsrsShortTermWithStepsEnabled: false,
+          );
+          final result = await storage.reviewCardSchedulingStatesForCardForNow(
+            cardId: Int64(1),
+            baseContext: supplied,
+            loadBalancerEnabled: false,
+            fuzzSeed: null,
+            now: now,
+          );
+          final expectedFsrs = computeFsrsNextStates(
+            currentMemoryState: result.current.review.memoryState,
+            daysElapsed: 0,
+            desiredRetention: config.inner.desiredRetention,
+            params: config.fsrsParams,
+          );
+          final expectedContext = supplied
+              .withDeckConfig(config)
+              .withFsrsNextStates(
+                FsrsReviewNextStates(
+                  again: FsrsReviewNextState(
+                    interval: expectedFsrs.again.interval,
+                    memoryState: expectedFsrs.again.memoryState,
+                  ),
+                  hard: FsrsReviewNextState(
+                    interval: expectedFsrs.hard.interval,
+                    memoryState: expectedFsrs.hard.memoryState,
+                  ),
+                  good: FsrsReviewNextState(
+                    interval: expectedFsrs.good.interval,
+                    memoryState: expectedFsrs.good.memoryState,
+                  ),
+                  easy: FsrsReviewNextState(
+                    interval: expectedFsrs.easy.interval,
+                    memoryState: expectedFsrs.easy.memoryState,
+                  ),
+                ),
+              )
+              .withFsrsShortTermSettings(
+                allowShortTerm: testCase.allowShortTerm,
+                shortTermWithStepsEnabled: true,
+              );
+
+          _expectReviewSchedulingStatesEqual(
+            result,
+            result.current.review.nextStates(expectedContext),
+          );
+          expect(
+            result.again.kind,
+            testCase.allowShortTerm
+                ? ReviewScheduleKind.relearning
+                : ReviewScheduleKind.review,
+          );
+          expect(supplied.fsrsParams, [0.1, 0.2, 0.3]);
+          expect(supplied.fsrsAllowShortTerm, !testCase.allowShortTerm);
+          expect(supplied.fsrsShortTermWithStepsEnabled, isFalse);
+
+          if (testCase.allowShortTerm) {
+            await storage.writeCollectionConfig(
+              'fsrs_short_term_with_steps_enabled',
+              false,
+            );
+            final withStepsDisabled = await storage
+                .reviewCardSchedulingStatesForCardForNow(
+                  cardId: Int64(1),
+                  baseContext: supplied,
+                  loadBalancerEnabled: false,
+                  fuzzSeed: null,
+                  now: now,
+                );
+            expect(withStepsDisabled.again.kind, ReviewScheduleKind.review);
+            await storage.writeCollectionConfig(
+              'fsrs_short_term_with_steps_enabled',
+              true,
+            );
+          }
+        }
+      },
+    );
+
+    test(
+      'short-term with-steps flag follows global config and FSRS enablement',
+      () async {
+        await storage.writeCollectionConfig('fsrs', false);
+        await storage.writeCollectionConfig(
+          'fsrs_short_term_with_steps_enabled',
+          true,
+        );
+        final fsrsDisabled = await storage
+            .reviewCardSchedulingStatesForCardForNow(
+              cardId: Int64(1),
+              baseContext: const ReviewSchedulingContext(
+                fsrsAllowShortTerm: true,
+                fsrsShortTermWithStepsEnabled: false,
+              ),
+              loadBalancerEnabled: false,
+              fuzzSeed: null,
+              now: now,
+            );
+
+        expect(fsrsDisabled.again.review.memoryState, isNull);
+
+        await storage.writeCollectionConfig('fsrs', true);
+        await storage.writeCollectionConfig(
+          'fsrs_short_term_with_steps_enabled',
+          false,
+        );
+        final fsrsEnabled = await storage
+            .reviewCardSchedulingStatesForCardForNow(
+              cardId: Int64(1),
+              baseContext: const ReviewSchedulingContext(
+                fsrsAllowShortTerm: false,
+                fsrsShortTermWithStepsEnabled: true,
+              ),
+              loadBalancerEnabled: false,
+              fuzzSeed: null,
+              now: now,
+            );
+
+        expect(fsrsEnabled.again.review.memoryState, isNotNull);
+      },
+    );
+
+    test(
       'stored last-review time takes precedence over revlog lookup',
       () async {
         await storage.writeCollectionConfig('fsrs', true);

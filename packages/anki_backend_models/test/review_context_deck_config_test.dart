@@ -178,4 +178,68 @@ void main() {
     expect(copy.graduatingIntervalGood, context.graduatingIntervalGood);
     expect(copy.graduatingIntervalEasy, context.graduatingIntervalEasy);
   });
+
+  test('copies only FSRS short-term scheduler settings', () {
+    final resolver = (double interval, int minimum, int maximum) => maximum;
+    final memory = FsrsMemoryState(stability: 3, difficulty: 5);
+    final fsrs = FsrsReviewNextStates(
+      again: FsrsReviewNextState(interval: 0.1, memoryState: memory),
+      hard: FsrsReviewNextState(interval: 2, memoryState: memory),
+      good: FsrsReviewNextState(interval: 3, memoryState: memory),
+      easy: FsrsReviewNextState(interval: 4, memoryState: memory),
+    );
+    final params = List<double>.filled(21, 0.25);
+    final context = ReviewSchedulingContext(
+      hardMultiplier: 1.1,
+      easyMultiplier: 1.7,
+      intervalMultiplier: 1.3,
+      maximumReviewInterval: 900,
+      leechThreshold: 9,
+      lapseMultiplier: 0.4,
+      minimumLapseInterval: 3,
+      fuzzFactor: 0.42,
+      loadBalancedIntervalResolver: resolver,
+      fsrsNextStates: fsrs,
+      fsrsParams: params,
+      fsrsDesiredRetention: 0.87,
+      relearningAgainDelaySecs: 77,
+      relearningRemainingSteps: 2,
+      fsrsAllowShortTerm: false,
+      fsrsShortTermWithStepsEnabled: false,
+      relearningStepsEmpty: false,
+      learningStepsMinutes: [1, 2],
+      relearningStepsMinutes: [3],
+      graduatingIntervalGood: 4,
+      graduatingIntervalEasy: 5,
+    );
+
+    final copy = context.withFsrsShortTermSettings(
+      allowShortTerm: true,
+      shortTermWithStepsEnabled: true,
+    );
+
+    expect(copy.fsrsAllowShortTerm, isTrue);
+    expect(copy.fsrsShortTermWithStepsEnabled, isTrue);
+    expect(context.fsrsAllowShortTerm, isFalse);
+    expect(context.fsrsShortTermWithStepsEnabled, isFalse);
+    expect(copy.hardMultiplier, context.hardMultiplier);
+    expect(copy.easyMultiplier, context.easyMultiplier);
+    expect(copy.intervalMultiplier, context.intervalMultiplier);
+    expect(copy.maximumReviewInterval, context.maximumReviewInterval);
+    expect(copy.leechThreshold, context.leechThreshold);
+    expect(copy.lapseMultiplier, context.lapseMultiplier);
+    expect(copy.minimumLapseInterval, context.minimumLapseInterval);
+    expect(copy.fuzzFactor, context.fuzzFactor);
+    expect(copy.loadBalancedIntervalResolver, same(resolver));
+    expect(copy.fsrsNextStates, same(fsrs));
+    expect(copy.fsrsParams, same(params));
+    expect(copy.fsrsDesiredRetention, context.fsrsDesiredRetention);
+    expect(copy.relearningAgainDelaySecs, context.relearningAgainDelaySecs);
+    expect(copy.relearningRemainingSteps, context.relearningRemainingSteps);
+    expect(copy.relearningStepsEmpty, context.relearningStepsEmpty);
+    expect(copy.learningStepsMinutes, same(context.learningStepsMinutes));
+    expect(copy.relearningStepsMinutes, same(context.relearningStepsMinutes));
+    expect(copy.graduatingIntervalGood, context.graduatingIntervalGood);
+    expect(copy.graduatingIntervalEasy, context.graduatingIntervalEasy);
+  });
 }

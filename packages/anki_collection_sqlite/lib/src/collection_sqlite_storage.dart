@@ -3666,7 +3666,7 @@ WHERE queue IN (-2, -3)
     );
   }
 
-  void _validateNormalReviewCard(Card card) {
+  Deck _validateNormalReviewCard(Card card) {
     final cardId = card.id;
     if (card.ctype != CardType.review) {
       throw StateError('card is not a review card: $cardId');
@@ -3677,6 +3677,7 @@ WHERE queue IN (-2, -3)
     if (deck.kind is FilteredDeckKind) {
       throw StateError('filtered deck is not supported: ${card.deckId}');
     }
+    return deck;
   }
 
   /// Returns the union of note tags in [deckId] and its descendants.
@@ -4083,12 +4084,14 @@ WHERE queue IN (-2, -3)
   ///
   /// [today] is the caller-derived collection day, and
   /// [deckConfigByDeck] is the caller-resolved mapping from deck IDs to preset
-  /// IDs. The method reads cards in Core's 99-day half-open range, loads all
-  /// stored deck configs, and delegates the grouping to
-  /// [LoadBalancerCache.fromHistory]. It does not derive either input.
+  /// IDs. The method reads cards in Core's 99-day half-open range and loads all
+  /// stored deck configs. [additionalConfigs] fill only IDs with no stored row,
+  /// such as a selected config using Core defaults, before delegating grouping
+  /// to [LoadBalancerCache.fromHistory]. It does not derive either input.
   Future<LoadBalancerCache> buildLoadBalancerCache({
     required int today,
     required Map<DeckId, DeckConfigId> deckConfigByDeck,
+    Map<DeckConfigId, DeckConfig> additionalConfigs = const {},
   }) async {
     final history = await getAllCardsDueInRange(
       minDay: today,
@@ -4101,10 +4104,14 @@ WHERE queue IN (-2, -3)
               .toList(growable: false),
         )
         .toList(growable: false);
+    final configs = _deckConfigStorage.getDeckConfigMap();
+    for (final entry in additionalConfigs.entries) {
+      configs.putIfAbsent(entry.key, () => entry.value);
+    }
     return LoadBalancerCache.fromHistory(
       cardsByDay: historyRows,
       deckConfigByDeck: deckConfigByDeck,
-      configs: _deckConfigStorage.getDeckConfigMap(),
+      configs: configs,
     );
   }
 
@@ -4118,6 +4125,7 @@ WHERE queue IN (-2, -3)
   /// 99-day half-open window and all stored configs are loaded.
   Future<LoadBalancerCache> buildLoadBalancerCacheFromCollection({
     required int today,
+    Map<DeckConfigId, DeckConfig> additionalConfigs = const {},
   }) {
     final deckConfigByDeck = <DeckId, DeckConfigId>{};
     for (final deck in _deckStorage.getAllDecks()) {
@@ -4127,6 +4135,7 @@ WHERE queue IN (-2, -3)
     return buildLoadBalancerCache(
       today: today,
       deckConfigByDeck: deckConfigByDeck,
+      additionalConfigs: additionalConfigs,
     );
   }
 
@@ -4143,10 +4152,12 @@ WHERE queue IN (-2, -3)
   }
 
   Future<CollectionLoadBalancerContext> _loadBalancerContextForTiming(
-    SchedTimingToday timing,
-  ) async {
+    SchedTimingToday timing, {
+    Map<DeckConfigId, DeckConfig> additionalConfigs = const {},
+  }) async {
     final cache = await buildLoadBalancerCacheFromCollection(
       today: timing.daysElapsed,
+      additionalConfigs: additionalConfigs,
     );
     return CollectionLoadBalancerContext(
       daysElapsed: timing.daysElapsed,
@@ -4242,13 +4253,15 @@ WHERE queue IN (-2, -3)
   /// Calculates the four answer-button states for a stored normal-deck review
   /// card from one caller-selected collection timing snapshot.
   ///
-  /// [baseContext] contains host-resolved scheduler settings and remains the
-  /// source of all non-load-balancer inputs. When enabled, the card's state and
-  /// its load-balancer resolver use the same [now] and collection day; when
-  /// disabled, no load-balancer history or config is read. Missing cards,
-  /// non-review cards, missing decks, and cards assigned to filtered decks
-  /// preserve [currentReviewCardStateForNow] errors. This is read-only and does
-  /// not derive FSRS memory state or persist answer results.
+  /// [baseContext] supplies dynamic non-config scheduler inputs, which remain
+  /// intact while scheduler settings are projected from the card's assigned
+  /// deck config. A missing config row uses Core-compatible defaults; config ID
+  /// zero is invalid. When enabled, the card state and load-balancer resolver
+  /// share one [now] and collection-day snapshot. When disabled, deck config is
+  /// still read but load-balancer history is not. Missing cards, non-review
+  /// cards, missing decks, and filtered decks preserve
+  /// [currentReviewCardStateForNow] errors. This is read-only and does not
+  /// derive FSRS memory state or persist answer results.
   Future<ReviewCardSchedulingStates> reviewCardSchedulingStatesForCardForNow({
     required CardId cardId,
     required ReviewSchedulingContext baseContext,
@@ -4259,17 +4272,34 @@ WHERE queue IN (-2, -3)
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
 
-    _validateNormalReviewCard(card);
+    final deck = _validateNormalReviewCard(card);
+    final deckConfigId = deck.configId;
+    if (deckConfigId == null || deckConfigId == Int64.ZERO) {
+      throw StateError('deck has no config ID: ${deck.id}');
+    }
+    final storedConfig = _deckConfigStorage.getDeckConfig(deckConfigId);
+    final config =
+        storedConfig ??
+        DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
     final timing = timingTodayForNow(now: now);
     final state = _currentReviewCardStateForCardAtTiming(card, timing);
-    final context = loadBalancerEnabled
-        ? await _reviewSchedulingContextWithCardAtTiming(
-            baseContext: baseContext,
-            card: card,
-            fuzzSeed: fuzzSeed,
-            timing: timing,
-          )
-        : baseContext;
+    var context = baseContext.withDeckConfig(config);
+    if (loadBalancerEnabled) {
+      final loadBalancerContext = await _loadBalancerContextForTiming(
+        timing,
+        additionalConfigs: storedConfig == null
+            ? {deckConfigId: config}
+            : const {},
+      );
+      final noteId = config.inner.buryReviews ? card.noteId : null;
+      context = context.withLoadBalancedIntervalResolver(
+        loadBalancerContext.reviewIntervalResolver(
+          deckConfigId: deckConfigId,
+          noteId: noteId,
+          fuzzSeed: fuzzSeed,
+        ),
+      );
+    }
     return state.nextStates(context);
   }
 

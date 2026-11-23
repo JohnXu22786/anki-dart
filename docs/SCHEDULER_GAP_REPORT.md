@@ -378,15 +378,19 @@ transaction/undo behavior, and Reviewer UI remain open.
 stored card, validates that it is an ordinary Review card in a normal deck,
 and projects its current state using one collection timing snapshot. It then
 calculates all four answer-button states from the caller's base
-`ReviewSchedulingContext`. When load balancing is enabled, card/home-deck
-selection and the resolver cache use that same card and timing snapshot; when
-disabled, the method skips load-balancer config and history reads. The supplied
-nullable fuzz seed and scheduler inputs remain caller-owned, and the method is
-read-only: it does not derive FSRS memory state or apply or persist answers.
-This closes whole stored normal-deck Review answer-state calculation only.
-Filtered preview/rescheduling, new/learning/relearning states, FSRS derivation,
-answer application, cache updates, persistence, transactions/undo, and Reviewer
-UI remain open.
+`ReviewSchedulingContext`. It resolves the assigned normal deck's config and
+projects its scheduler fields while preserving caller-owned dynamic inputs. A
+missing config row uses Core-compatible defaults; config ID zero is invalid.
+When load balancing is enabled, the same resolved config supplies both the
+preset and `buryReviews` behavior, and one timing snapshot feeds state and cache
+resolution. When disabled, config is read but load-balancer cache/history is
+not. The nullable fuzz seed and other dynamic inputs remain caller-owned, and
+the method is read-only: it does not derive FSRS memory state or apply or
+persist answers. This closes whole stored normal-deck Review answer-state
+calculation with collection-backed resolved config selection. Filtered
+preview/rescheduling, new/learning/relearning states, FSRS derivation, answer
+application, cache updates, persistence, transactions/undo, and Reviewer UI
+remain open.
 
 ### Unit 105 — resolved deck config projection into review context
 
@@ -399,13 +403,27 @@ other non-config context fields. It does not select or read a deck config,
 normalize stored protobuf values, derive FSRS inputs, or assemble non-review
 states.
 
-Units 103–104 close stored ordinary Review card retrieval and all four
-read-only answer-state calculations for a stored normal-deck Review card.
-Remaining scheduler gaps include collection-backed resolved config selection,
-FSRS memory-state derivation for that path, new/learning/relearning card state
-assembly, filtered-deck preview/rescheduling, answer application, cache updates,
-card/revlog persistence, transactions/undo, application call-site wiring, and
-Reviewer UI.
+Units 103–106 close stored ordinary Review card retrieval and all four
+read-only answer-state calculations with collection-backed config selection
+for a stored normal-deck Review card. Remaining scheduler gaps include FSRS
+memory-state derivation for that path, new/learning/relearning card state
+assembly, filtered-deck preview/rescheduling, answer application, cache
+updates, card/revlog persistence, transactions/undo, application call-site
+wiring, and Reviewer UI.
+
+### Unit 106 — collection config in stored Review answer states
+
+`CollectionSqliteStorage.reviewCardSchedulingStatesForCardForNow()` resolves
+the assigned normal deck's config before calculating answer-button states,
+then applies `ReviewSchedulingContext.withDeckConfig()` while preserving
+caller-owned fuzz, FSRS results and parameters, feature flags, and other
+dynamic inputs. A missing config row follows Core-compatible default config
+values; a normal deck with config ID zero returns an explicit invalid-config
+error. Load balancing reuses the resolved config for preset and `buryReviews`
+selection and shares one timing snapshot with current-state projection. The
+disabled path reads scheduler config but does not load cache/history. Config
+selection and projection are closed for this stored normal-deck Review answer
+path; FSRS derivation and non-review/filtered-deck state assembly remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -419,12 +437,11 @@ Reviewer UI.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: collection-backed resolved deck-config selection
-  and use of `ReviewSchedulingContext.withDeckConfig()` by the answer path,
-  FSRS derivation, non-review/filtered-deck state assembly, answer-call-site
-  wiring, persisted scheduling changes,
+- Remaining scheduler work: FSRS derivation, non-review/filtered-deck state
+  assembly, answer-call-site wiring, persisted scheduling changes,
   transactions/undo, and orchestration. Stored normal-deck Review state
-  retrieval and answer-state calculation are closed by Units 103–104.
+  retrieval and answer-state calculation with collection-backed config
+  selection are closed by Units 103–106.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

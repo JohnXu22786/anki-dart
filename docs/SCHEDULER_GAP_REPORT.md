@@ -114,17 +114,20 @@ scheduler runtime, persistence, and UI remain outside this unit. Pinned source
 hashes and AGPL provenance are recorded in the package notice and
 `packages/anki_collection_sqlite/SOURCE.sha256`.
 
-### Unit 80 — easy-day load modifiers
+### Units 80–81 — load-balancer helpers
 
 `anki_backend_models` now exposes Core's typed `EasyDay` classification,
 seven-day percentage parsing, and pure reduced-day load normalization. The
 helper takes explicit weekday indices and review counts and preserves Core's
 Float32 and zip behavior. `CollectionSqliteStorage.deckTree()` already
-implements the documented queue-count aggregation. This helper does not
-perform full load balancing: interval weighting and selection, sibling
-dispersion, card-history reads, easy-day configuration lookup, weekday/timezone
-derivation, and scheduler integration remain outside the shared model unit.
-Pinned source hashes and AGPL provenance are recorded in the package notice and
+implements the documented queue-count aggregation. Unit 81 adds
+`IntervalLoadCandidate` and `calculateIntervalLoadWeight()`, which compute
+Core's per-interval weight from explicit target interval, review count, sibling
+modifier, and easy-day modifier using float32 arithmetic. Random weighted
+selection, sibling search and modifier derivation, card-history reads, easy-day
+configuration lookup, weekday/timezone derivation, and scheduler integration
+remain outside the shared model unit. Pinned source hashes and AGPL provenance
+are recorded in the package notice and
 `packages/anki_backend_models/SOURCE.sha256`.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
@@ -139,10 +142,11 @@ Pinned source hashes and AGPL provenance are recorded in the package notice and
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: full interval load balancing and collection-backed
-  scheduler configuration reads. `CollectionSqliteStorage.deckTree()` already
-  provides the documented queue-count aggregation; the pure easy-day modifier
-  helper does not complete the full load balancer.
+- Remaining scheduler work: random weighted interval selection, sibling
+  search/modifier derivation, card-history reads, and collection-backed
+  scheduler configuration. `CollectionSqliteStorage.deckTree()` already
+  provides the documented queue-count aggregation; the pure interval-weight
+  and easy-day modifier helpers do not complete full load balancing.
 - Answer persistence, revlog mutation, undo, and collection transactions.
 - Reviewer UI, navigation, timing, and platform IO.
 

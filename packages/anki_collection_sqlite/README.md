@@ -86,7 +86,10 @@ configs and a caller-supplied deck-to-config map, then returns the shared
 `buildLoadBalancerCacheFromCollection()` convenience method to have the adapter
 derive the mapping from stored normal decks using Core's `Deck::config_id()`
 behavior, omitting filtered decks and retaining normal-deck config IDs even
-when no config row exists. `loadBalancerContextForNow()` resolves collection
+when no config row exists. Its optional `additionalConfigs` input fills only
+missing config rows, allowing selected Core-compatible defaults to supply
+load-balancer easy-day settings without overriding stored configs.
+`loadBalancerContextForNow()` resolves collection
 timing once and returns its `daysElapsed`, absolute `nextDayAt` timestamp, and
 the cache built for that same day as one immutable result.
 `findLoadBalancedIntervalForNow()` builds that context once using its optional
@@ -139,13 +142,17 @@ persistence/cache/undo, and Reviewer UI remain outside this method.
 `reviewCardSchedulingStatesForCardForNow()` reads a stored normal-deck Review
 card and calculates its four answer-button states from a caller-supplied base
 `ReviewSchedulingContext`, load-balancer flag, nullable fuzz seed, and optional
-clock. It projects current review state and, when enabled, builds the
-card-specific load-balancer resolver from the same card and timing snapshot.
-When disabled it does not read config or load-balancer history. Missing,
-non-review, missing-deck, and filtered-deck errors match
-`currentReviewCardStateForNow()`. Scheduling settings remain caller-owned;
-this entry point does not derive FSRS inputs or memory state, apply an answer,
-or persist cards/revlogs/cache state. Filtered-deck preview/rescheduling,
+clock. It resolves the stored card's assigned normal deck and config, then
+projects the normalized config's scheduler fields onto the supplied context.
+A missing config row uses Core-compatible defaults; a normal deck with config ID
+zero is invalid. Caller-provided fuzz, FSRS values, runtime flags, and other
+dynamic inputs remain intact. When load balancing is enabled, the resolver uses
+the same config (including `buryReviews` and its preset ID) and the same timing
+snapshot as the answer states. When disabled, the config is still read, but
+load-balancer history/cache is not. Missing, non-review, missing-deck, and
+filtered-deck errors match `currentReviewCardStateForNow()`. This entry point
+does not derive FSRS inputs or memory state, apply an answer, or persist
+cards/revlogs/cache state. Filtered-deck preview/rescheduling,
 new/learning/relearning answer states, answer application and persistence,
 transactions/undo, and Reviewer UI remain outside this entry point.
 

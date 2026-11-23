@@ -1186,8 +1186,179 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
       );
     });
 
+    test('stored deck config changes answer state calculation', () async {
+      final configured = _config(Int64(10), 'A', buryReviews: true)
+        ..inner.hardMultiplier = 1.1
+        ..inner.easyMultiplier = 1.7
+        ..inner.intervalMultiplier = 1.6
+        ..inner.maximumReviewInterval = 40;
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(configured);
+
+      final result = await storage.reviewCardSchedulingStatesForCardForNow(
+        cardId: Int64(1),
+        baseContext: base,
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+        now: now,
+      );
+      final state = await storage.currentReviewCardStateForNow(
+        cardId: Int64(1),
+        now: now,
+      );
+      final expected = state.nextStates(base.withDeckConfig(configured));
+      final withoutConfig = state.nextStates(base);
+
+      _expectReviewSchedulingStatesEqual(result, expected);
+      expect(
+        result.good.review.scheduledDays,
+        expected.good.review.scheduledDays,
+      );
+      expect(
+        result.easy.review.scheduledDays,
+        expected.easy.review.scheduledDays,
+      );
+      expect(
+        result.good.review.scheduledDays,
+        isNot(withoutConfig.good.review.scheduledDays),
+      );
+      expect(
+        result.easy.review.scheduledDays,
+        isNot(withoutConfig.easy.review.scheduledDays),
+      );
+    });
+
     test(
-      'disabled calculation uses base states and skips load-balancer reads',
+      'missing config row uses Core defaults, preserving dynamic inputs',
+      () async {
+        storage.deckConfigs.removeDeckConfig(Int64(10));
+        final dynamicContext = ReviewSchedulingContext(
+          fuzzFactor: 0.25,
+          fsrsNextStates: FsrsReviewNextStates(
+            again: FsrsReviewNextState(
+              interval: 1,
+              memoryState: FsrsMemoryState(stability: 1, difficulty: 2),
+            ),
+            hard: FsrsReviewNextState(
+              interval: 2,
+              memoryState: FsrsMemoryState(stability: 3, difficulty: 4),
+            ),
+            good: FsrsReviewNextState(
+              interval: 3,
+              memoryState: FsrsMemoryState(stability: 5, difficulty: 6),
+            ),
+            easy: FsrsReviewNextState(
+              interval: 4,
+              memoryState: FsrsMemoryState(stability: 7, difficulty: 8),
+            ),
+          ),
+          fsrsParams: const [0.2, 0.3, 0.4],
+          fsrsDesiredRetention: 0.88,
+          fsrsAllowShortTerm: true,
+          fsrsShortTermWithStepsEnabled: true,
+        );
+
+        final result = await storage.reviewCardSchedulingStatesForCardForNow(
+          cardId: Int64(1),
+          baseContext: dynamicContext,
+          loadBalancerEnabled: false,
+          fuzzSeed: null,
+          now: now,
+        );
+        final state = await storage.currentReviewCardStateForNow(
+          cardId: Int64(1),
+          now: now,
+        );
+        final expectedContext = dynamicContext.withDeckConfig(
+          DeckConfig.defaults(),
+        );
+        _expectReviewSchedulingStatesEqual(
+          result,
+          state.nextStates(expectedContext),
+        );
+        expect(expectedContext.fuzzFactor, dynamicContext.fuzzFactor);
+        expect(
+          expectedContext.fsrsNextStates,
+          same(dynamicContext.fsrsNextStates),
+        );
+        expect(expectedContext.fsrsParams, same(dynamicContext.fsrsParams));
+        expect(
+          expectedContext.fsrsDesiredRetention,
+          dynamicContext.fsrsDesiredRetention,
+        );
+        expect(expectedContext.fsrsAllowShortTerm, isTrue);
+        expect(expectedContext.fsrsShortTermWithStepsEnabled, isTrue);
+      },
+    );
+
+    test(
+      'enabled load balancing uses defaults for a missing config row',
+      () async {
+        storage.deckConfigs.removeDeckConfig(Int64(10));
+        final config = DeckConfig(
+          id: Int64(10),
+          inner: DeckConfig.defaults().inner,
+        );
+        final timing = storage.timingTodayForNow(now: now);
+        final cache = await storage.buildLoadBalancerCache(
+          today: timing.daysElapsed,
+          deckConfigByDeck: {Int64(7): Int64(10)},
+          additionalConfigs: {Int64(10): config},
+        );
+        final resolver =
+            CollectionLoadBalancerContext(
+              daysElapsed: timing.daysElapsed,
+              nextDayAt: TimestampSecs(timing.nextDayAt),
+              cache: cache,
+            ).reviewIntervalResolver(
+              deckConfigId: Int64(10),
+              noteId: null,
+              fuzzSeed: BigInt.from(42),
+            );
+
+        final result = await storage.reviewCardSchedulingStatesForCardForNow(
+          cardId: Int64(1),
+          baseContext: base,
+          loadBalancerEnabled: true,
+          fuzzSeed: BigInt.from(42),
+          now: now,
+        );
+        final state = await storage.currentReviewCardStateForNow(
+          cardId: Int64(1),
+          now: now,
+        );
+        final expectedContext = base
+            .withDeckConfig(config)
+            .withLoadBalancedIntervalResolver(resolver);
+
+        _expectReviewSchedulingStatesEqual(
+          result,
+          state.nextStates(expectedContext),
+        );
+      },
+    );
+
+    test('normal deck with config ID zero reports an invalid config', () async {
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, Int64.ZERO));
+      await expectLater(
+        storage.reviewCardSchedulingStatesForCardForNow(
+          cardId: Int64(1),
+          baseContext: base,
+          loadBalancerEnabled: false,
+          fuzzSeed: null,
+          now: now,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('deck has no config ID'),
+          ),
+        ),
+      );
+    });
+
+    test(
+      'disabled calculation uses config and skips load-balancer reads',
       () async {
         // An enabled cache read would reject this unrelated malformed history row.
         await storage.executeBatch('''
@@ -1206,12 +1377,15 @@ INSERT INTO cards (id, nid, did, queue, due) VALUES (2, 200, 7, 0, 4294967296);
           cardId: Int64(1),
           now: now,
         );
-        _expectReviewSchedulingStatesEqual(result, current.nextStates(base));
+        _expectReviewSchedulingStatesEqual(
+          result,
+          current.nextStates(base.withDeckConfig(_config(Int64(10), 'A'))),
+        );
       },
     );
 
     test(
-      'enabled calculation composes the stored state with Unit101 context',
+      'enabled calculation uses the resolved config and shared timing snapshot',
       () async {
         final result = await storage.reviewCardSchedulingStatesForCardForNow(
           cardId: Int64(1),
@@ -1225,21 +1399,24 @@ INSERT INTO cards (id, nid, did, queue, due) VALUES (2, 200, 7, 0, 4294967296);
           cardId: Int64(1),
           now: now,
         );
-        final composed = await storage
-            .reviewSchedulingContextWithCardLoadBalancerForNow(
-              baseContext: base,
-              cardId: Int64(1),
-              loadBalancerEnabled: true,
-              fuzzSeed: BigInt.from(42),
-              now: now,
-            );
+        final loadBalancer = await storage.loadBalancerContextForNow(now: now);
+        final config = _config(Int64(10), 'A', buryReviews: true);
+        final composed = base
+            .withLoadBalancedIntervalResolver(
+              loadBalancer.reviewIntervalResolver(
+                deckConfigId: config.id,
+                noteId: Int64(100),
+                fuzzSeed: BigInt.from(42),
+              ),
+            )
+            .withDeckConfig(config);
 
         _expectReviewSchedulingStatesEqual(
           result,
           current.nextStates(composed),
         );
-        expect(composed.intervalMultiplier, base.intervalMultiplier);
-        expect(composed.hardMultiplier, base.hardMultiplier);
+        expect(composed.intervalMultiplier, config.inner.intervalMultiplier);
+        expect(composed.hardMultiplier, config.inner.hardMultiplier);
         expect(composed.fuzzFactor, base.fuzzFactor);
         expect(composed.fsrsParams, same(base.fsrsParams));
         expect(result.current.review.scheduledDays, 30);

@@ -894,6 +894,117 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
     },
   );
 
+  group('reviewCardSchedulingStatesWithCardLoadBalancerForNow', () {
+    const creationSecs = 1_700_000_000;
+    final now = DateTime.fromMillisecondsSinceEpoch(
+      (creationSecs + 12 * Duration.secondsPerDay + 1234) * 1000,
+      isUtc: true,
+    );
+    const base = ReviewSchedulingContext(
+      intervalMultiplier: 1.2,
+      hardMultiplier: 1.4,
+      fuzzFactor: 0.25,
+    );
+    final state = ReviewCardState(
+      scheduledDays: 5,
+      elapsedDays: 8,
+      easeFactor: 2.3,
+      lapses: 2,
+    );
+
+    setUp(() async {
+      await _prepareTimingCollection(storage, creationSecs);
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config(Int64(10), 'A', buryReviews: true),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck(7, Int64(10)));
+      await _insertReviewContextCard(
+        storage,
+        cardId: 1,
+        noteId: Int64(100),
+        deckId: 7,
+      );
+    });
+
+    test(
+      'enabled output matches direct nextStates with the Unit99 resolver',
+      () async {
+        const fuzzSeed = 42;
+        final composedContext = await storage
+            .reviewSchedulingContextWithCardLoadBalancerForNow(
+              baseContext: base,
+              cardId: Int64(1),
+              loadBalancerEnabled: true,
+              fuzzSeed: BigInt.from(fuzzSeed),
+              now: now,
+            );
+
+        final result = await storage
+            .reviewCardSchedulingStatesWithCardLoadBalancerForNow(
+              state: state,
+              baseContext: base,
+              cardId: Int64(1),
+              loadBalancerEnabled: true,
+              fuzzSeed: BigInt.from(fuzzSeed),
+              now: now,
+            );
+
+        _expectReviewSchedulingStatesEqual(
+          result,
+          state.nextStates(composedContext),
+        );
+        expect(composedContext.intervalMultiplier, base.intervalMultiplier);
+        expect(composedContext.hardMultiplier, base.hardMultiplier);
+        expect(composedContext.fuzzFactor, base.fuzzFactor);
+        expect(result.current.review.scheduledDays, state.scheduledDays);
+      },
+    );
+
+    test(
+      'disabled output uses the base context without looking up the card',
+      () async {
+        final result = await storage
+            .reviewCardSchedulingStatesWithCardLoadBalancerForNow(
+              state: state,
+              baseContext: base,
+              cardId: Int64(999),
+              loadBalancerEnabled: false,
+              fuzzSeed: null,
+            );
+
+        _expectReviewSchedulingStatesEqual(result, state.nextStates(base));
+      },
+    );
+
+    test(
+      'injected now selects the collection timing for answer states',
+      () async {
+        final context = await storage.loadBalancerContextForNow(now: now);
+        final expectedContext = base.withLoadBalancedIntervalResolver(
+          context.reviewIntervalResolver(
+            deckConfigId: Int64(10),
+            noteId: Int64(100),
+            fuzzSeed: BigInt.from(42),
+          ),
+        );
+        final result = await storage
+            .reviewCardSchedulingStatesWithCardLoadBalancerForNow(
+              state: state,
+              baseContext: base,
+              cardId: Int64(1),
+              loadBalancerEnabled: true,
+              fuzzSeed: BigInt.from(42),
+              now: now,
+            );
+
+        _expectReviewSchedulingStatesEqual(
+          result,
+          state.nextStates(expectedContext),
+        );
+      },
+    );
+  });
+
   group('CollectionLoadBalancerContext.addAnsweredReviewCard', () {
     final preset = Int64(10);
 
@@ -958,6 +1069,26 @@ INSERT INTO cards (id, nid, due, did, queue) VALUES
       expect(day.hasSibling(Int64(20)), isFalse);
     });
   });
+}
+
+void _expectReviewSchedulingStatesEqual(
+  ReviewCardSchedulingStates actual,
+  ReviewCardSchedulingStates expected,
+) {
+  for (final pair in [
+    (actual.current, expected.current),
+    (actual.again, expected.again),
+    (actual.hard, expected.hard),
+    (actual.good, expected.good),
+    (actual.easy, expected.easy),
+  ]) {
+    expect(pair.$1.kind, pair.$2.kind);
+    expect(pair.$1.review.scheduledDays, pair.$2.review.scheduledDays);
+    expect(pair.$1.review.elapsedDays, pair.$2.review.elapsedDays);
+    expect(pair.$1.review.easeFactor, pair.$2.review.easeFactor);
+    expect(pair.$1.review.lapses, pair.$2.review.lapses);
+    expect(pair.$1.review.leeched, pair.$2.review.leeched);
+  }
 }
 
 Future<void> _prepareTimingCollection(

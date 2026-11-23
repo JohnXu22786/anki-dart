@@ -4174,6 +4174,36 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Calculates answer-button states for a caller-resolved review [state].
+  ///
+  /// [state] and [baseContext] must be derived from the same host snapshot.
+  /// This method does not derive current card state or FSRS inputs. When load
+  /// balancing is enabled, it composes the card-specific resolver once using
+  /// [cardId], [fuzzSeed], and [now]; when disabled, it uses [baseContext]
+  /// without collection reads. It returns [ReviewCardState.nextStates]
+  /// unchanged, which may calculate FSRS answer outcomes from [baseContext],
+  /// and does not persist or mutate card, revlog, or cache state.
+  Future<ReviewCardSchedulingStates>
+  reviewCardSchedulingStatesWithCardLoadBalancerForNow({
+    required ReviewCardState state,
+    required ReviewSchedulingContext baseContext,
+    required CardId cardId,
+    required bool loadBalancerEnabled,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+  }) async {
+    final context = loadBalancerEnabled
+        ? await reviewSchedulingContextWithCardLoadBalancerForNow(
+            baseContext: baseContext,
+            cardId: cardId,
+            loadBalancerEnabled: true,
+            fuzzSeed: fuzzSeed,
+            now: now,
+          )
+        : baseContext;
+    return state.nextStates(context);
+  }
+
   /// Selects an interval using the collection cache and timing for [now].
   ///
   /// This reads the current collection context once and delegates the pure

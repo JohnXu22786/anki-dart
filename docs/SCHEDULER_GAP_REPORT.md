@@ -114,7 +114,7 @@ scheduler runtime, persistence, and UI remain outside this unit. Pinned source
 hashes and AGPL provenance are recorded in the package notice and
 `packages/anki_collection_sqlite/SOURCE.sha256`.
 
-### Units 80–81 — load-balancer helpers
+### Units 80–82 — load-balancer helpers
 
 `anki_backend_models` now exposes Core's typed `EasyDay` classification,
 seven-day percentage parsing, and pure reduced-day load normalization. The
@@ -130,6 +130,14 @@ remain outside the shared model unit. Pinned source hashes and AGPL provenance
 are recorded in the package notice and
 `packages/anki_backend_models/SOURCE.sha256`.
 
+Unit 82 adds `calculateSiblingDayModifiers()`, a pure helper that applies the
+Core five-day sibling neighborhood to explicit sibling day indices over an
+inclusive window in Core's 99-day cache, preserving float32 factors and
+multiplication rounding. It deduplicates indices and processes them in
+ascending order for deterministic output. Sibling discovery, card-history reads, day/date
+derivation, random weighted selection, and scheduler integration remain
+outside; units 80–82 do not implement full load balancing.
+
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
   `RelearningCardState` in `anki_backend_models`. Learning-step minutes,
@@ -143,7 +151,7 @@ are recorded in the package notice and
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
 - Remaining scheduler work: random weighted interval selection, sibling
-  search/modifier derivation, card-history reads, and collection-backed
+  search, card-history reads, day/date derivation, and collection-backed
   scheduler configuration. `CollectionSqliteStorage.deckTree()` already
   provides the documented queue-count aggregation; the pure interval-weight
   and easy-day modifier helpers do not complete full load balancing.

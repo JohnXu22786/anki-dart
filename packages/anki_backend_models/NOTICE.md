@@ -162,11 +162,21 @@ configuration or storage.
 `IntervalLoadCandidate` and `calculateIntervalLoadWeight()` adapt Core's
 per-interval formula from the same source. They take the target interval,
 review count, sibling modifier, and easy-day modifier explicitly, and preserve
-the formula's Float32 arithmetic. Random weighted selection, sibling search
-and modifier derivation, card-history reads, configuration lookup, and
-scheduler integration remain outside this port. The source file's hash is
+the formula's Float32 arithmetic. Random weighted selection, sibling search,
+card-history reads, configuration lookup, and scheduler integration remain
+outside this port. The source file's hash is
 recorded in `SOURCE.sha256`; Anki Core is Copyright Ankitects Pty Ltd and
 contributors and licensed under AGPL-3.0-or-later.
+
+`calculateSiblingDayModifiers()` adapts Core's sibling-day neighborhood
+factors from the same `load_balancer.rs` source. It accepts an inclusive
+interval window and caller-supplied sibling day indices in the 99-day cache.
+It deduplicates and processes indices in ascending order, and preserves Core's
+Float32 factor and multiplication rounding. Sibling discovery across presets, day/date derivation,
+card-history reads, load-weighted selection, and scheduler integration remain
+outside this helper; this is not full load balancing. The existing source hash
+in `SOURCE.sha256` also covers this helper's source, and root `COPYING` remains
+unchanged.
 
 
 The platform-neutral browser card-template renderer also follows Anki Core's

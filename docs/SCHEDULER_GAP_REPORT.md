@@ -408,7 +408,7 @@ answer-state calculations with collection-backed config selection, missing
 FSRS memory-state derivation, and FSRS answer outcomes for stored normal-deck
 Review cards. Unit 110 closes the two FSRS short-term settings for that same
 path. Unit 111 closes stored normal-deck New answer-state calculation only.
-Remaining scheduler gaps include Learning and Relearning state assembly,
+Remaining scheduler gaps include Relearning state assembly,
 filtered-deck preview/rescheduling, answer application, cache updates,
 card/revlog persistence, transactions/undo, application call-site wiring, and
 Reviewer UI.
@@ -493,10 +493,29 @@ revlogs, derive FSRS memory/outcomes, or load load-balancer history/cache. It is
 read-only and reports missing card/deck, non-New card, filtered deck, and
 missing config ID errors.
 
-This closes stored normal-deck New answer-state calculation only. Learning and
-Relearning state retrieval/assembly, filtered-deck preview/rescheduling,
-answer application and persistence, cache mutation, transactions/undo, app
-call-site wiring, and Reviewer UI remain open.
+This closes stored normal-deck New answer-state calculation only. At this
+point Learning and Relearning state retrieval/assembly, filtered-deck
+preview/rescheduling, answer application and persistence, cache mutation,
+transactions/undo, app call-site wiring, and Reviewer UI remain open.
+
+### Unit 113 — stored normal-deck Learn answer states
+
+`CollectionSqliteStorage.learningCardSchedulingStatesForCard()` requires the
+caller to provide `scheduledSecs` and `elapsedSecs` resolved from one scheduler
+snapshot. It does not derive them from the stored queue, due value, or
+timestamps. `LearningCardState.fromCard()` projects the stored remaining steps
+and memory state along with those exact timings. The method resolves the
+assigned normal deck's learning/relearning config, applies Core defaults when
+the config row is absent, and composes the two collection FSRS short-term flags
+with the caller's existing `ReviewSchedulingContext`. It returns the four
+answer-button states without reading revlogs or load-balancer cache/history or
+persisting answers. Missing cards/decks/config IDs, non-Learn cards, and
+filtered decks fail clearly.
+
+This closes stored normal-deck Learn answer-state calculation only. Relearning
+state assembly, filtered-deck preview/rescheduling, answer application and
+persistence, cache mutation, transactions/undo, app call-site wiring, and
+Reviewer UI remain open.
 
 - New-card, learning-card, and existing relearning-card pure Again/Hard/Good/Easy
   transitions are now exposed by `NewCardState`, `LearningCardState`, and
@@ -510,12 +529,12 @@ call-site wiring, and Reviewer UI remain open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: Learning/Relearning and filtered-deck state
+- Remaining scheduler work: Relearning and filtered-deck state
   assembly, answer-call-site wiring, persisted scheduling changes, transactions/undo,
   and orchestration. Stored normal-deck Review state retrieval and
   collection-backed FSRS Review answer-state calculation are closed by Units
   103–110; stored normal-deck New answer-state calculation is closed by Unit
-  111.
+  111; Unit 113 closes stored normal-deck Learn answer-state calculation.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

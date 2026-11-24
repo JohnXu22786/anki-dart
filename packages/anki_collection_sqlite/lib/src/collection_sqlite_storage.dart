@@ -13,6 +13,7 @@ import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as protoConfig;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as protoNotetype;
 import 'package:anki_backend_protocol/anki/collection.pb.dart'
     as protoCollection;
+import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as protoScheduler;
 import 'package:anki_collection_schema/anki_collection_schema.dart';
 import 'package:anki_scheduler_timing/anki_scheduler_timing.dart';
 import 'package:anki_search_sql/anki_search_sql.dart';
@@ -3790,6 +3791,119 @@ WHERE queue IN (-2, -3)
       card,
       scheduledSecs: scheduledSecs,
       elapsedSecs: elapsedSecs,
+    );
+  }
+
+  /// Reads and wraps the current state of a stored card in a rescheduling
+  /// filtered deck in Core's generated [protoScheduler.SchedulingState] shape.
+  ///
+  /// Learn and Relearn cards require caller-resolved [scheduledSecs] and
+  /// [elapsedSecs] from the same scheduler snapshot. These values are never
+  /// inferred from stored queue, due, or timestamps. Review state uses the
+  /// supplied [now] to resolve one collection timing snapshot. This read-only
+  /// method delegates the current-state calculations to the existing card
+  /// projections and does not calculate answer states or mutate collection
+  /// data.
+  Future<protoScheduler.SchedulingState>
+  currentReschedulingFilteredCardSchedulingState({
+    required CardId cardId,
+    int? scheduledSecs,
+    int? elapsedSecs,
+    DateTime? now,
+  }) async {
+    Card card;
+    try {
+      final storedCard = await getCard(cardId);
+      if (storedCard == null) throw StateError('card not found: $cardId');
+      card = storedCard;
+    } on InvalidModelValue catch (error) {
+      throw StateError('unsupported card type or stored card value: $error');
+    }
+
+    final protoScheduler.SchedulingState_Normal normal = await switch (card
+        .ctype) {
+      CardType.newCard => () async {
+        final state = await currentReschedulingFilteredNewCardState(
+          cardId: cardId,
+        );
+        return protoScheduler.SchedulingState_Normal(
+          new_1: protoScheduler.SchedulingState_New(position: state.position),
+        );
+      }(),
+      CardType.learn => () async {
+        if (scheduledSecs == null || elapsedSecs == null) {
+          throw StateError(
+            'scheduledSecs and elapsedSecs are required for Learn cards',
+          );
+        }
+        final state = await currentReschedulingFilteredLearningCardState(
+          cardId: cardId,
+          scheduledSecs: scheduledSecs,
+          elapsedSecs: elapsedSecs,
+        );
+        return protoScheduler.SchedulingState_Normal(
+          learning: protoScheduler.SchedulingState_Learning(
+            remainingSteps: state.remainingSteps,
+            scheduledSecs: state.scheduledSecs,
+            elapsedSecs: state.elapsedSecs,
+            memoryState: state.memoryState?.toProto(),
+          ),
+        );
+      }(),
+      CardType.review => () async {
+        final state = await currentReschedulingFilteredReviewCardStateForNow(
+          cardId: cardId,
+          now: now,
+        );
+        return protoScheduler.SchedulingState_Normal(
+          review: protoScheduler.SchedulingState_Review(
+            scheduledDays: state.scheduledDays,
+            elapsedDays: state.elapsedDays,
+            easeFactor: state.easeFactor,
+            lapses: state.lapses,
+            leeched: state.leeched,
+            memoryState: state.memoryState?.toProto(),
+          ),
+        );
+      }(),
+      CardType.relearn => () async {
+        if (scheduledSecs == null || elapsedSecs == null) {
+          throw StateError(
+            'scheduledSecs and elapsedSecs are required for Relearn cards',
+          );
+        }
+        final state = await currentReschedulingFilteredRelearningCardState(
+          cardId: cardId,
+          scheduledSecs: scheduledSecs,
+          elapsedSecs: elapsedSecs,
+        );
+        return protoScheduler.SchedulingState_Normal(
+          relearning: protoScheduler.SchedulingState_Relearning(
+            review: protoScheduler.SchedulingState_Review(
+              scheduledDays: state.review.scheduledDays,
+              elapsedDays: state.review.elapsedDays,
+              easeFactor: state.review.easeFactor,
+              lapses: state.review.lapses,
+              leeched: state.review.leeched,
+              memoryState: state.review.memoryState?.toProto(),
+            ),
+            learning: protoScheduler.SchedulingState_Learning(
+              remainingSteps: state.learning.remainingSteps,
+              scheduledSecs: state.learning.scheduledSecs,
+              elapsedSecs: state.learning.elapsedSecs,
+              memoryState: state.learning.memoryState?.toProto(),
+            ),
+          ),
+        );
+      }(),
+    };
+
+    return protoScheduler.SchedulingState(
+      filtered: protoScheduler.SchedulingState_Filtered(
+        rescheduling: protoScheduler.SchedulingState_ReschedulingFilter(
+          originalState: normal,
+        ),
+      ),
     );
   }
 

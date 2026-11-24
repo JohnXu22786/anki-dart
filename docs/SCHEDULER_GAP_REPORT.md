@@ -622,6 +622,30 @@ wrapping, filtered-card query/gather, rescheduling execution, answer
 application/persistence, transactions/undo, and app/UI integration remain
 open.
 
+### Unit 123 — stored Learn answer states in rescheduling filtered decks
+
+`CollectionSqliteStorage.reschedulingFilteredLearningCardSchedulingStatesForCard()`
+returns the current and Again/Hard/Good/Easy states for a stored Learn card
+assigned to a filtered deck with rescheduling enabled. The caller supplies
+`scheduledSecs` for the current learning step and `elapsedSecs` from the same
+scheduler timing snapshot; neither is inferred from stored queue, due, or
+timestamps. `LearningCardState.fromCard()` preserves the stored remaining
+steps and FSRS memory. The answer transitions use the original home deck's
+normalized config and collection FSRS short-term flags, preserve caller-owned
+dynamic context, and use Core defaults when the config row is absent. Every
+current/outcome Normal state is wrapped in
+`SchedulingState.Filtered.ReschedulingFilter.original_state`. Missing or
+invalid cards, missing assigned/home decks, normal or non-rescheduling
+filtered decks, missing original deck IDs, non-normal home decks, and missing
+home config IDs fail clearly. This read-only path does not read revlogs, FSRS
+memory history, or load-balancer cache/history, and does not apply or persist
+answers.
+
+This closes only stored Learn-card answer-state composition in rescheduling
+filtered decks. Relearn and Review outcomes, non-rescheduling Preview wrapping,
+filtered-card query/gather, rescheduling execution, answer application and
+persistence, transactions/undo, and app/UI integration remain open.
+
 ### Unit 115 — pure filtered-preview current and answer states
 
 `FilteredPreviewState` and `FilteredPreviewSchedulingStates` model Core's
@@ -685,7 +709,8 @@ app call-site wiring, and Reviewer UI remain open.
   New-state projection for rescheduling filtered cards. Unit122 closes only
   stored New answer-state composition for rescheduling filtered cards.
   Unit119 closes only the current unwrapped Learn-state projection for
-  rescheduling filtered cards.
+  rescheduling filtered cards. Unit123 closes only stored Learn answer-state
+  composition for rescheduling filtered cards.
   Unit121 closes current-state `ReschedulingFilterState` wrapping for stored
   New, Learn, Review, and Relearn cards in rescheduling filtered decks. It does
   not close answer-state composition, Preview wrapping, or rescheduling

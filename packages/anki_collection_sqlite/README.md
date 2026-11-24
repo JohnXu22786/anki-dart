@@ -267,6 +267,24 @@ Review outcomes, non-rescheduling Preview wrapping, filtered-card
 query/gathering, rescheduling execution, answer persistence, transactions/undo,
 and app/UI wiring remain outside this entry point.
 
+`reschedulingFilteredLearningCardSchedulingStatesForCard()` reads a stored
+Learn card assigned to a rescheduling filtered deck. The caller supplies
+`scheduledSecs` for the current learning step and `elapsedSecs` from the same
+scheduler timing snapshot; neither value is inferred from stored queue, due,
+or timestamps. `LearningCardState.fromCard()` preserves the stored remaining
+steps and FSRS memory, while its four answer transitions use the original
+home deck's scheduler config and collection FSRS short-term flags. Missing
+config rows use Core defaults, and caller-owned context fields are preserved.
+Current and answer Normal states are wrapped in
+`SchedulingState.Filtered.ReschedulingFilter.original_state`. The read-only
+API rejects missing or invalid cards, missing decks, normal or non-rescheduling
+filtered decks, absent original/home decks, and a home deck without a config
+ID. It does not read revlogs, FSRS memory history, or load-balancer
+cache/history, and does not apply or persist answers. Relearn and Review
+filtered outcomes, Preview wrapping, filtered-card query/gathering,
+rescheduling execution, answer persistence, transactions/undo, and app/UI
+wiring remain outside this entry point.
+
 `learningCardSchedulingStatesForCard()` reads a stored Learn card in its
 assigned normal deck and requires `scheduledSecs` and `elapsedSecs` already
 resolved from the same scheduler snapshot. It does not infer timing from the

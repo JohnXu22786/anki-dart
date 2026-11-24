@@ -4045,6 +4045,135 @@ WHERE queue IN (-2, -3)
     ),
   };
 
+  /// Calculates current and Again/Hard/Good/Easy states for a stored Learn
+  /// card assigned to a rescheduling filtered deck, wrapping each state in
+  /// Core's filtered-rescheduling protocol shape.
+  ///
+  /// [scheduledSecs] is the current learning-step delay resolved by the
+  /// caller, and [elapsedSecs] comes from the same scheduler timing snapshot.
+  /// Neither value is inferred from stored queue, due, or timestamps. The
+  /// stored remaining steps and memory state are projected by
+  /// [LearningCardState.fromCard]. Answer transitions use the home deck's
+  /// scheduler config, with Core defaults when the config row is absent, and
+  /// collection FSRS short-term settings. Other dynamic values from
+  /// [baseContext] are preserved. This read-only path does not read revlogs,
+  /// FSRS memory history, or load-balancer cache/history, and does not persist
+  /// answers.
+  Future<protoScheduler.SchedulingStates>
+  reschedulingFilteredLearningCardSchedulingStatesForCard({
+    required CardId cardId,
+    required int scheduledSecs,
+    required int elapsedSecs,
+    required ReviewSchedulingContext baseContext,
+  }) async {
+    late final Card card;
+    try {
+      final storedCard = await getCard(cardId);
+      if (storedCard == null) throw StateError('card not found: $cardId');
+      card = storedCard;
+    } on InvalidModelValue catch (error) {
+      throw StateError('invalid stored card value: $error');
+    }
+    if (card.ctype != CardType.learn) {
+      throw StateError('card is not a learning card: $cardId');
+    }
+
+    final filteredDeck = _deckStorage.getDeck(card.deckId);
+    if (filteredDeck == null) {
+      throw StateError('deck not found: ${card.deckId}');
+    }
+    final filteredKind = filteredDeck.kind;
+    if (filteredKind is! FilteredDeckKind) {
+      throw StateError('filtered deck required: ${card.deckId}');
+    }
+    if (!filteredKind.value.reschedule) {
+      throw StateError(
+        'filtered deck does not reschedule cards: ${filteredDeck.id}',
+      );
+    }
+    if (card.originalDeckId == Int64.ZERO) {
+      throw StateError('card has no original deck ID: $cardId');
+    }
+    final homeDeck = _deckStorage.getDeck(card.originalDeckId);
+    if (homeDeck == null) {
+      throw StateError('home deck not found: ${card.originalDeckId}');
+    }
+    if (homeDeck.kind is! NormalDeckKind) {
+      throw StateError('home deck is not a normal deck: ${homeDeck.id}');
+    }
+    final deckConfigId = homeDeck.configId;
+    if (deckConfigId == null || deckConfigId == Int64.ZERO) {
+      throw StateError('home deck has no config ID: ${homeDeck.id}');
+    }
+
+    final storedConfig = _deckConfigStorage.getDeckConfig(deckConfigId);
+    final config =
+        storedConfig ??
+        DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
+    final context = baseContext
+        .withDeckConfig(config)
+        .withFsrsShortTermSettings(
+          allowShortTerm: allowsFsrsShortTerm(
+            fsrsEnabled: readCollectionConfig('fsrs') == true,
+            params: config.fsrsParams,
+          ),
+          shortTermWithStepsEnabled:
+              readCollectionConfig('fsrs_short_term_with_steps_enabled') ==
+              true,
+        );
+    final transitions = LearningCardState.fromCard(
+      card,
+      scheduledSecs: scheduledSecs,
+      elapsedSecs: elapsedSecs,
+    ).nextStates(context);
+
+    protoScheduler.SchedulingState wrap(LearningCardTransition transition) =>
+        protoScheduler.SchedulingState(
+          filtered: protoScheduler.SchedulingState_Filtered(
+            rescheduling: protoScheduler.SchedulingState_ReschedulingFilter(
+              originalState: _learningCardTransitionToNormalProto(transition),
+            ),
+          ),
+        );
+
+    return protoScheduler.SchedulingStates(
+      current: wrap(transitions.current),
+      again: wrap(transitions.again),
+      hard: wrap(transitions.hard),
+      good: wrap(transitions.good),
+      easy: wrap(transitions.easy),
+    );
+  }
+
+  protoScheduler.SchedulingState_Normal _learningCardTransitionToNormalProto(
+    LearningCardTransition transition,
+  ) => switch (transition.kind) {
+    LearningTransitionKind.learning => protoScheduler.SchedulingState_Normal(
+      learning: protoScheduler.SchedulingState_Learning(
+        remainingSteps: transition.learning!.remainingSteps,
+        scheduledSecs: transition.learning!.scheduledSecs,
+        elapsedSecs: transition.learning!.elapsedSecs,
+        memoryState: transition.learning!.memoryState?.toProto(),
+      ),
+    ),
+    LearningTransitionKind.review => protoScheduler.SchedulingState_Normal(
+      review: protoScheduler.SchedulingState_Review(
+        scheduledDays: transition.review!.scheduledDays,
+        elapsedDays: transition.review!.elapsedDays,
+        easeFactor: transition.review!.easeFactor,
+        lapses: transition.review!.lapses,
+        leeched: transition.review!.leeched,
+        memoryState: transition.review!.memoryState?.toProto(),
+      ),
+    ),
+    LearningTransitionKind.newCard => throw StateError(
+      'Learn card transition cannot be New',
+    ),
+    LearningTransitionKind.relearning => throw StateError(
+      'Learn card transition cannot be Relearn',
+    ),
+  };
+
   Deck _validateNormalReviewCard(Card card) {
     final cardId = card.id;
     if (card.ctype != CardType.review) {

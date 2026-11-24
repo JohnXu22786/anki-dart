@@ -4721,6 +4721,36 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Returns generated protocol states for a stored card in a non-rescheduling
+  /// filtered deck, wrapping each Preview state in Core's filtered Preview
+  /// oneofs.
+  ///
+  /// Card/deck validation and delay calculation are delegated to
+  /// [filteredPreviewSchedulingStatesForCard]. This read-only assembly does
+  /// not resolve scheduler timing, mutate collection state, or apply answers.
+  Future<protoScheduler.SchedulingStates>
+  filteredPreviewSchedulingStatesProtoForCard({required CardId cardId}) async {
+    final states = await filteredPreviewSchedulingStatesForCard(cardId: cardId);
+
+    protoScheduler.SchedulingState wrap(FilteredPreviewState state) =>
+        protoScheduler.SchedulingState(
+          filtered: protoScheduler.SchedulingState_Filtered(
+            preview: protoScheduler.SchedulingState_Preview(
+              scheduledSecs: state.scheduledSecs,
+              finished: state.finished,
+            ),
+          ),
+        );
+
+    return protoScheduler.SchedulingStates(
+      current: wrap(states.current),
+      again: wrap(states.again),
+      hard: wrap(states.hard),
+      good: wrap(states.good),
+      easy: wrap(states.easy),
+    );
+  }
+
   /// Returns the union of note tags in [deckId] and its descendants.
   ///
   /// The host combines these with the collection tag table to preserve

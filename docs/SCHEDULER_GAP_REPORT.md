@@ -711,6 +711,8 @@ app call-site wiring, and Reviewer UI remain open.
   Unit119 closes only the current unwrapped Learn-state projection for
   rescheduling filtered cards. Unit123 closes only stored Learn answer-state
   composition for rescheduling filtered cards.
+  Unit124 closes only stored Relearn answer-state composition for rescheduling
+  filtered cards; Review outcomes and Preview wrapping remain open.
   Unit121 closes current-state `ReschedulingFilterState` wrapping for stored
   New, Learn, Review, and Relearn cards in rescheduling filtered decks. It does
   not close answer-state composition, Preview wrapping, or rescheduling

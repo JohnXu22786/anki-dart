@@ -173,6 +173,21 @@ decks produce state errors. Answer-state composition, full filtered
 rescheduling execution, answer application/persistence, transactions/undo,
 app call-site wiring, and Reviewer UI remain separate work.
 
+`currentReschedulingFilteredLearningCardState()` reads a stored Learn card
+assigned to a filtered deck with rescheduling enabled. The caller supplies
+`scheduledSecs` resolved from the current learning step and `elapsedSecs` from
+the scheduler timing snapshot; this method does not infer either value from
+queue, due, or timestamps. `LearningCardState.fromCard()` preserves those
+timings, the stored remaining steps, and memory state. This read-only
+projection does not read deck config, revlogs, or load-balancer cache/history.
+Missing cards/decks, non-Learn cards, normal decks, and non-rescheduling
+filtered decks produce state errors. This closes only current unwrapped Learn
+state projection for rescheduling filtered cards; step/timing resolution,
+answer-state composition, full filtered `ReschedulingFilterState` wrapping,
+other card types, filtered rescheduling execution, answer application and
+persistence, transactions/undo, app call-site wiring, and Reviewer UI remain
+separate work.
+
 `reviewCardSchedulingStatesForCardForNow()` reads a stored normal-deck Review
 card and calculates its four answer-button states from a caller-supplied base
 `ReviewSchedulingContext`, load-balancer flag, nullable fuzz seed, and optional

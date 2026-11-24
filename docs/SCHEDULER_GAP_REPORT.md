@@ -535,6 +535,23 @@ clearly. This closes stored normal-deck Relearn state assembly only; filtered
 deck preview/rescheduling, answer application, cache mutation, transactions,
 app call-site wiring, and Reviewer UI remain open.
 
+### Unit 119 — current Learn state in rescheduling filtered decks
+
+`CollectionSqliteStorage.currentReschedulingFilteredLearningCardState()` reads
+a stored Learn card assigned to a filtered deck with rescheduling enabled. The
+caller supplies `scheduledSecs` resolved from the current learning step and
+`elapsedSecs` from the scheduler timing snapshot; this method does not infer
+either value from queue, due, or timestamps. `LearningCardState.fromCard()`
+preserves those timings, stored remaining steps, and memory state. The
+read-only projection does not read deck config, revlogs, or load-balancer
+cache/history. Missing cards/decks, non-Learn cards, normal decks, and
+non-rescheduling filtered decks fail clearly. This closes only current
+unwrapped Learn-state projection for rescheduling filtered cards;
+step/timing resolution, answer-state composition, full filtered
+`ReschedulingFilterState` wrapping, other card types, filtered rescheduling
+execution, answer application/persistence, transactions/undo, app call-site
+wiring, and Reviewer UI remain open.
+
 ### Unit 118 — current New state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredNewCardState()` reads a
@@ -610,7 +627,8 @@ app call-site wiring, and Reviewer UI remain open.
   111; Units 113–114 close stored normal-deck Learn and Relearn answer-state
   calculation. Unit117 closes current unwrapped Review-state projection for
   rescheduling filtered cards only. Unit118 closes only the current unwrapped
-  New-state projection for rescheduling filtered cards.
+  New-state projection for rescheduling filtered cards. Unit119 closes only the
+  current unwrapped Learn-state projection for rescheduling filtered cards.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

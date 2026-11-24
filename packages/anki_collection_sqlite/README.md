@@ -161,6 +161,21 @@ execution, other filtered card types, answer-state composition/application,
 persistence, transactions/undo, app call-site wiring, and Reviewer UI remain
 separate work.
 
+`reschedulingFilteredReviewCardSchedulingStatesForCardForNow()` returns the
+current and Again/Hard/Good/Easy states for a stored Review card in a
+rescheduling filtered deck. It uses nonzero `originalDue`, otherwise stored
+`due`, without normal-deck clamping, and shares one caller-selected timing
+snapshot across current state, collection FSRS derivation, and optional load
+balancing. The original/home normal deck supplies its config, with Core
+defaults when the config row is absent. Each Normal outcome is wrapped in
+`SchedulingState.Filtered.ReschedulingFilter.original_state`; Again may map to
+Relearn when the caller's context supplies a relearning step. Invalid or
+missing cards/decks, normal or non-rescheduling filtered decks, and missing or
+invalid home deck/config identity fail clearly. This is read-only: it does not
+apply or persist answers. Filtered scheduling execution, answer application,
+transactions/undo, app call-site wiring, Preview wrapping, and Reviewer UI
+remain separate work.
+
 `currentReschedulingFilteredNewCardState()` reads a stored New card assigned
 to a filtered deck with rescheduling enabled. It resolves the current
 position from nonzero `originalDue`, otherwise stored `due`, and clamps

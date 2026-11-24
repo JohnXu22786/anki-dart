@@ -3694,6 +3694,208 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Calculates current and Again/Hard/Good/Easy states for a stored Review
+  /// card assigned to a rescheduling filtered deck, wrapping each state in
+  /// Core's filtered-rescheduling protocol shape.
+  ///
+  /// One collection timing snapshot is shared by current-state elapsed days,
+  /// FSRS history and next-state derivation, and optional load-balancer
+  /// resolution. The home deck supplies the scheduler config; missing config
+  /// rows use Core defaults. This is read-only and does not apply or persist
+  /// answers.
+  Future<protoScheduler.SchedulingStates>
+  reschedulingFilteredReviewCardSchedulingStatesForCardForNow({
+    required CardId cardId,
+    required ReviewSchedulingContext baseContext,
+    required bool loadBalancerEnabled,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+  }) async {
+    late final Card card;
+    try {
+      final storedCard = await getCard(cardId);
+      if (storedCard == null) throw StateError('card not found: $cardId');
+      card = storedCard;
+    } on InvalidModelValue catch (error) {
+      throw StateError('invalid stored card value: $error');
+    }
+    if (card.ctype != CardType.review) {
+      throw StateError('card is not a review card: $cardId');
+    }
+
+    final filteredDeck = _deckStorage.getDeck(card.deckId);
+    if (filteredDeck == null) {
+      throw StateError('deck not found: ${card.deckId}');
+    }
+    final filteredKind = filteredDeck.kind;
+    if (filteredKind is! FilteredDeckKind) {
+      throw StateError('filtered deck required: ${card.deckId}');
+    }
+    if (!filteredKind.value.reschedule) {
+      throw StateError(
+        'filtered deck does not reschedule cards: ${filteredDeck.id}',
+      );
+    }
+    if (card.originalDeckId == Int64.ZERO) {
+      throw StateError('card has no original deck ID: $cardId');
+    }
+    final homeDeck = _deckStorage.getDeck(card.originalDeckId);
+    if (homeDeck == null) {
+      throw StateError('home deck not found: ${card.originalDeckId}');
+    }
+    if (homeDeck.kind is! NormalDeckKind) {
+      throw StateError('home deck is not a normal deck: ${homeDeck.id}');
+    }
+    final deckConfigId = homeDeck.configId;
+    if (deckConfigId == null || deckConfigId == Int64.ZERO) {
+      throw StateError('home deck has no config ID: ${homeDeck.id}');
+    }
+
+    final storedConfig = _deckConfigStorage.getDeckConfig(deckConfigId);
+    final config =
+        storedConfig ??
+        DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
+    final timing = timingTodayForNow(now: now);
+    final fsrsEnabled = readCollectionConfig('fsrs') == true;
+    final context = baseContext
+        .withDeckConfig(config)
+        .withFsrsShortTermSettings(
+          allowShortTerm: allowsFsrsShortTerm(
+            fsrsEnabled: fsrsEnabled,
+            params: config.fsrsParams,
+          ),
+          shortTermWithStepsEnabled:
+              readCollectionConfig('fsrs_short_term_with_steps_enabled') ==
+              true,
+        );
+    final effectiveDue = card.originalDue != 0 ? card.originalDue : card.due;
+    var state = ReviewCardState.fromCard(
+      card,
+      effectiveDue: effectiveDue,
+      daysElapsed: timing.daysElapsed,
+    );
+    if (fsrsEnabled && card.memoryState == null) {
+      final revlogs = _revlogStorage.getRevlogEntriesForCard(card.id)
+        ..sort((a, b) => a.id.value.compareTo(b.id.value));
+      final memoryState = computeFsrsMemoryState(
+        revlogs: revlogs,
+        nextDayAt: TimestampSecs(timing.nextDayAt),
+        params: config.fsrsParams,
+        historicalRetention: config.inner.historicalRetention,
+        ignoreRevlogsBefore: _ignoreRevlogsBefore(config),
+      );
+      if (memoryState != null) {
+        state = ReviewCardState(
+          scheduledDays: state.scheduledDays,
+          elapsedDays: state.elapsedDays,
+          easeFactor: state.easeFactor,
+          lapses: state.lapses,
+          leeched: state.leeched,
+          memoryState: memoryState,
+        );
+      }
+    }
+    var resolvedContext = context;
+    if (fsrsEnabled) {
+      final lastReviewTime =
+          card.lastReviewTimeSecs ?? _revlogStorage.timeOfLastReview(card.id);
+      final elapsedSeconds = lastReviewTime == null
+          ? 0
+          : (timing.nextDayAt - lastReviewTime.toInt()).toInt();
+      final daysElapsed = elapsedSeconds <= 0 ? 0 : elapsedSeconds ~/ 86400;
+      final calculated = computeFsrsNextStates(
+        currentMemoryState: state.memoryState,
+        daysElapsed: daysElapsed,
+        desiredRetention: homeDeck.effectiveDesiredRetention(config.inner),
+        params: config.fsrsParams,
+      );
+      resolvedContext = resolvedContext.withFsrsNextStates(
+        FsrsReviewNextStates(
+          again: FsrsReviewNextState(
+            interval: calculated.again.interval,
+            memoryState: calculated.again.memoryState,
+          ),
+          hard: FsrsReviewNextState(
+            interval: calculated.hard.interval,
+            memoryState: calculated.hard.memoryState,
+          ),
+          good: FsrsReviewNextState(
+            interval: calculated.good.interval,
+            memoryState: calculated.good.memoryState,
+          ),
+          easy: FsrsReviewNextState(
+            interval: calculated.easy.interval,
+            memoryState: calculated.easy.memoryState,
+          ),
+        ),
+      );
+    }
+    if (loadBalancerEnabled) {
+      final loadBalancerContext = await _loadBalancerContextForTiming(
+        timing,
+        additionalConfigs: storedConfig == null
+            ? {deckConfigId: config}
+            : const {},
+      );
+      final noteId = config.inner.buryReviews ? card.noteId : null;
+      resolvedContext = resolvedContext.withLoadBalancedIntervalResolver(
+        loadBalancerContext.reviewIntervalResolver(
+          deckConfigId: deckConfigId,
+          noteId: noteId,
+          fuzzSeed: fuzzSeed,
+        ),
+      );
+    }
+
+    final transitions = state.nextStates(resolvedContext);
+    protoScheduler.SchedulingState wrap(ReviewCardTransition transition) =>
+        protoScheduler.SchedulingState(
+          filtered: protoScheduler.SchedulingState_Filtered(
+            rescheduling: protoScheduler.SchedulingState_ReschedulingFilter(
+              originalState: _reviewCardTransitionToNormalProto(transition),
+            ),
+          ),
+        );
+
+    return protoScheduler.SchedulingStates(
+      current: wrap(transitions.current),
+      again: wrap(transitions.again),
+      hard: wrap(transitions.hard),
+      good: wrap(transitions.good),
+      easy: wrap(transitions.easy),
+    );
+  }
+
+  protoScheduler.SchedulingState_Normal _reviewCardTransitionToNormalProto(
+    ReviewCardTransition transition,
+  ) {
+    final review = transition.review;
+    final reviewProto = protoScheduler.SchedulingState_Review(
+      scheduledDays: review.scheduledDays,
+      elapsedDays: review.elapsedDays,
+      easeFactor: review.easeFactor,
+      lapses: review.lapses,
+      leeched: review.leeched,
+      memoryState: review.memoryState?.toProto(),
+    );
+    return switch (transition.kind) {
+      ReviewScheduleKind.review => protoScheduler.SchedulingState_Normal(
+        review: reviewProto,
+      ),
+      ReviewScheduleKind.relearning => protoScheduler.SchedulingState_Normal(
+        relearning: protoScheduler.SchedulingState_Relearning(
+          review: reviewProto,
+          learning: protoScheduler.SchedulingState_Learning(
+            remainingSteps: transition.learning!.remainingSteps,
+            scheduledSecs: transition.learning!.scheduledSecs,
+            elapsedSecs: transition.learning!.elapsedSecs,
+            memoryState: transition.learning!.memoryState?.toProto(),
+          ),
+        ),
+      ),
+    };
+  }
+
   /// Reads the current New state for a card in a rescheduling filtered deck.
   ///
   /// Core uses the card's nonzero original due value, falling back to its

@@ -251,6 +251,22 @@ errors. Filtered-deck preview/rescheduling, answer application and
 persistence, transactions/undo, and Reviewer UI remain outside this entry
 point.
 
+`reschedulingFilteredNewCardSchedulingStatesForCard()` reads a stored New card
+assigned to a filtered deck with rescheduling enabled. It resolves the current
+position from nonzero `originalDue`, falling back to stored `due`, and clamps
+negative positions to zero. Again/Hard/Good/Easy are calculated with
+`NewCardState.nextStates()` using the original home deck's config and the
+collection FSRS short-term flags, while preserving caller-owned dynamic
+context. Missing config rows use Core defaults. It returns current and answer
+states wrapped in the generated `SchedulingState.Filtered.ReschedulingFilter`
+shape. This read-only API rejects missing/invalid cards, missing decks, normal
+or non-rescheduling filtered decks, missing original/home decks, and missing
+home config IDs. It does not read revlogs, FSRS memory history, or load-balancer
+cache/history, and does not apply or persist answers. Learn, Relearn, and
+Review outcomes, non-rescheduling Preview wrapping, filtered-card
+query/gathering, rescheduling execution, answer persistence, transactions/undo,
+and app/UI wiring remain outside this entry point.
+
 `learningCardSchedulingStatesForCard()` reads a stored Learn card in its
 assigned normal deck and requires `scheduledSecs` and `elapsedSecs` already
 resolved from the same scheduler snapshot. It does not infer timing from the

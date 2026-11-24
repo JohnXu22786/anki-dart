@@ -149,6 +149,13 @@ INSERT INTO col VALUES (1700000000, '{}');
         ),
         _stateError('scheduledSecs and elapsedSecs are required'),
       );
+      await _insertCard(storage, id: 2, type: CardType.relearn, left: 1001);
+      await expectLater(
+        storage.currentReschedulingFilteredCardSchedulingState(
+          cardId: Int64(2),
+        ),
+        _stateError('scheduledSecs and elapsedSecs are required'),
+      );
       await storage.executeBatch('UPDATE cards SET did = 404 WHERE id = 1');
       await expectLater(_project(storage, 1), _stateError('deck not found'));
 

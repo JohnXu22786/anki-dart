@@ -145,6 +145,13 @@ Preview state plus all four answer outcomes from that deck's stored Again,
 Hard, and Good delays. The current state remains unfinished at zero seconds;
 zero-delay answers and Easy finish the preview. This is a read-only projection:
 it does not resolve scheduler timing, apply answers, or persist card state.
+
+`filteredPreviewSchedulingStatesProtoForCard()` reuses that validated
+collection projection and wraps current plus Again/Hard/Good/Easy in generated
+`SchedulingStates`, with each state encoded as `SchedulingState.filtered`
+containing the `preview` oneof. It preserves `scheduledSecs` and `finished`
+exactly and performs no writes.
+
 Filtered-deck search/gathering, rescheduling, normal-state resolution, answer
 application, cache updates, transactions/undo, app call-site wiring, and
 Reviewer UI remain separate work.

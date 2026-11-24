@@ -690,6 +690,20 @@ deck search/gathering, rescheduling, normal-state resolution, answer
 application, cache updates, persistence, transactions/undo, application
 call-site wiring, and Reviewer UI remain open.
 
+### Unit 126 — collection-backed filtered Preview protocol states
+
+`CollectionSqliteStorage.filteredPreviewSchedulingStatesProtoForCard()` reuses
+the Unit116 collection validation and Unit115 Preview state calculation, then
+wraps current and Again/Hard/Good/Easy in generated
+`SchedulingState.filtered.preview` protocol states. It preserves each
+`scheduledSecs` and `finished` value, including an unfinished zero-delay
+current state and the finished Easy outcome. The read-only wrapper does not
+resolve timing, apply answers, mutate caches, or persist scheduling.
+
+This closes only collection-backed filtered Preview protocol-state assembly.
+Filtered search/gather, execution, answer application and persistence,
+transactions/undo, and Reviewer UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

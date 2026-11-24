@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as protoDeck;
+import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as protoScheduler;
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -108,6 +109,92 @@ CREATE TABLE decks (
         await expectLater(project(Int64(1)), _stateError('rescheduling'));
       },
     );
+  });
+
+  group('filteredPreviewSchedulingStatesProtoForCard', () {
+    test('wraps all states in filtered Preview protocol oneofs', () async {
+      final result = await storage.filteredPreviewSchedulingStatesProtoForCard(
+        cardId: Int64(1),
+      );
+
+      final states = [
+        result.current,
+        result.again,
+        result.hard,
+        result.good,
+        result.easy,
+      ];
+      final expected = [
+        (45, false),
+        (45, false),
+        (90, false),
+        (180, false),
+        (0, true),
+      ];
+      for (var i = 0; i < states.length; i++) {
+        final state = states[i];
+        expect(state.whichKind(), protoScheduler.SchedulingState_Kind.filtered);
+        expect(
+          state.filtered.whichKind(),
+          protoScheduler.SchedulingState_Filtered_Kind.preview,
+        );
+        expect(state.hasNormal(), isFalse);
+        expect(state.filtered.hasRescheduling(), isFalse);
+        expect(state.filtered.preview.scheduledSecs, expected[i].$1);
+        expect(state.filtered.preview.finished, expected[i].$2);
+      }
+    });
+
+    test('preserves zero-delay current and finished answer states', () async {
+      storage.decks.addOrUpdateDeckWithExistingId(
+        _filteredDeck(again: 0, hard: 0, good: 0),
+      );
+
+      final result = await storage.filteredPreviewSchedulingStatesProtoForCard(
+        cardId: Int64(1),
+      );
+
+      expect(result.current.filtered.preview.scheduledSecs, 0);
+      expect(result.current.filtered.preview.finished, isFalse);
+      for (final state in [
+        result.again,
+        result.hard,
+        result.good,
+        result.easy,
+      ]) {
+        expect(state.filtered.preview.scheduledSecs, 0);
+        expect(state.filtered.preview.finished, isTrue);
+      }
+    });
+
+    test('preserves card and assigned-deck validation', () async {
+      Future<protoScheduler.SchedulingStates> project([CardId? id]) =>
+          storage.filteredPreviewSchedulingStatesProtoForCard(
+            cardId: id ?? Int64(404),
+          );
+
+      await expectLater(project(), _stateError('card not found'));
+      await storage.executeBatch('UPDATE cards SET did = 404 WHERE id = 1');
+      await expectLater(project(Int64(1)), _stateError('deck not found'));
+
+      await storage.executeBatch('UPDATE cards SET did = 7 WHERE id = 1');
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(7),
+          name: 'Normal',
+          kind: NormalDeckKind(protoDeck.Deck_Normal(configId: Int64.ONE)),
+        ),
+      );
+      await expectLater(
+        project(Int64(1)),
+        _stateError('filtered deck required'),
+      );
+
+      storage.decks.addOrUpdateDeckWithExistingId(
+        _filteredDeck(reschedule: true),
+      );
+      await expectLater(project(Int64(1)), _stateError('rescheduling'));
+    });
   });
 }
 

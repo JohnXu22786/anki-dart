@@ -570,6 +570,21 @@ full filtered `ReschedulingFilterState` wrapping, other card types, filtered
 rescheduling execution, answer application/persistence, transactions/undo, app
 call-site wiring, and Reviewer UI remain open.
 
+### Unit 121 — current rescheduling-filter wrapper for all stored card types
+
+`CollectionSqliteStorage.currentReschedulingFilteredCardSchedulingState()`
+returns the generated `SchedulingState` filtered-rescheduling wrapper for
+stored New, Learn, Review, and Relearn cards. It reuses the existing current
+state projections, preserving New position resolution, Review effective-due
+and timing behavior, and explicit caller-resolved Learn/Relearn timing. It
+rejects missing cards/decks, unsupported card types, normal decks, and filtered
+decks without rescheduling. The read-only API does not read answer
+configuration, revlogs, FSRS history/cache, or mutate collection data. This
+closes only current-state wrapper assembly for these four card types; answer
+state composition, non-rescheduling Preview wrapping, filtered-card
+query/gather, rescheduling execution, answer application/persistence,
+transactions/undo, and app/UI integration remain open.
+
 ### Unit 118 — current New state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredNewCardState()` reads a
@@ -647,6 +662,10 @@ app call-site wiring, and Reviewer UI remain open.
   rescheduling filtered cards only. Unit118 closes only the current unwrapped
   New-state projection for rescheduling filtered cards. Unit119 closes only the
   current unwrapped Learn-state projection for rescheduling filtered cards.
+  Unit121 closes current-state `ReschedulingFilterState` wrapping for stored
+  New, Learn, Review, and Relearn cards in rescheduling filtered decks. It does
+  not close answer-state composition, Preview wrapping, or rescheduling
+  execution.
   Collection-backed due-card history and
   the Unit94 timing-plus-cache context are available; Unit90 groups
   caller-preloaded history, and `CollectionSqliteStorage.deckTree()` provides

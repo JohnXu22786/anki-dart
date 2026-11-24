@@ -203,6 +203,20 @@ state composition, full filtered `ReschedulingFilterState` wrapping, other card
 types, filtered rescheduling execution, answer application/persistence,
 transactions/undo, app call-site wiring, and Reviewer UI remain separate work.
 
+`currentReschedulingFilteredCardSchedulingState()` returns the generated
+`SchedulingState` filtered-rescheduling wrapper for stored New, Learn, Review,
+and Relearn cards. It wraps the existing current-state projections without
+changing their due or timing rules: New position and Review effective due use
+the filtered-card resolutions above, while Learn and Relearn require explicit
+caller-resolved `scheduledSecs` and `elapsedSecs`. It rejects missing cards or
+decks, unsupported card types, normal decks, and filtered decks without
+rescheduling. This read-only API does not read answer configuration, revlogs,
+FSRS history/cache, or mutate collection data. It closes current-state
+`ReschedulingFilterState` wrapping for these four stored card types only;
+answer-state composition, non-rescheduling Preview wrapping, filtered-card
+query/gather, rescheduling execution, answer application/persistence,
+transactions/undo, and app/UI integration remain open.
+
 `reviewCardSchedulingStatesForCardForNow()` reads a stored normal-deck Review
 card and calculates its four answer-button states from a caller-supplied base
 `ReviewSchedulingContext`, load-balancer flag, nullable fuzz seed, and optional

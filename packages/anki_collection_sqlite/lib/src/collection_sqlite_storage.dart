@@ -3722,6 +3722,41 @@ WHERE queue IN (-2, -3)
     return NewCardState(position: max(effectiveDue, 0));
   }
 
+  /// Reads the current state for a Learn card in a rescheduling filtered deck.
+  ///
+  /// [scheduledSecs] and [elapsedSecs] are resolved by the caller from Core's
+  /// current learning step and scheduler timing snapshot. Neither value is
+  /// inferred from stored queue, due, or timestamps. This read-only projection
+  /// preserves stored remaining steps and memory state, and does not read deck
+  /// config, revlogs, or load-balancer cache/history.
+  Future<LearningCardState> currentReschedulingFilteredLearningCardState({
+    required CardId cardId,
+    required int scheduledSecs,
+    required int elapsedSecs,
+  }) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+    if (card.ctype != CardType.learn) {
+      throw StateError('card is not a learning card: $cardId');
+    }
+
+    final deck = _deckStorage.getDeck(card.deckId);
+    if (deck == null) throw StateError('deck not found: ${card.deckId}');
+    final kind = deck.kind;
+    if (kind is! FilteredDeckKind) {
+      throw StateError('filtered deck required: ${card.deckId}');
+    }
+    if (!kind.value.reschedule) {
+      throw StateError('filtered deck does not reschedule cards: ${deck.id}');
+    }
+
+    return LearningCardState.fromCard(
+      card,
+      scheduledSecs: scheduledSecs,
+      elapsedSecs: elapsedSecs,
+    );
+  }
+
   ReviewCardState _currentReviewCardStateForCardAtTiming(
     Card card,
     SchedTimingToday timing,

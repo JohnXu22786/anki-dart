@@ -3693,6 +3693,35 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Reads the current New state for a card in a rescheduling filtered deck.
+  ///
+  /// Core uses the card's nonzero original due value, falling back to its
+  /// stored due value, and clamps the resulting New position to zero. This
+  /// read-only projection does not read deck config, revlogs, or load-balancer
+  /// cache/history and does not calculate answer outcomes.
+  Future<NewCardState> currentReschedulingFilteredNewCardState({
+    required CardId cardId,
+  }) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+    if (card.ctype != CardType.newCard) {
+      throw StateError('card is not a new card: $cardId');
+    }
+
+    final deck = _deckStorage.getDeck(card.deckId);
+    if (deck == null) throw StateError('deck not found: ${card.deckId}');
+    final kind = deck.kind;
+    if (kind is! FilteredDeckKind) {
+      throw StateError('filtered deck required: ${card.deckId}');
+    }
+    if (!kind.value.reschedule) {
+      throw StateError('filtered deck does not reschedule cards: ${deck.id}');
+    }
+
+    final effectiveDue = card.originalDue != 0 ? card.originalDue : card.due;
+    return NewCardState(position: max(effectiveDue, 0));
+  }
+
   ReviewCardState _currentReviewCardStateForCardAtTiming(
     Card card,
     SchedTimingToday timing,

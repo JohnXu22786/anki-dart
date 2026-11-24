@@ -161,6 +161,18 @@ execution, other filtered card types, answer-state composition/application,
 persistence, transactions/undo, app call-site wiring, and Reviewer UI remain
 separate work.
 
+`currentReschedulingFilteredNewCardState()` reads a stored New card assigned
+to a filtered deck with rescheduling enabled. It resolves the current
+position from nonzero `originalDue`, otherwise stored `due`, and clamps
+negative positions to zero before constructing `NewCardState`. This
+read-only projection returns only the current New state; it does not read deck
+config, revlogs, or load-balancer cache/history, or calculate answer outcomes.
+Missing cards/decks, non-New cards, normal decks, and non-rescheduling filtered
+decks produce state errors. Answer-state composition, full filtered
+`ReschedulingFilterState` wrapping, other filtered card types, filtered
+rescheduling execution, answer application/persistence, transactions/undo,
+app call-site wiring, and Reviewer UI remain separate work.
+
 `reviewCardSchedulingStatesForCardForNow()` reads a stored normal-deck Review
 card and calculates its four answer-button states from a caller-supplied base
 `ReviewSchedulingContext`, load-balancer flag, nullable fuzz seed, and optional

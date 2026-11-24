@@ -552,6 +552,24 @@ step/timing resolution, answer-state composition, full filtered
 execution, answer application/persistence, transactions/undo, app call-site
 wiring, and Reviewer UI remain open.
 
+### Unit 120 — current Relearn state in rescheduling filtered decks
+
+`CollectionSqliteStorage.currentReschedulingFilteredRelearningCardState()`
+reads a stored Relearn card assigned to a filtered deck with rescheduling
+enabled. The caller supplies `scheduledSecs` resolved from the current
+relearning step and `elapsedSecs` from the scheduler timing snapshot; the
+method does not infer timing from queue, due, or timestamps.
+`RelearningCardState.fromCard()` preserves the supplied timings, remaining
+steps, and stored Review interval, ease, lapses, and memory in the paired
+current Learning and Review states. This read-only projection does not read
+deck config, revlogs, or load-balancer cache/history. It rejects missing
+cards/decks, non-Relearn cards, normal decks, and non-rescheduling filtered
+decks. This closes only current paired Relearn-state projection for
+rescheduling filtered cards; step/timing resolution, answer-state composition,
+full filtered `ReschedulingFilterState` wrapping, other card types, filtered
+rescheduling execution, answer application/persistence, transactions/undo, app
+call-site wiring, and Reviewer UI remain open.
+
 ### Unit 118 — current New state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredNewCardState()` reads a

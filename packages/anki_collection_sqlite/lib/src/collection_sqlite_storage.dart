@@ -155,13 +155,17 @@ final class CollectionLoadBalancerContext {
 final class CollectionAnswerTiming {
   const CollectionAnswerTiming({
     required this.now,
+    int? answeredAtMillis,
     required this.daysElapsed,
     required this.nextDayAt,
     required this.secsUntilDayRollover,
-  });
+  }) : answeredAtMillis = answeredAtMillis ?? now * 1000;
 
   /// Current Unix timestamp in seconds from the timing snapshot.
   final int now;
+
+  /// Current Unix timestamp in milliseconds from the same captured instant.
+  final int answeredAtMillis;
 
   /// Collection day from the timing snapshot.
   final int daysElapsed;
@@ -3020,11 +3024,13 @@ GROUP BY did
 
   /// Resolves the shared day and rollover inputs used by [answerCard].
   ///
-  /// Timing is resolved once, so [now], [daysElapsed], and [nextDayAt] all
-  /// describe the same collection snapshot. The rollover duration is checked
-  /// before returning because [answerCard] accepts it as a uint32.
+  /// Timing is resolved once, so [now], [answeredAtMillis], [daysElapsed], and
+  /// [nextDayAt] all describe the same collection snapshot. The rollover
+  /// duration is checked before returning because [answerCard] accepts it as a
+  /// uint32.
   CollectionAnswerTiming answerTimingForNow({DateTime? now}) {
-    final timing = timingTodayForNow(now: now);
+    final capturedNow = now ?? DateTime.now();
+    final timing = timingTodayForNow(now: capturedNow);
     final secsUntilDayRollover = timing.nextDayAt - timing.now;
     if (secsUntilDayRollover < 0 || secsUntilDayRollover > 0xffffffff) {
       throw ArgumentError.value(
@@ -3035,6 +3041,7 @@ GROUP BY did
     }
     return CollectionAnswerTiming(
       now: timing.now,
+      answeredAtMillis: capturedNow.millisecondsSinceEpoch,
       daysElapsed: timing.daysElapsed,
       nextDayAt: timing.nextDayAt,
       secsUntilDayRollover: secsUntilDayRollover,
@@ -5552,11 +5559,11 @@ WHERE queue IN (-2, -3)
   /// are caller-resolved inputs. [capAnswerTimeToSecs] comes from the card's
   /// home/original deck config; [suspendLeechedCards] and the three sibling
   /// bury flags are caller-resolved settings for that config; [answerTiming]
-  /// carries the caller-resolved collection day and rollover duration from one
-  /// collection timing snapshot. This method does not resolve deck
-  /// config. Review due day and Learning/Relearning queue and due values are
-  /// derived from generated next states and [answerTiming]. Intraday
-  /// Learning/Relearning intervals are fuzzed from [fuzzSeed].
+  /// carries the caller-resolved answer timestamp, collection day, and
+  /// rollover duration from one collection timing snapshot. This method does
+  /// not resolve deck config. Review due day and Learning/Relearning queue and
+  /// due values are derived from generated next states and [answerTiming].
+  /// Intraday Learning/Relearning intervals are fuzzed from [fuzzSeed].
   /// The generated answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5564,7 +5571,6 @@ WHERE queue IN (-2, -3)
   Future<Card> answerCard({
     required CardId cardId,
     required protoScheduler.CardAnswer_Rating rating,
-    required Int64 answeredAtMillis,
     required int millisecondsTaken,
     required int capAnswerTimeToSecs,
     required bool suspendLeechedCards,
@@ -5607,7 +5613,7 @@ WHERE queue IN (-2, -3)
       cardId: cardId,
       rating: rating,
       customData: card.customData,
-      answeredAtMillis: answeredAtMillis,
+      answeredAtMillis: Int64(answerTiming.answeredAtMillis),
       millisecondsTaken: millisecondsTaken,
       baseContext: baseContext,
       scheduledSecs: scheduledSecs,
@@ -5692,7 +5698,9 @@ WHERE queue IN (-2, -3)
                     protoScheduler.SchedulingState_Filtered_Kind.rescheduling)
         ? Card.fromProto(
             card.toProto()
-              ..lastReviewTimeSecs = Int64(answeredAtMillis.toInt() ~/ 1000),
+              ..lastReviewTimeSecs = Int64(
+                answerTiming.answeredAtMillis ~/ 1000,
+              ),
           )
         : card;
     late Card appliedCard;

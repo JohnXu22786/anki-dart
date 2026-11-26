@@ -1250,3 +1250,18 @@ apply/record APIs retain their explicit absolute due values. This closes only
 deterministic Learning interval fuzz and its composed intraday due path. Answer
 timestamp, elapsed/scheduling context, app/UI integration, and remaining
 scheduler gaps stay open.
+
+### Unit 158 — derive answer timestamp from the timing snapshot
+
+`CollectionAnswerTiming` now preserves the captured instant in milliseconds as
+well as the scheduler's whole-second value. `answerTimingForNow()` passes one
+captured `DateTime` to collection timing resolution and derives both values
+from it. The composed `CollectionSqliteStorage.answerCard()` no longer accepts
+a separate `answeredAtMillis`; it builds the generated answer timestamp and
+updates `Card.lastReviewTimeSecs` from the same timing snapshot. Normal and
+rescheduling-filtered answers store the snapshot's Unix seconds, while
+filtered Preview retains its existing Card timestamp, matching Core's
+`answer_card_inner()` behavior. Lower-level request construction still accepts
+an explicit timestamp. This closes only timestamp snapshot composition and
+`lastReviewTimeSecs` parity in the composed operation; caller/UI integration
+and remaining scheduler gaps stay open.

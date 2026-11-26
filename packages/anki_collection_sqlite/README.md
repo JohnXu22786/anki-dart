@@ -166,6 +166,17 @@ scheduling-state assembly for stored New/Learn/Review/Relearn cards only;
 answer application and persistence, transactions/undo, app call-site wiring,
 and Reviewer UI remain open.
 
+`schedulingStatesProtoForCard()` dispatches a stored card by its assigned deck
+mode and type: normal decks reuse the normal projection, rescheduling filtered
+decks reuse their New/Learn/Review/Relearn projections, and other filtered
+decks reuse the Preview projection. It returns current and Again/Hard/Good/Easy
+generated states without duplicating scheduler calculations. Review timing,
+load-balancer settings, fuzz seed, and caller context are forwarded; Learn and
+Relearn timing values are forwarded unchanged. The API preserves each
+projection's validation and read-only behavior. This closes only collection
+state dispatch; answer application and persistence, transactions/undo, and
+application/UI call-site integration remain open.
+
 Filtered-deck search/gathering and rescheduling, answer application,
 cache updates, transactions/undo, app call-site wiring, and Reviewer UI remain
 separate work.

@@ -198,7 +198,7 @@ int? resolveLearningAnswerDueDay({
   return (answerTiming.daysElapsed + days).toSigned(32);
 }
 
-/// Resolves an intraday Learning or Relearning due timestamp from the caller's
+/// Resolves an intraday Learning or Relearning due timestamp from a
 /// fuzz-resolved interval and one captured answer timing snapshot.
 ///
 /// This pure operation performs no collection reads or scheduling transitions.
@@ -5555,8 +5555,8 @@ WHERE queue IN (-2, -3)
   /// carries the caller-resolved collection day and rollover duration from one
   /// collection timing snapshot. This method does not resolve deck
   /// config. Review due day and Learning/Relearning queue and due values are
-  /// derived from generated next states and [answerTiming]. For intraday
-  /// answers, [fuzzedLearningSecs] is the caller's fuzz-resolved interval.
+  /// derived from generated next states and [answerTiming]. Intraday
+  /// Learning/Relearning intervals are fuzzed from [fuzzSeed].
   /// The generated answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5580,7 +5580,6 @@ WHERE queue IN (-2, -3)
     required int usn,
     required CollectionAnswerTiming answerTiming,
     required double? desiredRetention,
-    int? fuzzedLearningSecs,
     int? dueTimestampSecs,
     CollectionLoadBalancerContext? loadBalancerContext,
     DeckConfigId? homeDeckConfigId,
@@ -5679,14 +5678,11 @@ WHERE queue IN (-2, -3)
         resolvedLearningDueDay ??
         (learningScheduledSecs == null
             ? null
-            : fuzzedLearningSecs == null
-            ? throw ArgumentError.value(
-                fuzzedLearningSecs,
-                'fuzzedLearningSecs',
-                'is required for intraday Learning/Relearning answers',
-              )
             : resolveLearningAnswerDueTimestamp(
-                fuzzedLearningSecs: fuzzedLearningSecs,
+                fuzzedLearningSecs: fuzzLearningIntervalSecs(
+                  learningScheduledSecs,
+                  fuzzSeed,
+                ),
                 answerTiming: answerTiming,
               ));
     final cardToApply =

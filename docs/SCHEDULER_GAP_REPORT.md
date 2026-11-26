@@ -704,6 +704,21 @@ This closes only collection-backed filtered Preview protocol-state assembly.
 Filtered search/gather, execution, answer application and persistence,
 transactions/undo, and Reviewer UI remain open.
 
+### Unit 127 — normal-deck stored-card protocol state assembly
+
+`CollectionSqliteStorage.normalCardSchedulingStatesProtoForCard()` dispatches
+stored normal-deck New, Learn, Review, and Relearn cards to their existing
+collection-backed answer-state projections, then wraps current and
+Again/Hard/Good/Easy states in generated `SchedulingState.normal` values. It
+preserves each transition's inner New/Learning/Review/Relearning oneof and
+scheduling fields. Learn and Relearn require caller-supplied `scheduledSecs`
+and `elapsedSecs`; Review receives the caller's `now`, load-balancer setting,
+fuzz seed, and context. The API rejects missing or invalid cards, missing
+assigned decks, filtered decks, and timing inputs that do not match the card
+type. This closes only generated normal-deck scheduling-state assembly for
+stored New/Learn/Review/Relearn cards. Answer application and persistence,
+transactions/undo, app call-site wiring, and Reviewer UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`
@@ -732,8 +747,8 @@ app call-site wiring, and Reviewer UI remain open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: filtered-deck rescheduling and normal-state
-  resolution, answer-call-site wiring, persisted scheduling changes,
+- Remaining scheduler work: filtered-deck rescheduling, answer-call-site
+  wiring, persisted scheduling changes,
   transactions/undo, and orchestration. Stored non-rescheduling filtered
   Preview-delay assembly is closed by Unit116. Stored normal-deck Review state retrieval and
   collection-backed FSRS Review answer-state calculation are closed by Units
@@ -750,7 +765,10 @@ app call-site wiring, and Reviewer UI remain open.
   filtered cards. Unit125 closes only stored Review answer-state composition
   for rescheduling filtered cards; Preview wrapping remains open.
   Unit121 closes current-state `ReschedulingFilterState` wrapping for stored
-  New, Learn, Review, and Relearn cards in rescheduling filtered decks. It does
+  New, Learn, Review, and Relearn cards in rescheduling filtered decks. Unit127
+  closes normal-deck generated protocol-state assembly for stored New, Learn,
+  Review, and Relearn cards; answer application, persistence, and app call-site
+  integration remain open. Unit121 does
   not close answer-state composition, Preview wrapping, or rescheduling
   execution.
   Collection-backed due-card history and

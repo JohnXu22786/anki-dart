@@ -152,9 +152,23 @@ collection projection and wraps current plus Again/Hard/Good/Easy in generated
 containing the `preview` oneof. It preserves `scheduledSecs` and `finished`
 exactly and performs no writes.
 
-Filtered-deck search/gathering, rescheduling, normal-state resolution, answer
-application, cache updates, transactions/undo, app call-site wiring, and
-Reviewer UI remain separate work.
+`normalCardSchedulingStatesProtoForCard()` reads a stored New, Learn, Review,
+or Relearn card in its normal deck and wraps the existing collection-backed
+answer states in generated `SchedulingStates`, each using the `normal` oneof.
+The inner New/Learning/Review/Relearning oneofs and their scheduling fields
+come directly from the existing transition calculations. It requires
+caller-resolved `scheduledSecs` and `elapsedSecs` for Learn and Relearn cards;
+Review timing and optional load-balancer behavior use the supplied `now`,
+`loadBalancerEnabled`, and `fuzzSeed` inputs. Caller-owned context fields are
+preserved by the existing projections. The API is read-only and rejects
+filtered decks and invalid stored cards. It closes generated normal-deck
+scheduling-state assembly for stored New/Learn/Review/Relearn cards only;
+answer application and persistence, transactions/undo, app call-site wiring,
+and Reviewer UI remain open.
+
+Filtered-deck search/gathering and rescheduling, answer application,
+cache updates, transactions/undo, app call-site wiring, and Reviewer UI remain
+separate work.
 
 `currentReschedulingFilteredReviewCardStateForNow()` reads a stored Review
 card assigned to a filtered deck with rescheduling enabled. It resolves the

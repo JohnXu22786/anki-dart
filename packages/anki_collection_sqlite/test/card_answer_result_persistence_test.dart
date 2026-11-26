@@ -152,6 +152,214 @@ void main() {
   });
 
   test(
+    'applies rescheduling-filtered answers and persists both rows',
+    () async {
+      for (final leavesFilteredDeck in <bool>[false, true]) {
+        for (final kind in <scheduler.SchedulingState_Normal_Kind>[
+          scheduler.SchedulingState_Normal_Kind.new_1,
+          scheduler.SchedulingState_Normal_Kind.learning,
+          scheduler.SchedulingState_Normal_Kind.review,
+          scheduler.SchedulingState_Normal_Kind.relearning,
+        ]) {
+          final answer = _reschedulingAnswer(
+            kind: kind,
+            answeredAt:
+                1712345680000 + (leavesFilteredDeck ? 10 : 0) + kind.index,
+            staysFiltered: !leavesFilteredDeck,
+          );
+          final expectedDue = switch (kind) {
+            scheduler.SchedulingState_Normal_Kind.new_1 => 9,
+            scheduler.SchedulingState_Normal_Kind.learning => 123456,
+            scheduler.SchedulingState_Normal_Kind.review => 47,
+            scheduler.SchedulingState_Normal_Kind.relearning => 19,
+            scheduler.SchedulingState_Normal_Kind.notSet => 0,
+          };
+          final applied = await storage
+              .applyAndRecordReschedulingFilteredCardAnswerResult(
+                card: _filteredCard(),
+                answer: answer,
+                usn: 23,
+                secsUntilDayRollover: 1800,
+                desiredRetention: 0.91,
+                learningQueue:
+                    kind == scheduler.SchedulingState_Normal_Kind.relearning
+                    ? CardQueue.dayLearn
+                    : CardQueue.learn,
+                learningDue:
+                    kind == scheduler.SchedulingState_Normal_Kind.relearning
+                    ? 19
+                    : 123456,
+                reviewDueDay: 47,
+              );
+
+          expect(applied.due, expectedDue);
+          expect(applied.deckId, leavesFilteredDeck ? Int64(13) : Int64(99));
+          expect(
+            applied.originalDeckId,
+            leavesFilteredDeck ? Int64.ZERO : Int64(13),
+          );
+          expect(applied.originalDue, leavesFilteredDeck ? 0 : expectedDue);
+          expect(
+            (await storage.getCard(Int64(41)))!.toProto(),
+            applied.toProto(),
+          );
+          final revlog = storage.revlog.getRevlogEntry(
+            RevlogId(answer.answeredAtMillis),
+          );
+          expect(revlog, isNotNull);
+          expect(revlog!.cardId, Int64(41));
+          expect(revlog.usn, 23);
+          expect(revlog.takenMillis, 850);
+        }
+      }
+    },
+  );
+
+  test(
+    'rejects malformed filtered answers before writes and cache changes',
+    () async {
+      final preset = Int64(77);
+      final context = _loadBalancerContext(preset);
+      final generation = storage.collectionUndoGeneration;
+      final valid = _reschedulingAnswer(
+        kind: scheduler.SchedulingState_Normal_Kind.review,
+        answeredAt: 1712345680100,
+        staysFiltered: true,
+      );
+      final invalid = <scheduler.CardAnswer>[
+        _reschedulingAnswer(
+          kind: scheduler.SchedulingState_Normal_Kind.review,
+          cardId: Int64(42),
+          answeredAt: 1712345680101,
+          staysFiltered: true,
+        ),
+        scheduler.CardAnswer(cardId: Int64(41)),
+        _reschedulingAnswer(
+          kind: scheduler.SchedulingState_Normal_Kind.review,
+          answeredAt: 1712345680102,
+          staysFiltered: true,
+          malformedCurrent: true,
+        ),
+        _reschedulingAnswer(
+          kind: scheduler.SchedulingState_Normal_Kind.review,
+          answeredAt: 1712345680104,
+          staysFiltered: true,
+          missingCurrentNewPosition: true,
+        ),
+      ];
+      for (final answer in invalid) {
+        await expectLater(
+          storage.applyAndRecordReschedulingFilteredCardAnswerResult(
+            card: _filteredCard(),
+            answer: answer,
+            usn: 23,
+            secsUntilDayRollover: 1800,
+            desiredRetention: null,
+            reviewDueDay: 47,
+            loadBalancerContext: context,
+            homeDeckConfigId: preset,
+          ),
+          throwsArgumentError,
+        );
+      }
+      for (final kind in [
+        scheduler.SchedulingState_Normal_Kind.learning,
+        scheduler.SchedulingState_Normal_Kind.relearning,
+      ]) {
+        await expectLater(
+          storage.applyAndRecordReschedulingFilteredCardAnswerResult(
+            card: _filteredCard(),
+            answer: _reschedulingAnswer(
+              kind: kind,
+              answeredAt: 1712345680103 + kind.index,
+              staysFiltered: true,
+            ),
+            usn: 23,
+            secsUntilDayRollover: 1800,
+            desiredRetention: null,
+          ),
+          throwsArgumentError,
+        );
+      }
+      await expectLater(
+        storage.applyAndRecordReschedulingFilteredCardAnswerResult(
+          card: _filteredCard(),
+          answer: valid,
+          usn: 23,
+          secsUntilDayRollover: 1800,
+          desiredRetention: null,
+        ),
+        throwsArgumentError,
+      );
+      expect((await storage.getCard(Int64(41)))!.due, 4);
+      expect(database.select('SELECT id FROM revlog'), isEmpty);
+      expect(storage.collectionUndoGeneration, generation);
+      expect(context.cache.daysByPreset[preset]![7].cardCount, 0);
+    },
+  );
+
+  test(
+    'collision rolls back filtered answer and cache; successful answer is undoable',
+    () async {
+      final preset = Int64(77);
+      final context = _loadBalancerContext(preset);
+      final collision = _reschedulingAnswer(
+        kind: scheduler.SchedulingState_Normal_Kind.review,
+        answeredAt: 1712345680200,
+        staysFiltered: false,
+      );
+      storage.revlog.addRevlogEntry(_revlog(id: 1712345680200, cardId: 41));
+      final generation = storage.collectionUndoGeneration;
+      await expectLater(
+        storage.applyAndRecordReschedulingFilteredCardAnswerResult(
+          card: _filteredCard(),
+          answer: collision,
+          usn: 23,
+          secsUntilDayRollover: 1800,
+          desiredRetention: null,
+          reviewDueDay: 47,
+          loadBalancerContext: context,
+          homeDeckConfigId: preset,
+        ),
+        throwsA(isA<StateError>()),
+      );
+      expect((await storage.getCard(Int64(41)))!.due, 4);
+      expect(context.cache.daysByPreset[preset]![8].cardCount, 0);
+      expect(storage.collectionUndoGeneration, generation);
+
+      final answer = _reschedulingAnswer(
+        kind: scheduler.SchedulingState_Normal_Kind.review,
+        answeredAt: 1712345680201,
+        staysFiltered: false,
+      );
+      final applied = await storage
+          .applyAndRecordReschedulingFilteredCardAnswerResult(
+            card: _filteredCard(),
+            answer: answer,
+            usn: 23,
+            secsUntilDayRollover: 1800,
+            desiredRetention: null,
+            reviewDueDay: 47,
+            loadBalancerContext: context,
+            homeDeckConfigId: preset,
+          );
+      expect(context.cache.daysByPreset[preset]![8].cardCount, 1);
+      await storage.undoLastCollectionOperation();
+      expect((await storage.getCard(Int64(41)))!.due, 4);
+      expect(
+        storage.revlog.getRevlogEntry(RevlogId(answer.answeredAtMillis)),
+        isNull,
+      );
+      await storage.redoLastCollectionOperation();
+      expect((await storage.getCard(Int64(41)))!.toProto(), applied.toProto());
+      expect(
+        storage.revlog.getRevlogEntry(RevlogId(answer.answeredAtMillis)),
+        isNotNull,
+      );
+    },
+  );
+
+  test(
     'rejects invalid, missing, and filtered answers before writing',
     () async {
       final generation = storage.collectionUndoGeneration;
@@ -734,6 +942,96 @@ scheduler.SchedulingState _normalNewState(int position) =>
         new_1: scheduler.SchedulingState_New(position: position),
       ),
     );
+
+scheduler.SchedulingState_Normal _reschedulingNormal(
+  scheduler.SchedulingState_Normal_Kind kind,
+) => switch (kind) {
+  scheduler.SchedulingState_Normal_Kind.new_1 =>
+    scheduler.SchedulingState_Normal(
+      new_1: scheduler.SchedulingState_New(position: 9),
+    ),
+  scheduler.SchedulingState_Normal_Kind.learning =>
+    scheduler.SchedulingState_Normal(
+      learning: scheduler.SchedulingState_Learning(
+        remainingSteps: 2,
+        scheduledSecs: 60,
+        elapsedSecs: 4,
+      ),
+    ),
+  scheduler.SchedulingState_Normal_Kind.review =>
+    scheduler.SchedulingState_Normal(
+      review: scheduler.SchedulingState_Review(
+        scheduledDays: 8,
+        elapsedDays: 3,
+        easeFactor: 2.5,
+        lapses: 0,
+      ),
+    ),
+  scheduler.SchedulingState_Normal_Kind.relearning =>
+    scheduler.SchedulingState_Normal(
+      relearning: scheduler.SchedulingState_Relearning(
+        review: scheduler.SchedulingState_Review(
+          scheduledDays: 8,
+          elapsedDays: 3,
+          easeFactor: 2.5,
+          lapses: 1,
+        ),
+        learning: scheduler.SchedulingState_Learning(
+          remainingSteps: 2,
+          scheduledSecs: 60,
+          elapsedSecs: 4,
+        ),
+      ),
+    ),
+  scheduler.SchedulingState_Normal_Kind.notSet =>
+    scheduler.SchedulingState_Normal(),
+};
+
+scheduler.SchedulingState _reschedulingWrapper(
+  scheduler.SchedulingState_Normal normal,
+) => scheduler.SchedulingState(
+  filtered: scheduler.SchedulingState_Filtered(
+    rescheduling: scheduler.SchedulingState_ReschedulingFilter(
+      originalState: normal,
+    ),
+  ),
+);
+
+scheduler.CardAnswer _reschedulingAnswer({
+  Int64? cardId,
+  required scheduler.SchedulingState_Normal_Kind kind,
+  required int answeredAt,
+  required bool staysFiltered,
+  bool malformedCurrent = false,
+  bool missingCurrentNewPosition = false,
+}) {
+  final next = _reschedulingNormal(kind);
+  final current = malformedCurrent
+      ? scheduler.SchedulingState(
+          filtered: scheduler.SchedulingState_Filtered(
+            rescheduling: scheduler.SchedulingState_ReschedulingFilter(),
+          ),
+        )
+      : _reschedulingWrapper(
+          missingCurrentNewPosition
+              ? scheduler.SchedulingState_Normal(
+                  new_1: scheduler.SchedulingState_New(),
+                )
+              : scheduler.SchedulingState_Normal(
+                  new_1: scheduler.SchedulingState_New(position: 5),
+                ),
+        );
+  return scheduler.CardAnswer(
+    cardId: cardId ?? Int64(41),
+    currentState: current,
+    newState: staysFiltered
+        ? _reschedulingWrapper(next)
+        : scheduler.SchedulingState(normal: next),
+    rating: scheduler.CardAnswer_Rating.GOOD,
+    answeredAtMillis: Int64(answeredAt),
+    millisecondsTaken: 850,
+  );
+}
 
 scheduler.SchedulingState _previewState({
   required int scheduledSecs,

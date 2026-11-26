@@ -329,3 +329,14 @@ defined by `proto/anki/scheduler.proto`. All source digests are recorded in
 `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and contributors and
 licensed under AGPL-3.0-or-later; this adaptation retains the same license,
 and root `COPYING` is unchanged.
+
+`applyNewCardAnswerState()` adapts the Normal/New Card state update from
+`rslib/src/scheduler/answering/learning.rs::apply_new_state()` and the reps
+increment from `apply_normal_study_state()` at Anki Core commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The generated scheduling protocol
+shape is defined by `proto/anki/scheduler.proto`; source digests are recorded in
+`SOURCE.sha256`. The helper only applies a generated Normal/New answer to an
+immutable Card snapshot and takes nullable desired retention as an explicit caller input.
+Core is Copyright Ankitects Pty Ltd and contributors and licensed under
+AGPL-3.0-or-later; this adaptation retains the same license, and root `COPYING`
+is unchanged.

@@ -115,6 +115,31 @@ void main() {
     answeredAtMillis: Int64.parseInt('9007199254740999'),
     millisecondsTaken: 45000,
   );
+  final newAnswer = scheduler.CardAnswer(
+    cardId: Int64(1),
+    newState: scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        new_1: scheduler.SchedulingState_New(position: 17),
+      ),
+    )..customData = '',
+    rating: scheduler.CardAnswer_Rating.EASY,
+  );
+  final appliedNewCard = applyNewCardAnswerState(
+    card: Card(id: Int64(1), reps: 4, originalPosition: 3),
+    answer: newAnswer,
+    desiredRetention: 0.9,
+  );
+  if (appliedNewCard.ctype != CardType.newCard ||
+      appliedNewCard.queue != CardQueue.newCard ||
+      appliedNewCard.due != 17 ||
+      appliedNewCard.reps != 5 ||
+      appliedNewCard.originalPosition != null ||
+      appliedNewCard.customData != '' ||
+      appliedNewCard.desiredRetention == null ||
+      (appliedNewCard.desiredRetention! - 0.9).abs() > 0.000001) {
+    throw StateError('Normal/New CardAnswer application differs on JavaScript');
+  }
+
   final revlog = revlogEntryFromCardAnswer(
     answer: answer,
     usn: 8,

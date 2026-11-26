@@ -821,6 +821,19 @@ preserve this value without mutating the input states. This closes only Card
 custom-data propagation into generated CardAnswer requests; applying the answer,
 persisting Card or revlog rows, and Reviewer UI behavior remain separate work.
 
+### Unit 135 — apply a Normal/New CardAnswer state to a Card snapshot
+
+`anki_backend_models.applyNewCardAnswerState()` accepts a generated
+`CardAnswer` only when its card ID matches and its `newState` wrapper is exactly
+Normal/New. It returns a copied Card with New type/queue, the answer's due
+position and custom data, one Core reps increment, and cleared original
+position and FSRS memory state. Desired retention is an explicit nullable caller input and is applied
+verbatim, including clearing an existing value when null. All other Card fields stay
+unchanged, and neither input is mutated. This closes only pure application of a
+Normal/New answer to a Card snapshot. Other scheduling states and wrappers,
+collection/app wiring, revlog and persistence integration, transaction/undo, and
+Reviewer UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`
@@ -870,9 +883,11 @@ app call-site wiring, and Reviewer UI remain open.
   New, Learn, Review, and Relearn cards in rescheduling filtered decks. Unit127
   closes normal-deck generated protocol-state assembly for stored New, Learn,
   Review, and Relearn cards; Unit129 closes pure generated CardAnswer request
-  construction, and Unit130 closes its collection-level stored-card routing,
-  while application, persistence, transactions/undo, app call-site integration,
-  and Reviewer UI remain open. Unit121 does
+  construction, Unit130 closes its collection-level stored-card routing, Unit133
+  closes pure revlog derivation, Unit134 closes Card custom-data propagation, and
+  Unit135 closes only pure Normal/New Card snapshot application. Other answer
+  state types and wrappers, collection/app wiring, revlog and persistence
+  integration, transactions/undo, and Reviewer UI remain open. Unit121 does
   not close answer-state composition, Preview wrapping, or rescheduling
   execution.
   Collection-backed due-card history and
@@ -882,8 +897,9 @@ app call-site wiring, and Reviewer UI remain open.
   decision, and Unit96 adds the pure ReviewState interval hook, but these
   helpers do not complete collection call-site or full cross-platform review
   integration.
-- Applying scheduler answers and application call-site orchestration beyond
-  persistence of supplied post-answer card/revlog values.
+- Applying scheduler answers beyond pure Normal/New Card snapshot application,
+  plus application call-site orchestration and integration of generated answers
+  with revlog/persistence beyond the existing supplied-result operation.
 - Other collection transaction and undo work beyond the atomic answer-result
   operation above.
 - Reviewer UI, navigation, timing, and platform IO.

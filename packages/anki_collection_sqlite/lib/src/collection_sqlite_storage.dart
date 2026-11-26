@@ -5016,6 +5016,201 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Applies a caller-generated Normal [answer] to a caller-held [card]
+  /// snapshot and persists the resulting Card and RevlogEntry atomically.
+  ///
+  /// Learning and Relearning answers require caller-resolved [learningQueue]
+  /// and [learningDue]; Review answers require [reviewDueDay]. These due values,
+  /// [desiredRetention], [usn], and [secsUntilDayRollover] are explicit inputs:
+  /// this method does not read timing, deck configuration, or collection state
+  /// to resolve them. Filtered wrappers are unsupported. The applied Card is
+  /// returned only after [recordCardAnswerResult] commits both rows.
+  Future<Card> applyAndRecordCardAnswerResult({
+    required Card card,
+    required protoScheduler.CardAnswer answer,
+    required int usn,
+    required int secsUntilDayRollover,
+    required double? desiredRetention,
+    CardQueue? learningQueue,
+    int? learningDue,
+    int? reviewDueDay,
+    CollectionLoadBalancerContext? loadBalancerContext,
+    DeckConfigId? homeDeckConfigId,
+  }) async {
+    if (card.id != answer.cardId) {
+      throw ArgumentError.value(
+        answer.cardId,
+        'answer.cardId',
+        'must match card.id (${card.id})',
+      );
+    }
+    if (!answer.hasCurrentState() ||
+        answer.currentState.whichKind() !=
+            protoScheduler.SchedulingState_Kind.normal) {
+      throw ArgumentError.value(
+        answer.currentState,
+        'answer.currentState',
+        'expected a Normal state',
+      );
+    }
+    if (!answer.hasNewState() ||
+        answer.newState.whichKind() !=
+            protoScheduler.SchedulingState_Kind.normal) {
+      throw ArgumentError.value(
+        answer.newState,
+        'answer.newState',
+        'expected a Normal state',
+      );
+    }
+    _validateNormalCardAnswerState(
+      answer.currentState.normal,
+      'answer.currentState.normal',
+    );
+    _validateNormalCardAnswerState(
+      answer.newState.normal,
+      'answer.newState.normal',
+    );
+
+    final appliedCard = switch (answer.newState.normal.whichKind()) {
+      protoScheduler.SchedulingState_Normal_Kind.new_1 =>
+        applyNewCardAnswerState(
+          card: card,
+          answer: answer,
+          desiredRetention: desiredRetention,
+        ),
+      protoScheduler.SchedulingState_Normal_Kind.learning => () {
+        if (learningQueue == null || learningDue == null) {
+          throw ArgumentError(
+            'learningQueue and learningDue are required for Normal/Learning',
+          );
+        }
+        return applyLearningCardAnswerState(
+          card: card,
+          answer: answer,
+          queue: learningQueue,
+          due: learningDue,
+          desiredRetention: desiredRetention,
+        );
+      }(),
+      protoScheduler.SchedulingState_Normal_Kind.review => () {
+        if (reviewDueDay == null) {
+          throw ArgumentError.value(
+            reviewDueDay,
+            'reviewDueDay',
+            'is required for Normal/Review',
+          );
+        }
+        return applyReviewCardAnswerState(
+          card: card,
+          answer: answer,
+          dueDay: reviewDueDay,
+          desiredRetention: desiredRetention,
+        );
+      }(),
+      protoScheduler.SchedulingState_Normal_Kind.relearning => () {
+        if (learningQueue == null || learningDue == null) {
+          throw ArgumentError(
+            'learningQueue and learningDue are required for Normal/Relearning',
+          );
+        }
+        return applyRelearningCardAnswerState(
+          card: card,
+          answer: answer,
+          queue: learningQueue,
+          due: learningDue,
+          desiredRetention: desiredRetention,
+        );
+      }(),
+      protoScheduler.SchedulingState_Normal_Kind.notSet =>
+        throw ArgumentError.value(
+          answer.newState.normal,
+          'answer.newState.normal',
+          'must contain a Normal state variant',
+        ),
+    };
+    final revlog = revlogEntryFromCardAnswer(
+      answer: answer,
+      usn: usn,
+      secsUntilDayRollover: secsUntilDayRollover,
+    );
+    await recordCardAnswerResult(
+      card: appliedCard,
+      revlog: revlog,
+      loadBalancerContext: loadBalancerContext,
+      homeDeckConfigId: homeDeckConfigId,
+    );
+    return appliedCard;
+  }
+
+  void _validateNormalCardAnswerState(
+    protoScheduler.SchedulingState_Normal state,
+    String argumentName,
+  ) {
+    void require(bool valid, Object value, String field) {
+      if (!valid) {
+        throw ArgumentError.value(
+          value,
+          '$argumentName.$field',
+          'is missing a required field',
+        );
+      }
+    }
+
+    switch (state.whichKind()) {
+      case protoScheduler.SchedulingState_Normal_Kind.new_1:
+        require(state.new_1.hasPosition(), state.new_1, 'new.position');
+      case protoScheduler.SchedulingState_Normal_Kind.learning:
+        final learning = state.learning;
+        require(
+          learning.hasRemainingSteps() &&
+              learning.hasScheduledSecs() &&
+              learning.hasElapsedSecs(),
+          learning,
+          'learning',
+        );
+      case protoScheduler.SchedulingState_Normal_Kind.review:
+        final review = state.review;
+        require(
+          review.hasScheduledDays() &&
+              review.hasElapsedDays() &&
+              review.hasEaseFactor() &&
+              review.hasLapses(),
+          review,
+          'review',
+        );
+      case protoScheduler.SchedulingState_Normal_Kind.relearning:
+        final relearning = state.relearning;
+        require(
+          relearning.hasReview() && relearning.hasLearning(),
+          relearning,
+          'relearning',
+        );
+        final review = relearning.review;
+        require(
+          review.hasScheduledDays() &&
+              review.hasElapsedDays() &&
+              review.hasEaseFactor() &&
+              review.hasLapses(),
+          review,
+          'relearning.review',
+        );
+        final learning = relearning.learning;
+        require(
+          learning.hasRemainingSteps() &&
+              learning.hasScheduledSecs() &&
+              learning.hasElapsedSecs(),
+          learning,
+          'relearning.learning',
+        );
+      case protoScheduler.SchedulingState_Normal_Kind.notSet:
+        throw ArgumentError.value(
+          state,
+          argumentName,
+          'must contain a Normal state variant',
+        );
+    }
+  }
+
   Never _missingLearningTiming(String cardType) => throw StateError(
     'scheduledSecs and elapsedSecs are required for $cardType cards',
   );

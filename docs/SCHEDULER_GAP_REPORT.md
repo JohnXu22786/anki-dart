@@ -879,6 +879,24 @@ This closes only pure Normal/Relearning Card snapshot application; filtered
 Relearning wrappers, due/timing resolution, revlog and persistence integration,
 transactions/undo, app wiring, and Reviewer UI remain open.
 
+### Unit 139 — apply and persist Normal CardAnswer results in the collection
+
+`CollectionSqliteStorage.applyAndRecordCardAnswerResult()` accepts a
+caller-held Card snapshot and generated CardAnswer, dispatches Normal/New,
+Normal/Learning, Normal/Review, and Normal/Relearning to the corresponding
+`anki_backend_models` snapshot helper, derives the matching RevlogEntry from
+explicit caller-supplied USN and day-rollover seconds, and persists both values
+through the existing atomic `recordCardAnswerResult()` operation. Learning and
+Relearning due queue/value and Review due day remain explicit caller-resolved
+inputs, as does nullable desired retention; no timing or collection state is
+read to resolve them. The operation returns the applied Card after commit and
+preserves the existing post-commit review-cache update and undo/redo behavior.
+Missing, mismatched, malformed, or filtered answers and missing due resolution
+are rejected before writes. This closes only collection orchestration for
+caller-resolved Normal answers through existing apply/derive/persist/cache
+helpers. Due resolution, filtered wrappers, app/Reviewer call-site integration,
+additional transaction/undo work, and UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`
@@ -907,9 +925,11 @@ app call-site wiring, and Reviewer UI remain open.
   parameters, historical retention, cutoff, and the next-day timestamp as
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
-- Remaining scheduler work: filtered-deck rescheduling, answer-call-site
-  wiring and application, persisted scheduling changes,
-  transactions/undo, and orchestration. Stored non-rescheduling filtered
+- Remaining scheduler work: filtered-deck rescheduling, caller-side
+  due/timing/fuzz resolution, app/Reviewer call-site integration, additional
+  transaction/undo work, and UI. Unit139 closes only collection orchestration
+  for caller-resolved Normal answers through existing apply, revlog derivation,
+  persistence, and cache helpers. Stored non-rescheduling filtered
   Preview-delay assembly is closed by Unit116. Stored normal-deck Review state retrieval and
   collection-backed FSRS Review answer-state calculation are closed by Units
   103–110; stored normal-deck New answer-state calculation is closed by Unit
@@ -931,10 +951,13 @@ app call-site wiring, and Reviewer UI remain open.
   construction, Unit130 closes its collection-level stored-card routing, Unit133
   closes pure revlog derivation, Unit134 closes Card custom-data propagation, and
   Unit135 closes pure Normal/New Card snapshot application, Unit136 closes
-  pure Normal/Learning Card snapshot application, and Unit137 closes pure
-  Normal/Review Card snapshot application. Relearn and filtered wrappers, due
-  calculation and caller resolution, collection/app wiring, revlog
-  and persistence integration, transactions/undo, and Reviewer UI remain open.
+  pure Normal/Learning Card snapshot application, Unit137 closes pure
+  Normal/Review Card snapshot application, and Unit138 closes pure
+  Normal/Relearning Card snapshot application. Unit139 closes collection
+  orchestration for caller-resolved Normal answers through existing apply,
+  revlog derivation, persistence, and cache helpers. Due calculation and caller
+  resolution, filtered wrappers, app/Reviewer call-site integration, additional
+  transaction/undo work, and UI remain open.
   Unit121 does
   not close answer-state composition, Preview wrapping, or rescheduling
   execution.
@@ -945,10 +968,9 @@ app call-site wiring, and Reviewer UI remain open.
   decision, and Unit96 adds the pure ReviewState interval hook, but these
   helpers do not complete collection call-site or full cross-platform review
   integration.
-- Applying scheduler answers beyond pure Normal/New, Normal/Learning, and
-  Normal/Review Card snapshot application, plus caller-side due/timing/fuzz resolution, application
-  call-site orchestration and integration of generated answers with
-  revlog/persistence beyond the existing supplied-result operation.
+- Applying scheduler answers beyond pure Normal/New, Normal/Learning,
+  Normal/Review, and Normal/Relearning Card snapshot application, plus
+  caller-side due/timing/fuzz resolution and app/Reviewer call-site integration.
 - Other collection transaction and undo work beyond the atomic answer-result
   operation above.
 - Reviewer UI, navigation, timing, and platform IO.

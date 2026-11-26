@@ -2,6 +2,7 @@
 // Copyright (C) 2026 John Tsui
 
 import 'package:anki_backend_models/anki_backend_models.dart';
+import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -67,6 +68,271 @@ void main() {
       expect(storage.revlog.getRevlogEntry(entry.id)!.cardId, Int64(41));
     },
   );
+
+  test('applies and persists all four Normal answer states', () async {
+    final cases =
+        <
+          ({
+            scheduler.CardAnswer answer,
+            CardQueue? queue,
+            int? due,
+            int? reviewDue,
+            CardType expectedType,
+            CardQueue expectedQueue,
+            int expectedDue,
+          })
+        >[
+          (
+            answer: _newAnswer(answeredAt: 1712345678000),
+            queue: null,
+            due: null,
+            reviewDue: null,
+            expectedType: CardType.newCard,
+            expectedQueue: CardQueue.newCard,
+            expectedDue: 9,
+          ),
+          (
+            answer: _learningAnswer(answeredAt: 1712345678001),
+            queue: CardQueue.learn,
+            due: 123456,
+            reviewDue: null,
+            expectedType: CardType.learn,
+            expectedQueue: CardQueue.learn,
+            expectedDue: 123456,
+          ),
+          (
+            answer: _reviewAnswer(answeredAt: 1712345678002),
+            queue: null,
+            due: null,
+            reviewDue: 47,
+            expectedType: CardType.review,
+            expectedQueue: CardQueue.review,
+            expectedDue: 47,
+          ),
+          (
+            answer: _relearningAnswer(answeredAt: 1712345678003),
+            queue: CardQueue.dayLearn,
+            due: 19,
+            reviewDue: null,
+            expectedType: CardType.relearn,
+            expectedQueue: CardQueue.dayLearn,
+            expectedDue: 19,
+          ),
+        ];
+
+    for (final (index, result) in cases.indexed) {
+      final card = _card(id: 41, due: 4);
+      final applied = await storage.applyAndRecordCardAnswerResult(
+        card: card,
+        answer: result.answer,
+        usn: 7,
+        secsUntilDayRollover: 3600,
+        desiredRetention: 0.91,
+        learningQueue: result.queue,
+        learningDue: result.due,
+        reviewDueDay: result.reviewDue,
+      );
+
+      expect(applied.reps, 1);
+      expect(applied.ctype, result.expectedType);
+      expect(applied.queue, result.expectedQueue);
+      expect(applied.due, result.expectedDue);
+      expect((await storage.getCard(Int64(41)))!.toProto(), applied.toProto());
+      final revlog = storage.revlog.getRevlogEntry(
+        RevlogId(Int64(1712345678000 + index)),
+      );
+      expect(revlog, isNotNull);
+      expect(revlog!.cardId, Int64(41));
+      expect(revlog.id.value, Int64(1712345678000 + index));
+      expect(revlog.usn, 7);
+      expect(revlog.buttonChosen, 3);
+      expect(revlog.takenMillis, 850);
+      expect(revlog.reviewKind, RevlogReviewKind.learning);
+    }
+  });
+
+  test(
+    'rejects invalid, missing, and filtered answers before writing',
+    () async {
+      final generation = storage.collectionUndoGeneration;
+      final preset = Int64(77);
+      final context = _loadBalancerContext(preset);
+      final invalid = <scheduler.CardAnswer>[
+        scheduler.CardAnswer(cardId: Int64(41)),
+        scheduler.CardAnswer(
+          cardId: Int64(41),
+          currentState: scheduler.SchedulingState(
+            normal: scheduler.SchedulingState_Normal(
+              new_1: scheduler.SchedulingState_New(position: 1),
+            ),
+          ),
+          newState: scheduler.SchedulingState(
+            normal: scheduler.SchedulingState_Normal(),
+          ),
+        ),
+        scheduler.CardAnswer(
+          cardId: Int64(41),
+          currentState: _normalNewState(5),
+          newState: scheduler.SchedulingState(
+            normal: scheduler.SchedulingState_Normal(
+              new_1: scheduler.SchedulingState_New(),
+            ),
+          ),
+        ),
+        scheduler.CardAnswer(
+          cardId: Int64(41),
+          currentState: scheduler.SchedulingState(
+            normal: scheduler.SchedulingState_Normal(
+              new_1: scheduler.SchedulingState_New(),
+            ),
+          ),
+          newState: scheduler.SchedulingState(
+            normal: scheduler.SchedulingState_Normal(
+              review: scheduler.SchedulingState_Review(
+                scheduledDays: 8,
+                elapsedDays: 3,
+                easeFactor: 2.5,
+                lapses: 0,
+              ),
+            ),
+          ),
+        ),
+        scheduler.CardAnswer(
+          cardId: Int64(41),
+          currentState: _normalNewState(5),
+          newState: scheduler.SchedulingState(
+            filtered: scheduler.SchedulingState_Filtered(
+              preview: scheduler.SchedulingState_Preview(scheduledSecs: 30),
+            ),
+          ),
+        ),
+        scheduler.CardAnswer(
+          cardId: Int64(41),
+          currentState: scheduler.SchedulingState(
+            filtered: scheduler.SchedulingState_Filtered(
+              rescheduling: scheduler.SchedulingState_ReschedulingFilter(
+                originalState: scheduler.SchedulingState_Normal(
+                  new_1: scheduler.SchedulingState_New(position: 5),
+                ),
+              ),
+            ),
+          ),
+          newState: _normalNewState(9),
+        ),
+        _newAnswer(cardId: Int64(42)),
+      ];
+      for (final answer in invalid) {
+        await expectLater(
+          storage.applyAndRecordCardAnswerResult(
+            card: _card(id: 41, due: 4),
+            answer: answer,
+            usn: 7,
+            secsUntilDayRollover: 3600,
+            desiredRetention: null,
+            loadBalancerContext: context,
+            homeDeckConfigId: preset,
+          ),
+          throwsArgumentError,
+        );
+      }
+      await expectLater(
+        storage.applyAndRecordCardAnswerResult(
+          card: _card(id: 41, due: 4),
+          answer: _learningAnswer(),
+          usn: 7,
+          secsUntilDayRollover: 3600,
+          desiredRetention: null,
+          learningQueue: CardQueue.review,
+          learningDue: 90,
+        ),
+        throwsArgumentError,
+      );
+      for (final answer in [
+        _learningAnswer(),
+        _reviewAnswer(),
+        _relearningAnswer(),
+      ]) {
+        await expectLater(
+          storage.applyAndRecordCardAnswerResult(
+            card: _card(id: 41, due: 4),
+            answer: answer,
+            usn: 7,
+            secsUntilDayRollover: 3600,
+            desiredRetention: null,
+          ),
+          throwsArgumentError,
+        );
+      }
+
+      expect((await storage.getCard(Int64(41)))!.due, 4);
+      expect(database.select('SELECT id FROM revlog'), isEmpty);
+      expect(storage.collectionUndoGeneration, generation);
+      expect(context.cache.daysByPreset[preset]![9].cardCount, 0);
+    },
+  );
+
+  test(
+    'failed revlog insert leaves applied card and cache unchanged',
+    () async {
+      final preset = Int64(77);
+      final context = _loadBalancerContext(preset);
+      final collision = _revlog(id: 1712345678000, cardId: 41);
+      storage.revlog.addRevlogEntry(collision);
+      final generation = storage.collectionUndoGeneration;
+
+      await expectLater(
+        storage.applyAndRecordCardAnswerResult(
+          card: _card(id: 41, due: 4),
+          answer: _reviewAnswer(),
+          usn: 7,
+          secsUntilDayRollover: 3600,
+          desiredRetention: null,
+          reviewDueDay: 47,
+          loadBalancerContext: context,
+          homeDeckConfigId: preset,
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      expect((await storage.getCard(Int64(41)))!.due, 4);
+      expect(database.select('SELECT id FROM revlog'), hasLength(1));
+      expect(context.cache.daysByPreset[preset]![7].cardCount, 0);
+      expect(storage.collectionUndoGeneration, generation);
+    },
+  );
+
+  test('commits cache mutation with answer and undo/redo rows', () async {
+    final preset = Int64(77);
+    final context = _loadBalancerContext(preset);
+    final answer = _reviewAnswer(answeredAt: 1712345678015);
+
+    final applied = await storage.applyAndRecordCardAnswerResult(
+      card: _card(id: 41, due: 4),
+      answer: answer,
+      usn: 7,
+      secsUntilDayRollover: 3600,
+      desiredRetention: null,
+      reviewDueDay: 47,
+      loadBalancerContext: context,
+      homeDeckConfigId: preset,
+    );
+    expect(applied.queue, CardQueue.review);
+    expect(context.cache.daysByPreset[preset]![8].cardCount, 1);
+    expect(storage.collectionUndoLabel, 'answerCard');
+
+    await storage.undoLastCollectionOperation();
+    expect((await storage.getCard(Int64(41)))!.due, 4);
+    expect(
+      storage.revlog.getRevlogEntry(RevlogId(answer.answeredAtMillis)),
+      isNull,
+    );
+    await storage.redoLastCollectionOperation();
+    expect((await storage.getCard(Int64(41)))!.due, 47);
+    expect(
+      storage.revlog.getRevlogEntry(RevlogId(answer.answeredAtMillis)),
+      isNotNull,
+    );
+  });
 
   test(
     'adds a persisted review result to the supplied home-config cache',
@@ -290,6 +556,92 @@ void main() {
     },
   );
 }
+
+scheduler.SchedulingState _normalNewState(int position) =>
+    scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        new_1: scheduler.SchedulingState_New(position: position),
+      ),
+    );
+
+scheduler.CardAnswer _newAnswer({
+  Int64? cardId,
+  int answeredAt = 1712345678000,
+}) => scheduler.CardAnswer(
+  cardId: cardId ?? Int64(41),
+  currentState: _normalNewState(5),
+  newState: scheduler.SchedulingState(
+    normal: scheduler.SchedulingState_Normal(
+      new_1: scheduler.SchedulingState_New(position: 9),
+    ),
+  )..customData = 'new',
+  rating: scheduler.CardAnswer_Rating.GOOD,
+  answeredAtMillis: Int64(answeredAt),
+  millisecondsTaken: 850,
+);
+
+scheduler.CardAnswer _learningAnswer({int answeredAt = 1712345678000}) =>
+    scheduler.CardAnswer(
+      cardId: Int64(41),
+      currentState: _normalNewState(5),
+      newState: scheduler.SchedulingState(
+        normal: scheduler.SchedulingState_Normal(
+          learning: scheduler.SchedulingState_Learning(
+            remainingSteps: 2,
+            scheduledSecs: 60,
+            elapsedSecs: 4,
+          ),
+        ),
+      )..customData = 'learning',
+      rating: scheduler.CardAnswer_Rating.GOOD,
+      answeredAtMillis: Int64(answeredAt),
+      millisecondsTaken: 850,
+    );
+
+scheduler.CardAnswer _reviewAnswer({int answeredAt = 1712345678000}) =>
+    scheduler.CardAnswer(
+      cardId: Int64(41),
+      currentState: _normalNewState(5),
+      newState: scheduler.SchedulingState(
+        normal: scheduler.SchedulingState_Normal(
+          review: scheduler.SchedulingState_Review(
+            scheduledDays: 8,
+            elapsedDays: 3,
+            easeFactor: 2.5,
+            lapses: 0,
+          ),
+        ),
+      )..customData = 'review',
+      rating: scheduler.CardAnswer_Rating.GOOD,
+      answeredAtMillis: Int64(answeredAt),
+      millisecondsTaken: 850,
+    );
+
+scheduler.CardAnswer _relearningAnswer({int answeredAt = 1712345678000}) =>
+    scheduler.CardAnswer(
+      cardId: Int64(41),
+      currentState: _normalNewState(5),
+      newState: scheduler.SchedulingState(
+        normal: scheduler.SchedulingState_Normal(
+          relearning: scheduler.SchedulingState_Relearning(
+            review: scheduler.SchedulingState_Review(
+              scheduledDays: 8,
+              elapsedDays: 3,
+              easeFactor: 2.5,
+              lapses: 1,
+            ),
+            learning: scheduler.SchedulingState_Learning(
+              remainingSteps: 2,
+              scheduledSecs: 60,
+              elapsedSecs: 4,
+            ),
+          ),
+        ),
+      )..customData = 'relearning',
+      rating: scheduler.CardAnswer_Rating.GOOD,
+      answeredAtMillis: Int64(answeredAt),
+      millisecondsTaken: 850,
+    );
 
 Card _card({
   required int id,

@@ -76,6 +76,16 @@ the current and selected state messages so they do not alias the input. It
 constructs a request only; applying the answer, updating revlogs or collection
 state, and transaction/undo behavior remain caller-owned.
 
+`applyFilteredPreviewCardAnswerState()` accepts a generated `CardAnswer` whose
+current and new states are both filtered Preview states with their required
+fields present, and whose Card carries an original deck ID. Unfinished answers
+use a caller-resolved due timestamp and PreviewRepeat queue. Finished answers
+restore the original deck and any nonzero original due value, then restore a
+nonnegative queue from the Card type and restored due. It preserves existing
+custom data when the protocol field is absent and copies it when present,
+including an explicit empty value. The helper does not calculate due times,
+read a clock or collection, derive a revlog, or persist changes.
+
 `applyLearningCardAnswerState()` accepts a generated `CardAnswer` whose card ID
 matches the supplied Card, whose `currentState` is Normal/New or Normal/Learning,
 and whose `newState` is Normal/Learning. It returns a copied Card with Learn

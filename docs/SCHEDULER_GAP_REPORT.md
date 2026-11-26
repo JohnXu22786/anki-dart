@@ -1204,3 +1204,20 @@ due inputs. This closes only generated Review state plus single-snapshot
 due-day resolution for composed answer storage. Learning and Relearning due
 resolution, scheduler elapsed/fuzz inputs, scheduling context resolution,
 caller/UI integration, and other due types remain open.
+
+### Unit 155 — resolve interday Learning/Relearning due day in composed answers
+
+The composed `CollectionSqliteStorage.answerCard()` operation now resolves
+Learning and Relearning queue and due day from the generated next state, using
+Core's inclusive `scheduledSecs >= secsUntilDayRollover` barrier, whole-day
+offset calculation, captured `daysElapsed`, and signed i32 Card storage
+conversion. A generated interday answer is stored in `CardQueue.dayLearn`
+without a caller-supplied learning queue or due value; intraday answers retain
+the caller-resolved due timestamp and use `CardQueue.learn`. The same generated
+state extraction covers ordinary and rescheduling-filtered answer paths. The
+public pure `resolveLearningAnswerDueDay()` helper performs no collection reads
+or scheduling transitions, and lower-level apply/record APIs keep their
+explicit queue and due arguments. This closes only interday Learning/Relearning
+queue and due-day resolution for the composed answer operation. Intraday
+timestamp calculation/fuzz, caller/UI integration, scheduler elapsed/fuzz
+inputs, scheduling context resolution, and remaining scheduler gaps stay open.

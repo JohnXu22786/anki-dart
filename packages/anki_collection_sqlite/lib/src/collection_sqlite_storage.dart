@@ -218,6 +218,7 @@ enum CollectionUndoOperation {
   changeDeckDailyLimits,
   createDeck,
   renameDeck,
+  answerCard,
   custom,
 }
 
@@ -4966,6 +4967,45 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Persists a caller-computed post-answer [card] and its [revlog] together.
+  ///
+  /// The card must already exist and both values must identify the same card.
+  /// The update and revlog insertion commit as one undoable `answerCard`
+  /// collection operation. Scheduling, revlog derivation, and cache updates
+  /// remain the caller's responsibility.
+  Future<void> recordCardAnswerResult({
+    required Card card,
+    required RevlogEntry revlog,
+  }) async {
+    if (card.id != revlog.cardId) {
+      throw ArgumentError.value(
+        revlog.cardId,
+        'revlog.cardId',
+        'must match card.id (${card.id})',
+      );
+    }
+    await runUndoableCollectionOperation(
+      operation: CollectionUndoOperation.answerCard,
+      prepare: () async {
+        if (await getCard(card.id) == null) {
+          throw StateError('card not found: ${card.id}');
+        }
+        return true;
+      },
+      apply: () async {
+        final updatedRows = await _withExternalCollectionMutation(
+          () => _updateCardSync(card),
+        );
+        if (updatedRows == 0) {
+          throw StateError('card update did not affect card: ${card.id}');
+        }
+        if (_revlogStorage.addRevlogEntry(revlog) == null) {
+          throw StateError('revlog ID is already in use: ${revlog.id.value}');
+        }
+      },
+    );
+  }
+
   Never _missingLearningTiming(String cardType) => throw StateError(
     'scheduledSecs and elapsedSecs are required for $cardType cards',
   );
@@ -5175,16 +5215,20 @@ WHERE queue IN (-2, -3)
 
   /// Updates all persisted scheduling fields for [card].
   Future<void> updateCard(Card card) async {
-    await _withExternalCollectionMutation(() {
-      _database.execute('''
+    await _withExternalCollectionMutation(() => _updateCardSync(card));
+    await _flushIfAutocommit();
+  }
+
+  int _updateCardSync(Card card) {
+    _database.execute('''
       UPDATE cards SET nid = ?, did = ?, ord = ?, mod = ?, usn = ?,
         type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?,
         lapses = ?, left = ?, odue = ?, odid = ?, flags = ?, data = ?
       WHERE id = ?
     ''', _cardValues(card)..add(_toSqlInt64(card.id)));
-      if (_database.updatedRows > 0) discardExistingNoteUpdateUndoHistory();
-    });
-    await _flushIfAutocommit();
+    final updatedRows = _database.updatedRows;
+    if (updatedRows > 0) discardExistingNoteUpdateUndoHistory();
+    return updatedRows;
   }
 
   Future<CardId> addCard(Card card) async {

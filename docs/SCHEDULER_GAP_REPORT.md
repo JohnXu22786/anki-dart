@@ -767,6 +767,19 @@ only collection-level stored-card CardAnswer request routing/construction;
 answer application and persistence, transactions/undo, and Reviewer UI remain
 open.
 
+### Unit 131 — persist a supplied post-answer card and revlog
+
+`CollectionSqliteStorage.recordCardAnswerResult()` accepts the caller-computed
+post-answer `Card` and `RevlogEntry`, requires them to identify the same
+existing card, and updates the card while inserting the revlog in one SQLite
+transaction. The operation uses the collection undo journal under the stable
+`answerCard` identity, so undo restores the prior card and removes the new
+revlog, and redo reapplies both. A revlog ID collision or card update failure
+rolls back the whole write. This closes only persistence and undo/redo for
+caller-supplied answer results. Scheduler calculation, CardAnswer request
+routing, revlog field derivation, load-balancer cache mutation, and
+Reviewer/app call-site orchestration remain caller-owned or open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`
@@ -828,7 +841,10 @@ app call-site wiring, and Reviewer UI remain open.
   decision, and Unit96 adds the pure ReviewState interval hook, but these
   helpers do not complete collection call-site or full cross-platform review
   integration.
-- Answer persistence, revlog mutation, undo, and collection transactions.
+- Applying scheduler answers and application call-site orchestration beyond
+  persistence of supplied post-answer card/revlog values.
+- Other collection transaction and undo work beyond the atomic answer-result
+  operation above.
 - Reviewer UI, navigation, timing, and platform IO.
 
 These remain in the Core/backend or host adapter until their own shared Dart

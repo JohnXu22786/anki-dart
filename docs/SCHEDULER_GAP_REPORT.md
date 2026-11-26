@@ -1212,12 +1212,28 @@ Learning and Relearning queue and due day from the generated next state, using
 Core's inclusive `scheduledSecs >= secsUntilDayRollover` barrier, whole-day
 offset calculation, captured `daysElapsed`, and signed i32 Card storage
 conversion. A generated interday answer is stored in `CardQueue.dayLearn`
-without a caller-supplied learning queue or due value; intraday answers retain
-the caller-resolved due timestamp and use `CardQueue.learn`. The same generated
+without a caller-supplied learning queue or due value; intraday answers use
+`CardQueue.learn`. The same generated
 state extraction covers ordinary and rescheduling-filtered answer paths. The
 public pure `resolveLearningAnswerDueDay()` helper performs no collection reads
 or scheduling transitions, and lower-level apply/record APIs keep their
 explicit queue and due arguments. This closes only interday Learning/Relearning
-queue and due-day resolution for the composed answer operation. Intraday
-timestamp calculation/fuzz, caller/UI integration, scheduler elapsed/fuzz
-inputs, scheduling context resolution, and remaining scheduler gaps stay open.
+queue and due-day resolution for the composed answer operation. Intraday due
+timestamp composition, caller/UI integration, scheduler elapsed/fuzz inputs,
+scheduling context resolution, and remaining scheduler gaps stay open.
+
+### Unit 156 — compose intraday Learning/Relearning due timestamp
+
+The public pure `resolveLearningAnswerDueTimestamp()` helper adds the caller's
+already fuzz-resolved intraday delay to `CollectionAnswerTiming.now` and
+converts the result to Core's signed i32 Card due representation. It validates
+the delay and all timing snapshot values as uint32 inputs. The composed
+`CollectionSqliteStorage.answerCard()` API now accepts `fuzzedLearningSecs`;
+generated intraday Learning/Relearning answers resolve their due timestamp
+from that delay and the same captured timing snapshot, for ordinary and
+rescheduling-filtered answers. Interday DayLearn continues to use Unit155's
+generated due-day resolver without requiring an intraday delay, and lower-level
+apply/record APIs retain their explicit absolute due values. This closes only
+intraday due timestamp composition from snapshot plus fuzzed interval. Fuzz
+calculation, answer timestamp, elapsed/scheduling context, caller/UI
+integration, and remaining scheduler gaps remain open.

@@ -198,6 +198,26 @@ int? resolveLearningAnswerDueDay({
   return (answerTiming.daysElapsed + days).toSigned(32);
 }
 
+/// Resolves an intraday Learning or Relearning due timestamp from the caller's
+/// fuzz-resolved interval and one captured answer timing snapshot.
+///
+/// This pure operation performs no collection reads or scheduling transitions.
+int resolveLearningAnswerDueTimestamp({
+  required int fuzzedLearningSecs,
+  required CollectionAnswerTiming answerTiming,
+}) {
+  _requiredUnsigned(fuzzedLearningSecs, 32, 'fuzzedLearningSecs');
+  _requiredUnsigned(answerTiming.now, 32, 'now');
+  _requiredUnsigned(answerTiming.daysElapsed, 32, 'daysElapsed');
+  _requiredUnsigned(answerTiming.nextDayAt, 32, 'nextDayAt');
+  _requiredUnsigned(
+    answerTiming.secsUntilDayRollover,
+    32,
+    'secsUntilDayRollover',
+  );
+  return (answerTiming.now + fuzzedLearningSecs).toSigned(32);
+}
+
 /// Opens a SQLite database for the caller-selected platform and location.
 ///
 /// The driver owns platform-specific database configuration and can capture
@@ -5534,9 +5554,9 @@ WHERE queue IN (-2, -3)
   /// bury flags are caller-resolved settings for that config; [answerTiming]
   /// carries the caller-resolved collection day and rollover duration from one
   /// collection timing snapshot. This method does not resolve deck
-  /// config. Review due day and interday Learning/Relearning queue and due day
-  /// are derived from generated next states and [answerTiming]. Intraday
-  /// Learning/Relearning due timestamps remain caller-resolved.
+  /// config. Review due day and Learning/Relearning queue and due values are
+  /// derived from generated next states and [answerTiming]. For intraday
+  /// answers, [fuzzedLearningSecs] is the caller's fuzz-resolved interval.
   /// The generated answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5560,7 +5580,7 @@ WHERE queue IN (-2, -3)
     required int usn,
     required CollectionAnswerTiming answerTiming,
     required double? desiredRetention,
-    int? learningDue,
+    int? fuzzedLearningSecs,
     int? dueTimestampSecs,
     CollectionLoadBalancerContext? loadBalancerContext,
     DeckConfigId? homeDeckConfigId,
@@ -5655,7 +5675,20 @@ WHERE queue IN (-2, -3)
     final resolvedLearningQueue = resolvedLearningDueDay == null
         ? CardQueue.learn
         : CardQueue.dayLearn;
-    final resolvedLearningDue = resolvedLearningDueDay ?? learningDue;
+    final resolvedLearningDue =
+        resolvedLearningDueDay ??
+        (learningScheduledSecs == null
+            ? null
+            : fuzzedLearningSecs == null
+            ? throw ArgumentError.value(
+                fuzzedLearningSecs,
+                'fuzzedLearningSecs',
+                'is required for intraday Learning/Relearning answers',
+              )
+            : resolveLearningAnswerDueTimestamp(
+                fuzzedLearningSecs: fuzzedLearningSecs,
+                answerTiming: answerTiming,
+              ));
     final cardToApply =
         currentKind == protoScheduler.SchedulingState_Kind.normal ||
             (currentKind == protoScheduler.SchedulingState_Kind.filtered &&

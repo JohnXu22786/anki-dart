@@ -123,4 +123,92 @@ void main() {
       );
     });
   });
+
+  group('resolveLearningAnswerDueTimestamp', () {
+    test('adds fuzzed seconds to the captured time', () {
+      expect(
+        resolveLearningAnswerDueTimestamp(
+          fuzzedLearningSecs: 90,
+          answerTiming: const CollectionAnswerTiming(
+            now: 1712345678,
+            daysElapsed: 6,
+            nextDayAt: 1712347478,
+            secsUntilDayRollover: 1800,
+          ),
+        ),
+        1712345768,
+      );
+    });
+
+    test('uses signed i32 Card representation and validates uint32 inputs', () {
+      expect(
+        resolveLearningAnswerDueTimestamp(
+          fuzzedLearningSecs: 0xffffffff,
+          answerTiming: const CollectionAnswerTiming(
+            now: 0xffffffff,
+            daysElapsed: 0,
+            nextDayAt: 0xffffffff,
+            secsUntilDayRollover: 0,
+          ),
+        ),
+        -2,
+      );
+
+      for (final invalid in [-1, 0x100000000]) {
+        expect(
+          () => resolveLearningAnswerDueTimestamp(
+            fuzzedLearningSecs: invalid,
+            answerTiming: const CollectionAnswerTiming(
+              now: 0,
+              daysElapsed: 0,
+              nextDayAt: 0,
+              secsUntilDayRollover: 0,
+            ),
+          ),
+          throwsFormatException,
+        );
+        for (final field in [
+          'now',
+          'daysElapsed',
+          'nextDayAt',
+          'secsUntilDayRollover',
+        ]) {
+          final timing = switch (field) {
+            'now' => CollectionAnswerTiming(
+              now: invalid,
+              daysElapsed: 0,
+              nextDayAt: 0,
+              secsUntilDayRollover: 0,
+            ),
+            'daysElapsed' => CollectionAnswerTiming(
+              now: 0,
+              daysElapsed: invalid,
+              nextDayAt: 0,
+              secsUntilDayRollover: 0,
+            ),
+            'nextDayAt' => CollectionAnswerTiming(
+              now: 0,
+              daysElapsed: 0,
+              nextDayAt: invalid,
+              secsUntilDayRollover: 0,
+            ),
+            _ => CollectionAnswerTiming(
+              now: 0,
+              daysElapsed: 0,
+              nextDayAt: 0,
+              secsUntilDayRollover: invalid,
+            ),
+          };
+          expect(
+            () => resolveLearningAnswerDueTimestamp(
+              fuzzedLearningSecs: 0,
+              answerTiming: timing,
+            ),
+            throwsFormatException,
+            reason: 'rejects invalid $field',
+          );
+        }
+      }
+    });
+  });
 }

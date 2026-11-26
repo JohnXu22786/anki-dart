@@ -1289,3 +1289,17 @@ level apply/record APIs retain their explicit due argument. This closes only
 composed filtered Preview due-time resolution; filtered deck gathering,
 elapsed/context resolution, app/UI integration, and remaining scheduler gaps
 stay open.
+
+### Unit 161 — derive Learning/Relearning elapsed seconds from the stored Card
+
+The composed `CollectionSqliteStorage.answerCard()` no longer accepts caller
+`elapsedSecs` for Learning or Relearning scheduling-state generation. It
+derives elapsed seconds from the already-read Card snapshot, caller-resolved
+`scheduledSecs`, and the same `CollectionAnswerTiming` used by the answer.
+Learn queue cards use the prior step's fuzzed due origin with Core's
+`card.id + card.reps.wrapping_sub(1)` seed; DayLearn cards use Core's
+minimum-one-day elapsed calculation and i32/u32 conversions. The lower-level
+scheduling and apply/record APIs retain their explicit elapsed inputs, and
+`scheduledSecs` remains caller-resolved. This closes only elapsed-seconds
+composition for stored Learn/Relearn cards; step resolution, scheduling
+context, app/UI integration, and remaining scheduler gaps stay open.

@@ -202,6 +202,50 @@ int? resolveLearningAnswerDueDay({
   return (answerTiming.daysElapsed + days).toSigned(32);
 }
 
+/// Resolves the elapsed seconds for a stored Learning or Relearning Card using
+/// the caller-resolved current step and the answer's captured timing snapshot.
+///
+/// This follows Core's `normal_study_state()` conversions. Intraday Learning
+/// cards use the prior step due origin with the seed for `reps - 1`; DayLearn
+/// cards derive elapsed time from their stored due day. Other queues return
+/// zero, matching Core's unused-queue fallback.
+int resolveLearningAnswerElapsedSecs({
+  required Card card,
+  required int scheduledSecs,
+  required CollectionAnswerTiming answerTiming,
+}) {
+  if (card.ctype != CardType.learn && card.ctype != CardType.relearn) {
+    throw ArgumentError.value(
+      card.ctype,
+      'card.ctype',
+      'expected Learn or Relearn',
+    );
+  }
+  _requiredUnsigned(scheduledSecs, 32, 'scheduledSecs');
+  _requiredUnsigned(card.reps, 32, 'card.reps');
+  _requiredUnsigned(answerTiming.daysElapsed, 32, 'daysElapsed');
+
+  if (card.queue == CardQueue.learn) {
+    _requiredUnsigned(answerTiming.now, 32, 'now');
+    final cardIdAsU64 = BigInt.from(card.id.toInt()).toUnsigned(64);
+    final previousReps = BigInt.from(card.reps - 1).toUnsigned(32);
+    final seed = (cardIdAsU64 + previousReps).toUnsigned(64);
+    final previousStepSecs = fuzzLearningIntervalSecs(scheduledSecs, seed);
+    final previousAnswerOrigin = card.due - previousStepSecs;
+    return (answerTiming.now - previousAnswerOrigin) & 0xffffffff;
+  }
+
+  if (card.queue == CardQueue.dayLearn) {
+    final lastIntervalDays = max(scheduledSecs ~/ 86400, 1);
+    final elapsedDays = _wrapInt32(
+      answerTiming.daysElapsed - card.due + lastIntervalDays,
+    );
+    return _wrapInt32(elapsedDays * 86400) & 0xffffffff;
+  }
+
+  return 0;
+}
+
 /// Resolves an intraday Learning or Relearning due timestamp from a
 /// fuzz-resolved interval and one captured answer timing snapshot.
 ///
@@ -5564,7 +5608,9 @@ WHERE queue IN (-2, -3)
   /// not resolve deck config. Review due day and Learning/Relearning queue and
   /// due values are derived from generated next states and [answerTiming].
   /// Intraday Learning/Relearning and unfinished filtered Preview intervals
-  /// are fuzzed from [fuzzSeed] and resolved from [answerTiming]. The generated
+  /// are fuzzed from [fuzzSeed] and resolved from [answerTiming]. Learning and
+  /// Relearning elapsed seconds are derived from the stored Card and the
+  /// caller-resolved [scheduledSecs]. The generated
   /// answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5580,7 +5626,6 @@ WHERE queue IN (-2, -3)
     required bool buryReviewSiblings,
     required ReviewSchedulingContext baseContext,
     int? scheduledSecs,
-    int? elapsedSecs,
     required bool loadBalancerEnabled,
     required BigInt? fuzzSeed,
     required int usn,
@@ -5608,6 +5653,20 @@ WHERE queue IN (-2, -3)
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
 
+    final elapsedSecs = switch (card.ctype) {
+      CardType.learn || CardType.relearn =>
+        scheduledSecs == null
+            ? throw StateError(
+                'scheduledSecs is required for '
+                '${card.ctype == CardType.learn ? 'Learn' : 'Relearn'} cards',
+              )
+            : resolveLearningAnswerElapsedSecs(
+                card: card,
+                scheduledSecs: scheduledSecs,
+                answerTiming: answerTiming,
+              ),
+      _ => null,
+    };
     final answer = await cardAnswerRequestForCard(
       cardId: cardId,
       rating: rating,

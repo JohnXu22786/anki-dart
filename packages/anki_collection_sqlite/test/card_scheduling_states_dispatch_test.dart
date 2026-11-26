@@ -1017,7 +1017,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
       baseContext: context,
       scheduledSecs: 90,
-      elapsedSecs: 12,
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
@@ -1336,7 +1335,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       millisecondsTaken: 300,
       baseContext: context,
       scheduledSecs: 90,
-      elapsedSecs: 12,
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
@@ -2082,7 +2080,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         scheduledSecs: 90,
-        elapsedSecs: 12,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
@@ -2268,6 +2265,7 @@ INSERT INTO cards VALUES
     Future<Card> answer({
       CollectionAnswerTiming? answerTiming,
       BigInt? fuzzSeed,
+      int? scheduledSecs = 90,
     }) => storage.answerCard(
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
@@ -2278,8 +2276,7 @@ INSERT INTO cards VALUES
       buryInterdayLearningSiblings: false,
       buryReviewSiblings: false,
       baseContext: context,
-      scheduledSecs: 90,
-      elapsedSecs: 0,
+      scheduledSecs: scheduledSecs,
       loadBalancerEnabled: false,
       fuzzSeed: fuzzSeed,
       usn: 8,
@@ -2295,6 +2292,16 @@ INSERT INTO cards VALUES
 
     await storage.executeBatch(
       'UPDATE cards SET type = 1, queue = 1, left = 2, due = 0, did = 40, odid = 0 WHERE id = 1',
+    );
+    await expectLater(
+      answer(scheduledSecs: null),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('scheduledSecs is required for Learn cards'),
+        ),
+      ),
     );
     final learning = await answer();
     expect(learning.queue, CardQueue.dayLearn);

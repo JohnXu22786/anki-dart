@@ -35,20 +35,23 @@ INSERT INTO col VALUES (1700000000, '{}');
   group('answerTimingForNow', () {
     const creationSecs = 1700000000;
 
-    test('returns one collection timing snapshot before rollover', () {
-      final nowSecs = creationSecs + 3 * Duration.secondsPerDay - 1;
-      final now = DateTime.fromMillisecondsSinceEpoch(
-        nowSecs * 1000,
-        isUtc: true,
-      );
-      final timing = storage.answerTimingForNow(now: now);
+    test(
+      'returns one millisecond-precision collection timing snapshot before rollover',
+      () {
+        final nowMillis =
+            (creationSecs + 3 * Duration.secondsPerDay - 1) * 1000 + 456;
+        final nowSecs = nowMillis ~/ 1000;
+        final now = DateTime.fromMillisecondsSinceEpoch(nowMillis, isUtc: true);
+        final timing = storage.answerTimingForNow(now: now);
 
-      expect(timing.now, nowSecs);
-      expect(timing.daysElapsed, 2);
-      expect(timing.nextDayAt, creationSecs + 3 * Duration.secondsPerDay);
-      expect(timing.secsUntilDayRollover, 1);
-      expect(timing.secsUntilDayRollover, inInclusiveRange(0, 0xffffffff));
-    });
+        expect(timing.now, nowSecs);
+        expect(timing.answeredAtMillis, nowMillis);
+        expect(timing.daysElapsed, 2);
+        expect(timing.nextDayAt, creationSecs + 3 * Duration.secondsPerDay);
+        expect(timing.secsUntilDayRollover, 1);
+        expect(timing.secsUntilDayRollover, inInclusiveRange(0, 0xffffffff));
+      },
+    );
 
     test(
       'preserves rollover boundary and answer input values read-only',
@@ -77,7 +80,6 @@ INSERT INTO col VALUES (1700000000, '{}');
           storage.answerCard(
             cardId: Int64(-1),
             rating: protoScheduler.CardAnswer_Rating.GOOD,
-            answeredAtMillis: Int64(nowSecs * 1000),
             millisecondsTaken: 0,
             capAnswerTimeToSecs: 60,
             suspendLeechedCards: false,

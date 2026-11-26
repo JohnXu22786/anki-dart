@@ -314,3 +314,15 @@ caller-resolved home-config flags and keeps sibling Card changes in the
 existing undoable answer transaction; no upstream implementation code is
 copied. All six source hashes are recorded in `SOURCE.sha256` and validated by
 `tool/check_package.py`. Root `COPYING` remains unchanged.
+
+`CollectionSqliteStorage.answerDeckConfigForCard()` adapts the assigned-deck,
+home/original-deck, and home-config resolution in Core's
+`CardStateUpdater::card_state_updater()` and `answer_card_inner()` from
+`rslib/src/scheduler/answering/mod.rs`, and uses the DeckConfig row and default
+semantics from `rslib/src/deckconfig/mod.rs` and `schema11.rs`, at pinned Core
+commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The resolver projects the
+home config ID, answer-time cap, leech action, and sibling-bury flags without
+resolving scheduling state or mutating the collection. The three source hashes
+are recorded in `SOURCE.sha256` and validated by `tool/check_package.py`. This
+independent Dart adaptation is covered by the package's AGPL-3.0-or-later
+license; root `COPYING` is unchanged.

@@ -173,6 +173,16 @@ final class CollectionAnswerTiming {
   final int secsUntilDayRollover;
 }
 
+/// Resolves a Review answer's due day from one generated next state and timing
+/// snapshot, using Core's unsigned day sum and signed i32 Card representation.
+///
+/// This pure operation performs no collection reads and does not derive or
+/// alter the scheduling state.
+int resolveReviewAnswerDueDay({
+  required ReviewCardState nextState,
+  required CollectionAnswerTiming answerTiming,
+}) => (answerTiming.daysElapsed + nextState.scheduledDays).toSigned(32);
+
 /// Opens a SQLite database for the caller-selected platform and location.
 ///
 /// The driver owns platform-specific database configuration and can capture
@@ -5509,7 +5519,9 @@ WHERE queue IN (-2, -3)
   /// bury flags are caller-resolved settings for that config; [answerTiming]
   /// carries the caller-resolved collection day and rollover duration from one
   /// collection timing snapshot. This method does not resolve deck
-  /// config.
+  /// config. Review due day is derived from the generated next Review state's
+  /// scheduled days and [answerTiming]. Other answer types continue to use
+  /// their existing caller-resolved due inputs.
   /// The generated answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5535,7 +5547,6 @@ WHERE queue IN (-2, -3)
     required double? desiredRetention,
     CardQueue? learningQueue,
     int? learningDue,
-    int? reviewDueDay,
     int? dueTimestampSecs,
     CollectionLoadBalancerContext? loadBalancerContext,
     DeckConfigId? homeDeckConfigId,
@@ -5593,6 +5604,27 @@ WHERE queue IN (-2, -3)
     }
     final currentKind = cappedAnswer.currentState.whichKind();
     final newKind = cappedAnswer.newState.whichKind();
+    final normalNewState = switch (newKind) {
+      protoScheduler.SchedulingState_Kind.normal =>
+        cappedAnswer.newState.normal,
+      protoScheduler.SchedulingState_Kind.filtered =>
+        cappedAnswer.newState.filtered.whichKind() ==
+                protoScheduler.SchedulingState_Filtered_Kind.rescheduling
+            ? cappedAnswer.newState.filtered.rescheduling.originalState
+            : null,
+      protoScheduler.SchedulingState_Kind.notSet => null,
+    };
+    final isReviewAnswer =
+        normalNewState?.whichKind() ==
+        protoScheduler.SchedulingState_Normal_Kind.review;
+    final resolvedReviewDueDay = isReviewAnswer
+        ? resolveReviewAnswerDueDay(
+            nextState: ReviewCardState(
+              scheduledDays: normalNewState!.review.scheduledDays,
+            ),
+            answerTiming: answerTiming,
+          )
+        : null;
     final cardToApply =
         currentKind == protoScheduler.SchedulingState_Kind.normal ||
             (currentKind == protoScheduler.SchedulingState_Kind.filtered &&
@@ -5618,7 +5650,7 @@ WHERE queue IN (-2, -3)
         desiredRetention: desiredRetention,
         learningQueue: learningQueue,
         learningDue: learningDue,
-        reviewDueDay: reviewDueDay,
+        reviewDueDay: resolvedReviewDueDay,
       );
     } else if (currentKind != protoScheduler.SchedulingState_Kind.filtered) {
       throw ArgumentError.value(
@@ -5664,7 +5696,7 @@ WHERE queue IN (-2, -3)
           answer: cappedAnswer,
           learningQueue: learningQueue,
           learningDue: learningDue,
-          reviewDueDay: reviewDueDay,
+          reviewDueDay: resolvedReviewDueDay,
           desiredRetention: desiredRetention,
         );
         final currentState =
@@ -5691,16 +5723,6 @@ WHERE queue IN (-2, -3)
       }
     }
 
-    final normalNewState = switch (newKind) {
-      protoScheduler.SchedulingState_Kind.normal =>
-        cappedAnswer.newState.normal,
-      protoScheduler.SchedulingState_Kind.filtered =>
-        cappedAnswer.newState.filtered.whichKind() ==
-                protoScheduler.SchedulingState_Filtered_Kind.rescheduling
-            ? cappedAnswer.newState.filtered.rescheduling.originalState
-            : null,
-      protoScheduler.SchedulingState_Kind.notSet => null,
-    };
     if (suspendLeechedCards &&
         normalNewState != null &&
         _normalCardAnswerStateIsLeeched(normalNewState)) {

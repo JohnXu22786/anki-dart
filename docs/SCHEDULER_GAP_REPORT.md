@@ -1190,3 +1190,17 @@ and Revlog interval conversion. This closes only the required one-object
 plumbing for the day/rollover pair on the composed operation. Answer timestamp,
 Review due, Learning/Relearning due, scheduler elapsed/fuzz inputs, scheduling
 context, caller/UI integration, and resolving the snapshot remain open.
+
+### Unit 154 — resolve Review answer due day from generated state
+
+The composed `CollectionSqliteStorage.answerCard()` operation now resolves a
+Review answer's due day from the generated next Review state's `scheduledDays`
+and the same `CollectionAnswerTiming.daysElapsed` snapshot used by the answer.
+The public pure `resolveReviewAnswerDueDay()` helper performs Core's unsigned
+day addition and signed i32 storage conversion without collection reads or
+scheduling transitions. The composed answer API no longer accepts an
+independent Review due day; lower-level apply/record APIs retain their explicit
+due inputs. This closes only generated Review state plus single-snapshot
+due-day resolution for composed answer storage. Learning and Relearning due
+resolution, scheduler elapsed/fuzz inputs, scheduling context resolution,
+caller/UI integration, and other due types remain open.

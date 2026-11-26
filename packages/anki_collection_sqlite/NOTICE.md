@@ -309,11 +309,12 @@ Answer-triggered sibling bury in the composed
 `rslib/src/scheduler/queue/builder/burying.rs`,
 `rslib/src/scheduler/queue/mod.rs`, `rslib/src/storage/card/mod.rs`, and
 `rslib/src/storage/card/siblings_for_bury.sql`, pinned to
-`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The Dart implementation accepts
-caller-resolved home-config flags and keeps sibling Card changes in the
-existing undoable answer transaction; no upstream implementation code is
-copied. All six source hashes are recorded in `SOURCE.sha256` and validated by
-`tool/check_package.py`. Root `COPYING` remains unchanged.
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The Dart implementation resolves
+sibling-bury flags from the stored Card's home DeckConfig and keeps sibling
+Card changes in the existing undoable answer transaction; no upstream
+implementation code is copied. All six source hashes are recorded in
+`SOURCE.sha256` and validated by `tool/check_package.py`. Root `COPYING` remains
+unchanged.
 
 `CollectionSqliteStorage.answerDeckConfigForCard()` adapts the assigned-deck,
 home/original-deck, and home-config resolution in Core's
@@ -325,4 +326,7 @@ home config ID, answer-time cap, leech action, and sibling-bury flags without
 resolving scheduling state or mutating the collection. The three source hashes
 are recorded in `SOURCE.sha256` and validated by `tool/check_package.py`. This
 independent Dart adaptation is covered by the package's AGPL-3.0-or-later
-license; root `COPYING` is unchanged.
+license; root `COPYING` is unchanged. The composed `answerCard()` operation
+uses this stored-card home-config resolution for its answer-time cap, leech
+action, sibling-bury flags, and load-balancer cache key; missing config rows
+use Core defaults.

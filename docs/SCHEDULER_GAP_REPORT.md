@@ -1303,3 +1303,28 @@ scheduling and apply/record APIs retain their explicit elapsed inputs, and
 `scheduledSecs` remains caller-resolved. This closes only elapsed-seconds
 composition for stored Learn/Relearn cards; step resolution, scheduling
 context, app/UI integration, and remaining scheduler gaps stay open.
+
+### Unit 162 — derive Learning/Relearning current delay from the stored Card's home config
+
+The composed `CollectionSqliteStorage.answerCard()` operation no longer accepts
+caller-resolved `scheduledSecs` for Learning or Relearning answers. It reads the
+stored Card, resolves its home DeckConfig using nonzero `originalDeckId` for
+filtered cards and the assigned deck otherwise, and selects the current delay
+from that config's Learning/Relearning steps and the Card's remaining steps.
+Missing config rows use Core defaults. Lower-level scheduling and answer APIs
+retain their explicit delay inputs. This closes only composed current-step-delay
+resolution; elapsed/context resolution, app/UI integration, and remaining
+scheduler gaps stay open.
+
+### Unit 163 — resolve composed answer settings from the stored Card's home config
+
+The composed `CollectionSqliteStorage.answerCard()` operation no longer accepts
+caller-provided answer cap, leech suspension, sibling bury flags, or home config
+ID. It resolves those values from the stored Card's home DeckConfig, using
+nonzero `originalDeckId` for filtered cards and the assigned deck otherwise;
+missing config rows use Core defaults. The resolved config ID also keys
+post-answer load-balancer cache updates. The public
+`answerDeckConfigForCard()` projection and lower-level apply/record APIs remain
+available with their existing contracts. This closes only composed answer
+configuration resolution; answer context, Review elapsed, UI/call-site wiring,
+and remaining scheduler gaps stay open.

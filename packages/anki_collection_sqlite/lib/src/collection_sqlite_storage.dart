@@ -5599,26 +5599,15 @@ WHERE queue IN (-2, -3)
         DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
   }
 
-  int _currentStepDelaySecsForCard(Card card) {
-    final settings = _homeDeckConfigForCard(card).inner;
-    return resolveCurrentLearningStepDelaySecs(
-      steps: card.ctype == CardType.learn
-          ? settings.learnSteps
-          : settings.relearnSteps,
-      remainingSteps: card.remainingSteps,
-    );
-  }
-
   /// Answers one stored card by dispatching its scheduling states, selecting
   /// the requested rating, then applying and recording that answer atomically.
   ///
   /// All timing and scheduling values that are not already stored on the Card
-  /// are caller-resolved inputs. [capAnswerTimeToSecs] comes from the card's
-  /// home/original deck config; [suspendLeechedCards] and the three sibling
-  /// bury flags are caller-resolved settings for that config; [answerTiming]
-  /// carries the caller-resolved answer timestamp, collection day, and
-  /// rollover duration from one collection timing snapshot. The current
-  /// Learning/Relearning step delay comes from the stored Card's home deck
+  /// are caller-resolved inputs. Answer cap, leech action, sibling bury flags,
+  /// and the load-balancer config ID come from the stored Card's home config;
+  /// [answerTiming] carries the caller-resolved answer timestamp, collection
+  /// day, and rollover duration from one collection timing snapshot. The
+  /// current Learning/Relearning step delay comes from the same resolved home
   /// config. Review due day and Learning/Relearning queue and
   /// due values are derived from generated next states and [answerTiming].
   /// Intraday Learning/Relearning and unfinished filtered Preview intervals
@@ -5633,11 +5622,6 @@ WHERE queue IN (-2, -3)
     required CardId cardId,
     required protoScheduler.CardAnswer_Rating rating,
     required int millisecondsTaken,
-    required int capAnswerTimeToSecs,
-    required bool suspendLeechedCards,
-    required bool buryNewSiblings,
-    required bool buryInterdayLearningSiblings,
-    required bool buryReviewSiblings,
     required ReviewSchedulingContext baseContext,
     required bool loadBalancerEnabled,
     required BigInt? fuzzSeed,
@@ -5645,7 +5629,6 @@ WHERE queue IN (-2, -3)
     required CollectionAnswerTiming answerTiming,
     required double? desiredRetention,
     CollectionLoadBalancerContext? loadBalancerContext,
-    DeckConfigId? homeDeckConfigId,
   }) async {
     _requiredUnsigned(answerTiming.daysElapsed, 32, 'daysElapsed');
     _requiredUnsigned(
@@ -5653,21 +5636,28 @@ WHERE queue IN (-2, -3)
       32,
       'secsUntilDayRollover',
     );
-    if (capAnswerTimeToSecs < 0 || capAnswerTimeToSecs > 0xffffffff) {
-      throw ArgumentError.value(
-        capAnswerTimeToSecs,
-        'capAnswerTimeToSecs',
-        'expected a uint32',
-      );
-    }
-    // The caller supplies Core's uint32 seconds value. This product fits in
-    // signed 64-bit arithmetic, while CardAnswer.millisecondsTaken is uint32.
-    final capAnswerTimeToMillis = capAnswerTimeToSecs * 1000;
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
-
+    final homeDeckConfig = _homeDeckConfigForCard(card);
+    final config = homeDeckConfig.inner;
+    final capAnswerTimeToSecs = config.capAnswerTimeToSecs;
+    final suspendLeechedCards =
+        config.leechAction ==
+        protoConfig.DeckConfig_Config_LeechAction.LEECH_ACTION_SUSPEND;
+    final buryNewSiblings = config.buryNew;
+    final buryInterdayLearningSiblings = config.buryInterdayLearning;
+    final buryReviewSiblings = config.buryReviews;
+    _requiredUnsigned(capAnswerTimeToSecs, 32, 'capAnswerTimeToSecs');
+    // This product fits in signed 64-bit arithmetic, while
+    // CardAnswer.millisecondsTaken is uint32.
+    final capAnswerTimeToMillis = capAnswerTimeToSecs * 1000;
     final scheduledSecs = switch (card.ctype) {
-      CardType.learn || CardType.relearn => _currentStepDelaySecsForCard(card),
+      CardType.learn || CardType.relearn => resolveCurrentLearningStepDelaySecs(
+        steps: card.ctype == CardType.learn
+            ? config.learnSteps
+            : config.relearnSteps,
+        remainingSteps: card.remainingSteps,
+      ),
       _ => null,
     };
 
@@ -5894,7 +5884,7 @@ WHERE queue IN (-2, -3)
         leechTagNoteId: newStateIsLeeched ? card.noteId : null,
         leechTagUsn: newStateIsLeeched ? usn : null,
         loadBalancerContext: loadBalancerContext,
-        homeDeckConfigId: homeDeckConfigId,
+        homeDeckConfigId: homeDeckConfig.id,
       ),
       zoneValues: {
         _answerCardExpectedSnapshotZoneKey: card,

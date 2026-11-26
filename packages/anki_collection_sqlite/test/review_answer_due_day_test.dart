@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -210,5 +211,94 @@ void main() {
         }
       }
     });
+  });
+
+  group('resolveLearningAnswerElapsedSecs', () {
+    test('uses prior-step fuzz seed with wrapping reps for Learn cards', () {
+      final card = Card(
+        id: Int64(41),
+        noteId: Int64(1),
+        deckId: Int64(1),
+        ctype: CardType.learn,
+        queue: CardQueue.learn,
+        due: 200000,
+        reps: 0,
+      );
+      const timing = CollectionAnswerTiming(
+        now: 1712345678,
+        daysElapsed: 10,
+        nextDayAt: 1712349278,
+        secsUntilDayRollover: 3600,
+      );
+
+      // Core adds the wrapped u32 reps value to the u64 card ID.
+      final previousStepDue =
+          card.due - fuzzLearningIntervalSecs(1200, BigInt.from(4294967336));
+      expect(
+        resolveLearningAnswerElapsedSecs(
+          card: card,
+          scheduledSecs: 1200,
+          answerTiming: timing,
+        ),
+        (timing.now - previousStepDue) & 0xffffffff,
+      );
+    });
+
+    test('derives DayLearn elapsed days with Core signed conversions', () {
+      final card = Card(
+        id: Int64(9),
+        noteId: Int64(1),
+        deckId: Int64(1),
+        ctype: CardType.relearn,
+        queue: CardQueue.dayLearn,
+        due: 20,
+        reps: 3,
+      );
+      const timing = CollectionAnswerTiming(
+        now: 1712345678,
+        daysElapsed: 22,
+        nextDayAt: 1712349278,
+        secsUntilDayRollover: 3600,
+      );
+
+      expect(
+        resolveLearningAnswerElapsedSecs(
+          card: card,
+          scheduledSecs: 90000,
+          answerTiming: timing,
+        ),
+        3 * 86400,
+      );
+    });
+
+    test(
+      'uses one day for same-day DayLearn steps and wraps uint32 seconds',
+      () {
+        final card = Card(
+          id: Int64(9),
+          noteId: Int64(1),
+          deckId: Int64(1),
+          ctype: CardType.learn,
+          queue: CardQueue.dayLearn,
+          due: 0x7fffffff,
+          reps: 1,
+        );
+        const timing = CollectionAnswerTiming(
+          now: 0,
+          daysElapsed: 0xffffffff,
+          nextDayAt: 86400,
+          secsUntilDayRollover: 86400,
+        );
+
+        expect(
+          resolveLearningAnswerElapsedSecs(
+            card: card,
+            scheduledSecs: 1,
+            answerTiming: timing,
+          ),
+          (-2147483647 * 86400) & 0xffffffff,
+        );
+      },
+    );
   });
 }

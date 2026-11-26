@@ -1007,6 +1007,21 @@ the cap's Core uint32 domain and does not read deck config. Correct config
 resolution at Normal and filtered callers, other post-answer Core behavior,
 due/timing resolution, and app/Reviewer/UI integration remain open.
 
+### Unit 147 — apply caller-resolved leech suspension after a stored-card answer
+
+The composed `CollectionSqliteStorage.answerCard()` operation accepts the
+caller-resolved leech action for the card's home/original deck config. When the
+generated Normal or filtered-rescheduling answer's resulting Review state is
+leeched and the caller selects Suspend, the updated Card queue is set to
+Suspended before its atomic Card and Revlog commit. A false flag preserves the
+queue from state application, and filtered Preview answers are not treated as
+leech transitions. The operation continues to use the generated state as its
+leeched signal, validate and apply state before writing, and preserve existing
+undo/redo and post-commit load-balancer behavior. This closes only
+caller-resolved leech suspension in the composed single-card operation;
+leech tag creation, deck stats, sibling bury, queue updates, config resolution,
+due/timing resolution, and app/Reviewer UI integration remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

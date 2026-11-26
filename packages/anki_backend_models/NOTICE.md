@@ -364,12 +364,26 @@ Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later; this
 adaptation retains the same license, and root `COPYING` is unchanged.
 
 `applyFilteredPreviewCardAnswerState()` adapts filtered Preview Card-answer
-application and filtered-deck queue restoration from
-`rslib/src/scheduler/answering/learning.rs` and `rslib/src/card/mod.rs` at Anki
-Core commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The generated protocol
-shape is defined by `proto/anki/scheduler.proto`. Their pinned SHA-256 digests
-are recorded in `SOURCE.sha256`. The helper applies only to an immutable Card
+application and filtered-deck behavior from
+`rslib/src/scheduler/answering/preview.rs`,
+`rslib/src/scheduler/filtered/card.rs`, `rslib/src/scheduler/timing.rs`,
+`rslib/src/card/mod.rs`, and the generated protocol shape in
+`proto/anki/scheduler.proto` at Anki Core commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. Their pinned SHA-256 digests are
+recorded in `SOURCE.sha256`. The helper applies only to an immutable Card
 snapshot using caller-resolved due seconds for unfinished previews; it does not
 calculate scheduling times, derive revlogs, or persist collection state. Core is
+Copyright Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later;
+this adaptation retains the same license, and root `COPYING` remains unchanged.
+
+`applyReschedulingFilteredCardAnswerState()` adapts Core's state transition in
+`rslib/src/scheduler/answering/mod.rs::apply_study_state()`, filtered-deck
+restoration in
+`rslib/src/scheduler/filtered/card.rs::remove_from_filtered_deck_before_reschedule()`,
+and Normal state application in `rslib/src/scheduler/answering/learning.rs` at
+Anki Core commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The generated state
+shape is defined by `proto/anki/scheduler.proto`; pinned source digests are
+recorded in `SOURCE.sha256`. This pure helper applies only an immutable Card
+snapshot and requires caller-resolved due values and desired retention. Core is
 Copyright Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later;
 this adaptation retains the same license, and root `COPYING` remains unchanged.

@@ -86,6 +86,17 @@ custom data when the protocol field is absent and copies it when present,
 including an explicit empty value. The helper does not calculate due times,
 read a clock or collection, derive a revlog, or persist changes.
 
+`applyReschedulingFilteredCardAnswerState()` applies a generated
+rescheduling-filtered `CardAnswer` to an immutable Card snapshot. It reuses the
+Normal state helpers with the wrapper's embedded state and requires caller-
+resolved Learning/Relearning queue and due values, Review due day, and nullable
+desired retention where applicable. A top-level Normal result restores the
+original deck and clears filtered metadata before applying scheduling; a
+filtered/rescheduling result stays filtered and records the resulting due as
+`originalDue`. Optional custom data is copied when present, including an empty
+string, and preserved when absent. The helper does not resolve scheduling time,
+derive revlogs, or persist collection state.
+
 `applyLearningCardAnswerState()` accepts a generated `CardAnswer` whose card ID
 matches the supplied Card, whose `currentState` is Normal/New or Normal/Learning,
 and whose `newState` is Normal/Learning. It returns a copied Card with Learn

@@ -56,3 +56,93 @@ Card applyNewCardAnswerState({
     customData: answer.newState.customData,
   );
 }
+
+/// Applies a generated Normal/Learning [answer] to [card] without mutating
+/// either input.
+///
+/// The caller supplies the resolved Learning [queue] and [due] value. Intraday
+/// due timestamps use seconds; interday due values use the collection day.
+/// Neither value is calculated or classified here. [desiredRetention] is also
+/// passed through as a caller-resolved nullable Core input.
+Card applyLearningCardAnswerState({
+  required Card card,
+  required scheduler.CardAnswer answer,
+  required CardQueue queue,
+  required int due,
+  required double? desiredRetention,
+}) {
+  if (answer.cardId != card.id) {
+    throw ArgumentError.value(
+      answer.cardId,
+      'answer.cardId',
+      'must match card.id',
+    );
+  }
+  if (queue != CardQueue.learn && queue != CardQueue.dayLearn) {
+    throw ArgumentError.value(
+      queue,
+      'queue',
+      'expected Learning or day Learning queue',
+    );
+  }
+  if (!answer.hasCurrentState() ||
+      answer.currentState.whichKind() !=
+          scheduler.SchedulingState_Kind.normal ||
+      !_supportsLearningCurrentState(answer.currentState.normal)) {
+    throw ArgumentError.value(
+      answer.currentState,
+      'answer.currentState',
+      'expected a Normal/New or Normal/Learning state',
+    );
+  }
+  if (!answer.hasNewState() ||
+      answer.newState.whichKind() != scheduler.SchedulingState_Kind.normal ||
+      answer.newState.normal.whichKind() !=
+          scheduler.SchedulingState_Normal_Kind.learning ||
+      !answer.newState.normal.learning.hasRemainingSteps()) {
+    throw ArgumentError.value(
+      answer.newState,
+      'answer.newState',
+      'expected a Normal/Learning state with remaining steps',
+    );
+  }
+
+  final currentNormal = answer.currentState.normal;
+  final learning = answer.newState.normal.learning;
+  return Card(
+    id: card.id,
+    noteId: card.noteId,
+    deckId: card.deckId,
+    templateIdx: card.templateIdx,
+    mtimeSecs: card.mtimeSecs,
+    usn: card.usn,
+    ctype: CardType.learn,
+    queue: queue,
+    due: due,
+    interval: card.interval,
+    easeFactorRaw: card.easeFactorRaw,
+    reps: card.reps + 1,
+    lapses: card.lapses,
+    remainingStepsRaw: learning.remainingSteps,
+    originalDue: card.originalDue,
+    originalDeckId: card.originalDeckId,
+    flags: card.flags,
+    originalPosition: switch (currentNormal.whichKind()) {
+      scheduler.SchedulingState_Normal_Kind.new_1 =>
+        currentNormal.new_1.position,
+      scheduler.SchedulingState_Normal_Kind.learning => card.originalPosition,
+      _ => throw StateError('validated current state changed unexpectedly'),
+    },
+    memoryState: learning.hasMemoryState()
+        ? FsrsMemoryState.fromProto(learning.memoryState)
+        : null,
+    desiredRetention: desiredRetention,
+    decay: card.decay,
+    lastReviewTimeSecs: card.lastReviewTimeSecs,
+    customData: answer.newState.customData,
+  );
+}
+
+bool _supportsLearningCurrentState(scheduler.SchedulingState_Normal normal) =>
+    normal.whichKind() == scheduler.SchedulingState_Normal_Kind.new_1 ||
+    normal.whichKind() == scheduler.SchedulingState_Normal_Kind.learning;

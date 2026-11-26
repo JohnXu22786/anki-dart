@@ -949,6 +949,24 @@ closes only pure Card snapshot application for generated rescheduling-filtered
 answers; collection apply/record wiring, due/timing resolution, other filtered
 execution, app/Reviewer integration, and UI remain open.
 
+### Unit 143 — apply and persist rescheduling-filtered CardAnswer results
+
+`CollectionSqliteStorage.applyAndRecordReschedulingFilteredCardAnswerResult()`
+applies a generated rescheduling-filtered `CardAnswer` to a caller-held Card
+snapshot with `applyReschedulingFilteredCardAnswerState()`, derives its
+`RevlogEntry` from explicit caller-supplied USN and day-rollover seconds, and
+persists both through the existing atomic `recordCardAnswerResult()` operation.
+The caller supplies nullable desired retention and resolved Learning,
+Relearning, or Review due inputs as required by the new Normal inner state. A
+top-level Normal result leaves the filtered deck; a filtered/rescheduling
+result remains filtered. The method returns the updated Card only after commit
+and inherits the existing undo, redo, and post-commit cache behavior. It does
+not query a stored Card or resolve timing, due, interval, fuzz, or deck
+configuration. This closes only collection-level apply/record orchestration
+for caller-resolved rescheduling-filtered answers; due/timing resolution,
+additional rescheduling behavior, app/Reviewer wiring, additional
+transaction/undo scope, and UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

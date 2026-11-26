@@ -5178,6 +5178,67 @@ WHERE queue IN (-2, -3)
     return appliedCard;
   }
 
+  /// Applies a generated rescheduling-filtered [answer] to a caller-held
+  /// [card] snapshot, derives its RevlogEntry, and persists both atomically.
+  ///
+  /// Learning and Relearning answers require caller-resolved
+  /// [learningQueue] and [learningDue]; Review answers require
+  /// [reviewDueDay]. The caller also supplies [desiredRetention], [usn], and
+  /// [secsUntilDayRollover]. This method does not read timing, deck
+  /// configuration, or stored Card values to resolve scheduling inputs. The
+  /// updated Card is returned only after [recordCardAnswerResult] commits both
+  /// rows.
+  Future<Card> applyAndRecordReschedulingFilteredCardAnswerResult({
+    required Card card,
+    required protoScheduler.CardAnswer answer,
+    required int usn,
+    required int secsUntilDayRollover,
+    required double? desiredRetention,
+    CardQueue? learningQueue,
+    int? learningDue,
+    int? reviewDueDay,
+    CollectionLoadBalancerContext? loadBalancerContext,
+    DeckConfigId? homeDeckConfigId,
+  }) async {
+    final appliedCard = applyReschedulingFilteredCardAnswerState(
+      card: card,
+      answer: answer,
+      learningQueue: learningQueue,
+      learningDue: learningDue,
+      reviewDueDay: reviewDueDay,
+      desiredRetention: desiredRetention,
+    );
+    final currentState =
+        answer.currentState.filtered.rescheduling.originalState;
+    final nextState =
+        answer.newState.whichKind() ==
+            protoScheduler.SchedulingState_Kind.normal
+        ? answer.newState.normal
+        : answer.newState.filtered.rescheduling.originalState;
+    _validateNormalCardAnswerState(
+      currentState,
+      'answer.currentState.filtered.rescheduling.originalState',
+    );
+    _validateNormalCardAnswerState(
+      nextState,
+      answer.newState.whichKind() == protoScheduler.SchedulingState_Kind.normal
+          ? 'answer.newState.normal'
+          : 'answer.newState.filtered.rescheduling.originalState',
+    );
+    final revlog = revlogEntryFromCardAnswer(
+      answer: answer,
+      usn: usn,
+      secsUntilDayRollover: secsUntilDayRollover,
+    );
+    await recordCardAnswerResult(
+      card: appliedCard,
+      revlog: revlog,
+      loadBalancerContext: loadBalancerContext,
+      homeDeckConfigId: homeDeckConfigId,
+    );
+    return appliedCard;
+  }
+
   void _validateNormalCardAnswerState(
     protoScheduler.SchedulingState_Normal state,
     String argumentName,

@@ -18,6 +18,45 @@ void main() {
     throw StateError('filtered preview transitions differ on JavaScript');
   }
 
+  final filteredPreviewCard = Card(
+    id: Int64(10),
+    deckId: Int64(20),
+    ctype: CardType.learn,
+    queue: CardQueue.previewRepeat,
+    due: 1700000000,
+    originalDeckId: Int64(30),
+  );
+  final filteredPreviewAnswer = scheduler.CardAnswer(
+    cardId: filteredPreviewCard.id,
+    currentState: scheduler.SchedulingState(
+      filtered: scheduler.SchedulingState_Filtered(
+        preview: scheduler.SchedulingState_Preview(
+          scheduledSecs: 30,
+          finished: false,
+        ),
+      ),
+    ),
+    newState: scheduler.SchedulingState(
+      filtered: scheduler.SchedulingState_Filtered(
+        preview: scheduler.SchedulingState_Preview(
+          scheduledSecs: 0,
+          finished: true,
+        ),
+      ),
+    )..customData = '',
+    rating: scheduler.CardAnswer_Rating.EASY,
+  );
+  final restoredPreviewCard = applyFilteredPreviewCardAnswerState(
+    card: filteredPreviewCard,
+    answer: filteredPreviewAnswer,
+  );
+  if (restoredPreviewCard.deckId != Int64(30) ||
+      restoredPreviewCard.originalDeckId != Int64.ZERO ||
+      restoredPreviewCard.queue != CardQueue.learn ||
+      restoredPreviewCard.customData != '') {
+    throw StateError('filtered Preview Card application differs on JavaScript');
+  }
+
   final loadBalancerDay = LoadBalancerDay()
     ..add(CardId.parseInt('9223372036854775807'),
         NoteId.parseInt('9007199254740993'));

@@ -362,3 +362,14 @@ to an immutable Card snapshot and takes the resolved due queue/value and
 nullable desired retention as explicit caller inputs. Core is Copyright
 Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later; this
 adaptation retains the same license, and root `COPYING` is unchanged.
+
+`applyFilteredPreviewCardAnswerState()` adapts filtered Preview Card-answer
+application and filtered-deck queue restoration from
+`rslib/src/scheduler/answering/learning.rs` and `rslib/src/card/mod.rs` at Anki
+Core commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The generated protocol
+shape is defined by `proto/anki/scheduler.proto`. Their pinned SHA-256 digests
+are recorded in `SOURCE.sha256`. The helper applies only to an immutable Card
+snapshot using caller-resolved due seconds for unfinished previews; it does not
+calculate scheduling times, derive revlogs, or persist collection state. Core is
+Copyright Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later;
+this adaptation retains the same license, and root `COPYING` remains unchanged.

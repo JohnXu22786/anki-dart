@@ -897,6 +897,26 @@ caller-resolved Normal answers through existing apply/derive/persist/cache
 helpers. Due resolution, filtered wrappers, app/Reviewer call-site integration,
 additional transaction/undo work, and UI remain open.
 
+### Unit 140 — apply filtered Preview CardAnswer states to a Card snapshot
+
+`anki_backend_models.applyFilteredPreviewCardAnswerState()` accepts a generated
+`CardAnswer` whose current and new states are exactly filtered Preview states,
+with matching Card ID and required `scheduledSecs`/`finished` fields, and a Card
+with a nonzero original deck ID. Unfinished previews require caller-resolved due
+seconds and set PreviewRepeat queue. Finished previews restore the original deck
+and nonzero original due, clear the restored metadata, and derive New/Review or
+Learning/day-Learning queue from card type and restored due; negative queues are
+preserved. Reps, ctype, desired retention and other unrelated Card values stay
+unchanged. Custom data is copied only when present in the new state, including
+an explicit empty value. The pure helper returns a new Card snapshot without
+reading time or collection state, deriving a revlog, or persisting. Core
+provenance for `rslib/src/scheduler/answering/learning.rs`,
+`rslib/src/card/mod.rs`, and `proto/anki/scheduler.proto` is recorded in the
+model package `NOTICE.md` and `SOURCE.sha256`. This closes only filtered Preview
+Card snapshot application; collection-level apply/record orchestration, filtered
+rescheduling wrappers, normal-state re-entry into rescheduling filtered decks,
+due calculation, and app/UI integration remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

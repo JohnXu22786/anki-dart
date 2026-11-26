@@ -1,7 +1,118 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
+import 'package:fixnum/fixnum.dart';
 
 import 'card.dart';
+
+/// Applies a generated filtered Preview [answer] to [card] without mutating
+/// either input.
+///
+/// An unfinished preview requires the caller-resolved due timestamp in
+/// [dueTimestampSecs]. A finished preview restores the original deck and due
+/// values and derives a nonnegative queue from the card type and restored due.
+Card applyFilteredPreviewCardAnswerState({
+  required Card card,
+  required scheduler.CardAnswer answer,
+  int? dueTimestampSecs,
+}) {
+  if (answer.cardId != card.id) {
+    throw ArgumentError.value(
+      answer.cardId,
+      'answer.cardId',
+      'must match card.id',
+    );
+  }
+  if (card.originalDeckId == Int64.ZERO) {
+    throw ArgumentError.value(
+      card.originalDeckId,
+      'card.originalDeckId',
+      'must identify the original deck of a filtered card',
+    );
+  }
+  if (!_hasFilteredPreview(answer.currentState) ||
+      !_hasFilteredPreview(answer.newState)) {
+    throw ArgumentError(
+      'answer.currentState and answer.newState must both be filtered Preview states',
+    );
+  }
+
+  final currentPreview = answer.currentState.filtered.preview;
+  final newPreview = answer.newState.filtered.preview;
+  if (!currentPreview.hasScheduledSecs() ||
+      !currentPreview.hasFinished() ||
+      !newPreview.hasScheduledSecs() ||
+      !newPreview.hasFinished()) {
+    throw ArgumentError(
+      'filtered Preview states must include scheduled seconds and finished',
+    );
+  }
+
+  var deckId = card.deckId;
+  var originalDeckId = card.originalDeckId;
+  var due = card.due;
+  var originalDue = card.originalDue;
+  var queue = card.queue;
+  if (newPreview.finished) {
+    deckId = card.originalDeckId;
+    originalDeckId = Int64.ZERO;
+    if (card.originalDue != 0) {
+      due = card.originalDue;
+      originalDue = 0;
+    }
+    if (card.queue.value >= 0) {
+      queue = switch (card.ctype) {
+        CardType.newCard => CardQueue.newCard,
+        CardType.review => CardQueue.review,
+        CardType.learn ||
+        CardType.relearn =>
+          due > 1000000000 ? CardQueue.learn : CardQueue.dayLearn,
+      };
+    }
+  } else {
+    if (dueTimestampSecs == null) {
+      throw ArgumentError.value(
+        dueTimestampSecs,
+        'dueTimestampSecs',
+        'is required for an unfinished filtered Preview answer',
+      );
+    }
+    due = dueTimestampSecs;
+    queue = CardQueue.previewRepeat;
+  }
+
+  return Card(
+    id: card.id,
+    noteId: card.noteId,
+    deckId: deckId,
+    templateIdx: card.templateIdx,
+    mtimeSecs: card.mtimeSecs,
+    usn: card.usn,
+    ctype: card.ctype,
+    queue: queue,
+    due: due,
+    interval: card.interval,
+    easeFactorRaw: card.easeFactorRaw,
+    reps: card.reps,
+    lapses: card.lapses,
+    remainingStepsRaw: card.remainingStepsRaw,
+    originalDue: originalDue,
+    originalDeckId: originalDeckId,
+    flags: card.flags,
+    originalPosition: card.originalPosition,
+    memoryState: card.memoryState,
+    desiredRetention: card.desiredRetention,
+    decay: card.decay,
+    lastReviewTimeSecs: card.lastReviewTimeSecs,
+    customData: answer.newState.hasCustomData()
+        ? answer.newState.customData
+        : card.customData,
+  );
+}
+
+bool _hasFilteredPreview(scheduler.SchedulingState state) =>
+    state.whichKind() == scheduler.SchedulingState_Kind.filtered &&
+    state.filtered.whichKind() ==
+        scheduler.SchedulingState_Filtered_Kind.preview;
 
 /// Applies a generated Normal/New [answer] to [card] without mutating either.
 ///

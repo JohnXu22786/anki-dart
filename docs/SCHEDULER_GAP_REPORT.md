@@ -736,6 +736,20 @@ revlog state, or mutate caches. This closes only the unified collection
 state-dispatch API; answer application and persistence, transactions/undo,
 and application/UI call-site integration remain open.
 
+### Unit 129 — CardAnswer request construction
+
+`anki_backend_models.cardAnswerFromSchedulingStates()` builds the generated
+`CardAnswer` request from a card ID, generated `SchedulingStates`, selected
+rating, caller-supplied signed 64-bit answer timestamp, and elapsed-answer
+milliseconds. It pairs the supplied current state with the outcome selected by
+Again/Hard/Good/Easy, preserves normal, filtered Preview, and
+filtered-rescheduling protocol wrappers, rejects missing required states and
+elapsed values outside `uint32`, and copies the mutable current/outcome state
+messages. It does not apply the answer, persist card or revlog changes, update
+caches, or introduce answer-call-site wiring. This closes generated request
+construction only; answer application, persistence, transactions/undo, and
+application/UI call-site integration remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`
@@ -765,7 +779,7 @@ app call-site wiring, and Reviewer UI remain open.
   explicit inputs. Parameter training, collection queries, bulk writes,
   transactions, and rescheduling remain host-owned.
 - Remaining scheduler work: filtered-deck rescheduling, answer-call-site
-  wiring, persisted scheduling changes,
+  wiring and application, persisted scheduling changes,
   transactions/undo, and orchestration. Stored non-rescheduling filtered
   Preview-delay assembly is closed by Unit116. Stored normal-deck Review state retrieval and
   collection-backed FSRS Review answer-state calculation are closed by Units
@@ -784,7 +798,8 @@ app call-site wiring, and Reviewer UI remain open.
   Unit121 closes current-state `ReschedulingFilterState` wrapping for stored
   New, Learn, Review, and Relearn cards in rescheduling filtered decks. Unit127
   closes normal-deck generated protocol-state assembly for stored New, Learn,
-  Review, and Relearn cards; answer application, persistence, and app call-site
+  Review, and Relearn cards; generated CardAnswer request construction is
+  closed by Unit129, while answer application, persistence, and app call-site
   integration remain open. Unit121 does
   not close answer-state composition, Preview wrapping, or rescheduling
   execution.

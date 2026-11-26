@@ -996,6 +996,17 @@ the composed answer timestamp mutation; answer-duration caps, other
 post-answer behavior, due/timing resolution, and app/Reviewer/UI integration
 remain open.
 
+### Unit 146 — cap answer duration using caller-resolved deck config
+
+The composed `CollectionSqliteStorage.answerCard()` operation accepts the
+caller-resolved answer-duration cap in seconds from the card's home/original
+deck config and caps its generated `CardAnswer` before deriving or persisting
+the updated Card and Revlog. The capped milliseconds are recorded in the Revlog
+for Normal, filtered Preview, and rescheduling answers. The operation validates
+the cap's Core uint32 domain and does not read deck config. Correct config
+resolution at Normal and filtered callers, other post-answer Core behavior,
+due/timing resolution, and app/Reviewer/UI integration remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

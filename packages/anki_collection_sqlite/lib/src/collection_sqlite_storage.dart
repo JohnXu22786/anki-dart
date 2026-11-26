@@ -4751,6 +4751,135 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  /// Returns generated scheduler states for a stored card in a normal deck.
+  ///
+  /// The calculation is delegated to the existing collection-backed normal
+  /// card projections. [baseContext] supplies caller-owned scheduler inputs.
+  /// Review cards use [now], [loadBalancerEnabled], and [fuzzSeed] to resolve
+  /// collection timing and load-balancer behavior. Learn and Relearn cards
+  /// require caller-resolved [scheduledSecs] and [elapsedSecs] from one
+  /// scheduler timing snapshot. Those values are never inferred from stored
+  /// queue, due, or timestamps. This read-only method does not apply answers,
+  /// persist revlogs, or mutate caches.
+  Future<protoScheduler.SchedulingStates>
+  normalCardSchedulingStatesProtoForCard({
+    required CardId cardId,
+    required ReviewSchedulingContext baseContext,
+    int? scheduledSecs,
+    int? elapsedSecs,
+    required bool loadBalancerEnabled,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+  }) async {
+    late final Card card;
+    try {
+      final storedCard = await getCard(cardId);
+      if (storedCard == null) throw StateError('card not found: $cardId');
+      card = storedCard;
+    } on InvalidModelValue catch (error) {
+      throw StateError('invalid stored card value: $error');
+    }
+
+    final deck = _deckStorage.getDeck(card.deckId);
+    if (deck == null) throw StateError('deck not found: ${card.deckId}');
+    if (deck.kind is FilteredDeckKind) {
+      throw StateError('filtered deck is not supported: ${card.deckId}');
+    }
+    if (deck.kind is! NormalDeckKind) {
+      throw StateError('normal deck required: ${card.deckId}');
+    }
+
+    if (card.ctype == CardType.learn || card.ctype == CardType.relearn) {
+      if (scheduledSecs == null || elapsedSecs == null) {
+        final name = card.ctype == CardType.learn ? 'Learn' : 'Relearn';
+        throw StateError(
+          'scheduledSecs and elapsedSecs are required for $name cards',
+        );
+      }
+    } else if (scheduledSecs != null || elapsedSecs != null) {
+      throw StateError(
+        'scheduledSecs and elapsedSecs only apply to Learn and Relearn cards',
+      );
+    }
+
+    late final protoScheduler.SchedulingStates states;
+    switch (card.ctype) {
+      case CardType.newCard:
+        states = _learningSchedulingStatesToProto(
+          await newCardSchedulingStatesForCard(
+            cardId: cardId,
+            baseContext: baseContext,
+          ),
+          _newCardTransitionToNormalProto,
+        );
+      case CardType.learn:
+        states = _learningSchedulingStatesToProto(
+          await learningCardSchedulingStatesForCard(
+            cardId: cardId,
+            scheduledSecs: scheduledSecs!,
+            elapsedSecs: elapsedSecs!,
+            baseContext: baseContext,
+          ),
+          _learningCardTransitionToNormalProto,
+        );
+      case CardType.review:
+        states = _reviewSchedulingStatesToProto(
+          await reviewCardSchedulingStatesForCardForNow(
+            cardId: cardId,
+            baseContext: baseContext,
+            loadBalancerEnabled: loadBalancerEnabled,
+            fuzzSeed: fuzzSeed,
+            now: now,
+          ),
+        );
+      case CardType.relearn:
+        states = _learningSchedulingStatesToProto(
+          await relearningCardSchedulingStatesForCard(
+            cardId: cardId,
+            scheduledSecs: scheduledSecs!,
+            elapsedSecs: elapsedSecs!,
+            baseContext: baseContext,
+          ),
+          _relearningCardTransitionToNormalProto,
+        );
+    }
+    return states;
+  }
+
+  protoScheduler.SchedulingStates _learningSchedulingStatesToProto(
+    LearningCardSchedulingStates states,
+    protoScheduler.SchedulingState_Normal Function(LearningCardTransition)
+    toProto,
+  ) {
+    protoScheduler.SchedulingState wrap(LearningCardTransition state) =>
+        protoScheduler.SchedulingState(normal: toProto(state));
+
+    return protoScheduler.SchedulingStates(
+      current: wrap(states.current),
+      again: wrap(states.again),
+      hard: wrap(states.hard),
+      good: wrap(states.good),
+      easy: wrap(states.easy),
+    );
+  }
+
+  protoScheduler.SchedulingStates _reviewSchedulingStatesToProto(
+    ReviewCardSchedulingStates states,
+  ) {
+    protoScheduler.SchedulingState wrap(ReviewCardTransition state) =>
+        protoScheduler.SchedulingState(
+          normal: _reviewCardTransitionToNormalProto(state),
+        );
+
+    return protoScheduler.SchedulingStates(
+      current: wrap(states.current),
+      again: wrap(states.again),
+      hard: wrap(states.hard),
+      good: wrap(states.good),
+      easy: wrap(states.easy),
+    );
+  }
+
   /// Returns the union of note tags in [deckId] and its descendants.
   ///
   /// The host combines these with the collection tag table to preserve

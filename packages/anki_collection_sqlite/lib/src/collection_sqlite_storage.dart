@@ -151,6 +151,28 @@ final class CollectionLoadBalancerContext {
       );
 }
 
+/// Answer timing inputs resolved from one collection day snapshot.
+final class CollectionAnswerTiming {
+  const CollectionAnswerTiming({
+    required this.now,
+    required this.daysElapsed,
+    required this.nextDayAt,
+    required this.secsUntilDayRollover,
+  });
+
+  /// Current Unix timestamp in seconds from the timing snapshot.
+  final int now;
+
+  /// Collection day from the timing snapshot.
+  final int daysElapsed;
+
+  /// Next rollover Unix timestamp in seconds from the timing snapshot.
+  final int nextDayAt;
+
+  /// Unsigned seconds from [now] until [nextDayAt].
+  final int secsUntilDayRollover;
+}
+
 /// Opens a SQLite database for the caller-selected platform and location.
 ///
 /// The driver owns platform-specific database configuration and can capture
@@ -2949,6 +2971,29 @@ GROUP BY did
       rolloverHour: rollover,
     );
     return timing;
+  }
+
+  /// Resolves the shared day and rollover inputs used by [answerCard].
+  ///
+  /// Timing is resolved once, so [now], [daysElapsed], and [nextDayAt] all
+  /// describe the same collection snapshot. The rollover duration is checked
+  /// before returning because [answerCard] accepts it as a uint32.
+  CollectionAnswerTiming answerTimingForNow({DateTime? now}) {
+    final timing = timingTodayForNow(now: now);
+    final secsUntilDayRollover = timing.nextDayAt - timing.now;
+    if (secsUntilDayRollover < 0 || secsUntilDayRollover > 0xffffffff) {
+      throw ArgumentError.value(
+        secsUntilDayRollover,
+        'secsUntilDayRollover',
+        'expected a uint32 nonnegative duration',
+      );
+    }
+    return CollectionAnswerTiming(
+      now: timing.now,
+      daysElapsed: timing.daysElapsed,
+      nextDayAt: timing.nextDayAt,
+      secsUntilDayRollover: secsUntilDayRollover,
+    );
   }
 
   /// Returns Core's configured current deck, or its source default ID.

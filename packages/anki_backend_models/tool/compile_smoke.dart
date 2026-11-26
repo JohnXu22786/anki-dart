@@ -3,6 +3,7 @@ import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/notes.pbenum.dart' as notes;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
 import 'package:anki_backend_protocol/anki/deck_config.pbenum.dart' as deck;
+import 'package:anki_backend_protocol/anki/cards.pb.dart' as proto;
 import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
 
@@ -138,6 +139,42 @@ void main() {
       appliedNewCard.desiredRetention == null ||
       (appliedNewCard.desiredRetention! - 0.9).abs() > 0.000001) {
     throw StateError('Normal/New CardAnswer application differs on JavaScript');
+  }
+
+  final learningAnswer = scheduler.CardAnswer(
+    cardId: Int64(1),
+    currentState: scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        new_1: scheduler.SchedulingState_New(position: 8),
+      ),
+    ),
+    newState: scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        learning: scheduler.SchedulingState_Learning(
+          remainingSteps: 2,
+          memoryState: proto.FsrsMemoryState(stability: 3.5, difficulty: 4.5),
+        ),
+      ),
+    )..customData = 'learning',
+    rating: scheduler.CardAnswer_Rating.GOOD,
+  );
+  final appliedLearningCard = applyLearningCardAnswerState(
+    card: Card(id: Int64(1), reps: 2),
+    answer: learningAnswer,
+    queue: CardQueue.learn,
+    due: 1700000000,
+    desiredRetention: null,
+  );
+  if (appliedLearningCard.ctype != CardType.learn ||
+      appliedLearningCard.queue != CardQueue.learn ||
+      appliedLearningCard.due != 1700000000 ||
+      appliedLearningCard.remainingSteps != 2 ||
+      appliedLearningCard.originalPosition != 8 ||
+      appliedLearningCard.memoryState?.stability != 3.5 ||
+      appliedLearningCard.customData != 'learning' ||
+      appliedLearningCard.reps != 3) {
+    throw StateError(
+        'Normal/Learning CardAnswer application differs on JavaScript');
   }
 
   final revlog = revlogEntryFromCardAnswer(

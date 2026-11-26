@@ -76,6 +76,16 @@ the current and selected state messages so they do not alias the input. It
 constructs a request only; applying the answer, updating revlogs or collection
 state, and transaction/undo behavior remain caller-owned.
 
+`applyLearningCardAnswerState()` accepts a generated `CardAnswer` whose card ID
+matches the supplied Card, whose `currentState` is Normal/New or Normal/Learning,
+and whose `newState` is Normal/Learning. It returns a copied Card with Learn
+type, caller-resolved Learn or day-Learn queue and due value, the answer's step
+count, optional FSRS memory state and custom data, one reps increment, and the
+Core original-position behavior. Desired retention is caller supplied and
+nullable. The helper does not resolve due classification, scheduler time,
+rollover or fuzz, and does not derive revlogs, persist data, or update
+collection state.
+
 `revlogEntryFromCardAnswer()` derives the shared `RevlogEntry` model from a
 supplied generated `CardAnswer`, caller-provided `usn`, and explicit seconds
 until day rollover. It follows Core's interval-to-day rollover conversion,

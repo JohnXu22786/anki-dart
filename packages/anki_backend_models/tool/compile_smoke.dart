@@ -218,6 +218,56 @@ void main() {
         'Normal/Review CardAnswer application differs on JavaScript');
   }
 
+  final relearningAnswer = scheduler.CardAnswer(
+    cardId: Int64(1),
+    currentState: scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        relearning: scheduler.SchedulingState_Relearning(
+          review: scheduler.SchedulingState_Review(scheduledDays: 1),
+          learning: scheduler.SchedulingState_Learning(remainingSteps: 2),
+        ),
+      ),
+    ),
+    newState: scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        relearning: scheduler.SchedulingState_Relearning(
+          review: scheduler.SchedulingState_Review(
+            scheduledDays: 23,
+            easeFactor: 2.3456,
+            lapses: 7,
+          ),
+          learning: scheduler.SchedulingState_Learning(
+            remainingSteps: 4,
+            memoryState:
+                proto.FsrsMemoryState(stability: 9.5, difficulty: 3.25),
+          ),
+        ),
+      ),
+    )..customData = 'relearning',
+    rating: scheduler.CardAnswer_Rating.AGAIN,
+  );
+  final appliedRelearningCard = applyRelearningCardAnswerState(
+    card: Card(id: Int64(1), reps: 2, originalPosition: 3),
+    answer: relearningAnswer,
+    queue: CardQueue.dayLearn,
+    due: 17,
+    desiredRetention: null,
+  );
+  if (appliedRelearningCard.ctype != CardType.relearn ||
+      appliedRelearningCard.queue != CardQueue.dayLearn ||
+      appliedRelearningCard.due != 17 ||
+      appliedRelearningCard.interval != 23 ||
+      appliedRelearningCard.easeFactorRaw != 2346 ||
+      appliedRelearningCard.lapses != 7 ||
+      appliedRelearningCard.remainingSteps != 4 ||
+      appliedRelearningCard.originalPosition != 3 ||
+      appliedRelearningCard.memoryState?.stability != 9.5 ||
+      appliedRelearningCard.customData != 'relearning' ||
+      appliedRelearningCard.reps != 3) {
+    throw StateError(
+        'Normal/Relearning CardAnswer application differs on JavaScript');
+  }
+
   final revlog = revlogEntryFromCardAnswer(
     answer: answer,
     usn: 8,

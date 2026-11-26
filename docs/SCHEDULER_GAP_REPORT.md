@@ -863,6 +863,22 @@ This closes only pure Normal/Review Card snapshot application; Relearn and
 filtered wrappers, due-day/timing resolution, revlog and persistence
 integration, transactions/undo, app wiring, and Reviewer UI remain open.
 
+### Unit 138 — apply a Normal/Relearning CardAnswer state to a Card snapshot
+
+`anki_backend_models.applyRelearningCardAnswerState()` accepts a generated
+`CardAnswer` with a matching card ID, a supported Normal current state (New,
+Learning, Review, or Relearning), and exactly Normal/Relearning new state with
+its paired Review and Learning values present. It maps interval, ease factor,
+and lapses from the Review state, and remaining steps and optional FSRS memory
+state from the Learning state. The copied Card uses Relearn type, a
+caller-resolved Learning or day-Learning queue and due value, one reps
+increment, and Core's original-position behavior. Custom data is replaced only
+when its protocol field is present. Nullable desired retention remains a
+caller-supplied input.
+This closes only pure Normal/Relearning Card snapshot application; filtered
+Relearning wrappers, due/timing resolution, revlog and persistence integration,
+transactions/undo, app wiring, and Reviewer UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

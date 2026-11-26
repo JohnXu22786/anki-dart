@@ -331,6 +331,217 @@ void main() {
       }
     });
   });
+
+  group('applyReviewCardAnswerState', () {
+    test('applies Review outcomes and maps the new state to the Card', () {
+      for (final rating in <scheduler.CardAnswer_Rating>[
+        scheduler.CardAnswer_Rating.AGAIN,
+        scheduler.CardAnswer_Rating.HARD,
+        scheduler.CardAnswer_Rating.GOOD,
+        scheduler.CardAnswer_Rating.EASY,
+      ]) {
+        final card = _learningCard(
+          originalPosition: 91,
+          remainingStepsRaw: 49,
+          memoryState: FsrsMemoryState(stability: 2.5, difficulty: 7),
+        );
+        final review = scheduler.SchedulingState_Review(
+          scheduledDays: 77,
+          elapsedDays: 4,
+          easeFactor: 2.3456,
+          lapses: 12,
+          memoryState: proto.FsrsMemoryState(stability: 9.5, difficulty: 3.25),
+        );
+        final answer = _reviewAnswer(
+          currentState: _normalNewState(position: 91),
+          review: review,
+          rating: rating,
+          customData: 'review-${rating.name}',
+        );
+        final cardBefore = card.toProto();
+        final answerBefore = answer.deepCopy();
+
+        final updated = applyReviewCardAnswerState(
+          card: card,
+          answer: answer,
+          dueDay: 1234,
+          desiredRetention: 0.9,
+        );
+
+        expect(updated.ctype, CardType.review);
+        expect(updated.queue, CardQueue.review);
+        expect(updated.due, 1234);
+        expect(updated.interval, 77);
+        expect(updated.easeFactorRaw, 2346);
+        expect(updated.lapses, 12);
+        expect(updated.remainingSteps, 0);
+        expect(updated.reps, card.reps + 1);
+        expect(updated.originalPosition, 91);
+        expect(updated.memoryState!.stability, 9.5);
+        expect(updated.memoryState!.difficulty, 3.25);
+        expect(updated.desiredRetention, closeTo(0.9, 0.000001));
+        expect(updated.customData, 'review-${rating.name}');
+        _expectReviewUnchangedCardFields(updated, card);
+        expect(updated.originalPosition, 91);
+        expect(card.toProto(), cardBefore);
+        expect(answer, answerBefore);
+        expect(identical(updated, card), isFalse);
+      }
+    });
+
+    test('preserves original position for non-New Normal current states', () {
+      final card = _learningCard(
+        originalPosition: 88,
+        memoryState: FsrsMemoryState(stability: 4, difficulty: 5),
+      );
+      for (final currentState in <scheduler.SchedulingState>[
+        _normalLearningState(remainingSteps: 1),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            review: scheduler.SchedulingState_Review(scheduledDays: 1),
+          ),
+        ),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            relearning: scheduler.SchedulingState_Relearning(
+              review: scheduler.SchedulingState_Review(scheduledDays: 1),
+            ),
+          ),
+        ),
+      ]) {
+        final updated = applyReviewCardAnswerState(
+          card: card,
+          answer: _reviewAnswer(currentState: currentState),
+          dueDay: 10,
+          desiredRetention: null,
+        );
+        expect(updated.originalPosition, 88);
+        expect(updated.desiredRetention, isNull);
+        expect(updated.memoryState, isNull);
+      }
+
+      final answerWithUnsetCustomData = scheduler.CardAnswer(
+        cardId: card.id,
+        currentState: _normalNewState(position: 1),
+        newState: scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            review: scheduler.SchedulingState_Review(
+              scheduledDays: 1,
+              easeFactor: 2.5,
+              lapses: 0,
+            ),
+          ),
+        ),
+        rating: scheduler.CardAnswer_Rating.GOOD,
+      );
+      expect(answerWithUnsetCustomData.newState.hasCustomData(), isFalse);
+      final unchangedCustomData = applyReviewCardAnswerState(
+        card: card,
+        answer: answerWithUnsetCustomData,
+        dueDay: 10,
+        desiredRetention: null,
+      );
+      expect(unchangedCustomData.customData, card.customData);
+    });
+
+    test('rejects mismatched IDs, unsupported wrappers, and missing fields',
+        () {
+      final card = _learningCard();
+      final validCurrent = _normalNewState(position: 1);
+      for (final currentState in <scheduler.SchedulingState>[
+        scheduler.SchedulingState(),
+        scheduler.SchedulingState(normal: scheduler.SchedulingState_Normal()),
+        scheduler.SchedulingState(
+          filtered: scheduler.SchedulingState_Filtered(
+            preview: scheduler.SchedulingState_Preview(scheduledSecs: 60),
+          ),
+        ),
+      ]) {
+        expect(
+          () => applyReviewCardAnswerState(
+            card: card,
+            answer: _reviewAnswer(currentState: currentState),
+            dueDay: 1,
+            desiredRetention: null,
+          ),
+          throwsArgumentError,
+        );
+      }
+      expect(
+        () => applyReviewCardAnswerState(
+          card: card,
+          answer: _reviewAnswer(
+            currentState: validCurrent,
+            cardId: Int64(43),
+          ),
+          dueDay: 1,
+          desiredRetention: null,
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => applyReviewCardAnswerState(
+          card: card,
+          answer: scheduler.CardAnswer(
+            cardId: card.id,
+            newState: _reviewAnswer(currentState: validCurrent).newState,
+            rating: scheduler.CardAnswer_Rating.GOOD,
+          ),
+          dueDay: 1,
+          desiredRetention: null,
+        ),
+        throwsArgumentError,
+      );
+
+      final malformedReviews = <scheduler.SchedulingState_Review>[
+        scheduler.SchedulingState_Review(
+            elapsedDays: 1, easeFactor: 2.5, lapses: 1),
+        scheduler.SchedulingState_Review(
+            scheduledDays: 1, elapsedDays: 1, lapses: 1),
+        scheduler.SchedulingState_Review(scheduledDays: 1, easeFactor: 2.5),
+      ];
+      for (final review in malformedReviews) {
+        expect(
+          () => applyReviewCardAnswerState(
+            card: card,
+            answer: _reviewAnswer(currentState: validCurrent, review: review),
+            dueDay: 1,
+            desiredRetention: null,
+          ),
+          throwsArgumentError,
+        );
+      }
+      for (final newState in <scheduler.SchedulingState>[
+        scheduler.SchedulingState(),
+        scheduler.SchedulingState(normal: scheduler.SchedulingState_Normal()),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            learning: scheduler.SchedulingState_Learning(),
+          ),
+        ),
+        scheduler.SchedulingState(
+          filtered: scheduler.SchedulingState_Filtered(
+            preview: scheduler.SchedulingState_Preview(scheduledSecs: 60),
+          ),
+        ),
+      ]) {
+        expect(
+          () => applyReviewCardAnswerState(
+            card: card,
+            answer: scheduler.CardAnswer(
+              cardId: card.id,
+              currentState: validCurrent,
+              newState: newState,
+              rating: scheduler.CardAnswer_Rating.GOOD,
+            ),
+            dueDay: 1,
+            desiredRetention: null,
+          ),
+          throwsArgumentError,
+        );
+      }
+    });
+  });
 }
 
 scheduler.CardAnswer _answer({
@@ -422,6 +633,30 @@ scheduler.CardAnswer _learningAnswer({
       rating: scheduler.CardAnswer_Rating.GOOD,
     );
 
+scheduler.CardAnswer _reviewAnswer({
+  required scheduler.SchedulingState currentState,
+  scheduler.SchedulingState_Review? review,
+  scheduler.CardAnswer_Rating rating = scheduler.CardAnswer_Rating.GOOD,
+  Int64? cardId,
+  String customData = 'review answer data',
+}) =>
+    scheduler.CardAnswer(
+      cardId: cardId ?? Int64(42),
+      currentState: currentState,
+      newState: scheduler.SchedulingState(
+        normal: scheduler.SchedulingState_Normal(
+          review: review ??
+              scheduler.SchedulingState_Review(
+                scheduledDays: 7,
+                elapsedDays: 2,
+                easeFactor: 2.3,
+                lapses: 3,
+              ),
+        ),
+      )..customData = customData,
+      rating: rating,
+    );
+
 void _expectUnchangedCardFields(Card updated, Card original) {
   expect(updated.id, original.id);
   expect(updated.noteId, original.noteId);
@@ -432,6 +667,20 @@ void _expectUnchangedCardFields(Card updated, Card original) {
   expect(updated.interval, original.interval);
   expect(updated.easeFactorRaw, original.easeFactorRaw);
   expect(updated.lapses, original.lapses);
+  expect(updated.originalDue, original.originalDue);
+  expect(updated.originalDeckId, original.originalDeckId);
+  expect(updated.flags, original.flags);
+  expect(updated.decay, original.decay);
+  expect(updated.lastReviewTimeSecs, original.lastReviewTimeSecs);
+}
+
+void _expectReviewUnchangedCardFields(Card updated, Card original) {
+  expect(updated.id, original.id);
+  expect(updated.noteId, original.noteId);
+  expect(updated.deckId, original.deckId);
+  expect(updated.templateIdx, original.templateIdx);
+  expect(updated.mtimeSecs, original.mtimeSecs);
+  expect(updated.usn, original.usn);
   expect(updated.originalDue, original.originalDue);
   expect(updated.originalDeckId, original.originalDeckId);
   expect(updated.flags, original.flags);

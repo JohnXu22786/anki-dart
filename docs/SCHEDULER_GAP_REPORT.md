@@ -1180,3 +1180,13 @@ answer input. This closes only shared-snapshot resolution for the
 `daysElapsed` and `secsUntilDayRollover` inputs to `answerCard()`. Answer
 timestamp, Review due, Learning/Relearning due, scheduler elapsed/fuzz inputs,
 scheduling context, caller integration, and UI remain open.
+
+### Unit 153 — compose answer timing input
+
+The composed `CollectionSqliteStorage.answerCard()` operation now requires one
+`CollectionAnswerTiming` object for the collection day and rollover duration.
+It uses both values from that same caller-resolved snapshot for deck statistics
+and Revlog interval conversion. This closes only the required one-object
+plumbing for the day/rollover pair on the composed operation. Answer timestamp,
+Review due, Learning/Relearning due, scheduler elapsed/fuzz inputs, scheduling
+context, caller/UI integration, and resolving the snapshot remain open.

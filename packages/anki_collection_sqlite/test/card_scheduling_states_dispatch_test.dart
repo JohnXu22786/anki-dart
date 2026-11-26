@@ -80,6 +80,9 @@ INSERT INTO col VALUES (1700000000, '{}');
         nextDayAt: 1712347478,
         secsUntilDayRollover: 1800,
       );
+      final snapshotNow = DateTime.fromMillisecondsSinceEpoch(
+        timing.answeredAtMillis,
+      );
       await storage.executeBatch(
         'UPDATE cards SET type = 2, queue = 2, did = 40, odid = 0 WHERE id = 1',
       );
@@ -92,7 +95,7 @@ INSERT INTO col VALUES (1700000000, '{}');
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
-        now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
+        now: snapshotNow,
       );
       final expectedDue = resolveReviewAnswerDueDay(
         nextState: ReviewCardState(
@@ -113,7 +116,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
-        now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
         usn: 8,
         answerTiming: timing,
         desiredRetention: null,
@@ -1111,7 +1113,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         usn: 7,
 
         desiredRetention: 0.91,
-        now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
       );
 
       expect(applied.customData, 'stored 🦊');
@@ -2175,7 +2176,6 @@ INSERT INTO cards VALUES
         desiredRetention: null,
         loadBalancerContext: loadBalancerContext,
         homeDeckConfigId: cachedPreset,
-        now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
       ),
       throwsStateError,
     );
@@ -2208,10 +2208,16 @@ INSERT INTO cards VALUES
       desiredRetention: null,
       loadBalancerContext: loadBalancerContext,
       homeDeckConfigId: cachedPreset,
-      now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
     );
     expect((await storage.getCard(Int64(20)))!.queue, CardQueue.schedBuried);
-    expect(cache.daysByPreset[cachedPreset]![applied.interval].cardCount, 1);
+    final days = cache.daysByPreset[cachedPreset]!;
+    if (applied.interval < days.length) {
+      expect(days[applied.interval].cardCount, 1);
+    } else {
+      // Core's 99-day load-balancer cache ignores longer intervals.
+      expect(days.first.cardCount, 1);
+      expect(days.skip(1).every((day) => day.cardCount == 0), isTrue);
+    }
   });
 
   test('answerCard derives Learning and Relearning due from state and timing', () async {

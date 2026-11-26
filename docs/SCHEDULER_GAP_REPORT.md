@@ -1265,3 +1265,14 @@ filtered Preview retains its existing Card timestamp, matching Core's
 an explicit timestamp. This closes only timestamp snapshot composition and
 `lastReviewTimeSecs` parity in the composed operation; caller/UI integration
 and remaining scheduler gaps stay open.
+
+### Unit 159 — derive scheduler `now` from the answer timing snapshot
+
+The composed `CollectionSqliteStorage.answerCard()` no longer accepts an
+independent scheduler `now`. It converts `CollectionAnswerTiming.answeredAtMillis`
+to a local `DateTime` and forwards that instant to card-answer request
+construction, so scheduling state and the generated answer use the same
+captured answer instant. Lower-level scheduling and request APIs retain their
+explicit optional `now` inputs. This closes only the composed scheduler-time
+composition gap; scheduler elapsed/context inputs, configuration resolution,
+app/UI integration, and remaining scheduler gaps stay open.

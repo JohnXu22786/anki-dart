@@ -5582,7 +5582,6 @@ WHERE queue IN (-2, -3)
     int? elapsedSecs,
     required bool loadBalancerEnabled,
     required BigInt? fuzzSeed,
-    DateTime? now,
     required int usn,
     required CollectionAnswerTiming answerTiming,
     required double? desiredRetention,
@@ -5620,7 +5619,7 @@ WHERE queue IN (-2, -3)
       elapsedSecs: elapsedSecs,
       loadBalancerEnabled: loadBalancerEnabled,
       fuzzSeed: fuzzSeed,
-      now: now,
+      now: DateTime.fromMillisecondsSinceEpoch(answerTiming.answeredAtMillis),
     );
     final cappedAnswer = answer.deepCopy()
       ..millisecondsTaken = min(

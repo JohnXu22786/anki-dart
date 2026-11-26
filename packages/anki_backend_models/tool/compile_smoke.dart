@@ -177,6 +177,47 @@ void main() {
         'Normal/Learning CardAnswer application differs on JavaScript');
   }
 
+  final reviewAnswer = scheduler.CardAnswer(
+    cardId: Int64(1),
+    currentState: scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        new_1: scheduler.SchedulingState_New(position: 8),
+      ),
+    ),
+    newState: scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        review: scheduler.SchedulingState_Review(
+          scheduledDays: 23,
+          easeFactor: 2.3456,
+          lapses: 7,
+          memoryState: proto.FsrsMemoryState(stability: 9.5, difficulty: 3.25),
+        ),
+      ),
+    )..customData = 'review',
+    rating: scheduler.CardAnswer_Rating.EASY,
+  );
+  final appliedReviewCard = applyReviewCardAnswerState(
+    card: Card(id: Int64(1), reps: 2, remainingStepsRaw: 3),
+    answer: reviewAnswer,
+    dueDay: 1700000010,
+    desiredRetention: null,
+  );
+  if (appliedReviewCard.ctype != CardType.review ||
+      appliedReviewCard.queue != CardQueue.review ||
+      appliedReviewCard.due != 1700000010 ||
+      appliedReviewCard.interval != 23 ||
+      appliedReviewCard.easeFactorRaw != 2346 ||
+      appliedReviewCard.lapses != 7 ||
+      appliedReviewCard.remainingSteps != 0 ||
+      appliedReviewCard.originalPosition != 8 ||
+      appliedReviewCard.memoryState?.stability != 9.5 ||
+      appliedReviewCard.customData != 'review' ||
+      appliedReviewCard.desiredRetention != null ||
+      appliedReviewCard.reps != 3) {
+    throw StateError(
+        'Normal/Review CardAnswer application differs on JavaScript');
+  }
+
   final revlog = revlogEntryFromCardAnswer(
     answer: answer,
     usn: 8,

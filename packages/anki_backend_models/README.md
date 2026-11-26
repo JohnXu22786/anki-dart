@@ -86,6 +86,15 @@ nullable. The helper does not resolve due classification, scheduler time,
 rollover or fuzz, and does not derive revlogs, persist data, or update
 collection state.
 
+`applyReviewCardAnswerState()` accepts a generated `CardAnswer` with a matching
+card ID, a supported Normal current state, and exactly Normal/Review new state.
+It returns a copied Card using the caller-resolved due day and applies the
+Review interval, rounded ease factor, lapses, optional memory state, custom
+data when present (preserving existing custom data when the field is absent),
+reps increment, and Core original-position behavior. Due-day resolution,
+revlog derivation, collection writes, and transaction/undo behavior remain
+caller-owned.
+
 `revlogEntryFromCardAnswer()` derives the shared `RevlogEntry` model from a
 supplied generated `CardAnswer`, caller-provided `usn`, and explicit seconds
 until day rollover. It follows Core's interval-to-day rollover conversion,

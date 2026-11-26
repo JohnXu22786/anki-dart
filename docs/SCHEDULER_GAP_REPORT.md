@@ -847,6 +847,22 @@ Card snapshot application. Other answer states and wrappers, due calculation,
 timing/rollover/fuzz and call-site resolution, revlog and persistence
 integration, transactions/undo, app wiring, and Reviewer UI remain open.
 
+### Unit 137 — apply a Normal/Review CardAnswer state to a Card snapshot
+
+`anki_backend_models.applyReviewCardAnswerState()` accepts a generated
+`CardAnswer` with a matching card ID, a supported Normal current state (New,
+Learning, Review, or Relearning), and exactly Normal/Review new state with its
+required scheduled-day, ease-factor, and lapse fields present. It returns a
+copied Card with Review type/queue, caller-resolved due day, scheduled interval,
+Core-rounded ease factor, answer lapses and optional memory state, zero
+remaining steps, copied custom data, one reps increment, and Core's
+original-position behavior. Custom data is replaced only when the protocol field
+is present; an absent field preserves the Card's existing value. Nullable
+desired retention is caller supplied.
+This closes only pure Normal/Review Card snapshot application; Relearn and
+filtered wrappers, due-day/timing resolution, revlog and persistence
+integration, transactions/undo, app wiring, and Reviewer UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`
@@ -898,9 +914,10 @@ app call-site wiring, and Reviewer UI remain open.
   Review, and Relearn cards; Unit129 closes pure generated CardAnswer request
   construction, Unit130 closes its collection-level stored-card routing, Unit133
   closes pure revlog derivation, Unit134 closes Card custom-data propagation, and
-  Unit135 closes pure Normal/New Card snapshot application, and Unit136 closes
-  pure Normal/Learning Card snapshot application. Other answer state types and
-  wrappers, due calculation and caller resolution, collection/app wiring, revlog
+  Unit135 closes pure Normal/New Card snapshot application, Unit136 closes
+  pure Normal/Learning Card snapshot application, and Unit137 closes pure
+  Normal/Review Card snapshot application. Relearn and filtered wrappers, due
+  calculation and caller resolution, collection/app wiring, revlog
   and persistence integration, transactions/undo, and Reviewer UI remain open.
   Unit121 does
   not close answer-state composition, Preview wrapping, or rescheduling
@@ -912,8 +929,8 @@ app call-site wiring, and Reviewer UI remain open.
   decision, and Unit96 adds the pure ReviewState interval hook, but these
   helpers do not complete collection call-site or full cross-platform review
   integration.
-- Applying scheduler answers beyond pure Normal/New and Normal/Learning Card
-  snapshot application, plus caller-side due/timing/fuzz resolution, application
+- Applying scheduler answers beyond pure Normal/New, Normal/Learning, and
+  Normal/Review Card snapshot application, plus caller-side due/timing/fuzz resolution, application
   call-site orchestration and integration of generated answers with
   revlog/persistence beyond the existing supplied-result operation.
 - Other collection transaction and undo work beyond the atomic answer-result

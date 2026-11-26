@@ -913,9 +913,25 @@ reading time or collection state, deriving a revlog, or persisting. Core
 provenance for `rslib/src/scheduler/answering/learning.rs`,
 `rslib/src/card/mod.rs`, and `proto/anki/scheduler.proto` is recorded in the
 model package `NOTICE.md` and `SOURCE.sha256`. This closes only filtered Preview
-Card snapshot application; collection-level apply/record orchestration, filtered
-rescheduling wrappers, normal-state re-entry into rescheduling filtered decks,
-due calculation, and app/UI integration remain open.
+Card snapshot application. Unit 141 adds the collection-level apply/record
+orchestration described below; filtered rescheduling wrappers, normal-state
+re-entry into rescheduling filtered decks, caller-side due calculation, and
+app/UI integration remain open.
+
+### Unit 141 — apply and persist filtered Preview CardAnswer results
+
+`CollectionSqliteStorage.applyAndRecordFilteredPreviewCardAnswerResult()`
+applies a generated filtered Preview `CardAnswer` to a caller-held Card
+snapshot, derives its `RevlogEntry`, and atomically persists both through the
+existing answer-result operation. The caller supplies the USN, day-rollover
+seconds, and the due timestamp for unfinished Preview answers. The operation
+returns the updated Card only after commit and preserves the existing undo,
+redo, and post-commit review-cache behavior. It does not resolve timing, read a
+stored Card, or access deck configuration or collection state to construct the
+snapshot or due timestamp. This closes only collection-level filtered Preview
+apply/record orchestration; caller-side timing resolution, filtered
+rescheduling execution and wrappers, app/Reviewer call-site integration,
+remaining transaction/undo work, and UI integration remain open.
 
 ### Unit 117 — current Review state in rescheduling filtered decks
 

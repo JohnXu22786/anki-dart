@@ -5142,6 +5142,42 @@ WHERE queue IN (-2, -3)
     return appliedCard;
   }
 
+  /// Applies a generated filtered Preview [answer] to a caller-held [card]
+  /// snapshot and persists the updated Card and derived RevlogEntry atomically.
+  ///
+  /// [usn], [secsUntilDayRollover], and, for unfinished Preview answers,
+  /// [dueTimestampSecs] are caller-resolved inputs. This method does not read
+  /// timing, deck configuration, stored Card values, or collection state to
+  /// construct the snapshot or resolve the due timestamp. The updated Card is
+  /// returned only after [recordCardAnswerResult] commits both rows.
+  Future<Card> applyAndRecordFilteredPreviewCardAnswerResult({
+    required Card card,
+    required protoScheduler.CardAnswer answer,
+    required int usn,
+    required int secsUntilDayRollover,
+    int? dueTimestampSecs,
+    CollectionLoadBalancerContext? loadBalancerContext,
+    DeckConfigId? homeDeckConfigId,
+  }) async {
+    final appliedCard = applyFilteredPreviewCardAnswerState(
+      card: card,
+      answer: answer,
+      dueTimestampSecs: dueTimestampSecs,
+    );
+    final revlog = revlogEntryFromCardAnswer(
+      answer: answer,
+      usn: usn,
+      secsUntilDayRollover: secsUntilDayRollover,
+    );
+    await recordCardAnswerResult(
+      card: appliedCard,
+      revlog: revlog,
+      loadBalancerContext: loadBalancerContext,
+      homeDeckConfigId: homeDeckConfigId,
+    );
+    return appliedCard;
+  }
+
   void _validateNormalCardAnswerState(
     protoScheduler.SchedulingState_Normal state,
     String argumentName,

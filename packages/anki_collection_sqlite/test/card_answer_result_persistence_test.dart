@@ -335,6 +335,177 @@ void main() {
   });
 
   test(
+    'applies finished Preview answer and persists undoable result',
+    () async {
+      final preset = Int64(77);
+      final context = _loadBalancerContext(preset);
+      final answer = _filteredPreviewAnswer(
+        answeredAt: 1712345678020,
+        next: _previewState(scheduledSecs: 0, finished: true),
+      );
+
+      final applied = await storage
+          .applyAndRecordFilteredPreviewCardAnswerResult(
+            card: _filteredCard(),
+            answer: answer,
+            usn: 9,
+            secsUntilDayRollover: 5400,
+            loadBalancerContext: context,
+            homeDeckConfigId: preset,
+          );
+
+      expect(applied.deckId, Int64(13));
+      expect(applied.originalDeckId, Int64.ZERO);
+      expect(applied.originalDue, 0);
+      expect(applied.due, 47);
+      expect(applied.queue, CardQueue.review);
+      expect((await storage.getCard(Int64(41)))!.toProto(), applied.toProto());
+      final entry = storage.revlog.getRevlogEntry(
+        RevlogId(answer.answeredAtMillis),
+      );
+      expect(entry, isNotNull);
+      expect(entry!.cardId, Int64(41));
+      expect(entry.usn, 9);
+      expect(entry.buttonChosen, 3);
+      expect(entry.takenMillis, 850);
+      expect(entry.interval, 0);
+      expect(entry.reviewKind, RevlogReviewKind.filtered);
+      expect(context.cache.daysByPreset[preset]![7].cardCount, 1);
+      expect(storage.collectionUndoLabel, 'answerCard');
+
+      await storage.undoLastCollectionOperation();
+      expect((await storage.getCard(Int64(41)))!.due, 4);
+      expect(storage.revlog.getRevlogEntry(entry.id), isNull);
+
+      await storage.redoLastCollectionOperation();
+      expect((await storage.getCard(Int64(41)))!.toProto(), applied.toProto());
+      expect(storage.revlog.getRevlogEntry(entry.id), isNotNull);
+    },
+  );
+
+  test('applies unfinished PreviewRepeat using caller-resolved due', () async {
+    final answer = _filteredPreviewAnswer(
+      answeredAt: 1712345678021,
+      next: _previewState(scheduledSecs: 30, finished: false),
+    );
+
+    final applied = await storage.applyAndRecordFilteredPreviewCardAnswerResult(
+      card: _filteredCard(),
+      answer: answer,
+      usn: 11,
+      secsUntilDayRollover: 7200,
+      dueTimestampSecs: 1700000123,
+    );
+
+    expect(applied.deckId, Int64(99));
+    expect(applied.originalDeckId, Int64(13));
+    expect(applied.due, 1700000123);
+    expect(applied.queue, CardQueue.previewRepeat);
+    expect((await storage.getCard(Int64(41)))!.toProto(), applied.toProto());
+    final entry = storage.revlog.getRevlogEntry(
+      RevlogId(answer.answeredAtMillis),
+    );
+    expect(entry, isNotNull);
+    expect(entry!.usn, 11);
+    expect(entry.interval, -30);
+    expect(entry.reviewKind, RevlogReviewKind.filtered);
+  });
+
+  test(
+    'rejects invalid Preview answers and rolls back duplicate revlog',
+    () async {
+      final preset = Int64(77);
+      final context = _loadBalancerContext(preset);
+      final generationBeforeInvalid = storage.collectionUndoGeneration;
+      final validCurrent = _previewState(scheduledSecs: 60, finished: false);
+      final validNext = _previewState(scheduledSecs: 0, finished: true);
+      final invalidAnswers = <scheduler.CardAnswer>[
+        _filteredPreviewAnswer(cardId: Int64(42)),
+        _filteredPreviewAnswer(current: _normalNewState(1)),
+        _filteredPreviewAnswer(next: _normalNewState(2)),
+        _filteredPreviewAnswer(
+          current: scheduler.SchedulingState(
+            filtered: scheduler.SchedulingState_Filtered(
+              preview: scheduler.SchedulingState_Preview(finished: false),
+            ),
+          ),
+        ),
+        _filteredPreviewAnswer(
+          next: scheduler.SchedulingState(
+            filtered: scheduler.SchedulingState_Filtered(
+              preview: scheduler.SchedulingState_Preview(scheduledSecs: 10),
+            ),
+          ),
+        ),
+      ];
+      for (final answer in invalidAnswers) {
+        await expectLater(
+          storage.applyAndRecordFilteredPreviewCardAnswerResult(
+            card: _filteredCard(),
+            answer: answer,
+            usn: 9,
+            secsUntilDayRollover: 5400,
+            dueTimestampSecs: 1700000123,
+            loadBalancerContext: context,
+            homeDeckConfigId: preset,
+          ),
+          throwsArgumentError,
+        );
+      }
+      await expectLater(
+        storage.applyAndRecordFilteredPreviewCardAnswerResult(
+          card: _filteredCard(originalDeckId: Int64.ZERO),
+          answer: _filteredPreviewAnswer(
+            current: validCurrent,
+            next: validNext,
+          ),
+          usn: 9,
+          secsUntilDayRollover: 5400,
+          loadBalancerContext: context,
+          homeDeckConfigId: preset,
+        ),
+        throwsArgumentError,
+      );
+      await expectLater(
+        storage.applyAndRecordFilteredPreviewCardAnswerResult(
+          card: _filteredCard(),
+          answer: _filteredPreviewAnswer(
+            next: _previewState(scheduledSecs: 30, finished: false),
+          ),
+          usn: 9,
+          secsUntilDayRollover: 5400,
+        ),
+        throwsArgumentError,
+      );
+      expect(storage.collectionUndoGeneration, generationBeforeInvalid);
+
+      final collision = _revlog(id: 1712345678022, cardId: 41);
+      storage.revlog.addRevlogEntry(collision);
+      final generation = storage.collectionUndoGeneration;
+      await expectLater(
+        storage.applyAndRecordFilteredPreviewCardAnswerResult(
+          card: _filteredCard(),
+          answer: _filteredPreviewAnswer(answeredAt: 1712345678022),
+          usn: 9,
+          secsUntilDayRollover: 5400,
+          loadBalancerContext: context,
+          homeDeckConfigId: preset,
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      expect((await storage.getCard(Int64(41)))!.due, 4);
+      expect(
+        storage.revlog.getRevlogEntry(collision.id)!.toProto(),
+        collision.toProto(),
+      );
+      expect(database.select('SELECT id FROM revlog'), hasLength(1));
+      expect(context.cache.daysByPreset[preset]![7].cardCount, 0);
+      expect(storage.collectionUndoGeneration, generation);
+    },
+  );
+
+  test(
     'adds a persisted review result to the supplied home-config cache',
     () async {
       final preset = Int64(77);
@@ -564,6 +735,32 @@ scheduler.SchedulingState _normalNewState(int position) =>
       ),
     );
 
+scheduler.SchedulingState _previewState({
+  required int scheduledSecs,
+  required bool finished,
+}) => scheduler.SchedulingState(
+  filtered: scheduler.SchedulingState_Filtered(
+    preview: scheduler.SchedulingState_Preview(
+      scheduledSecs: scheduledSecs,
+      finished: finished,
+    ),
+  ),
+);
+
+scheduler.CardAnswer _filteredPreviewAnswer({
+  Int64? cardId,
+  int answeredAt = 1712345678022,
+  scheduler.SchedulingState? current,
+  scheduler.SchedulingState? next,
+}) => scheduler.CardAnswer(
+  cardId: cardId ?? Int64(41),
+  currentState: current ?? _previewState(scheduledSecs: 60, finished: false),
+  newState: next ?? _previewState(scheduledSecs: 0, finished: true),
+  rating: scheduler.CardAnswer_Rating.GOOD,
+  answeredAtMillis: Int64(answeredAt),
+  millisecondsTaken: 850,
+);
+
 scheduler.CardAnswer _newAnswer({
   Int64? cardId,
   int answeredAt = 1712345678000,
@@ -656,6 +853,19 @@ Card _card({
   due: due,
   queue: queue,
   interval: interval,
+);
+
+Card _filteredCard({Int64? originalDeckId}) => Card(
+  id: Int64(41),
+  noteId: Int64(12),
+  deckId: Int64(99),
+  mtimeSecs: Int64(1),
+  ctype: CardType.review,
+  queue: CardQueue.previewRepeat,
+  due: 4,
+  interval: 7,
+  originalDue: 47,
+  originalDeckId: originalDeckId ?? Int64(13),
 );
 
 RevlogEntry _revlog({required int id, required int cardId}) => RevlogEntry(

@@ -1072,6 +1072,20 @@ single-card operation; queue updates, caller-side config resolution,
 due/timing/fuzz resolution, app/Reviewer call-site integration, and UI remain
 open.
 
+### Unit 151 — resolve home-deck answer settings from a stored Card
+
+`CollectionSqliteStorage.answerDeckConfigForCard()` reads a stored Card,
+validates its assigned deck, and resolves the home deck from nonzero
+`Card.originalDeckId` or otherwise the assigned deck. It validates the home
+deck's config ID and returns the config ID, answer-duration cap, leech
+suspension action, and new/interday-learning/review sibling-bury flags from
+that home DeckConfig. A missing config row uses `DeckConfig.defaults()` while
+preserving the home config ID. The resolver is read-only and does not resolve
+scheduling timing, due values, fuzz, or caller-owned answer inputs. This closes
+only stored-card home-config resolution for Unit146/147/150 `answerCard()`
+inputs; answer-state config, due/timing/fuzz resolution, scheduling-context
+construction, app/Reviewer call-site integration, and UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

@@ -2,6 +2,7 @@
 import 'dart:async';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
+import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as protoConfig;
 import 'package:anki_backend_protocol/anki/decks.pb.dart' as protoDeck;
 import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as protoScheduler;
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
@@ -68,6 +69,183 @@ INSERT INTO col VALUES (1700000000, '{}');
   });
 
   tearDown(() async => storage.close());
+
+  test('resolves answer config from a stored normal card home deck', () async {
+    final config = DeckConfig(
+      id: Int64(10),
+      name: 'Answer config',
+      inner: DeckConfig.defaults().inner
+        ..capAnswerTimeToSecs = 37
+        ..leechAction =
+            protoConfig.DeckConfig_Config_LeechAction.LEECH_ACTION_SUSPEND
+        ..buryNew = true
+        ..buryReviews = false
+        ..buryInterdayLearning = true,
+    );
+    storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+
+    final beforeCard = await storage.getCard(Int64.ONE);
+    final beforeConfig = storage.deckConfigs.getDeckConfig(config.id);
+    final beforeDeck = storage.decks.getDeck(Int64(7));
+    final beforeRevlogCount = await storage.queryInt(
+      'SELECT count(*) FROM revlog',
+    );
+    final result = await storage.answerDeckConfigForCard(Int64.ONE);
+
+    expect(result.homeDeckConfigId, Int64(10));
+    expect(result.capAnswerTimeToSecs, 37);
+    expect(result.suspendLeechedCards, isTrue);
+    expect(result.buryNewSiblings, isTrue);
+    expect(result.buryReviewSiblings, isFalse);
+    expect(result.buryInterdayLearningSiblings, isTrue);
+    // These are exactly the caller-resolved config inputs to answerCard;
+    // timing, due, fuzz, and scheduling-context inputs remain caller-owned.
+    expect({
+      'capAnswerTimeToSecs': result.capAnswerTimeToSecs,
+      'suspendLeechedCards': result.suspendLeechedCards,
+      'buryNewSiblings': result.buryNewSiblings,
+      'buryReviewSiblings': result.buryReviewSiblings,
+      'buryInterdayLearningSiblings': result.buryInterdayLearningSiblings,
+    }, hasLength(5));
+    expect(
+      (await storage.getCard(Int64.ONE))!.toProto().writeToBuffer(),
+      beforeCard!.toProto().writeToBuffer(),
+    );
+    expect(
+      storage.deckConfigs.getDeckConfig(config.id)!.toProto().writeToBuffer(),
+      beforeConfig!.toProto().writeToBuffer(),
+    );
+    expect(
+      storage.decks.getDeck(Int64(7))!.toProto().writeToBuffer(),
+      beforeDeck!.toProto().writeToBuffer(),
+    );
+    expect(
+      await storage.queryInt('SELECT count(*) FROM revlog'),
+      beforeRevlogCount,
+    );
+    expect(storage.canUndoCollectionOperation, isFalse);
+  });
+
+  test(
+    'filtered card resolves original home config and ignores assigned config',
+    () async {
+      final assignedConfig = DeckConfig(
+        id: Int64(11),
+        name: 'Assigned config',
+        inner: DeckConfig.defaults().inner
+          ..capAnswerTimeToSecs = 5
+          ..buryNew = false,
+      );
+      final homeConfig = DeckConfig(
+        id: Int64(12),
+        name: 'Home config',
+        inner: DeckConfig.defaults().inner
+          ..capAnswerTimeToSecs = 91
+          ..leechAction =
+              protoConfig.DeckConfig_Config_LeechAction.LEECH_ACTION_SUSPEND
+          ..buryNew = true
+          ..buryReviews = true
+          ..buryInterdayLearning = true,
+      );
+      storage.deckConfigs
+        ..addOrUpdateDeckConfigWithExistingId(assignedConfig)
+        ..addOrUpdateDeckConfigWithExistingId(homeConfig);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(7),
+          name: 'Filtered with config',
+          kind: NormalDeckKind(
+            protoDeck.Deck_Normal(configId: assignedConfig.id),
+          ),
+        ),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(40),
+          name: 'Home',
+          kind: NormalDeckKind(protoDeck.Deck_Normal(configId: homeConfig.id)),
+        ),
+      );
+      await storage.executeBatch('UPDATE cards SET odid = 40 WHERE id = 1');
+
+      final result = await storage.answerDeckConfigForCard(Int64.ONE);
+
+      expect(result.homeDeckConfigId, homeConfig.id);
+      expect(result.capAnswerTimeToSecs, 91);
+      expect(result.suspendLeechedCards, isTrue);
+      expect(result.buryNewSiblings, isTrue);
+      expect(result.buryReviewSiblings, isTrue);
+      expect(result.buryInterdayLearningSiblings, isTrue);
+    },
+  );
+
+  test('missing home config row uses Core defaults and keeps its ID', () async {
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: Int64(40),
+        name: 'Home',
+        kind: NormalDeckKind(protoDeck.Deck_Normal(configId: Int64(88))),
+      ),
+    );
+    await storage.executeBatch('UPDATE cards SET odid = 40 WHERE id = 1');
+
+    final result = await storage.answerDeckConfigForCard(Int64.ONE);
+
+    final defaults = DeckConfig.defaults().inner;
+    expect(result.homeDeckConfigId, Int64(88));
+    expect(result.capAnswerTimeToSecs, defaults.capAnswerTimeToSecs);
+    expect(result.suspendLeechedCards, isFalse);
+    expect(result.buryNewSiblings, defaults.buryNew);
+    expect(result.buryReviewSiblings, defaults.buryReviews);
+    expect(result.buryInterdayLearningSiblings, defaults.buryInterdayLearning);
+    expect(await storage.queryInt('SELECT count(*) FROM deck_config'), 1);
+  });
+
+  test(
+    'rejects missing assigned/home decks and missing or invalid config IDs',
+    () async {
+      await expectLater(
+        storage.answerDeckConfigForCard(Int64(999)),
+        _stateError('card not found: 999'),
+      );
+
+      await storage.executeBatch('DELETE FROM decks WHERE id = 7');
+      await expectLater(
+        storage.answerDeckConfigForCard(Int64.ONE),
+        _stateError('deck not found: 7'),
+      );
+
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+      await storage.executeBatch('UPDATE cards SET odid = 99 WHERE id = 1');
+      await expectLater(
+        storage.answerDeckConfigForCard(Int64.ONE),
+        _stateError('home deck not found: 99'),
+      );
+
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(99),
+          name: 'No config',
+          kind: FilteredDeckKind(protoDeck.Deck_Filtered()),
+        ),
+      );
+      await expectLater(
+        storage.answerDeckConfigForCard(Int64.ONE),
+        _stateError('home deck has no config ID: 99'),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(99),
+          name: 'Invalid config',
+          kind: NormalDeckKind(protoDeck.Deck_Normal(configId: Int64.ZERO)),
+        ),
+      );
+      await expectLater(
+        storage.answerDeckConfigForCard(Int64.ONE),
+        _stateError('home deck has no config ID: 99'),
+      );
+    },
+  );
 
   test(
     'dispatches each card type by assigned deck mode into all five states',

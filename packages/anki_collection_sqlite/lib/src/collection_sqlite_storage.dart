@@ -323,6 +323,25 @@ final class DeckUnburyResult {
   final bool persistenceWarning;
 }
 
+/// Home-deck settings from a stored Card that supply `answerCard()` inputs.
+final class CollectionAnswerDeckConfig {
+  const CollectionAnswerDeckConfig({
+    required this.homeDeckConfigId,
+    required this.capAnswerTimeToSecs,
+    required this.suspendLeechedCards,
+    required this.buryNewSiblings,
+    required this.buryInterdayLearningSiblings,
+    required this.buryReviewSiblings,
+  });
+
+  final DeckConfigId homeDeckConfigId;
+  final int capAnswerTimeToSecs;
+  final bool suspendLeechedCards;
+  final bool buryNewSiblings;
+  final bool buryInterdayLearningSiblings;
+  final bool buryReviewSiblings;
+}
+
 /// Number of cards returned by a collection-backed filtered-deck empty.
 final class FilteredDeckEmptyResult {
   const FilteredDeckEmptyResult({
@@ -5387,6 +5406,53 @@ WHERE queue IN (-2, -3)
       homeDeckConfigId: homeDeckConfigId,
     );
     return appliedCard;
+  }
+
+  /// Resolves the stored Card's home DeckConfig settings used by `answerCard`.
+  ///
+  /// The assigned deck is validated first. A nonzero
+  /// [Card.originalDeckId] selects the home deck for filtered cards; otherwise
+  /// the assigned deck is the home deck. Missing config rows use Core's
+  /// default settings while retaining the home deck's config ID. This
+  /// read-only resolver does not resolve timing, scheduling context, due
+  /// values, or fuzz inputs.
+  Future<CollectionAnswerDeckConfig> answerDeckConfigForCard(
+    CardId cardId,
+  ) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+
+    final assignedDeck = _deckStorage.getDeck(card.deckId);
+    if (assignedDeck == null) {
+      throw StateError('deck not found: ${card.deckId}');
+    }
+    final homeDeckId = card.originalDeckId == Int64.ZERO
+        ? card.deckId
+        : card.originalDeckId;
+    final homeDeck = _deckStorage.getDeck(homeDeckId);
+    if (homeDeck == null) {
+      throw StateError('home deck not found: $homeDeckId');
+    }
+    final deckConfigId = homeDeck.configId;
+    if (deckConfigId == null || deckConfigId <= Int64.ZERO) {
+      throw StateError('home deck has no config ID: ${homeDeck.id}');
+    }
+
+    final storedConfig = _deckConfigStorage.getDeckConfig(deckConfigId);
+    final config =
+        storedConfig ??
+        DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
+    final settings = config.inner;
+    return CollectionAnswerDeckConfig(
+      homeDeckConfigId: deckConfigId,
+      capAnswerTimeToSecs: settings.capAnswerTimeToSecs,
+      suspendLeechedCards:
+          settings.leechAction ==
+          protoConfig.DeckConfig_Config_LeechAction.LEECH_ACTION_SUSPEND,
+      buryNewSiblings: settings.buryNew,
+      buryInterdayLearningSiblings: settings.buryInterdayLearning,
+      buryReviewSiblings: settings.buryReviews,
+    );
   }
 
   /// Answers one stored card by dispatching its scheduling states, selecting

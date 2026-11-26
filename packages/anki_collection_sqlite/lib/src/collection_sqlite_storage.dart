@@ -5506,8 +5506,9 @@ WHERE queue IN (-2, -3)
   /// All timing and scheduling values that are not already stored on the Card
   /// are caller-resolved inputs. [capAnswerTimeToSecs] comes from the card's
   /// home/original deck config; [suspendLeechedCards] and the three sibling
-  /// bury flags are caller-resolved settings for that config; [daysElapsed] is
-  /// the caller-resolved collection day. This method does not resolve deck
+  /// bury flags are caller-resolved settings for that config; [answerTiming]
+  /// carries the caller-resolved collection day and rollover duration from one
+  /// collection timing snapshot. This method does not resolve deck
   /// config.
   /// The generated answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
@@ -5530,8 +5531,7 @@ WHERE queue IN (-2, -3)
     required BigInt? fuzzSeed,
     DateTime? now,
     required int usn,
-    required int secsUntilDayRollover,
-    required int daysElapsed,
+    required CollectionAnswerTiming answerTiming,
     required double? desiredRetention,
     CardQueue? learningQueue,
     int? learningDue,
@@ -5540,7 +5540,12 @@ WHERE queue IN (-2, -3)
     CollectionLoadBalancerContext? loadBalancerContext,
     DeckConfigId? homeDeckConfigId,
   }) async {
-    _requiredUnsigned(daysElapsed, 32, 'daysElapsed');
+    _requiredUnsigned(answerTiming.daysElapsed, 32, 'daysElapsed');
+    _requiredUnsigned(
+      answerTiming.secsUntilDayRollover,
+      32,
+      'secsUntilDayRollover',
+    );
     if (capAnswerTimeToSecs < 0 || capAnswerTimeToSecs > 0xffffffff) {
       throw ArgumentError.value(
         capAnswerTimeToSecs,
@@ -5707,7 +5712,7 @@ WHERE queue IN (-2, -3)
     final revlog = revlogEntryFromCardAnswer(
       answer: cappedAnswer,
       usn: usn,
-      secsUntilDayRollover: secsUntilDayRollover,
+      secsUntilDayRollover: answerTiming.secsUntilDayRollover,
     );
     final newStateIsLeeched =
         normalNewState != null &&
@@ -5724,7 +5729,7 @@ WHERE queue IN (-2, -3)
       zoneValues: {
         _answerCardExpectedSnapshotZoneKey: card,
         _answerDeckStatsInputZoneKey: _AnswerDeckStatsInput(
-          daysElapsed: daysElapsed,
+          daysElapsed: answerTiming.daysElapsed,
           millisecondsTaken: cappedAnswer.millisecondsTaken,
           usn: usn,
         ),

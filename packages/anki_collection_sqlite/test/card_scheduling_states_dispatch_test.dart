@@ -607,16 +607,25 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 2500,
         capAnswerTimeToSecs: 1,
         suspendLeechedCards: false,
-        daysElapsed: 6,
+        answerTiming: const CollectionAnswerTiming(
+          now: 1712345678,
+          daysElapsed: 6,
+          nextDayAt: 1712345978,
+          secsUntilDayRollover: 300,
+        ),
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
         desiredRetention: null,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
         reviewDueDay: 41,
+      );
+
+      expect(
+        storage.revlog.getRevlogEntry(RevlogId(Int64(1712345678000)))!.interval,
+        1,
       );
 
       for (final deckId in [Int64(7), Int64(42), Int64(41)]) {
@@ -700,12 +709,16 @@ INSERT INTO col VALUES (1700000000, '{}');
           millisecondsTaken: 100,
           capAnswerTimeToSecs: 5,
           suspendLeechedCards: false,
-          daysElapsed: 6,
+          answerTiming: _answerTiming(
+            daysElapsed: 6,
+            secsUntilDayRollover: 1800,
+          ),
+
           baseContext: context,
           loadBalancerEnabled: false,
           fuzzSeed: null,
           usn: 8,
-          secsUntilDayRollover: 1800,
+
           desiredRetention: null,
           learningQueue: CardQueue.learn,
           learningDue: 1712346000,
@@ -741,12 +754,13 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 2500,
         capAnswerTimeToSecs: 1,
         suspendLeechedCards: false,
-        daysElapsed: 7,
+        answerTiming: _answerTiming(daysElapsed: 7, secsUntilDayRollover: 1800),
+
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
@@ -777,12 +791,13 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 1,
         capAnswerTimeToSecs: 1,
         suspendLeechedCards: false,
-        daysElapsed: 7,
+        answerTiming: _answerTiming(daysElapsed: 7, secsUntilDayRollover: 1800),
+
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
@@ -825,12 +840,13 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 250,
         capAnswerTimeToSecs: 1,
         suspendLeechedCards: false,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
         dueTimestampSecs: 1712346000,
       );
@@ -869,12 +885,16 @@ INSERT INTO col VALUES (1700000000, '{}');
           millisecondsTaken: testCase.millisecondsTaken,
           capAnswerTimeToSecs: testCase.capSecs,
           suspendLeechedCards: false,
-          daysElapsed: 6,
+          answerTiming: _answerTiming(
+            daysElapsed: 6,
+            secsUntilDayRollover: 1800,
+          ),
+
           baseContext: context,
           loadBalancerEnabled: false,
           fuzzSeed: null,
           usn: 8,
-          secsUntilDayRollover: 1800,
+
           desiredRetention: null,
           learningQueue: CardQueue.learn,
           learningDue: 1712346000,
@@ -905,12 +925,13 @@ INSERT INTO col VALUES (1700000000, '{}');
       millisecondsTaken: 2500,
       capAnswerTimeToSecs: 1,
       suspendLeechedCards: false,
-      daysElapsed: 6,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       baseContext: context,
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+
       desiredRetention: null,
       dueTimestampSecs: 1712346000,
     );
@@ -936,14 +957,15 @@ INSERT INTO col VALUES (1700000000, '{}');
       millisecondsTaken: 2500,
       capAnswerTimeToSecs: 1,
       suspendLeechedCards: false,
-      daysElapsed: 6,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       baseContext: context,
       scheduledSecs: 90,
       elapsedSecs: 12,
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+
       desiredRetention: 0.91,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
@@ -973,12 +995,16 @@ INSERT INTO col VALUES (1700000000, '{}');
             millisecondsTaken: 100,
             capAnswerTimeToSecs: capSecs,
             suspendLeechedCards: false,
-            daysElapsed: 6,
+            answerTiming: _answerTiming(
+              daysElapsed: 6,
+              secsUntilDayRollover: 1800,
+            ),
+
             baseContext: context,
             loadBalancerEnabled: false,
             fuzzSeed: null,
             usn: 8,
-            secsUntilDayRollover: 1800,
+
             desiredRetention: null,
           ),
           throwsArgumentError,
@@ -1016,7 +1042,8 @@ INSERT INTO col VALUES (1700000000, '{}');
         buryReviewSiblings: false,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 3600),
+
         cardId: Int64(1),
         rating: rating,
         answeredAtMillis: answerTime,
@@ -1025,7 +1052,7 @@ INSERT INTO col VALUES (1700000000, '{}');
         loadBalancerEnabled: false,
         fuzzSeed: BigInt.from(13),
         usn: 7,
-        secsUntilDayRollover: 3600,
+
         desiredRetention: 0.91,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
@@ -1101,7 +1128,11 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
             buryNewSiblings: buryNew,
             buryInterdayLearningSiblings: buryInterdayLearning,
             buryReviewSiblings: buryReviews,
-            daysElapsed: 6,
+            answerTiming: _answerTiming(
+              daysElapsed: 6,
+              secsUntilDayRollover: 1800,
+            ),
+
             cardId: Int64(1),
             rating: protoScheduler.CardAnswer_Rating.GOOD,
             answeredAtMillis: Int64(answerMillis),
@@ -1110,7 +1141,7 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
             loadBalancerEnabled: false,
             fuzzSeed: null,
             usn: 19,
-            secsUntilDayRollover: 1800,
+
             desiredRetention: null,
             learningQueue: CardQueue.learn,
             learningDue: 1712346000,
@@ -1195,7 +1226,8 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       buryReviewSiblings: false,
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
-      daysElapsed: 6,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       answeredAtMillis: Int64(normalAnswerTime),
@@ -1204,7 +1236,7 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+
       desiredRetention: null,
       reviewDueDay: 41,
     );
@@ -1241,7 +1273,8 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       buryReviewSiblings: false,
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
-      daysElapsed: 6,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       answeredAtMillis: Int64(rescheduleAnswerTime),
@@ -1252,7 +1285,7 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+
       desiredRetention: 0.91,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
@@ -1275,7 +1308,8 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       buryReviewSiblings: false,
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
-      daysElapsed: 6,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.AGAIN,
       answeredAtMillis: Int64(previewAnswerTime),
@@ -1284,7 +1318,7 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+
       desiredRetention: null,
       dueTimestampSecs: 1712346000,
     );
@@ -1327,7 +1361,8 @@ INSERT INTO cards VALUES
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       desiredRetention: null,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
@@ -1336,7 +1371,6 @@ INSERT INTO cards VALUES
       buryNewSiblings: true,
       buryInterdayLearningSiblings: true,
       buryReviewSiblings: true,
-      daysElapsed: 6,
     );
     expect(suspended.queue, CardQueue.suspended);
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.suspended);
@@ -1417,12 +1451,12 @@ INSERT INTO cards VALUES
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       desiredRetention: null,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
       suspendLeechedCards: false,
-      daysElapsed: 6,
     );
     expect(unsuspended.queue, CardQueue.learn);
     expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
@@ -1450,12 +1484,12 @@ INSERT INTO cards VALUES
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       desiredRetention: null,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
       suspendLeechedCards: true,
-      daysElapsed: 6,
     );
     expect(ordinary.queue, CardQueue.learn);
     expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
@@ -1481,13 +1515,13 @@ INSERT INTO cards VALUES
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       desiredRetention: null,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
       reviewDueDay: 41,
       suspendLeechedCards: true,
-      daysElapsed: 6,
     );
     expect(rescheduledLeech.queue, CardQueue.suspended);
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.suspended);
@@ -1510,11 +1544,11 @@ INSERT INTO cards VALUES
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       desiredRetention: null,
       dueTimestampSecs: 1712346000,
       suspendLeechedCards: true,
-      daysElapsed: 6,
     );
     expect(preview.queue, CardQueue.previewRepeat);
     expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
@@ -1538,12 +1572,13 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
@@ -1566,12 +1601,13 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: true,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
         dueTimestampSecs: 1712346000,
       );
@@ -1609,12 +1645,13 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
@@ -1656,12 +1693,13 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         baseContext: context,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 9,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
@@ -1739,7 +1777,8 @@ INSERT INTO cards VALUES
         buryNewSiblings: true,
         buryInterdayLearningSiblings: false,
         buryReviewSiblings: false,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(1712345679000),
@@ -1748,7 +1787,7 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
       );
 
@@ -1800,7 +1839,8 @@ INSERT INTO cards VALUES
       buryReviewSiblings: false,
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
-      daysElapsed: 6,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       answeredAtMillis: Int64(1712345679001),
@@ -1809,7 +1849,7 @@ INSERT INTO cards VALUES
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+
       desiredRetention: null,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
@@ -1855,7 +1895,8 @@ INSERT INTO cards VALUES
         buryNewSiblings: true,
         buryInterdayLearningSiblings: true,
         buryReviewSiblings: true,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.AGAIN,
         answeredAtMillis: Int64(1712345680000),
@@ -1864,7 +1905,7 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
         dueTimestampSecs: 1712346000,
       );
@@ -1892,7 +1933,11 @@ INSERT INTO cards VALUES
           buryReviewSiblings: false,
           capAnswerTimeToSecs: 120,
           suspendLeechedCards: false,
-          daysElapsed: 6,
+          answerTiming: _answerTiming(
+            daysElapsed: 6,
+            secsUntilDayRollover: 1800,
+          ),
+
           cardId: Int64(1),
           rating: protoScheduler.CardAnswer_Rating.GOOD,
           answeredAtMillis: Int64(1712345680001),
@@ -1901,7 +1946,7 @@ INSERT INTO cards VALUES
           loadBalancerEnabled: false,
           fuzzSeed: null,
           usn: 8,
-          secsUntilDayRollover: 1800,
+
           desiredRetention: 0.91,
         ),
         throwsA(
@@ -1920,7 +1965,11 @@ INSERT INTO cards VALUES
           buryReviewSiblings: false,
           capAnswerTimeToSecs: 120,
           suspendLeechedCards: false,
-          daysElapsed: 6,
+          answerTiming: _answerTiming(
+            daysElapsed: 6,
+            secsUntilDayRollover: 1800,
+          ),
+
           cardId: Int64(1),
           rating: protoScheduler.CardAnswer_Rating.GOOD,
           answeredAtMillis: Int64(1712345680002),
@@ -1931,7 +1980,7 @@ INSERT INTO cards VALUES
           loadBalancerEnabled: false,
           fuzzSeed: null,
           usn: 8,
-          secsUntilDayRollover: 1800,
+
           desiredRetention: 0.91,
         ),
         throwsArgumentError,
@@ -1944,7 +1993,8 @@ INSERT INTO cards VALUES
         buryReviewSiblings: false,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(1712345680003),
@@ -1955,7 +2005,7 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: 0.91,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
@@ -1976,7 +2026,11 @@ INSERT INTO cards VALUES
           buryReviewSiblings: false,
           capAnswerTimeToSecs: 120,
           suspendLeechedCards: false,
-          daysElapsed: 6,
+          answerTiming: _answerTiming(
+            daysElapsed: 6,
+            secsUntilDayRollover: 1800,
+          ),
+
           cardId: Int64(1),
           rating: protoScheduler.CardAnswer_Rating.GOOD,
           answeredAtMillis: Int64(1712345680004),
@@ -1985,7 +2039,7 @@ INSERT INTO cards VALUES
           loadBalancerEnabled: false,
           fuzzSeed: null,
           usn: 8,
-          secsUntilDayRollover: 1800,
+
           desiredRetention: 0.91,
         ),
         throwsA(isA<InvalidModelValue>()),
@@ -2032,7 +2086,8 @@ INSERT INTO cards VALUES
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
         buryReviewSiblings: true,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(answerTime - 1),
@@ -2041,7 +2096,7 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
       ),
       throwsArgumentError,
@@ -2057,7 +2112,8 @@ INSERT INTO cards VALUES
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
         buryReviewSiblings: true,
-        daysElapsed: 6,
+        answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(answerTime),
@@ -2066,7 +2122,7 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        secsUntilDayRollover: 1800,
+
         desiredRetention: null,
         reviewDueDay: 41,
         loadBalancerContext: loadBalancerContext,
@@ -2087,7 +2143,8 @@ INSERT INTO cards VALUES
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
       buryReviewSiblings: true,
-      daysElapsed: 6,
+      answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
+
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       answeredAtMillis: Int64(answerTime + 1),
@@ -2096,7 +2153,7 @@ INSERT INTO cards VALUES
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-      secsUntilDayRollover: 1800,
+
       desiredRetention: null,
       reviewDueDay: 41,
       loadBalancerContext: loadBalancerContext,
@@ -2238,4 +2295,14 @@ INSERT INTO cards (
 
 Matcher _stateError(String text) => throwsA(
   isA<StateError>().having((error) => error.message, 'message', contains(text)),
+);
+
+CollectionAnswerTiming _answerTiming({
+  required int daysElapsed,
+  required int secsUntilDayRollover,
+}) => CollectionAnswerTiming(
+  now: 0,
+  daysElapsed: daysElapsed,
+  nextDayAt: secsUntilDayRollover,
+  secsUntilDayRollover: secsUntilDayRollover,
 );

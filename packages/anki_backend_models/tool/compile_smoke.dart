@@ -8,6 +8,9 @@ import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  if (fuzzLearningIntervalSecs(1200, BigInt.from(58205158)) != 1473) {
+    throw StateError('seeded Learning fuzz differs on JavaScript');
+  }
   final previewStates = FilteredPreviewState.current(scheduledSecs: 0)
       .nextStates(againDelaySecs: 30, hardDelaySecs: 0, goodDelaySecs: 90);
   if (previewStates.current.finished ||

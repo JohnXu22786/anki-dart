@@ -387,3 +387,12 @@ recorded in `SOURCE.sha256`. This pure helper applies only an immutable Card
 snapshot and requires caller-resolved due values and desired retention. Core is
 Copyright Ankitects Pty Ltd and contributors and licensed under AGPL-3.0-or-later;
 this adaptation retains the same license, and root `COPYING` remains unchanged.
+
+`fuzzLearningIntervalSecs()` adapts `learning_ivl_with_fuzz()` from
+`rslib/src/scheduler/answering/learning.rs` at Anki Core commit
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. Its source digest is recorded in
+`SOURCE.sha256`. It reproduces Float32 fuzz-bound calculation and rand 0.9.4's
+default `u32` `random_range` sampling with `rand_chacha` 0.9.0 and
+`rand_core` 0.9.3. Core is Copyright Ankitects Pty Ltd and contributors and
+licensed under AGPL-3.0-or-later; this adaptation retains the same license,
+and root `COPYING` is unchanged.

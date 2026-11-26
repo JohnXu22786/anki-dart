@@ -14,7 +14,9 @@ inclusive interval window within Core's 99-day load-balancer cache.
 `calculateSiblingModifiers()` searches all caller-supplied preset buckets for
 the selected note, deduplicates sibling days, and applies those factors.
 `LoadBalancerDay` tracks caller-supplied card/note pairs and note membership
-for one day. `selectWeightedInterval()` provides Core's seeded weighted
+for one day. `fuzzLearningIntervalSecs()` matches Core's seeded intraday
+Learning and Relearning interval fuzz. `selectWeightedInterval()` provides
+Core's seeded weighted
 selection over caller-ordered candidates, matching the pinned rand 0.9.4,
 rand_chacha 0.9.0, and rand_core 0.9.3 behavior. `intervalToWeekday()` applies
 Core's interval offset to an absolute Unix timestamp, then projects the result

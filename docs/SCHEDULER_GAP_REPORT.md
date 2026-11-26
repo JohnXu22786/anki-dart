@@ -1224,16 +1224,29 @@ scheduling context resolution, and remaining scheduler gaps stay open.
 
 ### Unit 156 — compose intraday Learning/Relearning due timestamp
 
-The public pure `resolveLearningAnswerDueTimestamp()` helper adds the caller's
-already fuzz-resolved intraday delay to `CollectionAnswerTiming.now` and
+Unit156 introduced the pure `resolveLearningAnswerDueTimestamp()` helper,
+which adds a fuzz-resolved intraday delay to `CollectionAnswerTiming.now` and
 converts the result to Core's signed i32 Card due representation. It validates
-the delay and all timing snapshot values as uint32 inputs. The composed
-`CollectionSqliteStorage.answerCard()` API now accepts `fuzzedLearningSecs`;
-generated intraday Learning/Relearning answers resolve their due timestamp
-from that delay and the same captured timing snapshot, for ordinary and
-rescheduling-filtered answers. Interday DayLearn continues to use Unit155's
-generated due-day resolver without requiring an intraday delay, and lower-level
+the delay and timing snapshot values as uint32 inputs. At that stage, the
+composed `CollectionSqliteStorage.answerCard()` API accepted the caller's
+`fuzzedLearningSecs` for ordinary and rescheduling-filtered answers. Unit157
+below supersedes that input with internally derived seeded interval fuzz.
+Interday DayLearn continues to use Unit155's generated due-day resolver, and
+lower-level apply/record APIs retain their explicit absolute due values.
+
+### Unit 157 — derive Learning interval fuzz and intraday due
+
+The public pure `resolveLearningAnswerDueTimestamp()` helper adds a
+fuzz-resolved intraday delay to `CollectionAnswerTiming.now` and converts the
+result to Core's signed i32 Card due representation. It validates the delay and
+all timing snapshot values as uint32 inputs. `fuzzLearningIntervalSecs()`
+reproduces Core's Float32 upper-bound calculation and seeded rand 0.9.4 `u32`
+range sampling. The composed `CollectionSqliteStorage.answerCard()` path derives
+this fuzz from generated Learning/Relearning scheduled seconds and its existing
+`fuzzSeed`, then resolves due from that delay and the same captured timing
+snapshot for ordinary and rescheduling-filtered answers. Interday DayLearn
+continues to use Unit155's generated due-day resolver, and lower-level
 apply/record APIs retain their explicit absolute due values. This closes only
-intraday due timestamp composition from snapshot plus fuzzed interval. Fuzz
-calculation, answer timestamp, elapsed/scheduling context, caller/UI
-integration, and remaining scheduler gaps remain open.
+deterministic Learning interval fuzz and its composed intraday due path. Answer
+timestamp, elapsed/scheduling context, app/UI integration, and remaining
+scheduler gaps stay open.

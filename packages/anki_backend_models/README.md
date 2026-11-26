@@ -72,6 +72,14 @@ the current and selected state messages so they do not alias the input. It
 constructs a request only; applying the answer, updating revlogs or collection
 state, and transaction/undo behavior remain caller-owned.
 
+`revlogEntryFromCardAnswer()` derives the shared `RevlogEntry` model from a
+supplied generated `CardAnswer`, caller-provided `usn`, and explicit seconds
+until day rollover. It follows Core's interval-to-day rollover conversion,
+uses the current state's review kind and the new state's ease factor, and
+preserves the answer's 64-bit card ID and timestamp. It is pure and does not
+read timing or collection data, apply the answer, persist a revlog, update
+caches, or manage undo.
+
 `LearningCardState.fromCard()` projects an already-loaded Learn card using the
 current step delay and elapsed seconds supplied by the caller from the matching
 Core scheduler snapshot. It preserves the card's remaining step count and FSRS

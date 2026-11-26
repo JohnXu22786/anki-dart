@@ -3,6 +3,7 @@ import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/notes.pbenum.dart' as notes;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
 import 'package:anki_backend_protocol/anki/deck_config.pbenum.dart' as deck;
+import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
@@ -94,6 +95,38 @@ void main() {
   final note = Note(id: Int64(2));
   if (card.id.toInt() + note.id.toInt() != 3) {
     throw StateError('model package JS smoke compilation failed');
+  }
+  final answer = scheduler.CardAnswer(
+    cardId: Int64.parseInt('9007199254740997'),
+    currentState: scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        learning: scheduler.SchedulingState_Learning(scheduledSecs: 3599),
+      ),
+    ),
+    newState: scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        review: scheduler.SchedulingState_Review(
+          scheduledDays: 2,
+          easeFactor: 2.5,
+        ),
+      ),
+    ),
+    rating: scheduler.CardAnswer_Rating.GOOD,
+    answeredAtMillis: Int64.parseInt('9007199254740999'),
+    millisecondsTaken: 45000,
+  );
+  final revlog = revlogEntryFromCardAnswer(
+    answer: answer,
+    usn: 8,
+    secsUntilDayRollover: 3600,
+  );
+  if (revlog.cardId != answer.cardId ||
+      revlog.id.value != answer.answeredAtMillis ||
+      revlog.interval != 2 ||
+      revlog.lastInterval != -3599 ||
+      revlog.buttonChosen != 3 ||
+      revlog.reviewKind != RevlogReviewKind.learning) {
+    throw StateError('CardAnswer revlog derivation differs on JavaScript');
   }
   final reviewCard = Card(
     ctype: CardType.review,

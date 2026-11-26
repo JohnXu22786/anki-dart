@@ -793,6 +793,20 @@ caller-supplied answer results. Scheduler answer derivation, home-config
 resolution, app call-site orchestration, cache rebuild/undo invalidation, and
 Reviewer UI remain open.
 
+### Unit 133 — derive a RevlogEntry from CardAnswer
+
+`anki_backend_models.revlogEntryFromCardAnswer()` converts a supplied
+generated `CardAnswer` into the shared `RevlogEntry` model using caller-supplied
+`usn` and seconds until day rollover. It derives current and next intervals,
+ease factor, and review kind from normal New/Learning/Review/Relearning states,
+filtered Preview states, and filtered rescheduling wrappers; maps ratings to
+Core's one-based button values; and preserves the answer's exact 64-bit card ID
+and timestamp plus elapsed milliseconds. Missing or unsupported state
+wrappers and invalid numeric inputs are rejected. The helper does not read the
+clock or collection, apply or persist the answer, mutate caches, or write undo
+state. This closes only pure revlog derivation from a supplied CardAnswer;
+answer application, call-site orchestration, and Reviewer UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

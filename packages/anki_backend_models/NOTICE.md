@@ -319,3 +319,13 @@ search/limits, and rescheduling remain outside this pure transition. Source
 hashes are recorded in `SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and
 contributors and licensed under AGPL-3.0-or-later; this adaptation retains the
 same license.
+
+`revlogEntryFromCardAnswer()` adapts Core's `RevlogEntryPartial` construction
+from `rslib/src/scheduler/answering/revlog.rs`, interval conversion from
+`rslib/src/scheduler/states/interval_kind.rs`, and state interval/review-kind
+semantics from the corresponding scheduler state sources at the pinned Anki
+Core commit `e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The protocol shape is
+defined by `proto/anki/scheduler.proto`. All source digests are recorded in
+`SOURCE.sha256`. Core is Copyright Ankitects Pty Ltd and contributors and
+licensed under AGPL-3.0-or-later; this adaptation retains the same license,
+and root `COPYING` is unchanged.

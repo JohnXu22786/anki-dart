@@ -984,6 +984,18 @@ due/timing inputs, add bulk answering, or wire application/UI call sites. This
 closes only single-card request/apply/record orchestration; due/timing
 resolution and app/Reviewer/UI integration remain open.
 
+### Unit 145 — persist the answer timestamp on answered Cards
+
+The composed `CollectionSqliteStorage.answerCard()` path now copies the
+generated answer's `answeredAtMillis` to `Card.lastReviewTimeSecs` in whole
+Unix seconds for Normal and filtered-rescheduling answers. Filtered Preview
+answers retain the stored timestamp. The original stored Card snapshot remains
+the transaction's expected-value guard, and the timestamp update is persisted
+with the Card and Revlog in the existing undoable operation. This closes only
+the composed answer timestamp mutation; answer-duration caps, other
+post-answer behavior, due/timing resolution, and app/Reviewer/UI integration
+remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

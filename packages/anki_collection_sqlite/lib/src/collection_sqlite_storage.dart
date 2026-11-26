@@ -5306,6 +5306,16 @@ WHERE queue IN (-2, -3)
     }
     final currentKind = answer.currentState.whichKind();
     final newKind = answer.newState.whichKind();
+    final cardToApply =
+        currentKind == protoScheduler.SchedulingState_Kind.normal ||
+            (currentKind == protoScheduler.SchedulingState_Kind.filtered &&
+                answer.currentState.filtered.whichKind() ==
+                    protoScheduler.SchedulingState_Filtered_Kind.rescheduling)
+        ? Card.fromProto(
+            card.toProto()
+              ..lastReviewTimeSecs = Int64(answeredAtMillis.toInt() ~/ 1000),
+          )
+        : card;
     if (currentKind == protoScheduler.SchedulingState_Kind.normal) {
       if (newKind != protoScheduler.SchedulingState_Kind.normal) {
         throw ArgumentError.value(
@@ -5316,7 +5326,7 @@ WHERE queue IN (-2, -3)
       }
       return runZoned(
         () => applyAndRecordCardAnswerResult(
-          card: card,
+          card: cardToApply,
           answer: answer,
           usn: usn,
           secsUntilDayRollover: secsUntilDayRollover,
@@ -5352,7 +5362,7 @@ WHERE queue IN (-2, -3)
       }
       return runZoned(
         () => applyAndRecordFilteredPreviewCardAnswerResult(
-          card: card,
+          card: cardToApply,
           answer: answer,
           usn: usn,
           secsUntilDayRollover: secsUntilDayRollover,
@@ -5377,7 +5387,7 @@ WHERE queue IN (-2, -3)
       }
       return runZoned(
         () => applyAndRecordReschedulingFilteredCardAnswerResult(
-          card: card,
+          card: cardToApply,
           answer: answer,
           usn: usn,
           secsUntilDayRollover: secsUntilDayRollover,

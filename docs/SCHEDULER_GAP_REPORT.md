@@ -1019,8 +1019,26 @@ leech transitions. The operation continues to use the generated state as its
 leeched signal, validate and apply state before writing, and preserve existing
 undo/redo and post-commit load-balancer behavior. This closes only
 caller-resolved leech suspension in the composed single-card operation;
-leech tag creation, deck stats, sibling bury, queue updates, config resolution,
-due/timing resolution, and app/Reviewer UI integration remain open.
+deck stats, sibling bury, queue updates, config resolution, due/timing
+resolution, and app/Reviewer UI integration remain open.
+
+### Unit 148 — add the Core leech tag during a stored-card answer
+
+The composed `CollectionSqliteStorage.answerCard()` operation now adds Core's
+`leech` tag to the answered Card's Note whenever the generated answer's new
+state signals a leech, regardless of the caller-resolved suspension action.
+Filtered Preview answers and non-leeched results do not add the tag. When a new
+tag is needed, existing tags are deduplicated case-insensitively and sorted
+case-insensitively, and the stored registry spelling is reused when present.
+An already-present `leech` tag leaves the Note unchanged. A missing registry
+row is registered with the answer USN, while an existing row is preserved. A
+Note whose tags change receives Core's current modification time and the
+answer USN. Note and tag-registry writes share the existing atomic undoable
+Card+Revlog operation, so undo and redo include all affected rows. This closes
+only answer-triggered leech-tag creation and its persistence/undo on the
+composed single-card operation; deck stats, sibling bury, queue updates, config
+resolution, due/timing resolution, and app/Reviewer UI integration remain
+open.
 
 ### Unit 117 — current Review state in rescheduling filtered decks
 

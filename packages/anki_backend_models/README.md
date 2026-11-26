@@ -64,6 +64,14 @@ value and collection `daysElapsed` from the same timing snapshot. The pure
 projection preserves the stored interval, ease factor, lapses, and FSRS memory
 state; it does not read collection data or resolve filtered-deck due values.
 
+`cardAnswerFromSchedulingStates()` builds the generated `CardAnswer` protocol
+request from an existing generated `SchedulingStates` snapshot and a selected
+rating. It selects the matching outcome, preserves the signed 64-bit answer
+timestamp and card ID, validates the unsigned 32-bit elapsed time, and copies
+the current and selected state messages so they do not alias the input. It
+constructs a request only; applying the answer, updating revlogs or collection
+state, and transaction/undo behavior remain caller-owned.
+
 `LearningCardState.fromCard()` projects an already-loaded Learn card using the
 current step delay and elapsed seconds supplied by the caller from the matching
 Core scheduler snapshot. It preserves the card's remaining step count and FSRS

@@ -177,6 +177,15 @@ projection's validation and read-only behavior. This closes only collection
 state dispatch; answer application and persistence, transactions/undo, and
 application/UI call-site integration remain open.
 
+`cardAnswerRequestForCard()` combines that stored-card state dispatch with
+`anki_backend_models.cardAnswerFromSchedulingStates()`. It accepts the chosen
+rating, signed 64-bit answer timestamp, elapsed-answer milliseconds, and the
+same context and timing inputs as `schedulingStatesProtoForCard()`. The selected
+rating outcome and caller values flow into the generated `CardAnswer` request,
+retaining normal, rescheduling-filtered, and filtered-Preview wrappers. The
+method is read-only: answer application, revlog persistence, cache changes,
+transactions/undo, and application/UI call-site wiring remain open.
+
 Filtered-deck search/gathering and rescheduling, answer application,
 cache updates, transactions/undo, app call-site wiring, and Reviewer UI remain
 separate work.

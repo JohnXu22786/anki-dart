@@ -256,6 +256,168 @@ INSERT INTO col VALUES (1700000000, '{}');
       await expectLater(project(), _stateError('original deck ID'));
     },
   );
+
+  test(
+    'constructs rated answer requests from each stored-card dispatch mode',
+    () async {
+      const context = ReviewSchedulingContext(
+        fuzzFactor: 0,
+        relearningAgainDelaySecs: 600,
+      );
+      final cardId = Int64.parseInt('9007199254740997');
+      final answeredAtMillis = Int64.parseInt('-9007199254740997');
+      await storage.executeBatch(
+        'UPDATE cards SET id = $cardId, type = 0, queue = 0, did = 7, odid = 0',
+      );
+
+      for (final mode in ['normal', 'rescheduling', 'preview']) {
+        storage.decks.addOrUpdateDeckWithExistingId(
+          mode == 'normal'
+              ? _normalDeck()
+              : _filteredDeck(reschedule: mode == 'rescheduling'),
+        );
+        await storage.executeBatch(
+          'UPDATE cards SET did = 7, odid = ${mode == 'normal' ? 0 : 40}',
+        );
+        final dispatched = await storage.schedulingStatesProtoForCard(
+          cardId: cardId,
+          baseContext: context,
+          loadBalancerEnabled: false,
+          fuzzSeed: BigInt.from(13),
+          now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
+        );
+        for (final rating in [
+          protoScheduler.CardAnswer_Rating.AGAIN,
+          protoScheduler.CardAnswer_Rating.HARD,
+          protoScheduler.CardAnswer_Rating.GOOD,
+          protoScheduler.CardAnswer_Rating.EASY,
+        ]) {
+          final request = await storage.cardAnswerRequestForCard(
+            cardId: cardId,
+            rating: rating,
+            answeredAtMillis: answeredAtMillis,
+            millisecondsTaken: 0xffffffff,
+            baseContext: context,
+            loadBalancerEnabled: false,
+            fuzzSeed: BigInt.from(13),
+            now: DateTime.fromMillisecondsSinceEpoch(
+              1700000000000,
+              isUtc: true,
+            ),
+          );
+          final expected = switch (rating) {
+            protoScheduler.CardAnswer_Rating.AGAIN => dispatched.again,
+            protoScheduler.CardAnswer_Rating.HARD => dispatched.hard,
+            protoScheduler.CardAnswer_Rating.GOOD => dispatched.good,
+            protoScheduler.CardAnswer_Rating.EASY => dispatched.easy,
+            _ => throw StateError('unexpected test rating: $rating'),
+          };
+          expect(request.cardId, cardId, reason: mode);
+          expect(
+            request.currentState.toProto3Json(),
+            dispatched.current.toProto3Json(),
+            reason: mode,
+          );
+          expect(
+            request.newState.toProto3Json(),
+            expected.toProto3Json(),
+            reason: '$mode $rating',
+          );
+          expect(request.rating, rating, reason: mode);
+          expect(request.answeredAtMillis, answeredAtMillis, reason: mode);
+          expect(request.millisecondsTaken, 0xffffffff, reason: mode);
+          expect(
+            request.currentState.whichKind(),
+            dispatched.current.whichKind(),
+            reason: mode,
+          );
+        }
+      }
+    },
+  );
+
+  test(
+    'preserves dispatch errors, caller timing, and elapsed bounds',
+    () async {
+      const context = ReviewSchedulingContext(fuzzFactor: 0);
+      Future<protoScheduler.CardAnswer> answer({
+        CardId? cardId,
+        int? scheduledSecs,
+        int? elapsedSecs,
+        int millisecondsTaken = 0,
+      }) => storage.cardAnswerRequestForCard(
+        cardId: cardId ?? Int64(1),
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        answeredAtMillis: Int64(12),
+        millisecondsTaken: millisecondsTaken,
+        baseContext: context,
+        scheduledSecs: scheduledSecs,
+        elapsedSecs: elapsedSecs,
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+      );
+
+      await expectLater(
+        answer(cardId: Int64(404)),
+        _stateError('card not found'),
+      );
+      await storage.executeBatch('UPDATE cards SET type = 99 WHERE id = 1');
+      await expectLater(answer(), _stateError('invalid stored card value'));
+      await storage.executeBatch(
+        'UPDATE cards SET type = 1, queue = 1 WHERE id = 1',
+      );
+      await expectLater(answer(), _stateError('required for Learn cards'));
+      final learned = await answer(scheduledSecs: 90, elapsedSecs: 12);
+      expect(
+        learned
+            .currentState
+            .filtered
+            .rescheduling
+            .originalState
+            .learning
+            .elapsedSecs,
+        12,
+      );
+      await storage.executeBatch(
+        'UPDATE cards SET type = 3, queue = 3 WHERE id = 1',
+      );
+      final relearned = await answer(scheduledSecs: 75, elapsedSecs: 8);
+      expect(
+        relearned
+            .currentState
+            .filtered
+            .rescheduling
+            .originalState
+            .relearning
+            .learning
+            .scheduledSecs,
+        75,
+      );
+      expect(
+        relearned
+            .currentState
+            .filtered
+            .rescheduling
+            .originalState
+            .relearning
+            .learning
+            .elapsedSecs,
+        8,
+      );
+      await expectLater(
+        answer(millisecondsTaken: -1, scheduledSecs: 90, elapsedSecs: 12),
+        throwsArgumentError,
+      );
+      await expectLater(
+        answer(
+          millisecondsTaken: 0x100000000,
+          scheduledSecs: 90,
+          elapsedSecs: 12,
+        ),
+        throwsArgumentError,
+      );
+    },
+  );
 }
 
 DeckConfig _config() {

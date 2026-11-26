@@ -750,6 +750,23 @@ caches, or introduce answer-call-site wiring. This closes generated request
 construction only; answer application, persistence, transactions/undo, and
 application/UI call-site integration remain open.
 
+### Unit 130 — collection stored-card CardAnswer request routing
+
+`CollectionSqliteStorage.cardAnswerRequestForCard()` composes
+`schedulingStatesProtoForCard()` with
+`anki_backend_models.cardAnswerFromSchedulingStates()`. It routes the selected
+rating to the corresponding outcome while preserving the generated state
+wrapper selected for normal decks, rescheduling filtered decks, or filtered
+Preview. The caller's card ID, signed answer timestamp, elapsed milliseconds,
+review context and timing, load-balancer and fuzz inputs, and explicit
+Learn/Relearn `scheduledSecs` and `elapsedSecs` remain the inputs to the
+delegated builders; no timing is inferred from stored rows. Delegated stored
+card, deck, card-type, timing, rating, and unsigned elapsed-time validation is
+preserved. The API only constructs a request and remains read-only. This closes
+only collection-level stored-card CardAnswer request routing/construction;
+answer application and persistence, transactions/undo, and Reviewer UI remain
+open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`
@@ -798,9 +815,10 @@ app call-site wiring, and Reviewer UI remain open.
   Unit121 closes current-state `ReschedulingFilterState` wrapping for stored
   New, Learn, Review, and Relearn cards in rescheduling filtered decks. Unit127
   closes normal-deck generated protocol-state assembly for stored New, Learn,
-  Review, and Relearn cards; generated CardAnswer request construction is
-  closed by Unit129, while answer application, persistence, and app call-site
-  integration remain open. Unit121 does
+  Review, and Relearn cards; Unit129 closes pure generated CardAnswer request
+  construction, and Unit130 closes its collection-level stored-card routing,
+  while application, persistence, transactions/undo, app call-site integration,
+  and Reviewer UI remain open. Unit121 does
   not close answer-state composition, Preview wrapping, or rescheduling
   execution.
   Collection-backed due-card history and

@@ -4926,6 +4926,46 @@ WHERE queue IN (-2, -3)
     };
   }
 
+  /// Builds a generated answer request for a stored card without applying it.
+  ///
+  /// The stored card's assigned deck mode selects normal, rescheduling-filtered,
+  /// or filtered-Preview scheduling states through
+  /// [schedulingStatesProtoForCard]. [rating], [answeredAtMillis], and
+  /// [millisecondsTaken] are then passed unchanged to
+  /// [cardAnswerFromSchedulingStates]. Review timing and context, load-balancer
+  /// settings, fuzz seed, and caller-resolved Learn/Relearn timing are forwarded
+  /// to the state dispatcher. This method does not mutate the card, revlog,
+  /// cache, or collection state.
+  Future<protoScheduler.CardAnswer> cardAnswerRequestForCard({
+    required CardId cardId,
+    required protoScheduler.CardAnswer_Rating rating,
+    required Int64 answeredAtMillis,
+    required int millisecondsTaken,
+    required ReviewSchedulingContext baseContext,
+    int? scheduledSecs,
+    int? elapsedSecs,
+    required bool loadBalancerEnabled,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+  }) async {
+    final states = await schedulingStatesProtoForCard(
+      cardId: cardId,
+      baseContext: baseContext,
+      scheduledSecs: scheduledSecs,
+      elapsedSecs: elapsedSecs,
+      loadBalancerEnabled: loadBalancerEnabled,
+      fuzzSeed: fuzzSeed,
+      now: now,
+    );
+    return cardAnswerFromSchedulingStates(
+      cardId: cardId,
+      states: states,
+      rating: rating,
+      answeredAtMillis: answeredAtMillis,
+      millisecondsTaken: millisecondsTaken,
+    );
+  }
+
   Never _missingLearningTiming(String cardType) => throw StateError(
     'scheduledSecs and elapsedSecs are required for $cardType cards',
   );

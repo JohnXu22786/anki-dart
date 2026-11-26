@@ -4971,11 +4971,15 @@ WHERE queue IN (-2, -3)
   ///
   /// The card must already exist and both values must identify the same card.
   /// The update and revlog insertion commit as one undoable `answerCard`
-  /// collection operation. Scheduling, revlog derivation, and cache updates
+  /// collection operation. When [loadBalancerContext] is supplied, the
+  /// already-resolved [homeDeckConfigId] is used to update its in-memory cache
+  /// only after that operation commits. Scheduling and revlog derivation
   /// remain the caller's responsibility.
   Future<void> recordCardAnswerResult({
     required Card card,
     required RevlogEntry revlog,
+    CollectionLoadBalancerContext? loadBalancerContext,
+    DeckConfigId? homeDeckConfigId,
   }) async {
     if (card.id != revlog.cardId) {
       throw ArgumentError.value(
@@ -5003,6 +5007,8 @@ WHERE queue IN (-2, -3)
           throw StateError('revlog ID is already in use: ${revlog.id.value}');
         }
       },
+      onCommitted: (_) =>
+          loadBalancerContext?.addAnsweredReviewCard(card, homeDeckConfigId),
     );
   }
 

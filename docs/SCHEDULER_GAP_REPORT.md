@@ -780,6 +780,19 @@ caller-supplied answer results. Scheduler calculation, CardAnswer request
 routing, revlog field derivation, load-balancer cache mutation, and
 Reviewer/app call-site orchestration remain caller-owned or open.
 
+### Unit 132 — update the review cache after answer persistence
+
+`CollectionSqliteStorage.recordCardAnswerResult()` optionally accepts a
+caller-owned `CollectionLoadBalancerContext` and the already-resolved home
+deck-config ID. After the atomic card/revlog operation commits, it delegates to
+`CollectionLoadBalancerContext.addAnsweredReviewCard()` to add a resulting
+Review-queue card to that in-memory cache. Non-review results and missing home
+config IDs remain no-ops; failed writes and revlog collisions leave the cache
+unchanged. This closes only persistence-to-load-balancer-cache mutation for
+caller-supplied answer results. Scheduler answer derivation, home-config
+resolution, app call-site orchestration, cache rebuild/undo invalidation, and
+Reviewer UI remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

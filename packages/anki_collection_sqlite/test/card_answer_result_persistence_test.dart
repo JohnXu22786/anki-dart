@@ -69,6 +69,124 @@ void main() {
   );
 
   test(
+    'adds a persisted review result to the supplied home-config cache',
+    () async {
+      final preset = Int64(77);
+      final context = _loadBalancerContext(preset);
+      final answeredCard = _card(
+        id: 41,
+        due: 27,
+        queue: CardQueue.review,
+        interval: 7,
+      );
+
+      await storage.recordCardAnswerResult(
+        card: answeredCard,
+        revlog: _revlog(id: 1712345678010, cardId: 41),
+        loadBalancerContext: context,
+        homeDeckConfigId: preset,
+      );
+
+      final day = context.cache.daysByPreset[preset]![7];
+      expect(day.cardCount, 1);
+      expect(day.hasSibling(Int64(12)), isTrue);
+      expect(context.cache.daysByPreset[preset]![27].cardCount, 0);
+      expect((await storage.getCard(Int64(41)))!.interval, 7);
+      context.cache.removeCard(Int64(99));
+      expect(day.cardCount, 1);
+      context.cache.removeCard(Int64(41));
+      expect(day.cardCount, 0);
+    },
+  );
+
+  test('ignores non-review results and missing home-config IDs', () async {
+    final preset = Int64(77);
+    final context = _loadBalancerContext(preset);
+
+    await storage.recordCardAnswerResult(
+      card: _card(id: 41, due: 27, queue: CardQueue.learn, interval: 7),
+      revlog: _revlog(id: 1712345678011, cardId: 41),
+      loadBalancerContext: context,
+      homeDeckConfigId: preset,
+    );
+    await storage.recordCardAnswerResult(
+      card: _card(id: 41, due: 27, queue: CardQueue.review, interval: 8),
+      revlog: _revlog(id: 1712345678012, cardId: 41),
+      loadBalancerContext: context,
+      homeDeckConfigId: null,
+    );
+
+    expect(context.cache.daysByPreset[preset]![7].cardCount, 0);
+    expect(context.cache.daysByPreset[preset]![8].cardCount, 0);
+  });
+
+  test('card update failure preserves the prior review cache', () async {
+    final preset = Int64(77);
+    final context = _loadBalancerContext(preset);
+    context.addAnsweredReviewCard(
+      _card(id: 55, due: 0, queue: CardQueue.review, interval: 3),
+      preset,
+    );
+    await storage.executeBatch('''
+      CREATE TRIGGER reject_answer_card BEFORE UPDATE ON cards
+      BEGIN SELECT RAISE(ABORT, 'blocked'); END;
+    ''');
+
+    await expectLater(
+      storage.recordCardAnswerResult(
+        card: _card(id: 41, due: 27, queue: CardQueue.review, interval: 7),
+        revlog: _revlog(id: 1712345678013, cardId: 41),
+        loadBalancerContext: context,
+        homeDeckConfigId: preset,
+      ),
+      throwsA(isA<SqliteException>()),
+    );
+
+    expect(context.cache.daysByPreset[preset]![3].cardCount, 1);
+    expect(context.cache.daysByPreset[preset]![7].cardCount, 0);
+    expect(
+      context.cache.daysByPreset[preset]![3].hasSibling(Int64(12)),
+      isTrue,
+    );
+    expect(
+      context.cache.daysByPreset[preset]![7].hasSibling(Int64(12)),
+      isFalse,
+    );
+  });
+
+  test('revlog collision preserves the prior review cache', () async {
+    final preset = Int64(77);
+    final context = _loadBalancerContext(preset);
+    final existing = _revlog(id: 1712345678014, cardId: 41);
+    storage.revlog.addRevlogEntry(existing);
+    context.addAnsweredReviewCard(
+      _card(id: 55, due: 0, queue: CardQueue.review, interval: 3),
+      preset,
+    );
+
+    await expectLater(
+      storage.recordCardAnswerResult(
+        card: _card(id: 41, due: 27, queue: CardQueue.review, interval: 7),
+        revlog: existing,
+        loadBalancerContext: context,
+        homeDeckConfigId: preset,
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(context.cache.daysByPreset[preset]![3].cardCount, 1);
+    expect(context.cache.daysByPreset[preset]![7].cardCount, 0);
+    expect(
+      context.cache.daysByPreset[preset]![3].hasSibling(Int64(12)),
+      isTrue,
+    );
+    expect(
+      context.cache.daysByPreset[preset]![7].hasSibling(Int64(12)),
+      isFalse,
+    );
+  });
+
+  test(
     'unchanged card values still persist a distinct answer revlog',
     () async {
       final before = await storage.getCard(Int64(41));
@@ -173,12 +291,19 @@ void main() {
   );
 }
 
-Card _card({required int id, required int due}) => Card(
+Card _card({
+  required int id,
+  required int due,
+  CardQueue queue = CardQueue.newCard,
+  int interval = 0,
+}) => Card(
   id: Int64(id),
   noteId: Int64(12),
   deckId: Int64(13),
   mtimeSecs: Int64(1),
   due: due,
+  queue: queue,
+  interval: interval,
 );
 
 RevlogEntry _revlog({required int id, required int cardId}) => RevlogEntry(
@@ -192,3 +317,17 @@ RevlogEntry _revlog({required int id, required int cardId}) => RevlogEntry(
   takenMillis: 1200,
   reviewKind: RevlogReviewKind.review,
 );
+
+CollectionLoadBalancerContext _loadBalancerContext(DeckConfigId preset) {
+  final history = List.generate(99, (_) => <LoadBalancerHistoryCard>[]);
+  history[0].add((Int64(1), Int64(10), Int64(7)));
+  return CollectionLoadBalancerContext(
+    daysElapsed: 0,
+    nextDayAt: Int64.ZERO,
+    cache: LoadBalancerCache.fromHistory(
+      cardsByDay: history,
+      deckConfigByDeck: {Int64(7): preset},
+      configs: {preset: DeckConfig.defaults()},
+    ),
+  );
+}

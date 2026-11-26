@@ -122,13 +122,13 @@ deck config. Filtered home decks leave the context unchanged. The config's
 `buryReviews` flag controls whether the card note ID is passed to the resolver;
 a missing config row retains its config ID and behaves as bury disabled. The
 method composes this selection with one timing/cache snapshot and does not
-write scheduling state. After a successful answer, a host that already has the
-resulting card and resolved home config can call
-`CollectionLoadBalancerContext.addAnsweredReviewCard()` to update the context's
-in-memory cache. It adds only review-queue cards with a present home config ID;
-unknown presets and uncached intervals remain no-ops. The host still owns the
-application answer call site, interval application, persistence/undo, and
-Reviewer UI.
+write scheduling state. `recordCardAnswerResult()` can take that caller-owned
+context and resolved home config ID, then call
+`CollectionLoadBalancerContext.addAnsweredReviewCard()` only after the card and
+revlog commit together. It adds only review-queue cards with a present home
+config ID; failed writes, unknown presets, and uncached intervals do not update
+the cache. The host still owns the application answer call site, answer
+derivation, home-config resolution, and Reviewer UI.
 
 `currentReviewCardStateForNow()` reads a stored review card and its currently
 assigned deck, requires that deck to be normal, and projects its state using

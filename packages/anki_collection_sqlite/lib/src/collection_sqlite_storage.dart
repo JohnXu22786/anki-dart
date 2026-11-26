@@ -183,6 +183,21 @@ int resolveReviewAnswerDueDay({
   required CollectionAnswerTiming answerTiming,
 }) => (answerTiming.daysElapsed + nextState.scheduledDays).toSigned(32);
 
+/// Resolves a Learning or Relearning answer's due day when its step crosses
+/// the collection's inclusive day-rollover barrier.
+///
+/// Returns `null` for an intraday step. This pure operation performs no
+/// collection reads or scheduling transitions.
+int? resolveLearningAnswerDueDay({
+  required int scheduledSecs,
+  required CollectionAnswerTiming answerTiming,
+}) {
+  if (scheduledSecs < answerTiming.secsUntilDayRollover) return null;
+  final days =
+      ((scheduledSecs - answerTiming.secsUntilDayRollover) ~/ 86400) + 1;
+  return (answerTiming.daysElapsed + days).toSigned(32);
+}
+
 /// Opens a SQLite database for the caller-selected platform and location.
 ///
 /// The driver owns platform-specific database configuration and can capture
@@ -5519,9 +5534,9 @@ WHERE queue IN (-2, -3)
   /// bury flags are caller-resolved settings for that config; [answerTiming]
   /// carries the caller-resolved collection day and rollover duration from one
   /// collection timing snapshot. This method does not resolve deck
-  /// config. Review due day is derived from the generated next Review state's
-  /// scheduled days and [answerTiming]. Other answer types continue to use
-  /// their existing caller-resolved due inputs.
+  /// config. Review due day and interday Learning/Relearning queue and due day
+  /// are derived from generated next states and [answerTiming]. Intraday
+  /// Learning/Relearning due timestamps remain caller-resolved.
   /// The generated answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5545,7 +5560,6 @@ WHERE queue IN (-2, -3)
     required int usn,
     required CollectionAnswerTiming answerTiming,
     required double? desiredRetention,
-    CardQueue? learningQueue,
     int? learningDue,
     int? dueTimestampSecs,
     CollectionLoadBalancerContext? loadBalancerContext,
@@ -5625,6 +5639,23 @@ WHERE queue IN (-2, -3)
             answerTiming: answerTiming,
           )
         : null;
+    final learningScheduledSecs = switch (normalNewState?.whichKind()) {
+      protoScheduler.SchedulingState_Normal_Kind.learning =>
+        normalNewState!.learning.scheduledSecs,
+      protoScheduler.SchedulingState_Normal_Kind.relearning =>
+        normalNewState!.relearning.learning.scheduledSecs,
+      _ => null,
+    };
+    final resolvedLearningDueDay = learningScheduledSecs == null
+        ? null
+        : resolveLearningAnswerDueDay(
+            scheduledSecs: learningScheduledSecs,
+            answerTiming: answerTiming,
+          );
+    final resolvedLearningQueue = resolvedLearningDueDay == null
+        ? CardQueue.learn
+        : CardQueue.dayLearn;
+    final resolvedLearningDue = resolvedLearningDueDay ?? learningDue;
     final cardToApply =
         currentKind == protoScheduler.SchedulingState_Kind.normal ||
             (currentKind == protoScheduler.SchedulingState_Kind.filtered &&
@@ -5648,8 +5679,8 @@ WHERE queue IN (-2, -3)
         card: cardToApply,
         answer: cappedAnswer,
         desiredRetention: desiredRetention,
-        learningQueue: learningQueue,
-        learningDue: learningDue,
+        learningQueue: resolvedLearningQueue,
+        learningDue: resolvedLearningDue,
         reviewDueDay: resolvedReviewDueDay,
       );
     } else if (currentKind != protoScheduler.SchedulingState_Kind.filtered) {
@@ -5694,8 +5725,8 @@ WHERE queue IN (-2, -3)
         appliedCard = applyReschedulingFilteredCardAnswerState(
           card: cardToApply,
           answer: cappedAnswer,
-          learningQueue: learningQueue,
-          learningDue: learningDue,
+          learningQueue: resolvedLearningQueue,
+          learningDue: resolvedLearningDue,
           reviewDueDay: resolvedReviewDueDay,
           desiredRetention: desiredRetention,
         );

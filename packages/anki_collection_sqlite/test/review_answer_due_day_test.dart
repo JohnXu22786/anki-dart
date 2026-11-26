@@ -78,4 +78,49 @@ void main() {
       );
     });
   });
+
+  group('resolveLearningAnswerDueDay', () {
+    const timing = CollectionAnswerTiming(
+      now: 1000,
+      daysElapsed: 17,
+      nextDayAt: 1900,
+      secsUntilDayRollover: 900,
+    );
+
+    test('returns no due day below the rollover barrier', () {
+      expect(
+        resolveLearningAnswerDueDay(scheduledSecs: 899, answerTiming: timing),
+        isNull,
+      );
+    });
+
+    test('uses the inclusive rollover boundary and whole-day offsets', () {
+      expect(
+        resolveLearningAnswerDueDay(scheduledSecs: 900, answerTiming: timing),
+        18,
+      );
+      expect(
+        resolveLearningAnswerDueDay(
+          scheduledSecs: 900 + 2 * 86400 + 1,
+          answerTiming: timing,
+        ),
+        20,
+      );
+    });
+
+    test('wraps the due day to the signed i32 storage representation', () {
+      expect(
+        resolveLearningAnswerDueDay(
+          scheduledSecs: 900,
+          answerTiming: CollectionAnswerTiming(
+            now: 0,
+            daysElapsed: 0x7fffffff,
+            nextDayAt: 900,
+            secsUntilDayRollover: 900,
+          ),
+        ),
+        -0x80000000,
+      );
+    });
+  });
 }

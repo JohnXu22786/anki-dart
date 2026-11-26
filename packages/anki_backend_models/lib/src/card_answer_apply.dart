@@ -232,6 +232,115 @@ Card applyReviewCardAnswerState({
   );
 }
 
+/// Applies a generated Normal/Relearning [answer] to [card] without mutating
+/// either input. The caller supplies the resolved Relearning queue and due
+/// value: intraday timestamps use seconds and interday values use collection
+/// days. [desiredRetention] is the caller-resolved nullable Core input.
+Card applyRelearningCardAnswerState({
+  required Card card,
+  required scheduler.CardAnswer answer,
+  required CardQueue queue,
+  required int due,
+  required double? desiredRetention,
+}) {
+  if (answer.cardId != card.id) {
+    throw ArgumentError.value(
+      answer.cardId,
+      'answer.cardId',
+      'must match card.id',
+    );
+  }
+  if (queue != CardQueue.learn && queue != CardQueue.dayLearn) {
+    throw ArgumentError.value(
+      queue,
+      'queue',
+      'expected Relearning or day Relearning queue',
+    );
+  }
+  if (!answer.hasCurrentState() ||
+      answer.currentState.whichKind() !=
+          scheduler.SchedulingState_Kind.normal ||
+      !_supportsReviewCurrentState(answer.currentState.normal)) {
+    throw ArgumentError.value(
+      answer.currentState,
+      'answer.currentState',
+      'expected a Normal/New, Normal/Learning, Normal/Review, or '
+          'Normal/Relearning state',
+    );
+  }
+  if (!answer.hasNewState() ||
+      answer.newState.whichKind() != scheduler.SchedulingState_Kind.normal ||
+      answer.newState.normal.whichKind() !=
+          scheduler.SchedulingState_Normal_Kind.relearning) {
+    throw ArgumentError.value(
+      answer.newState,
+      'answer.newState',
+      'expected a Normal/Relearning state',
+    );
+  }
+
+  final relearning = answer.newState.normal.relearning;
+  if (!relearning.hasReview() || !relearning.hasLearning()) {
+    throw ArgumentError.value(
+      relearning,
+      'answer.newState.normal.relearning',
+      'must include paired Review and Learning states',
+    );
+  }
+  final review = relearning.review;
+  final learning = relearning.learning;
+  if (!review.hasScheduledDays() ||
+      !review.hasEaseFactor() ||
+      !review.hasLapses()) {
+    throw ArgumentError.value(
+      review,
+      'answer.newState.normal.relearning.review',
+      'must include scheduled days, ease factor, and lapses',
+    );
+  }
+  if (!learning.hasRemainingSteps()) {
+    throw ArgumentError.value(
+      learning,
+      'answer.newState.normal.relearning.learning',
+      'must include remaining steps',
+    );
+  }
+
+  final currentNormal = answer.currentState.normal;
+  return Card(
+    id: card.id,
+    noteId: card.noteId,
+    deckId: card.deckId,
+    templateIdx: card.templateIdx,
+    mtimeSecs: card.mtimeSecs,
+    usn: card.usn,
+    ctype: CardType.relearn,
+    queue: queue,
+    due: due,
+    interval: review.scheduledDays,
+    easeFactorRaw: (review.easeFactor * 1000).round(),
+    reps: card.reps + 1,
+    lapses: review.lapses,
+    remainingStepsRaw: learning.remainingSteps,
+    originalDue: card.originalDue,
+    originalDeckId: card.originalDeckId,
+    flags: card.flags,
+    originalPosition:
+        currentNormal.whichKind() == scheduler.SchedulingState_Normal_Kind.new_1
+            ? currentNormal.new_1.position
+            : card.originalPosition,
+    memoryState: learning.hasMemoryState()
+        ? FsrsMemoryState.fromProto(learning.memoryState)
+        : null,
+    desiredRetention: desiredRetention,
+    decay: card.decay,
+    lastReviewTimeSecs: card.lastReviewTimeSecs,
+    customData: answer.newState.hasCustomData()
+        ? answer.newState.customData
+        : card.customData,
+  );
+}
+
 bool _supportsLearningCurrentState(scheduler.SchedulingState_Normal normal) =>
     normal.whichKind() == scheduler.SchedulingState_Normal_Kind.new_1 ||
     normal.whichKind() == scheduler.SchedulingState_Normal_Kind.learning;

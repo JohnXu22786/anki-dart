@@ -542,6 +542,277 @@ void main() {
       }
     });
   });
+
+  group('applyRelearningCardAnswerState', () {
+    test('maps paired state fields and all supported current-state kinds', () {
+      final card = _learningCard(
+        originalPosition: 88,
+        remainingStepsRaw: 49,
+        memoryState: FsrsMemoryState(stability: 2, difficulty: 7),
+      );
+      final review = scheduler.SchedulingState_Review(
+        scheduledDays: 77,
+        elapsedDays: 4,
+        easeFactor: 2.3456,
+        lapses: 12,
+      );
+      final learning = scheduler.SchedulingState_Learning(
+        remainingSteps: 3,
+        scheduledSecs: 60,
+        elapsedSecs: 5,
+        memoryState: proto.FsrsMemoryState(stability: 9.5, difficulty: 3.25),
+      );
+      final currentStates = <scheduler.SchedulingState>[
+        _normalNewState(position: 91),
+        _normalLearningState(remainingSteps: 2),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            review: scheduler.SchedulingState_Review(scheduledDays: 2),
+          ),
+        ),
+        _normalRelearningState(
+          review: scheduler.SchedulingState_Review(scheduledDays: 1),
+          learning: scheduler.SchedulingState_Learning(remainingSteps: 1),
+        ),
+      ];
+
+      for (final (index, currentState) in currentStates.indexed) {
+        final answer = _relearningAnswer(
+          currentState: currentState,
+          review: review,
+          learning: learning,
+        );
+        final answerBefore = answer.deepCopy();
+        final cardBefore = card.toProto();
+        final queue = index.isEven ? CardQueue.learn : CardQueue.dayLearn;
+        final due = index.isEven ? 1700000123 : 27;
+
+        final updated = applyRelearningCardAnswerState(
+          card: card,
+          answer: answer,
+          queue: queue,
+          due: due,
+          desiredRetention: 0.9,
+        );
+
+        expect(updated.ctype, CardType.relearn);
+        expect(updated.queue, queue);
+        expect(updated.due, due);
+        expect(updated.interval, 77);
+        expect(updated.easeFactorRaw, 2346);
+        expect(updated.lapses, 12);
+        expect(updated.remainingSteps, 3);
+        expect(updated.reps, card.reps + 1);
+        expect(updated.originalPosition, index == 0 ? 91 : 88);
+        expect(updated.memoryState!.stability, 9.5);
+        expect(updated.memoryState!.difficulty, 3.25);
+        expect(updated.desiredRetention, closeTo(0.9, 0.000001));
+        expect(updated.customData, 'relearning answer data');
+        _expectReviewUnchangedCardFields(updated, card);
+        expect(updated.originalDue, card.originalDue);
+        expect(
+            updated.originalPosition, index == 0 ? 91 : card.originalPosition);
+        expect(card.toProto(), cardBefore);
+        expect(answer, answerBefore);
+        expect(identical(updated, card), isFalse);
+      }
+    });
+
+    test(
+        'clears absent learning memory, applies nullable retention, and handles custom data presence',
+        () {
+      final card = _learningCard(
+        memoryState: FsrsMemoryState(stability: 2, difficulty: 7),
+        desiredRetention: 0.8,
+      );
+      final base = _relearningAnswer(
+        currentState: _normalNewState(position: 42),
+        learning: scheduler.SchedulingState_Learning(remainingSteps: 0),
+      );
+
+      final withEmptyCustomData = base.deepCopy()..newState.customData = '';
+      final cleared = applyRelearningCardAnswerState(
+        card: card,
+        answer: withEmptyCustomData,
+        queue: CardQueue.learn,
+        due: 0,
+        desiredRetention: null,
+      );
+      expect(cleared.memoryState, isNull);
+      expect(cleared.remainingSteps, 0);
+      expect(cleared.desiredRetention, isNull);
+      expect(cleared.customData, '');
+
+      final absentCustomData = scheduler.CardAnswer(
+        cardId: card.id,
+        currentState: _normalNewState(position: 42),
+        newState: _relearningState(
+          learning: scheduler.SchedulingState_Learning(remainingSteps: 1),
+        ),
+        rating: scheduler.CardAnswer_Rating.GOOD,
+      );
+      expect(absentCustomData.newState.hasCustomData(), isFalse);
+      final preserved = applyRelearningCardAnswerState(
+        card: card,
+        answer: absentCustomData,
+        queue: CardQueue.dayLearn,
+        due: -10,
+        desiredRetention: 0.75,
+      );
+      expect(preserved.customData, card.customData);
+      expect(preserved.memoryState, isNull);
+      expect(preserved.desiredRetention, closeTo(0.75, 0.000001));
+      expect(preserved.due, -10);
+    });
+
+    test(
+        'rejects mismatched IDs, unsupported wrappers, and missing paired fields',
+        () {
+      final card = _learningCard();
+      final current = _normalNewState(position: 1);
+      expect(
+        () => applyRelearningCardAnswerState(
+          card: card,
+          answer: _relearningAnswer(currentState: current, cardId: Int64(43)),
+          queue: CardQueue.learn,
+          due: 1,
+          desiredRetention: null,
+        ),
+        throwsArgumentError,
+      );
+
+      for (final currentState in <scheduler.SchedulingState>[
+        scheduler.SchedulingState(),
+        scheduler.SchedulingState(normal: scheduler.SchedulingState_Normal()),
+        scheduler.SchedulingState(
+          filtered: scheduler.SchedulingState_Filtered(
+            preview: scheduler.SchedulingState_Preview(scheduledSecs: 60),
+          ),
+        ),
+      ]) {
+        expect(
+          () => applyRelearningCardAnswerState(
+            card: card,
+            answer: _relearningAnswer(currentState: currentState),
+            queue: CardQueue.learn,
+            due: 1,
+            desiredRetention: null,
+          ),
+          throwsArgumentError,
+        );
+      }
+
+      for (final newState in <scheduler.SchedulingState>[
+        scheduler.SchedulingState(),
+        scheduler.SchedulingState(normal: scheduler.SchedulingState_Normal()),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            review: scheduler.SchedulingState_Review(scheduledDays: 1),
+          ),
+        ),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            relearning: scheduler.SchedulingState_Relearning(
+              learning: scheduler.SchedulingState_Learning(remainingSteps: 1),
+            ),
+          ),
+        ),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            relearning: scheduler.SchedulingState_Relearning(
+              review: scheduler.SchedulingState_Review(scheduledDays: 1),
+            ),
+          ),
+        ),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            relearning: scheduler.SchedulingState_Relearning(
+              review: scheduler.SchedulingState_Review(
+                scheduledDays: 1,
+                easeFactor: 2.5,
+                lapses: 2,
+              ),
+              learning: scheduler.SchedulingState_Learning(),
+            ),
+          ),
+        ),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            relearning: scheduler.SchedulingState_Relearning(
+              review: scheduler.SchedulingState_Review(
+                easeFactor: 2.5,
+                lapses: 2,
+              ),
+              learning: scheduler.SchedulingState_Learning(remainingSteps: 1),
+            ),
+          ),
+        ),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            relearning: scheduler.SchedulingState_Relearning(
+              review: scheduler.SchedulingState_Review(
+                scheduledDays: 1,
+                lapses: 2,
+              ),
+              learning: scheduler.SchedulingState_Learning(remainingSteps: 1),
+            ),
+          ),
+        ),
+        scheduler.SchedulingState(
+          normal: scheduler.SchedulingState_Normal(
+            relearning: scheduler.SchedulingState_Relearning(
+              review: scheduler.SchedulingState_Review(
+                scheduledDays: 1,
+                easeFactor: 2.5,
+              ),
+              learning: scheduler.SchedulingState_Learning(remainingSteps: 1),
+            ),
+          ),
+        ),
+        scheduler.SchedulingState(
+          filtered: scheduler.SchedulingState_Filtered(
+            preview: scheduler.SchedulingState_Preview(scheduledSecs: 60),
+          ),
+        ),
+      ]) {
+        expect(
+          () => applyRelearningCardAnswerState(
+            card: card,
+            answer: scheduler.CardAnswer(
+              cardId: card.id,
+              currentState: current,
+              newState: newState,
+              rating: scheduler.CardAnswer_Rating.GOOD,
+            ),
+            queue: CardQueue.learn,
+            due: 1,
+            desiredRetention: null,
+          ),
+          throwsArgumentError,
+        );
+      }
+
+      for (final queue in <CardQueue>[
+        CardQueue.newCard,
+        CardQueue.review,
+        CardQueue.previewRepeat,
+        CardQueue.suspended,
+        CardQueue.schedBuried,
+        CardQueue.userBuried,
+      ]) {
+        expect(
+          () => applyRelearningCardAnswerState(
+            card: card,
+            answer: _relearningAnswer(currentState: current),
+            queue: queue,
+            due: 1,
+            desiredRetention: null,
+          ),
+          throwsArgumentError,
+        );
+      }
+    });
+  });
 }
 
 scheduler.CardAnswer _answer({
@@ -655,6 +926,57 @@ scheduler.CardAnswer _reviewAnswer({
         ),
       )..customData = customData,
       rating: rating,
+    );
+
+scheduler.SchedulingState _normalRelearningState({
+  required scheduler.SchedulingState_Review review,
+  required scheduler.SchedulingState_Learning learning,
+}) =>
+    scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        relearning: scheduler.SchedulingState_Relearning(
+          review: review,
+          learning: learning,
+        ),
+      ),
+    );
+
+scheduler.SchedulingState _relearningState({
+  scheduler.SchedulingState_Review? review,
+  scheduler.SchedulingState_Learning? learning,
+}) =>
+    scheduler.SchedulingState(
+      normal: scheduler.SchedulingState_Normal(
+        relearning: scheduler.SchedulingState_Relearning(
+          review: review ??
+              scheduler.SchedulingState_Review(
+                scheduledDays: 7,
+                elapsedDays: 2,
+                easeFactor: 2.3,
+                lapses: 3,
+              ),
+          learning: learning ??
+              scheduler.SchedulingState_Learning(
+                remainingSteps: 1,
+                scheduledSecs: 60,
+                elapsedSecs: 3,
+              ),
+        ),
+      ),
+    );
+
+scheduler.CardAnswer _relearningAnswer({
+  required scheduler.SchedulingState currentState,
+  scheduler.SchedulingState_Review? review,
+  scheduler.SchedulingState_Learning? learning,
+  Int64? cardId,
+}) =>
+    scheduler.CardAnswer(
+      cardId: cardId ?? Int64(42),
+      currentState: currentState,
+      newState: _relearningState(review: review, learning: learning)
+        ..customData = 'relearning answer data',
+      rating: scheduler.CardAnswer_Rating.GOOD,
     );
 
 void _expectUnchangedCardFields(Card updated, Card original) {

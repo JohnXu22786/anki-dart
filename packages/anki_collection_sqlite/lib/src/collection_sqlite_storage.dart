@@ -4846,6 +4846,90 @@ WHERE queue IN (-2, -3)
     return states;
   }
 
+  /// Returns generated current and Again/Hard/Good/Easy scheduling states for
+  /// a stored card, dispatching by its assigned deck mode and card type.
+  ///
+  /// Normal decks use [normalCardSchedulingStatesProtoForCard], filtered decks
+  /// that reschedule cards use the corresponding filtered-rescheduling
+  /// projection, and other filtered decks use the Preview projection. Review
+  /// cards preserve [now], [loadBalancerEnabled], [fuzzSeed], and
+  /// [baseContext]; Learn and Relearn cards preserve caller-resolved
+  /// [scheduledSecs] and [elapsedSecs]. The delegated projections retain
+  /// their validation and read-only behavior.
+  Future<protoScheduler.SchedulingStates> schedulingStatesProtoForCard({
+    required CardId cardId,
+    required ReviewSchedulingContext baseContext,
+    int? scheduledSecs,
+    int? elapsedSecs,
+    required bool loadBalancerEnabled,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+  }) async {
+    late final Card card;
+    try {
+      final storedCard = await getCard(cardId);
+      if (storedCard == null) throw StateError('card not found: $cardId');
+      card = storedCard;
+    } on InvalidModelValue catch (error) {
+      throw StateError('invalid stored card value: $error');
+    }
+
+    final deck = _deckStorage.getDeck(card.deckId);
+    if (deck == null) throw StateError('deck not found: ${card.deckId}');
+
+    if (deck.kind is NormalDeckKind) {
+      return normalCardSchedulingStatesProtoForCard(
+        cardId: cardId,
+        baseContext: baseContext,
+        scheduledSecs: scheduledSecs,
+        elapsedSecs: elapsedSecs,
+        loadBalancerEnabled: loadBalancerEnabled,
+        fuzzSeed: fuzzSeed,
+        now: now,
+      );
+    }
+
+    final kind = deck.kind;
+    if (kind is! FilteredDeckKind) {
+      throw StateError('normal or filtered deck required: ${card.deckId}');
+    }
+    if (!kind.value.reschedule) {
+      return filteredPreviewSchedulingStatesProtoForCard(cardId: cardId);
+    }
+
+    return switch (card.ctype) {
+      CardType.newCard => reschedulingFilteredNewCardSchedulingStatesForCard(
+        cardId: cardId,
+        baseContext: baseContext,
+      ),
+      CardType.learn => reschedulingFilteredLearningCardSchedulingStatesForCard(
+        cardId: cardId,
+        scheduledSecs: scheduledSecs ?? _missingLearningTiming('Learn'),
+        elapsedSecs: elapsedSecs ?? _missingLearningTiming('Learn'),
+        baseContext: baseContext,
+      ),
+      CardType.review =>
+        reschedulingFilteredReviewCardSchedulingStatesForCardForNow(
+          cardId: cardId,
+          baseContext: baseContext,
+          loadBalancerEnabled: loadBalancerEnabled,
+          fuzzSeed: fuzzSeed,
+          now: now,
+        ),
+      CardType.relearn =>
+        reschedulingFilteredRelearningCardSchedulingStatesForCard(
+          cardId: cardId,
+          scheduledSecs: scheduledSecs ?? _missingLearningTiming('Relearn'),
+          elapsedSecs: elapsedSecs ?? _missingLearningTiming('Relearn'),
+          baseContext: baseContext,
+        ),
+    };
+  }
+
+  Never _missingLearningTiming(String cardType) => throw StateError(
+    'scheduledSecs and elapsedSecs are required for $cardType cards',
+  );
+
   protoScheduler.SchedulingStates _learningSchedulingStatesToProto(
     LearningCardSchedulingStates states,
     protoScheduler.SchedulingState_Normal Function(LearningCardTransition)

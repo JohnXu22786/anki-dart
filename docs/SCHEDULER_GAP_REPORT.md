@@ -719,6 +719,23 @@ type. This closes only generated normal-deck scheduling-state assembly for
 stored New/Learn/Review/Relearn cards. Answer application and persistence,
 transactions/undo, app call-site wiring, and Reviewer UI remain open.
 
+### Unit 128 — collection card scheduling-state dispatch
+
+`CollectionSqliteStorage.schedulingStatesProtoForCard()` reads a stored card
+and selects the existing generated state projection from its assigned deck
+mode and card type. Normal decks reuse Unit127's New/Learn/Review/Relearn
+assembly; rescheduling filtered decks reuse their matching filtered
+New/Learn/Review/Relearn projections; non-rescheduling filtered decks reuse
+Unit126's Preview assembly. Current and Again/Hard/Good/Easy remain generated
+states in the selected mode's protocol oneofs. Review receives the caller's
+timing snapshot, load-balancer setting, fuzz seed, and context, while Learn and
+Relearn receive caller-resolved `scheduledSecs` and `elapsedSecs` unchanged.
+The API preserves delegated card, deck, configuration, card-type, and required
+timing errors. It is read-only and does not apply answers, persist card or
+revlog state, or mutate caches. This closes only the unified collection
+state-dispatch API; answer application and persistence, transactions/undo,
+and application/UI call-site integration remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

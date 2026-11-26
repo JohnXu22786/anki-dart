@@ -70,6 +70,61 @@ INSERT INTO col VALUES (1700000000, '{}');
 
   tearDown(() async => storage.close());
 
+  test(
+    'derives Review due from the generated state and answer timing',
+    () async {
+      const context = ReviewSchedulingContext(fuzzFactor: 0);
+      const timing = CollectionAnswerTiming(
+        now: 1712345678,
+        daysElapsed: 6,
+        nextDayAt: 1712347478,
+        secsUntilDayRollover: 1800,
+      );
+      await storage.executeBatch(
+        'UPDATE cards SET type = 2, queue = 2, did = 40, odid = 0 WHERE id = 1',
+      );
+      final generated = await storage.cardAnswerRequestForCard(
+        cardId: Int64(1),
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        customData: '',
+        answeredAtMillis: Int64(1712345679000),
+        millisecondsTaken: 300,
+        baseContext: context,
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+        now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
+      );
+      final expectedDue = resolveReviewAnswerDueDay(
+        nextState: ReviewCardState(
+          scheduledDays: generated.newState.normal.review.scheduledDays,
+        ),
+        answerTiming: timing,
+      );
+
+      final answered = await storage.answerCard(
+        cardId: Int64(1),
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        answeredAtMillis: Int64(1712345679000),
+        millisecondsTaken: 300,
+        capAnswerTimeToSecs: 120,
+        suspendLeechedCards: false,
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
+        baseContext: context,
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+        now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
+        usn: 8,
+        answerTiming: timing,
+        desiredRetention: null,
+      );
+
+      expect(answered.due, expectedDue);
+      expect((await storage.getCard(Int64(1)))!.due, expectedDue);
+    },
+  );
+
   test('resolves answer config from a stored normal card home deck', () async {
     final config = DeckConfig(
       id: Int64(10),
@@ -620,7 +675,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         desiredRetention: null,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
-        reviewDueDay: 41,
       );
 
       expect(
@@ -898,7 +952,6 @@ INSERT INTO col VALUES (1700000000, '{}');
           desiredRetention: null,
           learningQueue: CardQueue.learn,
           learningDue: 1712346000,
-          reviewDueDay: 41,
         );
         expect(
           storage.revlog.getRevlogEntry(RevlogId(answerId))!.takenMillis,
@@ -1056,7 +1109,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         desiredRetention: 0.91,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
-        reviewDueDay: 47,
         now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
       );
 
@@ -1145,7 +1197,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
             desiredRetention: null,
             learningQueue: CardQueue.learn,
             learningDue: 1712346000,
-            reviewDueDay: 41,
           );
           expect(
             (await storage.getCard(Int64(1)))!.queue,
@@ -1238,7 +1289,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       usn: 8,
 
       desiredRetention: null,
-      reviewDueDay: 41,
     );
     expect(normal.lastReviewTimeSecs, Int64(normalAnswerTime ~/ 1000));
     expect(
@@ -1289,7 +1339,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       desiredRetention: 0.91,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
-      reviewDueDay: 47,
     );
     expect(rescheduled.lastReviewTimeSecs, Int64(rescheduleAnswerTime ~/ 1000));
     expect(
@@ -1366,7 +1415,6 @@ INSERT INTO cards VALUES
       desiredRetention: null,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
-      reviewDueDay: 41,
       suspendLeechedCards: true,
       buryNewSiblings: true,
       buryInterdayLearningSiblings: true,
@@ -1520,7 +1568,6 @@ INSERT INTO cards VALUES
       desiredRetention: null,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
-      reviewDueDay: 41,
       suspendLeechedCards: true,
     );
     expect(rescheduledLeech.queue, CardQueue.suspended);
@@ -1582,7 +1629,6 @@ INSERT INTO cards VALUES
         desiredRetention: null,
         learningQueue: CardQueue.learn,
         learningDue: 1712346000,
-        reviewDueDay: 41,
       );
       expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
       expect(database.select('SELECT * FROM tags'), isEmpty);
@@ -1853,7 +1899,6 @@ INSERT INTO cards VALUES
       desiredRetention: null,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
-      reviewDueDay: 47,
     );
     await Future<void>.delayed(Duration.zero);
     allowOperationToFinish.complete();
@@ -2090,7 +2135,7 @@ INSERT INTO cards VALUES
 
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
-        answeredAtMillis: Int64(answerTime - 1),
+        answeredAtMillis: Int64(answerTime),
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
@@ -2099,7 +2144,7 @@ INSERT INTO cards VALUES
 
         desiredRetention: null,
       ),
-      throwsArgumentError,
+      throwsStateError,
     );
     expect((await storage.getCard(Int64(1)))!.toProto(), before);
     expect((await storage.getCard(Int64(20)))!.queue, CardQueue.review);
@@ -2124,7 +2169,6 @@ INSERT INTO cards VALUES
         usn: 8,
 
         desiredRetention: null,
-        reviewDueDay: 41,
         loadBalancerContext: loadBalancerContext,
         homeDeckConfigId: cachedPreset,
         now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
@@ -2155,7 +2199,6 @@ INSERT INTO cards VALUES
       usn: 8,
 
       desiredRetention: null,
-      reviewDueDay: 41,
       loadBalancerContext: loadBalancerContext,
       homeDeckConfigId: cachedPreset,
       now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),

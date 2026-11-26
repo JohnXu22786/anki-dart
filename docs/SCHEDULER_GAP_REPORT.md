@@ -1040,6 +1040,21 @@ composed single-card operation; deck stats, sibling bury, queue updates, config
 resolution, due/timing resolution, and app/Reviewer UI integration remain
 open.
 
+### Unit 149 — update deck statistics during a stored-card answer
+
+The composed `CollectionSqliteStorage.answerCard()` operation now updates
+Core-compatible daily deck statistics in the same undoable transaction as the
+Card, Revlog, and any leech Note/tag changes. It uses the stored Card's
+assigned deck and pre-answer queue, the caller-resolved collection day, and the
+generated answer's capped milliseconds. The assigned deck and each existing
+parent deck receive the queue-specific studied count and wrapped int32
+millisecond delta; a day change resets the stored daily counters first. Deck
+modification time and USN follow the answer operation. A stale Card check
+finishes before any deck statistic write, and undo/redo includes affected deck
+rows. This closes only answer-triggered deck statistics on the composed
+single-card operation; sibling bury, queue updates, config resolution,
+due/timing resolution, and app/Reviewer UI integration remain open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

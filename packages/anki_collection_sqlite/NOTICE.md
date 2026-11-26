@@ -290,3 +290,13 @@ present. Unknown presets and intervals outside the cache are ignored by the
 shared cache method. The collection answer call site, persistence, transaction
 and rollback behavior remain host-owned. This source is pinned in
 `SOURCE.sha256` and validated by `tool/check_package.py`.
+
+The composed `CollectionSqliteStorage.answerCard()` deck-stat update adapts
+`Deck::reset_stats_if_day_changed()` and
+`Collection::update_deck_stats()` from Anki Core
+`rslib/src/decks/stats.rs`, plus the answer's queue and capped duration from
+`rslib/src/scheduler/answering/mod.rs`, pinned to
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The Dart implementation keeps
+those writes in the existing atomic Card+Revlog answer operation. Both source
+hashes are recorded in `SOURCE.sha256` and validated by
+`tool/check_package.py`.

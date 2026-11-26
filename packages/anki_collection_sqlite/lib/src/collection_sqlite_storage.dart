@@ -57,6 +57,24 @@ final _externalCollectionMutationZoneKey = Object();
 // Carries answerCard's snapshot through existing apply helpers to the
 // transaction's prepare check without changing their public signatures.
 final _answerCardExpectedSnapshotZoneKey = Object();
+final _answerDeckStatsInputZoneKey = Object();
+
+final class _AnswerDeckStatsInput {
+  const _AnswerDeckStatsInput({
+    required this.daysElapsed,
+    required this.millisecondsTaken,
+    required this.usn,
+  });
+
+  final int daysElapsed;
+  final int millisecondsTaken;
+  final int usn;
+}
+
+int _wrapInt32(int value) {
+  final wrapped = value & 0xffffffff;
+  return wrapped >= 0x80000000 ? wrapped - 0x100000000 : wrapped;
+}
 
 /// Today's new/review queue counts and extension increments for custom study.
 final class CollectionCustomStudyLimitDefaults {
@@ -5011,6 +5029,7 @@ WHERE queue IN (-2, -3)
     }
     Note? noteWithLeechTag;
     var registerLeechTag = false;
+    List<Deck>? decksAfterAnswer;
     await runUndoableCollectionOperation(
       operation: CollectionUndoOperation.answerCard,
       prepare: () async {
@@ -5022,6 +5041,15 @@ WHERE queue IN (-2, -3)
         if (expectedCard is Card &&
             !_sameCardSnapshot(existingCard, expectedCard)) {
           throw StateError('card changed while preparing answer: ${card.id}');
+        }
+        final statsInput = Zone.current[_answerDeckStatsInputZoneKey];
+        if (expectedCard is Card && statsInput is _AnswerDeckStatsInput) {
+          decksAfterAnswer = _decksAfterAnswer(
+            card: expectedCard,
+            daysElapsed: statsInput.daysElapsed,
+            millisecondsTaken: statsInput.millisecondsTaken,
+            usn: statsInput.usn,
+          );
         }
         if (leechTagNoteId case final noteId?) {
           if (existingCard.noteId != noteId) {
@@ -5081,6 +5109,11 @@ WHERE queue IN (-2, -3)
             () => _tagStorage.registerTag(
               Tag(name: 'leech', usn: leechTagUsn!, expanded: false),
             ),
+          );
+        }
+        for (final deck in decksAfterAnswer ?? const <Deck>[]) {
+          await _withExternalCollectionMutation(
+            () => _deckStorage.updateDeck(deck),
           );
         }
       },
@@ -5318,7 +5351,8 @@ WHERE queue IN (-2, -3)
   /// All timing and scheduling values that are not already stored on the Card
   /// are caller-resolved inputs. [capAnswerTimeToSecs] comes from the card's
   /// home/original deck config; [suspendLeechedCards] is the caller-resolved
-  /// leech action for that config. This method does not resolve deck config.
+  /// leech action for that config; [daysElapsed] is the caller-resolved
+  /// collection day. This method does not resolve deck config.
   /// The generated answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5338,6 +5372,7 @@ WHERE queue IN (-2, -3)
     DateTime? now,
     required int usn,
     required int secsUntilDayRollover,
+    required int daysElapsed,
     required double? desiredRetention,
     CardQueue? learningQueue,
     int? learningDue,
@@ -5346,6 +5381,7 @@ WHERE queue IN (-2, -3)
     CollectionLoadBalancerContext? loadBalancerContext,
     DeckConfigId? homeDeckConfigId,
   }) async {
+    _requiredUnsigned(daysElapsed, 32, 'daysElapsed');
     if (capAnswerTimeToSecs < 0 || capAnswerTimeToSecs > 0xffffffff) {
       throw ArgumentError.value(
         capAnswerTimeToSecs,
@@ -5526,9 +5562,70 @@ WHERE queue IN (-2, -3)
         loadBalancerContext: loadBalancerContext,
         homeDeckConfigId: homeDeckConfigId,
       ),
-      zoneValues: {_answerCardExpectedSnapshotZoneKey: card},
+      zoneValues: {
+        _answerCardExpectedSnapshotZoneKey: card,
+        _answerDeckStatsInputZoneKey: _AnswerDeckStatsInput(
+          daysElapsed: daysElapsed,
+          millisecondsTaken: cappedAnswer.millisecondsTaken,
+          usn: usn,
+        ),
+      },
     );
     return appliedCard;
+  }
+
+  List<Deck> _decksAfterAnswer({
+    required Card card,
+    required int daysElapsed,
+    required int millisecondsTaken,
+    required int usn,
+  }) {
+    final assignedDeck = _deckStorage.getDeck(card.deckId);
+    if (assignedDeck == null) return const [];
+    final decks = <Deck>[assignedDeck];
+    final names = assignedDeck.name.split('::');
+    for (var depth = 1; depth < names.length; depth++) {
+      final parent = _deckStorage.getDeckByName(
+        names.take(depth).join('\u001f'),
+      );
+      if (parent != null) decks.add(parent);
+    }
+
+    final queue = card.queue;
+    final newDelta = queue == CardQueue.newCard ? 1 : 0;
+    final reviewDelta = queue == CardQueue.review || queue == CardQueue.dayLearn
+        ? 1
+        : 0;
+    final nowSecs =
+        (_nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch) ~/ 1000;
+    return [
+      for (final deck in decks)
+        () {
+          final common = deck.common.deepCopy();
+          if (common.lastDayStudied != daysElapsed) {
+            common
+              ..lastDayStudied = daysElapsed
+              ..newStudied = 0
+              ..learningStudied = 0
+              ..reviewStudied = 0
+              ..millisecondsStudied = 0;
+          }
+          common
+            ..newStudied = _wrapInt32(common.newStudied + newDelta)
+            ..reviewStudied = _wrapInt32(common.reviewStudied + reviewDelta)
+            ..millisecondsStudied = _wrapInt32(
+              common.millisecondsStudied + millisecondsTaken,
+            );
+          return Deck(
+            id: deck.id,
+            name: deck.name,
+            mtimeSecs: Int64(nowSecs),
+            usn: usn,
+            common: common,
+            kind: deck.kind,
+          );
+        }(),
+    ];
   }
 
   Card _applyNormalCardAnswerState({

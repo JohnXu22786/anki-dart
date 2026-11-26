@@ -9,6 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASHES = {
+    "rslib/src/decks/stats.rs": "928120714eab04cb0f5b0de271e2054b9873d32678d482336fbee31485a61477",
     "rslib/src/import_export/package/apkg/export.rs": "aaf20e1c5a1ad69b6635bd6ce8fbbfed4a4cd68791e1f60e9a994a54a1416536",
     "rslib/src/import_export/gather.rs": "3dcc158bd61263d47e7668cd44e3a7fe28f55f9b6b9249d9fdc67fe039cbc7c7",
     "rslib/src/import_export/package/media.rs": "29f28c10b3f291d45e3f439749a98a85e938a94bf3b9ac90f8bf44b1178b80cd",

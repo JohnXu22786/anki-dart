@@ -179,10 +179,13 @@ application/UI call-site integration remain open.
 
 `cardAnswerRequestForCard()` combines that stored-card state dispatch with
 `anki_backend_models.cardAnswerFromSchedulingStates()`. It accepts the chosen
-rating, signed 64-bit answer timestamp, elapsed-answer milliseconds, and the
+rating, the Card snapshot's `customData`, signed 64-bit answer timestamp,
+elapsed-answer milliseconds, and the
 same context and timing inputs as `schedulingStatesProtoForCard()`. The selected
-rating outcome and caller values flow into the generated `CardAnswer` request,
-retaining normal, rescheduling-filtered, and filtered-Preview wrappers. The
+rating outcome and caller values flow into the generated `CardAnswer` request.
+The Card value is copied into `new_state.custom_data` because `GetQueuedCards`
+does not populate it; the current-state projection remains unchanged. The
+request retains normal, rescheduling-filtered, and filtered-Preview wrappers.
 method is read-only: answer application, revlog persistence, cache changes,
 transactions/undo, and application/UI call-site wiring remain open.
 

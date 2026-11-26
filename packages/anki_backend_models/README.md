@@ -66,8 +66,12 @@ state; it does not read collection data or resolve filtered-deck due values.
 
 `cardAnswerFromSchedulingStates()` builds the generated `CardAnswer` protocol
 request from an existing generated `SchedulingStates` snapshot and a selected
-rating. It selects the matching outcome, preserves the signed 64-bit answer
-timestamp and card ID, validates the unsigned 32-bit elapsed time, and copies
+rating. The caller supplies the card's `customData` snapshot; the builder copies
+it into the selected new state while leaving the current-state projection
+unchanged. This is required because `GetQueuedCards` does not populate
+`SchedulingState.custom_data`. It selects the matching outcome, preserves the
+signed 64-bit answer timestamp and card ID, validates the unsigned 32-bit
+elapsed time, and copies
 the current and selected state messages so they do not alias the input. It
 constructs a request only; applying the answer, updating revlogs or collection
 state, and transaction/undo behavior remain caller-owned.

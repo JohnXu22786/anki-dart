@@ -4931,15 +4931,18 @@ WHERE queue IN (-2, -3)
   ///
   /// The stored card's assigned deck mode selects normal, rescheduling-filtered,
   /// or filtered-Preview scheduling states through
-  /// [schedulingStatesProtoForCard]. [rating], [answeredAtMillis], and
+  /// [schedulingStatesProtoForCard]. [rating], [customData], [answeredAtMillis], and
   /// [millisecondsTaken] are then passed unchanged to
-  /// [cardAnswerFromSchedulingStates]. Review timing and context, load-balancer
+  /// [cardAnswerFromSchedulingStates]. [customData] comes from the Card
+  /// snapshot held by the caller because the scheduler does not populate it.
+  /// Review timing and context, load-balancer
   /// settings, fuzz seed, and caller-resolved Learn/Relearn timing are forwarded
   /// to the state dispatcher. This method does not mutate the card, revlog,
   /// cache, or collection state.
   Future<protoScheduler.CardAnswer> cardAnswerRequestForCard({
     required CardId cardId,
     required protoScheduler.CardAnswer_Rating rating,
+    required String customData,
     required Int64 answeredAtMillis,
     required int millisecondsTaken,
     required ReviewSchedulingContext baseContext,
@@ -4962,6 +4965,7 @@ WHERE queue IN (-2, -3)
       cardId: cardId,
       states: states,
       rating: rating,
+      customData: customData,
       answeredAtMillis: answeredAtMillis,
       millisecondsTaken: millisecondsTaken,
     );

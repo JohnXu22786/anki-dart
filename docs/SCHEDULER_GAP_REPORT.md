@@ -807,6 +807,20 @@ clock or collection, apply or persist the answer, mutate caches, or write undo
 state. This closes only pure revlog derivation from a supplied CardAnswer;
 answer application, call-site orchestration, and Reviewer UI remain open.
 
+### Unit 134 — preserve Card custom data in CardAnswer requests
+
+`cardAnswerFromSchedulingStates()` and
+`CollectionSqliteStorage.cardAnswerRequestForCard()` accept the caller's
+`Card.customData` snapshot and copy it into the selected generated
+`CardAnswer.newState.customData`, including an empty string. The current state
+remains the unchanged scheduling-state projection because `GetQueuedCards`
+does not populate `SchedulingState.custom_data`; the request caller must provide
+the Card value to prevent existing custom data from being cleared on answer.
+Normal, rescheduling-filtered, and filtered-Preview request construction all
+preserve this value without mutating the input states. This closes only Card
+custom-data propagation into generated CardAnswer requests; applying the answer,
+persisting Card or revlog rows, and Reviewer UI behavior remain separate work.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

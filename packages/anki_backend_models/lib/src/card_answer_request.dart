@@ -9,11 +9,13 @@ import 'ids.dart';
 ///
 /// This only constructs the request; it does not apply the answer or persist
 /// any scheduling changes. State messages are copied so the request and the
-/// caller's state snapshot can be mutated independently.
+/// caller's state snapshot can be mutated independently. [customData] comes
+/// from the caller's Card snapshot because the scheduler does not populate it.
 proto.CardAnswer cardAnswerFromSchedulingStates({
   required CardId cardId,
   required proto.SchedulingStates states,
   required proto.CardAnswer_Rating rating,
+  required String customData,
   required Int64 answeredAtMillis,
   required int millisecondsTaken,
 }) {
@@ -57,7 +59,7 @@ proto.CardAnswer cardAnswerFromSchedulingStates({
   return proto.CardAnswer(
     cardId: cardId,
     currentState: states.current.deepCopy(),
-    newState: selectedState.deepCopy(),
+    newState: selectedState.deepCopy()..customData = customData,
     rating: rating,
     answeredAtMillis: answeredAtMillis,
     millisecondsTaken: millisecondsTaken,

@@ -1169,3 +1169,14 @@ app call-site wiring, and Reviewer UI remain open.
 These remain in the Core/backend or host adapter until their own shared Dart
 units are implemented. This ledger describes the pure transition slice; it does
 not claim scheduler execution or full review-session migration.
+
+### Unit 152 — answer timing snapshot
+
+`CollectionSqliteStorage.answerTimingForNow()` resolves
+`timingTodayForNow()` once and returns that snapshot's `daysElapsed`, `now`,
+and `nextDayAt`, plus `secsUntilDayRollover` derived from the same timestamps.
+It rejects a negative or non-uint32 duration instead of silently wrapping the
+answer input. This closes only shared-snapshot resolution for the
+`daysElapsed` and `secsUntilDayRollover` inputs to `answerCard()`. Answer
+timestamp, Review due, Learning/Relearning due, scheduler elapsed/fuzz inputs,
+scheduling context, caller integration, and UI remain open.

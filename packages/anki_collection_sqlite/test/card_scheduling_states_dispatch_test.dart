@@ -363,6 +363,136 @@ INSERT INTO col VALUES (1700000000, '{}');
     },
   );
 
+  test(
+    'answerCard caps normal elapsed time before revlog persistence',
+    () async {
+      const context = ReviewSchedulingContext(fuzzFactor: 0);
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+      final cases = [
+        (millisecondsTaken: 900, capSecs: 1, expectedMillis: 900),
+        (millisecondsTaken: 1000, capSecs: 1, expectedMillis: 1000),
+        (millisecondsTaken: 2500, capSecs: 1, expectedMillis: 1000),
+        (millisecondsTaken: 2500, capSecs: 0, expectedMillis: 0),
+        (millisecondsTaken: 100, capSecs: 0xffffffff, expectedMillis: 100),
+      ];
+
+      for (final (index, testCase) in cases.indexed) {
+        await storage.executeBatch(
+          'UPDATE cards SET type = 0, queue = 0, did = 7, odid = 0 WHERE id = 1',
+        );
+        final answerId = Int64(1712345678000 + index);
+        await storage.answerCard(
+          cardId: Int64(1),
+          rating: protoScheduler.CardAnswer_Rating.GOOD,
+          answeredAtMillis: answerId,
+          millisecondsTaken: testCase.millisecondsTaken,
+          capAnswerTimeToSecs: testCase.capSecs,
+          baseContext: context,
+          loadBalancerEnabled: false,
+          fuzzSeed: null,
+          usn: 8,
+          secsUntilDayRollover: 1800,
+          desiredRetention: null,
+          learningQueue: CardQueue.learn,
+          learningDue: 1712346000,
+          reviewDueDay: 41,
+        );
+        expect(
+          storage.revlog.getRevlogEntry(RevlogId(answerId))!.takenMillis,
+          testCase.expectedMillis,
+        );
+      }
+    },
+  );
+
+  test('answerCard caps Preview and rescheduling elapsed time', () async {
+    const context = ReviewSchedulingContext(fuzzFactor: 0);
+    final previewAnswerId = Int64(1712345679000);
+    storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck());
+    await storage.executeBatch(
+      'UPDATE cards SET type = 0, queue = 0, did = 7, odid = 40 WHERE id = 1',
+    );
+    await storage.answerCard(
+      cardId: Int64(1),
+      rating: protoScheduler.CardAnswer_Rating.AGAIN,
+      answeredAtMillis: previewAnswerId,
+      millisecondsTaken: 2500,
+      capAnswerTimeToSecs: 1,
+      baseContext: context,
+      loadBalancerEnabled: false,
+      fuzzSeed: null,
+      usn: 8,
+      secsUntilDayRollover: 1800,
+      desiredRetention: null,
+      dueTimestampSecs: 1712346000,
+    );
+    expect(
+      storage.revlog.getRevlogEntry(RevlogId(previewAnswerId))!.takenMillis,
+      1000,
+    );
+
+    final reschedulingAnswerId = Int64(1712345680000);
+    storage.decks.addOrUpdateDeckWithExistingId(
+      _filteredDeck(reschedule: true),
+    );
+    await storage.executeBatch(
+      'UPDATE cards SET type = 1, queue = 1, did = 7, odid = 40 WHERE id = 1',
+    );
+    await storage.answerCard(
+      cardId: Int64(1),
+      rating: protoScheduler.CardAnswer_Rating.GOOD,
+      answeredAtMillis: reschedulingAnswerId,
+      millisecondsTaken: 2500,
+      capAnswerTimeToSecs: 1,
+      baseContext: context,
+      scheduledSecs: 90,
+      elapsedSecs: 12,
+      loadBalancerEnabled: false,
+      fuzzSeed: null,
+      usn: 8,
+      secsUntilDayRollover: 1800,
+      desiredRetention: 0.91,
+      learningQueue: CardQueue.learn,
+      learningDue: 1712346000,
+    );
+    expect(
+      storage.revlog
+          .getRevlogEntry(RevlogId(reschedulingAnswerId))!
+          .takenMillis,
+      1000,
+    );
+  });
+
+  test(
+    'answerCard rejects caps that cannot be represented in milliseconds',
+    () async {
+      const context = ReviewSchedulingContext(fuzzFactor: 0);
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+      for (final capSecs in [-1, 0x100000000]) {
+        await expectLater(
+          storage.answerCard(
+            cardId: Int64(1),
+            rating: protoScheduler.CardAnswer_Rating.GOOD,
+            answeredAtMillis: Int64(1712345681000 + capSecs),
+            millisecondsTaken: 100,
+            capAnswerTimeToSecs: capSecs,
+            baseContext: context,
+            loadBalancerEnabled: false,
+            fuzzSeed: null,
+            usn: 8,
+            secsUntilDayRollover: 1800,
+            desiredRetention: null,
+          ),
+          throwsArgumentError,
+        );
+      }
+      expect(
+        storage.revlog.getRevlogEntry(RevlogId(Int64(1712345680999))),
+        isNull,
+      );
+    },
+  );
+
   test('answers and records one normal stored card for every rating', () async {
     const context = ReviewSchedulingContext(fuzzFactor: 0);
     storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
@@ -383,6 +513,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       );
       final answerTime = Int64(1712345678000 + index);
       final applied = await storage.answerCard(
+        capAnswerTimeToSecs: 120,
         cardId: Int64(1),
         rating: rating,
         answeredAtMillis: answerTime,
@@ -431,6 +562,7 @@ INSERT INTO col VALUES (1700000000, '{}');
 
     const normalAnswerTime = 1712345680123;
     final normal = await storage.answerCard(
+      capAnswerTimeToSecs: 120,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       answeredAtMillis: Int64(normalAnswerTime),
@@ -471,6 +603,7 @@ INSERT INTO col VALUES (1700000000, '{}');
     );
     const rescheduleAnswerTime = 1712345681123;
     final rescheduled = await storage.answerCard(
+      capAnswerTimeToSecs: 120,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       answeredAtMillis: Int64(rescheduleAnswerTime),
@@ -499,6 +632,7 @@ INSERT INTO col VALUES (1700000000, '{}');
     storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck());
     const previewAnswerTime = 1712345682123;
     final preview = await storage.answerCard(
+      capAnswerTimeToSecs: 120,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.AGAIN,
       answeredAtMillis: Int64(previewAnswerTime),
@@ -528,6 +662,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       const context = ReviewSchedulingContext(fuzzFactor: 0);
       storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
       final pendingAnswer = storage.answerCard(
+        capAnswerTimeToSecs: 120,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(1712345679000),
@@ -571,6 +706,7 @@ INSERT INTO col VALUES (1700000000, '{}');
     await operationEntered.future;
 
     final pendingAnswer = storage.answerCard(
+      capAnswerTimeToSecs: 120,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       answeredAtMillis: Int64(1712345679001),
@@ -612,6 +748,7 @@ INSERT INTO col VALUES (1700000000, '{}');
         _filteredDeck(reschedule: false),
       );
       final preview = await storage.answerCard(
+        capAnswerTimeToSecs: 120,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.AGAIN,
         answeredAtMillis: Int64(1712345680000),
@@ -636,6 +773,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       );
       await expectLater(
         storage.answerCard(
+          capAnswerTimeToSecs: 120,
           cardId: Int64(1),
           rating: protoScheduler.CardAnswer_Rating.GOOD,
           answeredAtMillis: Int64(1712345680001),
@@ -658,6 +796,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       final before = (await storage.getCard(Int64(1)))!.toProto();
       await expectLater(
         storage.answerCard(
+          capAnswerTimeToSecs: 120,
           cardId: Int64(1),
           rating: protoScheduler.CardAnswer_Rating.GOOD,
           answeredAtMillis: Int64(1712345680002),
@@ -676,6 +815,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       expect((await storage.getCard(Int64(1)))!.toProto(), before);
 
       final rescheduling = await storage.answerCard(
+        capAnswerTimeToSecs: 120,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(1712345680003),
@@ -702,6 +842,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       await storage.executeBatch('UPDATE cards SET type = 99 WHERE id = 1');
       await expectLater(
         storage.answerCard(
+          capAnswerTimeToSecs: 120,
           cardId: Int64(1),
           rating: protoScheduler.CardAnswer_Rating.GOOD,
           answeredAtMillis: Int64(1712345680004),
@@ -749,6 +890,7 @@ INSERT INTO col VALUES (1700000000, '{}');
 
     await expectLater(
       storage.answerCard(
+        capAnswerTimeToSecs: 120,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(answerTime - 1),
@@ -767,6 +909,7 @@ INSERT INTO col VALUES (1700000000, '{}');
 
     await expectLater(
       storage.answerCard(
+        capAnswerTimeToSecs: 120,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(answerTime),
@@ -790,6 +933,7 @@ INSERT INTO col VALUES (1700000000, '{}');
     expect(cache.daysByPreset[cachedPreset]![41].cardCount, 0);
     await storage.executeBatch('DELETE FROM revlog WHERE id = $answerTime');
     final applied = await storage.answerCard(
+      capAnswerTimeToSecs: 120,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       answeredAtMillis: Int64(answerTime + 1),

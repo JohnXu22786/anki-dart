@@ -5252,16 +5252,18 @@ WHERE queue IN (-2, -3)
   /// the requested rating, then applying and recording that answer atomically.
   ///
   /// All timing and scheduling values that are not already stored on the Card
-  /// are caller-resolved inputs. Normal, filtered Preview, and rescheduling
-  /// filtered answers are routed by their generated state wrappers to the
-  /// matching apply-and-record operation. The stored Card's custom data is
-  /// copied into the generated answer. The updated Card is returned only
-  /// after its Card and Revlog rows commit successfully.
+  /// are caller-resolved inputs. [capAnswerTimeToSecs] comes from the card's
+  /// home/original deck config; this method does not resolve deck config. The
+  /// generated answer is capped before the matching apply-and-record operation
+  /// derives its Card and Revlog results. The stored Card's custom data is
+  /// copied into the generated answer. The updated Card is returned only after
+  /// its Card and Revlog rows commit successfully.
   Future<Card> answerCard({
     required CardId cardId,
     required protoScheduler.CardAnswer_Rating rating,
     required Int64 answeredAtMillis,
     required int millisecondsTaken,
+    required int capAnswerTimeToSecs,
     required ReviewSchedulingContext baseContext,
     int? scheduledSecs,
     int? elapsedSecs,
@@ -5278,6 +5280,16 @@ WHERE queue IN (-2, -3)
     CollectionLoadBalancerContext? loadBalancerContext,
     DeckConfigId? homeDeckConfigId,
   }) async {
+    if (capAnswerTimeToSecs < 0 || capAnswerTimeToSecs > 0xffffffff) {
+      throw ArgumentError.value(
+        capAnswerTimeToSecs,
+        'capAnswerTimeToSecs',
+        'expected a uint32',
+      );
+    }
+    // The caller supplies Core's uint32 seconds value. This product fits in
+    // signed 64-bit arithmetic, while CardAnswer.millisecondsTaken is uint32.
+    final capAnswerTimeToMillis = capAnswerTimeToSecs * 1000;
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
 
@@ -5294,6 +5306,11 @@ WHERE queue IN (-2, -3)
       fuzzSeed: fuzzSeed,
       now: now,
     );
+    final cappedAnswer = answer.deepCopy()
+      ..millisecondsTaken = min(
+        answer.millisecondsTaken,
+        capAnswerTimeToMillis,
+      );
 
     final storedCardAfterDispatch = await getCard(cardId);
     if (storedCardAfterDispatch == null ||
@@ -5301,15 +5318,19 @@ WHERE queue IN (-2, -3)
       throw StateError('card changed while preparing answer: $cardId');
     }
 
-    if (!answer.hasCurrentState() || !answer.hasNewState()) {
-      throw ArgumentError.value(answer, 'answer', 'both states are required');
+    if (!cappedAnswer.hasCurrentState() || !cappedAnswer.hasNewState()) {
+      throw ArgumentError.value(
+        cappedAnswer,
+        'answer',
+        'both states are required',
+      );
     }
-    final currentKind = answer.currentState.whichKind();
-    final newKind = answer.newState.whichKind();
+    final currentKind = cappedAnswer.currentState.whichKind();
+    final newKind = cappedAnswer.newState.whichKind();
     final cardToApply =
         currentKind == protoScheduler.SchedulingState_Kind.normal ||
             (currentKind == protoScheduler.SchedulingState_Kind.filtered &&
-                answer.currentState.filtered.whichKind() ==
+                cappedAnswer.currentState.filtered.whichKind() ==
                     protoScheduler.SchedulingState_Filtered_Kind.rescheduling)
         ? Card.fromProto(
             card.toProto()
@@ -5319,7 +5340,7 @@ WHERE queue IN (-2, -3)
     if (currentKind == protoScheduler.SchedulingState_Kind.normal) {
       if (newKind != protoScheduler.SchedulingState_Kind.normal) {
         throw ArgumentError.value(
-          answer.newState,
+          cappedAnswer.newState,
           'answer.newState',
           'must match the current Normal state wrapper',
         );
@@ -5327,7 +5348,7 @@ WHERE queue IN (-2, -3)
       return runZoned(
         () => applyAndRecordCardAnswerResult(
           card: cardToApply,
-          answer: answer,
+          answer: cappedAnswer,
           usn: usn,
           secsUntilDayRollover: secsUntilDayRollover,
           desiredRetention: desiredRetention,
@@ -5342,20 +5363,20 @@ WHERE queue IN (-2, -3)
     }
     if (currentKind != protoScheduler.SchedulingState_Kind.filtered) {
       throw ArgumentError.value(
-        answer.currentState,
+        cappedAnswer.currentState,
         'answer.currentState',
         'must contain a Normal or filtered state wrapper',
       );
     }
 
-    final currentFilteredKind = answer.currentState.filtered.whichKind();
+    final currentFilteredKind = cappedAnswer.currentState.filtered.whichKind();
     if (currentFilteredKind ==
         protoScheduler.SchedulingState_Filtered_Kind.preview) {
       if (newKind != protoScheduler.SchedulingState_Kind.filtered ||
-          answer.newState.filtered.whichKind() !=
+          cappedAnswer.newState.filtered.whichKind() !=
               protoScheduler.SchedulingState_Filtered_Kind.preview) {
         throw ArgumentError.value(
-          answer.newState,
+          cappedAnswer.newState,
           'answer.newState',
           'must contain a filtered Preview state matching current state',
         );
@@ -5363,7 +5384,7 @@ WHERE queue IN (-2, -3)
       return runZoned(
         () => applyAndRecordFilteredPreviewCardAnswerResult(
           card: cardToApply,
-          answer: answer,
+          answer: cappedAnswer,
           usn: usn,
           secsUntilDayRollover: secsUntilDayRollover,
           dueTimestampSecs: dueTimestampSecs,
@@ -5377,10 +5398,10 @@ WHERE queue IN (-2, -3)
         protoScheduler.SchedulingState_Filtered_Kind.rescheduling) {
       if (newKind != protoScheduler.SchedulingState_Kind.normal &&
           (newKind != protoScheduler.SchedulingState_Kind.filtered ||
-              answer.newState.filtered.whichKind() !=
+              cappedAnswer.newState.filtered.whichKind() !=
                   protoScheduler.SchedulingState_Filtered_Kind.rescheduling)) {
         throw ArgumentError.value(
-          answer.newState,
+          cappedAnswer.newState,
           'answer.newState',
           'must contain a Normal or filtered rescheduling state',
         );
@@ -5388,7 +5409,7 @@ WHERE queue IN (-2, -3)
       return runZoned(
         () => applyAndRecordReschedulingFilteredCardAnswerResult(
           card: cardToApply,
-          answer: answer,
+          answer: cappedAnswer,
           usn: usn,
           secsUntilDayRollover: secsUntilDayRollover,
           desiredRetention: desiredRetention,
@@ -5402,7 +5423,7 @@ WHERE queue IN (-2, -3)
       );
     }
     throw ArgumentError.value(
-      answer.currentState.filtered,
+      cappedAnswer.currentState.filtered,
       'answer.currentState.filtered',
       'must contain a Preview or rescheduling state',
     );

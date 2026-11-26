@@ -420,6 +420,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       );
       final cardBefore = await storage.getCard(Int64(1));
       await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(1712345678000),
@@ -510,6 +513,9 @@ INSERT INTO col VALUES (1700000000, '{}');
           'UPDATE cards SET type = 0, queue = $queue, did = 7 WHERE id = 1',
         );
         await storage.answerCard(
+          buryNewSiblings: false,
+          buryInterdayLearningSiblings: false,
+          buryReviewSiblings: false,
           cardId: Int64(1),
           rating: protoScheduler.CardAnswer_Rating.GOOD,
           answeredAtMillis: Int64(1712345680000 + index),
@@ -548,6 +554,9 @@ INSERT INTO col VALUES (1700000000, '{}');
         'UPDATE cards SET type = 0, queue = 0, did = 7 WHERE id = 1',
       );
       await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(1712345680100),
@@ -581,6 +590,9 @@ INSERT INTO col VALUES (1700000000, '{}');
         'UPDATE cards SET type = 0, queue = 0, did = 7 WHERE id = 1',
       );
       await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(1712345680101),
@@ -626,6 +638,9 @@ INSERT INTO col VALUES (1700000000, '{}');
         'UPDATE cards SET type = 0, queue = 2, did = 7, odid = 40 WHERE id = 1',
       );
       await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         answeredAtMillis: Int64(1712345680200),
@@ -667,6 +682,9 @@ INSERT INTO col VALUES (1700000000, '{}');
         );
         final answerId = Int64(1712345678000 + index);
         await storage.answerCard(
+          buryNewSiblings: false,
+          buryInterdayLearningSiblings: false,
+          buryReviewSiblings: false,
           cardId: Int64(1),
           rating: protoScheduler.CardAnswer_Rating.GOOD,
           answeredAtMillis: answerId,
@@ -700,6 +718,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       'UPDATE cards SET type = 0, queue = 0, did = 7, odid = 40 WHERE id = 1',
     );
     await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.AGAIN,
       answeredAtMillis: previewAnswerId,
@@ -728,6 +749,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       'UPDATE cards SET type = 1, queue = 1, did = 7, odid = 40 WHERE id = 1',
     );
     await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       answeredAtMillis: reschedulingAnswerId,
@@ -762,6 +786,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       for (final capSecs in [-1, 0x100000000]) {
         await expectLater(
           storage.answerCard(
+            buryNewSiblings: false,
+            buryInterdayLearningSiblings: false,
+            buryReviewSiblings: false,
             cardId: Int64(1),
             rating: protoScheduler.CardAnswer_Rating.GOOD,
             answeredAtMillis: Int64(1712345681000 + capSecs),
@@ -806,6 +833,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       );
       final answerTime = Int64(1712345678000 + index);
       final applied = await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
         daysElapsed: 6,
@@ -845,6 +875,131 @@ INSERT INTO col VALUES (1700000000, '{}');
     expect(storage.revlog.getRevlogEntry(lastRevlog), isNotNull);
   });
 
+  test(
+    'answerCard buries same-note siblings selected by caller flags and original queue',
+    () async {
+      const context = ReviewSchedulingContext(fuzzFactor: 0);
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+      await storage.executeBatch('''
+INSERT INTO cards VALUES
+ (2, 100, 7, 1, 11, 1, 0, 0, 22, 31, 2400, 9, 2, 1, 0, 0, 3, 'new'),
+ (3, 100, 7, 2, 12, 2, 2, 2, 23, 32, 2500, 10, 3, 2, 0, 0, 4, 'review'),
+ (4, 100, 7, 3, 13, 3, 3, 3, 24, 33, 2600, 11, 4, 3, 0, 0, 5, 'daylearn'),
+ (5, 100, 7, 4, 14, 4, 1, 1, 25, 34, 2700, 12, 5, 4, 0, 0, 6, 'learn'),
+ (6, 100, 7, 5, 15, 5, 1, 4, 26, 35, 2800, 13, 6, 5, 0, 0, 7, 'preview'),
+ (7, 100, 7, 6, 16, 6, 0, -1, 27, 36, 2900, 14, 7, 6, 0, 0, 8, 'suspended'),
+ (8, 100, 7, 7, 17, 7, 0, -2, 28, 37, 3000, 15, 8, 7, 0, 0, 9, 'buried'),
+ (9, 100, 7, 8, 18, 8, 0, -3, 29, 38, 3100, 16, 9, 8, 0, 0, 10, 'user-buried'),
+ (10, 101, 7, 9, 19, 9, 0, 0, 30, 39, 3200, 17, 10, 9, 0, 0, 11, 'other-note');
+INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback', 'other', 2, 0, '');
+''');
+      final originalSiblings = <int, Card>{
+        for (var id = 2; id <= 10; id++)
+          id: (await storage.getCard(Int64(id)))!,
+      };
+      final queues = [
+        CardQueue.newCard,
+        CardQueue.learn,
+        CardQueue.review,
+        CardQueue.dayLearn,
+        CardQueue.previewRepeat,
+        CardQueue.suspended,
+        CardQueue.schedBuried,
+        CardQueue.userBuried,
+      ];
+      var answerMillis = 1712345680000;
+      for (final answeredQueue in queues) {
+        for (var mask = 0; mask < 8; mask++) {
+          await storage.executeBatch(
+            'UPDATE cards SET type = 0, queue = ${answeredQueue.value} WHERE id = 1',
+          );
+          final flags = [mask & 1 != 0, mask & 2 != 0, mask & 4 != 0];
+          final buryNew = flags[0];
+          final buryInterdayLearning = flags[1];
+          final buryReviews = flags[2];
+          await storage.answerCard(
+            capAnswerTimeToSecs: 120,
+            suspendLeechedCards: false,
+            buryNewSiblings: buryNew,
+            buryInterdayLearningSiblings: buryInterdayLearning,
+            buryReviewSiblings: buryReviews,
+            daysElapsed: 6,
+            cardId: Int64(1),
+            rating: protoScheduler.CardAnswer_Rating.GOOD,
+            answeredAtMillis: Int64(answerMillis),
+            millisecondsTaken: 300,
+            baseContext: context,
+            loadBalancerEnabled: false,
+            fuzzSeed: null,
+            usn: 19,
+            secsUntilDayRollover: 1800,
+            desiredRetention: null,
+            learningQueue: CardQueue.learn,
+            learningDue: 1712346000,
+            reviewDueDay: 41,
+          );
+          expect(
+            (await storage.getCard(Int64(1)))!.queue,
+            isNot(CardQueue.schedBuried),
+            reason: 'the answered card is never selected as its own sibling',
+          );
+
+          final permitsInterday =
+              answeredQueue == CardQueue.learn ||
+              answeredQueue == CardQueue.previewRepeat ||
+              answeredQueue == CardQueue.dayLearn;
+          final permitsReviews =
+              permitsInterday || answeredQueue == CardQueue.review;
+          final expectedBuried = <int>{
+            if (buryNew) 2,
+            if (buryReviews && permitsReviews) 3,
+            if (buryInterdayLearning && permitsInterday) 4,
+          };
+          for (final entry in originalSiblings.entries) {
+            final id = entry.key;
+            final original = entry.value;
+            final actual = (await storage.getCard(original.id))!;
+            expect(
+              actual.queue,
+              expectedBuried.contains(id)
+                  ? CardQueue.schedBuried
+                  : original.queue,
+              reason: 'answered=$answeredQueue mask=$mask sibling=$id',
+            );
+            if (expectedBuried.contains(id)) {
+              expect(actual.usn, 19);
+              expect(actual.mtimeSecs, Int64(1712345678));
+              final expected = Card.fromProto(
+                original.toProto()
+                  ..queue = CardQueue.schedBuried.value
+                  ..usn = 19
+                  ..mtimeSecs = Int64(1712345678),
+              );
+              expect(
+                actual.toProto(),
+                expected.toProto(),
+                reason: 'bury must preserve every non-queue Card field',
+              );
+            } else {
+              expect(actual.toProto(), original.toProto());
+            }
+          }
+          await storage.undoLastCollectionOperation();
+          for (final entry in originalSiblings.entries) {
+            final id = entry.key;
+            final original = entry.value;
+            expect(
+              (await storage.getCard(original.id))!.toProto(),
+              original.toProto(),
+              reason: 'undo answered=$answeredQueue mask=$mask sibling=$id',
+            );
+          }
+          answerMillis++;
+        }
+      }
+    },
+  );
+
   test('answerCard stores answer time except for filtered Preview', () async {
     const context = ReviewSchedulingContext(fuzzFactor: 0);
     const originalReviewTime = 1699999999;
@@ -857,6 +1012,9 @@ INSERT INTO col VALUES (1700000000, '{}');
 
     const normalAnswerTime = 1712345680123;
     final normal = await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
       daysElapsed: 6,
@@ -900,6 +1058,9 @@ INSERT INTO col VALUES (1700000000, '{}');
     );
     const rescheduleAnswerTime = 1712345681123;
     final rescheduled = await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
       daysElapsed: 6,
@@ -931,6 +1092,9 @@ INSERT INTO col VALUES (1700000000, '{}');
     storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck());
     const previewAnswerTime = 1712345682123;
     final preview = await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
       daysElapsed: 6,
@@ -967,6 +1131,12 @@ INSERT INTO col VALUES (1700000000, '{}');
     await storage.executeBatch(
       'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 7 WHERE id = 1',
     );
+    await storage.executeBatch('''
+INSERT INTO cards VALUES
+ (20, 100, 7, 1, 11, 1, 0, 0, 22, 31, 2400, 9, 2, 1, 0, 0, 3, 'bury-new'),
+ (21, 100, 7, 2, 12, 2, 2, 2, 23, 32, 2500, 10, 3, 2, 0, 0, 4, 'bury-review'),
+ (22, 100, 7, 3, 13, 3, 3, 3, 24, 33, 2600, 11, 4, 3, 0, 0, 5, 'keep-daylearn');
+''');
 
     const suspendedAnswerId = 1712345683123;
     final suspended = await storage.answerCard(
@@ -985,10 +1155,16 @@ INSERT INTO col VALUES (1700000000, '{}');
       learningDue: 1712346000,
       reviewDueDay: 41,
       suspendLeechedCards: true,
+      buryNewSiblings: true,
+      buryInterdayLearningSiblings: true,
+      buryReviewSiblings: true,
       daysElapsed: 6,
     );
     expect(suspended.queue, CardQueue.suspended);
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.suspended);
+    expect((await storage.getCard(Int64(20)))!.queue, CardQueue.schedBuried);
+    expect((await storage.getCard(Int64(21)))!.queue, CardQueue.schedBuried);
+    expect((await storage.getCard(Int64(22)))!.queue, CardQueue.dayLearn);
     expect(
       storage.revlog.getRevlogEntry(RevlogId(Int64(suspendedAnswerId))),
       isNotNull,
@@ -1016,6 +1192,9 @@ INSERT INTO col VALUES (1700000000, '{}');
     );
     await storage.undoLastCollectionOperation();
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.review);
+    expect((await storage.getCard(Int64(20)))!.queue, CardQueue.newCard);
+    expect((await storage.getCard(Int64(21)))!.queue, CardQueue.review);
+    expect((await storage.getCard(Int64(22)))!.queue, CardQueue.dayLearn);
     expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
     expect(
       database.select('SELECT mod, usn FROM notes WHERE id = 100').single,
@@ -1029,6 +1208,9 @@ INSERT INTO col VALUES (1700000000, '{}');
     );
     await storage.redoLastCollectionOperation();
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.suspended);
+    expect((await storage.getCard(Int64(20)))!.queue, CardQueue.schedBuried);
+    expect((await storage.getCard(Int64(21)))!.queue, CardQueue.schedBuried);
+    expect((await storage.getCard(Int64(22)))!.queue, CardQueue.dayLearn);
     expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
     expect(database.select('SELECT tag FROM tags'), [
       {'tag': 'leech'},
@@ -1045,6 +1227,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 7 WHERE id = 1',
     );
     final unsuspended = await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.AGAIN,
       answeredAtMillis: Int64(1712345684123),
@@ -1071,6 +1256,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 0 WHERE id = 1',
     );
     final ordinary = await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.AGAIN,
       answeredAtMillis: Int64(1712345685123),
@@ -1103,6 +1291,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 40, lapses = 7 WHERE id = 1',
     );
     final rescheduledLeech = await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.AGAIN,
       answeredAtMillis: Int64(1712345685623),
@@ -1129,6 +1320,9 @@ INSERT INTO col VALUES (1700000000, '{}');
     );
     storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck());
     final preview = await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.AGAIN,
       answeredAtMillis: Int64(1712345686123),
@@ -1157,6 +1351,9 @@ INSERT INTO col VALUES (1700000000, '{}');
         'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 0 WHERE id = 1',
       );
       await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.AGAIN,
         answeredAtMillis: Int64(1712345687001),
@@ -1182,6 +1379,9 @@ INSERT INTO col VALUES (1700000000, '{}');
         'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 40, lapses = 7 WHERE id = 1',
       );
       await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.AGAIN,
         answeredAtMillis: Int64(1712345687002),
@@ -1222,6 +1422,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       );
 
       await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.AGAIN,
         answeredAtMillis: Int64(1712345687003),
@@ -1266,6 +1469,9 @@ INSERT INTO col VALUES (1700000000, '{}');
         WHERE id = 1;
       """);
       await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.AGAIN,
         answeredAtMillis: Int64(1712345687004),
@@ -1346,9 +1552,15 @@ INSERT INTO col VALUES (1700000000, '{}');
     () async {
       const context = ReviewSchedulingContext(fuzzFactor: 0);
       storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+      await storage.executeBatch(
+        "INSERT INTO cards VALUES (20, 100, 7, 1, 11, 1, 0, 0, 22, 31, 2400, 9, 2, 1, 0, 0, 3, 'stale-answer-sibling')",
+      );
       final pendingAnswer = storage.answerCard(
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
+        buryNewSiblings: true,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         daysElapsed: 6,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
@@ -1369,6 +1581,7 @@ INSERT INTO col VALUES (1700000000, '{}');
         _stateError('card changed while preparing answer'),
       );
       expect((await storage.getCard(Int64(1)))!.due, 18);
+      expect((await storage.getCard(Int64(20)))!.queue, CardQueue.newCard);
       expect(
         storage.revlog.getRevlogEntry(RevlogId(Int64(1712345679000))),
         isNull,
@@ -1404,6 +1617,9 @@ INSERT INTO col VALUES (1700000000, '{}');
     await operationEntered.future;
 
     final pendingAnswer = storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
+      buryReviewSiblings: false,
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
       daysElapsed: 6,
@@ -1446,12 +1662,21 @@ INSERT INTO col VALUES (1700000000, '{}');
         "UPDATE cards SET type = 0, queue = 0, did = 7, odid = 40, "
         "data = '{\"cd\":\"preview data\"}' WHERE id = 1",
       );
+      await storage.executeBatch('''
+INSERT INTO cards VALUES
+ (20, 100, 7, 1, 11, 1, 0, 0, 22, 31, 2400, 9, 2, 1, 0, 0, 3, 'filtered-new-sibling'),
+ (21, 100, 7, 2, 12, 2, 2, 2, 23, 32, 2500, 10, 3, 2, 0, 0, 4, 'filtered-review-sibling'),
+ (22, 100, 7, 3, 13, 3, 3, 3, 24, 33, 2600, 11, 4, 3, 0, 0, 5, 'filtered-daylearn-sibling');
+''');
       storage.decks.addOrUpdateDeckWithExistingId(
         _filteredDeck(reschedule: false),
       );
       final preview = await storage.answerCard(
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
+        buryNewSiblings: true,
+        buryInterdayLearningSiblings: true,
+        buryReviewSiblings: true,
         daysElapsed: 6,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.AGAIN,
@@ -1468,6 +1693,13 @@ INSERT INTO col VALUES (1700000000, '{}');
       expect(preview.queue, CardQueue.previewRepeat);
       expect(preview.due, 1712346000);
       expect(preview.customData, 'preview data');
+      expect((await storage.getCard(Int64(20)))!.queue, CardQueue.schedBuried);
+      expect((await storage.getCard(Int64(21)))!.queue, CardQueue.review);
+      expect((await storage.getCard(Int64(22)))!.queue, CardQueue.dayLearn);
+      await storage.undoLastCollectionOperation();
+      expect((await storage.getCard(Int64(20)))!.queue, CardQueue.newCard);
+      expect((await storage.getCard(Int64(21)))!.queue, CardQueue.review);
+      expect((await storage.getCard(Int64(22)))!.queue, CardQueue.dayLearn);
 
       await storage.executeBatch(
         'UPDATE cards SET type = 1, queue = 1, did = 7, odid = 40 WHERE id = 1',
@@ -1477,6 +1709,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       );
       await expectLater(
         storage.answerCard(
+          buryNewSiblings: false,
+          buryInterdayLearningSiblings: false,
+          buryReviewSiblings: false,
           capAnswerTimeToSecs: 120,
           suspendLeechedCards: false,
           daysElapsed: 6,
@@ -1502,6 +1737,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       final before = (await storage.getCard(Int64(1)))!.toProto();
       await expectLater(
         storage.answerCard(
+          buryNewSiblings: false,
+          buryInterdayLearningSiblings: false,
+          buryReviewSiblings: false,
           capAnswerTimeToSecs: 120,
           suspendLeechedCards: false,
           daysElapsed: 6,
@@ -1523,6 +1761,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       expect((await storage.getCard(Int64(1)))!.toProto(), before);
 
       final rescheduling = await storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
         daysElapsed: 6,
@@ -1552,6 +1793,9 @@ INSERT INTO col VALUES (1700000000, '{}');
       await storage.executeBatch('UPDATE cards SET type = 99 WHERE id = 1');
       await expectLater(
         storage.answerCard(
+          buryNewSiblings: false,
+          buryInterdayLearningSiblings: false,
+          buryReviewSiblings: false,
           capAnswerTimeToSecs: 120,
           suspendLeechedCards: false,
           daysElapsed: 6,
@@ -1576,6 +1820,9 @@ INSERT INTO col VALUES (1700000000, '{}');
     storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
     await storage.executeBatch(
       "UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, data = '{}' WHERE id = 1",
+    );
+    await storage.executeBatch(
+      "INSERT INTO cards VALUES (20, 100, 7, 1, 11, 1, 2, 2, 22, 31, 2400, 9, 2, 1, 0, 0, 3, 'answer-sibling')",
     );
     final cachedPreset = Int64(10);
     final cache = LoadBalancerCache.fromHistory(
@@ -1602,8 +1849,11 @@ INSERT INTO col VALUES (1700000000, '{}');
 
     await expectLater(
       storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
+        buryReviewSiblings: true,
         daysElapsed: 6,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
@@ -1619,12 +1869,16 @@ INSERT INTO col VALUES (1700000000, '{}');
       throwsArgumentError,
     );
     expect((await storage.getCard(Int64(1)))!.toProto(), before);
+    expect((await storage.getCard(Int64(20)))!.queue, CardQueue.review);
     expect(storage.collectionUndoGeneration, beforeUndo);
 
     await expectLater(
       storage.answerCard(
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
+        buryReviewSiblings: true,
         daysElapsed: 6,
         cardId: Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
@@ -1644,13 +1898,17 @@ INSERT INTO col VALUES (1700000000, '{}');
       throwsStateError,
     );
     expect((await storage.getCard(Int64(1)))!.toProto(), before);
+    expect((await storage.getCard(Int64(20)))!.queue, CardQueue.review);
     expect(storage.collectionUndoGeneration, beforeUndo);
     expect(cache.daysByPreset[cachedPreset]![0].cardCount, 1);
     expect(cache.daysByPreset[cachedPreset]![41].cardCount, 0);
     await storage.executeBatch('DELETE FROM revlog WHERE id = $answerTime');
     final applied = await storage.answerCard(
+      buryNewSiblings: false,
+      buryInterdayLearningSiblings: false,
       capAnswerTimeToSecs: 120,
       suspendLeechedCards: false,
+      buryReviewSiblings: true,
       daysElapsed: 6,
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
@@ -1667,6 +1925,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       homeDeckConfigId: cachedPreset,
       now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
     );
+    expect((await storage.getCard(Int64(20)))!.queue, CardQueue.schedBuried);
     expect(cache.daysByPreset[cachedPreset]![applied.interval].cardCount, 1);
   });
 

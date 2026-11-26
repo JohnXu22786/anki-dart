@@ -903,7 +903,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         usn: 8,
 
         desiredRetention: null,
-        dueTimestampSecs: 1712346000,
       );
       expect(storage.decks.getDeck(Int64(7))!.common.reviewStudied, 1);
       expect(storage.decks.getDeck(Int64(7))!.common.millisecondsStudied, 250);
@@ -988,7 +987,6 @@ INSERT INTO col VALUES (1700000000, '{}');
       usn: 8,
 
       desiredRetention: null,
-      dueTimestampSecs: 1712346000,
     );
     expect(
       storage.revlog.getRevlogEntry(RevlogId(previewAnswerId))!.takenMillis,
@@ -1366,6 +1364,7 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
         daysElapsed: 6,
         secsUntilDayRollover: 1800,
         answeredAtMillis: Int64(previewAnswerTime).toInt(),
+        now: previewAnswerTime ~/ 1000,
       ),
 
       cardId: Int64(1),
@@ -1377,8 +1376,9 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       usn: 8,
 
       desiredRetention: null,
-      dueTimestampSecs: 1712346000,
     );
+    expect(preview.queue, CardQueue.previewRepeat);
+    expect(preview.due, 1712345682 + 45);
     expect(preview.lastReviewTimeSecs, Int64(rescheduleAnswerTime ~/ 1000));
     expect(
       (await storage.getCard(Int64(1)))!.lastReviewTimeSecs,
@@ -1609,7 +1609,6 @@ INSERT INTO cards VALUES
       ),
 
       desiredRetention: null,
-      dueTimestampSecs: 1712346000,
       suspendLeechedCards: true,
     );
     expect(preview.queue, CardQueue.previewRepeat);
@@ -1674,7 +1673,6 @@ INSERT INTO cards VALUES
         usn: 8,
 
         desiredRetention: null,
-        dueTimestampSecs: 1712346000,
       );
       expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
       expect(database.select('SELECT * FROM tags'), isEmpty);
@@ -1943,7 +1941,7 @@ INSERT INTO cards VALUES
   });
 
   test(
-    'routes Preview and rescheduling answers and validates caller due data',
+    'routes Preview due from generated state and millisecond timing snapshot',
     () async {
       const context = ReviewSchedulingContext(fuzzFactor: 0);
       await storage.executeBatch(
@@ -1959,6 +1957,30 @@ INSERT INTO cards VALUES
       storage.decks.addOrUpdateDeckWithExistingId(
         _filteredDeck(reschedule: false),
       );
+      final finishedPreview = await storage.answerCard(
+        capAnswerTimeToSecs: 120,
+        suspendLeechedCards: false,
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
+        answerTiming: _answerTiming(
+          daysElapsed: 6,
+          secsUntilDayRollover: 1800,
+          answeredAtMillis: 1712345679999,
+        ),
+        cardId: Int64(1),
+        rating: protoScheduler.CardAnswer_Rating.EASY,
+        millisecondsTaken: 300,
+        baseContext: context,
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+        usn: 8,
+        desiredRetention: null,
+      );
+      expect(finishedPreview.queue, CardQueue.newCard);
+      expect(finishedPreview.due, 17);
+      await storage.undoLastCollectionOperation();
+
       final preview = await storage.answerCard(
         capAnswerTimeToSecs: 120,
         suspendLeechedCards: false,
@@ -1969,6 +1991,7 @@ INSERT INTO cards VALUES
           daysElapsed: 6,
           secsUntilDayRollover: 1800,
           answeredAtMillis: Int64(1712345680000).toInt(),
+          now: 1712345680,
         ),
 
         cardId: Int64(1),
@@ -1976,18 +1999,30 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
+        fuzzSeed: BigInt.from(13),
         usn: 8,
 
         desiredRetention: null,
-        dueTimestampSecs: 1712346000,
       );
       expect(preview.queue, CardQueue.previewRepeat);
-      expect(preview.due, 1712346000);
+      expect(
+        preview.due,
+        resolveLearningAnswerDueTimestamp(
+          fuzzedLearningSecs: fuzzLearningIntervalSecs(45, BigInt.from(13)),
+          answerTiming: CollectionAnswerTiming(
+            now: 1712345680,
+            answeredAtMillis: 1712345680000,
+            daysElapsed: 6,
+            nextDayAt: 1800,
+            secsUntilDayRollover: 1800,
+          ),
+        ),
+      );
       expect(preview.customData, 'preview data');
       expect((await storage.getCard(Int64(20)))!.queue, CardQueue.schedBuried);
       expect((await storage.getCard(Int64(21)))!.queue, CardQueue.review);
       expect((await storage.getCard(Int64(22)))!.queue, CardQueue.dayLearn);
+
       await storage.undoLastCollectionOperation();
       expect((await storage.getCard(Int64(20)))!.queue, CardQueue.newCard);
       expect((await storage.getCard(Int64(21)))!.queue, CardQueue.review);
@@ -2484,8 +2519,9 @@ CollectionAnswerTiming _answerTiming({
   required int daysElapsed,
   required int secsUntilDayRollover,
   int? answeredAtMillis,
+  int now = 0,
 }) => CollectionAnswerTiming(
-  now: 0,
+  now: now,
   answeredAtMillis: answeredAtMillis,
   daysElapsed: daysElapsed,
   nextDayAt: secsUntilDayRollover,

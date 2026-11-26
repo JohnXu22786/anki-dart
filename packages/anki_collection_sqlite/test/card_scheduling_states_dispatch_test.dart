@@ -1016,7 +1016,6 @@ INSERT INTO col VALUES (1700000000, '{}');
       ),
 
       baseContext: context,
-      scheduledSecs: 90,
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
@@ -1334,7 +1333,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       rating: protoScheduler.CardAnswer_Rating.GOOD,
       millisecondsTaken: 300,
       baseContext: context,
-      scheduledSecs: 90,
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
@@ -2032,37 +2030,6 @@ INSERT INTO cards VALUES
       storage.decks.addOrUpdateDeckWithExistingId(
         _filteredDeck(reschedule: true),
       );
-      await expectLater(
-        storage.answerCard(
-          buryNewSiblings: false,
-          buryInterdayLearningSiblings: false,
-          buryReviewSiblings: false,
-          capAnswerTimeToSecs: 120,
-          suspendLeechedCards: false,
-          answerTiming: _answerTiming(
-            daysElapsed: 6,
-            secsUntilDayRollover: 1800,
-            answeredAtMillis: Int64(1712345680001).toInt(),
-          ),
-
-          cardId: Int64(1),
-          rating: protoScheduler.CardAnswer_Rating.GOOD,
-          millisecondsTaken: 300,
-          baseContext: context,
-          loadBalancerEnabled: false,
-          fuzzSeed: null,
-          usn: 8,
-
-          desiredRetention: 0.91,
-        ),
-        throwsA(
-          isA<StateError>().having(
-            (error) => error.message,
-            'message',
-            contains('required for Learn cards'),
-          ),
-        ),
-      );
       final rescheduling = await storage.answerCard(
         buryNewSiblings: false,
         buryInterdayLearningSiblings: false,
@@ -2079,7 +2046,6 @@ INSERT INTO cards VALUES
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         millisecondsTaken: 300,
         baseContext: context,
-        scheduledSecs: 90,
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
@@ -2265,7 +2231,6 @@ INSERT INTO cards VALUES
     Future<Card> answer({
       CollectionAnswerTiming? answerTiming,
       BigInt? fuzzSeed,
-      int? scheduledSecs = 90,
     }) => storage.answerCard(
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
@@ -2276,7 +2241,6 @@ INSERT INTO cards VALUES
       buryInterdayLearningSiblings: false,
       buryReviewSiblings: false,
       baseContext: context,
-      scheduledSecs: scheduledSecs,
       loadBalancerEnabled: false,
       fuzzSeed: fuzzSeed,
       usn: 8,
@@ -2292,16 +2256,6 @@ INSERT INTO cards VALUES
 
     await storage.executeBatch(
       'UPDATE cards SET type = 1, queue = 1, left = 2, due = 0, did = 40, odid = 0 WHERE id = 1',
-    );
-    await expectLater(
-      answer(scheduledSecs: null),
-      throwsA(
-        isA<StateError>().having(
-          (error) => error.message,
-          'message',
-          contains('scheduledSecs is required for Learn cards'),
-        ),
-      ),
     );
     final learning = await answer();
     expect(learning.queue, CardQueue.dayLearn);
@@ -2387,6 +2341,139 @@ INSERT INTO cards VALUES
     expect(filteredIntradayRelearning.queue, CardQueue.learn);
     expect(filteredIntradayRelearning.due, intradayDue);
     expect((await storage.getCard(Int64(1)))!.due, intradayDue);
+  });
+
+  test('answerCard resolves current step from the home deck config', () async {
+    final assignedConfig = DeckConfig(
+      id: Int64(11),
+      name: 'Assigned',
+      inner: DeckConfig.defaults().inner
+        ..learnSteps.clear()
+        ..learnSteps.addAll([9, 20])
+        ..relearnSteps.clear()
+        ..relearnSteps.addAll([9, 20]),
+    );
+    final homeConfig = DeckConfig(
+      id: Int64(12),
+      name: 'Home',
+      inner: DeckConfig.defaults().inner
+        ..learnSteps.clear()
+        ..learnSteps.addAll([4, 7])
+        ..relearnSteps.clear()
+        ..relearnSteps.addAll([6, 8]),
+    );
+    storage.deckConfigs
+      ..addOrUpdateDeckConfigWithExistingId(assignedConfig)
+      ..addOrUpdateDeckConfigWithExistingId(homeConfig);
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: Int64(7),
+        name: 'Normal',
+        kind: NormalDeckKind(
+          protoDeck.Deck_Normal(configId: assignedConfig.id),
+        ),
+      ),
+    );
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: Int64(40),
+        name: 'Home',
+        kind: NormalDeckKind(protoDeck.Deck_Normal(configId: homeConfig.id)),
+      ),
+    );
+
+    Future<int> answerAndReadLastInterval({
+      required int type,
+      required int deckId,
+      required int originalDeckId,
+      required int answerMillis,
+    }) async {
+      await storage.executeBatch(
+        'UPDATE cards SET type = $type, queue = $type, left = 1, due = 0, '
+        'did = $deckId, odid = $originalDeckId WHERE id = 1',
+      );
+      await storage.answerCard(
+        cardId: Int64.ONE,
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        millisecondsTaken: 300,
+        capAnswerTimeToSecs: 120,
+        suspendLeechedCards: false,
+        buryNewSiblings: false,
+        buryInterdayLearningSiblings: false,
+        buryReviewSiblings: false,
+        baseContext: const ReviewSchedulingContext(fuzzFactor: 0),
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+        usn: 8,
+        answerTiming: CollectionAnswerTiming(
+          now: answerMillis ~/ 1000,
+          answeredAtMillis: answerMillis,
+          daysElapsed: 6,
+          nextDayAt: answerMillis ~/ 1000 + 1800,
+          secsUntilDayRollover: 1800,
+        ),
+        desiredRetention: null,
+      );
+      return storage.revlog
+          .getRevlogEntry(RevlogId(Int64(answerMillis)))!
+          .lastInterval;
+    }
+
+    expect(
+      await answerAndReadLastInterval(
+        type: 1,
+        deckId: 7,
+        originalDeckId: 0,
+        answerMillis: 1712345681000,
+      ),
+      -1200,
+      reason: 'normal Learn cards use their deck config step',
+    );
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: Int64(7),
+        name: 'Filtered',
+        kind: FilteredDeckKind(protoDeck.Deck_Filtered(reschedule: true)),
+      ),
+    );
+    expect(
+      await answerAndReadLastInterval(
+        type: 1,
+        deckId: 7,
+        originalDeckId: 40,
+        answerMillis: 1712345682000,
+      ),
+      -420,
+      reason:
+          'filtered Learn cards use original home config, not assigned config',
+    );
+    expect(
+      await answerAndReadLastInterval(
+        type: 3,
+        deckId: 7,
+        originalDeckId: 40,
+        answerMillis: 1712345683000,
+      ),
+      -480,
+      reason: 'Relearn cards use the home config relearning steps',
+    );
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: Int64(7),
+        name: 'Normal without stored config',
+        kind: NormalDeckKind(protoDeck.Deck_Normal(configId: Int64(88))),
+      ),
+    );
+    expect(
+      await answerAndReadLastInterval(
+        type: 1,
+        deckId: 7,
+        originalDeckId: 0,
+        answerMillis: 1712345684000,
+      ),
+      -600,
+      reason: 'missing home config rows use Core default learning steps',
+    );
   });
 
   test(

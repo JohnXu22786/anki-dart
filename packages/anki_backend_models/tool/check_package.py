@@ -74,6 +74,7 @@ SOURCE_HASHES = {
     "proto/anki/scheduler.proto": "9ebdd150185cdaccef2a7957481361b869344e573cce4dc0be77489cac7b71e3",
     "rslib/src/scheduler/answering/current.rs": "1d8a18daf1ff3bf6e4252fbe58c3ff79ced4da8bbf75093b783b0dbd32ddbf4e",
     "rslib/src/scheduler/answering/mod.rs": "7f921fb18f6ea7adecb8c6a2d6cc53abfd9cae1f1dc15104b9704ec874ee5873",
+    "rslib/src/scheduler/answering/learning.rs": "c6c744d494a7f54d5efb8c2d5e98a74c92016c84d10773437b16414c8840cacc",
     "rslib/src/scheduler/states/review.rs": "57ed79be2d29e6185ecf7c0444e3f21929ce5b86b1e8d5b60aacf90c9fdb494d",
     "rslib/src/scheduler/states/fuzz.rs": "30a33e2e522ebcb56ca434a897f66209fcb4284065115ee031def73097343105",
     "rslib/src/scheduler/states/mod.rs": "f4247b73f39403a1f8eb423d52bec91bf3e7f6a005f1b93767a24a0a0ee8f7a9",

@@ -673,7 +673,7 @@ INSERT INTO col VALUES (1700000000, '{}');
         fuzzSeed: null,
         usn: 8,
         desiredRetention: null,
-        learningDue: 1712346000,
+        fuzzedLearningSecs: 90,
       );
 
       expect(
@@ -773,7 +773,7 @@ INSERT INTO col VALUES (1700000000, '{}');
           usn: 8,
 
           desiredRetention: null,
-          learningDue: 1712346000,
+          fuzzedLearningSecs: 90,
         );
         final deck = storage.decks.getDeck(Int64(7))!;
         expect(
@@ -814,7 +814,7 @@ INSERT INTO col VALUES (1700000000, '{}');
         usn: 8,
 
         desiredRetention: null,
-        learningDue: 1712346000,
+        fuzzedLearningSecs: 90,
       );
       final rolledOver = storage.decks.getDeck(Int64(7))!;
       expect(rolledOver.common.lastDayStudied, 7);
@@ -850,7 +850,7 @@ INSERT INTO col VALUES (1700000000, '{}');
         usn: 8,
 
         desiredRetention: null,
-        learningDue: 1712346000,
+        fuzzedLearningSecs: 90,
       );
       expect(
         storage.decks.getDeck(Int64(7))!.common.millisecondsStudied,
@@ -946,7 +946,7 @@ INSERT INTO col VALUES (1700000000, '{}');
           usn: 8,
 
           desiredRetention: null,
-          learningDue: 1712346000,
+          fuzzedLearningSecs: 90,
         );
         expect(
           storage.revlog.getRevlogEntry(RevlogId(answerId))!.takenMillis,
@@ -1015,7 +1015,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       usn: 8,
 
       desiredRetention: 0.91,
-      learningDue: 1712346000,
+      fuzzedLearningSecs: 90,
     );
     expect(
       storage.revlog
@@ -1101,7 +1101,7 @@ INSERT INTO col VALUES (1700000000, '{}');
         usn: 7,
 
         desiredRetention: 0.91,
-        learningDue: 1712346000,
+        fuzzedLearningSecs: 90,
         now: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
       );
 
@@ -1188,7 +1188,7 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
             usn: 19,
 
             desiredRetention: null,
-            learningDue: 1712346000,
+            fuzzedLearningSecs: 90,
           );
           expect(
             (await storage.getCard(Int64(1)))!.queue,
@@ -1329,7 +1329,7 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       usn: 8,
 
       desiredRetention: 0.91,
-      learningDue: 1712346000,
+      fuzzedLearningSecs: 90,
     );
     expect(rescheduled.lastReviewTimeSecs, Int64(rescheduleAnswerTime ~/ 1000));
     expect(
@@ -1404,7 +1404,7 @@ INSERT INTO cards VALUES
       answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
 
       desiredRetention: null,
-      learningDue: 1712346000,
+      fuzzedLearningSecs: 90,
       suspendLeechedCards: true,
       buryNewSiblings: true,
       buryInterdayLearningSiblings: true,
@@ -1492,7 +1492,7 @@ INSERT INTO cards VALUES
       answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
 
       desiredRetention: null,
-      learningDue: 1712346000,
+      fuzzedLearningSecs: 90,
       suspendLeechedCards: false,
     );
     expect(unsuspended.queue, CardQueue.learn);
@@ -1524,7 +1524,7 @@ INSERT INTO cards VALUES
       answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
 
       desiredRetention: null,
-      learningDue: 1712346000,
+      fuzzedLearningSecs: 90,
       suspendLeechedCards: true,
     );
     expect(ordinary.queue, CardQueue.learn);
@@ -1554,7 +1554,7 @@ INSERT INTO cards VALUES
       answerTiming: _answerTiming(daysElapsed: 6, secsUntilDayRollover: 1800),
 
       desiredRetention: null,
-      learningDue: 1712346000,
+      fuzzedLearningSecs: 90,
       suspendLeechedCards: true,
     );
     expect(rescheduledLeech.queue, CardQueue.suspended);
@@ -1614,7 +1614,7 @@ INSERT INTO cards VALUES
         usn: 8,
 
         desiredRetention: null,
-        learningDue: 1712346000,
+        fuzzedLearningSecs: 90,
       );
       expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
       expect(database.select('SELECT * FROM tags'), isEmpty);
@@ -1685,7 +1685,7 @@ INSERT INTO cards VALUES
         usn: 8,
 
         desiredRetention: null,
-        learningDue: 1712346000,
+        fuzzedLearningSecs: 90,
       );
 
       expect((await storage.getNote(Int64(100)))!.tags, [
@@ -1732,7 +1732,7 @@ INSERT INTO cards VALUES
         usn: 9,
 
         desiredRetention: null,
-        learningDue: 1712346000,
+        fuzzedLearningSecs: 90,
       );
       expect((await storage.getNote(Int64(100)))!.tags, [
         'alpha',
@@ -1881,7 +1881,7 @@ INSERT INTO cards VALUES
       usn: 8,
 
       desiredRetention: null,
-      learningDue: 1712346000,
+      fuzzedLearningSecs: 90,
     );
     await Future<void>.delayed(Duration.zero);
     allowOperationToFinish.complete();
@@ -2035,11 +2035,11 @@ INSERT INTO cards VALUES
         usn: 8,
 
         desiredRetention: 0.91,
-        learningDue: 1712346000,
+        fuzzedLearningSecs: 90,
       );
       expect(rescheduling.deckId, Int64(7));
       expect(rescheduling.queue, CardQueue.learn);
-      expect(rescheduling.due, 1712346000);
+      expect(rescheduling.due, 90);
       expect(
         storage.revlog.getRevlogEntry(RevlogId(Int64(1712345680003))),
         isNotNull,
@@ -2189,7 +2189,7 @@ INSERT INTO cards VALUES
     expect(cache.daysByPreset[cachedPreset]![applied.interval].cardCount, 1);
   });
 
-  test('answerCard derives interday Learning and Relearning queue and due day', () async {
+  test('answerCard derives Learning and Relearning due from state and timing', () async {
     const context = ReviewSchedulingContext(fuzzFactor: 0);
     const timing = CollectionAnswerTiming(
       now: 1712345678,
@@ -2201,7 +2201,7 @@ INSERT INTO cards VALUES
     var answerId = 1712345679000;
     Future<Card> answer({
       CollectionAnswerTiming? answerTiming,
-      int? learningDue,
+      int? fuzzedLearningSecs,
     }) => storage.answerCard(
       cardId: Int64(1),
       rating: protoScheduler.CardAnswer_Rating.GOOD,
@@ -2220,7 +2220,7 @@ INSERT INTO cards VALUES
       usn: 8,
       answerTiming: answerTiming ?? timing,
       desiredRetention: null,
-      learningDue: learningDue,
+      fuzzedLearningSecs: fuzzedLearningSecs,
     );
 
     await storage.executeBatch(
@@ -2262,19 +2262,54 @@ INSERT INTO cards VALUES
     await storage.executeBatch(
       'UPDATE cards SET type = 1, queue = 1, left = 2, due = 0, did = 40, odid = 0 WHERE id = 1',
     );
+    const intradayTiming = CollectionAnswerTiming(
+      now: 1712345678,
+      daysElapsed: 6,
+      nextDayAt: 1712347478,
+      secsUntilDayRollover: 1800,
+    );
+    const intradayDue = 1712345768;
     final intraday = await answer(
-      answerTiming: const CollectionAnswerTiming(
-        now: 1712345678,
-        daysElapsed: 6,
-        nextDayAt: 1712347478,
-        secsUntilDayRollover: 1800,
-      ),
-      learningDue: 123456,
+      answerTiming: intradayTiming,
+      fuzzedLearningSecs: 90,
     );
     expect(intraday.queue, CardQueue.learn);
-    expect(intraday.due, 123456);
+    expect(intraday.due, intradayDue);
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.learn);
-    expect((await storage.getCard(Int64(1)))!.due, 123456);
+    expect((await storage.getCard(Int64(1)))!.due, intradayDue);
+
+    await storage.executeBatch(
+      'UPDATE cards SET type = 1, queue = 1, left = 2, due = 0, did = 7, odid = 40 WHERE id = 1',
+    );
+    final filteredIntraday = await answer(
+      answerTiming: intradayTiming,
+      fuzzedLearningSecs: 90,
+    );
+    expect(filteredIntraday.queue, CardQueue.learn);
+    expect(filteredIntraday.due, intradayDue);
+    expect((await storage.getCard(Int64(1)))!.due, intradayDue);
+
+    await storage.executeBatch(
+      'UPDATE cards SET type = 3, queue = 3, left = 2, due = 0, did = 40, odid = 0 WHERE id = 1',
+    );
+    final intradayRelearning = await answer(
+      answerTiming: intradayTiming,
+      fuzzedLearningSecs: 90,
+    );
+    expect(intradayRelearning.queue, CardQueue.learn);
+    expect(intradayRelearning.due, intradayDue);
+    expect((await storage.getCard(Int64(1)))!.due, intradayDue);
+
+    await storage.executeBatch(
+      'UPDATE cards SET type = 3, queue = 3, left = 2, due = 0, did = 7, odid = 40 WHERE id = 1',
+    );
+    final filteredIntradayRelearning = await answer(
+      answerTiming: intradayTiming,
+      fuzzedLearningSecs: 90,
+    );
+    expect(filteredIntradayRelearning.queue, CardQueue.learn);
+    expect(filteredIntradayRelearning.due, intradayDue);
+    expect((await storage.getCard(Int64(1)))!.due, intradayDue);
   });
 
   test(

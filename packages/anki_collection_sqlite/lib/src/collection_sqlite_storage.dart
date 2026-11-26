@@ -5563,6 +5563,21 @@ WHERE queue IN (-2, -3)
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
 
+    final config = _homeDeckConfigForCard(card);
+    final settings = config.inner;
+    return CollectionAnswerDeckConfig(
+      homeDeckConfigId: config.id,
+      capAnswerTimeToSecs: settings.capAnswerTimeToSecs,
+      suspendLeechedCards:
+          settings.leechAction ==
+          protoConfig.DeckConfig_Config_LeechAction.LEECH_ACTION_SUSPEND,
+      buryNewSiblings: settings.buryNew,
+      buryInterdayLearningSiblings: settings.buryInterdayLearning,
+      buryReviewSiblings: settings.buryReviews,
+    );
+  }
+
+  DeckConfig _homeDeckConfigForCard(Card card) {
     final assignedDeck = _deckStorage.getDeck(card.deckId);
     if (assignedDeck == null) {
       throw StateError('deck not found: ${card.deckId}');
@@ -5580,19 +5595,17 @@ WHERE queue IN (-2, -3)
     }
 
     final storedConfig = _deckConfigStorage.getDeckConfig(deckConfigId);
-    final config =
-        storedConfig ??
+    return storedConfig ??
         DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
-    final settings = config.inner;
-    return CollectionAnswerDeckConfig(
-      homeDeckConfigId: deckConfigId,
-      capAnswerTimeToSecs: settings.capAnswerTimeToSecs,
-      suspendLeechedCards:
-          settings.leechAction ==
-          protoConfig.DeckConfig_Config_LeechAction.LEECH_ACTION_SUSPEND,
-      buryNewSiblings: settings.buryNew,
-      buryInterdayLearningSiblings: settings.buryInterdayLearning,
-      buryReviewSiblings: settings.buryReviews,
+  }
+
+  int _currentStepDelaySecsForCard(Card card) {
+    final settings = _homeDeckConfigForCard(card).inner;
+    return resolveCurrentLearningStepDelaySecs(
+      steps: card.ctype == CardType.learn
+          ? settings.learnSteps
+          : settings.relearnSteps,
+      remainingSteps: card.remainingSteps,
     );
   }
 
@@ -5604,13 +5617,14 @@ WHERE queue IN (-2, -3)
   /// home/original deck config; [suspendLeechedCards] and the three sibling
   /// bury flags are caller-resolved settings for that config; [answerTiming]
   /// carries the caller-resolved answer timestamp, collection day, and
-  /// rollover duration from one collection timing snapshot. This method does
-  /// not resolve deck config. Review due day and Learning/Relearning queue and
+  /// rollover duration from one collection timing snapshot. The current
+  /// Learning/Relearning step delay comes from the stored Card's home deck
+  /// config. Review due day and Learning/Relearning queue and
   /// due values are derived from generated next states and [answerTiming].
   /// Intraday Learning/Relearning and unfinished filtered Preview intervals
   /// are fuzzed from [fuzzSeed] and resolved from [answerTiming]. Learning and
   /// Relearning elapsed seconds are derived from the stored Card and the
-  /// caller-resolved [scheduledSecs]. The generated
+  /// resolved current step delay. The generated
   /// answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5625,7 +5639,6 @@ WHERE queue IN (-2, -3)
     required bool buryInterdayLearningSiblings,
     required bool buryReviewSiblings,
     required ReviewSchedulingContext baseContext,
-    int? scheduledSecs,
     required bool loadBalancerEnabled,
     required BigInt? fuzzSeed,
     required int usn,
@@ -5653,18 +5666,17 @@ WHERE queue IN (-2, -3)
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
 
+    final scheduledSecs = switch (card.ctype) {
+      CardType.learn || CardType.relearn => _currentStepDelaySecsForCard(card),
+      _ => null,
+    };
+
     final elapsedSecs = switch (card.ctype) {
-      CardType.learn || CardType.relearn =>
-        scheduledSecs == null
-            ? throw StateError(
-                'scheduledSecs is required for '
-                '${card.ctype == CardType.learn ? 'Learn' : 'Relearn'} cards',
-              )
-            : resolveLearningAnswerElapsedSecs(
-                card: card,
-                scheduledSecs: scheduledSecs,
-                answerTiming: answerTiming,
-              ),
+      CardType.learn || CardType.relearn => resolveLearningAnswerElapsedSecs(
+        card: card,
+        scheduledSecs: scheduledSecs!,
+        answerTiming: answerTiming,
+      ),
       _ => null,
     };
     final answer = await cardAnswerRequestForCard(

@@ -29,6 +29,7 @@ export 'src/easy_day_load.dart';
 export 'src/interval_load_weight.dart';
 export 'src/weighted_interval_selection.dart';
 export 'src/learning_interval_fuzz.dart';
+export 'src/learning_step_delay.dart';
 export 'src/sibling_day_modifiers.dart';
 export 'src/sibling_modifiers.dart';
 export 'src/load_balancer_day.dart';

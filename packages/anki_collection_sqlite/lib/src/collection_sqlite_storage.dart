@@ -54,6 +54,9 @@ part 'database_check.dart';
 const _preparedStatementCacheCapacity = 50;
 final _collectionUndoOperationZoneKey = Object();
 final _externalCollectionMutationZoneKey = Object();
+// Carries answerCard's snapshot through existing apply helpers to the
+// transaction's prepare check without changing their public signatures.
+final _answerCardExpectedSnapshotZoneKey = Object();
 
 /// Today's new/review queue counts and extension increments for custom study.
 final class CollectionCustomStudyLimitDefaults {
@@ -4995,8 +4998,14 @@ WHERE queue IN (-2, -3)
     await runUndoableCollectionOperation(
       operation: CollectionUndoOperation.answerCard,
       prepare: () async {
-        if (await getCard(card.id) == null) {
+        final existingCard = await getCard(card.id);
+        if (existingCard == null) {
           throw StateError('card not found: ${card.id}');
+        }
+        final expectedCard = Zone.current[_answerCardExpectedSnapshotZoneKey];
+        if (expectedCard is Card &&
+            !_sameCardSnapshot(existingCard, expectedCard)) {
+          throw StateError('card changed while preparing answer: ${card.id}');
         }
         return true;
       },
@@ -5238,6 +5247,160 @@ WHERE queue IN (-2, -3)
     );
     return appliedCard;
   }
+
+  /// Answers one stored card by dispatching its scheduling states, selecting
+  /// the requested rating, then applying and recording that answer atomically.
+  ///
+  /// All timing and scheduling values that are not already stored on the Card
+  /// are caller-resolved inputs. Normal, filtered Preview, and rescheduling
+  /// filtered answers are routed by their generated state wrappers to the
+  /// matching apply-and-record operation. The stored Card's custom data is
+  /// copied into the generated answer. The updated Card is returned only
+  /// after its Card and Revlog rows commit successfully.
+  Future<Card> answerCard({
+    required CardId cardId,
+    required protoScheduler.CardAnswer_Rating rating,
+    required Int64 answeredAtMillis,
+    required int millisecondsTaken,
+    required ReviewSchedulingContext baseContext,
+    int? scheduledSecs,
+    int? elapsedSecs,
+    required bool loadBalancerEnabled,
+    required BigInt? fuzzSeed,
+    DateTime? now,
+    required int usn,
+    required int secsUntilDayRollover,
+    required double? desiredRetention,
+    CardQueue? learningQueue,
+    int? learningDue,
+    int? reviewDueDay,
+    int? dueTimestampSecs,
+    CollectionLoadBalancerContext? loadBalancerContext,
+    DeckConfigId? homeDeckConfigId,
+  }) async {
+    final card = await getCard(cardId);
+    if (card == null) throw StateError('card not found: $cardId');
+
+    final answer = await cardAnswerRequestForCard(
+      cardId: cardId,
+      rating: rating,
+      customData: card.customData,
+      answeredAtMillis: answeredAtMillis,
+      millisecondsTaken: millisecondsTaken,
+      baseContext: baseContext,
+      scheduledSecs: scheduledSecs,
+      elapsedSecs: elapsedSecs,
+      loadBalancerEnabled: loadBalancerEnabled,
+      fuzzSeed: fuzzSeed,
+      now: now,
+    );
+
+    final storedCardAfterDispatch = await getCard(cardId);
+    if (storedCardAfterDispatch == null ||
+        !_sameCardSnapshot(storedCardAfterDispatch, card)) {
+      throw StateError('card changed while preparing answer: $cardId');
+    }
+
+    if (!answer.hasCurrentState() || !answer.hasNewState()) {
+      throw ArgumentError.value(answer, 'answer', 'both states are required');
+    }
+    final currentKind = answer.currentState.whichKind();
+    final newKind = answer.newState.whichKind();
+    if (currentKind == protoScheduler.SchedulingState_Kind.normal) {
+      if (newKind != protoScheduler.SchedulingState_Kind.normal) {
+        throw ArgumentError.value(
+          answer.newState,
+          'answer.newState',
+          'must match the current Normal state wrapper',
+        );
+      }
+      return runZoned(
+        () => applyAndRecordCardAnswerResult(
+          card: card,
+          answer: answer,
+          usn: usn,
+          secsUntilDayRollover: secsUntilDayRollover,
+          desiredRetention: desiredRetention,
+          learningQueue: learningQueue,
+          learningDue: learningDue,
+          reviewDueDay: reviewDueDay,
+          loadBalancerContext: loadBalancerContext,
+          homeDeckConfigId: homeDeckConfigId,
+        ),
+        zoneValues: {_answerCardExpectedSnapshotZoneKey: card},
+      );
+    }
+    if (currentKind != protoScheduler.SchedulingState_Kind.filtered) {
+      throw ArgumentError.value(
+        answer.currentState,
+        'answer.currentState',
+        'must contain a Normal or filtered state wrapper',
+      );
+    }
+
+    final currentFilteredKind = answer.currentState.filtered.whichKind();
+    if (currentFilteredKind ==
+        protoScheduler.SchedulingState_Filtered_Kind.preview) {
+      if (newKind != protoScheduler.SchedulingState_Kind.filtered ||
+          answer.newState.filtered.whichKind() !=
+              protoScheduler.SchedulingState_Filtered_Kind.preview) {
+        throw ArgumentError.value(
+          answer.newState,
+          'answer.newState',
+          'must contain a filtered Preview state matching current state',
+        );
+      }
+      return runZoned(
+        () => applyAndRecordFilteredPreviewCardAnswerResult(
+          card: card,
+          answer: answer,
+          usn: usn,
+          secsUntilDayRollover: secsUntilDayRollover,
+          dueTimestampSecs: dueTimestampSecs,
+          loadBalancerContext: loadBalancerContext,
+          homeDeckConfigId: homeDeckConfigId,
+        ),
+        zoneValues: {_answerCardExpectedSnapshotZoneKey: card},
+      );
+    }
+    if (currentFilteredKind ==
+        protoScheduler.SchedulingState_Filtered_Kind.rescheduling) {
+      if (newKind != protoScheduler.SchedulingState_Kind.normal &&
+          (newKind != protoScheduler.SchedulingState_Kind.filtered ||
+              answer.newState.filtered.whichKind() !=
+                  protoScheduler.SchedulingState_Filtered_Kind.rescheduling)) {
+        throw ArgumentError.value(
+          answer.newState,
+          'answer.newState',
+          'must contain a Normal or filtered rescheduling state',
+        );
+      }
+      return runZoned(
+        () => applyAndRecordReschedulingFilteredCardAnswerResult(
+          card: card,
+          answer: answer,
+          usn: usn,
+          secsUntilDayRollover: secsUntilDayRollover,
+          desiredRetention: desiredRetention,
+          learningQueue: learningQueue,
+          learningDue: learningDue,
+          reviewDueDay: reviewDueDay,
+          loadBalancerContext: loadBalancerContext,
+          homeDeckConfigId: homeDeckConfigId,
+        ),
+        zoneValues: {_answerCardExpectedSnapshotZoneKey: card},
+      );
+    }
+    throw ArgumentError.value(
+      answer.currentState.filtered,
+      'answer.currentState.filtered',
+      'must contain a Preview or rescheduling state',
+    );
+  }
+
+  bool _sameCardSnapshot(Card first, Card second) =>
+      base64Encode(first.toProto().writeToBuffer()) ==
+      base64Encode(second.toProto().writeToBuffer());
 
   void _validateNormalCardAnswerState(
     protoScheduler.SchedulingState_Normal state,

@@ -4985,6 +4985,8 @@ WHERE queue IN (-2, -3)
   Future<void> recordCardAnswerResult({
     required Card card,
     required RevlogEntry revlog,
+    NoteId? leechTagNoteId,
+    int? leechTagUsn,
     CollectionLoadBalancerContext? loadBalancerContext,
     DeckConfigId? homeDeckConfigId,
   }) async {
@@ -4995,6 +4997,20 @@ WHERE queue IN (-2, -3)
         'must match card.id (${card.id})',
       );
     }
+    if ((leechTagNoteId == null) != (leechTagUsn == null)) {
+      throw ArgumentError(
+        'leechTagNoteId and leechTagUsn must be supplied together',
+      );
+    }
+    if (leechTagNoteId != null && leechTagNoteId != card.noteId) {
+      throw ArgumentError.value(
+        leechTagNoteId,
+        'leechTagNoteId',
+        'must match card.noteId (${card.noteId})',
+      );
+    }
+    Note? noteWithLeechTag;
+    var registerLeechTag = false;
     await runUndoableCollectionOperation(
       operation: CollectionUndoOperation.answerCard,
       prepare: () async {
@@ -5007,6 +5023,42 @@ WHERE queue IN (-2, -3)
             !_sameCardSnapshot(existingCard, expectedCard)) {
           throw StateError('card changed while preparing answer: ${card.id}');
         }
+        if (leechTagNoteId case final noteId?) {
+          if (existingCard.noteId != noteId) {
+            throw StateError(
+              'leech tag note no longer matches answered card: ${card.id}',
+            );
+          }
+          final note = await getNote(noteId);
+          if (note == null) throw StateError('note not found: $noteId');
+          if (!note.tags.any((tag) => unicodeCaseFold(tag) == 'leech')) {
+            final canonifiedTags = <String, String>{};
+            for (final tag in note.tags) {
+              canonifiedTags.putIfAbsent(unicodeCaseFold(tag), () => tag);
+            }
+            canonifiedTags.putIfAbsent(
+              'leech',
+              () => _tagStorage.preferredTagCase('leech') ?? 'leech',
+            );
+            final updatedTags = canonifiedTags.values.toList()
+              ..sort(
+                (first, second) =>
+                    unicodeCaseFold(first).compareTo(unicodeCaseFold(second)),
+              );
+            noteWithLeechTag = copyNote(note);
+            noteWithLeechTag!.tags
+              ..clear()
+              ..addAll(updatedTags);
+            noteWithLeechTag!.markModified(
+              leechTagUsn!,
+              mtimeSecs:
+                  (_nowMillis?.call() ??
+                      DateTime.now().millisecondsSinceEpoch) ~/
+                  1000,
+            );
+          }
+          registerLeechTag = _tagStorage.preferredTagCase('leech') == null;
+        }
         return true;
       },
       apply: () async {
@@ -5018,6 +5070,18 @@ WHERE queue IN (-2, -3)
         }
         if (_revlogStorage.addRevlogEntry(revlog) == null) {
           throw StateError('revlog ID is already in use: ${revlog.id.value}');
+        }
+        if (noteWithLeechTag case final note?) {
+          await _withExternalCollectionMutation(
+            () => _noteStorage.updateNote(note),
+          );
+        }
+        if (registerLeechTag) {
+          await _withExternalCollectionMutation(
+            () => _tagStorage.registerTag(
+              Tag(name: 'leech', usn: leechTagUsn!, expanded: false),
+            ),
+          );
         }
       },
       onCommitted: (_) =>
@@ -5450,10 +5514,15 @@ WHERE queue IN (-2, -3)
       usn: usn,
       secsUntilDayRollover: secsUntilDayRollover,
     );
+    final newStateIsLeeched =
+        normalNewState != null &&
+        _normalCardAnswerStateIsLeeched(normalNewState);
     await runZoned(
       () => recordCardAnswerResult(
         card: appliedCard,
         revlog: revlog,
+        leechTagNoteId: newStateIsLeeched ? card.noteId : null,
+        leechTagUsn: newStateIsLeeched ? usn : null,
         loadBalancerContext: loadBalancerContext,
         homeDeckConfigId: homeDeckConfigId,
       ),

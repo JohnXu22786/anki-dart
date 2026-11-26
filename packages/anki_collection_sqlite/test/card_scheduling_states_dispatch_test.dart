@@ -20,6 +20,7 @@ void main() {
         openDatabase: (_) => database = sqlite3.openInMemory(),
       ),
       location: ':memory:',
+      nowMillis: () => 1712345678999,
     );
     await storage.executeBatch('''
 CREATE TABLE cards (
@@ -44,6 +45,17 @@ CREATE TABLE revlog (
   ease INTEGER NOT NULL, ivl INTEGER NOT NULL, lastIvl INTEGER NOT NULL,
   factor INTEGER NOT NULL, time INTEGER NOT NULL, type INTEGER NOT NULL
 );
+CREATE TABLE notes (
+  id INTEGER PRIMARY KEY, guid TEXT NOT NULL, mid INTEGER NOT NULL,
+  mod INTEGER NOT NULL, usn INTEGER NOT NULL, tags TEXT NOT NULL,
+  flds TEXT NOT NULL, sfld INTEGER NOT NULL, csum INTEGER NOT NULL,
+  flags INTEGER NOT NULL DEFAULT 0, data TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE tags (
+  tag TEXT NOT NULL PRIMARY KEY COLLATE NOCASE,
+  usn INTEGER NOT NULL, collapsed INTEGER NOT NULL
+);
+INSERT INTO notes VALUES (100, 'note-guid', 1, 17, 3, '', 'front\x1fback', 'front', 1, 0, '');
 INSERT INTO col VALUES (1700000000, '{}');
 ''');
     storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(_config());
@@ -690,6 +702,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       desiredRetention: null,
       learningQueue: CardQueue.learn,
       learningDue: 1712346000,
+      reviewDueDay: 41,
       suspendLeechedCards: true,
     );
     expect(suspended.queue, CardQueue.suspended);
@@ -698,21 +711,53 @@ INSERT INTO col VALUES (1700000000, '{}');
       storage.revlog.getRevlogEntry(RevlogId(Int64(suspendedAnswerId))),
       isNotNull,
     );
+    expect((await storage.getNote(Int64(100)))!.tags, [
+      'leech',
+    ], reason: 'a leeched answer adds the Core leech tag');
+    expect(database.select('SELECT tag, usn, collapsed FROM tags'), [
+      {'tag': 'leech', 'usn': 8, 'collapsed': 1},
+    ]);
+    expect(
+      database.select('SELECT mod, usn FROM notes WHERE id = 100').single,
+      {'mod': 1712345678, 'usn': 8},
+    );
+    expect(
+      storage.collectionUndoChanges.map((change) => change.kind),
+      containsAll([
+        CollectionUndoChangeKind.card,
+        CollectionUndoChangeKind.revlog,
+        CollectionUndoChangeKind.note,
+        CollectionUndoChangeKind.noteTags,
+        CollectionUndoChangeKind.tag,
+      ]),
+    );
     await storage.undoLastCollectionOperation();
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.review);
+    expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
+    expect(
+      database.select('SELECT mod, usn FROM notes WHERE id = 100').single,
+      {'mod': 17, 'usn': 3},
+    );
+    expect(database.select('SELECT * FROM tags'), isEmpty);
     expect(
       storage.revlog.getRevlogEntry(RevlogId(Int64(suspendedAnswerId))),
       isNull,
     );
     await storage.redoLastCollectionOperation();
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.suspended);
+    expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
+    expect(database.select('SELECT tag FROM tags'), [
+      {'tag': 'leech'},
+    ]);
     expect(
       storage.revlog.getRevlogEntry(RevlogId(Int64(suspendedAnswerId))),
       isNotNull,
     );
 
+    await storage.executeBatch("UPDATE notes SET tags = '' WHERE id = 100");
+    await storage.executeBatch('DELETE FROM tags');
     await storage.executeBatch(
-      'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 0 WHERE id = 1',
+      'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 7 WHERE id = 1',
     );
     final unsuspended = await storage.answerCard(
       cardId: Int64(1),
@@ -731,6 +776,10 @@ INSERT INTO col VALUES (1700000000, '{}');
       suspendLeechedCards: false,
     );
     expect(unsuspended.queue, CardQueue.learn);
+    expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
+    expect(database.select('SELECT tag, usn FROM tags'), [
+      {'tag': 'leech', 'usn': 8},
+    ]);
 
     await storage.executeBatch(
       'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 0 WHERE id = 1',
@@ -756,7 +805,10 @@ INSERT INTO col VALUES (1700000000, '{}');
       suspendLeechedCards: true,
     );
     expect(ordinary.queue, CardQueue.learn);
+    expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
 
+    await storage.executeBatch("UPDATE notes SET tags = '' WHERE id = 100");
+    await storage.executeBatch('DELETE FROM tags');
     storage.decks.addOrUpdateDeckWithExistingId(
       _filteredDeck(reschedule: true),
     );
@@ -782,6 +834,7 @@ INSERT INTO col VALUES (1700000000, '{}');
     );
     expect(rescheduledLeech.queue, CardQueue.suspended);
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.suspended);
+    expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
 
     await storage.executeBatch(
       'UPDATE cards SET type = 0, queue = 0, did = 7, odid = 40, lapses = 0 WHERE id = 1',
@@ -803,6 +856,196 @@ INSERT INTO col VALUES (1700000000, '{}');
       suspendLeechedCards: true,
     );
     expect(preview.queue, CardQueue.previewRepeat);
+    expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
+  });
+
+  test(
+    'answerCard does not register leech tags for ordinary or Preview answers',
+    () async {
+      const context = ReviewSchedulingContext(fuzzFactor: 0, leechThreshold: 1);
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+      await storage.executeBatch(
+        'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 0 WHERE id = 1',
+      );
+      await storage.answerCard(
+        cardId: Int64(1),
+        rating: protoScheduler.CardAnswer_Rating.AGAIN,
+        answeredAtMillis: Int64(1712345687001),
+        millisecondsTaken: 300,
+        capAnswerTimeToSecs: 120,
+        suspendLeechedCards: false,
+        baseContext: context,
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+        usn: 8,
+        secsUntilDayRollover: 1800,
+        desiredRetention: null,
+        learningQueue: CardQueue.learn,
+        learningDue: 1712346000,
+        reviewDueDay: 41,
+      );
+      expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
+      expect(database.select('SELECT * FROM tags'), isEmpty);
+
+      storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck());
+      await storage.executeBatch(
+        'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 40, lapses = 7 WHERE id = 1',
+      );
+      await storage.answerCard(
+        cardId: Int64(1),
+        rating: protoScheduler.CardAnswer_Rating.AGAIN,
+        answeredAtMillis: Int64(1712345687002),
+        millisecondsTaken: 300,
+        capAnswerTimeToSecs: 120,
+        suspendLeechedCards: true,
+        baseContext: context,
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+        usn: 8,
+        secsUntilDayRollover: 1800,
+        desiredRetention: null,
+        dueTimestampSecs: 1712346000,
+      );
+      expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
+      expect(database.select('SELECT * FROM tags'), isEmpty);
+    },
+  );
+
+  test(
+    'answerCard preserves case-insensitive leech and unrelated tags',
+    () async {
+      const context = ReviewSchedulingContext(
+        fuzzFactor: 0,
+        leechThreshold: 1,
+        relearningAgainDelaySecs: 600,
+      );
+      await storage.executeBatch("""
+      UPDATE notes SET tags = 'zeta LeEcH alpha' WHERE id = 100;
+      INSERT INTO tags VALUES ('leech', 4, 0);
+      INSERT INTO tags VALUES ('alpha', 5, 1);
+      INSERT INTO tags VALUES ('zeta', 6, 1);
+    """);
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+      await storage.executeBatch(
+        'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 7 WHERE id = 1',
+      );
+
+      await storage.answerCard(
+        cardId: Int64(1),
+        rating: protoScheduler.CardAnswer_Rating.AGAIN,
+        answeredAtMillis: Int64(1712345687003),
+        millisecondsTaken: 300,
+        capAnswerTimeToSecs: 120,
+        suspendLeechedCards: false,
+        baseContext: context,
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+        usn: 8,
+        secsUntilDayRollover: 1800,
+        desiredRetention: null,
+        learningQueue: CardQueue.learn,
+        learningDue: 1712346000,
+      );
+
+      expect((await storage.getNote(Int64(100)))!.tags, [
+        'zeta',
+        'LeEcH',
+        'alpha',
+      ]);
+      expect(
+        database.select('SELECT mod, usn FROM notes WHERE id = 100').single,
+        {'mod': 17, 'usn': 3},
+        reason: 'an already-present leech tag does not modify the Note',
+      );
+      expect(
+        database.select('SELECT tag, usn, collapsed FROM tags ORDER BY tag'),
+        [
+          {'tag': 'alpha', 'usn': 5, 'collapsed': 1},
+          {'tag': 'leech', 'usn': 4, 'collapsed': 0},
+          {'tag': 'zeta', 'usn': 6, 'collapsed': 1},
+        ],
+      );
+
+      await storage.executeBatch("""
+        UPDATE notes SET tags = 'zeta alpha fooſ foos' WHERE id = 100;
+        UPDATE tags SET tag = 'Leech' WHERE tag = 'leech';
+        INSERT INTO tags VALUES ('foos', 7, 1);
+        UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 7
+        WHERE id = 1;
+      """);
+      await storage.answerCard(
+        cardId: Int64(1),
+        rating: protoScheduler.CardAnswer_Rating.AGAIN,
+        answeredAtMillis: Int64(1712345687004),
+        millisecondsTaken: 300,
+        capAnswerTimeToSecs: 120,
+        suspendLeechedCards: false,
+        baseContext: context,
+        loadBalancerEnabled: false,
+        fuzzSeed: null,
+        usn: 9,
+        secsUntilDayRollover: 1800,
+        desiredRetention: null,
+        learningQueue: CardQueue.learn,
+        learningDue: 1712346000,
+      );
+      expect((await storage.getNote(Int64(100)))!.tags, [
+        'alpha',
+        'fooſ',
+        'Leech',
+        'zeta',
+      ]);
+      expect(unicodeCaseFold('fooſ'), unicodeCaseFold('foos'));
+      expect(
+        database.select('SELECT tag, usn, collapsed FROM tags WHERE tag = ?', [
+          'leech',
+        ]),
+        [
+          {'tag': 'Leech', 'usn': 4, 'collapsed': 0},
+        ],
+      );
+    },
+  );
+
+  test('recordCardAnswerResult rejects a leech tag for another Note', () async {
+    final card = (await storage.getCard(Int64(1)))!;
+    final undoGeneration = storage.collectionUndoGeneration;
+
+    await expectLater(
+      storage.recordCardAnswerResult(
+        card: card,
+        revlog: RevlogEntry(
+          id: RevlogId(Int64(1712345687005)),
+          cardId: card.id,
+        ),
+        leechTagNoteId: Int64(101),
+        leechTagUsn: 8,
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
+
+    expect(await storage.getCard(card.id), isNotNull);
+    expect(database.select('SELECT * FROM revlog'), isEmpty);
+    expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
+    expect(database.select('SELECT * FROM tags'), isEmpty);
+    expect(storage.collectionUndoGeneration, undoGeneration);
+
+    await storage.executeBatch('UPDATE cards SET nid = 101 WHERE id = 1');
+    await expectLater(
+      storage.recordCardAnswerResult(
+        card: card,
+        revlog: RevlogEntry(
+          id: RevlogId(Int64(1712345687006)),
+          cardId: card.id,
+        ),
+        leechTagNoteId: card.noteId,
+        leechTagUsn: 8,
+      ),
+      _stateError('leech tag note no longer matches answered card'),
+    );
+    expect(database.select('SELECT * FROM revlog'), isEmpty);
+    expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
+    expect(database.select('SELECT * FROM tags'), isEmpty);
   });
 
   test(

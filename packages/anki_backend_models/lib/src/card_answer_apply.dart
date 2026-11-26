@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
+import 'package:protobuf/protobuf.dart';
 
 import 'card.dart';
 
@@ -461,3 +462,211 @@ bool _supportsReviewCurrentState(scheduler.SchedulingState_Normal normal) =>
     normal.whichKind() == scheduler.SchedulingState_Normal_Kind.learning ||
     normal.whichKind() == scheduler.SchedulingState_Normal_Kind.review ||
     normal.whichKind() == scheduler.SchedulingState_Normal_Kind.relearning;
+
+/// Applies a generated rescheduling-filtered [answer] to an immutable Card
+/// snapshot. The caller supplies the already-resolved due values needed by the
+/// Normal state helpers; this method does not calculate scheduling time.
+///
+/// A top-level Normal new state removes the card from its filtered deck before
+/// applying the state. A filtered/rescheduling new state keeps it filtered and
+/// records the resulting due value as its original due.
+Card applyReschedulingFilteredCardAnswerState({
+  required Card card,
+  required scheduler.CardAnswer answer,
+  CardQueue? learningQueue,
+  int? learningDue,
+  int? reviewDueDay,
+  required double? desiredRetention,
+}) {
+  if (answer.cardId != card.id) {
+    throw ArgumentError.value(
+      answer.cardId,
+      'answer.cardId',
+      'must match card.id',
+    );
+  }
+  if (card.originalDeckId == Int64.ZERO) {
+    throw ArgumentError.value(
+      card.originalDeckId,
+      'card.originalDeckId',
+      'must identify the original deck of a filtered card',
+    );
+  }
+
+  final currentNormal = _reschedulingFilteredNormal(answer.currentState);
+  final newNormal = _reschedulingFilteredAnswerNormal(answer.newState);
+  final appliesNormally =
+      answer.newState.whichKind() == scheduler.SchedulingState_Kind.normal;
+  final normalAnswer = answer.deepCopy()
+    ..currentState = _normalStateWithCustomData(
+      currentNormal,
+      answer.currentState,
+    )
+    ..newState = _normalStateWithCustomData(newNormal, answer.newState);
+
+  final sourceCard = appliesNormally
+      ? Card(
+          id: card.id,
+          noteId: card.noteId,
+          deckId: card.originalDeckId,
+          templateIdx: card.templateIdx,
+          mtimeSecs: card.mtimeSecs,
+          usn: card.usn,
+          ctype: card.ctype,
+          queue: card.queue,
+          due: card.due,
+          interval: card.interval,
+          easeFactorRaw: card.easeFactorRaw,
+          reps: card.reps,
+          lapses: card.lapses,
+          remainingStepsRaw: card.remainingStepsRaw,
+          originalDue: 0,
+          originalDeckId: Int64.ZERO,
+          flags: card.flags,
+          originalPosition: card.originalPosition,
+          memoryState: card.memoryState,
+          desiredRetention: card.desiredRetention,
+          decay: card.decay,
+          lastReviewTimeSecs: card.lastReviewTimeSecs,
+          customData: card.customData,
+        )
+      : card;
+
+  final normalCard = switch (newNormal.whichKind()) {
+    scheduler.SchedulingState_Normal_Kind.new_1 => applyNewCardAnswerState(
+        card: sourceCard,
+        answer: normalAnswer,
+        desiredRetention: desiredRetention,
+      ),
+    scheduler.SchedulingState_Normal_Kind.learning =>
+      applyLearningCardAnswerState(
+        card: sourceCard,
+        answer: normalAnswer,
+        queue: _requiredLearningQueue(learningQueue),
+        due: _requiredLearningDue(learningDue),
+        desiredRetention: desiredRetention,
+      ),
+    scheduler.SchedulingState_Normal_Kind.review => applyReviewCardAnswerState(
+        card: sourceCard,
+        answer: normalAnswer,
+        dueDay: _requiredReviewDueDay(reviewDueDay),
+        desiredRetention: desiredRetention,
+      ),
+    scheduler.SchedulingState_Normal_Kind.relearning =>
+      applyRelearningCardAnswerState(
+        card: sourceCard,
+        answer: normalAnswer,
+        queue: _requiredLearningQueue(learningQueue),
+        due: _requiredLearningDue(learningDue),
+        desiredRetention: desiredRetention,
+      ),
+    scheduler.SchedulingState_Normal_Kind.notSet => throw ArgumentError(
+        'answer.newState must contain a supported Normal state',
+      ),
+  };
+
+  final customData =
+      answer.newState.hasCustomData() ? normalCard.customData : card.customData;
+  return Card(
+    id: normalCard.id,
+    noteId: normalCard.noteId,
+    deckId: normalCard.deckId,
+    templateIdx: normalCard.templateIdx,
+    mtimeSecs: normalCard.mtimeSecs,
+    usn: normalCard.usn,
+    ctype: normalCard.ctype,
+    queue: normalCard.queue,
+    due: normalCard.due,
+    interval: normalCard.interval,
+    easeFactorRaw: normalCard.easeFactorRaw,
+    reps: normalCard.reps,
+    lapses: normalCard.lapses,
+    remainingStepsRaw: normalCard.remainingStepsRaw,
+    originalDue: appliesNormally ? normalCard.originalDue : normalCard.due,
+    originalDeckId: normalCard.originalDeckId,
+    flags: normalCard.flags,
+    originalPosition: normalCard.originalPosition,
+    memoryState: normalCard.memoryState,
+    desiredRetention: normalCard.desiredRetention,
+    decay: normalCard.decay,
+    lastReviewTimeSecs: normalCard.lastReviewTimeSecs,
+    customData: customData,
+  );
+}
+
+scheduler.SchedulingState_Normal _reschedulingFilteredNormal(
+  scheduler.SchedulingState state,
+) {
+  if (state.whichKind() != scheduler.SchedulingState_Kind.filtered ||
+      state.filtered.whichKind() !=
+          scheduler.SchedulingState_Filtered_Kind.rescheduling ||
+      !state.filtered.rescheduling.hasOriginalState() ||
+      state.filtered.rescheduling.originalState.whichKind() ==
+          scheduler.SchedulingState_Normal_Kind.notSet) {
+    throw ArgumentError.value(
+      state,
+      'answer.currentState',
+      'expected a filtered/rescheduling state with a supported original state',
+    );
+  }
+  return state.filtered.rescheduling.originalState;
+}
+
+scheduler.SchedulingState_Normal _reschedulingFilteredAnswerNormal(
+  scheduler.SchedulingState state,
+) {
+  if (state.whichKind() == scheduler.SchedulingState_Kind.normal) {
+    if (state.normal.whichKind() ==
+        scheduler.SchedulingState_Normal_Kind.notSet) {
+      throw ArgumentError.value(
+        state,
+        'answer.newState',
+        'expected a populated Normal or filtered/rescheduling state',
+      );
+    }
+    return state.normal;
+  }
+  if (state.whichKind() == scheduler.SchedulingState_Kind.filtered &&
+      state.filtered.whichKind() ==
+          scheduler.SchedulingState_Filtered_Kind.rescheduling &&
+      state.filtered.rescheduling.hasOriginalState() &&
+      state.filtered.rescheduling.originalState.whichKind() !=
+          scheduler.SchedulingState_Normal_Kind.notSet) {
+    return state.filtered.rescheduling.originalState;
+  }
+  throw ArgumentError.value(
+    state,
+    'answer.newState',
+    'expected a populated Normal or filtered/rescheduling state',
+  );
+}
+
+scheduler.SchedulingState _normalStateWithCustomData(
+  scheduler.SchedulingState_Normal normal,
+  scheduler.SchedulingState wrapper,
+) {
+  final state = scheduler.SchedulingState(normal: normal);
+  if (wrapper.hasCustomData()) state.customData = wrapper.customData;
+  return state;
+}
+
+CardQueue _requiredLearningQueue(CardQueue? queue) {
+  if (queue == null) {
+    throw ArgumentError.value(queue, 'learningQueue', 'is required');
+  }
+  return queue;
+}
+
+int _requiredLearningDue(int? due) {
+  if (due == null) {
+    throw ArgumentError.value(due, 'learningDue', 'is required');
+  }
+  return due;
+}
+
+int _requiredReviewDueDay(int? dueDay) {
+  if (dueDay == null) {
+    throw ArgumentError.value(dueDay, 'reviewDueDay', 'is required');
+  }
+  return dueDay;
+}

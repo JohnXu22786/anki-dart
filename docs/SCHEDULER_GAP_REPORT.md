@@ -929,9 +929,25 @@ returns the updated Card only after commit and preserves the existing undo,
 redo, and post-commit review-cache behavior. It does not resolve timing, read a
 stored Card, or access deck configuration or collection state to construct the
 snapshot or due timestamp. This closes only collection-level filtered Preview
-apply/record orchestration; caller-side timing resolution, filtered
-rescheduling execution and wrappers, app/Reviewer call-site integration,
-remaining transaction/undo work, and UI integration remain open.
+apply/record orchestration; caller-side timing resolution, collection-level
+filtered rescheduling execution and persistence, app/Reviewer call-site
+integration, remaining transaction/undo work, and UI integration remain open.
+
+### Unit 142 — apply rescheduling-filtered CardAnswer states to a Card snapshot
+
+`anki_backend_models.applyReschedulingFilteredCardAnswerState()` applies a
+generated `CardAnswer` whose current state is a filtered/rescheduling wrapper
+with a supported Normal original state. It accepts either a populated
+top-level Normal new state, which restores the original deck and clears
+filtered metadata before scheduling, or a filtered/rescheduling new state,
+which keeps the card in the filtered deck and updates `originalDue` to the
+resulting due. Existing Normal/New, Learning, Review, and Relearning snapshot
+helpers apply the scheduling values, with due values/queues and nullable
+desired retention supplied by the caller. Optional custom data is preserved
+when absent and copied when present, including an explicit empty value. This
+closes only pure Card snapshot application for generated rescheduling-filtered
+answers; collection apply/record wiring, due/timing resolution, other filtered
+execution, app/Reviewer integration, and UI remain open.
 
 ### Unit 117 — current Review state in rescheduling filtered decks
 
@@ -989,11 +1005,13 @@ app call-site wiring, and Reviewer UI remain open.
   Unit135 closes pure Normal/New Card snapshot application, Unit136 closes
   pure Normal/Learning Card snapshot application, Unit137 closes pure
   Normal/Review Card snapshot application, and Unit138 closes pure
-  Normal/Relearning Card snapshot application. Unit139 closes collection
+  Normal/Relearning Card snapshot application. Unit142 closes pure Card
+  snapshot application for generated rescheduling-filtered answers. Unit139 closes collection
   orchestration for caller-resolved Normal answers through existing apply,
   revlog derivation, persistence, and cache helpers. Due calculation and caller
-  resolution, filtered wrappers, app/Reviewer call-site integration, additional
-  transaction/undo work, and UI remain open.
+  resolution, collection-level filtered rescheduling execution and persistence,
+  app/Reviewer call-site integration, additional transaction/undo work, and UI
+  remain open.
   Unit121 does
   not close answer-state composition, Preview wrapping, or rescheduling
   execution.

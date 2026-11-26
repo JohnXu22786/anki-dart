@@ -300,3 +300,17 @@ The composed `CollectionSqliteStorage.answerCard()` deck-stat update adapts
 those writes in the existing atomic Card+Revlog answer operation. Both source
 hashes are recorded in `SOURCE.sha256` and validated by
 `tool/check_package.py`.
+
+Answer-triggered sibling bury in the composed
+`CollectionSqliteStorage.answerCard()` operation adapts Core's
+`answer_card_inner()` and sibling-selection behavior from
+`rslib/src/scheduler/answering/mod.rs`,
+`rslib/src/scheduler/bury_and_suspend.rs`,
+`rslib/src/scheduler/queue/builder/burying.rs`,
+`rslib/src/scheduler/queue/mod.rs`, `rslib/src/storage/card/mod.rs`, and
+`rslib/src/storage/card/siblings_for_bury.sql`, pinned to
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. The Dart implementation accepts
+caller-resolved home-config flags and keeps sibling Card changes in the
+existing undoable answer transaction; no upstream implementation code is
+copied. All six source hashes are recorded in `SOURCE.sha256` and validated by
+`tool/check_package.py`. Root `COPYING` remains unchanged.

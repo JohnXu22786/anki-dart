@@ -1055,6 +1055,23 @@ rows. This closes only answer-triggered deck statistics on the composed
 single-card operation; sibling bury, queue updates, config resolution,
 due/timing resolution, and app/Reviewer UI integration remain open.
 
+### Unit 150 — bury eligible siblings after a stored-card answer
+
+The composed `CollectionSqliteStorage.answerCard()` operation accepts the
+caller-resolved new-card, interday-learning, and review sibling-bury flags from
+the answered card's home/original deck config. It uses the transaction's
+expected pre-answer Card and Note ID, applies Core's gather-order exclusions
+based on the original queue, and selects only same-note New, Review, and
+DayLearn siblings other than the answered card. Eligible siblings that are
+not suspended are stored as `SchedBuried` with the answer USN and Core-compatible
+current modification seconds; all other Card fields are preserved. These
+changes commit in the existing undoable answer operation with the answered
+Card, Revlog, leech Note/tag, and deck statistics, so undo and redo cover all
+affected rows. This closes only answer-triggered sibling bury on the composed
+single-card operation; queue updates, caller-side config resolution,
+due/timing/fuzz resolution, app/Reviewer call-site integration, and UI remain
+open.
+
 ### Unit 117 — current Review state in rescheduling filtered decks
 
 `CollectionSqliteStorage.currentReschedulingFilteredReviewCardStateForNow()`

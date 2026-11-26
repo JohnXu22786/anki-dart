@@ -58,6 +58,7 @@ final _externalCollectionMutationZoneKey = Object();
 // transaction's prepare check without changing their public signatures.
 final _answerCardExpectedSnapshotZoneKey = Object();
 final _answerDeckStatsInputZoneKey = Object();
+final _answerSiblingBuryInputZoneKey = Object();
 
 final class _AnswerDeckStatsInput {
   const _AnswerDeckStatsInput({
@@ -68,6 +69,20 @@ final class _AnswerDeckStatsInput {
 
   final int daysElapsed;
   final int millisecondsTaken;
+  final int usn;
+}
+
+final class _AnswerSiblingBuryInput {
+  const _AnswerSiblingBuryInput({
+    required this.buryNew,
+    required this.buryReviews,
+    required this.buryDayLearning,
+    required this.usn,
+  });
+
+  final bool buryNew;
+  final bool buryReviews;
+  final bool buryDayLearning;
   final int usn;
 }
 
@@ -5030,6 +5045,7 @@ WHERE queue IN (-2, -3)
     Note? noteWithLeechTag;
     var registerLeechTag = false;
     List<Deck>? decksAfterAnswer;
+    var siblingsAfterAnswer = const <Card>[];
     await runUndoableCollectionOperation(
       operation: CollectionUndoOperation.answerCard,
       prepare: () async {
@@ -5050,6 +5066,31 @@ WHERE queue IN (-2, -3)
             millisecondsTaken: statsInput.millisecondsTaken,
             usn: statsInput.usn,
           );
+        }
+        final siblingBuryInput = Zone.current[_answerSiblingBuryInputZoneKey];
+        if (expectedCard is Card &&
+            siblingBuryInput is _AnswerSiblingBuryInput) {
+          final nowSecs =
+              (_nowMillis?.call() ?? DateTime.now().millisecondsSinceEpoch) ~/
+              1000;
+          siblingsAfterAnswer = [
+            for (final sibling in await allCardsOfNote(expectedCard.noteId))
+              if (sibling.id != expectedCard.id &&
+                  ((sibling.queue == CardQueue.newCard &&
+                          siblingBuryInput.buryNew) ||
+                      (sibling.queue == CardQueue.review &&
+                          siblingBuryInput.buryReviews) ||
+                      (sibling.queue == CardQueue.dayLearn &&
+                          siblingBuryInput.buryDayLearning)))
+                Card.fromProto(
+                  sibling.toProto()
+                    ..queue = CardQueue.schedBuried.value
+                    ..mtimeSecs = Int64(nowSecs)
+                    ..usn = siblingBuryInput.usn,
+                ),
+          ];
+        } else {
+          siblingsAfterAnswer = const [];
         }
         if (leechTagNoteId case final noteId?) {
           if (existingCard.noteId != noteId) {
@@ -5115,6 +5156,9 @@ WHERE queue IN (-2, -3)
           await _withExternalCollectionMutation(
             () => _deckStorage.updateDeck(deck),
           );
+        }
+        for (final sibling in siblingsAfterAnswer) {
+          await _withExternalCollectionMutation(() => _updateCardSync(sibling));
         }
       },
       onCommitted: (_) =>
@@ -5350,9 +5394,10 @@ WHERE queue IN (-2, -3)
   ///
   /// All timing and scheduling values that are not already stored on the Card
   /// are caller-resolved inputs. [capAnswerTimeToSecs] comes from the card's
-  /// home/original deck config; [suspendLeechedCards] is the caller-resolved
-  /// leech action for that config; [daysElapsed] is the caller-resolved
-  /// collection day. This method does not resolve deck config.
+  /// home/original deck config; [suspendLeechedCards] and the three sibling
+  /// bury flags are caller-resolved settings for that config; [daysElapsed] is
+  /// the caller-resolved collection day. This method does not resolve deck
+  /// config.
   /// The generated answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5364,6 +5409,9 @@ WHERE queue IN (-2, -3)
     required int millisecondsTaken,
     required int capAnswerTimeToSecs,
     required bool suspendLeechedCards,
+    required bool buryNewSiblings,
+    required bool buryInterdayLearningSiblings,
+    required bool buryReviewSiblings,
     required ReviewSchedulingContext baseContext,
     int? scheduledSecs,
     int? elapsedSecs,
@@ -5567,6 +5615,34 @@ WHERE queue IN (-2, -3)
         _answerDeckStatsInputZoneKey: _AnswerDeckStatsInput(
           daysElapsed: daysElapsed,
           millisecondsTaken: cappedAnswer.millisecondsTaken,
+          usn: usn,
+        ),
+        _answerSiblingBuryInputZoneKey: _AnswerSiblingBuryInput(
+          buryNew: buryNewSiblings,
+          buryReviews:
+              buryReviewSiblings &&
+              switch (card.queue) {
+                CardQueue.learn ||
+                CardQueue.previewRepeat ||
+                CardQueue.dayLearn ||
+                CardQueue.review => true,
+                CardQueue.newCard ||
+                CardQueue.suspended ||
+                CardQueue.schedBuried ||
+                CardQueue.userBuried => false,
+              },
+          buryDayLearning:
+              buryInterdayLearningSiblings &&
+              switch (card.queue) {
+                CardQueue.learn ||
+                CardQueue.previewRepeat ||
+                CardQueue.dayLearn => true,
+                CardQueue.newCard ||
+                CardQueue.review ||
+                CardQueue.suspended ||
+                CardQueue.schedBuried ||
+                CardQueue.userBuried => false,
+              },
           usn: usn,
         ),
       },

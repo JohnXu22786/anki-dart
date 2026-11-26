@@ -4,6 +4,7 @@ import 'package:anki_backend_protocol/anki/decks.pb.dart' as protoDeck;
 import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as protoScheduler;
 import 'package:anki_collection_sqlite/anki_collection_sqlite.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:protobuf/protobuf.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
@@ -292,9 +293,11 @@ INSERT INTO col VALUES (1700000000, '{}');
           protoScheduler.CardAnswer_Rating.GOOD,
           protoScheduler.CardAnswer_Rating.EASY,
         ]) {
+          final customData = mode == 'normal' ? '' : '學習 🦊';
           final request = await storage.cardAnswerRequestForCard(
             cardId: cardId,
             rating: rating,
+            customData: customData,
             answeredAtMillis: answeredAtMillis,
             millisecondsTaken: 0xffffffff,
             baseContext: context,
@@ -318,9 +321,25 @@ INSERT INTO col VALUES (1700000000, '{}');
             dispatched.current.toProto3Json(),
             reason: mode,
           );
+          final expectedNewState = expected.deepCopy()..customData = customData;
           expect(
             request.newState.toProto3Json(),
-            expected.toProto3Json(),
+            expectedNewState.toProto3Json(),
+            reason: '$mode $rating',
+          );
+          expect(
+            request.newState.hasCustomData(),
+            isTrue,
+            reason: '$mode $rating',
+          );
+          expect(
+            request.newState.customData,
+            customData,
+            reason: '$mode $rating',
+          );
+          expect(
+            request.currentState.hasCustomData(),
+            isFalse,
             reason: '$mode $rating',
           );
           expect(request.rating, rating, reason: mode);
@@ -348,6 +367,7 @@ INSERT INTO col VALUES (1700000000, '{}');
       }) => storage.cardAnswerRequestForCard(
         cardId: cardId ?? Int64(1),
         rating: protoScheduler.CardAnswer_Rating.GOOD,
+        customData: '',
         answeredAtMillis: Int64(12),
         millisecondsTaken: millisecondsTaken,
         baseContext: context,

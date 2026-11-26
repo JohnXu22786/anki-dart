@@ -2,6 +2,7 @@
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as proto;
 import 'package:fixnum/fixnum.dart';
+import 'package:protobuf/protobuf.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -42,21 +43,30 @@ void main() {
       };
 
       for (final entry in expected.entries) {
+        final customData =
+            entry.key == proto.CardAnswer_Rating.HARD ? '' : 'カード 🗂';
         final request = cardAnswerFromSchedulingStates(
           cardId: Int64.parseInt('9007199254740997'),
           states: states,
           rating: entry.key,
+          customData: customData,
           answeredAtMillis: Int64.parseInt('-9007199254740997'),
           millisecondsTaken: 0xffffffff,
         );
         expect(request.cardId, Int64.parseInt('9007199254740997'));
         expect(request.currentState, reschedulingFiltered);
-        expect(request.newState, entry.value);
+        final expectedNewState = entry.value.deepCopy()
+          ..customData = customData;
+        expect(request.newState, expectedNewState);
+        expect(request.newState.hasCustomData(), isTrue);
+        expect(request.newState.customData, customData);
+        expect(request.currentState.hasCustomData(), isFalse);
         expect(request.rating, entry.key);
         expect(request.answeredAtMillis, Int64.parseInt('-9007199254740997'));
         expect(request.millisecondsTaken, 0xffffffff);
         expect(identical(request.currentState, states.current), isFalse);
         expect(identical(request.newState, entry.value), isFalse);
+        expect(entry.value.hasCustomData(), isFalse);
         request.currentState.clearKind();
         request.newState.clearKind();
         expect(states.current.hasFiltered(), isTrue);
@@ -71,6 +81,7 @@ void main() {
           cardId: Int64.ONE,
           states: states,
           rating: proto.CardAnswer_Rating.AGAIN,
+          customData: '',
           answeredAtMillis: Int64.ZERO,
           millisecondsTaken: 0,
         ).millisecondsTaken,
@@ -87,6 +98,7 @@ void main() {
             cardId: Int64(1),
             states: states,
             rating: proto.CardAnswer_Rating.AGAIN,
+            customData: '',
             answeredAtMillis: Int64(0),
             millisecondsTaken: 0,
           );
@@ -101,6 +113,7 @@ void main() {
             ),
           ),
           rating: proto.CardAnswer_Rating.EASY,
+          customData: '',
           answeredAtMillis: Int64(0),
           millisecondsTaken: 0,
         ),
@@ -114,6 +127,7 @@ void main() {
             again: proto.SchedulingState(),
           ),
           rating: proto.CardAnswer_Rating.AGAIN,
+          customData: '',
           answeredAtMillis: Int64(0),
           millisecondsTaken: -1,
         ),
@@ -127,6 +141,7 @@ void main() {
             again: proto.SchedulingState(),
           ),
           rating: proto.CardAnswer_Rating.AGAIN,
+          customData: '',
           answeredAtMillis: Int64(0),
           millisecondsTaken: 0x100000000,
         ),

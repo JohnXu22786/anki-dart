@@ -5563,8 +5563,9 @@ WHERE queue IN (-2, -3)
   /// rollover duration from one collection timing snapshot. This method does
   /// not resolve deck config. Review due day and Learning/Relearning queue and
   /// due values are derived from generated next states and [answerTiming].
-  /// Intraday Learning/Relearning intervals are fuzzed from [fuzzSeed].
-  /// The generated answer is capped before applying its Card and Revlog
+  /// Intraday Learning/Relearning and unfinished filtered Preview intervals
+  /// are fuzzed from [fuzzSeed] and resolved from [answerTiming]. The generated
+  /// answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
   /// commit successfully.
@@ -5585,7 +5586,6 @@ WHERE queue IN (-2, -3)
     required int usn,
     required CollectionAnswerTiming answerTiming,
     required double? desiredRetention,
-    int? dueTimestampSecs,
     CollectionLoadBalancerContext? loadBalancerContext,
     DeckConfigId? homeDeckConfigId,
   }) async {
@@ -5739,10 +5739,20 @@ WHERE queue IN (-2, -3)
             'must contain a filtered Preview state matching current state',
           );
         }
+        final nextPreview = cappedAnswer.newState.filtered.preview;
+        final previewDueTimestampSecs = nextPreview.finished
+            ? null
+            : resolveLearningAnswerDueTimestamp(
+                fuzzedLearningSecs: fuzzLearningIntervalSecs(
+                  nextPreview.scheduledSecs,
+                  fuzzSeed,
+                ),
+                answerTiming: answerTiming,
+              );
         appliedCard = applyFilteredPreviewCardAnswerState(
           card: cardToApply,
           answer: cappedAnswer,
-          dueTimestampSecs: dueTimestampSecs,
+          dueTimestampSecs: previewDueTimestampSecs,
         );
       } else if (currentFilteredKind ==
           protoScheduler.SchedulingState_Filtered_Kind.rescheduling) {

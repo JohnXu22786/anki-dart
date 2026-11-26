@@ -1276,3 +1276,16 @@ captured answer instant. Lower-level scheduling and request APIs retain their
 explicit optional `now` inputs. This closes only the composed scheduler-time
 composition gap; scheduler elapsed/context inputs, configuration resolution,
 app/UI integration, and remaining scheduler gaps stay open.
+
+### Unit 160 — derive filtered Preview due from generated state
+
+The composed `CollectionSqliteStorage.answerCard()` no longer accepts a separate
+`dueTimestampSecs`. For unfinished filtered Preview answers, it fuzzes the
+generated Preview state's `scheduledSecs` with the existing Unit157 seeded
+Learning interval helper and resolves the due timestamp from the same
+`CollectionAnswerTiming.now` snapshot. Finished Preview answers continue to
+restore the original due without deriving or requiring a timestamp. The lower
+level apply/record APIs retain their explicit due argument. This closes only
+composed filtered Preview due-time resolution; filtered deck gathering,
+elapsed/context resolution, app/UI integration, and remaining scheduler gaps
+stay open.

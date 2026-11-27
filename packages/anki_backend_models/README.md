@@ -178,6 +178,11 @@ u32 second delays. Current state remains unfinished at zero seconds; zero-delay
 answer outcomes and Easy are finished. Collection lookup, delay configuration,
 filtered-deck search/limits, and rescheduling remain outside this pure model.
 
+`initializeFsrsTrainingModelParameters()` projects optional four-value initial
+stabilities into an immutable Float32 21-weight FSRS 5.2.0 training model
+initialization vector, optionally freezing short-term stability weights 17–19.
+It does not optimize weights or change scheduler inference defaults.
+
 `initializeFsrsStabilityParameters()` derives the four initial FSRS 5.2.0
 stabilities from caller-supplied training items and an average-recall prior. It
 keeps examples with exactly one long-term review and returns immutable values

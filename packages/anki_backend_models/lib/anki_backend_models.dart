@@ -65,3 +65,4 @@ export 'src/tag.dart';
 export 'src/fsrs_gradient_masking.dart';
 export 'src/fsrs_cosine_annealing_lr.dart';
 export 'src/fsrs_training_iteration_count.dart';
+export 'src/fsrs_best_model_selection.dart';

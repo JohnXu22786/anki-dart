@@ -61,6 +61,43 @@ void main() {
           )) {
     throw StateError('FSRS recency weighting differs on JavaScript');
   }
+  final packedBatch = packFsrsTrainingBatch([
+    WeightedFsrsTrainingItem(
+      item: const FsrsTrainingItem(
+        reviews: [
+          FsrsTrainingReview(rating: 4, deltaT: 0),
+          FsrsTrainingReview(rating: 3, deltaT: 16777219),
+          FsrsTrainingReview(rating: 1, deltaT: 16777217),
+        ],
+      ),
+      weight: 0.3,
+    ),
+    const WeightedFsrsTrainingItem(
+      item: FsrsTrainingItem(
+        reviews: [
+          FsrsTrainingReview(rating: 2, deltaT: 0),
+          FsrsTrainingReview(rating: 4, deltaT: 2),
+          FsrsTrainingReview(rating: 2, deltaT: 3),
+        ],
+      ),
+      weight: 1,
+    ),
+  ]);
+  final packingFailures = <String>[
+    if (packedBatch.timeHistories.length != 2) 'row count',
+    if (packedBatch.timeHistories[0][0] != 0) 'time row 0 item 0',
+    if (packedBatch.timeHistories[0][1] != 0) 'time row 0 item 1',
+    if (packedBatch.timeHistories[1][0] != 16777220) 'time row 1 item 0',
+    if (packedBatch.timeHistories[1][1] != 2) 'time row 1 item 1',
+    if (packedBatch.ratingHistories[0][0] != 4) 'rating row 0 item 0',
+    if (packedBatch.ratingHistories[1][1] != 4) 'rating row 1 item 1',
+    if (packedBatch.deltaTs[0] != 16777216) 'current delta',
+    if (packedBatch.labels[0] != 0 || packedBatch.labels[1] != 1) 'labels',
+    if ((packedBatch.weights[0] - 0.3).abs() > 0.0000001) 'weight',
+  ];
+  if (packingFailures.isNotEmpty) {
+    throw StateError('FSRS training batch packing differs: $packingFailures');
+  }
 
   final averageRecall = calculateAverageFsrsRecall([
     const FsrsTrainingItem(

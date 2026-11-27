@@ -1543,3 +1543,12 @@ FSRS 5.2.0's cosine annealing scheduler, including its period boundary and
 nonnegative integer record semantics. The cosine learning-rate schedule is
 available while optimizer/autodiff integration, model fitting, evaluation
 orchestration, progress, collection integration, and UI remain open.
+
+### Unit 185 — FSRS training batch packing
+
+`packFsrsTrainingBatch()` converts caller-ordered weighted FSRS training items
+into immutable, tensor-compatible values: sequence-major padded time and rating
+histories, current delta times, binary labels, and weights. It preserves item
+order and Float32 rounding. Deterministic value packing is available while
+shuffle/RNG, batch iteration, autodiff, optimizer integration/model fitting,
+evaluation orchestration, progress, collection integration, and UI remain open.

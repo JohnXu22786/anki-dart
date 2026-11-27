@@ -168,6 +168,11 @@ already ordered by review timestamp, preserves their order and associations,
 and matches Core's Float32 arithmetic. The source file hash and crate archive
 hash are recorded in `SOURCE.sha256` and `THIRD_PARTY_SOURCE.sha256`.
 
+`packFsrsTrainingBatch()` adapts `fsrs-5.2.0/src/dataset.rs::FSRSBatcher::batch()`
+to immutable, caller-ordered values with Burn-compatible sequence-major
+histories. Shuffle, data-loader iteration, and model training remain outside
+this helper; the source file digest is recorded in `SOURCE.sha256`.
+
 `EasyDay`, `parseEasyDaysPercentages()`, and
 `calculateEasyDaysModifiers()` adapt Core's easy-day classification,
 percentage parsing, and review-load normalization from

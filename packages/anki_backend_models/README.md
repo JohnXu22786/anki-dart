@@ -41,6 +41,11 @@ Pinned Anki Core source digests and license attribution are recorded in
 training items with the optimizer's FSRS 5.2.0 recency weights, preserving
 their order and Core's Float32 rounding.
 
+`packFsrsTrainingBatch()` packs caller-ordered weighted training items into
+immutable, sequence-major padded histories, current deltas, binary labels, and
+weights. It provides tensor-compatible values without batch iteration or model
+fitting.
+
 `splitFsrsTrainingItemsByTimeSeries()` creates immutable expanding-window
 training and validation folds from FSRS training items already ordered by
 review timestamp, matching FSRS 5.2.0 segment boundaries. It preserves item

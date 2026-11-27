@@ -179,3 +179,8 @@ operation order. Empty and zero-total-weight reduction edge behavior follows
 the source's NaN/zero results; retrievability endpoints are not clamped. This
 helper provides loss reduction only, not model fitting or evaluation
 orchestration.
+
+`calculateFsrsTrainingIterationCount()` projects the FSRS 5.2.0 training
+iteration count from item, batch, and epoch totals, preserving the source's
+extra batch slot for empty datasets and exact batch multiples. It does not
+perform dataloader iteration or training.

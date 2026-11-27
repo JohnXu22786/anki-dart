@@ -35,6 +35,34 @@ class WeightedFsrsTrainingItem {
   final double weight;
 }
 
+/// Calculates mean recall over each item's current (last) review.
+///
+/// A current rating greater than 1 counts as a recall, matching FSRS 5.2.0.
+/// The ratio uses Core's Float32 arithmetic. Every item must contain at least
+/// one review.
+double calculateAverageFsrsRecall(List<FsrsTrainingItem> items) {
+  if (items.isEmpty) return 0.0;
+
+  var totalRecall = 0;
+  for (var index = 0; index < items.length; index++) {
+    final reviews = items[index].reviews;
+    if (reviews.isEmpty) {
+      throw ArgumentError.value(
+        index,
+        'items',
+        'each FSRS training item must contain at least one review',
+      );
+    }
+    if (reviews.last.rating > 1) totalRecall++;
+  }
+
+  final storage = Float32List(2);
+  storage[0] = totalRecall.toDouble();
+  storage[1] = items.length.toDouble();
+  storage[0] = storage[0] / storage[1];
+  return storage[0];
+}
+
 /// Assigns FSRS 5.2.0 recency weights to caller-ordered training [items].
 ///
 /// [items] must already be sorted by review timestamp, oldest first. This

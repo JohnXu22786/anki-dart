@@ -1510,3 +1510,12 @@ result bits follow Dart's math runtime; Rust leaves `f32::powf` precision
 platform-dependent. This makes FSRS parameter clipping available while
 optimizer model fitting, time-series evaluation orchestration, progress,
 collection integration, and UI remain open.
+
+### Unit 181 — reduce FSRS weighted binary cross entropy
+
+`calculateFsrsBinaryCrossEntropy()` now ports FSRS 5.2.0's weighted BCE loss
+with Burn's Mean, Sum, and Auto reductions and source-compatible Float32
+operation order. Weighted BCE reduction is available; full model fitting,
+evaluation orchestration, progress reporting, collection integration, and UI
+remain open. This helper does not implement FSRS model fitting or evaluation
+orchestration.

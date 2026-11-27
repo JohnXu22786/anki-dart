@@ -73,3 +73,4 @@ c6c744d494a7f54d5efb8c2d5e98a74c92016c84d10773437b16414c8840cacc  rslib/src/sche
 19cf1867554b0a237d8cb89bcee05f987dbf799e9b61e7267f859057e6d5fc4e  rslib/src/scheduler/answering/preview.rs
 6aca7e9b55088f43d981eaafa8a02c5de538cf3c7e1c13640e3565de6ee4fd13  rslib/src/scheduler/filtered/card.rs
 a9aeea597aa76b57a90bf91124d4245bde91c672f60e56337460a60300795f17  rslib/src/scheduler/timing.rs
+9d69b14b82145f1c562d355dcfdcda56ec9da7b6e9da69db1c5ab4c12645214f  fsrs-5.2.0/src/training.rs

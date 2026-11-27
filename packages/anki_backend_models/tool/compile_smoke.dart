@@ -65,6 +65,17 @@ void main() {
     throw StateError('FSRS average recall differs on JavaScript');
   }
 
+  final weightedBce = calculateFsrsBinaryCrossEntropy(
+    const [0.25, 0.75, 0.4],
+    const [1.0, 0.0, 1.0],
+    const [0.5, 2.0, 1.25],
+    reduction: FsrsBceReduction.auto,
+  );
+  if (weightedBce != 1.2296264171600342) {
+    throw StateError(
+        'FSRS weighted binary cross entropy differs on JavaScript');
+  }
+
   final initializedStabilities = initializeFsrsStabilityParameters(
     const [
       FsrsTrainingItem(reviews: [

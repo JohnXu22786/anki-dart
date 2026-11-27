@@ -5759,6 +5759,13 @@ WHERE queue IN (-2, -3)
       composedAnswerContext = _answerContextWithFsrsNextStates(
         answerContext,
         fsrsNextStates,
+        clearFsrs: !fsrsEnabled,
+      );
+    } else if (!fsrsEnabled) {
+      composedAnswerContext = _answerContextWithFsrsNextStates(
+        answerContext,
+        null,
+        clearFsrs: true,
       );
     }
     final answer = await cardAnswerRequestForCard(
@@ -7764,8 +7771,9 @@ WHERE queue IN (-2, -3)
 
 ReviewSchedulingContext _answerContextWithFsrsNextStates(
   ReviewSchedulingContext context,
-  FsrsReviewNextStates? states,
-) => ReviewSchedulingContext(
+  FsrsReviewNextStates? states, {
+  bool clearFsrs = false,
+}) => ReviewSchedulingContext(
   hardMultiplier: context.hardMultiplier,
   easyMultiplier: context.easyMultiplier,
   intervalMultiplier: context.intervalMultiplier,
@@ -7776,12 +7784,14 @@ ReviewSchedulingContext _answerContextWithFsrsNextStates(
   fuzzFactor: context.fuzzFactor,
   loadBalancedIntervalResolver: context.loadBalancedIntervalResolver,
   fsrsNextStates: states,
-  fsrsParams: context.fsrsParams,
-  fsrsDesiredRetention: context.fsrsDesiredRetention,
+  fsrsParams: clearFsrs ? null : context.fsrsParams,
+  fsrsDesiredRetention: clearFsrs ? null : context.fsrsDesiredRetention,
   relearningAgainDelaySecs: context.relearningAgainDelaySecs,
   relearningRemainingSteps: context.relearningRemainingSteps,
-  fsrsAllowShortTerm: context.fsrsAllowShortTerm,
-  fsrsShortTermWithStepsEnabled: context.fsrsShortTermWithStepsEnabled,
+  fsrsAllowShortTerm: clearFsrs ? false : context.fsrsAllowShortTerm,
+  fsrsShortTermWithStepsEnabled: clearFsrs
+      ? false
+      : context.fsrsShortTermWithStepsEnabled,
   relearningStepsEmpty: context.relearningStepsEmpty,
   learningStepsMinutes: context.learningStepsMinutes,
   relearningStepsMinutes: context.relearningStepsMinutes,

@@ -26,6 +26,7 @@ export 'src/fsrs_training_batch.dart';
 export 'src/fsrs_training_batch_iterator.dart'
     show FsrsTrainingBatchIterator, FsrsTrainingBatchProgress;
 export 'src/fsrs_training_batch_shuffle.dart' show FsrsTrainingBatchShuffle;
+export 'src/fsrs_training_batch_loader.dart' show FsrsTrainingBatchLoader;
 export 'src/fsrs_training_progress.dart';
 export 'src/fsrs_time_series_split.dart';
 export 'src/fsrs_stability_initialization.dart';

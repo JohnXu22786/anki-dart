@@ -36,6 +36,7 @@ export 'src/fsrs_binary_cross_entropy.dart';
 export 'src/fsrs_training_predictions.dart';
 export 'src/fsrs_l2_regularization.dart';
 export 'src/fsrs_training_batch_objective.dart';
+export 'src/fsrs_validation_loss.dart';
 export 'src/fsrs_adam.dart';
 export 'src/review_queue.dart';
 export 'src/queue_admission.dart';

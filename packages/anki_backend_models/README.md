@@ -211,6 +211,12 @@ input order with Float32 operation order. Empty histories retain the source
 model's zero initial state. Prediction remains separate from BCE reduction,
 optimizer steps, and scheduler inference.
 
+`calculateFsrsValidationLoss()` scores caller-ordered validation batches with each
+batch's Sum BCE and training-size-scaled L2 penalty, accumulating Float32
+batch objectives in Float64 and averaging by validation item count. It is
+scoring only; shuffling, best-model selection, progress reporting, and
+parameter updates remain outside this helper.
+
 `calculateFsrsTrainingIterationCount()` projects the FSRS 5.2.0 training
 iteration count from item, batch, and epoch totals, preserving the source's
 extra batch slot for empty datasets and exact batch multiples. It does not

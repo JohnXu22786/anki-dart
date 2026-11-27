@@ -1656,3 +1656,12 @@ FSRS 5.2.0's beta values and epsilon, returning immutable parameter and moment
 snapshots. The optimizer update is available for supplied gradients; automatic
 gradient calculation, full model fitting, evaluation orchestration, collection
 integration, and UI remain open.
+
+### Unit 200 — FSRS validation loss over batches
+
+`calculateFsrsValidationLoss()` predicts retrievabilities and composes the
+Sum-reduced BCE plus L2 penalty for each caller-ordered validation batch, using
+the batch's actual item count and the training-set total size. It accumulates
+Float32 batch objectives in Float64 and divides by the total validation item
+count. Validation-loss scoring is available while model selection, full
+training orchestration, autodiff, collection integration, and UI remain open.

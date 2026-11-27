@@ -424,7 +424,9 @@ and root `COPYING` is unchanged.
 and the crate archive hash are recorded in `SOURCE.sha256` and
 `THIRD_PARTY_SOURCE.sha256`. It keeps Burn's Float32 weighted log-loss order
 and Mean, Sum, and Auto reductions, including the source's NaN behavior for
-empty Mean/Auto input and zero-total-weight Auto input. It does not implement
-model fitting or evaluation orchestration. The upstream FSRS crate is
-Copyright Open Spaced Repetition and licensed under BSD-3-Clause; see
-`LICENSES/BSD-3-Clause-FSRS.txt`.
+empty Mean/Auto input and zero-total-weight Auto input. The
+`calculateFsrsL2Regularization()` helper also adapts `Model::l2_regularization()`
+from that file, preserving Float32 tensor arithmetic and the Float64 batch
+scale. These pure loss helpers do not implement model fitting or evaluation
+orchestration. The upstream FSRS crate is Copyright Open Spaced Repetition and
+licensed under BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.

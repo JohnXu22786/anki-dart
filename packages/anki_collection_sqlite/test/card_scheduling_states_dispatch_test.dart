@@ -309,8 +309,8 @@ INSERT INTO col VALUES (1700000000, '{}');
         intervalMultiplier: 1.7,
         maximumReviewInterval: 120,
         relearningAgainDelaySecs: 600,
-        fsrsNextStates: _unit166FsrsNextStates(),
       );
+      await storage.writeCollectionConfig('fsrs', true);
       for (final type in [1, 3]) {
         final typeTiming = CollectionAnswerTiming(
           now: 1712345678 + type,
@@ -339,13 +339,37 @@ INSERT INTO col VALUES (1700000000, '{}');
           scheduledSecs: scheduledSecs,
           answerTiming: typeTiming,
         );
+        final config = _config();
+        final calculated = computeFsrsNextStates(
+          currentMemoryState: card.memoryState,
+          daysElapsed: 0,
+          desiredRetention: _normalDeck().effectiveDesiredRetention(
+            config.inner,
+          ),
+          params: config.fsrsParams,
+        );
+        FsrsReviewNextState state(FsrsCalculatedState value) =>
+            FsrsReviewNextState(
+              interval: value.interval,
+              memoryState: value.memoryState,
+            );
+        final computedContext = context.withFsrsNextStates(
+          FsrsReviewNextStates(
+            again: state(calculated.again),
+            hard: state(calculated.hard),
+            good: state(calculated.good),
+            easy: state(calculated.easy),
+          ),
+        );
         final expected = await storage.cardAnswerRequestForCard(
           cardId: card.id,
           rating: protoScheduler.CardAnswer_Rating.GOOD,
           customData: card.customData,
           answeredAtMillis: Int64(typeTiming.answeredAtMillis),
           millisecondsTaken: 300,
-          baseContext: context.withFuzzFactor(seededStdRngFuzzFactor(seed)),
+          baseContext: computedContext.withFuzzFactor(
+            seededStdRngFuzzFactor(seed),
+          ),
           scheduledSecs: scheduledSecs,
           elapsedSecs: elapsedSecs,
           loadBalancerEnabled: false,
@@ -358,7 +382,7 @@ INSERT INTO col VALUES (1700000000, '{}');
           customData: card.customData,
           answeredAtMillis: Int64(typeTiming.answeredAtMillis),
           millisecondsTaken: 300,
-          baseContext: context,
+          baseContext: computedContext,
           scheduledSecs: scheduledSecs,
           elapsedSecs: elapsedSecs,
           loadBalancerEnabled: false,
@@ -2381,6 +2405,149 @@ INSERT INTO cards VALUES
         ),
         throwsA(isA<InvalidModelValue>()),
       );
+    },
+  );
+
+  test(
+    'answerCard derives Learn FSRS outcomes from stored revlog history',
+    () async {
+      const timing = CollectionAnswerTiming(
+        now: 1712345678,
+        daysElapsed: 6,
+        nextDayAt: 1712347478,
+        secsUntilDayRollover: 1800,
+      );
+      final config = _config()
+        ..inner.learnSteps.clear()
+        ..inner.desiredRetention = 0.87;
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+      await storage.writeCollectionConfig('fsrs', true);
+      await storage.executeBatch(
+        "UPDATE cards SET type = 1, queue = 1, left = 2, data = '{}' WHERE id = 1",
+      );
+      const revlogId = 1711300000000;
+      await storage.executeBatch(
+        'INSERT INTO revlog VALUES ($revlogId, 1, 0, 3, 30, 10, 2500, 300, 1)',
+      );
+      final before = (await storage.getCard(Int64.ONE))!;
+      final revlogs = storage.revlog.getRevlogEntriesForCard(Int64.ONE);
+      final memory = computeFsrsMemoryState(
+        revlogs: revlogs,
+        nextDayAt: TimestampSecs(timing.nextDayAt),
+        params: config.fsrsParams,
+        historicalRetention: config.inner.historicalRetention,
+        ignoreRevlogsBefore: Int64.ZERO,
+      );
+      final expected = computeFsrsNextStates(
+        currentMemoryState: memory,
+        daysElapsed: 12,
+        desiredRetention: 0.87,
+        params: config.fsrsParams,
+      ).good.memoryState;
+
+      final answered = await storage.answerCard(
+        cardId: before.id,
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        millisecondsTaken: 250,
+        baseContext: ReviewSchedulingContext(
+          fuzzFactor: 0,
+          fsrsNextStates: _unit166FsrsNextStates(),
+        ),
+        loadBalancerEnabled: false,
+        answerTiming: timing,
+      );
+
+      expect(answered.memoryState, isNotNull);
+      expect(
+        answered.memoryState!.stability,
+        closeTo(expected.stability, 1e-6),
+      );
+      expect(
+        answered.memoryState!.difficulty,
+        closeTo(expected.difficulty, 1e-6),
+      );
+      expect(answered.interval, isNot(40));
+      expect(storage.revlog.getRevlogEntriesForCard(Int64.ONE), hasLength(2));
+    },
+  );
+
+  test(
+    'answerCard derives Relearn FSRS outcomes from stored memory state',
+    () async {
+      const timing = CollectionAnswerTiming(
+        now: 1712345678,
+        daysElapsed: 6,
+        nextDayAt: 1712347478,
+        secsUntilDayRollover: 1800,
+      );
+      final config = _config()
+        ..inner.relearnSteps.clear()
+        ..inner.desiredRetention = 0.83;
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+      await storage.writeCollectionConfig('fsrs', true);
+      await storage.executeBatch(
+        'UPDATE cards SET type = 3, queue = 3, left = 2 WHERE id = 1',
+      );
+      final before = (await storage.getCard(Int64.ONE))!;
+      final expected = computeFsrsNextStates(
+        currentMemoryState: before.memoryState,
+        daysElapsed: 0,
+        desiredRetention: 0.83,
+        params: config.fsrsParams,
+      ).good.memoryState;
+
+      final answered = await storage.answerCard(
+        cardId: before.id,
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        millisecondsTaken: 250,
+        baseContext: ReviewSchedulingContext(
+          fuzzFactor: 0,
+          fsrsNextStates: _unit166FsrsNextStates(),
+        ),
+        loadBalancerEnabled: false,
+        answerTiming: timing,
+      );
+
+      expect(answered.memoryState, isNotNull);
+      expect(
+        answered.memoryState!.stability,
+        closeTo(expected.stability, 1e-6),
+      );
+      expect(
+        answered.memoryState!.difficulty,
+        closeTo(expected.difficulty, 1e-6),
+      );
+      expect(answered.interval, isNot(40));
+    },
+  );
+
+  test(
+    'answerCard ignores stale caller FSRS outcomes when FSRS is disabled',
+    () async {
+      final config = _config()..inner.learnSteps.clear();
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+      await storage.executeBatch(
+        "UPDATE cards SET type = 1, queue = 1, left = 2, data = '{}' WHERE id = 1",
+      );
+
+      final answered = await storage.answerCard(
+        cardId: Int64.ONE,
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        millisecondsTaken: 250,
+        baseContext: ReviewSchedulingContext(
+          fuzzFactor: 0,
+          fsrsNextStates: _unit166FsrsNextStates(),
+        ),
+        loadBalancerEnabled: false,
+        answerTiming: _answerTiming(
+          daysElapsed: 6,
+          secsUntilDayRollover: 1800,
+          answeredAtMillis: 1712345683000,
+        ),
+      );
+
+      expect(answered.interval, config.inner.graduatingIntervalGood);
+      expect(answered.memoryState, isNull);
     },
   );
 

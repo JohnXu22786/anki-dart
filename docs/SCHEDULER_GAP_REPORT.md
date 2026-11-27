@@ -1612,3 +1612,11 @@ datasets and exact batch multiples. Training iteration-count calculation is
 available while actual training/dataloader iteration and progress updates,
 autodiff, optimizer/model fitting, evaluation orchestration, collection
 integration, and UI remain open.
+
+### Unit 193 — FSRS training batch permutation retrieval
+
+`orderFsrsTrainingBatchesByIndices()` returns immutable existing batch values
+in a validated complete permutation of their indexes, preserving batch
+identity. Permutation-index batch retrieval is available while full dataloader
+iteration/progress, tensor autodiff, optimizer/model fitting, evaluation
+orchestration, collection integration, and UI remain open.

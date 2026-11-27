@@ -119,7 +119,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
         answerTiming: timing,
       );
 
@@ -166,7 +165,6 @@ INSERT INTO col VALUES (1700000000, '{}');
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: true,
-      usn: 8,
       answerTiming: timing,
     );
 
@@ -230,7 +228,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
         answerTiming: timing,
       );
 
@@ -314,7 +311,6 @@ INSERT INTO col VALUES (1700000000, '{}');
           millisecondsTaken: 300,
           baseContext: context,
           loadBalancerEnabled: false,
-          usn: 8,
           answerTiming: typeTiming,
         );
         expect(
@@ -630,7 +626,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 2500,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
         answerTiming: _answerTiming(
           daysElapsed: 6,
           secsUntilDayRollover: 1800,
@@ -668,7 +663,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 65000,
         baseContext: const ReviewSchedulingContext(fuzzFactor: 0),
         loadBalancerEnabled: false,
-        usn: 8,
         answerTiming: _answerTiming(
           daysElapsed: 6,
           secsUntilDayRollover: 1800,
@@ -1094,7 +1088,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         ),
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
 
       expect(
@@ -1109,7 +1102,7 @@ INSERT INTO col VALUES (1700000000, '{}');
         expect(deck.common.reviewStudied, 0);
         expect(deck.common.millisecondsStudied, 1000);
         expect(deck.mtimeSecs, Int64(1712345678));
-        expect(deck.usn, 8);
+        expect(deck.usn, -1);
       }
       expect(
         storage.collectionUndoChanges.map((change) => change.kind),
@@ -1188,7 +1181,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
           baseContext: context,
           loadBalancerEnabled: false,
-          usn: 8,
         );
         final deck = storage.decks.getDeck(Int64(7))!;
         expect(
@@ -1223,7 +1215,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
       final rolledOver = storage.decks.getDeck(Int64(7))!;
       expect(rolledOver.common.lastDayStudied, 7);
@@ -1253,7 +1244,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
       expect(
         storage.decks.getDeck(Int64(7))!.common.millisecondsStudied,
@@ -1295,7 +1285,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
       expect(storage.decks.getDeck(Int64(7))!.common.reviewStudied, 1);
       expect(storage.decks.getDeck(Int64(7))!.common.millisecondsStudied, 250);
@@ -1338,7 +1327,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
           baseContext: context,
           loadBalancerEnabled: false,
-          usn: 8,
         );
         expect(
           storage.revlog.getRevlogEntry(RevlogId(answerId))!.takenMillis,
@@ -1370,7 +1358,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
     );
     expect(
       storage.revlog.getRevlogEntry(RevlogId(previewAnswerId))!.takenMillis,
@@ -1399,7 +1386,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
     );
     expect(
       storage.revlog
@@ -1440,7 +1426,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 850,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 7,
       );
 
       expect(applied.customData, 'stored 🦊');
@@ -1461,6 +1446,41 @@ INSERT INTO col VALUES (1700000000, '{}');
     await storage.redoLastCollectionOperation();
     expect((await storage.getCard(Int64(1)))!.toProto(), committed.toProto());
     expect(storage.revlog.getRevlogEntry(lastRevlog), isNotNull);
+  });
+
+  test('answerCard uses client USN for normal answer mutations', () async {
+    const answerMillis = 1712345680123;
+    await storage.executeBatch('''
+ALTER TABLE col ADD COLUMN usn INTEGER NOT NULL DEFAULT 42;
+UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0 WHERE id = 1;
+INSERT INTO cards VALUES
+ (2, 100, 7, 1, 11, 1, 0, 0, 22, 31, 2400, 9, 2, 1, 0, 0, 3, 'sibling');
+''');
+    storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+      _config()..inner.buryNew = true,
+    );
+    storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+
+    await storage.answerCard(
+      cardId: Int64.ONE,
+      rating: protoScheduler.CardAnswer_Rating.GOOD,
+      millisecondsTaken: 300,
+      baseContext: const ReviewSchedulingContext(fuzzFactor: 0),
+      loadBalancerEnabled: false,
+      answerTiming: _answerTiming(
+        daysElapsed: 6,
+        secsUntilDayRollover: 1800,
+        answeredAtMillis: answerMillis,
+      ),
+    );
+
+    expect((await storage.getCard(Int64.ONE))!.usn, -1);
+    expect((await storage.getCard(Int64(2)))!.usn, -1);
+    expect(database.select('SELECT usn FROM revlog'), [
+      {'usn': -1},
+    ]);
+    expect(storage.decks.getDeck(Int64(7))!.usn, -1);
+    expect(storage.decks.getDeck(Int64(7))!.common.reviewStudied, 1);
   });
 
   test(
@@ -1523,7 +1543,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
             millisecondsTaken: 300,
             baseContext: context,
             loadBalancerEnabled: false,
-            usn: 19,
           );
           expect(
             (await storage.getCard(Int64(1)))!.queue,
@@ -1554,12 +1573,12 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
               reason: 'answered=$answeredQueue mask=$mask sibling=$id',
             );
             if (expectedBuried.contains(id)) {
-              expect(actual.usn, 19);
+              expect(actual.usn, -1);
               expect(actual.mtimeSecs, Int64(1712345678));
               final expected = Card.fromProto(
                 original.toProto()
                   ..queue = CardQueue.schedBuried.value
-                  ..usn = 19
+                  ..usn = -1
                   ..mtimeSecs = Int64(1712345678),
               );
               expect(
@@ -1610,7 +1629,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
     );
     expect(normal.lastReviewTimeSecs, Int64(normalAnswerTime ~/ 1000));
     expect(
@@ -1651,7 +1669,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
     );
     expect(rescheduled.lastReviewTimeSecs, Int64(rescheduleAnswerTime ~/ 1000));
     expect(
@@ -1682,7 +1699,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
     );
     expect(preview.queue, CardQueue.previewRepeat);
     expect(
@@ -1716,6 +1732,9 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
         ..inner.buryReviews = true,
     );
     await storage.executeBatch(
+      'ALTER TABLE col ADD COLUMN usn INTEGER NOT NULL DEFAULT 42',
+    );
+    await storage.executeBatch(
       'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 0, lapses = 7 WHERE id = 1',
     );
     await storage.executeBatch('''
@@ -1732,7 +1751,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
         secsUntilDayRollover: 1800,
@@ -1752,11 +1770,11 @@ INSERT INTO cards VALUES
       'leech',
     ], reason: 'a leeched answer adds the Core leech tag');
     expect(database.select('SELECT tag, usn, collapsed FROM tags'), [
-      {'tag': 'leech', 'usn': 8, 'collapsed': 1},
+      {'tag': 'leech', 'usn': -1, 'collapsed': 1},
     ]);
     expect(
       database.select('SELECT mod, usn FROM notes WHERE id = 100').single,
-      {'mod': 1712345678, 'usn': 8},
+      {'mod': 1712345678, 'usn': -1},
     );
     expect(
       storage.collectionUndoChanges.map((change) => change.kind),
@@ -1812,7 +1830,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
         secsUntilDayRollover: 1800,
@@ -1822,7 +1839,7 @@ INSERT INTO cards VALUES
     expect(unsuspended.queue, CardQueue.learn);
     expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
     expect(database.select('SELECT tag, usn FROM tags'), [
-      {'tag': 'leech', 'usn': 8},
+      {'tag': 'leech', 'usn': -1},
     ]);
 
     await storage.executeBatch(
@@ -1838,7 +1855,6 @@ INSERT INTO cards VALUES
         relearningAgainDelaySecs: 600,
       ),
       loadBalancerEnabled: false,
-      usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
         secsUntilDayRollover: 1800,
@@ -1867,7 +1883,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
         secsUntilDayRollover: 1800,
@@ -1888,7 +1903,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
         secsUntilDayRollover: 1800,
@@ -1919,7 +1933,6 @@ INSERT INTO cards VALUES
 
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
       expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
       expect(database.select('SELECT * FROM tags'), isEmpty);
@@ -1940,7 +1953,6 @@ INSERT INTO cards VALUES
 
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
       expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
       expect(database.select('SELECT * FROM tags'), isEmpty);
@@ -1978,7 +1990,6 @@ INSERT INTO cards VALUES
 
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
 
       expect((await storage.getNote(Int64(100)))!.tags, [
@@ -2019,7 +2030,6 @@ INSERT INTO cards VALUES
 
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 9,
       );
       expect((await storage.getNote(Int64(100)))!.tags, [
         'alpha',
@@ -2100,7 +2110,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
 
       database.execute('UPDATE cards SET due = 18 WHERE id = 1');
@@ -2157,7 +2166,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
     );
     await Future<void>.delayed(Duration.zero);
     allowOperationToFinish.complete();
@@ -2207,7 +2215,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
       expect(finishedPreview.queue, CardQueue.newCard);
       expect(finishedPreview.due, 17);
@@ -2231,7 +2238,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
       expect(preview.queue, CardQueue.previewRepeat);
       expect(
@@ -2280,7 +2286,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       );
       expect(rescheduling.deckId, Int64(7));
       expect(rescheduling.queue, CardQueue.learn);
@@ -2307,7 +2312,6 @@ INSERT INTO cards VALUES
           millisecondsTaken: 300,
           baseContext: context,
           loadBalancerEnabled: false,
-          usn: 8,
         ),
         throwsA(isA<InvalidModelValue>()),
       );
@@ -2370,7 +2374,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
       ),
       throwsStateError,
     );
@@ -2391,7 +2394,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        usn: 8,
         loadBalancerContext: loadBalancerContext,
       ),
       throwsStateError,
@@ -2414,7 +2416,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      usn: 8,
       loadBalancerContext: loadBalancerContext,
     );
     expect((await storage.getCard(Int64(20)))!.queue, CardQueue.schedBuried);
@@ -2445,7 +2446,6 @@ INSERT INTO cards VALUES
           millisecondsTaken: 300,
           baseContext: context,
           loadBalancerEnabled: false,
-          usn: 8,
           answerTiming: CollectionAnswerTiming(
             now: (answerTiming ?? timing).now,
             answeredAtMillis: answerAtMillis++,
@@ -2604,7 +2604,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: const ReviewSchedulingContext(fuzzFactor: 0),
         loadBalancerEnabled: false,
-        usn: 8,
         answerTiming: CollectionAnswerTiming(
           now: answerMillis ~/ 1000,
           answeredAtMillis: answerMillis,
@@ -2815,7 +2814,6 @@ Future<Card> _answerStoredCard(
   millisecondsTaken: 250,
   baseContext: const ReviewSchedulingContext(fuzzFactor: 0),
   loadBalancerEnabled: false,
-  usn: 8,
   answerTiming: _answerTiming(
     daysElapsed: 6,
     secsUntilDayRollover: 1800,

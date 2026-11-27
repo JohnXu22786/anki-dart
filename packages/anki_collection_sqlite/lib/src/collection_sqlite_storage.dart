@@ -5646,10 +5646,10 @@ WHERE queue IN (-2, -3)
     required int millisecondsTaken,
     required ReviewSchedulingContext baseContext,
     required bool loadBalancerEnabled,
-    required int usn,
     required CollectionAnswerTiming answerTiming,
     CollectionLoadBalancerContext? loadBalancerContext,
   }) async {
+    const answerUsn = -1;
     _requiredUnsigned(answerTiming.daysElapsed, 32, 'daysElapsed');
     _requiredUnsigned(
       answerTiming.secsUntilDayRollover,
@@ -5899,10 +5899,11 @@ WHERE queue IN (-2, -3)
         appliedCard.toProto()..queue = CardQueue.suspended.value,
       );
     }
+    appliedCard = Card.fromProto(appliedCard.toProto()..usn = answerUsn);
 
     final revlog = revlogEntryFromCardAnswer(
       answer: cappedAnswer,
-      usn: usn,
+      usn: answerUsn,
       secsUntilDayRollover: answerTiming.secsUntilDayRollover,
     );
     final newStateIsLeeched =
@@ -5913,7 +5914,7 @@ WHERE queue IN (-2, -3)
         card: appliedCard,
         revlog: revlog,
         leechTagNoteId: newStateIsLeeched ? card.noteId : null,
-        leechTagUsn: newStateIsLeeched ? usn : null,
+        leechTagUsn: newStateIsLeeched ? answerUsn : null,
         loadBalancerContext: loadBalancerContext,
         homeDeckConfigId: homeDeckConfig.id,
       ),
@@ -5922,7 +5923,7 @@ WHERE queue IN (-2, -3)
         _answerDeckStatsInputZoneKey: _AnswerDeckStatsInput(
           daysElapsed: answerTiming.daysElapsed,
           millisecondsTaken: cappedAnswer.millisecondsTaken,
-          usn: usn,
+          usn: answerUsn,
         ),
         _answerSiblingBuryInputZoneKey: _AnswerSiblingBuryInput(
           buryNew: buryNewSiblings,
@@ -5950,7 +5951,7 @@ WHERE queue IN (-2, -3)
                 CardQueue.schedBuried ||
                 CardQueue.userBuried => false,
               },
-          usn: usn,
+          usn: answerUsn,
         ),
       },
     );

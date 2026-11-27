@@ -30,6 +30,25 @@ void main() {
       fsrsTrainingData.trainingItems.length != 1) {
     throw StateError('FSRS training dataset preparation differs on JavaScript');
   }
+  final smokeItems = [
+    ...fsrsTrainingData.trainingItems,
+    for (var index = 0; index < 3; index++) const FsrsTrainingItem(reviews: []),
+  ];
+  final weightedTrainingItems = weightFsrsTrainingItemsByRecency(smokeItems);
+  const expectedWeights = [
+    0.25,
+    0.2777777910232544,
+    0.472222238779068,
+    1.0,
+  ];
+  if (weightedTrainingItems.length != expectedWeights.length ||
+      weightedTrainingItems.asMap().entries.any(
+            (entry) =>
+                entry.value.item != smokeItems[entry.key] ||
+                entry.value.weight != expectedWeights[entry.key],
+          )) {
+    throw StateError('FSRS recency weighting differs on JavaScript');
+  }
 
   if (fuzzLearningIntervalSecs(1200, BigInt.from(58205158)) != 1473) {
     throw StateError('seeded Learning fuzz differs on JavaScript');

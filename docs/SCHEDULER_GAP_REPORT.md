@@ -1468,3 +1468,11 @@ filtering and returns the non-initialization partition as the optimizer set.
 This closes dataset preparation only. Recency
 weighting/time-series validation, optimizer model fitting, progress reporting,
 and collection persistence/UI remain open.
+
+### Unit 176 — weight FSRS training items by recency
+
+`weightFsrsTrainingItemsByRecency()` now applies FSRS 5.2.0's recency weights
+to caller-supplied training items already ordered by review timestamp. It keeps
+item order and identity and matches Core's Float32 formula. Time-series
+validation splits, optimizer model fitting, progress reporting, collection
+orchestration, and UI remain open.

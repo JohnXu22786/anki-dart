@@ -37,6 +37,10 @@ only the in-memory day buckets, matching Core's cache bookkeeping.
 Pinned Anki Core source digests and license attribution are recorded in
 `SOURCE.sha256` and `NOTICE.md`.
 
+`weightFsrsTrainingItemsByRecency()` pairs already timestamp-ordered FSRS
+training items with the optimizer's FSRS 5.2.0 recency weights, preserving
+their order and Core's Float32 rounding.
+
 `ReviewSchedulingContext.loadBalancedIntervalResolver` accepts a
 `ReviewLoadBalancerIntervalResolver` for review intervals after Core's
 multipliers and bounds are applied. A null decision falls back to ordinary

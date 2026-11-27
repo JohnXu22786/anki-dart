@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import 'package:fixnum/fixnum.dart';
+import 'dart:math' as math;
+import 'dart:typed_data';
 
+import 'package:fixnum/fixnum.dart';
 import 'ids.dart';
 import 'revlog.dart';
 
@@ -20,6 +22,45 @@ class FsrsTrainingItem {
   const FsrsTrainingItem({required this.reviews});
 
   final List<FsrsTrainingReview> reviews;
+}
+
+/// An FSRS training item paired with its optimizer recency weight.
+class WeightedFsrsTrainingItem {
+  const WeightedFsrsTrainingItem({required this.item, required this.weight});
+
+  /// The original training item instance.
+  final FsrsTrainingItem item;
+
+  /// The item's recency weight, rounded with FSRS Core's Float32 arithmetic.
+  final double weight;
+}
+
+/// Assigns FSRS 5.2.0 recency weights to caller-ordered training [items].
+///
+/// [items] must already be sorted by review timestamp, oldest first. This
+/// projection preserves their order and does not inspect timestamps.
+List<WeightedFsrsTrainingItem> weightFsrsTrainingItemsByRecency(
+  List<FsrsTrainingItem> items,
+) {
+  final storage = Float32List(1);
+  double f32(double value) {
+    storage[0] = value;
+    return storage[0];
+  }
+
+  final length = math.max(f32(f32(items.length.toDouble()) - 1.0), 1.0);
+  final weightedItems = <WeightedFsrsTrainingItem>[];
+  for (var index = 0; index < items.length; index++) {
+    final position = f32(index.toDouble());
+    final ratio = f32(position / length);
+    final cube = f32(f32(ratio * ratio) * ratio);
+    final scaledCube = f32(0.75 * cube);
+    final weight = f32(0.25 + scaledCube);
+    weightedItems.add(
+      WeightedFsrsTrainingItem(item: items[index], weight: weight),
+    );
+  }
+  return List.unmodifiable(weightedItems);
 }
 
 /// Initialization examples and the optimizer's training examples.

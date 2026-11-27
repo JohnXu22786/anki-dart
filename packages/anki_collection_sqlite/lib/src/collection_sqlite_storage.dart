@@ -5709,9 +5709,10 @@ WHERE queue IN (-2, -3)
     );
     final home = _homeDeckAndConfigForCard(card);
     final homeDeckConfig = home.config;
-    final answerContext = baseContext
-        .withDeckConfig(homeDeckConfig)
-        .withFuzzFactor(seededStdRngFuzzFactor(fuzzSeed));
+    final answerContext = _answerContextWithRelearningAgainSettings(
+      baseContext.withDeckConfig(homeDeckConfig),
+      homeDeckConfig,
+    ).withFuzzFactor(seededStdRngFuzzFactor(fuzzSeed));
     final config = homeDeckConfig.inner;
     final fsrsEnabled = readCollectionConfig('fsrs') == true;
     final desiredRetention = fsrsEnabled
@@ -7798,6 +7799,43 @@ ReviewSchedulingContext _answerContextWithFsrsNextStates(
   graduatingIntervalGood: context.graduatingIntervalGood,
   graduatingIntervalEasy: context.graduatingIntervalEasy,
 );
+
+ReviewSchedulingContext _answerContextWithRelearningAgainSettings(
+  ReviewSchedulingContext context,
+  DeckConfig config,
+) {
+  final steps = config.inner.relearnSteps;
+  return ReviewSchedulingContext(
+    hardMultiplier: context.hardMultiplier,
+    easyMultiplier: context.easyMultiplier,
+    intervalMultiplier: context.intervalMultiplier,
+    maximumReviewInterval: context.maximumReviewInterval,
+    leechThreshold: context.leechThreshold,
+    lapseMultiplier: context.lapseMultiplier,
+    minimumLapseInterval: context.minimumLapseInterval,
+    fuzzFactor: context.fuzzFactor,
+    loadBalancedIntervalResolver: context.loadBalancedIntervalResolver,
+    fsrsNextStates: context.fsrsNextStates,
+    fsrsParams: context.fsrsParams,
+    fsrsDesiredRetention: context.fsrsDesiredRetention,
+    relearningAgainDelaySecs: steps.isEmpty
+        ? null
+        : _learningStepMinutesToSecs(steps.first),
+    relearningRemainingSteps: steps.length,
+    fsrsAllowShortTerm: context.fsrsAllowShortTerm,
+    fsrsShortTermWithStepsEnabled: context.fsrsShortTermWithStepsEnabled,
+    relearningStepsEmpty: context.relearningStepsEmpty,
+    learningStepsMinutes: context.learningStepsMinutes,
+    relearningStepsMinutes: context.relearningStepsMinutes,
+    graduatingIntervalGood: context.graduatingIntervalGood,
+    graduatingIntervalEasy: context.graduatingIntervalEasy,
+  );
+}
+
+int _learningStepMinutesToSecs(double minutes) {
+  final seconds = Float32List(1)..[0] = minutes * 60.0;
+  return seconds[0].toInt();
+}
 
 Int64 _ignoreRevlogsBefore(DeckConfig config) {
   final value = config.inner.ignoreRevlogsBeforeDate;

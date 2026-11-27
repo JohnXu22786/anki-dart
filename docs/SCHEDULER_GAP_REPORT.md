@@ -1412,3 +1412,16 @@ answers. Non-FSRS context fields remain intact, FSRS-enabled per-path behavior
 is unchanged, and lower-level explicit-context APIs retain their contracts.
 This closes only composed answer FSRS-context gating; UI/call-site wiring and
 remaining scheduler gaps stay open.
+
+### Unit 171 — derive Review Again Relearning inputs from the home config
+
+The composed `CollectionSqliteStorage.answerCard()` path now derives a
+Review card's Again-to-Relearning delay and remaining-step input from the
+stored Card's resolved home DeckConfig. The first configured Relearning step
+sets the delay in seconds using Core's Float32 conversion, empty steps clear a
+conflicting caller delay, and the remaining-step input follows Core's
+`remaining_for_failed()` count. Normal and rescheduling-filtered Review cards
+use their resolved home config. Other context values, FSRS behavior, and
+lower-level explicit-context APIs remain unchanged. This closes only composed
+Review Again Relearning input derivation; UI/call-site wiring and remaining
+scheduler gaps stay open.

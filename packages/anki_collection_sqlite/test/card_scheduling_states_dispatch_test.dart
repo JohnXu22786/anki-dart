@@ -173,134 +173,55 @@ INSERT INTO col VALUES (1700000000, '{}');
     expect(answered.interval, expected.newState.normal.review.scheduledDays);
   });
 
-  test('composed Review answer overrides caller fuzz and preserves context', () async {
-    await storage.executeBatch(
-      'UPDATE cards SET type = 2, queue = 2, did = 40, odid = 0 WHERE id = 1',
-    );
-    final card = (await storage.getCard(Int64.ONE))!;
-    final seed = answerFuzzSeedForCardIdAndReps(
-      cardId: BigInt.parse(card.id.toString()),
-      reps: card.reps,
-    );
-    const context = ReviewSchedulingContext(
-      fuzzFactor: 0.99,
-      intervalMultiplier: 1.7,
-      maximumReviewInterval: 120,
-      relearningAgainDelaySecs: 600,
-    );
-    const timing = CollectionAnswerTiming(
-      now: 1712345678,
-      answeredAtMillis: 1712345679000,
-      daysElapsed: 6,
-      nextDayAt: 1712347478,
-      secsUntilDayRollover: 1800,
-    );
-    final expected = await storage.cardAnswerRequestForCard(
-      cardId: card.id,
-      rating: protoScheduler.CardAnswer_Rating.GOOD,
-      customData: card.customData,
-      answeredAtMillis: Int64(timing.answeredAtMillis),
-      millisecondsTaken: 300,
-      baseContext: context.withFuzzFactor(seededStdRngFuzzFactor(seed)),
-      loadBalancerEnabled: false,
-      fuzzSeed: seed,
-      now: DateTime.fromMillisecondsSinceEpoch(timing.answeredAtMillis),
-    );
-    final callerContextResult = await storage.cardAnswerRequestForCard(
-      cardId: card.id,
-      rating: protoScheduler.CardAnswer_Rating.GOOD,
-      customData: card.customData,
-      answeredAtMillis: Int64(timing.answeredAtMillis),
-      millisecondsTaken: 300,
-      baseContext: context,
-      loadBalancerEnabled: false,
-      fuzzSeed: seed,
-      now: DateTime.fromMillisecondsSinceEpoch(timing.answeredAtMillis),
-    );
-    expect(
-      expected.newState.normal.review.scheduledDays,
-      isNot(callerContextResult.newState.normal.review.scheduledDays),
-    );
-
-    final answered = await storage.answerCard(
-      cardId: card.id,
-      rating: protoScheduler.CardAnswer_Rating.GOOD,
-      millisecondsTaken: 300,
-      baseContext: context,
-      loadBalancerEnabled: false,
-      usn: 8,
-      answerTiming: timing,
-    );
-
-    expect(answered.interval, expected.newState.normal.review.scheduledDays);
-  });
-
-  test('composed Learning and Relearning transitions override fuzz factor', () async {
-    final context = ReviewSchedulingContext(
-      fuzzFactor: 0,
-      intervalMultiplier: 1.7,
-      maximumReviewInterval: 120,
-      relearningAgainDelaySecs: 600,
-      fsrsNextStates: _unit166FsrsNextStates(),
-    );
-    for (final type in [1, 3]) {
-      final typeTiming = CollectionAnswerTiming(
-        now: 1712345678 + type,
-        answeredAtMillis: 1712345679000 + type * 1000,
-        daysElapsed: 6,
-        nextDayAt: 1712347478,
-        secsUntilDayRollover: 1800,
-      );
+  test(
+    'composed Review answer overrides caller fuzz and preserves context',
+    () async {
       await storage.executeBatch(
-        'UPDATE cards SET type = $type, queue = $type, left = 1, did = 40, odid = 0 WHERE id = 1',
+        'UPDATE cards SET type = 2, queue = 2, did = 40, odid = 0 WHERE id = 1',
       );
       final card = (await storage.getCard(Int64.ONE))!;
       final seed = answerFuzzSeedForCardIdAndReps(
         cardId: BigInt.parse(card.id.toString()),
         reps: card.reps,
       );
-      final steps = type == 1
-          ? _config().inner.learnSteps
-          : _config().inner.relearnSteps;
-      final scheduledSecs = resolveCurrentLearningStepDelaySecs(
-        steps: steps,
-        remainingSteps: card.remainingSteps,
+      const context = ReviewSchedulingContext(
+        fuzzFactor: 0.99,
+        intervalMultiplier: 1.7,
+        maximumReviewInterval: 120,
+        relearningAgainDelaySecs: 600,
       );
-      final elapsedSecs = resolveLearningAnswerElapsedSecs(
-        card: card,
-        scheduledSecs: scheduledSecs,
-        answerTiming: typeTiming,
+      const timing = CollectionAnswerTiming(
+        now: 1712345678,
+        answeredAtMillis: 1712345679000,
+        daysElapsed: 6,
+        nextDayAt: 1712347478,
+        secsUntilDayRollover: 1800,
       );
       final expected = await storage.cardAnswerRequestForCard(
         cardId: card.id,
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         customData: card.customData,
-        answeredAtMillis: Int64(typeTiming.answeredAtMillis),
+        answeredAtMillis: Int64(timing.answeredAtMillis),
         millisecondsTaken: 300,
         baseContext: context.withFuzzFactor(seededStdRngFuzzFactor(seed)),
-        scheduledSecs: scheduledSecs,
-        elapsedSecs: elapsedSecs,
         loadBalancerEnabled: false,
         fuzzSeed: seed,
-        now: DateTime.fromMillisecondsSinceEpoch(typeTiming.answeredAtMillis),
+        now: DateTime.fromMillisecondsSinceEpoch(timing.answeredAtMillis),
       );
       final callerContextResult = await storage.cardAnswerRequestForCard(
         cardId: card.id,
         rating: protoScheduler.CardAnswer_Rating.GOOD,
         customData: card.customData,
-        answeredAtMillis: Int64(typeTiming.answeredAtMillis),
+        answeredAtMillis: Int64(timing.answeredAtMillis),
         millisecondsTaken: 300,
         baseContext: context,
-        scheduledSecs: scheduledSecs,
-        elapsedSecs: elapsedSecs,
         loadBalancerEnabled: false,
         fuzzSeed: seed,
-        now: DateTime.fromMillisecondsSinceEpoch(typeTiming.answeredAtMillis),
+        now: DateTime.fromMillisecondsSinceEpoch(timing.answeredAtMillis),
       );
       expect(
         expected.newState.normal.review.scheduledDays,
         isNot(callerContextResult.newState.normal.review.scheduledDays),
-        reason: 'type $type',
       );
 
       final answered = await storage.answerCard(
@@ -310,15 +231,100 @@ INSERT INTO col VALUES (1700000000, '{}');
         baseContext: context,
         loadBalancerEnabled: false,
         usn: 8,
-        answerTiming: typeTiming,
+        answerTiming: timing,
       );
-      expect(
-        answered.interval,
-        expected.newState.normal.review.scheduledDays,
-        reason: 'type $type',
+
+      expect(answered.interval, expected.newState.normal.review.scheduledDays);
+    },
+  );
+
+  test(
+    'composed Learning and Relearning transitions override fuzz factor',
+    () async {
+      final context = ReviewSchedulingContext(
+        fuzzFactor: 0,
+        intervalMultiplier: 1.7,
+        maximumReviewInterval: 120,
+        relearningAgainDelaySecs: 600,
+        fsrsNextStates: _unit166FsrsNextStates(),
       );
-    }
-  });
+      for (final type in [1, 3]) {
+        final typeTiming = CollectionAnswerTiming(
+          now: 1712345678 + type,
+          answeredAtMillis: 1712345679000 + type * 1000,
+          daysElapsed: 6,
+          nextDayAt: 1712347478,
+          secsUntilDayRollover: 1800,
+        );
+        await storage.executeBatch(
+          'UPDATE cards SET type = $type, queue = $type, left = 1, did = 40, odid = 0 WHERE id = 1',
+        );
+        final card = (await storage.getCard(Int64.ONE))!;
+        final seed = answerFuzzSeedForCardIdAndReps(
+          cardId: BigInt.parse(card.id.toString()),
+          reps: card.reps,
+        );
+        final steps = type == 1
+            ? _config().inner.learnSteps
+            : _config().inner.relearnSteps;
+        final scheduledSecs = resolveCurrentLearningStepDelaySecs(
+          steps: steps,
+          remainingSteps: card.remainingSteps,
+        );
+        final elapsedSecs = resolveLearningAnswerElapsedSecs(
+          card: card,
+          scheduledSecs: scheduledSecs,
+          answerTiming: typeTiming,
+        );
+        final expected = await storage.cardAnswerRequestForCard(
+          cardId: card.id,
+          rating: protoScheduler.CardAnswer_Rating.GOOD,
+          customData: card.customData,
+          answeredAtMillis: Int64(typeTiming.answeredAtMillis),
+          millisecondsTaken: 300,
+          baseContext: context.withFuzzFactor(seededStdRngFuzzFactor(seed)),
+          scheduledSecs: scheduledSecs,
+          elapsedSecs: elapsedSecs,
+          loadBalancerEnabled: false,
+          fuzzSeed: seed,
+          now: DateTime.fromMillisecondsSinceEpoch(typeTiming.answeredAtMillis),
+        );
+        final callerContextResult = await storage.cardAnswerRequestForCard(
+          cardId: card.id,
+          rating: protoScheduler.CardAnswer_Rating.GOOD,
+          customData: card.customData,
+          answeredAtMillis: Int64(typeTiming.answeredAtMillis),
+          millisecondsTaken: 300,
+          baseContext: context,
+          scheduledSecs: scheduledSecs,
+          elapsedSecs: elapsedSecs,
+          loadBalancerEnabled: false,
+          fuzzSeed: seed,
+          now: DateTime.fromMillisecondsSinceEpoch(typeTiming.answeredAtMillis),
+        );
+        expect(
+          expected.newState.normal.review.scheduledDays,
+          isNot(callerContextResult.newState.normal.review.scheduledDays),
+          reason: 'type $type',
+        );
+
+        final answered = await storage.answerCard(
+          cardId: card.id,
+          rating: protoScheduler.CardAnswer_Rating.GOOD,
+          millisecondsTaken: 300,
+          baseContext: context,
+          loadBalancerEnabled: false,
+          usn: 8,
+          answerTiming: typeTiming,
+        );
+        expect(
+          answered.interval,
+          expected.newState.normal.review.scheduledDays,
+          reason: 'type $type',
+        );
+      }
+    },
+  );
 
   test('resolves answer config from a stored normal card home deck', () async {
     final config = DeckConfig(

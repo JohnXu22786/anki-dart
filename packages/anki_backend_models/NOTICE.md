@@ -178,6 +178,15 @@ this helper; the source file digest is recorded in `SOURCE.sha256`.
 existing batch values in index order after validating a complete permutation.
 The source file digest is recorded in `SOURCE.sha256`.
 
+`FsrsTrainingBatchIterator` and its immutable progress snapshots adapt
+`fsrs-5.2.0/src/batch_shuffle.rs::ShuffleDataLoaderIterator::next()` and
+`progress()`. The iterator snapshots the validated order from
+`orderFsrsTrainingBatchesByIndices()`, returns one existing batch per call, and
+reports the current cursor and ordered batch count. The source file and crate
+archive digests are recorded in `SOURCE.sha256` and
+`THIRD_PARTY_SOURCE.sha256`. The upstream FSRS crate is Copyright Open Spaced
+Repetition and licensed under BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.
+
 `sortFsrsTrainingItemsByReviewLength()` adapts
 `fsrs-5.2.0/src/dataset.rs::sort_items_by_review_length()` using cached review
 counts and stable ascending order. The returned immutable list preserves each

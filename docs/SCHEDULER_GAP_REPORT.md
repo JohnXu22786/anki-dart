@@ -1617,6 +1617,15 @@ integration, and UI remain open.
 
 `orderFsrsTrainingBatchesByIndices()` returns immutable existing batch values
 in a validated complete permutation of their indexes, preserving batch
-identity. Permutation-index batch retrieval is available while full dataloader
-iteration/progress, tensor autodiff, optimizer/model fitting, evaluation
+identity. Permutation-index retrieval is available; Unit 194 adds its cursor
+iteration and progress. Tensor autodiff, optimizer/model fitting, evaluation
+orchestration, collection integration, and UI remain open.
+
+### Unit 194 — FSRS training batch iteration and cursor progress
+
+`FsrsTrainingBatchIterator` traverses batches in a caller-supplied complete
+permutation, preserving batch identity and returning `null` after exhaustion.
+Its immutable progress snapshots report the cursor and ordered batch count;
+empty traversal is complete at 0/0. Permuted batch traversal with cursor
+progress is available while optimizer/autodiff/model fitting, evaluation
 orchestration, collection integration, and UI remain open.

@@ -197,6 +197,12 @@ the source's NaN/zero results; retrievability endpoints are not clamped. This
 helper provides loss reduction only, not model fitting or evaluation
 orchestration.
 
+`calculateFsrsTrainingBatchObjective()` composes the Sum-reduced weighted BCE
+from already-computed retrievabilities with the batch-scaled L2 parameter
+penalty, preserving the final Float32 addition from FSRS 5.2.0 training. It is
+a scalar objective only; gradients, optimizer updates, and training loops
+remain outside this helper.
+
 `predictFsrsTrainingBatchRetrievability()` adapts `Model::{forward,step,
 power_forgetting_curve}` from `fsrs-5.2.0/src/model.rs` as called by
 `Model::forward_classification()` in `training.rs`. It processes immutable

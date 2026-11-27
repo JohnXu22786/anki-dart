@@ -1639,3 +1639,12 @@ in item order and keeps prediction separate from the existing BCE reduction.
 Training predictions are available; gradients/autodiff, optimizer updates,
 model fitting, evaluation orchestration, collection integration, and UI remain
 open.
+
+### Unit 198 — compose the FSRS training batch objective
+
+`calculateFsrsTrainingBatchObjective()` composes the pinned FSRS 5.2.0
+training batch's Sum-reduced weighted BCE from supplied retrievabilities with
+the batch-scaled L2 parameter penalty, preserving the final Float32 addition.
+The scalar training objective is available; gradients/autodiff, optimizer
+updates, model fitting, evaluation orchestration, collection integration, and UI
+remain open.

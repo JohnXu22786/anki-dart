@@ -91,6 +91,7 @@ SOURCE_HASHES = {
     "fsrs-5.2.0/src/simulation.rs": "5436a78c825ce863edf8e234731a499c328e14413b2e09433d67a093fc6a5e69",
     "fsrs-5.2.0/src/dataset.rs": "40be295afe41f2e73a8498d88d0e0d7f347c428f6c7de6bd809b102df7f850fa",
     "fsrs-5.2.0/src/training.rs": "9d69b14b82145f1c562d355dcfdcda56ec9da7b6e9da69db1c5ab4c12645214f",
+    "fsrs-5.2.0/src/cosine_annealing.rs": "e58224ba941163f09fa95a202481f1ed9df9410405ea1abd6e12d8939729ef2a",
 }
 THIRD_PARTY_HASHES = {
     "htmlescape-0.3.1.crate": "e9025058dae765dee5070ec375f591e2ba14638c63feff74f13805a72e523163",

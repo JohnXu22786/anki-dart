@@ -1535,3 +1535,11 @@ freeze projections for initial stability (`[0, 4)`) and short-term stability
 (`[17, 20)`) over an exact 21-value Float32 vector. The freeze projections are
 available while optimizer/autodiff integration, full model fitting, evaluation
 orchestration, progress reporting, collection integration, and UI remain open.
+
+### Unit 184 — FSRS cosine annealing learning rate
+
+`FsrsCosineAnnealingLr` ports the deterministic state and step behavior of
+FSRS 5.2.0's cosine annealing scheduler, including its period boundary and
+nonnegative integer record semantics. The cosine learning-rate schedule is
+available while optimizer/autodiff integration, model fitting, evaluation
+orchestration, progress, collection integration, and UI remain open.

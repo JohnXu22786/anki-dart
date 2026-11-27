@@ -61,6 +61,16 @@ void main() {
           )) {
     throw StateError('FSRS recency weighting differs on JavaScript');
   }
+  final sortedTrainingItems = sortFsrsTrainingItemsByReviewLength([
+    weightedTrainingItems[2],
+    weightedTrainingItems[0],
+    weightedTrainingItems[3],
+  ]);
+  if (sortedTrainingItems[0] != weightedTrainingItems[2] ||
+      sortedTrainingItems[1] != weightedTrainingItems[3] ||
+      sortedTrainingItems[2] != weightedTrainingItems[0]) {
+    throw StateError('FSRS training length sorting differs on JavaScript');
+  }
   final packedBatch = packFsrsTrainingBatch([
     WeightedFsrsTrainingItem(
       item: const FsrsTrainingItem(

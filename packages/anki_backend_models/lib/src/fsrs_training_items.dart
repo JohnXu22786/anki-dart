@@ -114,6 +114,35 @@ List<WeightedFsrsTrainingItem> sortFsrsTrainingItemsByReviewLength(
   return List.unmodifiable(indexedItems.map((entry) => entry.item));
 }
 
+/// Sorts weighted training items by history length, then splits them into
+/// consecutive immutable batches of at most [batchSize] items.
+///
+/// Equal-length items retain their input order. Item instances and weights are
+/// preserved, and the caller's list is not modified.
+List<List<WeightedFsrsTrainingItem>>
+    sortAndChunkFsrsTrainingItemsByReviewLength(
+  List<WeightedFsrsTrainingItem> items, {
+  required int batchSize,
+}) {
+  if (batchSize <= 0) {
+    throw ArgumentError.value(batchSize, 'batchSize', 'must be positive');
+  }
+
+  final sortedItems = sortFsrsTrainingItemsByReviewLength(items);
+  final batches = <List<WeightedFsrsTrainingItem>>[];
+  for (var start = 0; start < sortedItems.length;) {
+    final remaining = sortedItems.length - start;
+    final batchLength = batchSize < remaining ? batchSize : remaining;
+    batches.add(
+      List<WeightedFsrsTrainingItem>.unmodifiable(
+        sortedItems.getRange(start, start + batchLength),
+      ),
+    );
+    start += batchLength;
+  }
+  return List.unmodifiable(batches);
+}
+
 /// Initialization examples and the optimizer's training examples.
 ///
 /// Both lists are immutable snapshots. Their item objects are the same input

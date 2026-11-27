@@ -1340,3 +1340,16 @@ application only when collection FSRS is enabled. Lower-level APIs retain their
 explicit nullable desired-retention inputs. This closes only composed desired
 retention resolution; Review context, UI/call-site wiring, and remaining
 scheduler gaps stay open.
+
+### Unit 165 — derive the composed answer fuzz seed from the stored Card
+
+The composed `CollectionSqliteStorage.answerCard()` operation no longer
+accepts a caller-provided `fuzzSeed`. It derives one seed from the stored Card's
+ID interpreted as u64 plus reps truncated to u32, with wrapping u64 addition,
+matching pinned Anki Core's normal-answering `get_fuzz_seed()` behavior. That
+seed is used for scheduler answer generation, Learning/Relearning interval
+fuzz, filtered Preview due resolution, and load-balancer composition.
+Lower-level request, state, and load-balancer APIs keep their explicit nullable
+seed inputs and existing null-seed behavior. This closes only composed answer
+fuzz-seed resolution; review fuzz-factor inputs, Review/context fields,
+UI/call-site wiring, and remaining scheduler gaps stay open.

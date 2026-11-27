@@ -83,7 +83,6 @@ INSERT INTO col VALUES (1700000000, '{}');
             millisecondsTaken: 0,
             baseContext: const ReviewSchedulingContext(),
             loadBalancerEnabled: false,
-            fuzzSeed: null,
             usn: 0,
             answerTiming: timing,
           ),

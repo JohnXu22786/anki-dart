@@ -215,3 +215,10 @@ optimizer steps, and scheduler inference.
 iteration count from item, batch, and epoch totals, preserving the source's
 extra batch slot for empty datasets and exact batch multiples. It does not
 perform dataloader iteration or training.
+
+`stepFsrsAdam()` ports Burn 0.17.1's pure Adam vector update with FSRS 5.2.0's
+beta values and epsilon. It accepts externally computed gradients and optional
+immutable moment state, and returns Float32-rounded parameters and new state.
+It does not calculate gradients, clip them, apply weight decay, or run training.
+Burn's `burn-core` crate is dual licensed under Apache-2.0 and MIT; see
+`LICENSES/Apache-2.0-Burn.txt` and `LICENSES/MIT-Burn.txt`.

@@ -515,3 +515,10 @@ Core's `usize` multiplication follows target-width overflow behavior outside
 realistic training-count ranges; the Dart projection uses Dart integer
 arithmetic. The upstream FSRS crate is Copyright Open Spaced Repetition and
 licensed under BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.
+
+`stepFsrsAdam()` adapts the pure vector update in `AdaptiveMomentum::transform()`
+and `Adam::step()` from Burn 0.17.1 `burn-core/src/optim/adam.rs`, using the
+beta values and epsilon configured by FSRS 5.2.0. The pinned Adam source and
+crate archive hashes are recorded in `SOURCE.sha256` and
+`THIRD_PARTY_SOURCE.sha256`. Burn is dual licensed under Apache-2.0 and MIT; see
+`LICENSES/Apache-2.0-Burn.txt` and `LICENSES/MIT-Burn.txt`.

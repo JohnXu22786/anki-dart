@@ -93,6 +93,7 @@ SOURCE_HASHES = {
     "fsrs-5.2.0/src/batch_shuffle.rs": "faa788bdc69dcef7c48790a7650f2ca658d458dcbfae7da11cb878ad24b819a2",
     "fsrs-5.2.0/src/training.rs": "9d69b14b82145f1c562d355dcfdcda56ec9da7b6e9da69db1c5ab4c12645214f",
     "fsrs-5.2.0/src/cosine_annealing.rs": "e58224ba941163f09fa95a202481f1ed9df9410405ea1abd6e12d8939729ef2a",
+    "burn-core-0.17.1/src/optim/adam.rs": "d626cfaaac0dfe7d59144d54500a9945bbff305d6b57d52d66ac20f9988a2448",
 }
 THIRD_PARTY_HASHES = {
     "htmlescape-0.3.1.crate": "e9025058dae765dee5070ec375f591e2ba14638c63feff74f13805a72e523163",
@@ -102,6 +103,7 @@ THIRD_PARTY_HASHES = {
     "rand_chacha-0.9.0.crate": "d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb",
     "rand_core-0.9.3.crate": "99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38",
     "ppv-lite86-0.2.21.crate": "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9",
+    "burn-core-0.17.1.crate": "2afa81c868c1a9b3fad25c31176945d0cc5181ba7b77c0456bc05cf57fca975c",
 }
 
 def main() -> int:
@@ -120,7 +122,7 @@ def main() -> int:
     if source_record.is_file():
         for line in source_record.read_text(encoding="utf-8").splitlines():
             match = re.fullmatch(
-                r"([0-9a-f]{64})  ((?:rslib/src/[a-z_/]+\.(?:rs|css|tex)|proto/anki/[a-z_/]+\.proto|fsrs-5\.2\.0/src/[a-z_]+\.rs))", line
+                r"([0-9a-f]{64})  ((?:rslib/src/[a-z_/]+\.(?:rs|css|tex)|proto/anki/[a-z_/]+\.proto|fsrs-5\.2\.0/src/[a-z_]+\.rs|burn-core-0\.17\.1/src/optim/adam\.rs))", line
             )
             if not match:
                 errors.append(f"SOURCE.sha256: invalid entry {line!r}")
@@ -157,6 +159,12 @@ def main() -> int:
     fsrs_license = ROOT / "LICENSES" / "BSD-3-Clause-FSRS.txt"
     if not fsrs_license.is_file() or "Copyright (c) 2023, Open Spaced Repetition" not in fsrs_license.read_text(encoding="utf-8"):
         errors.append("LICENSES/BSD-3-Clause-FSRS.txt: fsrs 5.2.0 BSD-3-Clause license text is missing")
+    burn_apache = ROOT / "LICENSES" / "Apache-2.0-Burn.txt"
+    if not burn_apache.is_file() or "END OF TERMS AND CONDITIONS" not in burn_apache.read_text(encoding="utf-8"):
+        errors.append("LICENSES/Apache-2.0-Burn.txt: burn-core Apache-2.0 license text is missing")
+    burn_mit = ROOT / "LICENSES" / "MIT-Burn.txt"
+    if not burn_mit.is_file() or "Burn Framework Contributors" not in burn_mit.read_text(encoding="utf-8"):
+        errors.append("LICENSES/MIT-Burn.txt: burn-core MIT license text is missing")
 
     unicode_manifest = ROOT / "UNICODE_CASEFOLD.sha256"
     expected_unicode_record = (

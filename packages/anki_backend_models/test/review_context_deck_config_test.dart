@@ -12,6 +12,7 @@ void main() {
         intervalMultiplier: 1.22,
         maximumReviewInterval: 24000,
         leechThreshold: 11,
+        initialEase: 2.35,
         lapseMultiplier: 0.35,
         minimumLapseInterval: 3,
         learnSteps: [1.25, 8.5],
@@ -31,6 +32,7 @@ void main() {
       deckConfig.inner.maximumReviewInterval,
     );
     expect(context.leechThreshold, deckConfig.inner.leechThreshold);
+    expect(context.initialEaseFactor, deckConfig.inner.initialEase);
     expect(context.lapseMultiplier, deckConfig.inner.lapseMultiplier);
     expect(context.minimumLapseInterval, deckConfig.inner.minimumLapseInterval);
     expect(context.learningStepsMinutes, [1.25, 8.5]);
@@ -107,6 +109,16 @@ void main() {
     expect(
       context.fsrsShortTermWithStepsEnabled,
       base.fsrsShortTermWithStepsEnabled,
+    );
+  });
+
+  test('defaults initial ease for contexts without a deck config', () {
+    expect(const ReviewSchedulingContext().initialEaseFactor, 2.5);
+    expect(
+      const ReviewSchedulingContext(initialEaseFactor: 2.6)
+          .withFuzzFactor(0.25)
+          .initialEaseFactor,
+      2.6,
     );
   });
 

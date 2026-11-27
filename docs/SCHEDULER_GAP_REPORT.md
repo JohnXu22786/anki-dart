@@ -1425,3 +1425,14 @@ use their resolved home config. Other context values, FSRS behavior, and
 lower-level explicit-context APIs remain unchanged. This closes only composed
 Review Again Relearning input derivation; UI/call-site wiring and remaining
 scheduler gaps stay open.
+
+### Unit 172 — derive initial ease from the home config
+
+`ReviewSchedulingContext` now carries an initial ease factor with the existing
+2.5 default, and New/Learning graduation uses that context value when creating
+the resulting Review state. `withDeckConfig()` projects the resolved config's
+normalized `initialEase`; composed stored-card answers already pass the home
+config through this projection. Caller-created contexts and lower-level answer
+APIs retain the 2.5 default unless a config is explicitly projected. This
+closes only initial ease selection for New/Learning graduation; other scheduler
+gaps and UI/call-site wiring remain open.

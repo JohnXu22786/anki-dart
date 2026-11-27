@@ -52,6 +52,21 @@ void main() {
     throw StateError('FSRS training batch iteration differs on JavaScript');
   }
 
+  final batchLoader = FsrsTrainingBatchLoader(
+    [firstTrainingBatch, secondTrainingBatch],
+    BigInt.zero,
+  );
+  final firstLoadedIterator = batchLoader.iterator();
+  final secondLoadedIterator = batchLoader.iterator();
+  if (!identical(firstLoadedIterator.nextBatch(), secondTrainingBatch) ||
+      !identical(firstLoadedIterator.nextBatch(), firstTrainingBatch) ||
+      firstLoadedIterator.nextBatch() != null ||
+      !identical(secondLoadedIterator.nextBatch(), firstTrainingBatch) ||
+      !identical(secondLoadedIterator.nextBatch(), secondTrainingBatch) ||
+      secondLoadedIterator.nextBatch() != null) {
+    throw StateError('FSRS training batch loader differs on JavaScript');
+  }
+
   final trainingProgress = FsrsTrainingProgress(
     splits: [
       FsrsTrainingSplitProgress(

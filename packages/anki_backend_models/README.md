@@ -64,9 +64,13 @@ helper.
 `FsrsTrainingBatchShuffle` returns immutable seeded batch-index permutations
 while preserving the rand 0.9.4 `StdRng` stream across calls. Its
 `IncreasingUniform` chunking and `u32` range sampler are version-pinned to rand
-0.9.4, rand_chacha 0.9.0, and rand_core 0.9.3. Full dataloader iteration and
-optimizer/autodiff/model fitting, evaluation orchestration, collection
-integration, and UI remain outside this helper.
+0.9.4, rand_chacha 0.9.0, and rand_core 0.9.3.
+
+`FsrsTrainingBatchLoader` snapshots a batch list and owns one seeded shuffle
+stream. Each `iterator()` call returns an independent traversal over the same
+batch values using the next permutation in that stream. Training epochs,
+optimization, evaluation orchestration, collection integration, and UI remain
+caller-owned.
 
 `splitFsrsTrainingItemsByTimeSeries()` creates immutable expanding-window
 training and validation folds from FSRS training items already ordered by

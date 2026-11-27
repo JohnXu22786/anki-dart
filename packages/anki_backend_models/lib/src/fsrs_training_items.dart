@@ -91,6 +91,28 @@ List<WeightedFsrsTrainingItem> weightFsrsTrainingItemsByRecency(
   return List.unmodifiable(weightedItems);
 }
 
+/// Filters weighted items to the training model's maximum history length.
+///
+/// This helper only applies the training model's maximum history-length
+/// filter; it preserves caller order, weighted item instances, and weights.
+/// [maxSequenceLength] must be positive and defaults to 64.
+List<WeightedFsrsTrainingItem> filterFsrsTrainingItemsByMaxSequenceLength(
+  List<WeightedFsrsTrainingItem> items, {
+  int maxSequenceLength = 64,
+}) {
+  if (maxSequenceLength <= 0) {
+    throw ArgumentError.value(
+      maxSequenceLength,
+      'maxSequenceLength',
+      'must be positive',
+    );
+  }
+
+  return List.unmodifiable(
+    items.where((item) => item.item.reviews.length <= maxSequenceLength),
+  );
+}
+
 /// Sorts weighted FSRS training items by review-history length, shortest first.
 ///
 /// Items with the same number of reviews retain their input order, matching

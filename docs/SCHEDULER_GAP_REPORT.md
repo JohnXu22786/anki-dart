@@ -1687,3 +1687,11 @@ nonfinite parameter vectors are rejected. Result selection is available while
 data preparation, average-recall derivation, initialization, optimizer
 training, progress/cancellation handling, model selection orchestration,
 collection integration, and UI remain open.
+
+### Unit 203 — filter overlong FSRS training sequences
+
+`filterFsrsTrainingItemsByMaxSequenceLength()` filters weighted training items
+to the training model's maximum history length (default 64), preserving input
+order and weighted item identity. This filter is available as a pure model
+helper; training orchestration, optimizer/autodiff, evaluation, collection
+integration, and UI remain open.

@@ -41,6 +41,10 @@ Pinned Anki Core source digests and license attribution are recorded in
 training items with the optimizer's FSRS 5.2.0 recency weights, preserving
 their order and Core's Float32 rounding.
 
+`filterFsrsTrainingItemsByMaxSequenceLength()` keeps weighted training items
+whose review histories fit the training model's maximum sequence length
+(default 64), preserving their order, identity, and weights.
+
 `sortFsrsTrainingItemsByReviewLength()` returns weighted items ordered by
 ascending history length, preserving the original item instances and input
 order among equal-length histories.

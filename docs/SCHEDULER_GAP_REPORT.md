@@ -1603,3 +1603,12 @@ Core's explicit completion-flag projection. This value update is available
 while completion-path/error orchestration, locks, abort/interrupter behavior,
 training loops, autodiff, optimizer/model fitting, evaluation orchestration,
 collection integration, and UI remain open.
+
+### Unit 192 — FSRS training iteration count projection
+
+`calculateFsrsTrainingIterationCount()` ports FSRS 5.2.0's deterministic
+training iteration-count expression, including the extra batch slot for empty
+datasets and exact batch multiples. Training iteration-count calculation is
+available while actual training/dataloader iteration and progress updates,
+autodiff, optimizer/model fitting, evaluation orchestration, collection
+integration, and UI remain open.

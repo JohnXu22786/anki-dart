@@ -8,6 +8,15 @@ import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  if (calculateFsrsTrainingIterationCount(
+        itemsTotal: 8,
+        batchSize: 4,
+        epochTotal: 2,
+      ) !=
+      6) {
+    throw StateError('FSRS training iteration count differs on JavaScript');
+  }
+
   final batchShuffle = FsrsTrainingBatchShuffle(BigInt.zero);
   if (batchShuffle.nextPermutation(5).join(',') != '1,0,2,3,4' ||
       batchShuffle.nextPermutation(5).join(',') != '0,1,2,4,3') {

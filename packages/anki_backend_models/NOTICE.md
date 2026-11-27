@@ -173,6 +173,13 @@ to immutable, caller-ordered values with Burn-compatible sequence-major
 histories. Shuffle, data-loader iteration, and model training remain outside
 this helper; the source file digest is recorded in `SOURCE.sha256`.
 
+`sortFsrsTrainingItemsByReviewLength()` adapts
+`fsrs-5.2.0/src/dataset.rs::sort_items_by_review_length()` using cached review
+counts and stable ascending order. The returned immutable list preserves each
+weighted item instance; the source file digest is recorded in `SOURCE.sha256`.
+The upstream FSRS crate is Copyright Open Spaced Repetition and licensed under
+BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.
+
 `EasyDay`, `parseEasyDaysPercentages()`, and
 `calculateEasyDaysModifiers()` adapt Core's easy-day classification,
 percentage parsing, and review-load normalization from

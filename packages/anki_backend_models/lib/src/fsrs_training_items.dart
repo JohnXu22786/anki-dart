@@ -91,6 +91,29 @@ List<WeightedFsrsTrainingItem> weightFsrsTrainingItemsByRecency(
   return List.unmodifiable(weightedItems);
 }
 
+/// Sorts weighted FSRS training items by review-history length, shortest first.
+///
+/// Items with the same number of reviews retain their input order, matching
+/// FSRS 5.2.0's stable `sort_items_by_review_length()`. The returned list is an
+/// immutable copy containing the original weighted item instances.
+List<WeightedFsrsTrainingItem> sortFsrsTrainingItemsByReviewLength(
+  List<WeightedFsrsTrainingItem> items,
+) {
+  final indexedItems = [
+    for (var index = 0; index < items.length; index++)
+      (
+        index: index,
+        reviewCount: items[index].item.reviews.length,
+        item: items[index],
+      ),
+  ];
+  indexedItems.sort((left, right) {
+    final lengthOrder = left.reviewCount.compareTo(right.reviewCount);
+    return lengthOrder != 0 ? lengthOrder : left.index.compareTo(right.index);
+  });
+  return List.unmodifiable(indexedItems.map((entry) => entry.item));
+}
+
 /// Initialization examples and the optimizer's training examples.
 ///
 /// Both lists are immutable snapshots. Their item objects are the same input

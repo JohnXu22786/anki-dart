@@ -1552,3 +1552,11 @@ histories, current delta times, binary labels, and weights. It preserves item
 order and Float32 rounding. Deterministic value packing is available while
 shuffle/RNG, batch iteration, autodiff, optimizer integration/model fitting,
 evaluation orchestration, progress, collection integration, and UI remain open.
+
+### Unit 186 — stable FSRS training history-length ordering
+
+`sortFsrsTrainingItemsByReviewLength()` returns weighted FSRS training items in
+ascending review-history length, preserving item identity and input order among
+ties. Stable length ordering is available while seeded shuffling/RNG, batch
+iteration, autodiff, optimizer/model fitting, evaluation orchestration,
+progress, collection integration, and UI remain open.

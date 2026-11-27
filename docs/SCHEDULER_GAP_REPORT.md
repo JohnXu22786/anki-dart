@@ -1436,3 +1436,15 @@ config through this projection. Caller-created contexts and lower-level answer
 APIs retain the 2.5 default unless a config is explicitly projected. This
 closes only initial ease selection for New/Learning graduation; other scheduler
 gaps and UI/call-site wiring remain open.
+
+### Unit 173 — derive New-card FSRS answer outcomes
+
+The composed `CollectionSqliteStorage.answerCard()` path now derives FSRS next
+states for stored New cards from a null current memory state, Core's elapsed-day
+source, the resolved home DeckConfig parameters and desired retention, and the
+answer timing snapshot. This replaces conflicting caller outcomes for normal
+and rescheduling-filtered New cards when collection FSRS is enabled. When FSRS
+is disabled, existing clearing behavior remains; other card types and lower-
+level explicit-context APIs retain their behavior. This closes only composed
+stored New-card FSRS outcome derivation; UI/call-site wiring and remaining
+scheduler gaps stay open.

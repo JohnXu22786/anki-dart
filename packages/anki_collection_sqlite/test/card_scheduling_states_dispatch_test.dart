@@ -2661,6 +2661,121 @@ INSERT INTO cards VALUES
     },
   );
 
+  test('answerCard derives New FSRS outcomes from the home config', () async {
+    const timing = CollectionAnswerTiming(
+      now: 1712345678,
+      daysElapsed: 6,
+      nextDayAt: 1712347478,
+      secsUntilDayRollover: 1800,
+    );
+    final config = _config()
+      ..inner.desiredRetention = 0.86
+      ..inner.fsrsParams6.addAll(List<double>.filled(21, 0.25));
+    storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: Int64(40),
+        name: 'Home',
+        kind: NormalDeckKind(
+          protoDeck.Deck_Normal(configId: Int64(10), desiredRetention: 0.81),
+        ),
+      ),
+    );
+    await storage.writeCollectionConfig('fsrs', true);
+    expect((await storage.getCard(Int64.ONE))!.memoryState, isNotNull);
+    final expected = computeFsrsNextStates(
+      currentMemoryState: null,
+      daysElapsed: 0,
+      desiredRetention: 0.81,
+      params: config.fsrsParams,
+    ).good;
+
+    final answered = await storage.answerCard(
+      cardId: Int64.ONE,
+      rating: protoScheduler.CardAnswer_Rating.GOOD,
+      millisecondsTaken: 250,
+      baseContext: ReviewSchedulingContext(
+        fuzzFactor: 0,
+        fsrsNextStates: _unit166FsrsNextStates(),
+      ),
+      loadBalancerEnabled: false,
+      answerTiming: timing,
+    );
+
+    expect(answered.memoryState, isNotNull);
+    expect(
+      answered.memoryState!.stability,
+      closeTo(expected.memoryState.stability, 1e-6),
+    );
+    expect(
+      answered.memoryState!.difficulty,
+      closeTo(expected.memoryState.difficulty, 1e-6),
+    );
+    expect(answered.interval, isNot(40));
+  });
+
+  test(
+    'answerCard derives rescheduling-filtered New FSRS outcomes from the home config',
+    () async {
+      const timing = CollectionAnswerTiming(
+        now: 1712345678,
+        daysElapsed: 6,
+        nextDayAt: 1712347478,
+        secsUntilDayRollover: 1800,
+      );
+      final config = _config()
+        ..inner.desiredRetention = 0.86
+        ..inner.fsrsParams6.addAll(List<double>.filled(21, 0.25));
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(40),
+          name: 'Home',
+          kind: NormalDeckKind(
+            protoDeck.Deck_Normal(configId: Int64(10), desiredRetention: 0.81),
+          ),
+        ),
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(
+        _filteredDeck(reschedule: true),
+      );
+      await storage.writeCollectionConfig('fsrs', true);
+      await storage.executeBatch(
+        'UPDATE cards SET did = 7, odid = 40 WHERE id = 1',
+      );
+      expect((await storage.getCard(Int64.ONE))!.memoryState, isNotNull);
+      final expected = computeFsrsNextStates(
+        currentMemoryState: null,
+        daysElapsed: 0,
+        desiredRetention: 0.81,
+        params: config.fsrsParams,
+      ).good;
+
+      final answered = await storage.answerCard(
+        cardId: Int64.ONE,
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        millisecondsTaken: 250,
+        baseContext: ReviewSchedulingContext(
+          fuzzFactor: 0,
+          fsrsNextStates: _unit166FsrsNextStates(),
+        ),
+        loadBalancerEnabled: false,
+        answerTiming: timing,
+      );
+
+      expect(answered.memoryState, isNotNull);
+      expect(
+        answered.memoryState!.stability,
+        closeTo(expected.memoryState.stability, 1e-6),
+      );
+      expect(
+        answered.memoryState!.difficulty,
+        closeTo(expected.memoryState.difficulty, 1e-6),
+      );
+      expect(answered.interval, isNot(40));
+    },
+  );
+
   test(
     'answerCard derives Learn FSRS outcomes from stored revlog history',
     () async {

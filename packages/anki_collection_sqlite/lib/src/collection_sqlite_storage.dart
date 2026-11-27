@@ -5625,8 +5625,8 @@ WHERE queue IN (-2, -3)
     required DeckConfig config,
     required CollectionAnswerTiming timing,
   }) {
-    var memoryState = card.memoryState;
-    if (memoryState == null) {
+    var memoryState = card.ctype == CardType.newCard ? null : card.memoryState;
+    if (card.ctype != CardType.newCard && memoryState == null) {
       final revlogs = _revlogStorage.getRevlogEntriesForCard(card.id)
         ..sort((a, b) => a.id.value.compareTo(b.id.value));
       memoryState = computeFsrsMemoryState(
@@ -5748,7 +5748,9 @@ WHERE queue IN (-2, -3)
       _ => null,
     };
     var composedAnswerContext = answerContext;
-    if (card.ctype == CardType.learn || card.ctype == CardType.relearn) {
+    if (card.ctype == CardType.newCard ||
+        card.ctype == CardType.learn ||
+        card.ctype == CardType.relearn) {
       final fsrsNextStates = fsrsEnabled
           ? _fsrsNextStatesForStoredAnswer(
               card: card,

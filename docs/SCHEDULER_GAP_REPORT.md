@@ -1484,3 +1484,11 @@ training and validation folds from FSRS items already ordered by review
 timestamp, matching FSRS 5.2.0 segment boundaries and final-fold remainder
 behavior. This closes time-series splitting only; optimizer model fitting,
 progress reporting, collection orchestration, and UI remain open.
+
+### Unit 178 — calculate FSRS average recall
+
+`calculateAverageFsrsRecall()` now measures the mean recall across each FSRS
+training item's current review, using the FSRS 5.2.0 `rating > 1` predicate and
+Core Float32 ratio. Average recall is available while optimizer fitting,
+time-series evaluation orchestration, progress reporting, collection
+integration, and UI remain open.

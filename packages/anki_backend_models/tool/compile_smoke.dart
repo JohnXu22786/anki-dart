@@ -50,6 +50,21 @@ void main() {
     throw StateError('FSRS recency weighting differs on JavaScript');
   }
 
+  final averageRecall = calculateAverageFsrsRecall([
+    const FsrsTrainingItem(
+      reviews: [FsrsTrainingReview(rating: 1, deltaT: 0)],
+    ),
+    const FsrsTrainingItem(
+      reviews: [FsrsTrainingReview(rating: 2, deltaT: 0)],
+    ),
+    const FsrsTrainingItem(
+      reviews: [FsrsTrainingReview(rating: 4, deltaT: 0)],
+    ),
+  ]);
+  if (averageRecall != 0.6666666865348816) {
+    throw StateError('FSRS average recall differs on JavaScript');
+  }
+
   final timeSeriesFolds = splitFsrsTrainingItemsByTimeSeries(
     smokeItems,
     nSplits: 1,

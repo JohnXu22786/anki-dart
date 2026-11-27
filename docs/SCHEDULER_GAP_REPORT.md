@@ -1577,3 +1577,12 @@ indices, matching FSRS 5.2.0 `ShuffleDataLoader::iter()` and the pinned rand
 batch-index shuffling is available while full dataloader iteration/progress,
 autodiff, optimizer/model fitting, evaluation orchestration, collection
 integration, and UI remain open.
+
+### Unit 189 — FSRS training progress projection
+
+`FsrsTrainingSplitProgress` and `FsrsTrainingProgress` expose immutable
+per-split and combined progress values using the FSRS 5.2.0 `ProgressState`
+arithmetic over caller-supplied counts. Progress projection is available while
+collector updates/abort handling, training orchestration, autodiff,
+optimizer/model fitting, evaluation orchestration, collection integration,
+and UI remain open.

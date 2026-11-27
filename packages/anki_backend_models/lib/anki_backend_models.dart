@@ -52,3 +52,4 @@ export 'src/note_duplicate_check.dart';
 export 'src/note_cloze_check.dart';
 export 'src/tag.dart';
 export 'src/fsrs_gradient_masking.dart';
+export 'src/fsrs_cosine_annealing_lr.dart';

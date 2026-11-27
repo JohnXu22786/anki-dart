@@ -439,3 +439,14 @@ flags are enabled, using Float32 vector conversion. This helper projects
 gradients only; optimizer/autodiff integration and model fitting remain
 outside this package helper. The upstream FSRS crate is Copyright Open Spaced
 Repetition and licensed under BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.
+
+`FsrsCosineAnnealingLr` adapts `CosineAnnealingLR` and its `step()`,
+`to_record()`, and `load_record()` behavior from
+`fsrs-5.2.0/src/cosine_annealing.rs` at the pinned Anki Core commit. It
+preserves the Float64 step sequence and nonnegative integer record semantics.
+Dart has no fused Float64 multiply-add API, so the non-restart formula uses
+separate multiplication and addition. This helper provides deterministic
+learning-rate scheduling only; optimizer/autodiff integration, model fitting,
+evaluation orchestration, progress, collection integration, and UI remain
+outside its scope. The upstream FSRS crate is Copyright Open Spaced Repetition
+and licensed under BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.

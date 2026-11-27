@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/deck_config.pb.dart' as protoConfig;
@@ -113,7 +114,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         fuzzSeed: null,
         usn: 8,
         answerTiming: timing,
-        desiredRetention: null,
       );
 
       expect(answered.due, expectedDue);
@@ -175,6 +175,132 @@ INSERT INTO col VALUES (1700000000, '{}');
       beforeRevlogCount,
     );
     expect(storage.canUndoCollectionOperation, isFalse);
+  });
+
+  test(
+    'answerCard derives desired retention from a normal deck override',
+    () async {
+      await storage.executeBatch(
+        "INSERT INTO config (key, usn, mtime_secs, val) VALUES ('fsrs', -1, 0, X'${_jsonHex(true)}')",
+      );
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config()..inner.desiredRetention = 0.84,
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(7),
+          name: 'Normal override',
+          kind: NormalDeckKind(
+            protoDeck.Deck_Normal(configId: Int64(10), desiredRetention: 0.81),
+          ),
+        ),
+      );
+      await storage.executeBatch(
+        'UPDATE cards SET type = 0, queue = 0, did = 7, odid = 0 WHERE id = 1',
+      );
+
+      final answered = await _answerStoredCard(storage, 1712345683000);
+
+      expect(answered.desiredRetention, closeTo(0.81, 0.000001));
+    },
+  );
+
+  test('answerCard falls back to normal DeckConfig desired retention', () async {
+    await storage.executeBatch(
+      "INSERT INTO config (key, usn, mtime_secs, val) VALUES ('fsrs', -1, 0, X'${_jsonHex(true)}')",
+    );
+    storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+      _config()..inner.desiredRetention = 0.84,
+    );
+    storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+    await storage.executeBatch(
+      'UPDATE cards SET type = 0, queue = 0, did = 7, odid = 0 WHERE id = 1',
+    );
+
+    final answered = await _answerStoredCard(storage, 1712345683001);
+
+    expect(answered.desiredRetention, closeTo(0.84, 0.000001));
+  });
+
+  test('answerCard derives filtered card retention from its home deck', () async {
+    await storage.executeBatch(
+      "INSERT INTO config (key, usn, mtime_secs, val) VALUES ('fsrs', -1, 0, X'${_jsonHex(true)}')",
+    );
+    storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+      _config()..inner.desiredRetention = 0.83,
+    );
+    storage.decks
+      ..addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(7),
+          name: 'Filtered',
+          kind: FilteredDeckKind(protoDeck.Deck_Filtered(reschedule: true)),
+        ),
+      )
+      ..addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(40),
+          name: 'Home override',
+          kind: NormalDeckKind(
+            protoDeck.Deck_Normal(configId: Int64(10), desiredRetention: 0.79),
+          ),
+        ),
+      );
+    await storage.executeBatch(
+      'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 40 WHERE id = 1',
+    );
+
+    final answered = await _answerStoredCard(storage, 1712345683002);
+
+    expect(answered.desiredRetention, closeTo(0.79, 0.000001));
+  });
+
+  test(
+    'answerCard falls back to filtered card home DeckConfig retention',
+    () async {
+      await storage.executeBatch(
+        "INSERT INTO config (key, usn, mtime_secs, val) VALUES ('fsrs', -1, 0, X'${_jsonHex(true)}')",
+      );
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+        _config()..inner.desiredRetention = 0.83,
+      );
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(40),
+          name: 'Home',
+          kind: NormalDeckKind(protoDeck.Deck_Normal(configId: Int64(10))),
+        ),
+      );
+      await storage.executeBatch(
+        'UPDATE cards SET type = 2, queue = 2, did = 7, odid = 40 WHERE id = 1',
+      );
+
+      final answered = await _answerStoredCard(storage, 1712345683004);
+
+      expect(answered.desiredRetention, closeTo(0.83, 0.000001));
+    },
+  );
+
+  test('answerCard clears desired retention when FSRS is disabled', () async {
+    storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(
+      _config()..inner.desiredRetention = 0.84,
+    );
+    storage.decks.addOrUpdateDeckWithExistingId(
+      Deck(
+        id: Int64(7),
+        name: 'Normal override',
+        kind: NormalDeckKind(
+          protoDeck.Deck_Normal(configId: Int64(10), desiredRetention: 0.81),
+        ),
+      ),
+    );
+    await storage.executeBatch(
+      "UPDATE cards SET type = 0, queue = 0, did = 7, odid = 0, data = '{\"dr\":0.77}' WHERE id = 1",
+    );
+
+    final answered = await _answerStoredCard(storage, 1712345683003);
+
+    expect(answered.desiredRetention, isNull);
   });
 
   test(
@@ -306,7 +432,6 @@ INSERT INTO col VALUES (1700000000, '{}');
           secsUntilDayRollover: 1800,
           answeredAtMillis: answerId.toInt(),
         ),
-        desiredRetention: null,
       );
 
       expect(answered.queue, CardQueue.suspended);
@@ -346,7 +471,6 @@ INSERT INTO col VALUES (1700000000, '{}');
           secsUntilDayRollover: 1800,
           answeredAtMillis: answerId.toInt(),
         ),
-        desiredRetention: null,
       );
 
       expect(
@@ -769,7 +893,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        desiredRetention: null,
       );
 
       expect(
@@ -865,8 +988,6 @@ INSERT INTO col VALUES (1700000000, '{}');
           loadBalancerEnabled: false,
           fuzzSeed: null,
           usn: 8,
-
-          desiredRetention: null,
         );
         final deck = storage.decks.getDeck(Int64(7))!;
         expect(
@@ -903,8 +1024,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: null,
       );
       final rolledOver = storage.decks.getDeck(Int64(7))!;
       expect(rolledOver.common.lastDayStudied, 7);
@@ -936,8 +1055,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: null,
       );
       expect(
         storage.decks.getDeck(Int64(7))!.common.millisecondsStudied,
@@ -981,8 +1098,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: null,
       );
       expect(storage.decks.getDeck(Int64(7))!.common.reviewStudied, 1);
       expect(storage.decks.getDeck(Int64(7))!.common.millisecondsStudied, 250);
@@ -1027,8 +1142,6 @@ INSERT INTO col VALUES (1700000000, '{}');
           loadBalancerEnabled: false,
           fuzzSeed: null,
           usn: 8,
-
-          desiredRetention: null,
         );
         expect(
           storage.revlog.getRevlogEntry(RevlogId(answerId))!.takenMillis,
@@ -1062,8 +1175,6 @@ INSERT INTO col VALUES (1700000000, '{}');
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-
-      desiredRetention: null,
     );
     expect(
       storage.revlog.getRevlogEntry(RevlogId(previewAnswerId))!.takenMillis,
@@ -1094,8 +1205,6 @@ INSERT INTO col VALUES (1700000000, '{}');
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-
-      desiredRetention: 0.91,
     );
     expect(
       storage.revlog
@@ -1138,8 +1247,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         loadBalancerEnabled: false,
         fuzzSeed: BigInt.from(13),
         usn: 7,
-
-        desiredRetention: 0.91,
       );
 
       expect(applied.customData, 'stored 🦊');
@@ -1224,8 +1331,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
             loadBalancerEnabled: false,
             fuzzSeed: null,
             usn: 19,
-
-            desiredRetention: null,
           );
           expect(
             (await storage.getCard(Int64(1)))!.queue,
@@ -1314,8 +1419,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-
-      desiredRetention: null,
     );
     expect(normal.lastReviewTimeSecs, Int64(normalAnswerTime ~/ 1000));
     expect(
@@ -1358,8 +1461,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-
-      desiredRetention: 0.91,
     );
     expect(rescheduled.lastReviewTimeSecs, Int64(rescheduleAnswerTime ~/ 1000));
     expect(
@@ -1387,8 +1488,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-
-      desiredRetention: null,
     );
     expect(preview.queue, CardQueue.previewRepeat);
     expect(preview.due, 1712345682 + 45);
@@ -1442,8 +1541,6 @@ INSERT INTO cards VALUES
         secsUntilDayRollover: 1800,
         answeredAtMillis: Int64(suspendedAnswerId).toInt(),
       ),
-
-      desiredRetention: null,
     );
     expect(suspended.queue, CardQueue.suspended);
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.suspended);
@@ -1525,8 +1622,6 @@ INSERT INTO cards VALUES
         secsUntilDayRollover: 1800,
         answeredAtMillis: Int64(1712345684123).toInt(),
       ),
-
-      desiredRetention: null,
     );
     expect(unsuspended.queue, CardQueue.learn);
     expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
@@ -1554,8 +1649,6 @@ INSERT INTO cards VALUES
         secsUntilDayRollover: 1800,
         answeredAtMillis: Int64(1712345685123).toInt(),
       ),
-
-      desiredRetention: null,
     );
     expect(ordinary.queue, CardQueue.learn);
     expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
@@ -1586,8 +1679,6 @@ INSERT INTO cards VALUES
         secsUntilDayRollover: 1800,
         answeredAtMillis: Int64(1712345685623).toInt(),
       ),
-
-      desiredRetention: null,
     );
     expect(rescheduledLeech.queue, CardQueue.suspended);
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.suspended);
@@ -1610,8 +1701,6 @@ INSERT INTO cards VALUES
         secsUntilDayRollover: 1800,
         answeredAtMillis: Int64(1712345686123).toInt(),
       ),
-
-      desiredRetention: null,
     );
     expect(preview.queue, CardQueue.previewRepeat);
     expect((await storage.getNote(Int64(100)))!.tags, ['leech']);
@@ -1639,8 +1728,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: null,
       );
       expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
       expect(database.select('SELECT * FROM tags'), isEmpty);
@@ -1663,8 +1750,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: null,
       );
       expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
       expect(database.select('SELECT * FROM tags'), isEmpty);
@@ -1704,8 +1789,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: null,
       );
 
       expect((await storage.getNote(Int64(100)))!.tags, [
@@ -1748,8 +1831,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 9,
-
-        desiredRetention: null,
       );
       expect((await storage.getNote(Int64(100)))!.tags, [
         'alpha',
@@ -1832,8 +1913,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: null,
       );
 
       database.execute('UPDATE cards SET due = 18 WHERE id = 1');
@@ -1892,8 +1971,6 @@ INSERT INTO cards VALUES
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-
-      desiredRetention: null,
     );
     await Future<void>.delayed(Duration.zero);
     allowOperationToFinish.complete();
@@ -1945,7 +2022,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-        desiredRetention: null,
       );
       expect(finishedPreview.queue, CardQueue.newCard);
       expect(finishedPreview.due, 17);
@@ -1966,8 +2042,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: BigInt.from(13),
         usn: 8,
-
-        desiredRetention: null,
       );
       expect(preview.queue, CardQueue.previewRepeat);
       expect(
@@ -2013,8 +2087,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: 0.91,
       );
       expect(rescheduling.deckId, Int64(7));
       expect(rescheduling.queue, CardQueue.learn);
@@ -2040,8 +2112,6 @@ INSERT INTO cards VALUES
           loadBalancerEnabled: false,
           fuzzSeed: null,
           usn: 8,
-
-          desiredRetention: 0.91,
         ),
         throwsA(isA<InvalidModelValue>()),
       );
@@ -2106,8 +2176,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: null,
       ),
       throwsStateError,
     );
@@ -2130,8 +2198,6 @@ INSERT INTO cards VALUES
         loadBalancerEnabled: false,
         fuzzSeed: null,
         usn: 8,
-
-        desiredRetention: null,
         loadBalancerContext: loadBalancerContext,
       ),
       throwsStateError,
@@ -2156,8 +2222,6 @@ INSERT INTO cards VALUES
       loadBalancerEnabled: false,
       fuzzSeed: null,
       usn: 8,
-
-      desiredRetention: null,
       loadBalancerContext: loadBalancerContext,
     );
     expect((await storage.getCard(Int64(20)))!.queue, CardQueue.schedBuried);
@@ -2199,7 +2263,6 @@ INSERT INTO cards VALUES
         nextDayAt: (answerTiming ?? timing).nextDayAt,
         secsUntilDayRollover: (answerTiming ?? timing).secsUntilDayRollover,
       ),
-      desiredRetention: null,
     );
 
     await storage.executeBatch(
@@ -2355,7 +2418,6 @@ INSERT INTO cards VALUES
           nextDayAt: answerMillis ~/ 1000 + 1800,
           secsUntilDayRollover: 1800,
         ),
-        desiredRetention: null,
       );
       return storage.revlog
           .getRevlogEntry(RevlogId(Int64(answerMillis)))!
@@ -2536,6 +2598,28 @@ Deck _filteredDeck({bool reschedule = false}) => Deck(
     ),
   ),
 );
+
+Future<Card> _answerStoredCard(
+  CollectionSqliteStorage storage,
+  int answeredAtMillis,
+) => storage.answerCard(
+  cardId: Int64.ONE,
+  rating: protoScheduler.CardAnswer_Rating.GOOD,
+  millisecondsTaken: 250,
+  baseContext: const ReviewSchedulingContext(fuzzFactor: 0),
+  loadBalancerEnabled: false,
+  fuzzSeed: null,
+  usn: 8,
+  answerTiming: _answerTiming(
+    daysElapsed: 6,
+    secsUntilDayRollover: 1800,
+    answeredAtMillis: answeredAtMillis,
+  ),
+);
+
+String _jsonHex(Object value) => jsonEncode(
+  value,
+).codeUnits.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
 
 Future<void> _insertCard(
   CollectionSqliteStorage storage, {

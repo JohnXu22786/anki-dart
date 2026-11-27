@@ -375,6 +375,129 @@ INSERT INTO col VALUES (1700000000, '{}');
   );
 
   test(
+    'Review Again derives Relearning delay and remaining steps from home config',
+    () async {
+      final assignedConfig = _config()
+        ..inner.relearnSteps.clear()
+        ..inner.relearnSteps.addAll([7, 9]);
+      final homeConfig = DeckConfig(
+        id: Int64(12),
+        name: 'Home Relearning',
+        inner: DeckConfig.defaults().inner
+          ..relearnSteps.clear()
+          ..relearnSteps.addAll([3, 8]),
+      );
+      storage.deckConfigs
+        ..addOrUpdateDeckConfigWithExistingId(assignedConfig)
+        ..addOrUpdateDeckConfigWithExistingId(homeConfig);
+      storage.decks.addOrUpdateDeckWithExistingId(
+        Deck(
+          id: Int64(40),
+          name: 'Home',
+          kind: NormalDeckKind(protoDeck.Deck_Normal(configId: homeConfig.id)),
+        ),
+      );
+      const callerContext = ReviewSchedulingContext(
+        fuzzFactor: 0,
+        relearningAgainDelaySecs: 600,
+        relearningRemainingSteps: 9,
+      );
+      for (final filtered in [false, true]) {
+        storage.decks.addOrUpdateDeckWithExistingId(
+          filtered ? _filteredDeck(reschedule: true) : _normalDeck(),
+        );
+        await storage.executeBatch(
+          'UPDATE cards SET type = 2, queue = 2, did = 7, '
+          'odid = ${filtered ? 40 : 0} WHERE id = 1',
+        );
+        final card = (await storage.getCard(Int64.ONE))!;
+        final seed = answerFuzzSeedForCardIdAndReps(
+          cardId: BigInt.parse(card.id.toString()),
+          reps: card.reps,
+        );
+        final timing = _answerTiming(
+          daysElapsed: 6,
+          secsUntilDayRollover: 1800,
+          answeredAtMillis: filtered ? 1712345683011 : 1712345683010,
+        );
+        final expectedConfig = filtered ? homeConfig : assignedConfig;
+        final expected =
+            ReviewCardState(
+                  scheduledDays: card.interval,
+                  elapsedDays: 6,
+                  easeFactor: card.easeFactor,
+                  lapses: card.lapses,
+                  memoryState: card.memoryState,
+                )
+                .nextStates(
+                  ReviewSchedulingContext(
+                    fuzzFactor: seededStdRngFuzzFactor(seed),
+                    relearningAgainDelaySecs:
+                        (expectedConfig.inner.relearnSteps.first * 60).toInt(),
+                    relearningRemainingSteps:
+                        expectedConfig.inner.relearnSteps.length,
+                  ),
+                )
+                .again;
+        final expectedDue = resolveLearningAnswerDueTimestamp(
+          fuzzedLearningSecs: fuzzLearningIntervalSecs(
+            expected.learning!.scheduledSecs,
+            seed,
+          ),
+          answerTiming: timing,
+        );
+
+        final answered = await storage.answerCard(
+          cardId: card.id,
+          rating: protoScheduler.CardAnswer_Rating.AGAIN,
+          millisecondsTaken: 300,
+          baseContext: callerContext,
+          loadBalancerEnabled: false,
+          answerTiming: timing,
+        );
+
+        expect(answered.queue, CardQueue.learn);
+        expect(answered.remainingSteps, expected.learning!.remainingSteps);
+        expect(answered.remainingSteps, 2);
+        expect(answered.due, expectedDue);
+        expect(expected.learning!.scheduledSecs, filtered ? 180 : 420);
+      }
+    },
+  );
+
+  test(
+    'Review Again clears caller delay when home Relearning steps are empty',
+    () async {
+      final config = _config()..inner.relearnSteps.clear();
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+      await storage.executeBatch(
+        'UPDATE cards SET type = 2, queue = 2, did = 40, odid = 0 WHERE id = 1',
+      );
+      final card = (await storage.getCard(Int64.ONE))!;
+      final timing = _answerTiming(
+        daysElapsed: 6,
+        secsUntilDayRollover: 1800,
+        answeredAtMillis: 1712345683020,
+      );
+
+      final answered = await storage.answerCard(
+        cardId: card.id,
+        rating: protoScheduler.CardAnswer_Rating.AGAIN,
+        millisecondsTaken: 300,
+        baseContext: const ReviewSchedulingContext(
+          fuzzFactor: 0,
+          relearningAgainDelaySecs: 600,
+          relearningRemainingSteps: 9,
+        ),
+        loadBalancerEnabled: false,
+        answerTiming: timing,
+      );
+
+      expect(answered.queue, CardQueue.review);
+    },
+  );
+
+  test(
     'composed Learning and Relearning transitions override fuzz factor',
     () async {
       final context = ReviewSchedulingContext(

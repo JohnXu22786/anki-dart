@@ -418,3 +418,13 @@ default `u32` `random_range` sampling with `rand_chacha` 0.9.0 and
 `rand_core` 0.9.3. Core is Copyright Ankitects Pty Ltd and contributors and
 licensed under AGPL-3.0-or-later; this adaptation retains the same license,
 and root `COPYING` is unchanged.
+
+`calculateFsrsBinaryCrossEntropy()` adapts `BCELoss::forward()` from
+`fsrs-5.2.0/src/training.rs` at the pinned Anki Core commit. Its source hash
+and the crate archive hash are recorded in `SOURCE.sha256` and
+`THIRD_PARTY_SOURCE.sha256`. It keeps Burn's Float32 weighted log-loss order
+and Mean, Sum, and Auto reductions, including the source's NaN behavior for
+empty Mean/Auto input and zero-total-weight Auto input. It does not implement
+model fitting or evaluation orchestration. The upstream FSRS crate is
+Copyright Open Spaced Repetition and licensed under BSD-3-Clause; see
+`LICENSES/BSD-3-Clause-FSRS.txt`.

@@ -90,6 +90,7 @@ SOURCE_HASHES = {
     "fsrs-5.2.0/src/parameter_initialization.rs": "a48564d946c3bb2a67524d96b98d38dafb2f6dbdd6a0dcc9ac5c5b3a627b10d6",
     "fsrs-5.2.0/src/simulation.rs": "5436a78c825ce863edf8e234731a499c328e14413b2e09433d67a093fc6a5e69",
     "fsrs-5.2.0/src/dataset.rs": "40be295afe41f2e73a8498d88d0e0d7f347c428f6c7de6bd809b102df7f850fa",
+    "fsrs-5.2.0/src/training.rs": "9d69b14b82145f1c562d355dcfdcda56ec9da7b6e9da69db1c5ab4c12645214f",
 }
 THIRD_PARTY_HASHES = {
     "htmlescape-0.3.1.crate": "e9025058dae765dee5070ec375f591e2ba14638c63feff74f13805a72e523163",

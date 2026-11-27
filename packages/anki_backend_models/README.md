@@ -153,3 +153,10 @@ keeps examples with exactly one long-term review and returns immutable values
 and retained counts; fitting optimizer model weights, time-series evaluation
 orchestration, progress, collection integration, and UI remain outside this
 pure initialization helper.
+
+`calculateFsrsBinaryCrossEntropy()` ports FSRS 5.2.0's weighted binary
+cross-entropy reduction with Burn's Mean, Sum, and Auto modes and Float32
+operation order. Empty and zero-total-weight reduction edge behavior follows
+the source's NaN/zero results; retrievability endpoints are not clamped. This
+helper provides loss reduction only, not model fitting or evaluation
+orchestration.

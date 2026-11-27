@@ -339,3 +339,11 @@ the stored Card's home deck and DeckConfig, applies
 collection FSRS is enabled. The source hash is already recorded in
 `SOURCE.sha256` and validated by `tool/check_package.py`; no upstream code is
 copied. Lower-level answer APIs keep their explicit input contracts.
+
+The composed `CollectionSqliteStorage.answerCard()` path derives its
+`ReviewSchedulingContext.fuzzFactor` from the stored Card's Unit165 answer fuzz
+seed, adapting `CardStateUpdater::state_context()` and `get_fuzz_factor()` in
+Core's `rslib/src/scheduler/answering/mod.rs` at the same pinned commit. That
+source hash is already recorded in `SOURCE.sha256`; the seeded Float32 sampler
+uses the pinned rand 0.9.4, rand_chacha 0.9.0, and rand_core 0.9.3 algorithms
+documented by `anki_backend_models`. No upstream implementation code is copied.

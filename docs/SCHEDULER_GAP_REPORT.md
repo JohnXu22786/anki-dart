@@ -1353,3 +1353,16 @@ Lower-level request, state, and load-balancer APIs keep their explicit nullable
 seed inputs and existing null-seed behavior. This closes only composed answer
 fuzz-seed resolution; review fuzz-factor inputs, Review/context fields,
 UI/call-site wiring, and remaining scheduler gaps stay open.
+
+### Unit 166 — derive composed answer fuzz factor from the stored Card
+
+The composed `CollectionSqliteStorage.answerCard()` operation now derives
+`ReviewSchedulingContext.fuzzFactor` from Unit165's stored-Card answer fuzz
+seed, matching `CardStateUpdater::state_context()` and `get_fuzz_factor()` in
+pinned Anki Core. The seeded `rand 0.9.4` f32 range sample uses the existing
+`StdRng` word stream, drops the low nine bits, constructs a `[1, 2)` Float32,
+and subtracts one with Core-compatible rounding. Other caller-owned context
+values remain unchanged. Lower-level state and request APIs retain explicit
+fuzz factors, including null's no-fuzz behavior. This closes only the composed
+answer fuzz-factor gap; UI/call-site wiring and remaining scheduler gaps stay
+open.

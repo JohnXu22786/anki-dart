@@ -100,6 +100,35 @@ class ReviewSchedulingContext {
   final int graduatingIntervalGood;
   final int graduatingIntervalEasy;
 
+  /// Returns this context with a caller-resolved fuzz factor.
+  ///
+  /// Every other scheduling input, including dynamically supplied FSRS
+  /// outcomes and the load-balancer resolver, remains unchanged.
+  ReviewSchedulingContext withFuzzFactor(double? fuzzFactor) =>
+      ReviewSchedulingContext(
+        hardMultiplier: hardMultiplier,
+        easyMultiplier: easyMultiplier,
+        intervalMultiplier: intervalMultiplier,
+        maximumReviewInterval: maximumReviewInterval,
+        leechThreshold: leechThreshold,
+        lapseMultiplier: lapseMultiplier,
+        minimumLapseInterval: minimumLapseInterval,
+        fuzzFactor: fuzzFactor,
+        loadBalancedIntervalResolver: loadBalancedIntervalResolver,
+        fsrsNextStates: fsrsNextStates,
+        fsrsParams: fsrsParams,
+        fsrsDesiredRetention: fsrsDesiredRetention,
+        relearningAgainDelaySecs: relearningAgainDelaySecs,
+        relearningRemainingSteps: relearningRemainingSteps,
+        fsrsAllowShortTerm: fsrsAllowShortTerm,
+        fsrsShortTermWithStepsEnabled: fsrsShortTermWithStepsEnabled,
+        relearningStepsEmpty: relearningStepsEmpty,
+        learningStepsMinutes: learningStepsMinutes,
+        relearningStepsMinutes: relearningStepsMinutes,
+        graduatingIntervalGood: graduatingIntervalGood,
+        graduatingIntervalEasy: graduatingIntervalEasy,
+      );
+
   /// Returns this context with a collection-backed interval resolver attached.
   ///
   /// All scheduler inputs remain unchanged; the resolver is the only field

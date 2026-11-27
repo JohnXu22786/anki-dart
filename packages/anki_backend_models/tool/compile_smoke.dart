@@ -10,6 +10,11 @@ import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  final adam = stepFsrsAdam([1], [2], learningRate: 0.1);
+  if (adam.state.time != 1 || (adam.parameters.single - 0.9).abs() > 1e-6) {
+    throw StateError('FSRS Adam update differs on JavaScript');
+  }
+
   if (calculateFsrsTrainingIterationCount(
         itemsTotal: 8,
         batchSize: 4,

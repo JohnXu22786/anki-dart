@@ -1648,3 +1648,11 @@ the batch-scaled L2 parameter penalty, preserving the final Float32 addition.
 The scalar training objective is available; gradients/autodiff, optimizer
 updates, model fitting, evaluation orchestration, collection integration, and UI
 remain open.
+
+### Unit 199 — deterministic FSRS Adam update
+
+`stepFsrsAdam()` applies Burn 0.17.1's pure Float32 Adam vector update using
+FSRS 5.2.0's beta values and epsilon, returning immutable parameter and moment
+snapshots. The optimizer update is available for supplied gradients; automatic
+gradient calculation, full model fitting, evaluation orchestration, collection
+integration, and UI remain open.

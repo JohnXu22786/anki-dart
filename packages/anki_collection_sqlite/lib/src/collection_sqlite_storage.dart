@@ -5619,6 +5619,50 @@ WHERE queue IN (-2, -3)
     );
   }
 
+  FsrsReviewNextStates _fsrsNextStatesForStoredAnswer({
+    required Card card,
+    required Deck homeDeck,
+    required DeckConfig config,
+    required CollectionAnswerTiming timing,
+  }) {
+    var memoryState = card.memoryState;
+    if (memoryState == null) {
+      final revlogs = _revlogStorage.getRevlogEntriesForCard(card.id)
+        ..sort((a, b) => a.id.value.compareTo(b.id.value));
+      memoryState = computeFsrsMemoryState(
+        revlogs: revlogs,
+        nextDayAt: TimestampSecs(timing.nextDayAt),
+        params: config.fsrsParams,
+        historicalRetention: config.inner.historicalRetention,
+        ignoreRevlogsBefore: _ignoreRevlogsBefore(config),
+      );
+    }
+
+    final lastReviewTime =
+        card.lastReviewTimeSecs ?? _revlogStorage.timeOfLastReview(card.id);
+    final elapsedSeconds = lastReviewTime == null
+        ? 0
+        : timing.nextDayAt - lastReviewTime.toInt();
+    final daysElapsed = elapsedSeconds <= 0 ? 0 : elapsedSeconds ~/ 86400;
+    final calculated = computeFsrsNextStates(
+      currentMemoryState: memoryState,
+      daysElapsed: daysElapsed,
+      desiredRetention: homeDeck.effectiveDesiredRetention(config.inner),
+      params: config.fsrsParams,
+    );
+    FsrsReviewNextState result(FsrsCalculatedState state) =>
+        FsrsReviewNextState(
+          interval: state.interval,
+          memoryState: state.memoryState,
+        );
+    return FsrsReviewNextStates(
+      again: result(calculated.again),
+      hard: result(calculated.hard),
+      good: result(calculated.good),
+      easy: result(calculated.easy),
+    );
+  }
+
   /// Answers one stored card by dispatching its scheduling states, selecting
   /// the requested rating, then applying and recording that answer atomically.
   ///
@@ -5669,7 +5713,8 @@ WHERE queue IN (-2, -3)
         .withDeckConfig(homeDeckConfig)
         .withFuzzFactor(seededStdRngFuzzFactor(fuzzSeed));
     final config = homeDeckConfig.inner;
-    final desiredRetention = readCollectionConfig('fsrs') == true
+    final fsrsEnabled = readCollectionConfig('fsrs') == true;
+    final desiredRetention = fsrsEnabled
         ? home.deck.effectiveDesiredRetention(config)
         : null;
     final capAnswerTimeToSecs = config.capAnswerTimeToSecs;
@@ -5701,13 +5746,28 @@ WHERE queue IN (-2, -3)
       ),
       _ => null,
     };
+    var composedAnswerContext = answerContext;
+    if (card.ctype == CardType.learn || card.ctype == CardType.relearn) {
+      final fsrsNextStates = fsrsEnabled
+          ? _fsrsNextStatesForStoredAnswer(
+              card: card,
+              homeDeck: home.deck,
+              config: homeDeckConfig,
+              timing: answerTiming,
+            )
+          : null;
+      composedAnswerContext = _answerContextWithFsrsNextStates(
+        answerContext,
+        fsrsNextStates,
+      );
+    }
     final answer = await cardAnswerRequestForCard(
       cardId: cardId,
       rating: rating,
       customData: card.customData,
       answeredAtMillis: Int64(answerTiming.answeredAtMillis),
       millisecondsTaken: millisecondsTaken,
-      baseContext: answerContext,
+      baseContext: composedAnswerContext,
       scheduledSecs: scheduledSecs,
       elapsedSecs: elapsedSecs,
       loadBalancerEnabled: loadBalancerEnabled,
@@ -7701,6 +7761,33 @@ WHERE queue IN (-2, -3)
     return statement;
   }
 }
+
+ReviewSchedulingContext _answerContextWithFsrsNextStates(
+  ReviewSchedulingContext context,
+  FsrsReviewNextStates? states,
+) => ReviewSchedulingContext(
+  hardMultiplier: context.hardMultiplier,
+  easyMultiplier: context.easyMultiplier,
+  intervalMultiplier: context.intervalMultiplier,
+  maximumReviewInterval: context.maximumReviewInterval,
+  leechThreshold: context.leechThreshold,
+  lapseMultiplier: context.lapseMultiplier,
+  minimumLapseInterval: context.minimumLapseInterval,
+  fuzzFactor: context.fuzzFactor,
+  loadBalancedIntervalResolver: context.loadBalancedIntervalResolver,
+  fsrsNextStates: states,
+  fsrsParams: context.fsrsParams,
+  fsrsDesiredRetention: context.fsrsDesiredRetention,
+  relearningAgainDelaySecs: context.relearningAgainDelaySecs,
+  relearningRemainingSteps: context.relearningRemainingSteps,
+  fsrsAllowShortTerm: context.fsrsAllowShortTerm,
+  fsrsShortTermWithStepsEnabled: context.fsrsShortTermWithStepsEnabled,
+  relearningStepsEmpty: context.relearningStepsEmpty,
+  learningStepsMinutes: context.learningStepsMinutes,
+  relearningStepsMinutes: context.relearningStepsMinutes,
+  graduatingIntervalGood: context.graduatingIntervalGood,
+  graduatingIntervalEasy: context.graduatingIntervalEasy,
+);
 
 Int64 _ignoreRevlogsBefore(DeckConfig config) {
   final value = config.inner.ignoreRevlogsBeforeDate;

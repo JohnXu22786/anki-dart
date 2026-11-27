@@ -1389,3 +1389,16 @@ parameters, load-balancer resolvers, and runtime relearning/FSRS flags remain
 intact; lower-level explicit-context APIs are unchanged. This closes only
 composed answer scheduler-setting selection; UI/call-site wiring and remaining
 scheduler gaps stay open.
+
+### Unit 169 — derive composed Learning/Relearning FSRS answer outcomes
+
+The composed `CollectionSqliteStorage.answerCard()` path now replaces caller
+FSRS next outcomes for stored Learning and Relearning cards with outcomes
+computed from the stored Card memory state, or its Revlog history when memory
+state is absent, the resolved home DeckConfig and desired retention, and the
+existing collection answer timing snapshot. When collection FSRS is disabled,
+stale caller outcomes are cleared for these card types. Other dynamic context
+fields and the lower-level explicit-context APIs remain unchanged; normal
+Review and filtered Review derivation paths are unaffected. This closes only
+composed Learning/Relearning FSRS outcome derivation; UI/call-site wiring and
+remaining scheduler gaps stay open.

@@ -1448,3 +1448,12 @@ is disabled, existing clearing behavior remains; other card types and lower-
 level explicit-context APIs retain their behavior. This closes only composed
 stored New-card FSRS outcome derivation; UI/call-site wiring and remaining
 scheduler gaps stay open.
+
+### Unit 174 — assemble FSRS training items from collection revlogs
+
+`CollectionSqliteStorage.fsrsTrainingItems()` now reads all revlog rows in
+card/ID order, groups them by signed card ID, and delegates to the existing
+deterministic FSRS training-item projection using explicit `nextDayAt` and
+`ignoreRevlogsBefore` inputs. This closes collection-backed training-item
+assembly only; FSRS parameter optimization, training UI/progress, and
+persistence remain open.

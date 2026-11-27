@@ -1486,6 +1486,30 @@ INSERT OR REPLACE INTO cards (
   /// Returns source-compatible review log row operations on this collection.
   RevlogStorage get revlog => _revlogStorage;
 
+  /// Projects this collection's revlog history into FSRS training examples.
+  ///
+  /// The timing and cutoff inputs are explicit, and reading the history does
+  /// not mutate collection state.
+  FsrsTrainingItems fsrsTrainingItems({
+    required TimestampSecs nextDayAt,
+    required Int64 ignoreRevlogsBefore,
+  }) {
+    final revlogsByCard = <List<RevlogEntry>>[];
+    Int64? currentCardId;
+    for (final entry in _revlogStorage.getAllRevlogEntriesInCardOrder()) {
+      if (currentCardId != entry.cardId) {
+        currentCardId = entry.cardId;
+        revlogsByCard.add(<RevlogEntry>[]);
+      }
+      revlogsByCard.last.add(entry);
+    }
+    return computeFsrsTrainingItems(
+      revlogsByCard: revlogsByCard,
+      nextDayAt: nextDayAt,
+      ignoreRevlogsBefore: ignoreRevlogsBefore,
+    );
+  }
+
   bool get canUndoCollectionOperation => _collectionUndoSteps.isNotEmpty;
   bool get canRedoCollectionOperation => _collectionRedoSteps.isNotEmpty;
   String? get collectionUndoLabel =>

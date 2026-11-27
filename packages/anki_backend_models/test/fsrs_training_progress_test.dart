@@ -254,4 +254,56 @@ void main() {
       expect(original.splits.single.epoch, 1);
     });
   });
+  group('FSRS training progress completion', () {
+    test('finishes a nonempty snapshot without changing progress values', () {
+      final splits = [
+        _split(epoch: 2, epochTotal: 5, itemsProcessed: 3, itemsTotal: 10),
+        _split(epoch: 1, epochTotal: 4, itemsProcessed: 2, itemsTotal: 7),
+      ];
+      final original = FsrsTrainingProgress(splits: splits, finished: false);
+
+      final completed = finishFsrsTrainingProgress(original);
+
+      expect(completed, isNot(same(original)));
+      expect(completed.finished, isTrue);
+      expect(original.finished, isFalse);
+      expect(completed.splits, orderedEquals(splits));
+      expect(completed.splits[0], same(original.splits[0]));
+      expect(completed.splits[1], same(original.splits[1]));
+      expect(completed.current, original.current);
+      expect(completed.total, original.total);
+    });
+
+    test('finishes an empty snapshot with zero current and total', () {
+      final original = FsrsTrainingProgress(splits: [], finished: false);
+
+      final completed = finishFsrsTrainingProgress(original);
+
+      expect(completed.finished, isTrue);
+      expect(completed.splits, isEmpty);
+      expect(completed.current, 0);
+      expect(completed.total, 0);
+      expect(original.finished, isFalse);
+    });
+
+    test('finishing an already-finished snapshot remains idempotent', () {
+      final original = FsrsTrainingProgress(
+        splits: [
+          _split(epoch: 3, epochTotal: 4, itemsProcessed: 2, itemsTotal: 6)
+        ],
+        finished: true,
+      );
+
+      final completed = finishFsrsTrainingProgress(original);
+      final completedAgain = finishFsrsTrainingProgress(completed);
+
+      expect(completed.finished, isTrue);
+      expect(completedAgain.finished, isTrue);
+      expect(completed, isNot(same(original)));
+      expect(completedAgain, isNot(same(completed)));
+      expect(completedAgain.splits, orderedEquals(original.splits));
+      expect(completedAgain.current, original.current);
+      expect(completedAgain.total, original.total);
+    });
+  });
 }

@@ -92,3 +92,11 @@ FsrsTrainingProgress updateFsrsTrainingProgressSplit({
     finished: progress.finished,
   );
 }
+
+/// Returns a new progress snapshot with [FsrsTrainingProgress.finished] set.
+///
+/// Split values and their order are preserved. The supplied [progress] is not
+/// modified.
+FsrsTrainingProgress finishFsrsTrainingProgress(
+        FsrsTrainingProgress progress) =>
+    FsrsTrainingProgress(splits: progress.splits, finished: true);

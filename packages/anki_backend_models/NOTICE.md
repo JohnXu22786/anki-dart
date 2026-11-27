@@ -336,6 +336,15 @@ defined by `proto/anki/scheduler.proto`. All source digests are recorded in
 licensed under AGPL-3.0-or-later; this adaptation retains the same license,
 and root `COPYING` is unchanged.
 
+`clipFsrsParameters()` adapts the parameter bounds and relearning-step
+constraint from `fsrs-5.2.0/src/parameter_clipper.rs`, with `S_MIN`, `D_MIN`,
+and `D_MAX` from `simulation.rs` and `INIT_S_MAX` from
+`parameter_initialization.rs`. The exact upstream source digests are recorded
+in `SOURCE.sha256`; this independent Dart implementation does not copy
+upstream source code. The clipping formula preserves Float32 operation order;
+transcendental results can differ by a small amount from Rust because Rust's
+`f32::powf` precision is unspecified and platform-dependent.
+
 `seededStdRngFuzzFactor()` reproduces rand 0.9.4's
 `UniformFloat<f32>::sample_single_inclusive()` sample used by Core's
 `get_fuzz_factor()`. It reuses the pinned `rand_chacha` 0.9.0 and `rand_core`

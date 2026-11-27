@@ -177,6 +177,10 @@ this helper; the source file digest is recorded in `SOURCE.sha256`.
 `fsrs-5.2.0/src/dataset.rs::sort_items_by_review_length()` using cached review
 counts and stable ascending order. The returned immutable list preserves each
 weighted item instance; the source file digest is recorded in `SOURCE.sha256`.
+`sortAndChunkFsrsTrainingItemsByReviewLength()` composes that ordering with
+`fsrs-5.2.0/src/batch_shuffle.rs::BatchTensorDataset::new()` consecutive
+`chunks(batch_size)` batching; the source file digest is recorded in
+`SOURCE.sha256`.
 The upstream FSRS crate is Copyright Open Spaced Repetition and licensed under
 BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.
 

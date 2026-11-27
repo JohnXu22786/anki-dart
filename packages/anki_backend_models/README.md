@@ -45,6 +45,9 @@ their order and Core's Float32 rounding.
 ascending history length, preserving the original item instances and input
 order among equal-length histories.
 
+`sortAndChunkFsrsTrainingItemsByReviewLength()` composes that stable ordering
+with immutable consecutive batches of at most the requested size.
+
 `packFsrsTrainingBatch()` packs caller-ordered weighted training items into
 immutable, sequence-major padded histories, current deltas, binary labels, and
 weights. It provides tensor-compatible values without batch iteration or model

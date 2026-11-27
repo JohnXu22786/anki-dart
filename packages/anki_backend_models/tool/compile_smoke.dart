@@ -71,6 +71,21 @@ void main() {
       sortedTrainingItems[2] != weightedTrainingItems[0]) {
     throw StateError('FSRS training length sorting differs on JavaScript');
   }
+  final sortedTrainingBatches = sortAndChunkFsrsTrainingItemsByReviewLength(
+    [
+      weightedTrainingItems[0],
+      weightedTrainingItems[2],
+      weightedTrainingItems[3]
+    ],
+    batchSize: 2,
+  );
+  if (sortedTrainingBatches.length != 2 ||
+      sortedTrainingBatches[0].length != 2 ||
+      sortedTrainingBatches[0][0] != weightedTrainingItems[2] ||
+      sortedTrainingBatches[0][1] != weightedTrainingItems[3] ||
+      sortedTrainingBatches[1].single != weightedTrainingItems[0]) {
+    throw StateError('FSRS training batch chunking differs on JavaScript');
+  }
   final packedBatch = packFsrsTrainingBatch([
     WeightedFsrsTrainingItem(
       item: const FsrsTrainingItem(

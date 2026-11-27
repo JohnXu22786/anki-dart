@@ -1560,3 +1560,11 @@ ascending review-history length, preserving item identity and input order among
 ties. Stable length ordering is available while seeded shuffling/RNG, batch
 iteration, autodiff, optimizer/model fitting, evaluation orchestration,
 progress, collection integration, and UI remain open.
+
+### Unit 187 — FSRS training batch chunking
+
+`sortAndChunkFsrsTrainingItemsByReviewLength()` combines stable ascending
+history-length ordering with immutable consecutive batches of at most the
+requested size. Sorted fixed-size batching is available while seeded
+shuffling/RNG, iteration/progress, autodiff, optimizer/model fitting,
+evaluation orchestration, collection integration, and UI remain open.

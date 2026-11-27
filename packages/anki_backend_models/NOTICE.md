@@ -430,3 +430,12 @@ from that file, preserving Float32 tensor arithmetic and the Float64 batch
 scale. These pure loss helpers do not implement model fitting or evaluation
 orchestration. The upstream FSRS crate is Copyright Open Spaced Repetition and
 licensed under BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.
+
+`maskFsrsParameterGradients()` adapts the pure vector projections in
+`Model::freeze_initial_stability()` and `Model::free_short_term_stability()`
+from `fsrs-5.2.0/src/training.rs` at the pinned Anki Core commit. It zeroes
+only the source-defined slices `[0, 4)` and `[17, 20)` when the matching freeze
+flags are enabled, using Float32 vector conversion. This helper projects
+gradients only; optimizer/autodiff integration and model fitting remain
+outside this package helper. The upstream FSRS crate is Copyright Open Spaced
+Repetition and licensed under BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.

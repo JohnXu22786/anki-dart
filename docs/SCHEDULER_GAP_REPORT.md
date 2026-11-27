@@ -1527,3 +1527,11 @@ regularization penalty with Float32 tensor arithmetic and a Float64 batch scale.
 The L2 penalty is now available; optimizer fitting/autodiff/gradients,
 evaluation orchestration, progress reporting, collection integration, and UI
 remain open.
+
+### Unit 183 — mask frozen FSRS parameter gradients
+
+`maskFsrsParameterGradients()` applies the pinned FSRS 5.2.0 training gradient
+freeze projections for initial stability (`[0, 4)`) and short-term stability
+(`[17, 20)`) over an exact 21-value Float32 vector. The freeze projections are
+available while optimizer/autodiff integration, full model fitting, evaluation
+orchestration, progress reporting, collection integration, and UI remain open.

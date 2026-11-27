@@ -1366,3 +1366,13 @@ values remain unchanged. Lower-level state and request APIs retain explicit
 fuzz factors, including null's no-fuzz behavior. This closes only the composed
 answer fuzz-factor gap; UI/call-site wiring and remaining scheduler gaps stay
 open.
+
+### Unit 167 — derive composed answer USN from client collection mode
+
+The composed `CollectionSqliteStorage.answerCard()` operation no longer
+accepts a caller-provided USN. It uses Core's client-side collection USN
+(`-1`) for the answered Card, Revlog, deck-stat, sibling-bury, and leech-tag
+mutations, regardless of the collection's stored `col.usn`. Lower-level
+explicit-USN apply/record APIs retain their existing contracts. This closes
+only composed answer USN resolution; server-sync behavior and UI/call-site
+wiring remain outside this unit.

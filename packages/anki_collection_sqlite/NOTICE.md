@@ -347,3 +347,13 @@ Core's `rslib/src/scheduler/answering/mod.rs` at the same pinned commit. That
 source hash is already recorded in `SOURCE.sha256`; the seeded Float32 sampler
 uses the pinned rand 0.9.4, rand_chacha 0.9.0, and rand_core 0.9.3 algorithms
 documented by `anki_backend_models`. No upstream implementation code is copied.
+
+The composed `CollectionSqliteStorage.answerCard()` operation uses the client
+USN sentinel (`-1`) from Core's `Collection::usn()` and
+`SqliteStorage::usn(server)` in `rslib/src/collection/mod.rs` and
+`rslib/src/storage/sync.rs`, pinned to
+`e64c6b1aee3e8d668fb8bbe084beada8e070d985`. Its answer mutations use the
+client-mode value even when `col.usn` is nonnegative; explicit-USN lower-level
+storage APIs remain unchanged. These paths are already covered by the package
+source pin and `tool/check_package.py`; no upstream implementation code is
+copied.

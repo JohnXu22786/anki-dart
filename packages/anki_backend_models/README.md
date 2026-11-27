@@ -214,8 +214,14 @@ optimizer steps, and scheduler inference.
 `calculateFsrsValidationLoss()` scores caller-ordered validation batches with each
 batch's Sum BCE and training-size-scaled L2 penalty, accumulating Float32
 batch objectives in Float64 and averaging by validation item count. It is
-scoring only; shuffling, best-model selection, progress reporting, and
-parameter updates remain outside this helper.
+scoring only; shuffling, progress reporting, and parameter updates remain
+outside this helper.
+
+`FsrsBestModelSnapshot` captures immutable validation-loss and ordered
+parameter values. `selectFsrsBestModel()` returns a new snapshot, replacing the
+current best only when the candidate loss is strictly lower. Callers supply
+already-computed parameters and validation losses; equal, worse, and NaN
+candidate losses preserve the current best.
 
 `calculateFsrsTrainingIterationCount()` projects the FSRS 5.2.0 training
 iteration count from item, batch, and epoch totals, preserving the source's

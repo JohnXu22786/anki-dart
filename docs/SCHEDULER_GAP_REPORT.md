@@ -1665,3 +1665,13 @@ the batch's actual item count and the training-set total size. It accumulates
 Float32 batch objectives in Float64 and divides by the total validation item
 count. Validation-loss scoring is available while model selection, full
 training orchestration, autodiff, collection integration, and UI remain open.
+
+
+### Unit 201 — deterministic FSRS best-model selection
+
+`FsrsBestModelSnapshot` holds immutable validation-loss and parameter values,
+and `selectFsrsBestModel()` returns the candidate only when its already-computed
+validation loss is strictly lower than the current best. Equal, greater, and NaN
+candidate losses preserve the existing snapshot, matching Rust floating-point
+comparison semantics. Best-model selection is available while training-loop
+orchestration, autodiff, collection integration, and UI remain open.

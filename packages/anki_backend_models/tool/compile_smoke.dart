@@ -50,6 +50,17 @@ void main() {
     throw StateError('FSRS recency weighting differs on JavaScript');
   }
 
+  final timeSeriesFolds = splitFsrsTrainingItemsByTimeSeries(
+    smokeItems,
+    nSplits: 1,
+  );
+  if (timeSeriesFolds.length != 1 ||
+      timeSeriesFolds.single.trainingItems.length != 2 ||
+      timeSeriesFolds.single.validationItems.length != 2 ||
+      timeSeriesFolds.single.validationItems.first != smokeItems[2]) {
+    throw StateError('FSRS time-series splitting differs on JavaScript');
+  }
+
   if (fuzzLearningIntervalSecs(1200, BigInt.from(58205158)) != 1473) {
     throw StateError('seeded Learning fuzz differs on JavaScript');
   }

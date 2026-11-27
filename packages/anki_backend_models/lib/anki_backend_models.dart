@@ -22,6 +22,7 @@ export 'src/stock_notetype.dart';
 export 'src/revlog.dart';
 export 'src/fsrs_memory_state.dart';
 export 'src/fsrs_training_items.dart';
+export 'src/fsrs_time_series_split.dart';
 export 'src/review_queue.dart';
 export 'src/queue_admission.dart';
 export 'src/queue_sorting.dart';

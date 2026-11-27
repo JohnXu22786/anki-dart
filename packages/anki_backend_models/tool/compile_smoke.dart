@@ -277,6 +277,21 @@ void main() {
         'FSRS weighted binary cross entropy differs on JavaScript');
   }
 
+  final trainingObjective = calculateFsrsTrainingBatchObjective(
+    const [0.25, 0.75, 0.4],
+    const [1.0, 0.0, 1.0],
+    const [0.5, 2.0, 1.25],
+    const [2.0],
+    const [0.0],
+    const [1.0],
+    batchSize: 2,
+    totalSize: 10,
+    gamma: 0.5,
+  );
+  if (trainingObjective != 5.011099338531494) {
+    throw StateError('FSRS training batch objective differs on JavaScript');
+  }
+
   final initializedStabilities = initializeFsrsStabilityParameters(
     const [
       FsrsTrainingItem(reviews: [

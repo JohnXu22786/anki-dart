@@ -470,7 +470,9 @@ and Mean, Sum, and Auto reductions, including the source's NaN behavior for
 empty Mean/Auto input and zero-total-weight Auto input. The
 `calculateFsrsL2Regularization()` helper also adapts `Model::l2_regularization()`
 from that file, preserving Float32 tensor arithmetic and the Float64 batch
-scale. These pure loss helpers do not implement model fitting or evaluation
+scale. `calculateFsrsTrainingBatchObjective()` composes the source's Sum BCE
+and L2 penalty with the final Float32 addition. These pure objective helpers do
+not implement gradients, optimizer updates, model fitting, or evaluation
 orchestration. The upstream FSRS crate is Copyright Open Spaced Repetition and
 licensed under BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.
 

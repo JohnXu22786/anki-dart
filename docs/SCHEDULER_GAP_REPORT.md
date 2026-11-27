@@ -1519,3 +1519,11 @@ operation order. Weighted BCE reduction is available; full model fitting,
 evaluation orchestration, progress reporting, collection integration, and UI
 remain open. This helper does not implement FSRS model fitting or evaluation
 orchestration.
+
+### Unit 182 — calculate FSRS L2 regularization penalty
+
+`calculateFsrsL2Regularization()` ports the pinned FSRS 5.2.0 training
+regularization penalty with Float32 tensor arithmetic and a Float64 batch scale.
+The L2 penalty is now available; optimizer fitting/autodiff/gradients,
+evaluation orchestration, progress reporting, collection integration, and UI
+remain open.

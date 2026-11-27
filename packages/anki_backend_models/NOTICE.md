@@ -474,6 +474,17 @@ scale. These pure loss helpers do not implement model fitting or evaluation
 orchestration. The upstream FSRS crate is Copyright Open Spaced Repetition and
 licensed under BSD-3-Clause; see `LICENSES/BSD-3-Clause-FSRS.txt`.
 
+`predictFsrsTrainingBatchRetrievability()` adapts `Model::{forward,step,
+power_forgetting_curve}` from `fsrs-5.2.0/src/model.rs`, as used by
+`Model::forward_classification()` in `fsrs-5.2.0/src/training.rs`. The source
+hashes and crate archive hash are recorded in `SOURCE.sha256` and
+`THIRD_PARTY_SOURCE.sha256`. It preserves sequence-major history traversal,
+padding-state behavior, and Float32 tensor operation order, returning current
+review predictions only. It does not compute loss, reduce a batch, optimize
+parameters, or alter scheduler inference. The upstream FSRS crate is Copyright
+Open Spaced Repetition and licensed under BSD-3-Clause; see
+`LICENSES/BSD-3-Clause-FSRS.txt`.
+
 `maskFsrsParameterGradients()` adapts the pure vector projections in
 `Model::freeze_initial_stability()` and `Model::free_short_term_stability()`
 from `fsrs-5.2.0/src/training.rs` at the pinned Anki Core commit. It zeroes

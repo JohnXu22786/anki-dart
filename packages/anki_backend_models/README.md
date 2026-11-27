@@ -197,6 +197,14 @@ the source's NaN/zero results; retrievability endpoints are not clamped. This
 helper provides loss reduction only, not model fitting or evaluation
 orchestration.
 
+`predictFsrsTrainingBatchRetrievability()` adapts `Model::{forward,step,
+power_forgetting_curve}` from `fsrs-5.2.0/src/model.rs` as called by
+`Model::forward_classification()` in `training.rs`. It processes immutable
+sequence-major batch histories and returns current-review retrievabilities in
+input order with Float32 operation order. Empty histories retain the source
+model's zero initial state. Prediction remains separate from BCE reduction,
+optimizer steps, and scheduler inference.
+
 `calculateFsrsTrainingIterationCount()` projects the FSRS 5.2.0 training
 iteration count from item, batch, and epoch totals, preserving the source's
 extra batch slot for empty datasets and exact batch multiples. It does not

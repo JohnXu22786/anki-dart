@@ -115,6 +115,26 @@ void main() {
         'FSRS training model initialization differs on JavaScript');
   }
 
+  final predictionBatch = FsrsTrainingBatch(
+    timeHistories: const [
+      [0],
+    ],
+    ratingHistories: const [
+      [3],
+    ],
+    deltaTs: const [5],
+    labels: const [1],
+    weights: const [1],
+  );
+  final prediction = predictFsrsTrainingBatchRetrievability(
+    predictionBatch,
+    initializeFsrsTrainingModelParameters(freezeShortTermStability: false),
+  );
+  if (prediction.length != 1 ||
+      (prediction.single - 0.8388614058494568).abs() > 1e-7) {
+    throw StateError('FSRS training prediction differs on JavaScript');
+  }
+
   final maskedGradients = maskFsrsParameterGradients(
     List<double>.generate(21, (index) => index.toDouble()),
     freezeInitialStability: true,

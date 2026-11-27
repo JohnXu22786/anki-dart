@@ -1629,3 +1629,13 @@ Its immutable progress snapshots report the cursor and ordered batch count;
 empty traversal is complete at 0/0. Permuted batch traversal with cursor
 progress is available while optimizer/autodiff/model fitting, evaluation
 orchestration, collection integration, and UI remain open.
+
+### Unit 197 — FSRS training batch retrievability predictions
+
+`predictFsrsTrainingBatchRetrievability()` adapts the pinned FSRS 5.2.0
+training model's forward, step, and power-forgetting-curve calculations over
+immutable sequence-major batches. It returns current-review Float32 predictions
+in item order and keeps prediction separate from the existing BCE reduction.
+Training predictions are available; gradients/autodiff, optimizer updates,
+model fitting, evaluation orchestration, collection integration, and UI remain
+open.

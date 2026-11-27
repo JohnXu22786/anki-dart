@@ -1402,3 +1402,13 @@ fields and the lower-level explicit-context APIs remain unchanged; normal
 Review and filtered Review derivation paths are unaffected. This closes only
 composed Learning/Relearning FSRS outcome derivation; UI/call-site wiring and
 remaining scheduler gaps stay open.
+
+### Unit 170 — clear caller FSRS context when collection FSRS is disabled
+
+The composed `CollectionSqliteStorage.answerCard()` path now clears caller
+FSRS next states, parameters, desired retention, and short-term flags whenever
+collection FSRS is disabled, including normal and rescheduling-filtered Review
+answers. Non-FSRS context fields remain intact, FSRS-enabled per-path behavior
+is unchanged, and lower-level explicit-context APIs retain their contracts.
+This closes only composed answer FSRS-context gating; UI/call-site wiring and
+remaining scheduler gaps stay open.

@@ -172,7 +172,77 @@ INSERT INTO col VALUES (1700000000, '{}');
   });
 
   test(
-    'composed Review answer uses stored config but preserves dynamic context',
+    'composed Review answers ignore caller FSRS states when FSRS is disabled',
+    () async {
+      for (final filtered in [false, true]) {
+        storage.decks.addOrUpdateDeckWithExistingId(
+          filtered ? _filteredDeck(reschedule: true) : _normalDeck(),
+        );
+        await storage.executeBatch(
+          'UPDATE cards SET type = 2, queue = 2, did = 7, '
+          'odid = ${filtered ? 40 : 0} WHERE id = 1',
+        );
+        final card = (await storage.getCard(Int64.ONE))!;
+        final fuzzSeed = answerFuzzSeedForCardIdAndReps(
+          cardId: BigInt.parse(card.id.toString()),
+          reps: card.reps,
+        );
+        final timing = _answerTiming(
+          daysElapsed: 6,
+          secsUntilDayRollover: 1800,
+          answeredAtMillis: filtered ? 1712345683011 : 1712345683010,
+        );
+        final expected = await storage.cardAnswerRequestForCard(
+          cardId: card.id,
+          rating: protoScheduler.CardAnswer_Rating.GOOD,
+          customData: card.customData,
+          answeredAtMillis: Int64(timing.answeredAtMillis),
+          millisecondsTaken: 300,
+          baseContext: const ReviewSchedulingContext()
+              .withDeckConfig(_config())
+              .withFuzzFactor(seededStdRngFuzzFactor(fuzzSeed)),
+          loadBalancerEnabled: false,
+          fuzzSeed: fuzzSeed,
+          now: DateTime.fromMillisecondsSinceEpoch(timing.answeredAtMillis),
+        );
+
+        final answered = await storage.answerCard(
+          cardId: Int64.ONE,
+          rating: protoScheduler.CardAnswer_Rating.GOOD,
+          millisecondsTaken: 300,
+          baseContext: ReviewSchedulingContext(
+            fuzzFactor: 0,
+            fsrsNextStates: _unit166FsrsNextStates(),
+            fsrsParams: _config().fsrsParams,
+            fsrsDesiredRetention: 0.9,
+            fsrsAllowShortTerm: true,
+            fsrsShortTermWithStepsEnabled: true,
+          ),
+          loadBalancerEnabled: false,
+          answerTiming: timing,
+        );
+
+        expect(
+          answered.interval,
+          filtered
+              ? expected
+                    .newState
+                    .filtered
+                    .rescheduling
+                    .originalState
+                    .review
+                    .scheduledDays
+              : expected.newState.normal.review.scheduledDays,
+          reason: filtered
+              ? 'rescheduling-filtered Review must match FSRS-free scheduling'
+              : 'normal Review must match FSRS-free scheduling',
+        );
+      }
+    },
+  );
+
+  test(
+    'composed Review answer clears caller FSRS and preserves other context',
     () async {
       await storage.executeBatch(
         'UPDATE cards SET type = 2, queue = 2, did = 40, odid = 0 WHERE id = 1',
@@ -200,9 +270,12 @@ INSERT INTO col VALUES (1700000000, '{}');
         nextDayAt: 1712347478,
         secsUntilDayRollover: 1800,
       );
-      final seededContext = context
-          .withDeckConfig(config)
-          .withFuzzFactor(seededStdRngFuzzFactor(seed));
+      final seededContext = ReviewSchedulingContext(
+        fuzzFactor: context.fuzzFactor,
+        maximumReviewInterval: context.maximumReviewInterval,
+        intervalMultiplier: context.intervalMultiplier,
+        relearningAgainDelaySecs: context.relearningAgainDelaySecs,
+      ).withDeckConfig(config).withFuzzFactor(seededStdRngFuzzFactor(seed));
       final expected = await storage.cardAnswerRequestForCard(
         cardId: card.id,
         rating: protoScheduler.CardAnswer_Rating.GOOD,

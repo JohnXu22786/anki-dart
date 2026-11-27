@@ -228,6 +228,13 @@ iteration count from item, batch, and epoch totals, preserving the source's
 extra batch slot for empty datasets and exact batch multiples. It does not
 perform dataloader iteration or training.
 
+`selectFsrsTrainingParameters()` applies FSRS 5.2.0's result-selection
+branches to already-prepared item counts and already-computed default and
+initialized parameter vectors. It returns an immutable snapshot for the
+default or initialized branch, or reports that optimizer training is required.
+The helper does not prepare training data, compute initialization, or train a
+model.
+
 `stepFsrsAdam()` ports Burn 0.17.1's pure Adam vector update with FSRS 5.2.0's
 beta values and epsilon. It accepts externally computed gradients and optional
 immutable moment state, and returns Float32-rounded parameters and new state.

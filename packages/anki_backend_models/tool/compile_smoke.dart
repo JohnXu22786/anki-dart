@@ -24,6 +24,27 @@ void main() {
     throw StateError('FSRS training iteration count differs on JavaScript');
   }
 
+  final defaultFsrsParameters = List<double>.generate(
+    21,
+    (index) => index.toDouble(),
+  );
+  final selectionInitializedParameters = List<double>.generate(
+    21,
+    (index) => 100 + index.toDouble(),
+  );
+  final trainingParameterSelection = selectFsrsTrainingParameters(
+    trainingItemCount: 64,
+    initializationItemCount: 64,
+    defaultParameters: defaultFsrsParameters,
+    initializedParameters: selectionInitializedParameters,
+  );
+  if (trainingParameterSelection.source !=
+          FsrsTrainingParameterSource.initialized ||
+      trainingParameterSelection.parameters?.join(',') !=
+          selectionInitializedParameters.join(',')) {
+    throw StateError('FSRS training parameter selection differs on JavaScript');
+  }
+
   final batchShuffle = FsrsTrainingBatchShuffle(BigInt.zero);
   if (batchShuffle.nextPermutation(5).join(',') != '1,0,2,3,4' ||
       batchShuffle.nextPermutation(5).join(',') != '0,1,2,4,3') {

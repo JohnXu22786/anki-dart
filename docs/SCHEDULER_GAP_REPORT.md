@@ -1675,3 +1675,15 @@ validation loss is strictly lower than the current best. Equal, greater, and NaN
 candidate losses preserve the existing snapshot, matching Rust floating-point
 comparison semantics. Best-model selection is available while training-loop
 orchestration, autodiff, collection integration, and UI remain open.
+
+### Unit 202 — FSRS training early-return parameter selection
+
+`selectFsrsTrainingParameters()` applies the pinned FSRS 5.2.0 branch order to
+already-prepared training and initialization counts: fewer than eight retained
+items select default parameters; otherwise equal counts or fewer than 64
+retained items select initialized parameters; remaining cases require
+optimizer training. Selected values are immutable snapshots, and malformed or
+nonfinite parameter vectors are rejected. Result selection is available while
+data preparation, average-recall derivation, initialization, optimizer
+training, progress/cancellation handling, model selection orchestration,
+collection integration, and UI remain open.

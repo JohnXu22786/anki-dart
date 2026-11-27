@@ -146,3 +146,10 @@ current filtered-preview state and Again/Hard/Good/Easy outcomes from explicit
 u32 second delays. Current state remains unfinished at zero seconds; zero-delay
 answer outcomes and Easy are finished. Collection lookup, delay configuration,
 filtered-deck search/limits, and rescheduling remain outside this pure model.
+
+`initializeFsrsStabilityParameters()` derives the four initial FSRS 5.2.0
+stabilities from caller-supplied training items and an average-recall prior. It
+keeps examples with exactly one long-term review and returns immutable values
+and retained counts; fitting optimizer model weights, time-series evaluation
+orchestration, progress, collection integration, and UI remain outside this
+pure initialization helper.

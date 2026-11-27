@@ -1492,3 +1492,11 @@ training item's current review, using the FSRS 5.2.0 `rating > 1` predicate and
 Core Float32 ratio. Average recall is available while optimizer fitting,
 time-series evaluation orchestration, progress reporting, collection
 integration, and UI remain open.
+
+### Unit 179 — initialize FSRS stability parameters
+
+`initializeFsrsStabilityParameters()` now derives the four initial stability
+values from FSRS 5.2.0 initialization examples and average recall, returning the
+retained per-rating item counts. Initial-stability parameter derivation is
+available; optimizer model fitting, time-series evaluation orchestration,
+progress, collection integration, and UI remain open.

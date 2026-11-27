@@ -65,6 +65,27 @@ void main() {
     throw StateError('FSRS average recall differs on JavaScript');
   }
 
+  final initializedStabilities = initializeFsrsStabilityParameters(
+    const [
+      FsrsTrainingItem(reviews: [
+        FsrsTrainingReview(rating: 1, deltaT: 0),
+        FsrsTrainingReview(rating: 2, deltaT: 1),
+      ]),
+      FsrsTrainingItem(reviews: [
+        FsrsTrainingReview(rating: 2, deltaT: 0),
+        FsrsTrainingReview(rating: 1, deltaT: 2),
+      ]),
+    ],
+    averageRecall: 0.5,
+  );
+  if (initializedStabilities.stabilities.length != 4 ||
+      initializedStabilities.stabilities[0] >
+          initializedStabilities.stabilities[1] ||
+      initializedStabilities.ratingCounts[1] != 1 ||
+      initializedStabilities.ratingCounts[2] != 1) {
+    throw StateError('FSRS stability initialization differs on JavaScript');
+  }
+
   final timeSeriesFolds = splitFsrsTrainingItemsByTimeSeries(
     smokeItems,
     nSplits: 1,

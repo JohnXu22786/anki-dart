@@ -368,6 +368,19 @@ transcendental results can differ by a small amount from Rust because Rust's
 high-23-bit Float32 construction is implemented. Those crates are dual
 licensed under Apache-2.0 or MIT.
 
+`FsrsTrainingBatchShuffle` adapts FSRS 5.2.0 `ShuffleDataLoader::iter()` and
+rand 0.9.4 `SliceRandom::shuffle()` with its `IncreasingUniform` chunking and
+default biased Canon `u32 random_range` correction. It reuses the same pinned
+`StdRng` implementation and third-party crate archives recorded in
+`THIRD_PARTY_SOURCE.sha256`. The pinned rand source digests are
+`rand-0.9.4/src/seq/slice.rs` (`8212a23bbc284b74b981ef8d5fc177c460926415f9d747a5a127453b7fa0f9e2`),
+`rand-0.9.4/src/seq/increasing_uniform.rs`
+(`73b1bf2b30c4e5972f2e902dbb30b90518006bae7eb2628d1ab2547eaeca8ea3`), and
+`rand-0.9.4/src/distr/uniform_int.rs`
+(`1fb3ade156995a45b33853c04eb28c4031d7b0f73e731145182adb69de0c5880`). Rand
+is dual licensed under Apache-2.0 or MIT, with the applicable license texts
+included in `LICENSES/`.
+
 `applyNewCardAnswerState()` adapts the Normal/New Card state update from
 `rslib/src/scheduler/answering/learning.rs::apply_new_state()` and the reps
 increment from `apply_normal_study_state()` at Anki Core commit

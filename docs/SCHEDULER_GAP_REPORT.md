@@ -1328,3 +1328,15 @@ post-answer load-balancer cache updates. The public
 available with their existing contracts. This closes only composed answer
 configuration resolution; answer context, Review elapsed, UI/call-site wiring,
 and remaining scheduler gaps stay open.
+
+### Unit 164 — derive composed answer desired retention from the stored Card's home deck
+
+The composed `CollectionSqliteStorage.answerCard()` operation no longer accepts
+caller-provided desired retention. It uses the stored Card's home deck and
+resolved DeckConfig, applying a normal deck's desired-retention override or
+falling back to the config value; filtered cards use their original home deck.
+Missing config rows use Core defaults, and the value is passed to answer
+application only when collection FSRS is enabled. Lower-level APIs retain their
+explicit nullable desired-retention inputs. This closes only composed desired
+retention resolution; Review context, UI/call-site wiring, and remaining
+scheduler gaps stay open.

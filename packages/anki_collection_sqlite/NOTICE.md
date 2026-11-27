@@ -330,3 +330,12 @@ license; root `COPYING` is unchanged. The composed `answerCard()` operation
 uses this stored-card home-config resolution for its answer-time cap, leech
 action, sibling-bury flags, and load-balancer cache key; missing config rows
 use Core defaults.
+
+The composed `CollectionSqliteStorage.answerCard()` desired-retention input
+adapts `CardStateUpdater::card_state_updater()` from Core's
+`rslib/src/scheduler/answering/mod.rs` at the same pinned commit. It resolves
+the stored Card's home deck and DeckConfig, applies
+`Deck::effective_desired_retention()`, and passes the result only when
+collection FSRS is enabled. The source hash is already recorded in
+`SOURCE.sha256` and validated by `tool/check_package.py`; no upstream code is
+copied. Lower-level answer APIs keep their explicit input contracts.

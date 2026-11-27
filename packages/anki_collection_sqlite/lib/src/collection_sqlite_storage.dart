@@ -5563,7 +5563,8 @@ WHERE queue IN (-2, -3)
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
 
-    final config = _homeDeckConfigForCard(card);
+    final home = _homeDeckAndConfigForCard(card);
+    final config = home.config;
     final settings = config.inner;
     return CollectionAnswerDeckConfig(
       homeDeckConfigId: config.id,
@@ -5577,7 +5578,7 @@ WHERE queue IN (-2, -3)
     );
   }
 
-  DeckConfig _homeDeckConfigForCard(Card card) {
+  ({Deck deck, DeckConfig config}) _homeDeckAndConfigForCard(Card card) {
     final assignedDeck = _deckStorage.getDeck(card.deckId);
     if (assignedDeck == null) {
       throw StateError('deck not found: ${card.deckId}');
@@ -5595,8 +5596,12 @@ WHERE queue IN (-2, -3)
     }
 
     final storedConfig = _deckConfigStorage.getDeckConfig(deckConfigId);
-    return storedConfig ??
-        DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner);
+    return (
+      deck: homeDeck,
+      config:
+          storedConfig ??
+          DeckConfig(id: deckConfigId, inner: DeckConfig.defaults().inner),
+    );
   }
 
   /// Answers one stored card by dispatching its scheduling states, selecting
@@ -5627,7 +5632,6 @@ WHERE queue IN (-2, -3)
     required BigInt? fuzzSeed,
     required int usn,
     required CollectionAnswerTiming answerTiming,
-    required double? desiredRetention,
     CollectionLoadBalancerContext? loadBalancerContext,
   }) async {
     _requiredUnsigned(answerTiming.daysElapsed, 32, 'daysElapsed');
@@ -5638,8 +5642,12 @@ WHERE queue IN (-2, -3)
     );
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
-    final homeDeckConfig = _homeDeckConfigForCard(card);
+    final home = _homeDeckAndConfigForCard(card);
+    final homeDeckConfig = home.config;
     final config = homeDeckConfig.inner;
+    final desiredRetention = readCollectionConfig('fsrs') == true
+        ? home.deck.effectiveDesiredRetention(config)
+        : null;
     final capAnswerTimeToSecs = config.capAnswerTimeToSecs;
     final suspendLeechedCards =
         config.leechAction ==

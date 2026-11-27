@@ -86,7 +86,6 @@ INSERT INTO col VALUES (1700000000, '{}');
             fuzzSeed: null,
             usn: 0,
             answerTiming: timing,
-            desiredRetention: null,
           ),
           throwsA(isA<StateError>()),
         );

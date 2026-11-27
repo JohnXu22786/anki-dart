@@ -8,6 +8,18 @@ import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  final maskedGradients = maskFsrsParameterGradients(
+    List<double>.generate(21, (index) => index.toDouble()),
+    freezeInitialStability: true,
+    freezeShortTermStability: true,
+  );
+  if (maskedGradients.take(4).any((value) => value != 0.0) ||
+      maskedGradients[4] != 4.0 ||
+      maskedGradients[16] != 16.0 ||
+      maskedGradients.skip(17).take(3).any((value) => value != 0.0) ||
+      maskedGradients[20] != 20.0) {
+    throw StateError('FSRS gradient masking differs on JavaScript');
+  }
   final fsrsTrainingData = prepareFsrsTrainingData(
     const [
       FsrsTrainingItem(

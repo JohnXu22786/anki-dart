@@ -10,6 +10,28 @@ import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  final filteredTrainingItems = filterFsrsTrainingItemsByMaxSequenceLength([
+    WeightedFsrsTrainingItem(
+      item: FsrsTrainingItem(
+        reviews: [const FsrsTrainingReview(rating: 3, deltaT: 1)],
+      ),
+      weight: 0.5,
+    ),
+    WeightedFsrsTrainingItem(
+      item: FsrsTrainingItem(
+        reviews: [
+          const FsrsTrainingReview(rating: 3, deltaT: 1),
+          const FsrsTrainingReview(rating: 3, deltaT: 2),
+        ],
+      ),
+      weight: 1.0,
+    ),
+  ], maxSequenceLength: 1);
+  if (filteredTrainingItems.length != 1 ||
+      filteredTrainingItems.single.weight != 0.5) {
+    throw StateError('FSRS training sequence filtering differs on JavaScript');
+  }
+
   final adam = stepFsrsAdam([1], [2], learningRate: 0.1);
   if (adam.state.time != 1 || (adam.parameters.single - 0.9).abs() > 1e-6) {
     throw StateError('FSRS Adam update differs on JavaScript');

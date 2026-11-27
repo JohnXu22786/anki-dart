@@ -1476,3 +1476,11 @@ to caller-supplied training items already ordered by review timestamp. It keeps
 item order and identity and matches Core's Float32 formula. Time-series
 validation splits, optimizer model fitting, progress reporting, collection
 orchestration, and UI remain open.
+
+### Unit 177 — split FSRS training items by time series
+
+`splitFsrsTrainingItemsByTimeSeries()` now creates immutable expanding-window
+training and validation folds from FSRS items already ordered by review
+timestamp, matching FSRS 5.2.0 segment boundaries and final-fold remainder
+behavior. This closes time-series splitting only; optimizer model fitting,
+progress reporting, collection orchestration, and UI remain open.

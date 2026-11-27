@@ -127,6 +127,63 @@ INSERT INTO col VALUES (1700000000, '{}');
     },
   );
 
+  test(
+    'answerCard uses home config initial ease for New and Learning graduates',
+    () async {
+      storage.decks.addOrUpdateDeckWithExistingId(_normalDeck());
+      final noStepsConfig = DeckConfig(
+        id: Int64(10),
+        name: 'Configured initial ease',
+        inner: DeckConfig.defaults().inner
+          ..initialEase = 2.35
+          ..learnSteps.clear(),
+      );
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(noStepsConfig);
+      await storage.executeBatch(
+        'UPDATE cards SET type = 0, queue = 0, left = 0, odid = 0 WHERE id = 1',
+      );
+
+      final newCard = await storage.answerCard(
+        cardId: Int64.ONE,
+        rating: protoScheduler.CardAnswer_Rating.AGAIN,
+        millisecondsTaken: 250,
+        baseContext: const ReviewSchedulingContext(),
+        loadBalancerEnabled: false,
+        answerTiming: _answerTiming(
+          daysElapsed: 6,
+          secsUntilDayRollover: 1800,
+          answeredAtMillis: 1712345683100,
+        ),
+      );
+      expect(newCard.easeFactor, closeTo(2.35, 0.001));
+
+      final oneStepConfig = DeckConfig(
+        id: Int64(10),
+        name: 'Configured initial ease',
+        inner: DeckConfig.defaults().inner
+          ..initialEase = 2.35
+          ..learnSteps.add(1),
+      );
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(oneStepConfig);
+      await storage.executeBatch(
+        'UPDATE cards SET type = 1, queue = 1, left = 1, odid = 0 WHERE id = 1',
+      );
+      final learning = await storage.answerCard(
+        cardId: Int64.ONE,
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        millisecondsTaken: 250,
+        baseContext: const ReviewSchedulingContext(),
+        loadBalancerEnabled: false,
+        answerTiming: _answerTiming(
+          daysElapsed: 6,
+          secsUntilDayRollover: 1800,
+          answeredAtMillis: 1712345683200,
+        ),
+      );
+      expect(learning.easeFactor, closeTo(2.35, 0.001));
+    },
+  );
+
   test('uses the stored-card seed when composing a Review answer', () async {
     await storage.executeBatch(
       'UPDATE cards SET type = 2, queue = 2, did = 40, odid = 0 WHERE id = 1',

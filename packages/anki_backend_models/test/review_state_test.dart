@@ -178,6 +178,30 @@ void main() {
       expect(empty.again.review!.scheduledDays, 1);
     });
 
+    test('New and Learning graduation use the context initial ease', () {
+      const context = ReviewSchedulingContext(
+        initialEaseFactor: 2.35,
+        graduatingIntervalGood: 3,
+      );
+      final newCard = NewCardState().nextStates(context);
+      final learning = LearningCardState(
+        remainingSteps: 1,
+        scheduledSecs: 60,
+        elapsedSecs: 0,
+      ).nextStates(context);
+
+      expect(newCard.again.review!.easeFactor, closeTo(2.35, 0.00001));
+      expect(learning.good.review!.easeFactor, closeTo(2.35, 0.00001));
+      expect(
+        NewCardState()
+            .nextStates(const ReviewSchedulingContext())
+            .again
+            .review!
+            .easeFactor,
+        2.5,
+      );
+    });
+
     test('FSRS short term Good preserves learning remaining steps', () {
       final memory = FsrsMemoryState(stability: 1, difficulty: 5);
       final states = LearningCardState(

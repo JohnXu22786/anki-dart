@@ -64,6 +64,7 @@ class ReviewSchedulingContext {
     this.relearningStepsMinutes = const [],
     this.graduatingIntervalGood = 1,
     this.graduatingIntervalEasy = 4,
+    this.initialEaseFactor = _initialEaseFactor,
   });
 
   final double hardMultiplier;
@@ -100,6 +101,9 @@ class ReviewSchedulingContext {
   final int graduatingIntervalGood;
   final int graduatingIntervalEasy;
 
+  /// Initial ease assigned when a New/Learning card graduates to Review.
+  final double initialEaseFactor;
+
   /// Returns this context with a caller-resolved fuzz factor.
   ///
   /// Every other scheduling input, including dynamically supplied FSRS
@@ -127,6 +131,7 @@ class ReviewSchedulingContext {
         relearningStepsMinutes: relearningStepsMinutes,
         graduatingIntervalGood: graduatingIntervalGood,
         graduatingIntervalEasy: graduatingIntervalEasy,
+        initialEaseFactor: initialEaseFactor,
       );
 
   /// Returns this context with a collection-backed interval resolver attached.
@@ -170,6 +175,7 @@ class ReviewSchedulingContext {
       relearningStepsMinutes: config.relearnSteps.toList(growable: false),
       graduatingIntervalGood: config.graduatingIntervalGood,
       graduatingIntervalEasy: config.graduatingIntervalEasy,
+      initialEaseFactor: config.initialEase,
     );
   }
 
@@ -223,6 +229,7 @@ class ReviewSchedulingContext {
         relearningStepsMinutes: relearningStepsMinutes,
         graduatingIntervalGood: graduatingIntervalGood,
         graduatingIntervalEasy: graduatingIntervalEasy,
+        initialEaseFactor: initialEaseFactor,
       );
 }
 
@@ -949,7 +956,7 @@ LearningCardSchedulingStates _learningStates(
     return LearningCardTransition.review(
       ReviewCardState(
         scheduledDays: fuzzed,
-        easeFactor: _initialEaseFactor,
+        easeFactor: ctx.initialEaseFactor,
         memoryState: memory(rating),
       ),
     );

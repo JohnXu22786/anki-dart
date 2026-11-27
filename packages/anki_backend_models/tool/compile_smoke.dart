@@ -8,6 +8,29 @@ import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  final fsrsTrainingData = prepareFsrsTrainingData(
+    const [
+      FsrsTrainingItem(
+        reviews: [
+          FsrsTrainingReview(rating: 3, deltaT: 0),
+          FsrsTrainingReview(rating: 4, deltaT: 5),
+        ],
+      ),
+      FsrsTrainingItem(
+        reviews: [
+          FsrsTrainingReview(rating: 4, deltaT: 0),
+          FsrsTrainingReview(rating: 3, deltaT: 5),
+          FsrsTrainingReview(rating: 2, deltaT: 1),
+        ],
+      ),
+    ],
+    filterOutliers: false,
+  );
+  if (fsrsTrainingData.initializationItems.length != 1 ||
+      fsrsTrainingData.trainingItems.length != 1) {
+    throw StateError('FSRS training dataset preparation differs on JavaScript');
+  }
+
   if (fuzzLearningIntervalSecs(1200, BigInt.from(58205158)) != 1473) {
     throw StateError('seeded Learning fuzz differs on JavaScript');
   }

@@ -24,6 +24,7 @@ export 'src/fsrs_memory_state.dart';
 export 'src/fsrs_training_items.dart';
 export 'src/fsrs_time_series_split.dart';
 export 'src/fsrs_stability_initialization.dart';
+export 'src/fsrs_parameter_clipping.dart';
 export 'src/review_queue.dart';
 export 'src/queue_admission.dart';
 export 'src/queue_sorting.dart';

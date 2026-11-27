@@ -1500,3 +1500,13 @@ values from FSRS 5.2.0 initialization examples and average recall, returning the
 retained per-rating item counts. Initial-stability parameter derivation is
 available; optimizer model fitting, time-series evaluation orchestration,
 progress, collection integration, and UI remain open.
+
+### Unit 180 — clip FSRS optimizer parameters
+
+`clipFsrsParameters()` applies the pinned FSRS 5.2.0 per-parameter bounds,
+including the relearning-step ceiling and short-term parameter floor, with
+source-compatible Float32 operation order and slice behavior. Transcendental
+result bits follow Dart's math runtime; Rust leaves `f32::powf` precision
+platform-dependent. This makes FSRS parameter clipping available while
+optimizer model fitting, time-series evaluation orchestration, progress,
+collection integration, and UI remain open.

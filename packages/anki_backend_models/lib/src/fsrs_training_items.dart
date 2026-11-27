@@ -22,6 +22,144 @@ class FsrsTrainingItem {
   final List<FsrsTrainingReview> reviews;
 }
 
+/// Initialization examples and the optimizer's training examples.
+///
+/// Both lists are immutable snapshots. Their item objects are the same input
+/// instances; the contained review histories are not copied.
+class FsrsTrainingData {
+  FsrsTrainingData({
+    required List<FsrsTrainingItem> initializationItems,
+    required List<FsrsTrainingItem> trainingItems,
+  })  : initializationItems = List.unmodifiable(initializationItems),
+        trainingItems = List.unmodifiable(trainingItems);
+
+  /// Items with exactly one long-term review after optional outlier filtering.
+  final List<FsrsTrainingItem> initializationItems;
+
+  /// Items supplied to the optimizer after optional outlier filtering.
+  final List<FsrsTrainingItem> trainingItems;
+}
+
+/// Partitions [items] and optionally applies FSRS 5.2.0's deterministic
+/// initialization-dataset outlier filter.
+///
+/// Setting [filterOutliers] to `false` bypasses filtering and leaves the
+/// training set as the non-initialization partition. Each item must contain a
+/// valid 1–4 rating history, begin with deltaT zero, and end with a positive
+/// deltaT. Core assumes these preconditions and can panic while
+/// indexing malformed or empty items; this port instead throws
+/// [ArgumentError] at the API boundary.
+FsrsTrainingData prepareFsrsTrainingData(
+  List<FsrsTrainingItem> items, {
+  required bool filterOutliers,
+}) {
+  for (var itemIndex = 0; itemIndex < items.length; itemIndex++) {
+    final reviews = items[itemIndex].reviews;
+    if (reviews.isEmpty) {
+      throw ArgumentError.value(
+        itemIndex,
+        'items',
+        'each FSRS training item must contain at least one review',
+      );
+    }
+    if (reviews.first.deltaT != 0) {
+      throw ArgumentError.value(
+        itemIndex,
+        'items',
+        'the first review deltaT must be zero',
+      );
+    }
+    if (reviews.any((review) => review.deltaT < 0)) {
+      throw ArgumentError.value(
+        itemIndex,
+        'items',
+        'review deltaT values must not be negative',
+      );
+    }
+    if (reviews.last.deltaT <= 0) {
+      throw ArgumentError.value(
+        itemIndex,
+        'items',
+        'each FSRS training item must end with a long-term review',
+      );
+    }
+    if (reviews.any((review) => review.rating < 1 || review.rating > 4)) {
+      throw ArgumentError.value(
+        itemIndex,
+        'items',
+        'review ratings must be between 1 and 4',
+      );
+    }
+  }
+
+  final initializationItems = <FsrsTrainingItem>[];
+  final unpartitionedTrainingItems = <FsrsTrainingItem>[];
+  for (final item in items) {
+    final longTermReviewCount =
+        item.reviews.where((review) => review.deltaT > 0).length;
+    if (longTermReviewCount == 1) initializationItems.add(item);
+    if (longTermReviewCount != 1) unpartitionedTrainingItems.add(item);
+  }
+  final trainingItems = filterOutliers
+      ? List<FsrsTrainingItem>.of(items)
+      : unpartitionedTrainingItems;
+
+  if (!filterOutliers || initializationItems.isEmpty) {
+    return FsrsTrainingData(
+      initializationItems: initializationItems,
+      trainingItems: trainingItems,
+    );
+  }
+
+  final retained = <FsrsTrainingItem>[];
+  final removedPairs = <int, Set<int>>{};
+  for (var rating = 1; rating <= 4; rating++) {
+    final groupsByDelta = <int, List<FsrsTrainingItem>>{};
+    for (final item in initializationItems) {
+      if (item.reviews.first.rating == rating) {
+        groupsByDelta
+            .putIfAbsent(
+              item.reviews.last.deltaT,
+              () => <FsrsTrainingItem>[],
+            )
+            .add(item);
+      }
+    }
+    final groups = groupsByDelta.entries.toList()
+      ..sort((a, b) {
+        final sizeOrder = a.value.length.compareTo(b.value.length);
+        return sizeOrder != 0 ? sizeOrder : a.key.compareTo(b.key);
+      });
+    final total = groups.fold<int>(0, (sum, group) => sum + group.value.length);
+    final removalTarget = total ~/ 20 > 20 ? total ~/ 20 : 20;
+    var removedCount = 0;
+    for (final group in groups) {
+      final deltaT = group.key;
+      final examples = group.value;
+      final targetReached = removedCount + examples.length >= removalTarget;
+      final withinMaxDelta = deltaT <= (rating == 4 ? 365 : 100);
+      if (targetReached && examples.length >= 6 && withinMaxDelta) {
+        retained.addAll(examples);
+      } else {
+        if (!targetReached) removedCount += examples.length;
+        removedPairs.putIfAbsent(rating, () => <int>{}).add(deltaT);
+      }
+    }
+  }
+
+  final filteredTrainingItems = trainingItems.where((item) {
+    final rating = item.reviews.first.rating;
+    final firstLongTermDelta =
+        item.reviews.firstWhere((review) => review.deltaT > 0).deltaT;
+    return !(removedPairs[rating]?.contains(firstLongTermDelta) ?? false);
+  }).toList();
+
+  return FsrsTrainingData(
+    initializationItems: retained,
+    trainingItems: filteredTrainingItems,
+  );
+}
+
 /// Training examples and the count of retained revlog entries they represent.
 class FsrsTrainingItems {
   const FsrsTrainingItems({required this.items, required this.reviewCount});

@@ -1457,3 +1457,14 @@ deterministic FSRS training-item projection using explicit `nextDayAt` and
 `ignoreRevlogsBefore` inputs. This closes collection-backed training-item
 assembly only; FSRS parameter optimization, training UI/progress, and
 persistence remain open.
+
+### Unit 175 — prepare FSRS training and initialization datasets
+
+`prepareFsrsTrainingData()` partitions FSRS items with exactly one long-term
+review into the initialization dataset and applies the pinned FSRS 5.2.0
+outlier selection when requested. It returns immutable, deterministic
+initialization and optimizer-training lists; `filterOutliers: false` bypasses
+filtering and returns the non-initialization partition as the optimizer set.
+This closes dataset preparation only. Recency
+weighting/time-series validation, optimizer model fitting, progress reporting,
+and collection persistence/UI remain open.

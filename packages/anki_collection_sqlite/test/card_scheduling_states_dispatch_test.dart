@@ -111,7 +111,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
         answerTiming: timing,
       );
@@ -120,6 +119,48 @@ INSERT INTO col VALUES (1700000000, '{}');
       expect((await storage.getCard(Int64(1)))!.due, expectedDue);
     },
   );
+
+  test('uses the stored-card seed when composing a Review answer', () async {
+    await storage.executeBatch(
+      'UPDATE cards SET type = 2, queue = 2, did = 40, odid = 0 WHERE id = 1',
+    );
+    final card = (await storage.getCard(Int64(1)))!;
+    final fuzzSeed = answerFuzzSeedForCardIdAndReps(
+      cardId: BigInt.parse(card.id.toString()),
+      reps: card.reps,
+    );
+    const context = ReviewSchedulingContext(fuzzFactor: 0.5);
+    const timing = CollectionAnswerTiming(
+      now: 1712345678,
+      answeredAtMillis: 1712345679000,
+      daysElapsed: 6,
+      nextDayAt: 1712347478,
+      secsUntilDayRollover: 1800,
+    );
+    final expected = await storage.cardAnswerRequestForCard(
+      cardId: card.id,
+      rating: protoScheduler.CardAnswer_Rating.GOOD,
+      customData: card.customData,
+      answeredAtMillis: Int64(timing.answeredAtMillis),
+      millisecondsTaken: 300,
+      baseContext: context,
+      loadBalancerEnabled: true,
+      fuzzSeed: fuzzSeed,
+      now: DateTime.fromMillisecondsSinceEpoch(timing.answeredAtMillis),
+    );
+
+    final answered = await storage.answerCard(
+      cardId: card.id,
+      rating: protoScheduler.CardAnswer_Rating.GOOD,
+      millisecondsTaken: 300,
+      baseContext: context,
+      loadBalancerEnabled: true,
+      usn: 8,
+      answerTiming: timing,
+    );
+
+    expect(answered.interval, expected.newState.normal.review.scheduledDays);
+  });
 
   test('resolves answer config from a stored normal card home deck', () async {
     final config = DeckConfig(
@@ -425,7 +466,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 2500,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
         answerTiming: _answerTiming(
           daysElapsed: 6,
@@ -464,7 +504,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 65000,
         baseContext: const ReviewSchedulingContext(fuzzFactor: 0),
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
         answerTiming: _answerTiming(
           daysElapsed: 6,
@@ -891,7 +930,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         ),
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
 
@@ -986,7 +1024,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
           baseContext: context,
           loadBalancerEnabled: false,
-          fuzzSeed: null,
           usn: 8,
         );
         final deck = storage.decks.getDeck(Int64(7))!;
@@ -1022,7 +1059,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
       final rolledOver = storage.decks.getDeck(Int64(7))!;
@@ -1053,7 +1089,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
       expect(
@@ -1096,7 +1131,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
       expect(storage.decks.getDeck(Int64(7))!.common.reviewStudied, 1);
@@ -1140,7 +1174,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
           baseContext: context,
           loadBalancerEnabled: false,
-          fuzzSeed: null,
           usn: 8,
         );
         expect(
@@ -1173,7 +1206,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
     );
     expect(
@@ -1203,7 +1235,6 @@ INSERT INTO col VALUES (1700000000, '{}');
 
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
     );
     expect(
@@ -1245,7 +1276,6 @@ INSERT INTO col VALUES (1700000000, '{}');
         millisecondsTaken: 850,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: BigInt.from(13),
         usn: 7,
       );
 
@@ -1329,7 +1359,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
             millisecondsTaken: 300,
             baseContext: context,
             loadBalancerEnabled: false,
-            fuzzSeed: null,
             usn: 19,
           );
           expect(
@@ -1417,7 +1446,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
     );
     expect(normal.lastReviewTimeSecs, Int64(normalAnswerTime ~/ 1000));
@@ -1459,7 +1487,6 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
     );
     expect(rescheduled.lastReviewTimeSecs, Int64(rescheduleAnswerTime ~/ 1000));
@@ -1472,6 +1499,11 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       'UPDATE cards SET type = 0, queue = 0, did = 7, odid = 40 WHERE id = 1',
     );
     storage.decks.addOrUpdateDeckWithExistingId(_filteredDeck());
+    final previewSource = (await storage.getCard(Int64(1)))!;
+    final previewFuzzSeed = answerFuzzSeedForCardIdAndReps(
+      cardId: BigInt.parse(previewSource.id.toString()),
+      reps: previewSource.reps,
+    );
     const previewAnswerTime = 1712345682123;
     final preview = await storage.answerCard(
       answerTiming: _answerTiming(
@@ -1486,11 +1518,13 @@ INSERT INTO notes VALUES (101, 'other-note-guid', 1, 17, 3, '', 'other\\x1fback'
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
     );
     expect(preview.queue, CardQueue.previewRepeat);
-    expect(preview.due, 1712345682 + 45);
+    expect(
+      preview.due,
+      1712345682 + fuzzLearningIntervalSecs(45, previewFuzzSeed),
+    );
     expect(preview.lastReviewTimeSecs, Int64(rescheduleAnswerTime ~/ 1000));
     expect(
       (await storage.getCard(Int64(1)))!.lastReviewTimeSecs,
@@ -1534,7 +1568,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
@@ -1615,7 +1648,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
@@ -1642,7 +1674,6 @@ INSERT INTO cards VALUES
         relearningAgainDelaySecs: 600,
       ),
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
@@ -1672,7 +1703,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
@@ -1694,7 +1724,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
       answerTiming: _answerTiming(
         daysElapsed: 6,
@@ -1726,7 +1755,6 @@ INSERT INTO cards VALUES
 
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
       expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
@@ -1748,7 +1776,6 @@ INSERT INTO cards VALUES
 
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
       expect((await storage.getNote(Int64(100)))!.tags, isEmpty);
@@ -1787,7 +1814,6 @@ INSERT INTO cards VALUES
 
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
 
@@ -1829,7 +1855,6 @@ INSERT INTO cards VALUES
 
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 9,
       );
       expect((await storage.getNote(Int64(100)))!.tags, [
@@ -1911,7 +1936,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
 
@@ -1969,7 +1993,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
     );
     await Future<void>.delayed(Duration.zero);
@@ -2020,13 +2043,17 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
       expect(finishedPreview.queue, CardQueue.newCard);
       expect(finishedPreview.due, 17);
       await storage.undoLastCollectionOperation();
 
+      final previewSource = (await storage.getCard(Int64(1)))!;
+      final previewFuzzSeed = answerFuzzSeedForCardIdAndReps(
+        cardId: BigInt.parse(previewSource.id.toString()),
+        reps: previewSource.reps,
+      );
       final preview = await storage.answerCard(
         answerTiming: _answerTiming(
           daysElapsed: 6,
@@ -2040,14 +2067,13 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: BigInt.from(13),
         usn: 8,
       );
       expect(preview.queue, CardQueue.previewRepeat);
       expect(
         preview.due,
         resolveLearningAnswerDueTimestamp(
-          fuzzedLearningSecs: fuzzLearningIntervalSecs(45, BigInt.from(13)),
+          fuzzedLearningSecs: fuzzLearningIntervalSecs(45, previewFuzzSeed),
           answerTiming: CollectionAnswerTiming(
             now: 1712345680,
             answeredAtMillis: 1712345680000,
@@ -2073,6 +2099,11 @@ INSERT INTO cards VALUES
       storage.decks.addOrUpdateDeckWithExistingId(
         _filteredDeck(reschedule: true),
       );
+      final reschedulingSource = (await storage.getCard(Int64(1)))!;
+      final reschedulingFuzzSeed = answerFuzzSeedForCardIdAndReps(
+        cardId: BigInt.parse(reschedulingSource.id.toString()),
+        reps: reschedulingSource.reps,
+      );
       final rescheduling = await storage.answerCard(
         answerTiming: _answerTiming(
           daysElapsed: 6,
@@ -2085,12 +2116,14 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       );
       expect(rescheduling.deckId, Int64(7));
       expect(rescheduling.queue, CardQueue.learn);
-      expect(rescheduling.due, 600);
+      expect(
+        rescheduling.due,
+        fuzzLearningIntervalSecs(600, reschedulingFuzzSeed),
+      );
       expect(
         storage.revlog.getRevlogEntry(RevlogId(Int64(1712345680003))),
         isNotNull,
@@ -2110,7 +2143,6 @@ INSERT INTO cards VALUES
           millisecondsTaken: 300,
           baseContext: context,
           loadBalancerEnabled: false,
-          fuzzSeed: null,
           usn: 8,
         ),
         throwsA(isA<InvalidModelValue>()),
@@ -2174,7 +2206,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
       ),
       throwsStateError,
@@ -2196,7 +2227,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: context,
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
         loadBalancerContext: loadBalancerContext,
       ),
@@ -2220,7 +2250,6 @@ INSERT INTO cards VALUES
       millisecondsTaken: 300,
       baseContext: context,
       loadBalancerEnabled: false,
-      fuzzSeed: null,
       usn: 8,
       loadBalancerContext: loadBalancerContext,
     );
@@ -2245,25 +2274,22 @@ INSERT INTO cards VALUES
     );
     var answerAtMillis = 1712345679000;
 
-    Future<Card> answer({
-      CollectionAnswerTiming? answerTiming,
-      BigInt? fuzzSeed,
-    }) => storage.answerCard(
-      cardId: Int64(1),
-      rating: protoScheduler.CardAnswer_Rating.GOOD,
-      millisecondsTaken: 300,
-      baseContext: context,
-      loadBalancerEnabled: false,
-      fuzzSeed: fuzzSeed,
-      usn: 8,
-      answerTiming: CollectionAnswerTiming(
-        now: (answerTiming ?? timing).now,
-        answeredAtMillis: answerAtMillis++,
-        daysElapsed: (answerTiming ?? timing).daysElapsed,
-        nextDayAt: (answerTiming ?? timing).nextDayAt,
-        secsUntilDayRollover: (answerTiming ?? timing).secsUntilDayRollover,
-      ),
-    );
+    Future<Card> answer({CollectionAnswerTiming? answerTiming}) =>
+        storage.answerCard(
+          cardId: Int64(1),
+          rating: protoScheduler.CardAnswer_Rating.GOOD,
+          millisecondsTaken: 300,
+          baseContext: context,
+          loadBalancerEnabled: false,
+          usn: 8,
+          answerTiming: CollectionAnswerTiming(
+            now: (answerTiming ?? timing).now,
+            answeredAtMillis: answerAtMillis++,
+            daysElapsed: (answerTiming ?? timing).daysElapsed,
+            nextDayAt: (answerTiming ?? timing).nextDayAt,
+            secsUntilDayRollover: (answerTiming ?? timing).secsUntilDayRollover,
+          ),
+        );
 
     await storage.executeBatch(
       'UPDATE cards SET type = 1, queue = 1, left = 2, due = 0, did = 40, odid = 0 WHERE id = 1',
@@ -2310,48 +2336,53 @@ INSERT INTO cards VALUES
       nextDayAt: 1712347478,
       secsUntilDayRollover: 1800,
     );
-    const intradayDue = 1712346398;
-    final intraday = await answer(
-      answerTiming: intradayTiming,
-      fuzzSeed: BigInt.zero,
-    );
+    Future<int> expectedIntradayDue() async {
+      final card = (await storage.getCard(Int64(1)))!;
+      final seed = answerFuzzSeedForCardIdAndReps(
+        cardId: BigInt.parse(card.id.toString()),
+        reps: card.reps,
+      );
+      return resolveLearningAnswerDueTimestamp(
+        fuzzedLearningSecs: fuzzLearningIntervalSecs(600, seed),
+        answerTiming: intradayTiming,
+      );
+    }
+
+    var expectedDue = await expectedIntradayDue();
+    final intraday = await answer(answerTiming: intradayTiming);
     expect(intraday.queue, CardQueue.learn);
-    expect(intraday.due, intradayDue);
+    expect(intraday.due, expectedDue);
     expect((await storage.getCard(Int64(1)))!.queue, CardQueue.learn);
-    expect((await storage.getCard(Int64(1)))!.due, intradayDue);
+    expect((await storage.getCard(Int64(1)))!.due, expectedDue);
 
     await storage.executeBatch(
       'UPDATE cards SET type = 1, queue = 1, left = 2, due = 0, did = 7, odid = 40 WHERE id = 1',
     );
-    final filteredIntraday = await answer(
-      answerTiming: intradayTiming,
-      fuzzSeed: BigInt.zero,
-    );
+    expectedDue = await expectedIntradayDue();
+    final filteredIntraday = await answer(answerTiming: intradayTiming);
     expect(filteredIntraday.queue, CardQueue.learn);
-    expect(filteredIntraday.due, intradayDue);
-    expect((await storage.getCard(Int64(1)))!.due, intradayDue);
+    expect(filteredIntraday.due, expectedDue);
+    expect((await storage.getCard(Int64(1)))!.due, expectedDue);
 
     await storage.executeBatch(
       'UPDATE cards SET type = 3, queue = 3, left = 2, due = 0, did = 40, odid = 0 WHERE id = 1',
     );
-    final intradayRelearning = await answer(
-      answerTiming: intradayTiming,
-      fuzzSeed: BigInt.zero,
-    );
+    expectedDue = await expectedIntradayDue();
+    final intradayRelearning = await answer(answerTiming: intradayTiming);
     expect(intradayRelearning.queue, CardQueue.learn);
-    expect(intradayRelearning.due, intradayDue);
-    expect((await storage.getCard(Int64(1)))!.due, intradayDue);
+    expect(intradayRelearning.due, expectedDue);
+    expect((await storage.getCard(Int64(1)))!.due, expectedDue);
 
     await storage.executeBatch(
       'UPDATE cards SET type = 3, queue = 3, left = 2, due = 0, did = 7, odid = 40 WHERE id = 1',
     );
+    expectedDue = await expectedIntradayDue();
     final filteredIntradayRelearning = await answer(
       answerTiming: intradayTiming,
-      fuzzSeed: BigInt.zero,
     );
     expect(filteredIntradayRelearning.queue, CardQueue.learn);
-    expect(filteredIntradayRelearning.due, intradayDue);
-    expect((await storage.getCard(Int64(1)))!.due, intradayDue);
+    expect(filteredIntradayRelearning.due, expectedDue);
+    expect((await storage.getCard(Int64(1)))!.due, expectedDue);
   });
 
   test('answerCard resolves current step from the home deck config', () async {
@@ -2409,7 +2440,6 @@ INSERT INTO cards VALUES
         millisecondsTaken: 300,
         baseContext: const ReviewSchedulingContext(fuzzFactor: 0),
         loadBalancerEnabled: false,
-        fuzzSeed: null,
         usn: 8,
         answerTiming: CollectionAnswerTiming(
           now: answerMillis ~/ 1000,
@@ -2608,7 +2638,6 @@ Future<Card> _answerStoredCard(
   millisecondsTaken: 250,
   baseContext: const ReviewSchedulingContext(fuzzFactor: 0),
   loadBalancerEnabled: false,
-  fuzzSeed: null,
   usn: 8,
   answerTiming: _answerTiming(
     daysElapsed: 6,

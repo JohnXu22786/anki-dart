@@ -5,6 +5,25 @@ import 'package:fixnum/fixnum.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('answerFuzzSeedForCardIdAndReps', () {
+    test('adds the card ID and u32 reps with u64 wrapping', () {
+      expect(
+        answerFuzzSeedForCardIdAndReps(
+          cardId: BigInt.parse('fffffffffffffffe', radix: 16),
+          reps: 3,
+        ),
+        BigInt.one,
+      );
+      expect(
+        answerFuzzSeedForCardIdAndReps(
+          cardId: BigInt.from(41),
+          reps: 0x1_0000_0002,
+        ),
+        BigInt.from(43),
+      );
+    });
+  });
+
   group('resolveReviewAnswerDueDay', () {
     test('adds scheduled days to the captured collection day', () {
       final timing = CollectionAnswerTiming(

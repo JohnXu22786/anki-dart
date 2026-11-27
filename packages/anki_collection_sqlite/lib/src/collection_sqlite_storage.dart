@@ -91,6 +91,21 @@ int _wrapInt32(int value) {
   return wrapped >= 0x80000000 ? wrapped - 0x100000000 : wrapped;
 }
 
+/// Derives Core's normal-answering fuzz seed from a Card ID and reps count.
+///
+/// The ID is interpreted as a u64 bit pattern, reps is truncated to u32, and
+/// their sum wraps as u64, matching `get_fuzz_seed_for_id_and_reps()`.
+BigInt answerFuzzSeedForCardIdAndReps({
+  required BigInt cardId,
+  required int reps,
+}) {
+  final u64Mask = BigInt.parse('ffffffffffffffff', radix: 16);
+  final u32Mask = BigInt.from(0xffffffff);
+  final unsignedCardId = cardId & u64Mask;
+  final unsignedReps = BigInt.from(reps) & u32Mask;
+  return (unsignedCardId + unsignedReps) & u64Mask;
+}
+
 /// Today's new/review queue counts and extension increments for custom study.
 final class CollectionCustomStudyLimitDefaults {
   const CollectionCustomStudyLimitDefaults({
@@ -5616,9 +5631,9 @@ WHERE queue IN (-2, -3)
   /// config. Review due day and Learning/Relearning queue and
   /// due values are derived from generated next states and [answerTiming].
   /// Intraday Learning/Relearning and unfinished filtered Preview intervals
-  /// are fuzzed from [fuzzSeed] and resolved from [answerTiming]. Learning and
-  /// Relearning elapsed seconds are derived from the stored Card and the
-  /// resolved current step delay. The generated
+  /// are fuzzed from the stored Card's ID and reps and resolved from
+  /// [answerTiming]. Learning and Relearning elapsed seconds are derived from
+  /// the stored Card and the resolved current step delay. The generated
   /// answer is capped before applying its Card and Revlog
   /// results. The stored Card's custom data is copied into the generated
   /// answer. The updated Card is returned only after its Card and Revlog rows
@@ -5629,7 +5644,6 @@ WHERE queue IN (-2, -3)
     required int millisecondsTaken,
     required ReviewSchedulingContext baseContext,
     required bool loadBalancerEnabled,
-    required BigInt? fuzzSeed,
     required int usn,
     required CollectionAnswerTiming answerTiming,
     CollectionLoadBalancerContext? loadBalancerContext,
@@ -5642,6 +5656,10 @@ WHERE queue IN (-2, -3)
     );
     final card = await getCard(cardId);
     if (card == null) throw StateError('card not found: $cardId');
+    final fuzzSeed = answerFuzzSeedForCardIdAndReps(
+      cardId: BigInt.parse(card.id.toString()),
+      reps: card.reps,
+    );
     final home = _homeDeckAndConfigForCard(card);
     final homeDeckConfig = home.config;
     final config = homeDeckConfig.inner;

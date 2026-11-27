@@ -23,6 +23,35 @@ void main() {
     throw StateError('FSRS training batch shuffle differs on JavaScript');
   }
 
+  final firstTrainingBatch = FsrsTrainingBatch(
+    timeHistories: const [],
+    ratingHistories: const [],
+    deltaTs: [10],
+    labels: const [1],
+    weights: const [1],
+  );
+  final secondTrainingBatch = FsrsTrainingBatch(
+    timeHistories: const [],
+    ratingHistories: const [],
+    deltaTs: [20],
+    labels: const [1],
+    weights: const [1],
+  );
+  final batchIterator = FsrsTrainingBatchIterator(
+    batches: [firstTrainingBatch, secondTrainingBatch],
+    indices: [1, 0],
+  );
+  if (batchIterator.progress.itemsProcessed != 0 ||
+      batchIterator.progress.itemsTotal != 2 ||
+      batchIterator.progress.isComplete ||
+      !identical(batchIterator.nextBatch(), secondTrainingBatch) ||
+      batchIterator.progress.itemsProcessed != 1 ||
+      !identical(batchIterator.nextBatch(), firstTrainingBatch) ||
+      !batchIterator.progress.isComplete ||
+      batchIterator.nextBatch() != null) {
+    throw StateError('FSRS training batch iteration differs on JavaScript');
+  }
+
   final trainingProgress = FsrsTrainingProgress(
     splits: [
       FsrsTrainingSplitProgress(

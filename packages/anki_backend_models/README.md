@@ -56,12 +56,17 @@ fitting.
 `orderFsrsTrainingBatchesByIndices()` returns immutable existing batches in a
 validated permutation-index order, preserving batch identity.
 
+`FsrsTrainingBatchIterator` traverses that caller-supplied permutation with
+immutable cursor progress snapshots. Optimizer/autodiff/model fitting,
+evaluation orchestration, collection integration, and UI remain outside this
+helper.
+
 `FsrsTrainingBatchShuffle` returns immutable seeded batch-index permutations
 while preserving the rand 0.9.4 `StdRng` stream across calls. Its
 `IncreasingUniform` chunking and `u32` range sampler are version-pinned to rand
 0.9.4, rand_chacha 0.9.0, and rand_core 0.9.3. Full dataloader iteration and
-progress, autodiff, optimizer/model fitting, evaluation orchestration,
-collection integration, and UI remain outside this helper.
+optimizer/autodiff/model fitting, evaluation orchestration, collection
+integration, and UI remain outside this helper.
 
 `splitFsrsTrainingItemsByTimeSeries()` creates immutable expanding-window
 training and validation folds from FSRS training items already ordered by

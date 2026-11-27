@@ -23,6 +23,8 @@ export 'src/revlog.dart';
 export 'src/fsrs_memory_state.dart';
 export 'src/fsrs_training_items.dart';
 export 'src/fsrs_training_batch.dart';
+export 'src/fsrs_training_batch_iterator.dart'
+    show FsrsTrainingBatchIterator, FsrsTrainingBatchProgress;
 export 'src/fsrs_training_batch_shuffle.dart' show FsrsTrainingBatchShuffle;
 export 'src/fsrs_training_progress.dart';
 export 'src/fsrs_time_series_split.dart';

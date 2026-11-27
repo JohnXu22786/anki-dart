@@ -53,6 +53,13 @@ immutable, sequence-major padded histories, current deltas, binary labels, and
 weights. It provides tensor-compatible values without batch iteration or model
 fitting.
 
+`FsrsTrainingBatchShuffle` returns immutable seeded batch-index permutations
+while preserving the rand 0.9.4 `StdRng` stream across calls. Its
+`IncreasingUniform` chunking and `u32` range sampler are version-pinned to rand
+0.9.4, rand_chacha 0.9.0, and rand_core 0.9.3. Full dataloader iteration and
+progress, autodiff, optimizer/model fitting, evaluation orchestration,
+collection integration, and UI remain outside this helper.
+
 `splitFsrsTrainingItemsByTimeSeries()` creates immutable expanding-window
 training and validation folds from FSRS training items already ordered by
 review timestamp, matching FSRS 5.2.0 segment boundaries. It preserves item

@@ -1568,3 +1568,12 @@ history-length ordering with immutable consecutive batches of at most the
 requested size. Sorted fixed-size batching is available while seeded
 shuffling/RNG, iteration/progress, autodiff, optimizer/model fitting,
 evaluation orchestration, collection integration, and UI remain open.
+
+### Unit 188 — seeded FSRS training batch shuffle
+
+`FsrsTrainingBatchShuffle` returns seeded immutable permutations of batch
+indices, matching FSRS 5.2.0 `ShuffleDataLoader::iter()` and the pinned rand
+0.9.4 `SliceRandom::shuffle()` word stream across successive calls. Seeded
+batch-index shuffling is available while full dataloader iteration/progress,
+autodiff, optimizer/model fitting, evaluation orchestration, collection
+integration, and UI remain open.

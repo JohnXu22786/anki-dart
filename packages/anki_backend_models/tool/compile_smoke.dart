@@ -8,6 +8,12 @@ import 'package:anki_backend_protocol/anki/scheduler.pb.dart' as scheduler;
 import 'package:fixnum/fixnum.dart';
 
 void main() {
+  final batchShuffle = FsrsTrainingBatchShuffle(BigInt.zero);
+  if (batchShuffle.nextPermutation(5).join(',') != '1,0,2,3,4' ||
+      batchShuffle.nextPermutation(5).join(',') != '0,1,2,4,3') {
+    throw StateError('FSRS training batch shuffle differs on JavaScript');
+  }
+
   final maskedGradients = maskFsrsParameterGradients(
     List<double>.generate(21, (index) => index.toDouble()),
     freezeInitialStability: true,

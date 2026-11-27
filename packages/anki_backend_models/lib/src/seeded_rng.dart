@@ -11,7 +11,44 @@ List<int> seededStdRngWords(BigInt seed, {int count = 1}) {
   if (count < 0) {
     throw ArgumentError.value(count, 'count', 'must be nonnegative');
   }
-  return _SeededStdRng(seed).takeWords(count);
+  return SeededStdRng(seed).takeWords(count);
+}
+
+/// Stateful rand 0.9.4 `StdRng` word stream for package-internal adapters.
+///
+/// This reuses the pinned rand_core 0.9.3 seed expansion and rand_chacha 0.9.0
+/// ChaCha12 implementation used by the stateless helpers in this file.
+class SeededStdRng {
+  SeededStdRng(
+    BigInt seed, {
+    int blockLow = 0,
+    int blockHigh = 0,
+  })  : _key = _expandSeed(_validatedSeed(seed)),
+        _blockLow = _validateBlockWord(blockLow, 'blockLow'),
+        _blockHigh = _validateBlockWord(blockHigh, 'blockHigh');
+
+  final List<int> _key;
+  List<int> _words = [];
+  int _index = 0;
+  int _blockLow;
+  int _blockHigh;
+
+  int nextWord() {
+    if (_index == _words.length) {
+      _words = _chacha12Words(
+        _key,
+        blockLow: _blockLow,
+        blockHigh: _blockHigh,
+      );
+      _blockLow = (_blockLow + 1) & _wordMask;
+      if (_blockLow == 0) _blockHigh = (_blockHigh + 1) & _wordMask;
+      _index = 0;
+    }
+    return _words[_index++];
+  }
+
+  List<int> takeWords(int count) =>
+      List<int>.generate(count, (_) => nextWord(), growable: false);
 }
 
 /// Returns rand 0.9.4's seeded `random_range(0.0f32..1.0f32)` sample.
@@ -43,25 +80,55 @@ void _validateSeed(BigInt seed) {
   }
 }
 
-class _SeededStdRng {
-  _SeededStdRng(BigInt seed) : _key = _expandSeed(seed);
+BigInt _validatedSeed(BigInt seed) {
+  _validateSeed(seed);
+  return seed;
+}
 
-  final List<int> _key;
-  List<int> _words = [];
-  int _index = 0;
-  int _block = 0;
-
-  List<int> takeWords(int count) {
-    final result = <int>[];
-    while (result.length < count) {
-      if (_index == _words.length) {
-        _words = _chacha12Words(_key, block: _block++);
-        _index = 0;
-      }
-      result.add(_words[_index++]);
-    }
-    return result;
+int _validateBlockWord(int word, String name) {
+  if (word < 0 || word > _wordMask) {
+    throw ArgumentError.value(
+        word, name, 'must fit in an unsigned 32-bit word');
   }
+  return word;
+}
+
+/// Samples from `0..bound` using rand 0.9.4's default biased Canon sampler.
+///
+/// `IncreasingUniform` uses this `u32 random_range` path to create each
+/// factorial chunk. Keep the extra-word correction exactly aligned with the
+/// pinned rand source; it is deliberately not replaced by modulo sampling.
+int rand094RandomRangeU32(int bound, int Function() nextWord) {
+  if (bound < 1 || bound > _wordMask) {
+    throw ArgumentError.value(bound, 'bound', 'must be in 1..u32::MAX');
+  }
+  final (result, low) = _multiplyU32(nextWord(), bound);
+  var sample = result;
+  final threshold = (-bound) & _wordMask;
+  if (low > threshold) {
+    final (correctionHigh, _) = _multiplyU32(nextWord(), bound);
+    if (low + correctionHigh > _wordMask) sample++;
+  }
+  return sample;
+}
+
+/// Exact 32-by-32 widening multiplication using 16-bit limbs.
+///
+/// Keeping each intermediate below 2^53 also preserves exact integer results
+/// when this package is compiled to JavaScript.
+(int, int) _multiplyU32(int left, int right) {
+  final leftLow = left & 0xffff;
+  final leftHigh = left >> 16;
+  final rightLow = right & 0xffff;
+  final rightHigh = right >> 16;
+  final lowProduct = leftLow * rightLow;
+  final crossA = leftHigh * rightLow;
+  final crossB = leftLow * rightHigh;
+  final highProduct = leftHigh * rightHigh;
+  final middle = (lowProduct >> 16) + (crossA & 0xffff) + (crossB & 0xffff);
+  final low = ((middle & 0xffff) << 16) | (lowProduct & 0xffff);
+  final high = highProduct + (crossA >> 16) + (crossB >> 16) + (middle >> 16);
+  return (high, low);
 }
 
 List<int> _expandSeed(BigInt seed) {
@@ -78,15 +145,19 @@ List<int> _expandSeed(BigInt seed) {
   return words;
 }
 
-List<int> _chacha12Words(List<int> seedWords, {int block = 0}) {
+List<int> _chacha12Words(
+  List<int> seedWords, {
+  required int blockLow,
+  required int blockHigh,
+}) {
   final state = <int>[
     0x61707865,
     0x3320646e,
     0x79622d32,
     0x6b206574,
     ...seedWords,
-    block & _wordMask,
-    (block >> 32) & _wordMask,
+    blockLow,
+    blockHigh,
     0,
     0,
   ];

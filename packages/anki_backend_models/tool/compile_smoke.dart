@@ -14,6 +14,38 @@ void main() {
     throw StateError('FSRS training batch shuffle differs on JavaScript');
   }
 
+  final trainingProgress = FsrsTrainingProgress(
+    splits: [
+      FsrsTrainingSplitProgress(
+        epoch: 1,
+        epochTotal: 2,
+        itemsProcessed: 1,
+        itemsTotal: 4,
+      ),
+      FsrsTrainingSplitProgress(
+        epoch: 2,
+        epochTotal: 3,
+        itemsProcessed: 2,
+        itemsTotal: 5,
+      ),
+    ],
+    finished: false,
+  );
+  final updatedTrainingProgress = updateFsrsTrainingProgressSplit(
+    progress: trainingProgress,
+    splitIndex: 1,
+    epoch: 3,
+    epochTotal: 4,
+    itemsProcessed: 3,
+    itemsTotal: 6,
+  );
+  if (updatedTrainingProgress.current != 16 ||
+      updatedTrainingProgress.total != 32 ||
+      updatedTrainingProgress.splits.first != trainingProgress.splits.first ||
+      updatedTrainingProgress.finished) {
+    throw StateError('FSRS training progress update differs on JavaScript');
+  }
+
   final maskedGradients = maskFsrsParameterGradients(
     List<double>.generate(21, (index) => index.toDouble()),
     freezeInitialStability: true,

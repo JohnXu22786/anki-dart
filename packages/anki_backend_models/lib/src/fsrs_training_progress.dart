@@ -55,3 +55,40 @@ int _nonnegativeCount(Object? value, String name) {
   }
   return value;
 }
+
+/// Returns a progress snapshot with one split's training counts replaced.
+///
+/// The split index is checked against [progress.splits] before validating the
+/// supplied counts. All other splits and [FsrsTrainingProgress.finished] are
+/// preserved.
+FsrsTrainingProgress updateFsrsTrainingProgressSplit({
+  required FsrsTrainingProgress progress,
+  required int splitIndex,
+  required int epoch,
+  required int epochTotal,
+  required int itemsProcessed,
+  required int itemsTotal,
+}) {
+  if (splitIndex < 0 || splitIndex >= progress.splits.length) {
+    throw RangeError.index(
+      splitIndex,
+      progress.splits,
+      'splitIndex',
+      'split index out of range',
+    );
+  }
+
+  final updatedSplit = FsrsTrainingSplitProgress(
+    epoch: epoch,
+    epochTotal: epochTotal,
+    itemsProcessed: itemsProcessed,
+    itemsTotal: itemsTotal,
+  );
+  final updatedSplits = List<FsrsTrainingSplitProgress>.of(progress.splits);
+  updatedSplits[splitIndex] = updatedSplit;
+
+  return FsrsTrainingProgress(
+    splits: updatedSplits,
+    finished: progress.finished,
+  );
+}

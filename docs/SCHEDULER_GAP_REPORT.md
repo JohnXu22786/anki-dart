@@ -1594,3 +1594,12 @@ with only the selected split's epoch and item counts replaced. Immutable split
 progress updates are available while collector synchronization/abort handling,
 training orchestration, autodiff, optimizer/model fitting, evaluation
 orchestration, collection integration, and UI remain open.
+
+### Unit 191 — immutable FSRS training progress completion
+
+`finishFsrsTrainingProgress()` returns a new immutable progress snapshot with
+the same split values in the same order and `finished` set to `true`, matching
+Core's explicit completion-flag projection. This value update is available
+while completion-path/error orchestration, locks, abort/interrupter behavior,
+training loops, autodiff, optimizer/model fitting, evaluation orchestration,
+collection integration, and UI remain open.

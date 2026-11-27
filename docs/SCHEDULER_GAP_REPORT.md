@@ -1376,3 +1376,16 @@ mutations, regardless of the collection's stored `col.usn`. Lower-level
 explicit-USN apply/record APIs retain their existing contracts. This closes
 only composed answer USN resolution; server-sync behavior and UI/call-site
 wiring remain outside this unit.
+
+### Unit 168 — derive composed answer scheduler settings from the stored Card's home config
+
+The composed `CollectionSqliteStorage.answerCard()` path now projects the
+resolved stored Card home `DeckConfig` into `ReviewSchedulingContext` before
+applying the stored-card seeded fuzz factor. Hard/easy/interval multipliers,
+maximum review interval, leech threshold, lapse settings, learning/relearning
+steps, and graduation intervals therefore come from the same home config used
+by Core's `CardStateUpdater::state_context()`. Caller-owned FSRS outputs and
+parameters, load-balancer resolvers, and runtime relearning/FSRS flags remain
+intact; lower-level explicit-context APIs are unchanged. This closes only
+composed answer scheduler-setting selection; UI/call-site wiring and remaining
+scheduler gaps stay open.

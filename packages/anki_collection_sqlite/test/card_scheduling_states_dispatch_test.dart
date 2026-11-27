@@ -172,6 +172,72 @@ INSERT INTO col VALUES (1700000000, '{}');
   });
 
   test(
+    'composed Review answer uses stored config but preserves dynamic context',
+    () async {
+      await storage.executeBatch(
+        'UPDATE cards SET type = 2, queue = 2, did = 40, odid = 0 WHERE id = 1',
+      );
+      final card = (await storage.getCard(Int64.ONE))!;
+      final seed = answerFuzzSeedForCardIdAndReps(
+        cardId: BigInt.parse(card.id.toString()),
+        reps: card.reps,
+      );
+      final config = _config()
+        ..inner.maximumReviewInterval = 100
+        ..inner.intervalMultiplier = 1.4;
+      storage.deckConfigs.addOrUpdateDeckConfigWithExistingId(config);
+      final context = ReviewSchedulingContext(
+        fuzzFactor: 0.99,
+        maximumReviewInterval: 20,
+        intervalMultiplier: 0.4,
+        fsrsNextStates: _unit166FsrsNextStates(),
+        relearningAgainDelaySecs: 600,
+      );
+      const timing = CollectionAnswerTiming(
+        now: 1712345678,
+        answeredAtMillis: 1712345679000,
+        daysElapsed: 6,
+        nextDayAt: 1712347478,
+        secsUntilDayRollover: 1800,
+      );
+      final seededContext = context
+          .withDeckConfig(config)
+          .withFuzzFactor(seededStdRngFuzzFactor(seed));
+      final expected = await storage.cardAnswerRequestForCard(
+        cardId: card.id,
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        customData: card.customData,
+        answeredAtMillis: Int64(timing.answeredAtMillis),
+        millisecondsTaken: 300,
+        baseContext: seededContext,
+        loadBalancerEnabled: false,
+        fuzzSeed: seed,
+        now: DateTime.fromMillisecondsSinceEpoch(timing.answeredAtMillis),
+      );
+      final lowerLevel = ReviewCardState(
+        scheduledDays: card.interval,
+        elapsedDays: 6,
+        easeFactor: card.easeFactor,
+        lapses: card.lapses,
+        memoryState: card.memoryState,
+      ).nextStates(context);
+      expect(expected.newState.normal.review.scheduledDays, isNot(20));
+      expect(lowerLevel.good.review.scheduledDays, 20);
+
+      final answered = await storage.answerCard(
+        cardId: card.id,
+        rating: protoScheduler.CardAnswer_Rating.GOOD,
+        millisecondsTaken: 300,
+        baseContext: context,
+        loadBalancerEnabled: false,
+        answerTiming: timing,
+      );
+
+      expect(answered.interval, expected.newState.normal.review.scheduledDays);
+    },
+  );
+
+  test(
     'composed Review answer overrides caller fuzz and preserves context',
     () async {
       await storage.executeBatch(

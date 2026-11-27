@@ -53,6 +53,9 @@ immutable, sequence-major padded histories, current deltas, binary labels, and
 weights. It provides tensor-compatible values without batch iteration or model
 fitting.
 
+`orderFsrsTrainingBatchesByIndices()` returns immutable existing batches in a
+validated permutation-index order, preserving batch identity.
+
 `FsrsTrainingBatchShuffle` returns immutable seeded batch-index permutations
 while preserving the rand 0.9.4 `StdRng` stream across calls. Its
 `IncreasingUniform` chunking and `u32` range sampler are version-pinned to rand

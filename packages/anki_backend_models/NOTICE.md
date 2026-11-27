@@ -173,6 +173,11 @@ to immutable, caller-ordered values with Burn-compatible sequence-major
 histories. Shuffle, data-loader iteration, and model training remain outside
 this helper; the source file digest is recorded in `SOURCE.sha256`.
 
+`orderFsrsTrainingBatchesByIndices()` adapts the shuffled-index lookup used by
+`fsrs-5.2.0/src/dataset.rs::ShuffleDataLoader::iter()`, returning immutable
+existing batch values in index order after validating a complete permutation.
+The source file digest is recorded in `SOURCE.sha256`.
+
 `sortFsrsTrainingItemsByReviewLength()` adapts
 `fsrs-5.2.0/src/dataset.rs::sort_items_by_review_length()` using cached review
 counts and stable ascending order. The returned immutable list preserves each

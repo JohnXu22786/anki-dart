@@ -108,6 +108,43 @@ FsrsTrainingBatch packFsrsTrainingBatch(
   );
 }
 
+/// Returns [batches] in the order specified by a complete permutation of
+/// their indexes.
+///
+/// The returned list is immutable. Batch objects are reused, and neither
+/// input list nor its values are modified.
+List<FsrsTrainingBatch> orderFsrsTrainingBatchesByIndices({
+  required List<FsrsTrainingBatch> batches,
+  required List<int> indices,
+}) {
+  if (indices.length != batches.length) {
+    throw ArgumentError.value(
+      indices,
+      'indices',
+      'must contain one index for each batch',
+    );
+  }
+
+  final seen = List<bool>.filled(batches.length, false);
+  final ordered = <FsrsTrainingBatch>[];
+  for (final index in indices) {
+    if (index < 0 || index >= batches.length) {
+      throw ArgumentError.value(
+        index,
+        'indices',
+        'batch index must be between 0 and ${batches.length - 1}',
+      );
+    }
+    if (seen[index]) {
+      throw ArgumentError.value(index, 'indices', 'duplicate batch index');
+    }
+    seen[index] = true;
+    ordered.add(batches[index]);
+  }
+
+  return List.unmodifiable(ordered);
+}
+
 double _fsrsFloat32(double value) {
   final storage = Float32List(1);
   storage[0] = value;

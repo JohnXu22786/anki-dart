@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import 'dart:typed_data';
+
 /// Returns words from the pinned rand 0.9.4 StdRng stream.
 ///
 /// This package reproduces rand_core 0.9.3's `seed_from_u64` expansion and
@@ -10,6 +12,20 @@ List<int> seededStdRngWords(BigInt seed, {int count = 1}) {
     throw ArgumentError.value(count, 'count', 'must be nonnegative');
   }
   return _SeededStdRng(seed).takeWords(count);
+}
+
+/// Returns rand 0.9.4's seeded `random_range(0.0f32..1.0f32)` sample.
+///
+/// `UniformFloat<f32>::sample_single_inclusive()` discards the low nine bits
+/// of one generated word, inserts the remaining 23 bits into a `[1, 2)` f32,
+/// then subtracts one. The constructed fraction is exactly representable as
+/// f32, so the subtraction preserves Core's Float32 rounding.
+double seededStdRngFuzzFactor(BigInt seed) {
+  _validateSeed(seed);
+  final mantissa = seededStdRngWords(seed).single >> 9;
+  final floatBits = 0x3f800000 | mantissa;
+  final bytes = ByteData(4)..setUint32(0, floatBits, Endian.little);
+  return bytes.getFloat32(0, Endian.little) - 1.0;
 }
 
 const _wordMask = 0xffffffff;

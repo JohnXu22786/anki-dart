@@ -5630,6 +5630,8 @@ WHERE queue IN (-2, -3)
   /// current Learning/Relearning step delay comes from the same resolved home
   /// config. Review due day and Learning/Relearning queue and
   /// due values are derived from generated next states and [answerTiming].
+  /// The Review fuzz factor is derived from the stored Card's answer fuzz seed;
+  /// all other caller-owned scheduling context values are preserved.
   /// Intraday Learning/Relearning and unfinished filtered Preview intervals
   /// are fuzzed from the stored Card's ID and reps and resolved from
   /// [answerTiming]. Learning and Relearning elapsed seconds are derived from
@@ -5659,6 +5661,9 @@ WHERE queue IN (-2, -3)
     final fuzzSeed = answerFuzzSeedForCardIdAndReps(
       cardId: BigInt.parse(card.id.toString()),
       reps: card.reps,
+    );
+    final answerContext = baseContext.withFuzzFactor(
+      seededStdRngFuzzFactor(fuzzSeed),
     );
     final home = _homeDeckAndConfigForCard(card);
     final homeDeckConfig = home.config;
@@ -5701,7 +5706,7 @@ WHERE queue IN (-2, -3)
       customData: card.customData,
       answeredAtMillis: Int64(answerTiming.answeredAtMillis),
       millisecondsTaken: millisecondsTaken,
-      baseContext: baseContext,
+      baseContext: answerContext,
       scheduledSecs: scheduledSecs,
       elapsedSecs: elapsedSecs,
       loadBalancerEnabled: loadBalancerEnabled,

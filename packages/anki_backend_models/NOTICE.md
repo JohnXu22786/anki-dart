@@ -330,6 +330,13 @@ defined by `proto/anki/scheduler.proto`. All source digests are recorded in
 licensed under AGPL-3.0-or-later; this adaptation retains the same license,
 and root `COPYING` is unchanged.
 
+`seededStdRngFuzzFactor()` reproduces rand 0.9.4's
+`UniformFloat<f32>::sample_single_inclusive()` sample used by Core's
+`get_fuzz_factor()`. It reuses the pinned `rand_chacha` 0.9.0 and `rand_core`
+0.9.3 `StdRng` stream recorded in `THIRD_PARTY_SOURCE.sha256`; only the
+high-23-bit Float32 construction is implemented. Those crates are dual
+licensed under Apache-2.0 or MIT.
+
 `applyNewCardAnswerState()` adapts the Normal/New Card state update from
 `rslib/src/scheduler/answering/learning.rs::apply_new_state()` and the reps
 increment from `apply_normal_study_state()` at Anki Core commit

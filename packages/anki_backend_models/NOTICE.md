@@ -162,6 +162,12 @@ Training-item projections use the same pinned Core source and FSRS 5.2.0
 provenance recorded above; no upstream implementation is copied into product
 files.
 
+`weightFsrsTrainingItemsByRecency()` adapts the recency-weight assignment from
+`fsrs-5.2.0/src/dataset.rs::recency_weighted_fsrs_items()`. It accepts items
+already ordered by review timestamp, preserves their order and associations,
+and matches Core's Float32 arithmetic. The source file hash and crate archive
+hash are recorded in `SOURCE.sha256` and `THIRD_PARTY_SOURCE.sha256`.
+
 `EasyDay`, `parseEasyDaysPercentages()`, and
 `calculateEasyDaysModifiers()` adapt Core's easy-day classification,
 percentage parsing, and review-load normalization from

@@ -5622,16 +5622,17 @@ WHERE queue IN (-2, -3)
   /// Answers one stored card by dispatching its scheduling states, selecting
   /// the requested rating, then applying and recording that answer atomically.
   ///
-  /// All timing and scheduling values that are not already stored on the Card
-  /// are caller-resolved inputs. Answer cap, leech action, sibling bury flags,
-  /// and the load-balancer config ID come from the stored Card's home config;
+  /// Timing inputs and dynamic scheduler values are caller-resolved. Static
+  /// scheduler settings, answer cap, leech action, sibling-bury flags, and the
+  /// load-balancer config ID come from the stored Card's home config;
   /// [answerTiming] carries the caller-resolved answer timestamp, collection
   /// day, and rollover duration from one collection timing snapshot. The
   /// current Learning/Relearning step delay comes from the same resolved home
   /// config. Review due day and Learning/Relearning queue and
   /// due values are derived from generated next states and [answerTiming].
-  /// The Review fuzz factor is derived from the stored Card's answer fuzz seed;
-  /// all other caller-owned scheduling context values are preserved.
+  /// Scheduler settings are projected from the stored Card's home config,
+  /// while caller-owned dynamic context values remain intact. The Review fuzz
+  /// factor is derived from the stored Card's answer fuzz seed.
   /// Intraday Learning/Relearning and unfinished filtered Preview intervals
   /// are fuzzed from the stored Card's ID and reps and resolved from
   /// [answerTiming]. Learning and Relearning elapsed seconds are derived from
@@ -5662,11 +5663,11 @@ WHERE queue IN (-2, -3)
       cardId: BigInt.parse(card.id.toString()),
       reps: card.reps,
     );
-    final answerContext = baseContext.withFuzzFactor(
-      seededStdRngFuzzFactor(fuzzSeed),
-    );
     final home = _homeDeckAndConfigForCard(card);
     final homeDeckConfig = home.config;
+    final answerContext = baseContext
+        .withDeckConfig(homeDeckConfig)
+        .withFuzzFactor(seededStdRngFuzzFactor(fuzzSeed));
     final config = homeDeckConfig.inner;
     final desiredRetention = readCollectionConfig('fsrs') == true
         ? home.deck.effectiveDesiredRetention(config)

@@ -117,4 +117,141 @@ void main() {
       );
     });
   });
+  group('FSRS training progress split updates', () {
+    FsrsTrainingProgress progressFor(List<FsrsTrainingSplitProgress> splits,
+            {bool finished = false}) =>
+        FsrsTrainingProgress(splits: splits, finished: finished);
+
+    FsrsTrainingProgress update(
+      FsrsTrainingProgress progress,
+      int splitIndex, {
+      required int epoch,
+      required int epochTotal,
+      required int itemsProcessed,
+      required int itemsTotal,
+    }) =>
+        updateFsrsTrainingProgressSplit(
+          progress: progress,
+          splitIndex: splitIndex,
+          epoch: epoch,
+          epochTotal: epochTotal,
+          itemsProcessed: itemsProcessed,
+          itemsTotal: itemsTotal,
+        );
+
+    test('replaces the first, middle, and last split without changing others',
+        () {
+      final originalSplits = [
+        _split(epoch: 1, epochTotal: 2, itemsProcessed: 1, itemsTotal: 5),
+        _split(epoch: 2, epochTotal: 3, itemsProcessed: 2, itemsTotal: 7),
+        _split(epoch: 3, epochTotal: 4, itemsProcessed: 3, itemsTotal: 11),
+      ];
+      final original = progressFor(originalSplits, finished: true);
+
+      for (final index in [0, 1, 2]) {
+        final updated = update(
+          original,
+          index,
+          epoch: 4,
+          epochTotal: 6,
+          itemsProcessed: 8,
+          itemsTotal: 13,
+        );
+
+        expect(updated, isNot(same(original)));
+        expect(updated.splits, hasLength(3));
+        expect(updated.finished, isTrue);
+        expect(updated.splits[index].epoch, 4);
+        expect(updated.splits[index].epochTotal, 6);
+        expect(updated.splits[index].itemsProcessed, 8);
+        expect(updated.splits[index].itemsTotal, 13);
+        for (var other = 0; other < 3; other++) {
+          if (other != index) {
+            expect(updated.splits[other], same(original.splits[other]));
+          }
+        }
+        expect(original.splits, orderedEquals(originalSplits));
+      }
+    });
+
+    test('copies the source list and exposes an immutable updated snapshot',
+        () {
+      final sourceSplits = [
+        _split(epoch: 1, epochTotal: 2, itemsProcessed: 1, itemsTotal: 4),
+        _split(epoch: 2, epochTotal: 3, itemsProcessed: 2, itemsTotal: 5),
+      ];
+      final original = progressFor(sourceSplits);
+      final updated = update(
+        original,
+        1,
+        epoch: 3,
+        epochTotal: 4,
+        itemsProcessed: 3,
+        itemsTotal: 6,
+      );
+      final updatedSnapshot =
+          List<FsrsTrainingSplitProgress>.of(updated.splits);
+
+      sourceSplits.clear();
+      expect(original.splits, hasLength(2));
+      expect(updated.splits, orderedEquals(updatedSnapshot));
+      expect(() => updated.splits.clear(), throwsUnsupportedError);
+      expect(
+          () => updated.splits[0] = original.splits[0], throwsUnsupportedError);
+    });
+
+    test('recalculates aggregate current and total from updated values', () {
+      final original = progressFor([
+        _split(epoch: 2, epochTotal: 5, itemsProcessed: 3, itemsTotal: 10),
+        _split(epoch: 1, epochTotal: 4, itemsProcessed: 2, itemsTotal: 7),
+      ]);
+      final updated = update(
+        original,
+        0,
+        epoch: 4,
+        epochTotal: 6,
+        itemsProcessed: 8,
+        itemsTotal: 13,
+      );
+
+      expect(updated.current, 49);
+      expect(updated.total, 106);
+    });
+
+    test('rejects negative counts through split value validation', () {
+      final original = progressFor([
+        _split(epoch: 1, epochTotal: 2, itemsProcessed: 1, itemsTotal: 4),
+      ]);
+
+      expect(
+        () => update(original, 0,
+            epoch: -1, epochTotal: 2, itemsProcessed: 1, itemsTotal: 4),
+        throwsArgumentError,
+      );
+      expect(
+        () => update(original, 0,
+            epoch: 1, epochTotal: 2, itemsProcessed: 1, itemsTotal: -4),
+        throwsArgumentError,
+      );
+      expect(original.splits.single.epoch, 1);
+    });
+
+    test('reports negative and high split indexes as range errors', () {
+      final original = progressFor([
+        _split(epoch: 1, epochTotal: 2, itemsProcessed: 1, itemsTotal: 4),
+      ]);
+
+      expect(
+        () => update(original, -1,
+            epoch: 2, epochTotal: 3, itemsProcessed: 2, itemsTotal: 5),
+        throwsRangeError,
+      );
+      expect(
+        () => update(original, 1,
+            epoch: 2, epochTotal: 3, itemsProcessed: 2, itemsTotal: 5),
+        throwsRangeError,
+      );
+      expect(original.splits.single.epoch, 1);
+    });
+  });
 }

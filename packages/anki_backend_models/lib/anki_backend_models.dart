@@ -31,6 +31,7 @@ export 'src/fsrs_training_progress.dart';
 export 'src/fsrs_time_series_split.dart';
 export 'src/fsrs_stability_initialization.dart';
 export 'src/fsrs_parameter_clipping.dart';
+export 'src/fsrs_training_model_parameters.dart';
 export 'src/fsrs_binary_cross_entropy.dart';
 export 'src/fsrs_l2_regularization.dart';
 export 'src/review_queue.dart';

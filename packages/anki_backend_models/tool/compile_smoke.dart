@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import 'dart:typed_data';
+
 import 'package:anki_backend_models/anki_backend_models.dart';
 import 'package:anki_backend_protocol/anki/notes.pbenum.dart' as notes;
 import 'package:anki_backend_protocol/anki/notetypes.pb.dart' as proto;
@@ -97,6 +99,20 @@ void main() {
       updatedTrainingProgress.splits.first != trainingProgress.splits.first ||
       updatedTrainingProgress.finished) {
     throw StateError('FSRS training progress update differs on JavaScript');
+  }
+
+  final initializedFsrsParameters = initializeFsrsTrainingModelParameters(
+    initialStability: const [0.5, 1.5, 2.5, 3.5],
+    freezeShortTermStability: true,
+  );
+  final fsrsDefaults = Float32List.fromList([6.4133, 0.1542]);
+  if (initializedFsrsParameters.length != 21 ||
+      initializedFsrsParameters[0] != 0.5 ||
+      initializedFsrsParameters[4] != fsrsDefaults[0] ||
+      initializedFsrsParameters[17] != 0 ||
+      initializedFsrsParameters[20] != fsrsDefaults[1]) {
+    throw StateError(
+        'FSRS training model initialization differs on JavaScript');
   }
 
   final maskedGradients = maskFsrsParameterGradients(
